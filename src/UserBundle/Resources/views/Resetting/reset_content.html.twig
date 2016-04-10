@@ -1,0 +1,45 @@
+
+
+{% trans_default_domain 'FOSUserBundle' %}
+				{% if password.mismatch is defined %}
+				<div class="panel panel-red">
+					<div class="panel-heading">
+						<div>Erreur</div>
+					</div>
+					<div class="panel-footer">
+						{{ 'fos_user.password.mismatch'|trans }}
+					</div>
+				</div>
+				{% endif %}
+				
+				<div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Réinitialisation de votre mot de passe</h3>
+                    </div>
+					
+                    <div class="panel-body">
+					<form name="fos_user_resetting_form" action="{{ path('fos_user_resetting_reset',{'token': token}) }}" method="post">
+						<div class="form-group">
+							<input class="form-control" id="fos_user_resetting_form_plainPassword_first" name="fos_user_resetting_form[plainPassword][first]" placeholder="{{ 'form.new_password'|trans }}" required="required" type="password" autofocus />
+						</div>
+						<div class="form-group">
+							<input class="form-control" id="fos_user_resetting_form_plainPassword_second" name="fos_user_resetting_form[plainPassword][second]" placeholder="{{ 'form.new_password_confirmation'|trans }}" required="required" type="password" autofocus />
+						</div>
+						<div>					
+							{{ form_widget(form._token) }}
+						</div>
+						<div>
+							<input class="btn btn-lg btn-success btn-block" type="submit" value="{{ 'resetting.reset.submit'|trans }}" />
+						</div>
+					</form>
+{#					
+					{{ form_start(form, { 'action': path('fos_user_resetting_reset', {'token': token}), 'attr': { 'class': 'fos_user_resetting_reset' } }) }}
+    {{ form_widget(form) }}
+    <div>
+        <input type="submit" value="{{ 'resetting.reset.submit'|trans }}" />
+    </div>
+{{ form_end(form) }}#}
+					</div>
+                </div>
+		
+
