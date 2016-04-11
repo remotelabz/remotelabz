@@ -1,16 +1,6 @@
 {% trans_default_domain 'FOSUserBundle' %}
 
-{{ form_start(form, { 'action': path('fos_user_profile_edit'), 'attr': { 'class': 'fos_user_profile_edit' } }) }}
-    {{ form_widget(form) }}
-	
-	
-    <div>
-        <input type="submit" value="{{ 'profile.edit.submit'|trans }}" />
-    </div>
-{{ form_end(form) }}
-
-{% block body %}
-	<div id="page-wrapper">
+<div id="page-wrapper">
             {% for flash_message in app.session.flashbag.get('notice') %}
     <div class="flash-notice">
         {{ flash_message }}
@@ -21,6 +11,22 @@
         {{ flash_message }}
     </div>
 	{% endfor %}
+	</div>
+	
+	<div class="row">
+	{{ form_start(form, { 'action': path('fos_user_profile_edit'), 'attr': { 'class': 'fos_user_profile_edit' } }) }}
+    
+	{{ form_widget(form) }}
+	
+	<div>
+        <input type="submit" value="{{ 'profile.edit.submit'|trans }}" />
+    </div>
+	
+	</div>
+{#{{ form_end(form) }}#}
+
+{% block body %}
+	{#
 
 			<div class="row">
 				<div class="col-md-3">
@@ -31,7 +37,7 @@
     <div>
         <input type="submit" value="{{ 'profile.edit.submit'|trans }}" />
     </div>
-{{ form_end(form) }}
+{{ form_end(form) }}#}
 	</div>
     
 {% endblock %}
