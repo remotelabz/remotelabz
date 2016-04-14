@@ -22,13 +22,42 @@
             </div>
 	     
 			<div class="row">
-				<table><tr><th>Nom</th><th>Prénom</th><th>Mail</th><th>Username</th><th>Activé ?</th></tr>
+				<div class="x_content" style="display: block;">
+					<table class="table table-striped responsive-utilities jambo_table bulk_action">
+						<thead>
+						<tr class="headings">
+                        <th>
+                          <div class="icheckbox_flat-green" style="position: relative;"><input type="checkbox" id="check-all" class="flat" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div>
+                        </th>
+						<th class="column-title" style="display: table-cell;">Nom</th>
+						<th class="column-title" style="display: table-cell;">Prénom</th>
+						<th class="column-title" style="display: table-cell;">Mail</th>
+						<th class="column-title" style="display: table-cell;">Username</th>
+						<th class="column-title" style="display: table-cell;">Compte actif ?</th>						
+					  </tr>
+                    </thead>
+				    <tbody>
 				{% for user in list_user %}
-				<tr>
-					<td>{{ user.lastname }}</td><td>{{ user.firstname }}</td><td>{{ user.email }}</td><td>{{ user.username }}</td><td>{{user.enabled}}</td>
+				<tr class="{% if loop.index is odd %}odd{%else%}even{%endif%} pointer">
+					<td class="a-center ">
+                          <div class="icheckbox_flat-green" style="position: relative;"><input type="checkbox" class="flat" name="table_records" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; border: 0px; opacity: 0; background: rgb(255, 255, 255);"></ins></div>
+                    </td>
+					<td class=" ">{{ user.lastname }}</td>
+					<td class=" ">{{ user.firstname }}</td>
+					<td class=" ">{{ user.email }}</td>
+					<td class=" ">{{ user.username }}</td>
+					<td class=" ">{{user.enabled}}</td>
 				</tr>
 				{% endfor %}
+				</tbody>
 				</table>
 			</div>
+			</div>
+			
+			
+                
+             
+					  
+					  
     
 {% endblock %}
