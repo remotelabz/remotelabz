@@ -13,16 +13,17 @@
     </div>
 	{% endfor %}
 
-			
-			<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header">Ajout d'un utilisateur</h1>
-                </div>
-                <!-- /.col-lg-12 -->
-            </div>
-	     
-			<div class="row">
-			{{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Ajout d'un utilisateur</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					{{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
 			{# Les erreurs générales du formulaire. #}
 				{{ form_errors(form) }}
 				<div class="form-group">
@@ -81,8 +82,14 @@
   
 		{# Fermeture de la balise <form> du formulaire HTML #}
 		{{ form_end(form) }}
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+		
 			
 			
-	</div>
+	     
     
 {% endblock %}
