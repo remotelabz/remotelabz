@@ -1,5 +1,8 @@
 {% extends 'AppBundle::accueil_auth.html.twig' %}
-{% block stylesheets %}<link href="{{asset('css/datatables/css/jquery.dataTables.min.css')}}" rel="stylesheet">{% endblock %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+{% endblock %}
 {% block body %}
 	<div id="page-wrapper">
             {% for flash_message in app.session.flashbag.get('notice') %}
@@ -23,10 +26,10 @@
                     </div>
                     <div class="x_content">
                         <!-- content starts here -->
-					<table id="datatable" class="table table-striped table-bordered dataTable no-footer" width="100%" >
+					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
 						<thead>
 						<tr>
-							<th>Nom</th>
+							<th class="sorting" >Nom</th>
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
@@ -64,14 +67,33 @@
 {% block javascripts %}
   <!-- Datatables-->
         <script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
-
-        <!-- pace -->
-        <script src="{{asset('js/pace/pace.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+		<script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+		<script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.bootstrap.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/jszip.min.js')}}"></script>
+        <script src="{{asset('js/datatables/pdfmake.min.js')}}"></script>
+        <script src="{{asset('js/datatables/vfs_fonts.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.html5.min.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.print.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.fixedHeader.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.keyTable.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.responsive.min.js')}}"></script>
+        <script src="{{asset('js/datatables/responsive.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.scroller.min.js')}}"></script>
+		
+		
+		
+		
+		
         <script>
           var handleDataTableButtons = function() {
               "use strict";
               0 !== $("#datatable-buttons").length && $("#datatable-buttons").DataTable({
                 dom: "Bfrtip",
+				
                 buttons: [{
                   extend: "copy",
                   className: "btn-sm"
@@ -99,12 +121,14 @@
                 }
               }
             }();
-        </script>
-        <script type="text/javascript">
-          $(document).ready(function() {
-            $('#datatable').dataTable();
-           
-          });
-          
+   
+        $(document).ready(function() {
+			$('#datatable').DataTable( {
+				"order": [[ 3, "asc" ]],
+			} );
+
+			TableManageButtons.init();
+		} );
+        
         </script>
 {% endblock %}
