@@ -4,7 +4,7 @@ namespace UserBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
-
+use Symfony\Component\HttpFoundation\Response;
 
 use UserBundle\Entity\User;
 use UserBundle\Form\Type\AddUserFormType;
@@ -122,7 +122,49 @@ class DefaultController extends Controller
 		
 	}
 	
-	
+	/**
+     * @Route("/admin/active_user", name="active_user")
+     */
+	public function active_user(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$userManager = $this->container->get('fos_user.user_manager');
+		
+		
+		
+        if($request->isXmlHttpRequest()) {
+		
+		$id='';
+		$id=$request->get('data');
+		if ($id != '') {
+
+			$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+			$select_user = new User();
+			$select_user = $repository->find($id);
+			if($select_user->isEnabled())
+				$select_user->SetEnabled(0);
+			else
+				$select_user->SetEnabled(1);
+			
+			
+			$em = $this->getDoctrine()->getManager();
+			$em->persist($select_user);
+			$em->flush();
+			
+			$response = new Response();
+						
+			return new Response('Yes');
+			}
+		return new Response($request->get('data'));
+		}
+		else return new Response('No');
+		/*return $this->render(
+        'UserBundle:Gestion:list_user.html.twig',array(
+		'user' => $user,
+		'list_user' => $list_user
+		));*/
+	}
 	
 	function stripAccents($str, $encoding='utf-8')
 	{
