@@ -52,7 +52,16 @@
 					<td>{{ user.firstname }}</td>
 					<td>{{ user.email }}</td>
 					<td>{{ user.username }}</td>
-					<td>{{user.enabled}}</td>
+					<td>
+					{# <form action="{{path('list_user')}}" id="change_user">
+					<input type="hidden" name="user_id" value="{{user.id}}"/> #}
+					{% if user.enabled == 1 %}
+						Actif
+						<button id="{{user.id}}" onclick="Change_Desactive('{{user.id}}')">Désactive ?</button>
+					{%else%}
+						Desactivé
+						<button id="{{user.id}}" onclick="Change_Active('{{user.id}}')">Active ?</button>
+					{%endif%}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
@@ -83,11 +92,7 @@
         <script src="{{asset('js/datatables/dataTables.responsive.min.js')}}"></script>
         <script src="{{asset('js/datatables/responsive.bootstrap.min.js')}}"></script>
         <script src="{{asset('js/datatables/dataTables.scroller.min.js')}}"></script>
-		
-		
-		
-		
-		
+
         <script>
           var handleDataTableButtons = function() {
               "use strict";
@@ -125,10 +130,75 @@
         $(document).ready(function() {
 			$('#datatable').DataTable( {
 				"order": [[ 3, "asc" ]],
-			} );
-
+			});
 			TableManageButtons.init();
-		} );
-        
+		});
+
+		function Change_Activation(button) {
+				var user_id=button.id;
+				$(function(){
+					$.post(
+						"{{path('active_user')}}",
+						{ data: user_id},
+						function(data,status){
+							
+						});			
+				})
+		}
+		
+		var buttons = document.getElementsByTagName('button');
+		for (var i = 0, len = buttons.length; i < len; i++) {
+			buttons[i].onclick = function (){
+				Change_Activation(this);
+			}
+		}
+		
+		{#
+		function readData(sData) {
+	var arr_item=new Array();
+	var arr_cand=new Array();
+	arr_item=sData.getElementsByTagName("item");
+	for (var i = 0; i < arr_item.length; i++) {  
+         decision=arr_item[i].getAttribute('decision');
+		 choix=arr_item[i].getAttribute('choix');
+		 parcmodsess=arr_item[i].getAttribute('parcmodsess');
+		 
+    }
+	arr_cand=sData.getElementsByTagName("candidat");
+	for (var i = 0; i < arr_cand.length; i++) {  
+         id=arr_cand[i].getAttribute('id');
+    }
+	id_element=id+"_"+parcmodsess+"_"+choix;
+	
+	arr = document.getElementById("decision_"+id_element);  
+	arr.innerHTML=decision;
+}
+
+function request(oSelect) {
+	var value = oSelect.options[oSelect.selectedIndex].value;
+	var formid= oSelect.form.id;
+	var temp1="candidature"+"_"+formid+"_id_candidat";
+	var temp2="candidature"+"_"+formid+"_id_parcmodsess";
+	var temp3="candidature"+"_"+formid+"_choix";
+	var id_candidat= document.getElementById(temp1).value;
+	var id_parcmodsess= document.getElementById(temp2).value;
+	var choix= document.getElementById(temp3).value;
+
+	var xhr   = new getXMLHttpRequest();
+	
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
+			readData(xhr.responseXML);	
+		}
+	}
+	
+	xhr.open("POST", "decision", true);
+	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	xhr.send("id_candidat=" + id_candidat+"&id_parcmodsess="+id_parcmodsess+"&choix="+choix+"&decision="+value);
+}
+		#}
+		
+		
+
         </script>
 {% endblock %}
