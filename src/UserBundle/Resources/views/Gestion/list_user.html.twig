@@ -33,7 +33,7 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
-							<th>Compte actif ?</th>
+							<th>Activation/Désactivation</th>
 						</tr>
                     </thead>
 					<tfoot>
@@ -42,26 +42,26 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
-							<th>Compte actif ?</th>
+							<th>Activation/Désactivation</th>
 						</tr>
                     </tfoot>
 				    <tbody>
 				{% for user in list_user %}
-				<tr class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
+				<tr id="tr_{{user.id}}"{% if user.enabled == 0 %}  class="danger" {% endif %} class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
 					<td class="sorting_1" tabindex="0">{{ user.lastname }}</td>
 					<td>{{ user.firstname }}</td>
 					<td>{{ user.email }}</td>
 					<td>{{ user.username }}</td>
 					<td>
-					{# <form action="{{path('list_user')}}" id="change_user">
-					<input type="hidden" name="user_id" value="{{user.id}}"/> #}
+					{% if user.username != "admin" %}
 					{% if user.enabled == 1 %}
-						Actif
-						<button id="{{user.id}}" onclick="Change_Desactive('{{user.id}}')">Désactive ?</button>
+						
+						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Desactive('{{user.id}}')" value="Désactiver" >Désactiver</button>
 					{%else%}
-						Desactivé
-						<button id="{{user.id}}" onclick="Change_Active('{{user.id}}')">Active ?</button>
-					{%endif%}</td>
+						
+						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Active('{{user.id}}')" value="Activer" >Activer</button>
+					{%endif%}
+					{%endif %}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
@@ -141,7 +141,12 @@
 						"{{path('active_user')}}",
 						{ data: user_id},
 						function(data,status){
-							
+							var result = data.split(":");
+							document.getElementById("button_"+result[0]).innerHTML=result[1];
+							var existingclass=document.getElementById("tr_"+result[0]).className;
+							if (result[1]=="Activer")
+								document.getElementById("tr_"+result[0]).className="danger "+existingclass;
+							else document.getElementById("tr_"+result[0]).className=existingclass.replace("danger ","");
 						});			
 				})
 		}

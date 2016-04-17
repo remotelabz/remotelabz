@@ -113,6 +113,7 @@ class DefaultController extends Controller
 	
 		$list_user = $repository->findAll();
 		
+		
 		return $this->render(
         'UserBundle:Gestion:list_user.html.twig',array(
 		'user' => $user,
@@ -130,35 +131,37 @@ class DefaultController extends Controller
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$userManager = $this->container->get('fos_user.user_manager');
-		
-		
-		
+
         if($request->isXmlHttpRequest()) {
 		
 		$id='';
 		$id=$request->get('data');
-		if ($id != '') {
+		if ($id != '' AND $id != '1') {
 
 			$repository = $this->getDoctrine()->getRepository('UserBundle:User');
 			$select_user = new User();
-			$select_user = $repository->find($id);
-			if($select_user->isEnabled())
+			$user_id=preg_split("/_/",$id)[1];
+			$select_user = $repository->find($user_id);
+			if($select_user->isEnabled()) {
 				$select_user->SetEnabled(0);
-			else
+				$return="Activer";
+			}
+			else 
+			{
 				$select_user->SetEnabled(1);
+				$return="Désactiver";
+			}
 			
 			
 			$em = $this->getDoctrine()->getManager();
 			$em->persist($select_user);
 			$em->flush();
-			
-			$response = new Response();
-						
-			return new Response('Yes');
+			$result=$user_id.":".$return;
+			return new Response($result);
 			}
-		return new Response($request->get('data'));
+		return new Response(0);
 		}
-		else return new Response('No');
+		else return new Response(0);
 		/*return $this->render(
         'UserBundle:Gestion:list_user.html.twig',array(
 		'user' => $user,
