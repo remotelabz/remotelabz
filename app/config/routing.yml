@@ -1,3 +1,8 @@
+test:
+    resource: "@TestBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
 #user:
 #    resource: "@UserBundle/Resources/config/routing.yml"
 #    prefix:   /
