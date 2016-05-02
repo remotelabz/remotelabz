@@ -74,7 +74,7 @@ class Device
      *
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
      */
-    private $InterfControl;
+    private $interfControl;
 
 	/**
 	 *
