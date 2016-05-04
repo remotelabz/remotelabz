@@ -29,11 +29,24 @@ class Systeme
     private $nom;
 
     /**
-	 * @ORM\ManyToMany(targetEntity="AppBundle\Entity\Hyperviseur")
+	 * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Hyperviseur")
 	 * @ORM\JoinColumn(nullable=false)
      */
     private $Hyperviseur;
 
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="path_master", type="string", length=255)
+     */
+    private $path_master;
+	
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="path_relatif", type="string", length=255)
+     */
+    private $path_relatif;
 
     /**
      * Get id
