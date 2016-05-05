@@ -58,6 +58,7 @@ class Device
 
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme")
+     * @ORM\JoinColumn(nullable=false)
      */
     private $systeme;
 
@@ -70,6 +71,10 @@ class Device
      *
      * @return int
      */
+    /**
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
+     */
+    private $network_interfaces;
     public function getId()
     {
         return $this->id;
@@ -241,5 +246,47 @@ class Device
     public function getInterfaceControle()
     {
         return $this->interfaceControle;
+    }
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->network_interfaces = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    /**
+     * Add networkInterface
+     *
+     * @param \AppBundle\Entity\Network_Interface $networkInterface
+     *
+     * @return Device
+     */
+    public function addNetworkInterface(\AppBundle\Entity\Network_Interface $networkInterface)
+    {
+        $this->network_interfaces[] = $networkInterface;
+        $networkInterface->setDevice($this);
+
+        return $this;
+    }
+
+    /**
+     * Remove networkInterface
+     *
+     * @param \AppBundle\Entity\Network_Interface $networkInterface
+     */
+    public function removeNetworkInterface(\AppBundle\Entity\Network_Interface $networkInterface)
+    {
+        $this->network_interfaces->removeElement($networkInterface);
+    }
+
+    /**
+     * Get networkInterfaces
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getNetworkInterfaces()
+    {
+        return $this->network_interfaces;
     }
 }
