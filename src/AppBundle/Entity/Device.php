@@ -56,7 +56,15 @@ class Device
      */
     private $marque;
 
+    /**
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme")
+     */
+    private $systeme;
 
+    /**
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
+     */
+    private $interfaceControle;
     /**
      * Get id
      *
@@ -186,5 +194,52 @@ class Device
     {
         return $this->marque;
     }
-}
 
+    /**
+     * Set systeme
+     *
+     * @param \AppBundle\Entity\Systeme $systeme
+     *
+     * @return Device
+     */
+    public function setSysteme(\AppBundle\Entity\Systeme $systeme = null)
+    {
+        $this->systeme = $systeme;
+
+        return $this;
+    }
+
+    /**
+     * Get systeme
+     *
+     * @return \AppBundle\Entity\Systeme
+     */
+    public function getSysteme()
+    {
+        return $this->systeme;
+    }
+
+    /**
+     * Set interfaceControle
+     *
+     * @param \AppBundle\Entity\Network_Interface $interfaceControle
+     *
+     * @return Device
+     */
+    public function setInterfaceControle(\AppBundle\Entity\Network_Interface $interfaceControle = null)
+    {
+        $this->interfaceControle = $interfaceControle;
+
+        return $this;
+    }
+
+    /**
+     * Get interfaceControle
+     *
+     * @return \AppBundle\Entity\Network_Interface
+     */
+    public function getInterfaceControle()
+    {
+        return $this->interfaceControle;
+    }
+}
