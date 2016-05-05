@@ -34,6 +34,19 @@ class Systeme
      */
     private $hyperviseur;
 
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="path_master", type="string", length=255)
+     */
+    private $path_master;
+	
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="path_relatif", type="string", length=255)
+     */
+    private $path_relatif;
 
     /**
      * Get id
