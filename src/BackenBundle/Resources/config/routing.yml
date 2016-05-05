@@ -1,3 +1,7 @@
 backen_homepage:
-    path:     /backend
-    defaults: { _controller: BackenBundle:Default:index }
+    path:     /backendadd
+    defaults: { _controller: BackenBundle:Default:add }
+
+backen_view:
+    path:     /backendview
+    defaults: { _controller: BackenBundle:Default:view }
