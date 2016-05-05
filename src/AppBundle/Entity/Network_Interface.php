@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Network_Interface
  *
- * @ORM\Table(name="network__interface")
+ * @ORM\Table(name="networkInterface")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
  */
 class Network_Interface
@@ -34,7 +34,7 @@ class Network_Interface
 
     private $config_reseau;
     /**
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device",inversedBy="network_interfaces")
      */
     private $device;
     /**
