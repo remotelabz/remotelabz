@@ -1,3 +1,7 @@
+backen:
+    resource: "@BackenBundle/Resources/config/routing.yml"
+    prefix:   /
+
 test:
     resource: "@TestBundle/Controller/"
     type:     annotation

@@ -12,7 +12,7 @@
             {{ flash_message }}
         </div>
     {% endfor %}
-
+{{ dump() }}
     <div class="row">
         <div class="col-md-12">
             <div class="x_panel">
@@ -105,42 +105,61 @@
                                             {{ form_widget(form.Systeme, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(form.Network_Interfaces, "Interfaces Réseaux", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form.Network_Interfaces, "Interfaces Réseaux", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(form.Network_Interfaces) }}
-
-                                        <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(form.Network_Interfaces, {'attr': {'class': 'form-control'}}) }}
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form.Network_Interfaces) }}
                                         </div>
-                                    </div>
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form.Network_Interfaces.nom, "Nom", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form.Network_Interfaces.nom) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form.Network_Interfaces.nom, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                       </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
                                             {{ form_label(form.InterfControl, "Interface de controle", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(form.InterfControl) }}
+                                       </div>
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form.InterfControl.nom, "Nom", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form.InterfControl.nom) }}
 
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
-                                                {{ form_widget(form.InterfControl, {'attr': {'class': 'form-control'}}) }}
+                                                {{ form_widget(form.InterfControl.nom, {'attr': {'class': 'form-control'}}) }}
                                             </div>
-                                       </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
                                             {{ form_label(form.Connexion, "Connexion", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(form.Connexion) }}
-
-                                            <div class="col-sm-2">
-                                                {# Génération de l'input. #}
-                                                {{ form_widget(form.Connexion, {'attr': {'class': 'form-control'}}) }}
-                                            </div>
                                        </div>
+                                            <div class="form-group">
+                                                {# Génération du label. #}
+                                                {{ form_label(form.Connexion.Device1, "Nom", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                                 {# Affichage des erreurs pour ce champ précis. #}
+                                                {{ form_errors(form.Connexion.Device1) }}
+
+                                                <div class="col-sm-2">
+                                                    {# Génération de l'input. #}
+                                                    {{ form_widget(form.Connexion.Device1, {'attr': {'class': 'form-control'}}) }}
+                                                </div>
+                                            </div>
 
                                     {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
 
