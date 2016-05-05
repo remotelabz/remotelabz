@@ -21,29 +21,39 @@ class Connexion
      */
     private $id;
 
+
+    //je veux pas des connexions sans interface ni sans device JoinColumn(nullable=false)
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     *  * @ORM\JoinColumn(nullable=false)
      */
+
+
+
     private $Device1;
 
     /**
      * @var \stdClass
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\JoinColumn(nullable=false)
      */
     private $Device2;
 
     /**
      *
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $Interface1;
+    private $interface1;
 
     /**
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $Interface2;
+
+    private $interface2;
 
 
     /**

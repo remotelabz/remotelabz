@@ -29,10 +29,10 @@ class Systeme
     private $nom;
 
     /**
-	 * @ORM\ManyToMany(targetEntity="AppBundle\Entity\Hyperviseur")
+	 * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Hyperviseur")
 	 * @ORM\JoinColumn(nullable=false)
      */
-    private $Hyperviseur;
+    private $hyperviseur;
 
 
     /**
@@ -92,35 +92,5 @@ class Systeme
     {
         return $this->hyperviseur;
     }
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->Hyperviseur = new \Doctrine\Common\Collections\ArrayCollection();
-    }
 
-    /**
-     * Add hyperviseur
-     *
-     * @param \AppBundle\Entity\Hyperviseur $hyperviseur
-     *
-     * @return Systeme
-     */
-    public function addHyperviseur(\AppBundle\Entity\Hyperviseur $hyperviseur)
-    {
-        $this->Hyperviseur[] = $hyperviseur;
-
-        return $this;
-    }
-
-    /**
-     * Remove hyperviseur
-     *
-     * @param \AppBundle\Entity\Hyperviseur $hyperviseur
-     */
-    public function removeHyperviseur(\AppBundle\Entity\Hyperviseur $hyperviseur)
-    {
-        $this->Hyperviseur->removeElement($hyperviseur);
-    }
 }
