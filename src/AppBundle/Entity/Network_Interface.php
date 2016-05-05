@@ -33,8 +33,10 @@ class Network_Interface
      */
 
     private $config_reseau;
-
-
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     */
+    private $device;
     /**
      * Get id
      *
@@ -91,5 +93,29 @@ class Network_Interface
     public function getConfigReseau()
     {
         return $this->config_reseau;
+    }
+
+    /**
+     * Set device
+     *
+     * @param \AppBundle\Entity\Device $device
+     *
+     * @return Network_Interface
+     */
+    public function setDevice(\AppBundle\Entity\Device $device = null)
+    {
+        $this->device = $device;
+
+        return $this;
+    }
+
+    /**
+     * Get device
+     *
+     * @return \AppBundle\Entity\Device
+     */
+    public function getDevice()
+    {
+        return $this->device;
     }
 }
