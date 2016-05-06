@@ -12,7 +12,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 class AddTpController extends Controller
 {
     /**
-     * @Route("/admin/add_tp", name="add_tp")
+     * @Route("/admin/add_tp", name="add")
      */
     public function add_tp()
     {
