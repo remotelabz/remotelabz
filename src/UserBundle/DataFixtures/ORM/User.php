@@ -11,7 +11,7 @@ use UserBundle\Entity\User;
 
 class UserData extends AbstractFixture implements ContainerAwareInterface
 {
-  // Dans l'argument de la méthode load, l'objet $manager est l'EntityManager
+  // Dans l'argument de la mï¿½thode load, l'objet $manager est l'EntityManager
   public function load(ObjectManager $manager)
   {
     $adminuser=new User();
