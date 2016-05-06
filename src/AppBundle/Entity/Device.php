@@ -58,7 +58,7 @@ class Device
 
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme")
-     * @ORM\JoinColumn(nullable=false)
+     *
      */
     private $systeme;
 
@@ -66,15 +66,18 @@ class Device
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
      */
     private $interfaceControle;
-    /**
-     * Get id
-     *
-     * @return int
-     */
+
     /**
      *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
      */
     private $network_interfaces;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD", inversedBy="devices")
+     */
+    private $pod;
+
+
     public function getId()
     {
         return $this->id;
@@ -288,5 +291,29 @@ class Device
     public function getNetworkInterfaces()
     {
         return $this->network_interfaces;
+    }
+
+    /**
+     * Set pod
+     *
+     * @param \AppBundle\Entity\POD $pod
+     *
+     * @return Device
+     */
+    public function setPod(\AppBundle\Entity\POD $pod = null)
+    {
+        $this->pod = $pod;
+
+        return $this;
+    }
+
+    /**
+     * Get pod
+     *
+     * @return \AppBundle\Entity\POD
+     */
+    public function getPod()
+    {
+        return $this->pod;
     }
 }
