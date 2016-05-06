@@ -55,6 +55,22 @@ class Connexion
 
     private $interface2;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="NomeDevice1", type="string", length=255)
+     */
+    private $nomdevice1;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="NomDevice2", type="string", length=255)
+     */
+    private $nomdevice2;
+
+
+
 
     /**
      * Get id
@@ -64,54 +80,6 @@ class Connexion
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Set nomDevice1
-     *
-     * @param \stdClass $nomDevice1
-     *
-     * @return Connexion
-     */
-    public function setNomDevice1($nomDevice1)
-    {
-        $this->nomDevice1 = $nomDevice1;
-
-        return $this;
-    }
-
-    /**
-     * Get nomDevice1
-     *
-     * @return \stdClass
-     */
-    public function getNomDevice1()
-    {
-        return $this->nomDevice1;
-    }
-
-    /**
-     * Set nomDevice2
-     *
-     * @param \stdClass $nomDevice2
-     *
-     * @return Connexion
-     */
-    public function setNomDevice2($nomDevice2)
-    {
-        $this->nomDevice2 = $nomDevice2;
-
-        return $this;
-    }
-
-    /**
-     * Get nomDevice2
-     *
-     * @return \stdClass
-     */
-    public function getNomDevice2()
-    {
-        return $this->nomDevice2;
     }
 
     /**
@@ -208,5 +176,53 @@ class Connexion
     public function getDevice2()
     {
         return $this->Device2;
+    }
+
+    /**
+     * Set nomdevice1
+     *
+     * @param string $nomdevice1
+     *
+     * @return Connexion
+     */
+    public function setNomdevice1($nomdevice1)
+    {
+        $this->nomdevice1 = $nomdevice1;
+
+        return $this;
+    }
+
+    /**
+     * Get nomdevice1
+     *
+     * @return string
+     */
+    public function getNomdevice1()
+    {
+        return $this->nomdevice1;
+    }
+
+    /**
+     * Set nomdevice2
+     *
+     * @param string $nomdevice2
+     *
+     * @return Connexion
+     */
+    public function setNomdevice2($nomdevice2)
+    {
+        $this->nomdevice2 = $nomdevice2;
+
+        return $this;
+    }
+
+    /**
+     * Get nomdevice2
+     *
+     * @return string
+     */
+    public function getNomdevice2()
+    {
+        return $this->nomdevice2;
     }
 }

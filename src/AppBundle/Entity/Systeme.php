@@ -29,7 +29,7 @@ class Systeme
     private $nom;
 
     /**
-	 * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Hyperviseur")
+	 * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Hyperviseur",cascade={"persist"})
 	 * @ORM\JoinColumn(nullable=false)
      */
     private $hyperviseur;
@@ -47,6 +47,12 @@ class Systeme
      * @ORM\Column(name="path_relatif", type="string", length=255)
      */
     private $path_relatif;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Parameter",cascade={"persist"})
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $parametres;
 
     /**
      * Get id
@@ -106,4 +112,76 @@ class Systeme
         return $this->hyperviseur;
     }
 
+
+    /**
+     * Set pathMaster
+     *
+     * @param string $pathMaster
+     *
+     * @return Systeme
+     */
+    public function setPathMaster($pathMaster)
+    {
+        $this->path_master = $pathMaster;
+
+        return $this;
+    }
+
+    /**
+     * Get pathMaster
+     *
+     * @return string
+     */
+    public function getPathMaster()
+    {
+        return $this->path_master;
+    }
+
+    /**
+     * Set pathRelatif
+     *
+     * @param string $pathRelatif
+     *
+     * @return Systeme
+     */
+    public function setPathRelatif($pathRelatif)
+    {
+        $this->path_relatif = $pathRelatif;
+
+        return $this;
+    }
+
+    /**
+     * Get pathRelatif
+     *
+     * @return string
+     */
+    public function getPathRelatif()
+    {
+        return $this->path_relatif;
+    }
+
+    /**
+     * Set parametres
+     *
+     * @param \AppBundle\Entity\Parameter $parametres
+     *
+     * @return Systeme
+     */
+    public function setParametres(\AppBundle\Entity\Parameter $parametres)
+    {
+        $this->parametres = $parametres;
+
+        return $this;
+    }
+
+    /**
+     * Get parametres
+     *
+     * @return \AppBundle\Entity\Parameter
+     */
+    public function getParametres()
+    {
+        return $this->parametres;
+    }
 }
