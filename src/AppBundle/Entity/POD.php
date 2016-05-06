@@ -30,9 +30,24 @@ class POD
     /**
      * @var string
      *
-     * @ORM\Column(name="NomDevice2", type="string", length=255)
+     * @ORM\Column(name="NomDevice", type="string", length=255)
      */
     private $NomDevice;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="Nom_pod", type="string", length=255)
+     */
+
+    private $nompod;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB",inversedBy="pod")
+     */
+    private $lab;
+
+
 
     /**
      * Get id
@@ -111,5 +126,53 @@ class POD
     public function getNomDevice()
     {
         return $this->NomDevice;
+    }
+
+    /**
+     * Set lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return POD
+     */
+    public function setLab(\AppBundle\Entity\LAB $lab = null)
+    {
+        $this->lab = $lab;
+
+        return $this;
+    }
+
+    /**
+     * Get lab
+     *
+     * @return \AppBundle\Entity\LAB
+     */
+    public function getLab()
+    {
+        return $this->lab;
+    }
+
+    /**
+     * Set nompod
+     *
+     * @param string $nompod
+     *
+     * @return POD
+     */
+    public function setNompod($nompod)
+    {
+        $this->nompod = $nompod;
+
+        return $this;
+    }
+
+    /**
+     * Get nompod
+     *
+     * @return string
+     */
+    public function getNompod()
+    {
+        return $this->nompod;
     }
 }
