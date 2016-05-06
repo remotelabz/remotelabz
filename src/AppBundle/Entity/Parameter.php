@@ -21,19 +21,19 @@ class Parameter
      */
     private $id;
     /**
-     * @var string
+     * @var float
      *
-     * @ORM\Column(name="taille_memoire", type="string", length=40)
+     * @ORM\Column(name="seize_memoire", type="float", length=40)
      */
-    private $taille_memoire;
+    private $seize_memoire;
 
     /**
-     * @var string
+     * @var float
      *
-     * @ORM\Column(name="taille_disque", type="string", length=40)
+     * @ORM\Column(name="seize_disque", type="float", length=40)
      */
 
-    private $taille_disque;
+    private $seize_disque;
 
     /**
      * Get id
@@ -45,51 +45,52 @@ class Parameter
         return $this->id;
     }
 
+
     /**
-     * Set tailleMemoire
+     * Set seizeMemoire
      *
-     * @param string $tailleMemoire
+     * @param float $seizeMemoire
      *
      * @return Parameter
      */
-    public function setTailleMemoire($tailleMemoire)
+    public function setSeizeMemoire($seizeMemoire)
     {
-        $this->taille_memoire = $tailleMemoire;
+        $this->seize_memoire = $seizeMemoire;
 
         return $this;
     }
 
     /**
-     * Get tailleMemoire
+     * Get seizeMemoire
      *
-     * @return string
+     * @return float
      */
-    public function getTailleMemoire()
+    public function getSeizeMemoire()
     {
-        return $this->taille_memoire;
+        return $this->seize_memoire;
     }
 
     /**
-     * Set tailleDisque
+     * Set seizeDisque
      *
-     * @param string $tailleDisque
+     * @param float $seizeDisque
      *
      * @return Parameter
      */
-    public function setTailleDisque($tailleDisque)
+    public function setSeizeDisque($seizeDisque)
     {
-        $this->taille_disque = $tailleDisque;
+        $this->seize_disque = $seizeDisque;
 
         return $this;
     }
 
     /**
-     * Get tailleDisque
+     * Get seizeDisque
      *
-     * @return string
+     * @return float
      */
-    public function getTailleDisque()
+    public function getSeizeDisque()
     {
-        return $this->taille_disque;
+        return $this->seize_disque;
     }
 }
