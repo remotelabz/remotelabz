@@ -1,6 +1,6 @@
-backen_homepage:
-    path:     /backendadd
-    defaults: { _controller: BackenBundle:Default:add }
+ajout_tp:
+    path:     /addtp
+    defaults: { _controller: BackenBundle:Default:addTp }
 
 backen_view:
     path:     /backendview
