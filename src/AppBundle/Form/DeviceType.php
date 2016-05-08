@@ -17,14 +17,19 @@ class DeviceType extends AbstractType
         $builder
             ->add('nom')
             ->add('type')
+            ->add('propriete')
             ->add('modele')
-            ->add('version')
             ->add('marque')
-            ->add('Systeme')
-            ->add('Network_Interfaces', new Network_InterfaceType())
-            ->add('InterfControl', new Network_InterfaceType())
-            ->add('Connexion', new ConnexionType())
-        ;
+//            ->add('systeme' ,new SystemeType())
+//            ->add('interfaceControle', new Network_InterfaceType())
+            ->add('Network_Interfaces','collection',array(
+                                'type'           =>  new Network_InterfaceType(),
+                                'allow_add'      => true,
+                                'allow_delete'   => true
+
+                ))
+            ->add('save','submit')
+;
     }
     
     /**
