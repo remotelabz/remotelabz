@@ -24,7 +24,7 @@ class ConfigReseau
     /**
      * @var string
      *
-     * @ORM\Column(name="IP", type="string", length=255)
+     * @ORM\Column(name="IP", type="string", length=255,nullable=true)
      */
     private $iP;
 
@@ -52,7 +52,7 @@ class ConfigReseau
     /**
      * @var string
      *
-     * @ORM\Column(name="Masque", type="string", length=255)
+     * @ORM\Column(name="Masque", type="string", length=255,nullable=true)
      */
     private $masque;
 
