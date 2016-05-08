@@ -6,7 +6,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class Network_InterfaceType extends AbstractType
+class ParameterType extends AbstractType
 {
     /**
      * @param FormBuilderInterface $builder
@@ -15,11 +15,8 @@ class Network_InterfaceType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('nomInterface')
-
-            ->add('configreseau',new ConfigReseauType())
-            ->add('save','submit')
-
+            ->add('seize_memoire')
+            ->add('seize_disque')
         ;
     }
     
@@ -29,7 +26,7 @@ class Network_InterfaceType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'AppBundle\Entity\Network_Interface'
+            'data_class' => 'AppBundle\Entity\Parameter'
         ));
     }
 }

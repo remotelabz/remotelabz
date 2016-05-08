@@ -16,7 +16,10 @@ class SystemeType extends AbstractType
     {
         $builder
             ->add('nom')
-            ->add('Hyperviseur')
+            ->add('path_master')
+            ->add('path_relatif')
+            ->add('hyperviseur', new HyperviseurType())
+            ->add('parametres' , new ParameterType())
         ;
     }
     
