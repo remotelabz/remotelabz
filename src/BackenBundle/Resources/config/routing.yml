@@ -1,5 +1,5 @@
-ajout_tp:
-    path:     /addtp
+ajout_interface:
+    path:     /admin/addtp
     defaults: { _controller: BackenBundle:Default:addTp }
 
 backen_view:
