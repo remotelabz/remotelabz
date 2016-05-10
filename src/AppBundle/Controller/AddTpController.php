@@ -12,7 +12,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 class AddTpController extends Controller
 {
     /**
-     * @Route("/admin/add_tp", name="add")
+     * @Route("/admin/add_tp", name="add_tp")
      */
     public function add_tp()
     {
@@ -22,7 +22,7 @@ class AddTpController extends Controller
         $form = $this->get('form.factory')->create(new DeviceType(),$device);
 
                 return $this->render(
-                    'AppBundle::add_interfaces.html.twig',array(
+                    'AppBundle::add_tp.html.twig',array(
                     'user' => $user,
                     'form' => $form->createView(),
                 ));
