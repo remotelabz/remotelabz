@@ -18,8 +18,17 @@ class SystemeType extends AbstractType
             ->add('nom')
             ->add('path_master')
             ->add('path_relatif')
-            ->add('hyperviseur', new HyperviseurType())
-            ->add('parametres' , new ParameterType())
+            -> add('hyperviseur', 'entity', array(
+                'class'    => 'AppBundle:Hyperviseur',
+                'property' => 'nom',
+                'multiple' => false
+            ))
+            ->add('parametres' , 'entity',array(
+                'class'    => 'AppBundle:Parameter',
+                'property' => 'id',
+                'multiple' => false
+            ))
+            ->add('save','submit')
         ;
     }
     

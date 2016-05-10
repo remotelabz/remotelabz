@@ -20,14 +20,14 @@ class DeviceType extends AbstractType
             ->add('propriete')
             ->add('modele')
             ->add('marque')
-//            ->add('systeme' ,new SystemeType())
+            ->add('systeme' ,new SystemeType())
 //            ->add('interfaceControle', new Network_InterfaceType())
-            ->add('Network_Interfaces','collection',array(
-                                'type'           =>  new Network_InterfaceType(),
-                                'allow_add'      => true,
-                                'allow_delete'   => true
+//            ->add('Network_Interfaces','collection',array(
+//                                'type'           =>  new Network_InterfaceType(),
+//                                'allow_add'      => true,
+//                                'allow_delete'   => true
 
-                ))
+//                ))
             ->add('save','submit')
 ;
     }
