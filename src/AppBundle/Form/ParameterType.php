@@ -17,6 +17,7 @@ class ParameterType extends AbstractType
         $builder
             ->add('seize_memoire')
             ->add('seize_disque')
+            ->add('save','submit')
         ;
     }
     
