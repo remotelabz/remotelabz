@@ -1,0 +1,7 @@
+#ajout_interface:
+#    path:     /admin/addtp
+#    defaults: { _controller: BackendBundle:Default:addTp }
+
+backend_view:
+    path:     /backendview
+    defaults: { _controller: BackendBundle:Default:view }
