@@ -1,5 +1,5 @@
-backen:
-    resource: "@BackenBundle/Resources/config/routing.yml"
+backend:
+    resource: "@BackendBundle/Resources/config/routing.yml"
     prefix:   /
 
 test:
