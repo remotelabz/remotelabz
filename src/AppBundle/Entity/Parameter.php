@@ -20,6 +20,14 @@ class Parameter
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
+	
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="nom", type="string", length=255)
+     */
+    private $nom;
+	
     /**
      * @var float
      *
@@ -92,5 +100,29 @@ class Parameter
     public function getSeizeDisque()
     {
         return $this->seize_disque;
+    }
+
+    /**
+     * Set nom
+     *
+     * @param string $nom
+     *
+     * @return Parameter
+     */
+    public function setNom($nom)
+    {
+        $this->nom = $nom;
+
+        return $this;
+    }
+
+    /**
+     * Get nom
+     *
+     * @return string
+     */
+    public function getNom()
+    {
+        return $this->nom;
     }
 }

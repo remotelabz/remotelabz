@@ -25,7 +25,7 @@ use AppBundle\Entity\TP;
 class DefaultController extends Controller
 {	
 	/**
-     * @Route("/admin/add_tp", name="add_tp")
+     * @Route("/admin/add_device", name="add_device")
      */	
     public function add_TpAction(Request $request)
     {
@@ -55,21 +55,21 @@ class DefaultController extends Controller
                 $em->persist($interfaceControle);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Interface de controle  bien enregistrée.');
-                return $this->redirect($this->generateUrl('ajout_interface'));
+                return $this->redirect($this->generateUrl('add_device'));
             }
             if ($Interfacesform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($interfaces);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Interface de controle  bien enregistrée.');
-                return $this->redirect($this->generateUrl('ajout_interface'));
+                return $this->redirect($this->generateUrl('add_device'));
             }
             if ($parametreForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($parametre);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'parametres enregistrés');
-                return $this->redirect($this->generateUrl('ajout_interface'
+                return $this->redirect($this->generateUrl('add_device'
                 ));
             }
             if ($hyperForm->handleRequest($request)->isValid()) {
@@ -77,21 +77,21 @@ class DefaultController extends Controller
                 $em->persist($hyperviseur);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'hyperviseur ajouté avec succé ');
-                return $this->redirect($this->generateUrl('ajout_interface'));
+                return $this->redirect($this->generateUrl('add_device'));
             }
             if ($systemForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($systeme);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Systeme ajouté avec succé ');
-                return $this->redirect($this->generateUrl('ajout_interface'));
+                return $this->redirect($this->generateUrl('add_device'));
             }
         }
 
 
 
         return $this->render(
-            'AppBundle::add_tp.html.twig',array(
+            'BackendBundle::add_device.html.twig',array(
             'user'                  => $user,
             'InterfaceControleform' => $InterfaceControleform->createView(),
             'Interfacesform'        => $Interfacesform->createView(),
