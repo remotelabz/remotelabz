@@ -15,7 +15,8 @@ class ParameterType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('seize_memoire')
+			->add('nom')
+			->add('seize_memoire')
             ->add('seize_disque')
             ->add('save','submit')
         ;
