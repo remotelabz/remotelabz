@@ -16,11 +16,6 @@ app:
     resource: "@AppBundle/Controller/"
     type:     annotation
 
-tp:
-    resource: "@AppBundle/Controller/AddTpController.php"
-    type:     annotation
-
-
 user:
     resource: "@UserBundle/Controller/"
     type:     annotation
