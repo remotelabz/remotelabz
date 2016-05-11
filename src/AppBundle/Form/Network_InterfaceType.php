@@ -16,7 +16,6 @@ class Network_InterfaceType extends AbstractType
     {
         $builder
             ->add('nomInterface')
-
             ->add('configreseau',new ConfigReseauType())
             ->add('save','submit')
 

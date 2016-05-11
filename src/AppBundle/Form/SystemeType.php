@@ -25,7 +25,7 @@ class SystemeType extends AbstractType
             ))
             ->add('parametres' , 'entity',array(
                 'class'    => 'AppBundle:Parameter',
-                'property' => 'id',
+                'property' => 'nom',
                 'multiple' => false
             ))
             ->add('save','submit')
