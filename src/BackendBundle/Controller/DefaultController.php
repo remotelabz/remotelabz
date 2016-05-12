@@ -13,6 +13,7 @@ use AppBundle\Form\ParameterType;
 use AppBundle\Form\SystemeType;
 use AppBundle\Form\TPType;
 
+use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
@@ -60,6 +61,8 @@ class DefaultController extends Controller
             if ($Interfacesform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($interfaces);
+
+
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Interface de controle  bien enregistrée.');
                 return $this->redirect($this->generateUrl('add_device'));
@@ -86,6 +89,18 @@ class DefaultController extends Controller
                 $request->getSession()->getFlashBag()->add('notice', 'Systeme ajouté avec succé ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
+            if ($deviceForm->handleRequest($request)->isValid()) {
+                $em = $this->getDoctrine()->getManager();
+                if ($device->getInterfaceControle() != null){
+                    $em->persist($device->getInterfaceControle());
+                    $em->flush();
+                }
+                $device->setInterfaceControle($device->getInterfaceControle());
+                $em->persist($device);
+                $em->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'device ajouté avec succé  ');
+                return $this->redirect($this->generateUrl('add_device'));
+            }
         }
 
 
@@ -101,11 +116,26 @@ class DefaultController extends Controller
             'deviceForm'            => $deviceForm->createView(),
         ));
     }
+
+    /**
+     * @Route("/admin/test", name="test")
+     */
     public function viewAction()
     {
 
+        $net = new Network_Interface();
+        $conf = new \AppBundle\Entity\ConfigReseau();
 
-        return  new Response('nook');
+
+        $net->setNomInterface('test4');
+        $net->setConfigReseau($conf);
+
+
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($net);
+        $em->flush();
+
+        return  new Response('good');
 
     }
 
