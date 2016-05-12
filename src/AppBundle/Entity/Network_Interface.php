@@ -33,7 +33,7 @@ class Network_Interface
     private $nomInterface;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
      */
 
     private $config_reseau;
@@ -41,11 +41,13 @@ class Network_Interface
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device",inversedBy="network_interfaces")
      */
     private $device;
+
     /**
      * Get id
      *
      * @return int
      */
+
     public function getId()
     {
         return $this->id;
@@ -122,4 +124,6 @@ class Network_Interface
     {
         return $this->device;
     }
+
+
 }
