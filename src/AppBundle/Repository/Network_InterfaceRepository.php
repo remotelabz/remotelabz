@@ -10,4 +10,20 @@ namespace AppBundle\Repository;
  */
 class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 {
+    public function getNotUsedInterfaceControlQueryBuilder()
+    {
+        $qb =   $this
+            ->createQueryBuilder('net')
+//            ->where('net.config_reseau != :status')
+//            ->setParameter('status',NULL)
+        ;
+        $qb->where($qb->expr()->isNotNull('net.config_reseau' ));
+
+//          $result =  $qb->getQuery()->getResult();
+//
+////           ->andWhere($qb->expr()->isNull('net.device' ));
+//
+////            and($qb->expr()->isNull('net.device' )));
+//        return $result;
+    }
 }
