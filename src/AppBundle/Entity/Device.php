@@ -57,7 +57,7 @@ class Device
     private $marque;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme",cascade="persist")
      *
      */
     private $systeme;
