@@ -10,4 +10,17 @@ namespace AppBundle\Repository;
  */
 class DeviceRepository extends \Doctrine\ORM\EntityRepository
 {
+
+//    public function getNotUsedSystemQueryBuilder()
+//    {
+//        $qb =   $this
+//            ->createQueryBuilder('d')
+//            ->join('d.systeme','sys')
+//            ->addSelect('sys');
+//            $qb->where($qb->expr()->isNull('d.systeme' ))
+////                ->andWhere($qb->expr()->isNull('net.device' ));
+//           ;
+//        return $qb;
+//    }
 }
+
