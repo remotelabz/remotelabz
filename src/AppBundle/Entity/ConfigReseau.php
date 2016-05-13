@@ -62,6 +62,13 @@ class ConfigReseau
      * @ORM\Column(name="Protocole", type="string", length=255, nullable=true)
      */
     private $protocole;
+	
+	/**
+     * @var int
+		*
+     * @ORM\Column(name="Port", type="integer", nullable=true)
+     */
+    private $port;
 
 
     /**
@@ -216,5 +223,29 @@ class ConfigReseau
     public function getProtocole()
     {
         return $this->protocole;
+    }
+
+    /**
+     * Set port
+     *
+     * @param integer $port
+     *
+     * @return ConfigReseau
+     */
+    public function setPort($port)
+    {
+        $this->port = $port;
+
+        return $this;
+    }
+
+    /**
+     * Get port
+     *
+     * @return integer
+     */
+    public function getPort()
+    {
+        return $this->port;
     }
 }
