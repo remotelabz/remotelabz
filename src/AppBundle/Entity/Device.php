@@ -273,7 +273,6 @@ class Device
     {
         $this->network_interfaces[] = $networkInterface;
         $networkInterface->setDevice($this);
-
         return $this;
     }
 

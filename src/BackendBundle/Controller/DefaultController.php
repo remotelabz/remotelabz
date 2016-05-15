@@ -5,11 +5,13 @@ namespace BackendBundle\Controller;
 use AppBundle\Entity\Hyperviseur;
 use AppBundle\Entity\Network_Interface;
 use AppBundle\Entity\Parameter;
+use AppBundle\Entity\POD;
 use AppBundle\Entity\Systeme;
 use AppBundle\Form\DeviceType;
 use AppBundle\Form\HyperviseurType;
 use AppBundle\Form\Network_InterfaceType;
 use AppBundle\Form\ParameterType;
+use AppBundle\Form\PODType;
 use AppBundle\Form\SystemeType;
 use AppBundle\Form\TPType;
 
@@ -96,8 +98,6 @@ class DefaultController extends Controller
             if ($deviceForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 if ($device->getInterfaceControle() != null){
-                    echo  '!!!!!!!!!!!!!!!!';
-                    die();
                     $em->persist($device->getInterfaceControle());
                     $em->flush();
                     $device->setInterfaceControle($device->getInterfaceControle());
@@ -130,24 +130,46 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/admin/test", name="test")
+     * @Route("/admin/add_pod", name="add_pod")
      */
-    public function viewAction()
+    public function viewAction(Request $request)
     {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
 
-        $net = new Network_Interface();
-        $conf = new \AppBundle\Entity\ConfigReseau();
+        $pod = new POD();
+
+        $podForm = $this->get('form.factory')->create(new PODType(), $pod, array('method' => 'POST'));
+
+        if ('POST' === $request->getMethod()) {
+
+            if ($podForm->handleRequest($request)->isValid()) {
+
+                $em = $this->getDoctrine()->getManager();
+//                $nomdev = array();
+//                foreach ($pod->getDevices() as $dev) {
+//                       array_push($nomdev ,$dev->getNom());
+//                }
 
 
-        $net->setNomInterface('test4');
-        $net->setConfigReseau($conf);
+                foreach ($pod->getDevices() as $dev) {
+//                    $pod->setNomDevice( $nomdev);
+                    $pod->addDevice($dev);
+                }
+
+            }
+            $em->persist($pod);
+            $em->flush();
+            $request->getSession()->getFlashBag()->add('notice', 'pod ajouté  ');
+            return $this->redirect($this->generateUrl('add_pod'));
+        }
+        return $this->render(
+            'BackendBundle::add_pod.html.twig',array(
+            'user'                  => $user,
+            'podForm' => $podForm->createView()
+
+        ));
 
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($net);
-        $em->flush();
-
-        return  new Response('good');
 
     }
 
