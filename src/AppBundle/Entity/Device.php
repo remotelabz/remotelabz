@@ -77,6 +77,10 @@ class Device
      */
     private $pod;
 
+    public function __toString() {
+        return $this->nom;
+    }
+
 
     public function getId()
     {

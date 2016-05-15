@@ -32,7 +32,7 @@ class DefaultController extends Controller
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
-        $interfaces = new Network_Interface();
+        $interface = new Network_Interface();
         $interfaceControle = new Network_Interface();
         $hyperviseur = new Hyperviseur();
         $parametre = new Parameter();
@@ -40,33 +40,37 @@ class DefaultController extends Controller
         $device = new Device();
 
         $InterfaceControleform = $this->get('form.factory')->create(new Network_InterfaceType(), $interfaceControle, array('method' => 'POST'));
-        $Interfacesform = $this->get('form.factory')->create(new Network_InterfaceType(), $interfaces, array('method' => 'POST'));
+        $Interfaceform = $this->get('form.factory')->create(new Network_InterfaceType(), $interface, array('method' => 'POST'));
         $parametreForm = $this->get('form.factory')->create(new ParameterType(),$parametre, array('method' => 'POST'));
         $hyperForm = $this->get('form.factory')->create(new HyperviseurType(),$hyperviseur, array('method' => 'POST'));
         $systemForm = $this->get('form.factory')->create(new SystemeType(),$systeme, array('method' => 'POST'));
 
         $deviceForm = $this->get('form.factory')->create(new DeviceType(), $device, array('method' => 'POST'));
 
-        $Interfacesform->remove('configreseau');
+        $Interfaceform->remove('configreseau');
 
         if ('POST' === $request->getMethod()){
-            if ($InterfaceControleform->handleRequest($request)->isValid()) {
-               $em = $this->getDoctrine()->getManager();
-                $em->persist($interfaceControle->getConfigReseau());
-                $em->persist($interfaceControle);
-                $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface de controle  bien enregistrée.');
-                return $this->redirect($this->generateUrl('add_device'));
-            }
-            if ($Interfacesform->handleRequest($request)->isValid()) {
+
+
+                if ($InterfaceControleform->handleRequest($request)->isValid() and ($interfaceControle->getConfigReseau()->getIP() != null)) {
+//                    echo 'interface de controle  ';
+//                    die();
+                    $em1 = $this->getDoctrine()->getManager();
+                    $em1->persist($interfaceControle->getConfigReseau());
+                    $em1->persist($interfaceControle);
+                    $em1->flush();
+                    $request->getSession()->getFlashBag()->add('notice', 'Interface de controle '.$interfaceControle->getNomInterface(). ' bien enregistrée.');
+                    return $this->redirect($this->generateUrl('add_device'));
+                }
+            if ($Interfaceform->handleRequest($request)->isValid() ) {
                 $em = $this->getDoctrine()->getManager();
-                $em->persist($interfaces);
-
-
+                $em->persist($interface);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface de controle  bien enregistrée.');
+                $request->getSession()->getFlashBag()->add('notice', 'Interface  '.$interface->getNomInterface(). ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
             }
+
+
             if ($parametreForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($parametre);
@@ -92,10 +96,18 @@ class DefaultController extends Controller
             if ($deviceForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 if ($device->getInterfaceControle() != null){
+                    echo  '!!!!!!!!!!!!!!!!';
+                    die();
                     $em->persist($device->getInterfaceControle());
                     $em->flush();
+                    $device->setInterfaceControle($device->getInterfaceControle());
                 }
-                $device->setInterfaceControle($device->getInterfaceControle());
+                if ($device->getNetworkInterfaces() != null){
+
+                   foreach($device->getNetworkInterfaces()  as $net) {
+                       $device->addNetworkInterface($net);
+                   }
+                }
                 $em->persist($device);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'device ajouté avec succé  ');
@@ -109,7 +121,7 @@ class DefaultController extends Controller
             'BackendBundle::add_device.html.twig',array(
             'user'                  => $user,
             'InterfaceControleform' => $InterfaceControleform->createView(),
-            'Interfacesform'        => $Interfacesform->createView(),
+            'Interfaceform'        => $Interfaceform->createView(),
             'parametreForm'         => $parametreForm->createView(),
             'hyperForm'             =>$hyperForm->createView(),
             'systemForm'            => $systemForm->createView(),
