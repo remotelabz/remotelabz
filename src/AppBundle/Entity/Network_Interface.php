@@ -52,7 +52,15 @@ class Network_Interface
     {
         return $this->id;
     }
-
+    /**
+     * (Add this method into your class)
+     *
+     * @return string String representation of this class
+     */
+    public function __toString()
+    {
+        return $this->nomInterface;
+    }
     /**
      * Set nomInterface
      *

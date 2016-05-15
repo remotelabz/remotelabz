@@ -148,23 +148,23 @@
 
                             <div class="x_content">
                                 <!-- content starts here -->
-                                {{ form_start(Interfacesform, {'attr': {'class': 'form-horizontal'}}) }}
+                                {{ form_start(Interfaceform, {'attr': {'class': 'form-horizontal'}}) }}
                                 {# Les erreurs générales du formulaire. #}
-                                {{ form_errors(Interfacesform) }}
+                                {{ form_errors(Interfaceform) }}
                                 <div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfacesform.nomInterface, "Nom de l'nterface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nomInterface, "Nom de l'nterface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(Interfacesform.nomInterface) }}
+                                    {{ form_errors(Interfaceform.nomInterface) }}
 
                                     <div class="col-sm-2">
                                         {# Génération de l'input. #}
-                                        {{ form_widget(Interfacesform.nomInterface, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_widget(Interfaceform.nomInterface, {'attr': {'class': 'form-control'}}) }}
                                     </div>
                                 </div>
 
-                                {{ form_widget(Interfacesform.save, {'attr': {'class': 'btn btn-primary'}}) }}
+                                {{ form_widget(Interfaceform.save, {'attr': {'class': 'btn btn-primary'}}) }}
 
                                 {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
 
@@ -173,10 +173,10 @@
                                     Dans cet exemple, ce serait le champ CSRF (géré automatiquement par Symfony !)
                                     et tous les champs cachés (type « hidden »). #}
 
-                                {{ form_rest(Interfacesform) }}
+                                {{ form_rest(Interfaceform) }}
 
                                 {# Fermeture de la balise <form> du formulaire HTML #}
-                                {{ form_end(Interfacesform) }}
+                                {{ form_end(Interfaceform) }}
                                 <!-- content ends here -->
                             </div>
                         </div>
@@ -498,6 +498,18 @@
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
                                                 {{ form_widget(deviceForm.interfaceControle, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(deviceForm.network_interfaces, "Interfaces", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(deviceForm.network_interfaces) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(deviceForm.network_interfaces, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
 
