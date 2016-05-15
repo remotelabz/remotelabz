@@ -27,12 +27,12 @@ class POD
 
     private $devices;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="NomDevice", type="string", length=255)
-     */
-    private $NomDevice;
+//    /**
+//     * @var array
+//     *
+//     * @ORM\Column(name="NomDevice", type="array")
+//     */
+//    private $NomDevice;
 
     /**
      * @var string
@@ -59,6 +59,10 @@ class POD
         return $this->id;
     }
 
+    public function __toString() {
+        return $this->nompod;
+    }
+
 
 
     /**
@@ -67,6 +71,7 @@ class POD
     public function __construct()
     {
         $this->devices = new \Doctrine\Common\Collections\ArrayCollection();
+//        $this->NomDevice = array();
     }
 
     /**
@@ -79,8 +84,7 @@ class POD
     public function addDevice(\AppBundle\Entity\Device $device)
     {
         $this->devices[] = $device;
-        $device->setPod(this);
-
+        $device->setPod($this);
         return $this;
     }
 
@@ -104,29 +108,6 @@ class POD
         return $this->devices;
     }
 
-    /**
-     * Set nomDevice
-     *
-     * @param string $nomDevice
-     *
-     * @return POD
-     */
-    public function setNomDevice($nomDevice)
-    {
-        $this->NomDevice = $nomDevice;
-
-        return $this;
-    }
-
-    /**
-     * Get nomDevice
-     *
-     * @return string
-     */
-    public function getNomDevice()
-    {
-        return $this->NomDevice;
-    }
 
     /**
      * Set lab
@@ -175,4 +156,30 @@ class POD
     {
         return $this->nompod;
     }
+
+
+
+//    /**
+//     * Set nomDevice
+//     *
+//     * @param array $nomDevice
+//     *
+//     * @return POD
+//     */
+//    public function setNomDevice( array $nomDevice)
+//    {
+//        $this->NomDevice = $nomDevice;
+//
+//        return $this;
+//    }
+
+//    /**
+//     * Get nomDevice
+//     *
+//     * @return array
+//     */
+//    public function getNomDevice()
+//    {
+//        return $this->NomDevice;
+//    }
 }
