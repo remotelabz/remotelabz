@@ -24,16 +24,7 @@ class DeviceType extends AbstractType
             ->add('propriete')
             ->add('modele')
             ->add('marque')
-//            ->add( 'Systeme', 'entity', array(
-//                'class' => 'Appbundle\Entity\Systeme',
-//                'property' => 'nom',
-//                'query_builder' => function(SystemeRepository $er ){
-//                    return $er->createQueryBuilder('s')
-//                        ->where('s. = ?1')
-//                        ->andWhere('w.visible = 1')
-//                        ->andWhere('w.booked = 0')
-//                        ->setParameter(1, $caravan);
-//                                                 },
+//
               ->add('systeme', 'entity', array(
                 'class'    => 'AppBundle:Systeme',
                 'property' => 'nom',
@@ -49,7 +40,7 @@ class DeviceType extends AbstractType
         'property' => 'nomInterface',
         'multiple' => false,
         'required' => false,
-        'query_builder' => function(Network_InterfaceRepository $repo) {
+        'data' => function(Network_InterfaceRepository $repo) {
             return $repo->getNotUsedInterfaceControlQueryBuilder();
         }
 

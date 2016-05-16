@@ -24,14 +24,18 @@ class LAB
     /**
      * @var string
      *
-     * @ORM\Column(name="NomPod", type="string", length=255)
+     * @ORM\Column(name="Nomlab", type="string", length=255)
      */
-    private $nomPod;
+    private $nomlab;
 
     /**
      *  @ORM\OneToMany(targetEntity="AppBundle\Entity\POD", mappedBy="lab")
      */
     private $pod;
+    /**
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Connexion", mappedBy="lab")
+     */
+    private $connexions;
 
     /**
      * Get id
@@ -43,29 +47,7 @@ class LAB
         return $this->id;
     }
 
-    /**
-     * Set nomPod
-     *
-     * @param string $nomPod
-     *
-     * @return LAB
-     */
-    public function setNomPod($nomPod)
-    {
-        $this->nomPod = $nomPod;
 
-        return $this;
-    }
-
-    /**
-     * Get nomPod
-     *
-     * @return string
-     */
-    public function getNomPod()
-    {
-        return $this->nomPod;
-    }
     /**
      * Constructor
      */
@@ -84,7 +66,7 @@ class LAB
     public function addPod(\AppBundle\Entity\POD $pod)
     {
         $this->pod[] = $pod;
-        $pod->setLab(this);
+        $pod->setLab($this);
 
         return $this;
     }
@@ -107,5 +89,64 @@ class LAB
     public function getPod()
     {
         return $this->pod;
+    }
+
+    /**
+     * Set nomlab
+     *
+     * @param string $nomlab
+     *
+     * @return LAB
+     */
+    public function setNomlab($nomlab)
+    {
+        $this->nomlab = $nomlab;
+
+        return $this;
+    }
+
+    /**
+     * Get nomlab
+     *
+     * @return string
+     */
+    public function getNomlab()
+    {
+        return $this->nomlab;
+    }
+
+    /**
+     * Add connexion
+     *
+     * @param \AppBundle\Entity\Connexion $connexion
+     *
+     * @return LAB
+     */
+    public function addConnexion(\AppBundle\Entity\Connexion $connexion)
+    {
+        $this->connexions[] = $connexion;
+        $connexion->setLab($this);
+
+        return $this;
+    }
+
+    /**
+     * Remove connexion
+     *
+     * @param \AppBundle\Entity\Connexion $connexion
+     */
+    public function removeConnexion(\AppBundle\Entity\Connexion $connexion)
+    {
+        $this->connexions->removeElement($connexion);
+    }
+
+    /**
+     * Get connexions
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getConnexions()
+    {
+        return $this->connexions;
     }
 }
