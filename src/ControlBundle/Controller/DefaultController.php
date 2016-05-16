@@ -8,10 +8,24 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 class DefaultController extends Controller
 {
     /**
-     * @Route("/")
+     * @Route("/control", name="control_vm")
      */
     public function indexAction()
     {
-        return $this->render('ControlBundle:Default:index.html.twig');
+			
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		
+		
+		// Si l'utilisateur courant est anonyme, $user vaut « anon. »
+		
+		// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
+		
+		
+        return $this->render('ControlBundle:Default:index.html.twig', array(
+		'user' => $user,
+		'host' => "194.57.105.124",
+		'port' => "7220"
+		));
     }
 }
