@@ -1,17 +1,14 @@
 verify:
     resource: "@VerifyBundle/Controller/"
     type:     annotation
-    prefix:   /
 
 control:
     resource: "@ControlBundle/Controller/"
     type:     annotation
-    prefix:   /
 
 backend:
     resource: "@BackendBundle/Controller/"
     type:     annotation
-    prefix:   /
 
 test:
     resource: "@TestBundle/Controller/"
