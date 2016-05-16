@@ -62,12 +62,18 @@ class Connexion
      */
     private $nomdevice1;
 
+
     /**
      * @var string
      *
      * @ORM\Column(name="NomDevice2", type="string", length=255)
      */
     private $nomdevice2;
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     */
+    private $lab;
+
 
 
 
@@ -224,5 +230,29 @@ class Connexion
     public function getNomdevice2()
     {
         return $this->nomdevice2;
+    }
+
+    /**
+     * Set lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return Connexion
+     */
+    public function setLab(\AppBundle\Entity\LAB $lab = null)
+    {
+        $this->lab = $lab;
+
+        return $this;
+    }
+
+    /**
+     * Get lab
+     *
+     * @return \AppBundle\Entity\LAB
+     */
+    public function getLab()
+    {
+        return $this->lab;
     }
 }

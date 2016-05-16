@@ -3,12 +3,14 @@
 namespace BackendBundle\Controller;
 
 use AppBundle\Entity\Hyperviseur;
+use AppBundle\Entity\LAB;
 use AppBundle\Entity\Network_Interface;
 use AppBundle\Entity\Parameter;
 use AppBundle\Entity\POD;
 use AppBundle\Entity\Systeme;
 use AppBundle\Form\DeviceType;
 use AppBundle\Form\HyperviseurType;
+use AppBundle\Form\LABType;
 use AppBundle\Form\Network_InterfaceType;
 use AppBundle\Form\ParameterType;
 use AppBundle\Form\PODType;
@@ -30,7 +32,7 @@ class DefaultController extends Controller
 	/**
      * @Route("/admin/add_device", name="add_device")
      */	
-    public function add_TpAction(Request $request)
+    public function Add_DeviceAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
@@ -132,7 +134,7 @@ class DefaultController extends Controller
     /**
      * @Route("/admin/add_pod", name="add_pod")
      */
-    public function viewAction(Request $request)
+        public function Add_PodAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
@@ -171,6 +173,36 @@ class DefaultController extends Controller
 
 
 
+    }
+    /**
+     * @Route("/admin/add_lab", name="add_lab")
+     */
+    public function Add_LabAction(Request $request)
+    {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $lab = new LAB();
+        $labForm = $this->get('form.factory')->create(new LABType(), $lab, array('method' => 'POST'));
+
+        if ('POST' === $request->getMethod()) {
+            if ($labForm->handleRequest($request)->isValid()) {
+                $em = $this->getDoctrine()->getManager();
+                foreach ($lab->getPod() as $pod) {
+//                    $pod->setNomDevice( $nomdev);
+                    $lab->addPod($pod);
+                }
+
+            }
+            $em->persist($lab);
+            $em->flush();
+            $request->getSession()->getFlashBag()->add('notice', 'lab ajouter  ');
+            return $this->redirect($this->generateUrl('add_lab'));
+        }
+        return $this->render(
+            'BackendBundle::add_lab.html.twig', array(
+            'user' => $user,
+            'labForm' => $labForm->createView()
+
+        ));
     }
 
 
