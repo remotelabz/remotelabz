@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * POD
  *
- * @ORM\Table(name="pod")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PODRepository")
  */
 class POD
