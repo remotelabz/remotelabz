@@ -8,6 +8,8 @@ use AppBundle\Repository\SystemeRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+
 
 class DeviceType extends AbstractType
 {
@@ -40,24 +42,13 @@ class DeviceType extends AbstractType
         'property' => 'nomInterface',
         'multiple' => false,
         'required' => false,
-        'data' => function(Network_InterfaceRepository $repo) {
-            return $repo->getNotUsedInterfaceControlQueryBuilder();
-        }
-
-    ))
-           ->add('network_interfaces', 'entity', array(
-        'class'    => 'AppBundle:Network_Interface',
-        'property' => 'nomInterface',
-        'multiple' => true,
-               'required' => false,
-
-
-
-        'query_builder' => function(Network_InterfaceRepository $repo) {
-            return $repo->getNotUsedInterfacesQueryBuilder();
-        }
-
-    ))
+     //   'data' => function(Network_InterfaceRepository $repo) {
+       //     return $repo->getNotUsedInterfaceControlQueryBuilder();
+	//		}
+		))
+           ->add('network_interfaces', CollectionType::class, array(
+        'entry_type'    => 'AppBundle:Network_Interface::class'
+		))
 
 
 //            ->add('interfaceControle', new Network_InterfaceType())
@@ -68,7 +59,7 @@ class DeviceType extends AbstractType
 
 //                ))
             ->add('save','submit')
-;
+		;
     }
     
     /**

@@ -153,7 +153,7 @@
                                 {{ form_errors(Interfaceform) }}
                                 <div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfaceform.nomInterface, "Nom de l'nterface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nomInterface, "Nom de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
                                     {{ form_errors(Interfaceform.nomInterface) }}
@@ -509,10 +509,16 @@
 
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
-                                                {{ form_widget(deviceForm.network_interfaces, {'attr': {'class': 'form-control'}}) }}
+												<ul>
+												{% for netint in deviceForm.network_interfaces %}
+                                                <li>{{ form_row(netint, {'attr': {'class': 'form-control'}}) }}</li>
+												{% endfor %}
                                             </div>
                                         </div>
 
+										
+										
+										
                                         {{ form_widget(deviceForm.save, {'attr': {'class': 'btn btn-primary'}}) }}
 
                                         {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
