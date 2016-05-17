@@ -6,8 +6,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * ConfigReseau
- *
- * @ORM\Table(name="configReseau")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ConfigReseauRepository")
  */
 class ConfigReseau

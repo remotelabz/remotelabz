@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Device
  *
- * @ORM\Table(name="device")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\DeviceRepository")
  */
 class Device
