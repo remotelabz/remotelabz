@@ -21,5 +21,25 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
            ;
         ;
     }
+    public function findByPod($pod)
+    {
+        return $this
+            ->createQueryBuilder('dev')
+            ->join('dev.pod','pod')
+            ->andWhere('pod.id = :pod')
+            ->setParameter('pod', $pod)
+            ->getQuery()
+            ->getResult();
+    }
+    public function findByDevice($pod)
+    {
+        return $this
+            ->createQueryBuilder('dev')
+            ->join('dev.pod', 'pod')
+            ->andWhere('pod.id = :pod')
+            ->setParameter('pod', $pod)
+            ->getQuery()
+            ->getResult();
+    }
 }
 

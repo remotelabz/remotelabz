@@ -2,12 +2,28 @@
 
 namespace AppBundle\Form;
 
+use AppBundle\Entity\POD;
+use Doctrine\ORM\EntityManager;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class ConnexionType extends AbstractType
+
+
+
 {
+
+
+    protected $em;
+    function __construct(EntityManager $em)
+    {
+        $this->em = $em;
+    }
+
     /**
      * @param FormBuilderInterface $builder
      * @param array $options
@@ -15,13 +31,64 @@ class ConnexionType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('Device1')
-            ->add('Device2')
-            ->add('Interface1')
-            ->add('Interface2')
-        ;
+            ->add('nomconnexion','text')
+            ->add('Suivant','submit');
+//            ->add('Device1')
+//            ->add('Device2')
+//            ->add('Interface1')
+//            ->add('Interface2')
+//        ;
+
+        // Add listeners
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, array($this, 'onPreSetData'));
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, array($this, 'onPreSubmit'));
     }
-    
+
+    protected function addElements(FormInterface $form, POD $pod = null) {
+        // Remove the submit button, we will place this at the end of the form later
+        $submit = $form->get('Suivant');
+        $form->remove('Suivant');
+        // Add the province element
+        $form->add('pod', 'entity', array(
+                'data' => $pod,
+                'empty_value' => '-- Choose --',
+                'class' => 'AppBundle:POD',
+                'mapped' => false)
+        );
+        // device are empty, unless we actually supplied a pod
+        $devices = array();
+       if ($pod) {
+            // Fetch the device from specified pod
+            $repo = $this->em->getRepository('AppBundle:Device');
+            $devices = $repo->findByDevice($pod, array('name' => 'asc'));
+       }
+        // Add the device element
+        $form->add('nomdevice1', 'entity', array(
+            'empty_value' => '-- Select a device first --',
+            'class' => 'AppBundle:Device',
+            'choices' => $devices,
+        ));
+        // Add submit button again, this time, it's back at the end of the form
+        $form->add($submit);
+    }
+    function onPreSubmit(FormEvent $event) {
+        //die('presubmit');
+        $form = $event->getForm();
+        $data = $event->getData();
+        // Note that the data is not yet hydrated into the entity.
+        $pod = $this->em->getRepository('AppBundle:POD')->find($data['pod']);
+        $this->addElements($form, $pod);
+    }
+    function onPreSetData(FormEvent $event) {
+        $connexion = $event->getData();
+        $form = $event->getForm();
+
+        $pod = $connexion-> getNomdevice1() ? $connexion-> getNomdevice1()-> getPod() : null;
+        $this->addElements($form, $pod);
+    }
+
+
+
     /**
      * @param OptionsResolver $resolver
      */
@@ -30,5 +97,9 @@ class ConnexionType extends AbstractType
         $resolver->setDefaults(array(
             'data_class' => 'AppBundle\Entity\Connexion'
         ));
+    }
+    public function getName()
+    {
+        return "connexion_type";
     }
 }
