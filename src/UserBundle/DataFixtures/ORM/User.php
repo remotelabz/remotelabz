@@ -21,7 +21,8 @@ class UserData extends AbstractFixture implements ContainerAwareInterface
 	$adminuser->setEnabled(true);
 	
 	$encoder = $this->container->get('security.password_encoder');
-	$password = $encoder->encodePassword($adminuser, "1Admin-In5crip2");
+	//$password = $encoder->encodePassword($adminuser, "1Admin-In5crip2");
+	$password = $encoder->encodePassword($adminuser, "admin");
 	$adminuser->setPassword($password);
 	$adminuser->setEmail("florent.nolot@univ-reims.fr");
 	$adminuser->addRole('ROLE_SUPERADMIN');
