@@ -32,9 +32,7 @@ class DeviceType extends AbstractType
                 'property' => 'nom',
                 'multiple' => false,
                 'expanded' => false,
-//                'query_builder' => function(DeviceRepository $repo) {
-//                    return $repo->getNotUsedSystemQueryBuilder();
-//                }
+
             ))
             ->add('interfaceControle', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
@@ -51,18 +49,10 @@ class DeviceType extends AbstractType
 		'multiple' => true,
         'required' => false,
 		'query_builder' => function(Network_InterfaceRepository $repo) {
-			return $repo->getNotUsedInterfacesQueryBuilder();
+			return $repo->getNotUsedInterfaceControlQueryBuilder();
 		}
 		))
-
-//		->add('interfaceControle', new Network_InterfaceType())
-//            ->add('Network_Interfaces','collection',array(
-//                                'type'           =>  new Network_InterfaceType(),
-//                                'allow_add'      => true,
-//                                'allow_delete'   => true
-
-//                ))
-            ->add('save','submit')
+        ->add('save','submit')
 		;
     }
     
