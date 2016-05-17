@@ -18,8 +18,9 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 
        return  $qb = $em->createQueryBuilder()
             ->select('net')
-            ->from('AppBundle:Network_Interface', 'net')
-            ->innerJoin('AppBundle:Device', 'dev', 'WITH', 'net.config_reseau IS NOT NULL ');
+            ->from('AppBundle:Network_Interface', 'net');
+//            ->innerJoin('AppBundle:Device', 'dev', 'WITH', 'net.config_reseau IS NOT NULL ')
+			;
 
 //         $qb = $this->_em->createQueryBuilder();
 //        $query = $this->_em->createQuery('SELECT net FROM AppBundle:Network_Interface net WHERE net.id  IS NOT EXISTS

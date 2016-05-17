@@ -16,10 +16,10 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
         $qb = $this->_em->createQueryBuilder();
         return $qb->select('dev')
             ->from('AppBundle:Device', 'dev')
-            ->where($qb->expr()->isNull('dev.pod'))
+            //->where($qb->expr()->isNull('dev.pod'))
 //            ->andWhere($qb->expr()->isNull('net.config_reseau'));
            ;
-        ;
+        
     }
     public function findByPod($pod)
     {

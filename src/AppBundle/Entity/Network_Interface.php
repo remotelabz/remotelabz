@@ -9,7 +9,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * Network_Interface
- * @ORM\Table(name="networkInterface")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
  * @UniqueEntity(fields="nomInterface",message="une interafce existe dèjà avec ce nom")
  */

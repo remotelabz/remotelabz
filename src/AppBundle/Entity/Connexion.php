@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Connexion
  *
- * @ORM\Table(name="connexion")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ConnexionRepository")
  */
 class Connexion
