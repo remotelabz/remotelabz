@@ -2,12 +2,14 @@
 
 namespace BackendBundle\Controller;
 
+use AppBundle\Entity\Connexion;
 use AppBundle\Entity\Hyperviseur;
 use AppBundle\Entity\LAB;
 use AppBundle\Entity\Network_Interface;
 use AppBundle\Entity\Parameter;
 use AppBundle\Entity\POD;
 use AppBundle\Entity\Systeme;
+use AppBundle\Form\ConnexionType;
 use AppBundle\Form\DeviceType;
 use AppBundle\Form\HyperviseurType;
 use AppBundle\Form\LABType;
@@ -15,16 +17,21 @@ use AppBundle\Form\Network_InterfaceType;
 use AppBundle\Form\ParameterType;
 use AppBundle\Form\PODType;
 use AppBundle\Form\SystemeType;
-use AppBundle\Form\TPType;
+
 
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+
 use AppBundle\Entity\Device;
-use AppBundle\Entity\TP;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+
+
+
 
 
 class DefaultController extends Controller
@@ -204,6 +211,50 @@ class DefaultController extends Controller
 
         ));
     }
+    /**
+     * @Route("/admin/ajax_connexion_call", name="ajax_connexion_call")
+     */
+    public function ajaxAction(Request $request) {
+
+        if (! $request->isXmlHttpRequest()) {
+            throw new NotFoundHttpException();
+        }
+
+        // Get the pod ID
+        $id = $request->query->get('pod_id');
+        $result = array();
+        // Return a list of device, based on the selected pod
+        $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Device');
+        $devices = $repo->findByPod($id);
+        foreach ($devices as $device) {
+            $result[$device->getNom()] = $device->getId();
+        }
+        return new JsonResponse($result);
+    }
+
+    /**
+     * @Route("/admin/add_connexion", name="add_connexion")
+     */
+    public function Add_Connexion(Request $request)
+    {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $connexion = new Connexion();
+
+        //on passe l'entité manager au formulaire pour qu'on puisse valider les donner remplis automatiquement
+        $form = $this->createForm(new ConnexionType($this->getDoctrine()->getManager()), $connexion);
+        $form->handleRequest($request);
+        if ($form->isValid()) {
+            /* Do your stuff here */
+            die('form is valide');
+            $this->getDoctrine()->getManager()->persist($connexion);
+            $this->getDoctrine()->getManager()->flush();
+        }
+        return $this->render('BackendBundle::add_connexion.html.twig', array
+                        ('form' => $form->createView(),
+                           'user' => $user
+        ));
+    }
+
 
 
 }
