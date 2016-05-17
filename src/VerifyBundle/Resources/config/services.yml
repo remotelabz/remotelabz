@@ -1,0 +1,4 @@
+services:
+#    verify.example:
+#        class: VerifyBundle\Example
+#        arguments: ["@service_id", "plain_value", %parameter%]
