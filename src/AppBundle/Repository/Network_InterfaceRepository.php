@@ -2,6 +2,7 @@
 
 namespace AppBundle\Repository;
 
+
 /**
  * Network_InterfaceRepository
  *
@@ -15,11 +16,11 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 
 
         $em = $this->getEntityManager();
-
-       return  $qb = $em->createQueryBuilder()
-            ->select('net')
-            ->from('AppBundle:Network_Interface', 'net');
-//            ->innerJoin('AppBundle:Device', 'dev', 'WITH', 'net.config_reseau IS NOT NULL ')
+        return  $qb = $em->createQueryBuilder()
+        ->select('net')
+		->from('AppBundle:Network_Interface', 'net')
+		->where('net.config_reseau IS NULL')
+		;
 			;
 
 //         $qb = $this->_em->createQueryBuilder();
@@ -62,11 +63,12 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
     }
     public function getNotUsedInterfacesQueryBuilder()
     {
-        $qb = $this->_em->createQueryBuilder();
-        return $qb->select('net')
-        ->from('AppBundle:Network_Interface', 'net')
-        ->where($qb->expr()->isNull('net.device'))
-            ->andWhere($qb->expr()->isNull('net.config_reseau'));
+			$em = $this->getEntityManager();
+        return  $qb = $em->createQueryBuilder()
+            ->select('net')
+            ->from('AppBundle:Network_Interface', 'net')
+            ->where('net.device IS NULL')
+			;
 
 
     }

@@ -42,16 +42,20 @@ class DeviceType extends AbstractType
         'property' => 'nomInterface',
         'multiple' => false,
         'required' => false,
-     //   'data' => function(Network_InterfaceRepository $repo) {
-       //     return $repo->getNotUsedInterfaceControlQueryBuilder();
-	//		}
+        'query_builder' => function(Network_InterfaceRepository $repo) {
+            return $repo->getNotUsedInterfaceControlQueryBuilder();
+		}
 		))
-           ->add('network_interfaces', CollectionType::class, array(
-        'entry_type'    => 'AppBundle:Network_Interface::class'
+           ->add('network_interfaces', 'entity', array(
+        'class'    => 'AppBundle:Network_Interface',
+		'multiple' => true,
+        'required' => false,
+		'query_builder' => function(Network_InterfaceRepository $repo) {
+			return $repo->getNotUsedInterfacesQueryBuilder();
+		}
 		))
 
-
-//            ->add('interfaceControle', new Network_InterfaceType())
+//		->add('interfaceControle', new Network_InterfaceType())
 //            ->add('Network_Interfaces','collection',array(
 //                                'type'           =>  new Network_InterfaceType(),
 //                                'allow_add'      => true,
