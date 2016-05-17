@@ -28,8 +28,25 @@ class Connexion
      *  * @ORM\JoinColumn(nullable=false)
      */
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="NomeConnexion", type="string", length=255)
+     */
+    private $nomconnexion;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD")
+     */
+    private $pod;
 
 
+    /**
+     * @var \stdClass
+     *
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\JoinColumn(nullable=false)
+     */
     private $Device1;
 
     /**
@@ -254,5 +271,53 @@ class Connexion
     public function getLab()
     {
         return $this->lab;
+    }
+
+    /**
+     * Set nomconnexion
+     *
+     * @param string $nomconnexion
+     *
+     * @return Connexion
+     */
+    public function setNomconnexion($nomconnexion)
+    {
+        $this->nomconnexion = $nomconnexion;
+
+        return $this;
+    }
+
+    /**
+     * Get nomconnexion
+     *
+     * @return string
+     */
+    public function getNomconnexion()
+    {
+        return $this->nomconnexion;
+    }
+
+    /**
+     * Set pod
+     *
+     * @param \AppBundle\Entity\POD $pod
+     *
+     * @return Connexion
+     */
+    public function setPod(\AppBundle\Entity\POD $pod = null)
+    {
+        $this->pod = $pod;
+
+        return $this;
+    }
+
+    /**
+     * Get pod
+     *
+     * @return \AppBundle\Entity\POD
+     */
+    public function getPod()
+    {
+        return $this->pod;
     }
 }
