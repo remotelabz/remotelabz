@@ -34,14 +34,14 @@
                                     {{ form_errors(podForm) }}
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(podForm.nompod, "Nom de pod", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(podForm.nom, "Nom de pod", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(podForm.nompod) }}
+                                        {{ form_errors(podForm.nom) }}
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(podForm.nompod, {'attr': {'class': 'form-control'}}) }}
+                                            {{ form_widget(podForm.nom, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
                                     <div class="form-group">

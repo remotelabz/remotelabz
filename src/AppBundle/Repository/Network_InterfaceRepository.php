@@ -57,8 +57,16 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
             ->getResult();
 
     }
+    public function Network_Interface($device)
+    {
+        return $this
+            ->createQueryBuilder('net')
+            ->where('net.device = :device')
+            ->setParameter('device', $device)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
-<<<<<<< HEAD
 
 
 //            ->from('AppBundleDevice','dev')
@@ -124,5 +132,3 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 ////            and($qb->expr()->isNull('net.device' )));
 //        return $result;
 
-=======
->>>>>>> e0beab26dcad40a96676c7f08edf1f255581c08a

@@ -70,14 +70,14 @@ class DefaultController extends Controller
                     $em1->persist($interfaceControle->getConfigReseau());
                     $em1->persist($interfaceControle);
                     $em1->flush();
-                    $request->getSession()->getFlashBag()->add('notice', 'Interface de controle '.$interfaceControle->getNomInterface(). ' bien enregistrée.');
+                    $request->getSession()->getFlashBag()->add('notice', 'Interface de controle '.$interfaceControle->getNom(). ' bien enregistrée.');
                     return $this->redirect($this->generateUrl('add_device'));
                 }
             if ($Interfaceform->handleRequest($request)->isValid() ) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($interface);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface  '.$interface->getNomInterface(). ' bien enregistrée .');
+                $request->getSession()->getFlashBag()->add('notice', 'Interface  '.$interface->getNom(). ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
             }
 
@@ -216,24 +216,22 @@ class DefaultController extends Controller
      */
     public function ajaxAction(Request $request) {
 
-        if (! $request->isXmlHttpRequest()) {
-            throw new NotFoundHttpException();
-        }
+        if($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
+        {
+            $id = $request->request->get('id');
+            $selecteur = $request->request->get('select');
 
-        $id = $request->query->get('pod_id');
-        $result = array();
-        // Return a list of device, based on the selected pod
-        if ($id != null) {
-            $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Device');
-            $devices = $repo->findByPod($id);
+            if ($id != null)
+            {
+                $data = $this->getDoctrine()
+                    ->getManager()
+                    ->getRepository('AppBundle:'.$selecteur)
+                    ->$selecteur($id);
 
-            foreach ($devices as $device) {
-                $result[$device->getNom()] = $device->getId();
+                return new JsonResponse($data);
             }
         }
-
-
-        return new JsonResponse($result);
+        return new Response("Nonnn ....");
     }
 
     /**
