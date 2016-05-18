@@ -34,14 +34,14 @@
                                     {{ form_errors(InterfaceControleform) }}
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.nomInterface, "Nom de l'nterface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.nom, "Nom de l'nterface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.nomInterface) }}
+                                        {{ form_errors(InterfaceControleform.nom) }}
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.nomInterface, {'attr': {'class': 'form-control'}}) }}
+                                            {{ form_widget(InterfaceControleform.nom, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -153,14 +153,14 @@
                                 {{ form_errors(Interfaceform) }}
                                 <div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfaceform.nomInterface, "Nom de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nom, "Nom de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(Interfaceform.nomInterface) }}
+                                    {{ form_errors(Interfaceform.nom) }}
 
                                     <div class="col-sm-2">
                                         {# Génération de l'input. #}
-                                        {{ form_widget(Interfaceform.nomInterface, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_widget(Interfaceform.nom, {'attr': {'class': 'form-control'}}) }}
                                     </div>
                                 </div>
 
