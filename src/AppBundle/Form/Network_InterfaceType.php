@@ -15,7 +15,7 @@ class Network_InterfaceType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('nomInterface')
+            ->add('nom')
             ->add('configreseau',new ConfigReseauType())
             ->add('save','submit')
 

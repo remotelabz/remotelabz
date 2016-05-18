@@ -2,6 +2,7 @@
 
 namespace AppBundle\Repository;
 
+
 /**
  * Network_InterfaceRepository
  *
@@ -12,12 +13,117 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 {
     public function getNotUsedInterfaceControlQueryBuilder()
     {
-        $qb =   $this
+        $em = $this->getEntityManager();
+        $qb_used_interface = $em->createQueryBuilder()
+        ->select('net')
+		->from('AppBundle:Network_Interface', 'net')
+		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle=net.id')
+		->getQuery()
+		->getArrayResult();
+		
+		$qb = $em->createQueryBuilder();
+		return $qb
+		->select('net')
+		->from('AppBundle:Network_Interface', 'net')
+		->where($qb->expr()->andX($qb->expr()->isnull('net.device'),$qb->expr()->notin('net.id',':qb_used_interface')))
+		->setParameter('qb_used_interface',$qb_used_interface)
+		;
+		
+
+    }
+    public function getNotUsedInterfacesQueryBuilder()
+    {
+			$em = $this->getEntityManager();
+        return  $qb = $em->createQueryBuilder()
+            ->select('net')
+            ->from('AppBundle:Network_Interface', 'net')
+            ->where('net.device IS NULL')
+			;
+
+
+    }
+
+    public function getInterfacesAttachedToDevice($dev)
+    {
+
+        $qb = $this->_em->createQueryBuilder();
+        return $qb->select('net')
+            ->from('AppBundle:Network_Interface', 'net')
+            ->where($qb->expr()->isNotNull('net.device'))
+            ->join('net.device', 'dev')
+            ->andWhere('dev.id = :dev')
+            ->setParameter('dev', $dev)
+            ->getQuery()
+            ->getResult();
+
+    }
+    public function Network_Interface($device)
+    {
+        return $this
             ->createQueryBuilder('net')
+            ->where('net.device = :device')
+            ->setParameter('device', $device)
+            ->getQuery()
+            ->getArrayResult();
+    }
+}
+
+
+//            ->from('AppBundleDevice','dev')
+//            ->Where($qb->expr()->notIn('dev.interfaceControle',
+//            )
+////
+//
+//
+//            ->andWhere($qb->expr()->not($qb->expr()->exists(
+//                $qb2->select('dev')
+//                    ->from('AppBundle:Device', 'dev')
+//                    ->where($qb2->expr()->isNotNull(c))
+//            )));
+
+
+
+
+//    public function getAllUsedInterfaceControlQueryBuilder()
+//    {
+//        $em = $this->getEntityManager();
+//
+//        $qb = $em->createQueryBuilder('dev');
+//
+//            $qb ->select('dev')
+//                ->from('AppBundle:Device', 'dev')
+//                ->where($qb->expr()->isNotNull('dev.interfaceControle'));
+////                ->getQuery()
+////                ->getResult();
+//
+//        return $qb;
+//    }
+
+
+
+
+
+//           return $qb =   $this
+//            ->createQueryBuilder('net')
+//            ->innerJoin('AppBundle:Device', 'd', 'WITH', 'd.interfaceControle != net.id ')
+//
+//            ->where('net.config_reseau !=  :id')
+//             ->setParameter('id', 0 ) ;
+////            ->select('net')
+//            ->from('AppBundle:Network_Interface', 'net')
+//            ->innerJoin('AppBundle:Device', 'd', 'WITH', 'd.interfaceControle != net.id ');
+
+//
+//
+//
+//              ->where($qb->expr()->isNotNull('net.config_reseau' ));
+
+
+
 //            ->where('net.config_reseau != :status')
 //            ->setParameter('status',NULL)
-        ;
-        $qb->where($qb->expr()->isNotNull('net.config_reseau' ));
+
+//        $qb->where($qb->expr()->isNotNull('net.config_reseau' ));
 
 //          $result =  $qb->getQuery()->getResult();
 //
@@ -25,5 +131,4 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
 //
 ////            and($qb->expr()->isNull('net.device' )));
 //        return $result;
-    }
-}
+
