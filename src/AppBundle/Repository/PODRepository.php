@@ -10,4 +10,15 @@ namespace AppBundle\Repository;
  */
 class PODRepository extends \Doctrine\ORM\EntityRepository
 {
+
+    public function getNotUsedPodQueryBuilder()
+    {
+        $qb = $this->_em->createQueryBuilder();
+        return $qb->select('pod')
+            ->from('AppBundle:POD', 'pod')
+            ->where($qb->expr()->isNull('pod.lab'))
+//            ->andWhere($qb->expr()->isNull('net.config_reseau'));
+            ;
+        ;
+    }
 }
