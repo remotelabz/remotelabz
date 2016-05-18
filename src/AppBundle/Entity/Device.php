@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Device
 {
     /**
-      * @var int
+     * @var int
      *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
@@ -24,69 +24,60 @@ class Device
     /**
      * @var string
      *
-     * @ORM\Column(name="Nom", type="string", length=255, unique=true)
+     * @ORM\Column(name="nom", type="string", length=255)
      */
     private $nom;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="Type", type="string", length=255)
+     * @ORM\Column(name="type", type="string", length=255)
      */
     private $type;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="Modele", type="string", length=255)
+     * @ORM\Column(name="propriete", type="string", length=255)
+     */
+    private $propriete;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="modele", type="string", length=255)
      */
     private $modele;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="Version", type="string", length=255)
-     */
-    private $version;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="Marque", type="string", length=255)
+     * @ORM\Column(name="marque", type="string", length=255)
      */
     private $marque;
 
-	/**
-	 *
-	 * @ORM\ManyToMany(targetEntity="AppBundle\Entity\Systeme")
-	 * @ORM\JoinColumn(nullable=false)
-     */
-    private $Systeme;
-	
-	/**
-	 *
-	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-	 * @ORM\JoinColumn(nullable=false)
-     */
-    private $Network_Interfaces;
-	
     /**
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme",cascade="persist")
      *
-	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
      */
-    private $InterfControl;
+    private $systeme;
 
-	/**
-	 *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Connexion")
-     */
-    private $Connexion;
-	
     /**
-     * Get id
-     *
-     * @return int
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
      */
+    private $interfaceControle;
+
+    /**
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
+     */
+    private $network_interfaces;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD", inversedBy="devices")
+     */
+    private $pod;
+
+
     public function getId()
     {
         return $this->id;
@@ -141,6 +132,30 @@ class Device
     }
 
     /**
+     * Set propriete
+     *
+     * @param string $propriete
+     *
+     * @return Device
+     */
+    public function setPropriete($propriete)
+    {
+        $this->propriete = $propriete;
+
+        return $this;
+    }
+
+    /**
+     * Get propriete
+     *
+     * @return string
+     */
+    public function getPropriete()
+    {
+        return $this->propriete;
+    }
+
+    /**
      * Set modele
      *
      * @param string $modele
@@ -162,30 +177,6 @@ class Device
     public function getModele()
     {
         return $this->modele;
-    }
-
-    /**
-     * Set version
-     *
-     * @param string $version
-     *
-     * @return Device
-     */
-    public function setVersion($version)
-    {
-        $this->version = $version;
-
-        return $this;
-    }
-
-    /**
-     * Get version
-     *
-     * @return string
-     */
-    public function getVersion()
-    {
-        return $this->version;
     }
 
     /**
@@ -213,115 +204,116 @@ class Device
     }
 
     /**
-     * Set interfControl
+     * Set systeme
      *
-     * @param \stdClass $interfControl
+     * @param \AppBundle\Entity\Systeme $systeme
      *
      * @return Device
      */
-    public function setInterfControl($interfControl)
+    public function setSysteme(\AppBundle\Entity\Systeme $systeme = null)
     {
-        $this->interfControl = $interfControl;
+        $this->systeme = $systeme;
 
         return $this;
     }
 
     /**
-     * Get interfControl
+     * Get systeme
      *
-     * @return \stdClass
+     * @return \AppBundle\Entity\Systeme
      */
-    public function getInterfControl()
+    public function getSysteme()
     {
-        return $this->interfControl;
+        return $this->systeme;
+    }
+
+    /**
+     * Set interfaceControle
+     *
+     * @param \AppBundle\Entity\Network_Interface $interfaceControle
+     *
+     * @return Device
+     */
+    public function setInterfaceControle(\AppBundle\Entity\Network_Interface $interfaceControle = null)
+    {
+        $this->interfaceControle = $interfaceControle;
+
+        return $this;
+    }
+
+    /**
+     * Get interfaceControle
+     *
+     * @return \AppBundle\Entity\Network_Interface
+     */
+    public function getInterfaceControle()
+    {
+        return $this->interfaceControle;
     }
     /**
      * Constructor
      */
     public function __construct()
     {
-        $this->Systeme = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->network_interfaces = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
-     * Add systeme
+     * Add networkInterface
      *
-     * @param \AppBundle\Entity\Systeme $systeme
+     * @param \AppBundle\Entity\Network_Interface $networkInterface
      *
      * @return Device
      */
-    public function addSysteme(\AppBundle\Entity\Systeme $systeme)
+    public function addNetworkInterface(\AppBundle\Entity\Network_Interface $networkInterface)
     {
-        $this->Systeme[] = $systeme;
+        $this->network_interfaces[] = $networkInterface;
+        $networkInterface->setDevice($this);
 
         return $this;
     }
 
     /**
-     * Remove systeme
+     * Remove networkInterface
      *
-     * @param \AppBundle\Entity\Systeme $systeme
+     * @param \AppBundle\Entity\Network_Interface $networkInterface
      */
-    public function removeSysteme(\AppBundle\Entity\Systeme $systeme)
+    public function removeNetworkInterface(\AppBundle\Entity\Network_Interface $networkInterface)
     {
-        $this->Systeme->removeElement($systeme);
-    }
-
-    /**
-     * Get systeme
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getSysteme()
-    {
-        return $this->Systeme;
-    }
-
-    /**
-     * Set networkInterfaces
-     *
-     * @param \AppBundle\Entity\Network_Interface $networkInterfaces
-     *
-     * @return Device
-     */
-    public function setNetworkInterfaces(\AppBundle\Entity\Network_Interface $networkInterfaces)
-    {
-        $this->Network_Interfaces = $networkInterfaces;
-
-        return $this;
+        $this->network_interfaces->removeElement($networkInterface);
     }
 
     /**
      * Get networkInterfaces
      *
-     * @return \AppBundle\Entity\Network_Interface
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getNetworkInterfaces()
     {
-        return $this->Network_Interfaces;
+        return $this->network_interfaces;
     }
 
     /**
-     * Set connexion
+     * Set pod
      *
-     * @param \AppBundle\Entity\Connexion $connexion
+     * @param \AppBundle\Entity\POD $pod
      *
      * @return Device
      */
-    public function setConnexion(\AppBundle\Entity\Connexion $connexion = null)
+    public function setPod(\AppBundle\Entity\POD $pod = null)
     {
-        $this->Connexion = $connexion;
+        $this->pod = $pod;
 
         return $this;
     }
 
     /**
-     * Get connexion
+     * Get pod
      *
-     * @return \AppBundle\Entity\Connexion
+     * @return \AppBundle\Entity\POD
      */
-    public function getConnexion()
+    public function getPod()
     {
-        return $this->Connexion;
+        return $this->pod;
     }
 }
