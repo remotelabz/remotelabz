@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Device
  *
- * @ORM\Table(name="device")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\DeviceRepository")
  */
 class Device
@@ -76,6 +75,10 @@ class Device
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD", inversedBy="devices")
      */
     private $pod;
+
+    public function __toString() {
+        return $this->nom;
+    }
 
 
     public function getId()
@@ -269,7 +272,6 @@ class Device
     {
         $this->network_interfaces[] = $networkInterface;
         $networkInterface->setDevice($this);
-
         return $this;
     }
 
