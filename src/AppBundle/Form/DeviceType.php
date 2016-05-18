@@ -8,6 +8,8 @@ use AppBundle\Repository\SystemeRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+
 
 class DeviceType extends AbstractType
 {
@@ -30,9 +32,7 @@ class DeviceType extends AbstractType
                 'property' => 'nom',
                 'multiple' => false,
                 'expanded' => false,
-//                'query_builder' => function(DeviceRepository $repo) {
-//                    return $repo->getNotUsedSystemQueryBuilder();
-//                }
+
             ))
             ->add('interfaceControle', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
@@ -40,13 +40,13 @@ class DeviceType extends AbstractType
         'property' => 'nomInterface',
         'multiple' => false,
         'required' => false,
-        'data' => function(Network_InterfaceRepository $repo) {
+        'query_builder' => function(Network_InterfaceRepository $repo) {
             return $repo->getNotUsedInterfaceControlQueryBuilder();
-        }
-
-    ))
+		}
+		))
            ->add('network_interfaces', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
+<<<<<<< HEAD
         'property' => 'nomInterface',
         'multiple' => true,
                'required' => false,
@@ -66,6 +66,16 @@ class DeviceType extends AbstractType
 //                ))
             ->add('save','submit')
 ;
+=======
+		'multiple' => true,
+        'required' => false,
+		'query_builder' => function(Network_InterfaceRepository $repo) {
+			return $repo->getNotUsedInterfaceControlQueryBuilder();
+		}
+		))
+        ->add('save','submit')
+		;
+>>>>>>> e0beab26dcad40a96676c7f08edf1f255581c08a
     }
     
     /**
