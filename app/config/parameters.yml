@@ -9,5 +9,4 @@ parameters:
     mailer_host: 127.0.0.1
     mailer_user: null
     mailer_password: null
-    mail_from: florent.nolot@univ-reims.fr
     secret: b304407397855af94b35faf72b1140f4656360fc
