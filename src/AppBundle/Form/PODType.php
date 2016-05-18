@@ -21,14 +21,11 @@ class PODType extends AbstractType
                 'property' => 'nom',
                 'multiple' => true,
                 'required' => false,
-
-
-
                 'query_builder' => function(DeviceRepository $repo) {
                     return $repo->getNotUsedDeviceQueryBuilder();
                 }
             ))
-            ->add('nompod')
+            ->add('nom')
             ->add('save','submit')
         ;
     }
