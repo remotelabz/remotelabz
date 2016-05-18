@@ -1,7 +1,7 @@
 {% extends 'AppBundle::accueil_auth.html.twig' %}
 
 {% block body %}
-    <div id="page-wrapper">
+    <div id="page-wrapper" xmlns="http://www.w3.org/1999/html">
     {% for flash_message in app.session.flashbag.get('notice') %}
         <div class="flash-notice">
             {{ flash_message }}
@@ -56,18 +56,35 @@
                                             {# Génération de l'input. #}
                                             {{ form_widget(form.pod, {'attr': {'class': 'form-control'}}) }}
                                         </div>
+                                        </div>
                                         <div class="form-group">
-                                            {# Génération du label. #}
-                                            {{ form_label(form.nomdevice1, "Device1", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                             {#Génération du label. #}
+                                            {{ form_label(form.Device1, "Device1", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
-                                            {# Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(form.nomdevice1) }}
+                                             {#Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form.Device1) }}
 
                                             <div class="col-sm-2">
-                                                {# Génération de l'input. #}
-                                                {{ form_widget(form.nomdevice1, {'attr': {'class': 'form-control'}}) }}
+                                                 {#Génération de l'input.#}
+                                                {{ form_widget(form.Device1, {'attr': {'class': 'form-control'}}) }}
                                             </div>
+                                            <div class="form-group">
+                                                 {#Génération du label. #}
+                                                {{ form_label(form.Interface1, "Interface1", {'label_attr': {'class': ' col-sm-2 control-label'}}) }}
+
+                                                 {#Affichage des erreurs pour ce champ précis. #}
+                                                {{ form_errors(form.Interface1) }}
+
+                                                <div class="col-sm-2">
+                                                    {#Génération de l'input.#}
+                                                    {{ form_widget(form.Interface1, {'attr': {'class': 'interfaceclass'}}) }}
+                                                </div>
+
+                                      </div>
+
+
                                     </div>
+
 
                                     {{ form_widget(form.Suivant, {'attr': {'class': 'btn btn-primary'}}) }}
 
@@ -83,37 +100,105 @@
                                     {# Fermeture de la balise <form> du formulaire HTML #}
                                     {{ form_end(form) }}
                                     <!-- content ends here -->
+    <script type="text/javascript">
+        $(function () {
+            jQuery(document).ready(function() {
+                console.log("jQuery est prêt !");
 
-                                    <script type="text/javascript">
-                                        $(document).ready(function () {
-                                            $('#connexion_type_pod').change(function(){
-                                                var val = $(this).val();
-                                                if (val != null) {
-                                                    console.log('ça charge');
-                                                    $.ajax({
+                $(".connexion_type_pod").change(function() {
+                    mafonctionchange('Pod','Device');
+                }).trigger('change');
 
-                                                        type: "POST",
-                                                        url: "{{ url('ajax_connexion_call') }}?pod_id=" + val,
-                                                        beforeSend: function () {
+                $(".connexion_type_Device1").change(function() {
+                    mafonctionchange('Interface','Device');;
+                });
 
-                                                        },
-                                                        success: function (data) {
-                                                            // Remove current options
-                                                            $('#connexion_type_nomdevice1').html('');
-                                                            $.each(data, function (k, v) {
-                                                                $('#connexion_type_nomdevice1').append('<option value="' + v + '">' + k + '</option>');
-                                                            });
-                                                        }
-                                                    });
-                                                }else {
-                                                    console.log('ça charge pas ');
-                                                    $('#connexion_type_nomdevice1').html('');
+                function mafonctionchange(selecteur,selecteurparent)
+                {
+                    $.ajax({
+                        url: "{{ url('ajax_connexion_call') }}
+                        type: 'POST',
+                        data:
+                        {
+                            id : $("select."+selecteurparent+"class option:selected").val(),
+                            select : selecteur
+                        },
+                        dataType: 'json',
+                        success: function(reponse) {
 
-                                                }
-                                                return false;
-                                            });
-                                        });
-                                       </script>
+                            $('.'+selecteur+'class').empty();
+                            $.each(reponse, function(index, element) {
+                                $('.' + selecteur + 'class').append('<option value="'+ element.id +'" selected="selected"> '+ element.nom +' </option>');
+                            });
+
+                            if (selecteur == 'region') {
+                                mafonctionchange('ville','region');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+                                    {#<script type="text/javascript">#}
+                                        {#$(document).ready(function () {#}
+                                            {#$('#connexion_type_pod').change(function(){#}
+                                                {#var val = $(this).val();#}
+                                                {#if (val != null) {#}
+                                                    {#console.log('ça charge');#}
+                                                    {#$.ajax({#}
+
+                                                        {#type: "POST",#}
+                                                        {#url: "{{ url('ajax_connexion_call') }}?pod_id=" + val,#}
+                                                        {#beforeSend: function () {#}
+
+                                                        {#},#}
+                                                        {#success: function (data) {#}
+                                                            {#console.log('ça charge même ici');#}
+                                                            {#// Remove current options#}
+                                                            {#$('#connexion_type_nomdevice1').html('');#}
+                                                            {#$.each(data, function (k, v) {#}
+                                                                {#console.log(data);#}
+                                                                {#$('#connexion_type_nomdevice1').append('<option value="' + v + '">' + k + '</option>');#}
+                                                            {#});#}
+                                                        {#}#}
+                                                    {#});#}
+                                                {#}#}
+                                                {#return false;#}
+                                            {#});#}
+                                            {#$('#connexion_type_nomdevice1').change(function() {#}
+                                                        {#var val2 = $(this).val();#}
+                                                        {#if (val2 != null) {#}
+                                                            {#$.ajax({#}
+
+                                                                {#type: "POST",#}
+                                                                {#url: "{{ url('ajax_connexion_call') }}?dev_id=" + val2,#}
+                                                                {#beforeSend: function () {#}
+                                                                    {#if (val2 != null){#}
+                                                                        {#console.log('ça charge pour les interfaces avant denvoyer');#}
+                                                                    {#}#}
+
+
+                                                                {#},#}
+                                                                {#success: function (data) {#}
+                                                                    {#console.log('ça charge pour les interfaces');#}
+                                                                    {#// Remove current options#}
+{#//                                                                    $('#connexion_type_nomdevice1').html('');#}
+                                                                    {#$.each(data, function (k, v) {#}
+                                                                        {#console.log(data);#}
+                                                                        {#$('#connexion_type_interface1').append('<option value="' + v + '">' + k + '</option>');#}
+                                                                    {#});#}
+                                                                {#}#}
+                                                            {#});#}
+                                                        {#}#}
+                                                {#return false;#}
+                                            {#})#}
+
+
+
+                                        {#});#}
+                                       {#</script>#}
+</script>
                                     </div>
                             </div>
                         </div>
