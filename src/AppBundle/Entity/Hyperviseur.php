@@ -6,8 +6,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Hyperviseur
- *
- * @ORM\Table(name="hyperviseur")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\HyperviseurRepository")
  */
 class Hyperviseur

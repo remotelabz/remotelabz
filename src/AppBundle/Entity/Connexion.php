@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Connexion
  *
- * @ORM\Table(name="connexion")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ConnexionRepository")
  */
 class Connexion
@@ -28,8 +27,25 @@ class Connexion
      *  * @ORM\JoinColumn(nullable=false)
      */
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="NomeConnexion", type="string", length=255)
+     */
+    private $nomconnexion;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD")
+     */
+    private $pod;
 
 
+    /**
+     * @var \stdClass
+     *
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\JoinColumn(nullable=false)
+     */
     private $Device1;
 
     /**
@@ -62,12 +78,18 @@ class Connexion
      */
     private $nomdevice1;
 
+
     /**
      * @var string
      *
      * @ORM\Column(name="NomDevice2", type="string", length=255)
      */
     private $nomdevice2;
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     */
+    private $lab;
+
 
 
 
@@ -224,5 +246,77 @@ class Connexion
     public function getNomdevice2()
     {
         return $this->nomdevice2;
+    }
+
+    /**
+     * Set lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return Connexion
+     */
+    public function setLab(\AppBundle\Entity\LAB $lab = null)
+    {
+        $this->lab = $lab;
+
+        return $this;
+    }
+
+    /**
+     * Get lab
+     *
+     * @return \AppBundle\Entity\LAB
+     */
+    public function getLab()
+    {
+        return $this->lab;
+    }
+
+    /**
+     * Set nomconnexion
+     *
+     * @param string $nomconnexion
+     *
+     * @return Connexion
+     */
+    public function setNomconnexion($nomconnexion)
+    {
+        $this->nomconnexion = $nomconnexion;
+
+        return $this;
+    }
+
+    /**
+     * Get nomconnexion
+     *
+     * @return string
+     */
+    public function getNomconnexion()
+    {
+        return $this->nomconnexion;
+    }
+
+    /**
+     * Set pod
+     *
+     * @param \AppBundle\Entity\POD $pod
+     *
+     * @return Connexion
+     */
+    public function setPod(\AppBundle\Entity\POD $pod = null)
+    {
+        $this->pod = $pod;
+
+        return $this;
+    }
+
+    /**
+     * Get pod
+     *
+     * @return \AppBundle\Entity\POD
+     */
+    public function getPod()
+    {
+        return $this->pod;
     }
 }
