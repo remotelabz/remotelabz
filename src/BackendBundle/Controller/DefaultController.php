@@ -56,7 +56,6 @@ class DefaultController extends Controller
         $parametreForm = $this->get('form.factory')->create(new ParameterType(),$parametre, array('method' => 'POST'));
         $hyperForm = $this->get('form.factory')->create(new HyperviseurType(),$hyperviseur, array('method' => 'POST'));
         $systemForm = $this->get('form.factory')->create(new SystemeType(),$systeme, array('method' => 'POST'));
-
         $deviceForm = $this->get('form.factory')->create(new DeviceType(), $device, array('method' => 'POST'));
 
         $Interfaceform->remove('configreseau');
