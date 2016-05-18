@@ -37,7 +37,7 @@ class DeviceType extends AbstractType
             ->add('interfaceControle', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
         'empty_value'   => 'Select',
-        'property' => 'nomInterface',
+        'property' => 'nom',
         'multiple' => false,
         'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
@@ -46,8 +46,8 @@ class DeviceType extends AbstractType
 		))
            ->add('network_interfaces', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
-<<<<<<< HEAD
-        'property' => 'nomInterface',
+
+        'property' => 'nom',
         'multiple' => true,
                'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
@@ -65,17 +65,8 @@ class DeviceType extends AbstractType
 
 //                ))
             ->add('save','submit')
-;
-=======
-		'multiple' => true,
-        'required' => false,
-		'query_builder' => function(Network_InterfaceRepository $repo) {
-			return $repo->getNotUsedInterfaceControlQueryBuilder();
-		}
-		))
-        ->add('save','submit')
+
 		;
->>>>>>> e0beab26dcad40a96676c7f08edf1f255581c08a
     }
     
     /**

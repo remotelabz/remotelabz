@@ -10,7 +10,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 /**
  * Network_Interface
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
- * @UniqueEntity(fields="nomInterface",message="une interafce existe dèjà avec ce nom")
+ * @UniqueEntity(fields="nom",message="une interafce existe dèjà avec ce nom")
  */
 class Network_Interface
 {
@@ -29,7 +29,7 @@ class Network_Interface
      * @ORM\Column(name="nom_interface", type="string", length=255,unique = true)
      *  @Assert\NotBlank()
      */
-    private $nomInterface;
+    private $nom;
 
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
@@ -58,30 +58,30 @@ class Network_Interface
      */
     public function __toString()
     {
-        return $this->nomInterface;
+        return $this->nom;
     }
     /**
-     * Set nomInterface
+     * Set nom
      *
-     * @param string $nomInterface
+     * @param string $nom
      *
      * @return Network_Interface
      */
-    public function setNomInterface($nomInterface)
+    public function setNom($nom)
     {
-        $this->nomInterface = $nomInterface;
+        $this->nom = $nom;
 
         return $this;
     }
 
     /**
-     * Get nomInterface
+     * Get nom
      *
      * @return string
      */
-    public function getNomInterface()
+    public function getNom()
     {
-        return $this->nomInterface;
+        return $this->nom;
     }
 
     /**

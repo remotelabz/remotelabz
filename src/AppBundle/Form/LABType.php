@@ -19,7 +19,7 @@ class LABType extends AbstractType
             ->add('nomlab')
             ->add('pod', 'entity', array(
                 'class'    => 'AppBundle:POD',
-                'property' => 'nompod',
+                'property' => 'nom',
                 'multiple' => true,
                 'required' => false,
 

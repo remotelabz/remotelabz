@@ -39,7 +39,7 @@ class POD
      * @ORM\Column(name="Nom_pod", type="string", length=255)
      */
 
-    private $nompod;
+    private $nom;
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB",inversedBy="pod")
@@ -59,7 +59,7 @@ class POD
     }
 
     public function __toString() {
-        return $this->nompod;
+        return $this->nom;
     }
 
 
@@ -133,27 +133,27 @@ class POD
     }
 
     /**
-     * Set nompod
+     * Set nom
      *
-     * @param string $nompod
+     * @param string $nom
      *
      * @return POD
      */
-    public function setNompod($nompod)
+    public function setNom($nom)
     {
-        $this->nompod = $nompod;
+        $this->nom = $nom;
 
         return $this;
     }
 
     /**
-     * Get nompod
+     * Get nom
      *
      * @return string
      */
-    public function getNompod()
+    public function getNom()
     {
-        return $this->nompod;
+        return $this->nom;
     }
 
 
