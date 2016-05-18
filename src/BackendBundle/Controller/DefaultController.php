@@ -35,7 +35,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 
 class DefaultController extends Controller
-{	
+{
+
 	/**
      * @Route("/admin/add_device", name="add_device")
      */	
@@ -220,15 +221,19 @@ class DefaultController extends Controller
             throw new NotFoundHttpException();
         }
 
-        // Get the pod ID
         $id = $request->query->get('pod_id');
         $result = array();
         // Return a list of device, based on the selected pod
-        $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Device');
-        $devices = $repo->findByPod($id);
-        foreach ($devices as $device) {
-            $result[$device->getNom()] = $device->getId();
+        if ($id != null) {
+            $repo = $this->getDoctrine()->getManager()->getRepository('AppBundle:Device');
+            $devices = $repo->findByPod($id);
+
+            foreach ($devices as $device) {
+                $result[$device->getNom()] = $device->getId();
+            }
         }
+
+
         return new JsonResponse($result);
     }
 

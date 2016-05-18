@@ -50,9 +50,6 @@ class DeviceType extends AbstractType
         'property' => 'nomInterface',
         'multiple' => true,
                'required' => false,
-
-
-
         'query_builder' => function(Network_InterfaceRepository $repo) {
             return $repo->getNotUsedInterfacesQueryBuilder();
         }

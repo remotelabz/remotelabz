@@ -16,22 +16,11 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
         $qb = $this->_em->createQueryBuilder();
         return $qb->select('dev')
             ->from('AppBundle:Device', 'dev')
-            ->where($qb->expr()->isNull('dev.pod'))
-//            ->andWhere($qb->expr()->isNull('net.config_reseau'));
-           ;
-        ;
+            ->where($qb->expr()->isNull('dev.pod'))//            ->andWhere($qb->expr()->isNull('net.config_reseau'));
+            ;;
     }
+
     public function findByPod($pod)
-    {
-        return $this
-            ->createQueryBuilder('dev')
-            ->join('dev.pod','pod')
-            ->andWhere('pod.id = :pod')
-            ->setParameter('pod', $pod)
-            ->getQuery()
-            ->getResult();
-    }
-    public function findByDevice($pod)
     {
         return $this
             ->createQueryBuilder('dev')
@@ -39,7 +28,18 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
             ->andWhere('pod.id = :pod')
             ->setParameter('pod', $pod)
             ->getQuery()
-            ->getResult();
+           ->getResult();
+    }
+
+    public function InterfacesAttachedToPod($dev)
+    {
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder()
+            ->select('net')
+            ->from('AppBundle:Network_Interface', 'net')
+            ->innerJoin('AppBundle:Device', 'dev', 'WITH', 'net.device= :device_id')
+            ->setParameter('device_id', $dev);
+            return $res = $qb->getQuery()->getResult();
     }
 }
 
