@@ -3,64 +3,127 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * Network_Interface
- * 
- * @ORM\Table(name="network_interface")
+ * @ORM\Table(name="networkInterface")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
+ * @UniqueEntity(fields="nomInterface",message="une interafce existe dèjà avec ce nom")
  */
-
 class Network_Interface
 {
     /**
-     * @var integer
-	 * @ORM\Column(name="id", type="integer")
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-     
     private $id;
 
     /**
      * @var string
      *
-	 * @ORM\Column(name="Nom", type="string", length=255)
+     * @ORM\Column(name="nom_interface", type="string", length=255,unique = true)
+     *  @Assert\NotBlank()
      */
-    private $nom;
+    private $nomInterface;
 
+    /**
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
+     */
+
+    private $config_reseau;
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device",inversedBy="network_interfaces")
+     */
+    private $device;
 
     /**
      * Get id
      *
-     * @return integer
+     * @return int
      */
+
     public function getId()
     {
         return $this->id;
     }
 
     /**
-     * Set nom
+     * Set nomInterface
      *
-     * @param string $nom
+     * @param string $nomInterface
      *
-     * @return Interfaces
+     * @return Network_Interface
      */
-    public function setNom($nom)
+    public function setNomInterface($nomInterface)
     {
-        $this->Nom = $nom;
+        $this->nomInterface = $nomInterface;
 
         return $this;
     }
 
     /**
-     * Get nom
+     * Get nomInterface
      *
      * @return string
      */
-    public function getNom()
+    public function getNomInterface()
     {
-        return $this->Nom;
+        return $this->nomInterface;
     }
+
+    /**
+     * Set configReseau
+     *
+     * @param \AppBundle\Entity\ConfigReseau $configReseau
+     *
+     * @return Network_Interface
+     */
+    public function setConfigReseau(\AppBundle\Entity\ConfigReseau $configReseau = null)
+    {
+        $this->config_reseau = $configReseau;
+
+        return $this;
+    }
+
+    /**
+     * Get configReseau
+     *
+     * @return \AppBundle\Entity\ConfigReseau
+     */
+    public function getConfigReseau()
+    {
+        return $this->config_reseau;
+    }
+
+    /**
+     * Set device
+     *
+     * @param \AppBundle\Entity\Device $device
+     *
+     * @return Network_Interface
+     */
+    public function setDevice(\AppBundle\Entity\Device $device = null)
+    {
+        $this->device = $device;
+
+        return $this;
+    }
+
+    /**
+     * Get device
+     *
+     * @return \AppBundle\Entity\Device
+     */
+    public function getDevice()
+    {
+        return $this->device;
+    }
+
+
 }

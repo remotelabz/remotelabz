@@ -10,4 +10,14 @@ namespace AppBundle\Repository;
  */
 class SystemeRepository extends \Doctrine\ORM\EntityRepository
 {
+
+//    public function getNotUsedSystemeQueryBuilder()
+//    {
+//        return  $this
+//            ->createQueryBuilder('s')
+//            ->join('s.id')
+//            ->where('a.published = :published')
+//            ->setParameter('published', true)
+//            ;
+//    }
 }
