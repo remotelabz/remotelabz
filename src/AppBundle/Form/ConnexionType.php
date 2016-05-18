@@ -38,7 +38,7 @@ class ConnexionType extends AbstractType
             ->add('nomconnexion', 'text')
             ->add('pod', 'entity', array(
                 'class' => 'AppBundle:POD',
-                'property' => 'nompod',
+                'property' => 'nom',
                 'multiple' => false,
                 'required' => false,
                 'empty_value' => '-- Choose a pod --',
@@ -46,8 +46,10 @@ class ConnexionType extends AbstractType
                     return $repo->getNotUsedPodQueryBuilder();
 
                 }))
-            ->add('Device1','choice',array('attr'=> array('class'=>'device')))
-            ->add('Interface1',null,array('attr'=> array('class'=>'interface')))
+            ->add('Device1','choice')
+            ->add('Interface1','choice')
+            ->add('Device2','choice')
+            ->add('Interface2','choice')
             ->add('Suivant', 'submit');
             }
 //            ->add('Device1')
