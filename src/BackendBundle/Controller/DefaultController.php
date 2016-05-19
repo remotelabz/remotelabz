@@ -9,6 +9,7 @@ use AppBundle\Entity\Network_Interface;
 use AppBundle\Entity\Parameter;
 use AppBundle\Entity\POD;
 use AppBundle\Entity\Systeme;
+use AppBundle\Form\Connexion_select_podType;
 use AppBundle\Form\ConnexionType;
 use AppBundle\Form\DeviceType;
 use AppBundle\Form\HyperviseurType;
@@ -242,51 +243,15 @@ class DefaultController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
         $pod = new Connexion();
-        $form_pod = $this->get('form.factory')->create(new ConnexionType(), $pod, array('method' => 'POST'));
-        $form_pod->remove('nomconnexion');
-        $form_pod->remove('add');
-        $form_pod->remove('Device1');
-        $form_pod->remove('Interface1');
-        $form_pod->remove('Device2');
-        $form_pod->remove('Interface2');
-
-        $connexion = new Connexion();
-        $form_connexion = $this->get('form.factory');
-
-
-
+        $form_pod = $this->get('form.factory')->create(new Connexion_select_podType(), $pod, array('method' => 'POST'));
         if ('POST' === $request->getMethod()) {
             if ($form_pod->handleRequest($request)->isValid() and ($pod->getPod()->getId() != null)) {
 
                 $id_pod = $pod->getPod()->getId();
-                $form_connexion = $this->get('form.factory')->create(new ConnexionType($id_pod), $connexion, array('method' => 'POST'));
-                $form_connexion->remove('pod');
-                $form_connexion->remove('Suivant');
 
-                return $this->render(
-                    'BackendBundle::add_connexion.html.twig', array(
-                    'user' => $user,
-                    'form_connexion' => $form_connexion->createView()
-
-                ));
+                return $this->redirect($this->generateUrl('add_connexion_after_getpod',array('pod_id'=> $id_pod)));
             }
-
-
-            $em = $this->getDoctrine()->getManager();
-
-            $connexion->setNomdevice1($connexion->getDe);
-//
-            $em->persist($connexion);
-            $em->flush();
-            $request->getSession()->getFlashBag()->add('notice', ' connexion  ajouter  ');
-            return $this->redirect($this->generateUrl('add_connexion'));
-
-
         }
-
-
-
-
 
         return $this->render(
             'BackendBundle::add_connexion_pod.html.twig', array(
@@ -295,6 +260,45 @@ class DefaultController extends Controller
 
         ));
 
-
     }
-}
+
+        /**
+         * @Route("/admin/add_connexion_after_getpod{pod_id}", name="add_connexion_after_getpod")
+         */
+        public
+        function Add_Connexion_after_getpod(Request $request,$pod_id)
+        {
+            $em = $this->getDoctrine()->getManager();
+
+            $connexion = new Connexion();
+
+
+            $user = $this->get('security.token_storage')->getToken()->getUser();
+
+                $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id,$em), $connexion, array('method' => 'POST'));
+                $form_connexion->remove('pod');
+                $form_connexion->remove('Suivant');
+            if ('GET' === $request->getMethod()) {
+                return $this->render(
+
+                    'BackendBundle::add_connexion.html.twig', array(
+                    'user' => $user,
+                    'form_connexion' => $form_connexion->createView()
+
+                ));
+            }
+            if ('POST' === $request->getMethod()) {
+                if ($form_connexion->handleRequest($request)->isValid()) {
+                    $connexion->setNomdevice1($connexion->getDevice1()->getNom());
+                    $connexion->setNomdevice2($connexion->getDevice2()->getNom());
+                    $em->persist($connexion);
+                    $em->flush();
+                    $request->getSession()->getFlashBag()->add('notice', 'connexion ajouter  ');
+                    return $this->redirect($this->generateUrl('add_connexion'));
+                }
+            }
+
+            return $this->redirect($this->generateUrl('add_connexion'));
+
+        }
+    }

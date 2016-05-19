@@ -49,53 +49,69 @@
                                     </div>
 
                                     <div class="form-group">
-                                    {#Génération du label. #}
-                                    {{ form_label(form_connexion.Device1, "Device1", {'label_attr': {'class': 'col-sm-2'}}) }}
+                                        {#Génération du label. #}
+                                        {{ form_label(form_connexion.Device1, "Device1", {'label_attr': {'class': 'col-sm-2'}}) }}
 
-                                    {#Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(form_connexion.Device1) }}
+                                        {#Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(form_connexion.Device1) }}
 
-                                    <div class="col-sm-2">
-                                    {#Génération de l'input.#}
-                                    {{ form_widget(form_connexion.Device1, {'attr': {'class': 'dev1 span3' }}) }}
-                                    </div>
+                                        <div class="col-sm-2">
+                                        {#Génération de l'input.#}
+                                        {{ form_widget(form_connexion.Device1, {'attr': {'class': 'dev1 span3' }}) }}
+                                        </div>
+                                        <div class="form-group">
+                                            {#Génération du label. #}
+                                            {{ form_label(form_connexion.Interface1, "Interface1", {'label_attr': {'class': 'col-sm-2 '}}) }}
+
+                                            {#Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_connexion.Interface1) }}
+
+                                            <div class="col-sm-2">
+                                            {#Génération de l'input.#}
+                                            {{ form_widget(form_connexion.Interface1, {'attr': {'class': 'net1 span3'}}) }}
+                                            </div>
+                                            <div class="form-group">
+                                                {#Génération du label. #}
+                                                {{ form_label(form_connexion.vlan1, "N° Vlan", {'label_attr': {'class': 'col-sm-2 '}}) }}
+
+                                                {#Affichage des erreurs pour ce champ précis. #}
+                                                {{ form_errors(form_connexion.vlan1) }}
+                                                <div class="col-sm-2">
+                                                    {#Génération de l'input.#}
+                                                    {{ form_widget(form_connexion.vlan1, {'attr': {'class': 'net2 span3'}}) }}
+                                                </div>
+                                   </div>
                                     <div class="form-group">
-                                    {#Génération du label. #}
-                                    {{ form_label(form_connexion.Interface1, "Interface1", {'label_attr': {'class': 'col-sm-2 '}}) }}
+                                        {#Génération du label. #}
+                                        {{ form_label(form_connexion.Device2, "Device2", {'label_attr': {'class': 'col-sm-2'}}) }}
 
-                                    {#Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(form_connexion.Interface1) }}
+                                        {#Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(form_connexion.Device2) }}
 
-                                    <div class="col-sm-2">
-                                    {#Génération de l'input.#}
-                                    {{ form_widget(form_connexion.Interface1, {'attr': {'class': 'net1 span3'}}) }}
-                                    </div>
-                                    </div>
-                                    <div class="form-group">
-                                    {#Génération du label. #}
-                                    {{ form_label(form_connexion.Device2, "Device2", {'label_attr': {'class': 'col-sm-2'}}) }}
+                                        <div class="col-sm-2">
+                                            {#Génération de l'input.#}
+                                            {{ form_widget(form_connexion.Device2, {'attr': {'class': 'dev2 span3' }}) }}
+                                        </div>
+                                        <div class="form-group">
+                                                {#Génération du label. #}
+                                                {{ form_label(form_connexion.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2 '}}) }}
 
-                                    {#Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(form_connexion.Device2) }}
+                                                {#Affichage des erreurs pour ce champ précis. #}
+                                                {{ form_errors(form_connexion.Interface2) }}
+                                              <div class="col-sm-2">
+                                                {#Génération de l'input.#}
+                                                {{ form_widget(form_connexion.Interface2, {'attr': {'class': 'net2 span3'}}) }}
+                                             </div>
+                                        <div class="form-group">
+                                            {#Génération du label. #}
+                                            {{ form_label(form_connexion.vlan2, "N° Vlan", {'label_attr': {'class': 'col-sm-2 '}}) }}
 
-                                    <div class="col-sm-2">
-                                    {#Génération de l'input.#}
-                                    {{ form_widget(form_connexion.Device2, {'attr': {'class': 'dev2 span3' }}) }}
-                                    </div>
-                                    <div class="form-group">
-                                    {#Génération du label. #}
-                                    {{ form_label(form_connexion.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2 '}}) }}
-
-                                    {#Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(form_connexion.Interface2) }}
-
-                                    <div class="col-sm-2">
-                                    {#Génération de l'input.#}
-                                    {{ form_widget(form_connexion.Interface2, {'attr': {'class': 'net2 span3'}}) }}
-                                    </div>
-                                    </div>
-
-
+                                            {#Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_connexion.vlan2) }}
+                                            <div class="col-sm-2">
+                                                {#Génération de l'input.#}
+                                                {{ form_widget(form_connexion.vlan2, {'attr': {'class': 'net2 span3'}}) }}
+                                            </div>
                                     </div>
 
 
