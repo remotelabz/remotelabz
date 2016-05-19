@@ -29,86 +29,77 @@
 
                                 <div class="x_content">
 
+                     {#**************************************************************************************************************#}
                                     <!-- content starts here -->
-                                    {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+                                    {{ form_start(form_connexion, {'attr': {'class': 'form-horizontal'}}) }}
                                     {# Les erreurs générales du formulaire. #}
-                                    {{ form_errors(form) }}
-                                    <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(form.nomconnexion, "Nom ", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_errors(form_connexion) }}
 
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(form.nomconnexion) }}
+                                    <div class="form-group">
+                                     {#Génération du label. #}
+                                    {{ form_label(form_connexion.nomconnexion, "Nom ", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                     {#Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(form_connexion.nomconnexion) }}
 
                                         <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(form.nomconnexion, {'attr': {'class': 'form-control'}}) }}
-                                        </div>
+                                     {#Génération de l'input. #}
+                                    {{ form_widget(form_connexion.nomconnexion, {'attr': {'class': 'form-control'}}) }}
+                                       </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                    {#Génération du label. #}
+                                    {{ form_label(form_connexion.Device1, "Device1", {'label_attr': {'class': 'col-sm-2'}}) }}
+
+                                    {#Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(form_connexion.Device1) }}
+
+                                    <div class="col-sm-2">
+                                    {#Génération de l'input.#}
+                                    {{ form_widget(form_connexion.Device1, {'attr': {'class': 'dev1 span3' }}) }}
                                     </div>
                                     <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(form.pod, "Pod", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {#Génération du label. #}
+                                    {{ form_label(form_connexion.Interface1, "Interface1", {'label_attr': {'class': 'col-sm-2 '}}) }}
 
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(form.pod) }}
+                                    {#Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(form_connexion.Interface1) }}
 
-                                        <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(form.pod, {'attr': {'class': 'PODclass span3'}}) }}
-                                        </div>
-                                        </div>
-                                        <div class="form-group">
-                                             {#Génération du label. #}
-                                            {{ form_label(form.Device1, "Device1", {'label_attr': {'class': 'col-sm-2'}}) }}
+                                    <div class="col-sm-2">
+                                    {#Génération de l'input.#}
+                                    {{ form_widget(form_connexion.Interface1, {'attr': {'class': 'net1 span3'}}) }}
+                                    </div>
+                                    </div>
+                                    <div class="form-group">
+                                    {#Génération du label. #}
+                                    {{ form_label(form_connexion.Device2, "Device2", {'label_attr': {'class': 'col-sm-2'}}) }}
 
-                                             {#Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(form.Device1) }}
+                                    {#Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(form_connexion.Device2) }}
 
-                                            <div class="col-sm-2">
-                                                 {#Génération de l'input.#}
-                                                {{ form_widget(form.Device1, {'attr': {'class': 'Deviceclass span3' }}) }}
-                                            </div>
-                                            <div class="form-group">
-                                                {#Génération du label. #}
-                                                {{ form_label(form.Interface1, "Interface1", {'label_attr': {'class': 'col-sm-2 '}}) }}
+                                    <div class="col-sm-2">
+                                    {#Génération de l'input.#}
+                                    {{ form_widget(form_connexion.Device2, {'attr': {'class': 'dev2 span3' }}) }}
+                                    </div>
+                                    <div class="form-group">
+                                    {#Génération du label. #}
+                                    {{ form_label(form_connexion.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2 '}}) }}
 
-                                                {#Affichage des erreurs pour ce champ précis. #}
-                                                {{ form_errors(form.Interface1) }}
+                                    {#Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(form_connexion.Interface2) }}
 
-                                                <div class="col-sm-2">
-                                                    {#Génération de l'input.#}
-                                                    {{ form_widget(form.Interface1, {'attr': {'class': 'Network_Interfaceclass span3'}}) }}
-                                                </div>
-                                      </div>
-                                            <div class="form-group">
-                                                {#Génération du label. #}
-                                                {{ form_label(form.Device2, "Device2", {'label_attr': {'class': 'col-sm-2'}}) }}
-
-                                                {#Affichage des erreurs pour ce champ précis. #}
-                                                {{ form_errors(form.Device2) }}
-
-                                                <div class="col-sm-2">
-                                                    {#Génération de l'input.#}
-                                                    {{ form_widget(form.Device2, {'attr': {'class': 'Deviceclass span3' }}) }}
-                                                </div>
-                                                <div class="form-group">
-                                                    {#Génération du label. #}
-                                                    {{ form_label(form.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2 '}}) }}
-
-                                                    {#Affichage des erreurs pour ce champ précis. #}
-                                                    {{ form_errors(form.Interface2) }}
-
-                                                    <div class="col-sm-2">
-                                                        {#Génération de l'input.#}
-                                                        {{ form_widget(form.Interface2, {'attr': {'class': 'Network_Interfaceclass span3'}}) }}
-                                                    </div>
-                                                </div>
+                                    <div class="col-sm-2">
+                                    {#Génération de l'input.#}
+                                    {{ form_widget(form_connexion.Interface2, {'attr': {'class': 'net2 span3'}}) }}
+                                    </div>
+                                    </div>
 
 
                                     </div>
 
 
-                                    {{ form_widget(form.Suivant, {'attr': {'class': 'btn btn-primary'}}) }}
+                                    {{ form_widget(form_connexion.add, {'attr': {'class': 'btn btn-primary'}}) }}
 
                                     {#Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
 
@@ -117,10 +108,10 @@
                                         Dans cet exemple, ce serait le champ CSRF (géré automatiquement par Symfony !)
                                         et tous les champs cachés (type « hidden »). #}
 
-                                    {{ form_rest(form) }}
+                                    {{ form_rest(form_connexion) }}
 
                                     {# Fermeture de la balise <form> du formulaire HTML #}
-                                    {{ form_end(form) }}
+                                    {{ form_end(form_connexion) }}
                                     <!-- content ends here -->
 
 
@@ -138,45 +129,84 @@
         jQuery(document).ready(function () {
             console.log("jQuery est prêt !");
 
-            $(".PODclass").change(function () {
-
-                        mafonctionchange('Device', 'POD');
+            $(".dev1").change(function () {
+                var val = $(this).val();
+                if (val != null){
+                         mafonctionchange1();
+                        }
 
                     })
                     .trigger('change');
 
-            $(".Deviceclass").change(function () {
+            $(".dev2").change(function () {
+                        var val = $(this).val();
+                        if (val != null){
+                            console.log(val);
+                            mafonctionchange2();
+                        }
 
-                mafonctionchange('Network_Interface', 'Device');
+
+                    })
+                    .trigger('change');
+
             });
 
-            function mafonctionchange(selecteur, selecteurparent) {
-                console.log(selecteurparent);
+            function mafonctionchange1() {
+                console.log("dev1");
                 $.ajax({
                     url: "{{ url('ajax_connexion_call') }}",
                     type: 'POST',
                     data: {
-                        id: $("select." + selecteurparent + "class option:selected").val(),
-                        select: selecteur
+                        id: $("select.dev1 option:selected").val(),
 
                     },
                     dataType: 'json',
+
+
                     success: function (reponse) {
 
-                        $('.' + selecteur + 'class').empty();
-                        $.each(reponse, function (index, element) {
-                            $('.' + selecteur + 'class').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');
-                        });
+                        $('.net1').empty();
+                        if (reponse != null){
+                            console.log("réponse ");
+                            $('.net1').empty();
 
-                        if (selecteur == 'Device') {
-                            mafonctionchange('Network_Interface', 'Device');
+                        $.each(reponse, function (index, element) {
+                            $('.net1').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');
+                        });
                         }
+                        else $('.net1').empty();
 
                     }
+
+                });
+            }
+            function mafonctionchange2() {
+                console.log("device2");
+                $.ajax({
+                    url: "{{ url('ajax_connexion_call') }}",
+                    type: 'POST',
+                    data: {
+                        id: $("select.dev2 option:selected").val(),
+
+                    },
+                    dataType: 'json',
+
+
+                    success: function (reponse) {
+
+                        $('.net2').empty();
+                        if (reponse == null){
+                            console.log("réponse vide");
+                            $('.net2').empty();
+                        }
+                        $.each(reponse, function (index, element) {
+                            $('.net2').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');
+                        });
+                    }
+
                 });
             }
         });
-    });
  </script>
 
 
