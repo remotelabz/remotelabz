@@ -21,11 +21,12 @@ class ConnexionType extends AbstractType
 {
 
 
-    protected $em;
+    private $id_pod;
 
-    function __construct(EntityManager $em)
+    function __construct( $id_pod = null)
     {
-        $this->em = $em;
+        $this->id_pod = $id_pod;
+
     }
 
     /**
@@ -34,6 +35,7 @@ class ConnexionType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        $id = $this->id_pod;
         $builder
             ->add('nomconnexion', 'text')
             ->add('pod', 'entity', array(
@@ -44,14 +46,38 @@ class ConnexionType extends AbstractType
                 'empty_value' => '-- Choose a pod --',
                 'query_builder' => function (PODRepository $repo) {
                     return $repo->getNotUsedPodQueryBuilder();
-
                 }))
-            ->add('Device1','choice')
-            ->add('Interface1','choice')
-            ->add('Device2','choice')
-            ->add('Interface2','choice')
-            ->add('Suivant', 'submit');
-            }
+        ->add('add', 'submit')
+        ->add('Suivant', 'submit')
+            ->add('Device1', 'entity', array(
+                'class' => 'AppBundle:Device',
+                'property' => 'nom',
+                'multiple' => false,
+                'required' => false,
+                'empty_value' => '-- Choose a pod --',
+                'query_builder' => function (DeviceRepository $repo) use ($id)
+                {
+                    return $repo->Device($id);
+                }))
+            ->add('Device2', 'entity', array(
+                'class' => 'AppBundle:Device',
+                'property' => 'nom',
+                'multiple' => false,
+                'required' => false,
+                'empty_value' => '-- Choose a pod --',
+                'query_builder' => function (DeviceRepository $repo) use ($id)
+                {
+                    return $repo->Device($id);
+                }))
+        ->add('Interface1','choice')
+        ->add('Interface2','choice');
+    }
+//            ->add('Device1','choice')
+//            ->add('Interface1','choice')
+//            ->add('Device2','choice')
+//            ->add('Interface2','choice')
+//            ->add('Suivant', 'submit');
+//            }
 //            ->add('Device1')
 //            ->add('Device2')
 //            ->add('Interface1')
