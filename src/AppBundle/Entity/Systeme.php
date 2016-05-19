@@ -53,6 +53,10 @@ class Systeme
      */
     private $parametres;
 
+    public function __toString() {
+        return $this->nom;
+    }
+
     /**
      * Get id
      *
