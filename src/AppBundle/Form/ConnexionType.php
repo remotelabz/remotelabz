@@ -2,9 +2,11 @@
 
 namespace AppBundle\Form;
 
+use AppBundle\Entity\Connexion;
 use AppBundle\Entity\Device;
 use AppBundle\Entity\POD;
 use AppBundle\Repository\DeviceRepository;
+use AppBundle\Repository\Network_InterfaceRepository;
 use AppBundle\Repository\PODRepository;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\Form\AbstractType;
@@ -22,10 +24,13 @@ class ConnexionType extends AbstractType
 
 
     private $id_pod;
+    private $em;
 
-    function __construct( $id_pod = null)
+    function __construct( $id_pod = null,EntityManager $em=null)
     {
         $this->id_pod = $id_pod;
+        $this->em = $em;
+
 
     }
 
@@ -37,18 +42,10 @@ class ConnexionType extends AbstractType
     {
         $id = $this->id_pod;
         $builder
+            ->add('vlan1', 'text')
+            ->add('vlan2', 'text')
             ->add('nomconnexion', 'text')
-            ->add('pod', 'entity', array(
-                'class' => 'AppBundle:POD',
-                'property' => 'nom',
-                'multiple' => false,
-                'required' => false,
-                'empty_value' => '-- Choose a pod --',
-                'query_builder' => function (PODRepository $repo) {
-                    return $repo->getNotUsedPodQueryBuilder();
-                }))
         ->add('add', 'submit')
-        ->add('Suivant', 'submit')
             ->add('Device1', 'entity', array(
                 'class' => 'AppBundle:Device',
                 'property' => 'nom',
@@ -71,6 +68,45 @@ class ConnexionType extends AbstractType
                 }))
         ->add('Interface1','choice')
         ->add('Interface2','choice');
+
+        $formModifie1 = function(FormInterface $form,Device $device) {
+             $id_dev = $device->getId();
+            $interfaces_dev1 = $this->em->getRepository('AppBundle:Network_Interface')->getInterfacesAttachedToDevice($id_dev);
+
+            $form->add('Interface1', 'entity', array(
+                'class' => 'AppBundle:Network_Interface',
+                'property' => 'nom',
+                'multiple' => false,
+                'required' => false,
+                'empty_value' => '-- Choose a pod --',
+                'query_builder' => $interfaces_dev1
+            ));
+        };
+            $formModifie2 = function(FormInterface $form,Device $device){
+                 $id_dev = $device->getId();
+                $interfaces_dev2= $this->em->getRepository('AppBundle:Network_Interface')->getInterfacesAttachedToDevice($id_dev);
+                $form->add('Interface2', 'entity', array(
+                    'class' => 'AppBundle:Network_Interface',
+                    'property' => 'nom',
+                    'multiple' => false,
+                    'required' => false,
+                    'empty_value' => '-- Choose a pod --',
+                    'query_builder' => $interfaces_dev2
+
+                ));
+        };
+        $builder->get('Device1')->addEventListener(FormEvents::POST_SUBMIT,function(FormEvent $event)use ($formModifie1){
+            $device1 = $event->getForm()->getData();
+
+            $formModifie1($event->getForm()->getParent(),$device1);
+
+        });
+        $builder->get('Device2')->addEventListener(FormEvents::POST_SUBMIT,function(FormEvent $event)use ($formModifie2){
+            $device2 = $event->getForm()->getData();
+
+            $formModifie2($event->getForm()->getParent(),$device2);
+
+        });
     }
 //            ->add('Device1','choice')
 //            ->add('Interface1','choice')
