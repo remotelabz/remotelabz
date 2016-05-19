@@ -1,0 +1,116 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+    <div id="page-wrapper" xmlns="http://www.w3.org/1999/html">
+    {% for flash_message in app.session.flashbag.get('notice') %}
+        <div class="flash-notice">
+            {{ flash_message }}
+        </div>
+    {% endfor %}
+    {% for flash_message in app.session.flashbag.get('danger') %}
+        <div class="flash-notice">
+            {{ flash_message }}
+        </div>
+    {% endfor %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Ajout d'une Connexion</h2>
+                    <div class="clearfix"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-10">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">Ajoutez une connexion</div>
+                            <div class="panel-body">
+
+                                <div class="x_content">
+
+                                    <!-- content starts here -->
+                                    {{ form_start(form_pod, {'attr': {'class': 'form-horizontal'}}) }}
+                                    {# Les erreurs générales du formulaire. #}
+                                    {{ form_errors(form_pod) }}
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(form_pod.pod, "Pod", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(form_pod.pod) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(form_pod.pod, {'attr': {'class': 'PODclass span3'}}) }}
+                                        </div>
+                                    </div>
+
+                                    {{ form_widget(form_pod.Suivant, {'attr': {'class': 'btn btn-primary'}}) }}
+
+                                    {{ form_rest(form_pod) }}
+
+                                    {# Fermeture de la balise <form> du formulaire HTML #}
+                                    {{ form_end(form_pod) }}
+                                    <!-- content ends here -->
+                     {#**************************************************************************************************************#}
+
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    {#<script type="text/javascript">#}
+    {#$(function () {#}
+        {#jQuery(document).ready(function () {#}
+            {#console.log("jQuery est prêt !");#}
+
+            {#$(".PODclass").change(function () {#}
+
+                        {#mafonctionchange('Device', 'POD');#}
+
+                    {#})#}
+                    {#.trigger('change');#}
+
+             {#$(".Deviceclass").change(function () {#}
+
+                {#mafonctionchange('Network_Interface', 'Device');#}
+            {#});#}
+
+            {#function mafonctionchange(selecteur, selecteurparent) {#}
+                {#console.log(selecteurparent);#}
+                {#$.ajax({#}
+                    {#url: "{{ url('ajax_connexion_call') }}",#}
+                    {#type: 'POST',#}
+                    {#data: {#}
+                        {#id: $("select." + selecteurparent + "class option:selected").val(),#}
+                        {#select: selecteur#}
+
+                    {#},#}
+                    {#dataType: 'json',#}
+                    {#success: function (reponse) {#}
+
+                        {#$('.' + selecteur + 'class').empty();#}
+                        {#$.each(reponse, function (index, element) {#}
+                            {#$('.' + selecteur + 'class').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');#}
+                        {#});#}
+
+                        {#if (selecteur == 'Device') {#}
+                            {#mafonctionchange('Network_Interface', 'Device');#}
+                        {#}#}
+
+                    {#}#}
+                {#});#}
+            {#}#}
+        {#});#}
+    {#});#}
+ {#</script>#}
+
+
+
+
+{% endblock %}

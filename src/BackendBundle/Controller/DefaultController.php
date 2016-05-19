@@ -37,9 +37,9 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 class DefaultController extends Controller
 {
 
-	/**
+    /**
      * @Route("/admin/add_device", name="add_device")
-     */	
+     */
     public function Add_DeviceAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -53,31 +53,31 @@ class DefaultController extends Controller
 
         $InterfaceControleform = $this->get('form.factory')->create(new Network_InterfaceType(), $interfaceControle, array('method' => 'POST'));
         $Interfaceform = $this->get('form.factory')->create(new Network_InterfaceType(), $interface, array('method' => 'POST'));
-        $parametreForm = $this->get('form.factory')->create(new ParameterType(),$parametre, array('method' => 'POST'));
-        $hyperForm = $this->get('form.factory')->create(new HyperviseurType(),$hyperviseur, array('method' => 'POST'));
-        $systemForm = $this->get('form.factory')->create(new SystemeType(),$systeme, array('method' => 'POST'));
+        $parametreForm = $this->get('form.factory')->create(new ParameterType(), $parametre, array('method' => 'POST'));
+        $hyperForm = $this->get('form.factory')->create(new HyperviseurType(), $hyperviseur, array('method' => 'POST'));
+        $systemForm = $this->get('form.factory')->create(new SystemeType(), $systeme, array('method' => 'POST'));
         $deviceForm = $this->get('form.factory')->create(new DeviceType(), $device, array('method' => 'POST'));
 
         $Interfaceform->remove('configreseau');
 
-        if ('POST' === $request->getMethod()){
+        if ('POST' === $request->getMethod()) {
 
 
-                if ($InterfaceControleform->handleRequest($request)->isValid() and ($interfaceControle->getConfigReseau()->getIP() != null)) {
+            if ($InterfaceControleform->handleRequest($request)->isValid() and ($interfaceControle->getConfigReseau()->getIP() != null)) {
 //                    echo 'interface de controle  ';
 //                    die();
-                    $em1 = $this->getDoctrine()->getManager();
-                    $em1->persist($interfaceControle->getConfigReseau());
-                    $em1->persist($interfaceControle);
-                    $em1->flush();
-                    $request->getSession()->getFlashBag()->add('notice', 'Interface de controle '.$interfaceControle->getNom(). ' bien enregistrée.');
-                    return $this->redirect($this->generateUrl('add_device'));
-                }
-            if ($Interfaceform->handleRequest($request)->isValid() ) {
+                $em1 = $this->getDoctrine()->getManager();
+                $em1->persist($interfaceControle->getConfigReseau());
+                $em1->persist($interfaceControle);
+                $em1->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'Interface de controle ' . $interfaceControle->getNom() . ' bien enregistrée.');
+                return $this->redirect($this->generateUrl('add_device'));
+            }
+            if ($Interfaceform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($interface);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface  '.$interface->getNom(). ' bien enregistrée .');
+                $request->getSession()->getFlashBag()->add('notice', 'Interface  ' . $interface->getNom() . ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
             }
 
@@ -106,16 +106,16 @@ class DefaultController extends Controller
             }
             if ($deviceForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
-                if ($device->getInterfaceControle() != null){
+                if ($device->getInterfaceControle() != null) {
                     $em->persist($device->getInterfaceControle());
                     $em->flush();
                     $device->setInterfaceControle($device->getInterfaceControle());
                 }
-                if ($device->getNetworkInterfaces() != null){
+                if ($device->getNetworkInterfaces() != null) {
 
-                   foreach($device->getNetworkInterfaces()  as $net) {
-                       $device->addNetworkInterface($net);
-                   }
+                    foreach ($device->getNetworkInterfaces() as $net) {
+                        $device->addNetworkInterface($net);
+                    }
                 }
                 $em->persist($device);
                 $em->flush();
@@ -125,23 +125,22 @@ class DefaultController extends Controller
         }
 
 
-
         return $this->render(
-            'BackendBundle::add_device.html.twig',array(
-            'user'                  => $user,
+            'BackendBundle::add_device.html.twig', array(
+            'user' => $user,
             'InterfaceControleform' => $InterfaceControleform->createView(),
-            'Interfaceform'        => $Interfaceform->createView(),
-            'parametreForm'         => $parametreForm->createView(),
-            'hyperForm'             =>$hyperForm->createView(),
-            'systemForm'            => $systemForm->createView(),
-            'deviceForm'            => $deviceForm->createView(),
+            'Interfaceform' => $Interfaceform->createView(),
+            'parametreForm' => $parametreForm->createView(),
+            'hyperForm' => $hyperForm->createView(),
+            'systemForm' => $systemForm->createView(),
+            'deviceForm' => $deviceForm->createView(),
         ));
     }
 
     /**
      * @Route("/admin/add_pod", name="add_pod")
      */
-        public function Add_PodAction(Request $request)
+    public function Add_PodAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
@@ -172,15 +171,15 @@ class DefaultController extends Controller
             return $this->redirect($this->generateUrl('add_pod'));
         }
         return $this->render(
-            'BackendBundle::add_pod.html.twig',array(
-            'user'                  => $user,
+            'BackendBundle::add_pod.html.twig', array(
+            'user' => $user,
             'podForm' => $podForm->createView()
 
         ));
 
 
-
     }
+
     /**
      * @Route("/admin/add_lab", name="add_lab")
      */
@@ -211,27 +210,28 @@ class DefaultController extends Controller
 
         ));
     }
+
     /**
      * @Route("/admin/ajax_connexion_call", name="ajax_connexion_call")
      */
-    public function ajaxAction(Request $request) {
+    public function ajaxAction(Request $request)
+    {
 
-        if($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
+        if ($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
         {
             $id = $request->request->get('id');
-            $selecteur = $request->request->get('select');
 
-            if ($id != null)
-            {
+            if ($id != null) {
                 $data = $this->getDoctrine()
                     ->getManager()
-                    ->getRepository('AppBundle:'.$selecteur)
-                    ->$selecteur($id);
-
+                    ->getRepository('AppBundle:Network_Interface')
+                    ->Network_Interface($id);
                 return new JsonResponse($data);
             }
+
         }
-        return new Response("Nonnn ....");
+
+
     }
 
     /**
@@ -240,23 +240,61 @@ class DefaultController extends Controller
     public function Add_Connexion(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $pod = new Connexion();
+        $form_pod = $this->get('form.factory')->create(new ConnexionType(), $pod, array('method' => 'POST'));
+        $form_pod->remove('nomconnexion');
+        $form_pod->remove('add');
+        $form_pod->remove('Device1');
+        $form_pod->remove('Interface1');
+        $form_pod->remove('Device2');
+        $form_pod->remove('Interface2');
+
         $connexion = new Connexion();
+        $form_connexion = $this->get('form.factory');
 
-        //on passe l'entité manager au formulaire pour qu'on puisse valider les donner remplis automatiquement
-        $form = $this->createForm(new ConnexionType($this->getDoctrine()->getManager()), $connexion);
-        $form->handleRequest($request);
-        if ($form->isValid()) {
-            /* Do your stuff here */
-            die('form is valide');
-            $this->getDoctrine()->getManager()->persist($connexion);
-            $this->getDoctrine()->getManager()->flush();
+
+
+        if ('POST' === $request->getMethod()) {
+            if ($form_pod->handleRequest($request)->isValid() and ($pod->getPod()->getId() != null)) {
+
+                $id_pod = $pod->getPod()->getId();
+                $form_connexion = $this->get('form.factory')->create(new ConnexionType($id_pod), $connexion, array('method' => 'POST'));
+                $form_connexion->remove('pod');
+                $form_connexion->remove('Suivant');
+
+                return $this->render(
+                    'BackendBundle::add_connexion.html.twig', array(
+                    'user' => $user,
+                    'form_connexion' => $form_connexion->createView()
+
+                ));
+            }
+
+
+            $em = $this->getDoctrine()->getManager();
+
+            $connexion->setNomdevice1($connexion->getDe);
+//
+            $em->persist($connexion);
+            $em->flush();
+            $request->getSession()->getFlashBag()->add('notice', ' connexion  ajouter  ');
+            return $this->redirect($this->generateUrl('add_connexion'));
+
+
         }
-        return $this->render('BackendBundle::add_connexion.html.twig', array
-                        ('form' => $form->createView(),
-                           'user' => $user
+
+
+
+
+
+        return $this->render(
+            'BackendBundle::add_connexion_pod.html.twig', array(
+            'user' => $user,
+            'form_pod' => $form_pod->createView()
+
         ));
+
+
     }
-
-
-
 }
