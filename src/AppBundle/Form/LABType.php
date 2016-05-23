@@ -20,7 +20,7 @@ class LABType extends AbstractType
             ->add('pod', 'entity', array(
                 'class'    => 'AppBundle:POD',
                 'property' => 'nom',
-                'multiple' => true,
+                'multiple' => false,
                 'required' => false,
 
 
@@ -29,6 +29,7 @@ class LABType extends AbstractType
                     return $repo->getNotUsedPodQueryBuilder();
                 }
             ))
+            ->add('connexions','choice')
             ->add('Suivant','submit')
         ;
     }
