@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 class GestionController extends Controller
 {
     /**
-     * @Route("/admin/list_device", name="list_device")
+     * @Route("/admin/list_device", name="list_Device")
      */
     public function list_device(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -33,19 +33,38 @@ class GestionController extends Controller
 
     }
     /**
-     * @Route("/admin/delete_device{id}", name="delete_device")
+     * @Route("/admin/list_interface", name="list_Network_Interface")
      */
-    public function delete_device($id){
+    public function list_interface(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
+
+        $list_interface = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_interface.html.twig',array(
+            'user' => $user,
+            'list_interface' => $list_interface
+        ));
+
+    }
+
+    /**
+     * @Route("/admin/delete_entite{id}", name="delete_entite")
+     */
+    public function delete_device($id, Request $request){
+       $bundle = $request->query->get('bundle');
         if ($id != null) {
             $em = $this->getDoctrine()->getManager();
-            $device = $em->getRepository('AppBundle:Device')->findOneBy(array('id' => $id));
-            if ($device != null) {
-                $em->remove($device);
+            $entite= $em->getRepository('AppBundle:'.$bundle)->findOneBy(array('id' => $id));
+            if ($entite != null) {
+                $em->remove($entite);
                 $em->flush();
-                return $this->redirect($this->generateUrl('list_device'));
+                return $this->redirect($this->generateUrl('list_'.$bundle));
             }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
         }
-        return $this->redirect($this->generateUrl('list_device'));
+        return $this->redirect($this->generateUrl('list_'.$bundle));
     }
 }

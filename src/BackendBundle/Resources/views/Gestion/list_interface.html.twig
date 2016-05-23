@@ -30,25 +30,23 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th>type</th>
-							<th>propriete</th>
-							<th>modele</th>
-							<th>marque</th>
-							<th>systeme</th>
+							<th class="sorting" >Device</th>
 
 						</tr>
                     </thead>
 				    <tbody>
-				{% for device in list_device %}
+				{% for interface in list_interface %}
 
-					<td class="sorting_1" tabindex="0">{{ device.Nom }}</td>
-					<td>{{ device.type }}</td>
-					<td>{{ device.propriete }}</td>
-					<td>{{ device.modele }}</td>
-					<td>{{ device.marque }}</td>
-					<td>{{ device.systeme.nom }}</td>
+					<td class="sorting_1" tabindex="0">{{ interface.Nom }}</td>
+
+				{% if interface.device is empty %}
+							<td> aucun device attaché </td>
+				{%else%}
+						<td>{{ interface.device.nom }}</td>
+				{%endif%}
+
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': device.id, 'bundle':'Device'}) }}" data-type = "post" >
+					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
 							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
 
 				</tr>
