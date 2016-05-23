@@ -33,6 +33,7 @@ class Network_Interface
 
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
+     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
      */
 
     private $config_reseau;
