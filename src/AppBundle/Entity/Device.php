@@ -69,7 +69,7 @@ class Device
     private $interfaceControle;
 
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device" ,orphanRemoval=true)
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
      */
     private $network_interfaces;
 
