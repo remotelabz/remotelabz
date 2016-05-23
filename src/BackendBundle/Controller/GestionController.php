@@ -50,6 +50,24 @@ class GestionController extends Controller
         ));
 
     }
+    /**
+     * @Route("/admin/list_pod", name="list_POD")
+     */
+    public function list_pod(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:POD');
+
+        $list_pod = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_pod.html.twig',array(
+            'user' => $user,
+            'list_pod' => $list_pod
+        ));
+
+    }
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
