@@ -68,6 +68,24 @@ class GestionController extends Controller
         ));
 
     }
+    /**
+     * @Route("/admin/list_connexion", name="list_Connexion")
+     */
+    public function list_connexion(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Connexion');
+
+        $list_connexion = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_connexion.html.twig',array(
+            'user' => $user,
+            'list_connexion' => $list_connexion
+        ));
+
+    }
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
