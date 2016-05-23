@@ -70,7 +70,6 @@ class Device
 
     /**
      *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device" ,orphanRemoval=true)
-     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $network_interfaces;
 

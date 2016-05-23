@@ -21,7 +21,7 @@ class POD
     private $id;
 
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Device", mappedBy="pod")
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Device", mappedBy="pod" ,orphanRemoval=true)
      */
 
     private $devices;
