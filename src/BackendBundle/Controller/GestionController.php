@@ -9,6 +9,7 @@
 namespace BackendBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 
@@ -102,5 +103,27 @@ class GestionController extends Controller
             }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
         }
         return $this->redirect($this->generateUrl('list_'.$bundle));
+    }
+
+
+
+
+    /**
+     * @Route("/admin/ajax_connexion_pod", name="ajax_connexion_pod")
+     */
+    public function ajaxAction(Request $request)
+    {
+
+        if ($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
+        {
+            $id = $request->request->get('id');
+            if ($id != null) {
+                $data = $this->getDoctrine()
+                    ->getManager()
+                    ->getRepository('AppBundle:Connexion')
+                    ->getConnexionByPOD($id);
+                return new JsonResponse($data);
+            }
+        }
     }
 }
