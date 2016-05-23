@@ -10,4 +10,14 @@ namespace AppBundle\Repository;
  */
 class ConnexionRepository extends \Doctrine\ORM\EntityRepository
 {
+
+    public function getConnexionByPOD($pod)
+    {
+        return $this
+            ->createQueryBuilder('con')
+            ->where('con.pod = :pod')
+            ->setParameter('pod', $pod)
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
