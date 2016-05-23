@@ -56,23 +56,27 @@ class Device
     private $marque;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme",cascade="persist")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme",cascade={"persist","remove"})
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      *
      */
     private $systeme;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface" )
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $interfaceControle;
 
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device" ,orphanRemoval=true)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $network_interfaces;
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD", inversedBy="devices")
+     * @ORM\joinColumn(onDelete="SET NULL")
      */
     private $pod;
 
