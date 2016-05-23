@@ -267,12 +267,13 @@ class DefaultController extends Controller
          */
         public
         function Add_Connexion_after_getpod(Request $request,$pod_id)
+
         {
             $em = $this->getDoctrine()->getManager();
 
             $connexion = new Connexion();
 
-
+            
             $user = $this->get('security.token_storage')->getToken()->getUser();
 
                 $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id,$em), $connexion, array('method' => 'POST'));
@@ -288,9 +289,13 @@ class DefaultController extends Controller
                 ));
             }
             if ('POST' === $request->getMethod()) {
+                $em = $this->getDoctrine()->getManager();
+
+                $pod= $em->getRepository('AppBundle:POD')->findOneBy(array('id' => $pod_id));
                 if ($form_connexion->handleRequest($request)->isValid()) {
                     $connexion->setNomdevice1($connexion->getDevice1()->getNom());
                     $connexion->setNomdevice2($connexion->getDevice2()->getNom());
+                    $connexion->setPod($pod);
                     $em->persist($connexion);
                     $em->flush();
                     $request->getSession()->getFlashBag()->add('notice', 'connexion ajouter  ');
