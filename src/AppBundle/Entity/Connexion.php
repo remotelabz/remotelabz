@@ -30,7 +30,7 @@ class Connexion
     /**
      * @var string
      *
-     * @ORM\Column(name="NomeConnexion", type="string", length=255)
+     * @ORM\Column(name="NomConnexion", type="string", length=255)
      */
     private $nomconnexion;
 
@@ -56,7 +56,7 @@ class Connexion
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
      * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device1;
@@ -64,7 +64,7 @@ class Connexion
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
      * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device2;
