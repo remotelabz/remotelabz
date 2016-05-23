@@ -57,7 +57,7 @@ class Connexion
      * @var \stdClass
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device1;
 
@@ -65,21 +65,21 @@ class Connexion
      * @var \stdClass
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device2;
 
     /**
      *
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $interface1;
 
     /**
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
 
     private $interface2;

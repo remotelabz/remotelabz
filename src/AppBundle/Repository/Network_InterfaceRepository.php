@@ -17,7 +17,7 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
         $qb_used_interface = $em->createQueryBuilder()
         ->select('net')
 		->from('AppBundle:Network_Interface', 'net')
-		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle=net.id')
+		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle = net.id')
 		->getQuery()
 		->getArrayResult();
 		
