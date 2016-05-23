@@ -45,9 +45,11 @@
 					<td>{{ device.type }}</td>
 					<td>{{ device.propriete }}</td>
 					<td>{{ device.modele }}</td>
-				<td>{{ device.marque }}</td>
+					<td>{{ device.marque }}</td>
 					<td>{{ device.systeme.nom }}</td>
-
+					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+					<td> <a  class="btn btn-danger" href="{{ path('delete_device',{'id': device.id}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
 
 				</tr>
 				{% endfor %}
@@ -58,5 +60,33 @@
                 </div>
             </div>
         </div>
+	{#<script type="text/javascript">#}
+		{#$(function () {#}
+			{#jQuery(document).ready(function () {#}
+				{#console.log("jQuery est prêt !");#}
+			{#})#}
+		{#});#}
+
+			{#function delete_device(id_device) {#}
+				{#$.ajax({#}
+					{#url: "{{ url('delete_device') }}",#}
+					{#type: 'POST',#}
+					{#data: {#}
+						{#id: id_device,#}
+
+					{#},#}
+					{#dataType: 'json',#}
+
+
+					{#success: function (reponse) {#}
+						{#console.log('succes');#}
+
+
+					{#}#}
+
+				{#});#}
+			{#}#}
+
+	{#</script>#}
 
 {% endblock %}

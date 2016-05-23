@@ -9,6 +9,7 @@
 namespace BackendBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 
 
 class GestionController extends Controller
@@ -30,5 +31,21 @@ class GestionController extends Controller
             'list_device' => $list_device
         ));
 
+    }
+    /**
+     * @Route("/admin/delete_device{id}", name="delete_device")
+     */
+    public function delete_device($id){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        if ($id != null) {
+            $em = $this->getDoctrine()->getManager();
+            $device = $em->getRepository('AppBundle:Device')->findOneBy(array('id' => $id));
+            if ($device != null) {
+                $em->remove($device);
+                $em->flush();
+                return $this->redirect($this->generateUrl('list_device'));
+            }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
+        }
+        return $this->redirect($this->generateUrl('list_device'));
     }
 }
