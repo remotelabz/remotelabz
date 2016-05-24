@@ -187,22 +187,28 @@ class DefaultController extends Controller
     public function Add_LabAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
+        $em = $this->getDoctrine()->getManager();
         $lab = new LAB();
-        $labForm = $this->get('form.factory')->create(new LABType(), $lab, array('method' => 'POST'));
+        $labForm = $this->get('form.factory')->create(new LABType($em), $lab, array('method' => 'POST'));
 
         if ('POST' === $request->getMethod()) {
+
             if ($labForm->handleRequest($request)->isValid()) {
-                $em = $this->getDoctrine()->getManager();
-                foreach ($lab->getPod() as $pod) {
-//                    $pod->setNomDevice( $nomdev);
-                    $lab->addPod($pod);
+                $pod=$lab->getPod();
+                $connexion=$lab->getConnexions();
+
+                foreach ($pod as $p){
+                     $lab->addPod($p);
                 }
 
+                foreach ($connexion as $con){
+                    $lab->addConnexion($con);
+                }
+                $em->persist($lab);
+                $em->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'Lab ajouté  ');
+                return $this->redirect($this->generateUrl('add_lab'));
             }
-            $em->persist($lab);
-            $em->flush();
-            $request->getSession()->getFlashBag()->add('notice', 'lab ajouter  ');
-            return $this->redirect($this->generateUrl('add_lab'));
         }
         return $this->render(
             'BackendBundle::add_lab.html.twig', array(
@@ -233,6 +239,25 @@ class DefaultController extends Controller
         }
 
 
+    }
+
+    /**
+     * @Route("/admin/ajax_connexion_pod", name="ajax_connexion_pod")
+     */
+    public function ajaxActionAddConnexion(Request $request)
+    {
+
+        if ($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
+        {
+            $id = $request->request->get('id');
+            if ($id != null) {
+                $data = $this->getDoctrine()
+                    ->getManager()
+                    ->getRepository('AppBundle:Connexion')
+                    ->getConnexionByPOD($id);
+                return new JsonResponse($data);
+            }
+        }
     }
 
     /**

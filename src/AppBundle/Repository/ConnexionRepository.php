@@ -20,4 +20,12 @@ class ConnexionRepository extends \Doctrine\ORM\EntityRepository
             ->getQuery()
             ->getArrayResult();
     }
+    public function getConnexionByPOD_QueryBuilder($pod)
+    {
+        return $this
+            ->createQueryBuilder('con')
+            ->where('con.pod = :pod')
+            ->setParameter('pod', $pod);
+
+    }
 }
