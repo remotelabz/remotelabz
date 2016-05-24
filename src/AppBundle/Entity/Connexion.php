@@ -100,6 +100,7 @@ class Connexion
     private $nomdevice2;
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $lab;
 
