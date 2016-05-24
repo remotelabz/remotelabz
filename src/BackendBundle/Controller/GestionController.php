@@ -87,6 +87,24 @@ class GestionController extends Controller
         ));
 
     }
+    /**
+     * @Route("/admin/list_lab", name="list_LAB")
+     */
+    public function list_lab(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:LAB');
+
+        $list_lab = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_LAB.html.twig',array(
+            'user' => $user,
+            'list_lab' => $list_lab
+        ));
+
+    }
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
@@ -108,22 +126,4 @@ class GestionController extends Controller
 
 
 
-    /**
-     * @Route("/admin/ajax_connexion_pod", name="ajax_connexion_pod")
-     */
-    public function ajaxAction(Request $request)
-    {
-
-        if ($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
-        {
-            $id = $request->request->get('id');
-            if ($id != null) {
-                $data = $this->getDoctrine()
-                    ->getManager()
-                    ->getRepository('AppBundle:Connexion')
-                    ->getConnexionByPOD($id);
-                return new JsonResponse($data);
-            }
-        }
-    }
 }
