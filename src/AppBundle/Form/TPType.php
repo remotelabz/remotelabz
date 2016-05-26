@@ -12,7 +12,14 @@ class TPType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
+            -> add('labs', 'entity', array(
+                'class'    => 'AppBundle:LAB',
+                'property' => 'nomlab',
+                'multiple' => true
+            ))
+            ->add('nom','text')
             ->add('file','file')
+            ->add('save','submit')
         ;
     }
 
