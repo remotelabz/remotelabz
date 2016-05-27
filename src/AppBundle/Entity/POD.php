@@ -8,6 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
  * POD
  *
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PODRepository")
+ * @ORM\Table(name="pod")
+ 
  */
 class POD
 {
