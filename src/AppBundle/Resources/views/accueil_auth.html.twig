@@ -36,10 +36,24 @@
                   </ul>
 				<li><a><i class="fa fa-cog"></i> Gestion TP <span class="fa fa-chevron-down"></span></a>
 					<ul class="nav child_menu" style="display: none">
-						<li><a href="{{path('add_device')}}">Ajouter Device</a></li>
-                        <li><a href="{{path('add_pod')}}">Ajouter POD</a></li>
-                      <li><a href="{{path('add_connexion')}}">Ajouter Connexion</a></li>
-                         <li><a href="{{path('add_lab')}}">Ajouter LAB</a></li>
+                          <li><a><i class="fa fa-cog"></i> Configuration <span class="fa fa-chevron-down"></span></a>
+                                <ul class="nav child_menu" style="display: none">
+                                      <li><a href="{{path('add_device')}}">Ajouter Device</a></li>
+                                      <li><a href="{{path('add_pod')}}">Ajouter POD</a></li>
+                                    <li><a href="{{path('add_connexion')}}">Ajouter Connexion</a></li>
+                                       <li><a href="{{path('add_lab')}}">Ajouter LAB</a></li>
+                                    <li><a href="{{path('add_tp')}}">Ajouter TP</a></li>
+                                  </ul>
+                          </li>
+                        <li><a><i class="fa fa-cog"></i> Gestion <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu" style="display: none" >
+                                <li><a href="{{path('list_Device')}}">List Device</a></li>
+                                <li><a href="{{path('list_Network_Interface')}}">List Interface</a></li>
+                                <li><a href="{{path('list_POD')}}">List POD</a></li>
+                                <li><a href="{{path('list_Connexion')}}">List Connexion</a></li>
+                                <li><a href="{{path('list_LAB')}}">List LAB</a></li>
+                            </ul>
+                        </li>
 
 					</ul>
                 </li>
