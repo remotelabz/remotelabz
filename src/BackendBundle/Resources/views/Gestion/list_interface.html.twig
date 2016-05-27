@@ -1,0 +1,90 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+			<div class="flash-notice">
+				{{ flash_message }}
+			</div>
+		{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des interfaces</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
+						<thead>
+						<tr>
+							<th class="sorting" >Nom</th>
+							<th class="sorting" >Device</th>
+
+						</tr>
+                    </thead>
+				    <tbody>
+				{% for interface in list_interface %}
+
+					<td class="sorting_1" tabindex="0">{{ interface.Nom }}</td>
+
+				{% if interface.device is empty %}
+							<td> aucun device attaché </td>
+				{%else%}
+						<td>{{ interface.device.nom }}</td>
+				{%endif%}
+
+					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
+
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+	{#<script type="text/javascript">#}
+		{#$(function () {#}
+			{#jQuery(document).ready(function () {#}
+				{#console.log("jQuery est prêt !");#}
+			{#})#}
+		{#});#}
+
+			{#function delete_device(id_device) {#}
+				{#$.ajax({#}
+					{#url: "{{ url('delete_device') }}",#}
+					{#type: 'POST',#}
+					{#data: {#}
+						{#id: id_device,#}
+
+					{#},#}
+					{#dataType: 'json',#}
+
+
+					{#success: function (reponse) {#}
+						{#console.log('succes');#}
+
+
+					{#}#}
+
+				{#});#}
+			{#}#}
+
+	{#</script>#}
+
+{% endblock %}
