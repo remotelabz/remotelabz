@@ -1,0 +1,94 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+			<div class="flash-notice">
+				{{ flash_message }}
+			</div>
+		{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des connexions</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
+						<thead>
+						<tr>
+							<th class="sorting" >Nom</th>
+							<th>device1</th>
+							<th>interface1</th>
+							<th>device2</th>
+							<th>interface2</th>
+
+
+
+						</tr>
+                    </thead>
+				    <tbody>
+				{% for connexion in list_connexion %}
+
+					<td class="sorting_1" tabindex="0">{{ connexion.nomconnexion }}</td>
+					<td>{{ connexion.Device1.nom }}</td>
+					<td>{{ connexion.interface1.nom }}</td>
+					<td>{{ connexion.Device2.nom }}</td>
+					<td>{{ connexion.interface2.nom  }}</td>
+
+
+					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': connexion.id, 'bundle':'Connexion'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
+
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+	{#<script type="text/javascript">#}
+		{#$(function () {#}
+			{#jQuery(document).ready(function () {#}
+				{#console.log("jQuery est prêt !");#}
+			{#})#}
+		{#});#}
+
+			{#function delete_device(id_device) {#}
+				{#$.ajax({#}
+					{#url: "{{ url('delete_device') }}",#}
+					{#type: 'POST',#}
+					{#data: {#}
+						{#id: id_device,#}
+
+					{#},#}
+					{#dataType: 'json',#}
+
+
+					{#success: function (reponse) {#}
+						{#console.log('succes');#}
+
+
+					{#}#}
+
+				{#});#}
+			{#}#}
+
+	{#</script>#}
+
+{% endblock %}
