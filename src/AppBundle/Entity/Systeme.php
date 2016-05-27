@@ -29,7 +29,7 @@ class Systeme
 
     /**
 	 * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Hyperviseur",cascade={"persist"})
-	 * @ORM\JoinColumn(nullable=false)
+	 * @ORM\JoinColumn(nullable=true,onDelete="SET NULL")
      */
     private $hyperviseur;
 
@@ -49,9 +49,13 @@ class Systeme
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Parameter",cascade={"persist"})
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true,onDelete="SET NULL")
      */
     private $parametres;
+
+    public function __toString() {
+        return $this->nom;
+    }
 
     /**
      * Get id

@@ -17,7 +17,7 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
         $qb_used_interface = $em->createQueryBuilder()
         ->select('net')
 		->from('AppBundle:Network_Interface', 'net')
-		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle=net.id')
+		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle = net.id')
 		->getQuery()
 		->getArrayResult();
 		
@@ -46,17 +46,14 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
     public function getInterfacesAttachedToDevice($dev)
     {
 
-        $qb = $this->_em->createQueryBuilder();
-        return $qb->select('net')
-            ->from('AppBundle:Network_Interface', 'net')
-            ->where($qb->expr()->isNotNull('net.device'))
-            ->join('net.device', 'dev')
-            ->andWhere('dev.id = :dev')
-            ->setParameter('dev', $dev)
-            ->getQuery()
-            ->getResult();
+        return $this
+            ->createQueryBuilder('net')
+            ->where('net.device = :device')
+            ->setParameter('device', $dev);
 
     }
+
+
     public function Network_Interface($device)
     {
         return $this

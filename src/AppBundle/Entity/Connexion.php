@@ -30,7 +30,7 @@ class Connexion
     /**
      * @var string
      *
-     * @ORM\Column(name="NomeConnexion", type="string", length=255)
+     * @ORM\Column(name="NomConnexion", type="string", length=255)
      */
     private $nomconnexion;
 
@@ -39,34 +39,47 @@ class Connexion
      */
     private $pod;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="vlan1", type="integer")
+     */
+    private $vlan1;
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="vlan2", type="integer")
+     */
+    private $vlan2;
+
 
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device1;
 
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device2;
 
     /**
      *
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $interface1;
 
     /**
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
 
     private $interface2;
@@ -87,6 +100,7 @@ class Connexion
     private $nomdevice2;
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $lab;
 
@@ -318,5 +332,53 @@ class Connexion
     public function getPod()
     {
         return $this->pod;
+    }
+
+    /**
+     * Set vlan1
+     *
+     * @param string $vlan1
+     *
+     * @return Connexion
+     */
+    public function setVlan1($vlan1)
+    {
+        $this->vlan1 = $vlan1;
+
+        return $this;
+    }
+
+    /**
+     * Get vlan1
+     *
+     * @return string
+     */
+    public function getVlan1()
+    {
+        return $this->vlan1;
+    }
+
+    /**
+     * Set vlan2
+     *
+     * @param string $vlan2
+     *
+     * @return Connexion
+     */
+    public function setVlan2($vlan2)
+    {
+        $this->vlan2 = $vlan2;
+
+        return $this;
+    }
+
+    /**
+     * Get vlan2
+     *
+     * @return string
+     */
+    public function getVlan2()
+    {
+        return $this->vlan2;
     }
 }

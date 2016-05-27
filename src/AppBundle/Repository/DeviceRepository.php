@@ -31,9 +31,9 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
         return $this
             ->createQueryBuilder('dev')
             ->where('dev.pod = :pod')
-            ->setParameter('pod', $pod)
-            ->getQuery()
-           ->getArrayResult();
+            ->setParameter('pod', $pod);
+//            ->getQuery()
+//           ->getArrayResult();
     }
 
     public function InterfacesAttachedToPod($dev)
