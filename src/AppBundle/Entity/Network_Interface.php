@@ -22,11 +22,10 @@ class Network_Interface
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
-
     /**
      * @var string
      *
-     * @ORM\Column(name="nom_interface", type="string", length=255,unique = true)
+     * @ORM\Column(name="nom_interface", type="string", length=255)
      *  @Assert\NotBlank()
      */
     private $nom;
@@ -42,13 +41,17 @@ class Network_Interface
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $device;
-
     /**
-     * Get id
-     *
-     * @return int
+     * @Assert\Regex(pattern="/[0-9]+/")
      */
-
+//    private $nbr_interface;
+//
+//    /**
+//     * Get id
+//     *
+//     * @return int
+//     */
+    
     public function getId()
     {
         return $this->id;
@@ -133,6 +136,16 @@ class Network_Interface
     {
         return $this->device;
     }
-
-
+//    public function setNbrInterface($nbrInterface)
+//    {
+//        $this->nbr_interface = $nbrInterface;
+//
+//        return $this;
+//    }
+//
+// 
+//    public function getNbrInterface()
+//    {
+//        return $this->nbr_interface;
+//    }
 }

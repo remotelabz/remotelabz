@@ -78,7 +78,6 @@ class DefaultController extends Controller
             }
             if ($Interfaceform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
-                $em->persist($interface);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Interface  ' . $interface->getNom() . ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
