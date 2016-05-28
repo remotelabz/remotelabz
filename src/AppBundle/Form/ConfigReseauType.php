@@ -22,8 +22,8 @@ class ConfigReseauType extends AbstractType
             ->add('masque')
             ->add('protocole','choice', array(
                 'choices' => array('vnc' => 'VNC', 'telnet' => 'Telnet'))
-
-            );
+            )
+        ->add('port');
     }
     
     /**

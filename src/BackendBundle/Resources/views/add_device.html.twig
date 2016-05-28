@@ -116,6 +116,17 @@
                                             {# Génération de l'input. #}
                                             {{ form_widget(InterfaceControleform.configreseau.protocole, {'attr': {'class': 'form-control'}}) }}
                                         </div>
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(InterfaceControleform.configreseau.port, "Port", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(InterfaceControleform.configreseau.port) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(InterfaceControleform.configreseau.port, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
                                     </div>
 
                                     {{ form_widget(InterfaceControleform.save, {'attr': {'class': 'btn btn-primary'}}) }}
