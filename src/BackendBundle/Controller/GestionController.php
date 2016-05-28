@@ -160,6 +160,24 @@ class GestionController extends Controller
         ));
 
     }
+	 /**
+     * @Route("/admin/list_systeme", name="list_Systeme")
+     */
+    public function list_systeme(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Systeme');
+
+        $list_systeme = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_systeme.html.twig',array(
+            'user' => $user,
+            'list_systeme' => $list_systeme
+			));
+
+    }
 
 
     /**
