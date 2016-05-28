@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -23,32 +24,124 @@ class TP
      */
         private $id;
 
-   
-
-    private $file;
-
-    /**
-     * @ORM\Column(name="alt", type="string", length=255)
-     */
-    private $alt;
-
-
-
-    /**
-     * @ORM\Column(name="url", type="string", length=255)
-     */
-    private $url;
-
-    /**
-     * @ORM\Column(name="nom_fichier", type="string", length=255)
-     */
-    private $nom;
     /**
      * @ORM\OneToMany(targetEntity="AppBundle\Entity\LAB", mappedBy="tp")
      */
     private $labs;
-    // On ajoute cet attribut pour y stocker le nom du fichier temporairement
-    private $tempFilename;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank
+     */
+    private  $nom;
+
+    /**
+     * @Assert\File(maxSize="6000000")
+     */
+    private $file;
+
+    private $temp;
+
+
+    //store the relative path to the file to use it in twig 
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    public $path;
+    
+    public function getAbsolutePath()
+    {
+        return null === $this->path
+            ? null
+//            : $this->getUploadRootDir().'/'.$this->id.'.'.$this->path;
+            : $this->getUploadRootDir().'/'.$this->id.'.'.$this->path;
+    }
+
+    public function getWebPath()
+    {
+        return null === $this->path
+            ? null
+            : $this->getUploadDir().'/';
+    }
+
+
+    /**
+     * @ORM\PrePersist()
+     * @ORM\PreUpdate()
+     */
+    public function preUpload()
+    {
+        if (null !== $this->getFile()) {
+            $this->path = $this->getFile()->guessExtension();
+        }
+    }
+
+    /**
+     * @ORM\PostPersist()
+     * @ORM\PostUpdate()
+     */
+    public function upload()
+    {
+        if (null === $this->getFile()) {
+            return;
+        }
+
+        // check if we have an old image
+        if (isset($this->temp)) {
+            // delete the old image
+            unlink($this->temp);
+            // clear the temp image path
+            $this->temp = null;
+        }
+
+        // you must throw an exception here if the file cannot be moved
+        // so that the entity is not persisted to the database
+        // which the UploadedFile move() method does
+        $this->getFile()->move(
+            $this->getUploadRootDir(),
+            $this->id.'.'.$this->getFile()->guessExtension()
+        );
+
+        $this->setFile(null);
+
+
+    }
+    /**
+     * @ORM\PreRemove()
+     */
+    public function storeFilenameForRemove()
+    {
+        $this->temp = $this->getAbsolutePath();
+    }
+
+    /**
+     * @ORM\PostRemove()
+     */
+    public function removeUpload()
+    {
+        if (isset($this->temp)) {
+            unlink($this->temp);
+        }
+    }
+
+
+
+
+    protected function getUploadRootDir()
+    {
+        // the absolute directory path where uploaded
+        // documents should be saved
+        return __DIR__.'/../../../web/'.$this->getUploadDir();
+
+    }
+    protected function getUploadDir()
+    {
+        // get rid of the __DIR__ so it doesn't screw up
+        // when displaying uploaded doc/image in the view.
+        return 'uploads/documents';
+    }
+
 
     /**
      * Get id
@@ -60,145 +153,6 @@ class TP
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getFile()
-    {
-        return $this->file;
-    }
-
-
-    //ces deux evenement permetent de remplir l'attribut url et alt avant l'enregestrement
-
-     /**
-     * @ORM\PrePersist()
-     * @ORM\PreUpdate()
-     */
-    public function preUpload()
-    {
-        // Si jamais il n'y a pas de fichier (champ facultatif)
-        if (null === $this->file) {
-            return;
-        }
-
-        // Le nom du fichier est son id, on doit juste stocker également son extension
-        // Pour faire propre, on devrait renommer cet attribut en « extension », plutôt que « url »
-        $this->url = $this->file->guessExtension();
-
-        // Et on génère l'attribut alt de la pour le twig , à la valeur du nom du fichier sur le PC de l'internaute
-        $this->alt = $this->file->getClientOriginalName();
-    }
-
-    /* En cas d'échec de l'enregistrement de l'entité en base de données, il ne faudrait
-    pas se retrouver avec un fichier orphelin sur notre
-    disque. On attend donc que l'enregistrement
-    se fasse effectivement avant de déplacer le fichier. on utilise alors les deux event*/
-
-    /**
-     * @ORM\PostPersist()
-     * @ORM\PostUpdate()
-     */
-    public function upload()
-    {
-        // Si jamais il n'y a pas de fichier (champ facultatif)
-        if (null === $this->file) {
-            return;
-        }
-
-        // Si on avait un ancien fichier, on le supprime
-        if (null !== $this->tempFilename) {
-            $oldFile = $this->getUploadRootDir().'/'.$this->id.'.'.$this->tempFilename;
-            if (file_exists($oldFile)) {
-                unlink($oldFile);
-            }
-        }
-
-        // On déplace le fichier envoyé dans le répertoire de notre choix
-        $this->file->move(
-            $this->getUploadRootDir(), // Le répertoire de destination
-            $this->id.'.'.$this->url   // Le nom du fichier à créer, ici « id.extension »
-        );
-    }
-
-
-
-
-    public function setFile(UploadedFile $file = null )
-    {
-        $this->file = $file;
-        // On vérifie si on avait déjà un fichier pour cette entité
-        if (null !== $this->url) {
-            // On sauvegarde l'extension du fichier pour le supprimer plus tard
-            $this->tempFilename = $this->url;
-
-            // On réinitialise les valeurs des attributs url et alt
-            $this->url = null;
-            $this->alt = null;
-        }
-    }
-
-
-    public function getUploadDir()
-    {
-        // On retourne le chemin relatif vers l'image pour un navigateur
-        return 'uploads/tps';
-    }
-
-    protected function getUploadRootDir()
-    {
-        // On retourne le chemin relatif vers l'image pour notre code PHP
-        return __DIR__.'/../../../../web/'.$this->getUploadDir();
-    }
-    
-    /**
-     * Set url
-     *
-     * @param string $url
-     *
-     * @return TP
-     */
-    public function setUrl($url)
-    {
-        $this->url = $url;
-
-        return $this;
-    }
-
-    /**
-     * Get url
-     *
-     * @return string
-     */
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set nom
-     *
-     * @param string $nom
-     *
-     * @return TP
-     */
-    public function setNom($nom)
-    {
-        $this->nom = $nom;
-
-        return $this;
-    }
-
-    /**
-     * Get nom
-     *
-     * @return string
-     */
-    public function getNom()
-    {
-        return $this->nom;
     }
 
     /**
@@ -258,30 +212,55 @@ class TP
         return $this->labs;
     }
 
-   
-
-
     /**
-     * Set alt
+     * Set nom
      *
-     * @param string $alt
+     * @param string $nom
      *
      * @return TP
      */
-    public function setAlt($alt)
+    public function setNom($nom)
     {
-        $this->alt = $alt;
+        $this->nom = $nom;
 
         return $this;
     }
 
     /**
-     * Get alt
+     * Get nom
      *
      * @return string
      */
-    public function getAlt()
+    public function getNom()
     {
-        return $this->alt;
+        return $this->nom;
+    }
+
+    /**
+     * Sets file.
+     *
+     * @param UploadedFile $file
+     */
+    public function setFile(UploadedFile $file = null)
+    {
+        $this->file = $file;
+        // check if we have an old image path
+        if (is_file($this->getAbsolutePath())) {
+            // store the old name to delete after the update
+            $this->temp = $this->getAbsolutePath();
+            $this->path = null;
+        } else {
+            $this->path = 'initial';
+        }
+    }
+
+    /**
+     * Get file.
+     *
+     * @return UploadedFile
+     */
+    public function getFile()
+    {
+        return $this->file;
     }
 }

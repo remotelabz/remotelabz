@@ -20,7 +20,7 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Liste des LABs</h2>
+                        <h2>Liste des TPs</h2>
                         
                         <div class="clearfix"></div>
                     </div>
@@ -30,40 +30,33 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th class="sorting" >Pod</th>
-							<th class="sorting" >Connexion</th>
+							<th class="sorting" >LABs</th>
 
 						</tr>
                     </thead>
 				    <tbody>
-				{% for lab in list_lab %}
+				{% for tp in list_tp %}
 
-					<td class="sorting_1" tabindex="0">{{ lab.nomlab }}</td>
+					<td class="sorting_1" tabindex="0">{{ tp.nom }}</td>
 
-				{% if lab.pod is empty %}
-							<td> aucun device attaché </td>
+				{% if tp.labs is empty %}
+							<td> aucun  labs attaché a ce tp</td>
 				{%else%}
 					<td>
-						{% for p in lab.pod %}
-							{{ p.nom }}
+						{% for lab in tp.labs %}
+							{{ lab.nomlab }}
 								<br>
 						{% endfor %}
 					</td>
 				{%endif%}
-					{% if lab.connexions is empty %}
-						<td> aucune connexion</td>
-					{%else%}
-						<td>
-							{% for con in lab.connexions %}
-								{{ con.nomconnexion }}
-								<br>
-							{% endfor %}
-						</td>
-					{%endif%}
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': lab.id, 'bundle':'LAB'}) }}" data-type = "post" >
-							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
+					<td>
+						 <a  class="btn btn-link" href="{{ path('delete_entite',{'id': tp.id, 'bundle':'TP'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  Supprimer </a>
+						 <a class ="btn btn-link" href="{{ path ('show_tp',{'id':tp.id}) }} " target="_blank"  >
+							<i class="icon-trash icon-white"></i>  Fichier </a>
+					</td>
 
 				</tr>
 				{% endfor %}

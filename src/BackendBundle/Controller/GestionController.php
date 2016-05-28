@@ -11,6 +11,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 
 class GestionController extends Controller
@@ -105,6 +106,24 @@ class GestionController extends Controller
         ));
 
     }
+    /**
+     * @Route("/admin/list_tp", name="list_TP")
+     */
+    public function list_tp(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+
+        $list_tp = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_tp.html.twig',array(
+            'user' => $user,
+            'list_tp' => $list_tp
+        ));
+
+    }
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
@@ -120,7 +139,30 @@ class GestionController extends Controller
                 return $this->redirect($this->generateUrl('list_'.$bundle));
             }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
         }
+        $request->getSession()->getFlashBag()->add('info', "le".$bundle." a bien été supprimée.");
         return $this->redirect($this->generateUrl('list_'.$bundle));
+    }
+    /**
+     * @Route("/admin/show_tp{id}", name="show_tp")
+     */
+    public function show_tp($id,Request $request){
+        $em = $this->getDoctrine()->getManager();
+        $tp= $em->getRepository('AppBundle:TP')->findOneBy(array('id' => $id));
+        if ($tp != null) {
+            $chemin = $tp->getWebPath();
+            $fichier = $id.".pdf";
+            $response = new Response();
+            $response->setContent(file_get_contents($chemin . $fichier));
+            $response->headers->set(
+                'Content-Type',
+                'application/pdf'
+            ); // Affiche le pdf au lieux de le télécharger
+            $response->headers->set('Content-disposition', 'filename=' . $fichier);
+
+            return $response;
+        }
+
+
     }
 
 
