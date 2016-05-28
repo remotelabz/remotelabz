@@ -39,6 +39,7 @@ class LAB
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TP" ,inversedBy="labs")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $tp;
 
