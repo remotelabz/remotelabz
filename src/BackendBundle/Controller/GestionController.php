@@ -124,6 +124,43 @@ class GestionController extends Controller
         ));
 
     }
+	 /**
+     * @Route("/admin/list_parameter", name="list_Parameter")
+     */
+    public function list_parameter(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Parameter');
+
+        $list_parameter = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_parameter.html.twig',array(
+            'user' => $user,
+            'list_parameter' => $list_parameter
+        ));
+
+    }
+	 /**
+     * @Route("/admin/list_hyperviseur", name="list_Hyperviseur")
+     */
+    public function list_hyperviseur(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Hyperviseur');
+
+        $list_hyperviseur = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_hyperviseur.html.twig',array(
+            'user' => $user,
+            'list_hyperviseur' => $list_hyperviseur
+        ));
+
+    }
+
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
@@ -136,10 +173,11 @@ class GestionController extends Controller
             if ($entite != null) {
                 $em->remove($entite);
                 $em->flush();
+				$request->getSession()->getFlashBag()->add('notice', "le "." ".$bundle." a bien été supprimée.");
                 return $this->redirect($this->generateUrl('list_'.$bundle));
             }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
         }
-        $request->getSession()->getFlashBag()->add('info', "le".$bundle." a bien été supprimée.");
+        
         return $this->redirect($this->generateUrl('list_'.$bundle));
     }
     /**
