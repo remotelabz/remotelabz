@@ -344,8 +344,20 @@ class DefaultController extends Controller
         $tp = new TP();
         $form_tp = $this->get('form.factory')->create(new TPType(), $tp, array('method' => 'POST'));
         if ('POST' === $request->getMethod()) {
-            echo $tp->getAlt();
-            die();
+            if ($form_tp->handleRequest($request)->isValid()) {
+                $em = $this->getDoctrine()->getManager();
+                $labs = $tp->getLabs();
+                foreach ($labs as $lab) {
+                    $tp->addLab($lab);
+                }
+                $em->persist($tp);
+                $em->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'tp  ajouter  ');
+                return $this->redirect($this->generateUrl('add_tp'));
+
+
+            }
+
         }
 //            if ($form_tp->handleRequest($request)->isValid()) {
 //                $labs = $tp->getLabs();
