@@ -21,9 +21,11 @@ class ConfigReseauType extends AbstractType
             ->add('iPGateway')
             ->add('masque')
             ->add('protocole','choice', array(
-                'choices' => array('vnc' => 'VNC', 'telnet' => 'Telnet'))
+                'choices' => array('vnc' => 'VNC', 
+									'telnet' => 'Telnet',
+									'SSH' => 'SSH'))
             )
-        ->add('port');
+        ->add('port','text');
     }
     
     /**

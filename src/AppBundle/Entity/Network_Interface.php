@@ -5,13 +5,13 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+
 
 /**
  * Network_Interface
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
- * @UniqueEntity(fields="nom",message="une interafce existe dèjà avec ce nom")
  */
+
 class Network_Interface
 {
     /**
@@ -24,7 +24,6 @@ class Network_Interface
     private $id;
     /**
      * @var string
-     *
      * @ORM\Column(name="nom_interface", type="string", length=255)
      *  @Assert\NotBlank()
      */
