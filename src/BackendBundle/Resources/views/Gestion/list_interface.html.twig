@@ -46,7 +46,7 @@
 				{%endif%}
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
+					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
 							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
 
 				</tr>
