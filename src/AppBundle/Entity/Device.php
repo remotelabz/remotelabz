@@ -3,11 +3,14 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * Device
  *
  * @ORM\Entity(repositoryClass="AppBundle\Repository\DeviceRepository")
+ * @UniqueEntity(fields="network_interfaces",message="une interafce existe dèjà avec ce nom")
+
  */
 class Device
 {
@@ -23,7 +26,7 @@ class Device
     /**
      * @var string
      *
-     * @ORM\Column(name="nom", type="string", length=255)
+     * @ORM\Column(name="network_interfaces", type="string", length=255)
      */
     private $nom;
 
