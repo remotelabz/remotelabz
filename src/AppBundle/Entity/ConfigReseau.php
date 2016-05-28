@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * ConfigReseau
@@ -63,11 +64,10 @@ class ConfigReseau
 	
 	/**
      * @var int
-		*
      * @ORM\Column(name="Port", type="integer", nullable=true)
+     * @Assert\Regex(pattern="/\d+/")
      */
     private $port;
-
 
     /**
      * Get id
