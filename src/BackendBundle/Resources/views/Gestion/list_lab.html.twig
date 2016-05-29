@@ -30,26 +30,16 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th class="sorting" >Pod</th>
 							<th class="sorting" >Connexion</th>
 
 						</tr>
                     </thead>
 				    <tbody>
+					
 				{% for lab in list_lab %}
 
 					<td class="sorting_1" tabindex="0">{{ lab.nomlab }}</td>
-
-				{% if lab.pod is empty %}
-							<td> aucun device attaché </td>
-				{%else%}
-					<td>
-						{% for p in lab.pod %}
-							{{ p.nom }}
-								<br>
-						{% endfor %}
-					</td>
-				{%endif%}
+		
 					{% if lab.connexions is empty %}
 						<td> aucune connexion</td>
 					{%else%}

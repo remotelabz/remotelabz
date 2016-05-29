@@ -41,14 +41,17 @@ class GestionController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
         $repository = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
+		$repo = $this->getDoctrine()->getRepository('AppBundle:Device');
 
-        $list_interface = $repository->findAll();
+        $list_interface = $repository->getInterfaceForList();
+		$list_interfaceControle = $repo->getControleInterfaceForList();
 
 
         return $this->render(
             'BackendBundle:Gestion:list_interface.html.twig',array(
-            'user' => $user,
-            'list_interface' => $list_interface
+            'user' 						=> $user,
+			'list_interfaceControle'	=> $list_interfaceControle,
+            'list_interface'			 => $list_interface
         ));
 
     }
@@ -100,7 +103,7 @@ class GestionController extends Controller
 
 
         return $this->render(
-            'BackendBundle:Gestion:list_LAB.html.twig',array(
+            'BackendBundle:Gestion:list_lab.html.twig',array(
             'user' => $user,
             'list_lab' => $list_lab
         ));

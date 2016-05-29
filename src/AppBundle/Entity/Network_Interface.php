@@ -30,7 +30,7 @@ class Network_Interface
     private $nom;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade={"persist","remove"})
      * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
      */
 
@@ -40,16 +40,14 @@ class Network_Interface
      * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $device;
+	
+ 
+
     /**
-     * @Assert\Regex(pattern="/[0-9]+/")
+     * Get id
+     *
+     * @return int
      */
-//    private $nbr_interface;
-//
-//    /**
-//     * Get id
-//     *
-//     * @return int
-//     */
     
     public function getId()
     {
