@@ -35,6 +35,8 @@
 							<th>modele</th>
 							<th>marque</th>
 							<th>systeme</th>
+							<th>Interfaces</th>
+							<th>Interface de controle</th>
 
 
 						</tr>
@@ -48,6 +50,23 @@
 					<td>{{ device.modele }}</td>
 					<td>{{ device.marque }}</td>
 					<td>{{ device.systeme.nom }}</td>
+					{% if device.networkInterfaces is empty %}
+							<td> device sans interface</td>
+				{%else%}
+					<td>
+						{% for interface in device.networkInterfaces %}
+							{{ interface.nom }}
+								<br>
+						{% endfor %}
+					</td>
+				{%endif%}
+				{% if device.interfaceControle is empty %}
+							<td> device sans interface <br> de controle </td>
+				{%else%}
+					<td>
+						{{ device.interfaceControle.nom }}
+					</td>
+				{%endif%}
 
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
