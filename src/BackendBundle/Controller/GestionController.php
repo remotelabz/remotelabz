@@ -55,6 +55,23 @@ class GestionController extends Controller
         ));
 
     }
+	 /**
+     * @Route("/admin/list_ConfigReseau", name="list_ConfigReseau")
+     */
+    public function list_ConfigReseau(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+		$repo = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
+		$list_interfaceControle = $repo->getInterfaceControleForList();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_configReseau.html.twig',array(
+            'user' 						=> $user,
+			'list_interfaceControle'	=> $list_interfaceControle,
+        ));
+
+    }
     /**
      * @Route("/admin/list_pod", name="list_POD")
      */
