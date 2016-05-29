@@ -72,6 +72,14 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
             ->getQuery()
             ->getResult();
     }
+	 public function getInterfaceControleForList()
+    {
+        return $this
+            ->createQueryBuilder('net')
+            ->where('net.config_reseau IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
 	
 }
 
