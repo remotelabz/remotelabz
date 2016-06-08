@@ -20,7 +20,7 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Liste des device</h2>
+                        <h2>Liste des connexions</h2>
                         
                         <div class="clearfix"></div>
                     </div>
@@ -30,47 +30,27 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th>type</th>
-							<th>propriete</th>
-							<th>modele</th>
-							<th>marque</th>
-							<th>systeme</th>
-							<th>Interfaces</th>
-							<th>Interface de controle</th>
+							<th>device1</th>
+							<th>interface1</th>
+							<th>device2</th>
+							<th>interface2</th>
+
 
 
 						</tr>
                     </thead>
 				    <tbody>
-				{% for device in list_device %}
+				{% for connexion in list_connexion %}
 
-					<td class="sorting_1" tabindex="0">{{ device.Nom }}</td>
-					<td>{{ device.type }}</td>
-					<td>{{ device.propriete }}</td>
-					<td>{{ device.modele }}</td>
-					<td>{{ device.marque }}</td>
-					<td>{{ device.systeme.nom }}</td>
-					{% if device.networkInterfaces is empty %}
-							<td> device sans interface</td>
-				{%else%}
-					<td>
-						{% for interface in device.networkInterfaces %}
-							{{ interface.nom }}
-								<br>
-						{% endfor %}
-					</td>
-				{%endif%}
-				{% if device.interfaceControle is empty %}
-							<td> device sans interface <br> de controle </td>
-				{%else%}
-					<td>
-						{{ device.interfaceControle.nom }}
-					</td>
-				{%endif%}
+					<td class="sorting_1" tabindex="0">{{ connexion.nomconnexion }}</td>
+					<td>{{ connexion.Device1.nom }}</td>
+					<td>{{ connexion.interface1.nom }}</td>
+					<td>{{ connexion.Device2.nom }}</td>
+					<td>{{ connexion.interface2.nom  }}</td>
 
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': device.id, 'bundle':'Device'}) }}" data-type = "post" >
+					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': connexion.id, 'bundle':'Connexion'}) }}" data-type = "post" >
 							<i class="icon-trash icon-white"></i>  Supprimer </a>  </td>
 
 				</tr>

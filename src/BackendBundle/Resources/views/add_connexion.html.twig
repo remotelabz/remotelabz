@@ -170,7 +170,7 @@
             function mafonctionchange1() {
                 console.log("dev1");
                 $.ajax({
-                    url: "{{ url('ajax_connexion') }}",
+                    url: "{{ url('ajax_connexion_call') }}",
                     type: 'POST',
                     data: {
                         id: $("select.dev1 option:selected").val(),
