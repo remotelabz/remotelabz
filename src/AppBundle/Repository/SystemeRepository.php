@@ -11,13 +11,24 @@ namespace AppBundle\Repository;
 class SystemeRepository extends \Doctrine\ORM\EntityRepository
 {
 
-//    public function getNotUsedSystemeQueryBuilder()
-//    {
-//        return  $this
-//            ->createQueryBuilder('s')
-//            ->join('s.id')
-//            ->where('a.published = :published')
-//            ->setParameter('published', true)
-//            ;
-//    }
+   public function getNotUsedSystemeQueryBuilder()
+    {
+		 $em = $this->getEntityManager();
+        $qb_used_systeme = $em->createQueryBuilder()
+        ->select('sys')
+		->from('AppBundle:Systeme', 'sys')
+		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.systeme = sys.id')
+		->getQuery()
+		->getArrayResult();
+		
+		$qb = $em->createQueryBuilder();
+		return $qb
+		->select('sys')
+		->from('AppBundle:Systeme', 'sys')
+		->where($qb->expr()->notin('sys.id',':qb_used_systeme'))
+		->setParameter('qb_used_systeme',$qb_used_systeme)
+		;
+		
+       
+   }
 }

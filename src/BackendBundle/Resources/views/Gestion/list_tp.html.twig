@@ -20,7 +20,7 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Liste des device</h2>
+                        <h2>Liste des TPs</h2>
                         
                         <div class="clearfix"></div>
                     </div>
@@ -30,48 +30,33 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th>type</th>
-							<th>propriete</th>
-							<th>modele</th>
-							<th>marque</th>
-							<th>systeme</th>
-							<th>Interfaces</th>
-							<th>Interface de controle</th>
-
+							<th class="sorting" >LABs</th>
 
 						</tr>
                     </thead>
 				    <tbody>
-				{% for device in list_device %}
+				{% for tp in list_tp %}
 
-					<td class="sorting_1" tabindex="0">{{ device.Nom }}</td>
-					<td>{{ device.type }}</td>
-					<td>{{ device.propriete }}</td>
-					<td>{{ device.modele }}</td>
-					<td>{{ device.marque }}</td>
-					<td>{{ device.systeme.nom }}</td>
-					{% if device.networkInterfaces is empty %}
-							<td> device sans interface</td>
+					<td class="sorting_1" tabindex="0">{{ tp.nom }}</td>
+
+				{% if tp.labs is empty %}
+							<td> aucun  labs attaché a ce tp</td>
 				{%else%}
 					<td>
-						{% for interface in device.networkInterfaces %}
-							{{ interface.nom }}
+						{% for lab in tp.labs %}
+							{{ lab.nomlab }}
 								<br>
 						{% endfor %}
 					</td>
 				{%endif%}
-				{% if device.interfaceControle is empty %}
-							<td> device sans interface <br> de controle </td>
-				{%else%}
-					<td>
-						{{ device.interfaceControle.nom }}
-					</td>
-				{%endif%}
-
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': device.id, 'bundle':'Device'}) }}" data-type = "post" >
-							<i class="icon-trash icon-white"></i>  Supprimer </a>  </td>
+					<td>
+						 <a  class="btn btn-link" href="{{ path('delete_entite',{'id': tp.id, 'bundle':'TP'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  Supprimer </a>
+						 <a class ="btn btn-link" href="{{ path ('show_tp',{'id':tp.id}) }} " target="_blank"  >
+							<i class="icon-trash icon-white"></i>  Fichier </a>
+					</td>
 
 				</tr>
 				{% endfor %}
