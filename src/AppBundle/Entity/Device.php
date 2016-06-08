@@ -3,11 +3,13 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * Device
  *
  * @ORM\Entity(repositoryClass="AppBundle\Repository\DeviceRepository")
+
  */
 class Device
 {
@@ -69,8 +71,7 @@ class Device
     private $interfaceControle;
 
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device" ,orphanRemoval=true)
-     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
+     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
      */
     private $network_interfaces;
 

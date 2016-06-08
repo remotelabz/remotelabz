@@ -30,7 +30,7 @@ class Connexion
     /**
      * @var string
      *
-     * @ORM\Column(name="NomeConnexion", type="string", length=255)
+     * @ORM\Column(name="NomConnexion", type="string", length=255)
      */
     private $nomconnexion;
 
@@ -56,30 +56,30 @@ class Connexion
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device1;
 
     /**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $Device2;
 
     /**
      *
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $interface1;
 
     /**
      *
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\Network_Interface")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
 
     private $interface2;
@@ -100,6 +100,7 @@ class Connexion
     private $nomdevice2;
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $lab;
 

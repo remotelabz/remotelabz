@@ -2,7 +2,6 @@ imports:
     - { resource: parameters.yml }
     - { resource: security.yml }
     - { resource: services.yml }
-    - { resource: "@TestBundle/Resources/config/services.yml" }
     - { resource: "@BackendBundle/Resources/config/services.yml" }
     - { resource: "@ControlBundle/Resources/config/services.yml" }
     - { resource: "@VerifyBundle/Resources/config/services.yml" }

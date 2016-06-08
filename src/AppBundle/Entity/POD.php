@@ -8,6 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
  * POD
  *
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PODRepository")
+ * @ORM\Table(name="pod")
+ 
  */
 class POD
 {
@@ -43,6 +45,7 @@ class POD
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB",inversedBy="pod")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
     private $lab;
 

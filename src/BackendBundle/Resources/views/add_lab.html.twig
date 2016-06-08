@@ -53,7 +53,19 @@
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(labForm.pod, {'attr': {'class': 'form-control'}}) }}
+                                            {{ form_widget(labForm.pod, {'attr': {'class': 'pod'}}) }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(labForm.connexions, "Connexions", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(labForm.connexions) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(labForm.connexions, {'attr': {'class': 'connexions'}}) }}
                                         </div>
                                     </div>
 
@@ -80,6 +92,56 @@
         </div>
     </div>
     </div>
+    <script type="text/javascript">
+        $(function () {
+            jQuery(document).ready(function () {
+                console.log("jQuery est prêt !");
+
+                $(".pod").change(function () {
+                    console.log("pod !");
+                    var val = $(this).val();
+                    if (val != null){
+                        mafonctionchange1();
+                    }
+
+                })
+                        .trigger('change');
+
+            });
+
+            function mafonctionchange1() {
+                $.ajax({
+                    url: "{{ url('ajax_connexion_pod') }}",
+                    type: 'POST',
+                    data: {
+                        id: $("select.pod option:selected").val(),
+
+                    },
+                    dataType: 'json',
+
+
+                    success: function (reponse) {
+
+                        $('.connexions').empty();
+                        if (reponse != null){
+                            console.log("réponse ");
+                            $('.connexions').empty();
+
+                            $.each(reponse, function (index, element) {
+                                $('.connexions').append('<option value="' + element.id + '" selected="selected"> ' + element.nomconnexion + ' </option>');
+                            });
+                        }
+                        else $('.connexions').empty();
+
+                    }
+
+                });
+            }
+        });
+    </script>
+
+
+
 
 
 
