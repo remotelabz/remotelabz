@@ -5,13 +5,13 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+
 
 /**
  * Network_Interface
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Network_InterfaceRepository")
- * @UniqueEntity(fields="nom",message="une interafce existe dèjà avec ce nom")
  */
+
 class Network_Interface
 {
     /**
@@ -22,32 +22,33 @@ class Network_Interface
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
-
     /**
      * @var string
-     *
-     * @ORM\Column(name="nom_interface", type="string", length=255,unique = true)
+     * @ORM\Column(name="nom_interface", type="string", length=255)
      *  @Assert\NotBlank()
      */
     private $nom;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade="persist")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade={"persist","remove"})
+     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
      */
 
     private $config_reseau;
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device",inversedBy="network_interfaces")
-     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
+     * @ORM\JoinColumn(onDelete="SET NULL")
      */
     private $device;
+	
+ 
 
     /**
      * Get id
      *
      * @return int
      */
-
+    
     public function getId()
     {
         return $this->id;
@@ -132,6 +133,16 @@ class Network_Interface
     {
         return $this->device;
     }
-
-
+//    public function setNbrInterface($nbrInterface)
+//    {
+//        $this->nbr_interface = $nbrInterface;
+//
+//        return $this;
+//    }
+//
+// 
+//    public function getNbrInterface()
+//    {
+//        return $this->nbr_interface;
+//    }
 }
