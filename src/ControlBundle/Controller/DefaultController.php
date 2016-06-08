@@ -4,6 +4,7 @@ namespace ControlBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\HttpFoundation\Response;
 
 class DefaultController extends Controller
 {
@@ -27,5 +28,13 @@ class DefaultController extends Controller
 		'host' => "194.57.105.124",
 		'port' => "7220"
 		));
+    }
+	
+	 /**
+     * @Route("/listeTP", name="liste_TP")
+     */
+    public function listeTPAction()
+    {		
+        return $this->render('ControlBundle:Default:listeTP.html.twig');
     }
 }
