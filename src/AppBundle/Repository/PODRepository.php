@@ -16,7 +16,7 @@ class PODRepository extends \Doctrine\ORM\EntityRepository
         $qb = $this->_em->createQueryBuilder();
         return $qb->select('pod')
             ->from('AppBundle:POD', 'pod')
-            ->where($qb->expr()->isNull('pod.lab'))
+           // ->where($qb->expr()->isNull('pod.lab'))
 //            ->andWhere($qb->expr()->isNull('net.config_reseau'));
             ;
         ;
