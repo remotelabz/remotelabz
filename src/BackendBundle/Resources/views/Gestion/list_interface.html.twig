@@ -31,25 +31,41 @@
 						<tr>
 							<th class="sorting" >Nom</th>
 							<th class="sorting" >Device</th>
+							<th class="sorting" >Addresse Ip</th>
 
 						</tr>
                     </thead>
 				    <tbody>
 				{% for interface in list_interface %}
 
-					<td class="sorting_1" tabindex="0">{{ interface.Nom }}</td>
+						<td class="sorting_1" tabindex="0">{{ interface.nom }}</td>
 
-				{% if interface.device is empty %}
-							<td> aucun device attaché </td>
-				{%else%}
-						<td>{{ interface.device.nom }}</td>
-				{%endif%}
+					{% if interface.device is empty %}
+								<td> aucun device attaché </td>
+								<td> Interface sans Config Reseau </td>
+								
+					{%else%}
+							<td>{{ interface.device.nom }}</td>
+							<td> Interface sans Config Reseau </td>
+					{%endif%}
 
-					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
-					<td> <a  class="btn btn-danger" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
-							<i class="icon-trash icon-white"></i>  DELETE </a>  </td>
+						{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+						<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': interface.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
+								<i class="icon-trash icon-white"></i>  Supprimer </a>  </td>
 
-				</tr>
+					</tr>
+				{% endfor %}
+				{% for dev in list_interfaceControle %}
+
+						<td class="sorting_1" tabindex="0">{{ dev.interfaceControle.nom }}</td>
+							<td>{{ dev.nom }}</td>
+							<td> {{ dev.interfaceControle.configReseau.Ip }} </td>
+
+						{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+						<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': dev.interfaceControle.id, 'bundle':'Network_Interface'}) }}" data-type = "post" >
+								<i class="icon-trash icon-white"></i>  Supprimer </a>  </td>
+
+					</tr>
 				{% endfor %}
 				</tbody>
 				</table>
