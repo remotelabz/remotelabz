@@ -1,0 +1,101 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+    <div id="page-wrapper">
+        {% for flash_message in app.session.flashbag.get('notice') %}
+            <div class="flash-notice">
+                {{ flash_message }}
+            </div>
+        {% endfor %}
+        {% for flash_message in app.session.flashbag.get('danger') %}
+            <div class="flash-notice">
+                {{ flash_message }}
+            </div>
+        {% endfor %}
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Ajout d'un TP</h2>
+                        <div class="clearfix"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="panel panel-primary">
+                                <div class="panel-heading">Ajoutez un TP</div>
+                                <div class="panel-body">
+
+                                    <div class="x_content">
+                                        <!-- content starts here -->
+                                        {{ form_start(form_tp, {'attr': {'class': 'form-horizontal'}}) }}
+                                        {# Les erreurs générales du formulaire. #}
+                                        {{ form_errors(form_tp) }}
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.nom, "Nom de fichier", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.nom) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form_tp.nom, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.labs, "LAB", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.labs) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form_tp.labs, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.file, 'Ajoutez un fichier ', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.file) }}
+                                            <br>
+                                            <div class="col-sm-2 ">
+                                                 {#Génération de l'input. #}
+                                                {{ form_widget(form_tp.file) }}
+                                            </div>
+                                        </div>
+
+                                        {{ form_widget(form_tp.save, {'attr': {'class': 'btn btn-primary'}}) }}
+
+                                        {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
+
+
+                                        {# Génération automatique des champs pas encore écrits.
+                                            Dans cet exemple, ce serait le champ CSRF (géré automatiquement par Symfony !)
+                                            et tous les champs cachés (type « hidden »). #}
+
+                                        {{ form_rest(form_tp) }}
+
+                                        {# Fermeture de la balise <form> du formulaire HTML #}
+                                        {{ form_end(form_tp) }}
+                                        <!-- content ends here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+{% endblock %}
