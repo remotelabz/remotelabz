@@ -37,6 +37,12 @@ class User extends BaseUser
     protected $lastname;
 
 
+	/**
+	 *
+     * @ORM\OneToOne(targetEntity="UserBundle\Entity\Groupe", cascade={"persist"})
+     */
+    protected $groupe;
+	
     /**
      * Get id
      *
@@ -100,5 +106,28 @@ class User extends BaseUser
         parent::__construct();
         // your own logic
     }
-}
 
+    /**
+     * Set groupe
+     *
+     * @param \UserBundle\Entity\Groupe $groupe
+     *
+     * @return User
+     */
+    public function setGroupe(\UserBundle\Entity\Groupe $groupe = null)
+    {
+        $this->groupe = $groupe;
+
+        return $this;
+    }
+
+    /**
+     * Get groupe
+     *
+     * @return \UserBundle\Entity\Groupe
+     */
+    public function getGroupe()
+    {
+        return $this->groupe;
+    }
+}
