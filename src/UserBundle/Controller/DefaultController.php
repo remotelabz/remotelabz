@@ -88,7 +88,7 @@ class DefaultController extends Controller
 				'id' => $new_user->getId(),
 				)		
 			));
-    }
+		}
 
     	return $this->render(
         'UserBundle:Gestion:add_user.html.twig',array(
@@ -185,7 +185,16 @@ class DefaultController extends Controller
 		$check="";
 		
 		if ($form->handleRequest($request)->isValid()) {
-			$test = $form->get('Groupe')->getData();
+			$em = $this->getDoctrine()->getManager();
+			$groupe = $form->get('Groupe')->getData();
+			$userlist = $form->get('User')->getData();
+			foreach($userlist as $userid) {
+				$userid->setGroupe($groupe);
+				$userid->setRoles(array('roles'=>$groupe->getRole()));
+				$em->persist($userid);
+			}
+		$em->flush();
+		
 		}
 	
 		return $this->render(

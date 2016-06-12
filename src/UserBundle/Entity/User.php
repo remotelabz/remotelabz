@@ -39,7 +39,7 @@ class User extends BaseUser
 
 	/**
 	 *
-     * @ORM\OneToOne(targetEntity="UserBundle\Entity\Groupe", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="UserBundle\Entity\Groupe", cascade={"persist"})
      */
     protected $groupe;
 	
@@ -130,4 +130,10 @@ class User extends BaseUser
     {
         return $this->groupe;
     }
+	
+	public function getLabel()
+	{
+		return $this->lastname .' '. $this->firstname;
+	}
+	
 }
