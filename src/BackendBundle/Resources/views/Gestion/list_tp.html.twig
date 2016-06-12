@@ -1,0 +1,99 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+			<div class="flash-notice">
+				{{ flash_message }}
+			</div>
+		{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des TPs</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
+						<thead>
+						<tr>
+							<th class="sorting" >Nom</th>
+							<th class="sorting" >LABs</th>
+
+						</tr>
+                    </thead>
+				    <tbody>
+				{% for tp in list_tp %}
+
+					<td class="sorting_1" tabindex="0">{{ tp.nom }}</td>
+
+				{% if tp.labs is empty %}
+							<td> aucun  labs attaché a ce tp</td>
+				{%else%}
+					<td>
+						{% for lab in tp.labs %}
+							{{ lab.nomlab }}
+								<br>
+						{% endfor %}
+					</td>
+				{%endif%}
+
+					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+					<td>
+						 <a  class="btn btn-link" href="{{ path('delete_entite',{'id': tp.id, 'bundle':'TP'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  Supprimer </a>
+						 <a class ="btn btn-link" href="{{ path ('show_tp',{'id':tp.id}) }} " target="_blank"  >
+							<i class="icon-trash icon-white"></i>  Fichier </a>
+					</td>
+
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+	{#<script type="text/javascript">#}
+		{#$(function () {#}
+			{#jQuery(document).ready(function () {#}
+				{#console.log("jQuery est prêt !");#}
+			{#})#}
+		{#});#}
+
+			{#function delete_device(id_device) {#}
+				{#$.ajax({#}
+					{#url: "{{ url('delete_device') }}",#}
+					{#type: 'POST',#}
+					{#data: {#}
+						{#id: id_device,#}
+
+					{#},#}
+					{#dataType: 'json',#}
+
+
+					{#success: function (reponse) {#}
+						{#console.log('succes');#}
+
+
+					{#}#}
+
+				{#});#}
+			{#}#}
+
+	{#</script>#}
+
+{% endblock %}
