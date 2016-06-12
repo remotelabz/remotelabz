@@ -10,3 +10,4 @@ parameters:
     mailer_user: null
     mailer_password: null
     secret: b304407397855af94b35faf72b1140f4656360fc
+    mail_from: florent.nolot@univ-reims.fr
