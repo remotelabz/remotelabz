@@ -9,6 +9,7 @@ use AppBundle\Entity\Network_Interface;
 use AppBundle\Entity\Parameter;
 use AppBundle\Entity\POD;
 use AppBundle\Entity\Systeme;
+use AppBundle\Entity\TP;
 use AppBundle\Form\Connexion_select_podType;
 use AppBundle\Form\ConnexionType;
 use AppBundle\Form\DeviceType;
@@ -20,6 +21,7 @@ use AppBundle\Form\PODType;
 use AppBundle\Form\SystemeType;
 
 
+use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -76,7 +78,7 @@ class DefaultController extends Controller
             }
             if ($Interfaceform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
-                $em->persist($interface);
+				$em->persist($interface);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Interface  ' . $interface->getNom() . ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
@@ -194,14 +196,14 @@ class DefaultController extends Controller
         if ('POST' === $request->getMethod()) {
 
             if ($labForm->handleRequest($request)->isValid()) {
-                $pod=$lab->getPod();
-                $connexion=$lab->getConnexions();
+                $pod = $lab->getPod();
+                $connexion = $lab->getConnexions();
 
-                foreach ($pod as $p){
-                     $lab->addPod($p);
+                foreach ($pod as $p) {
+                    $lab->addPod($p);
                 }
 
-                foreach ($connexion as $con){
+                foreach ($connexion as $con) {
                     $lab->addConnexion($con);
                 }
                 $em->persist($lab);
@@ -274,7 +276,7 @@ class DefaultController extends Controller
 
                 $id_pod = $pod->getPod()->getId();
 
-                return $this->redirect($this->generateUrl('add_connexion_after_getpod',array('pod_id'=> $id_pod)));
+                return $this->redirect($this->generateUrl('add_connexion_after_getpod', array('pod_id' => $id_pod)));
             }
         }
 
@@ -287,48 +289,93 @@ class DefaultController extends Controller
 
     }
 
-        /**
-         * @Route("/admin/add_connexion_after_getpod{pod_id}", name="add_connexion_after_getpod")
-         */
-        public
-        function Add_Connexion_after_getpod(Request $request,$pod_id)
+    /**
+     * @Route("/admin/add_connexion_after_getpod{pod_id}", name="add_connexion_after_getpod")
+     */
+    public
+    function Add_Connexion_after_getpod(Request $request, $pod_id)
 
-        {
+    {
+        $em = $this->getDoctrine()->getManager();
+
+        $connexion = new Connexion();
+
+
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id, $em), $connexion, array('method' => 'POST'));
+        $form_connexion->remove('pod');
+        $form_connexion->remove('Suivant');
+        if ('GET' === $request->getMethod()) {
+            return $this->render(
+
+                'BackendBundle::add_connexion.html.twig', array(
+                'user' => $user,
+                'form_connexion' => $form_connexion->createView()
+
+            ));
+        }
+        if ('POST' === $request->getMethod()) {
             $em = $this->getDoctrine()->getManager();
 
-            $connexion = new Connexion();
-
-            
-            $user = $this->get('security.token_storage')->getToken()->getUser();
-
-                $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id,$em), $connexion, array('method' => 'POST'));
-                $form_connexion->remove('pod');
-                $form_connexion->remove('Suivant');
-            if ('GET' === $request->getMethod()) {
-                return $this->render(
-
-                    'BackendBundle::add_connexion.html.twig', array(
-                    'user' => $user,
-                    'form_connexion' => $form_connexion->createView()
-
-                ));
+            $pod = $em->getRepository('AppBundle:POD')->findOneBy(array('id' => $pod_id));
+            if ($form_connexion->handleRequest($request)->isValid()) {
+                $connexion->setNomdevice1($connexion->getDevice1()->getNom());
+                $connexion->setNomdevice2($connexion->getDevice2()->getNom());
+                $connexion->setPod($pod);
+                $em->persist($connexion);
+                $em->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'connexion ajouter  ');
+                return $this->redirect($this->generateUrl('add_connexion'));
             }
-            if ('POST' === $request->getMethod()) {
+        }
+
+        return $this->redirect($this->generateUrl('add_connexion'));
+
+    }
+
+    /**
+     * @Route("/admin/add_tp", name="add_tp")
+     */
+    public function addTp(Request $request)
+    {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        $tp = new TP();
+        $form_tp = $this->get('form.factory')->create(new TPType(), $tp, array('method' => 'POST'));
+        if ('POST' === $request->getMethod()) {
+            if ($form_tp->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
-
-                $pod= $em->getRepository('AppBundle:POD')->findOneBy(array('id' => $pod_id));
-                if ($form_connexion->handleRequest($request)->isValid()) {
-                    $connexion->setNomdevice1($connexion->getDevice1()->getNom());
-                    $connexion->setNomdevice2($connexion->getDevice2()->getNom());
-                    $connexion->setPod($pod);
-                    $em->persist($connexion);
-                    $em->flush();
-                    $request->getSession()->getFlashBag()->add('notice', 'connexion ajouter  ');
-                    return $this->redirect($this->generateUrl('add_connexion'));
+                $labs = $tp->getLabs();
+                foreach ($labs as $lab) {
+                    $tp->addLab($lab);
                 }
-            }
+                $em->persist($tp);
+                $em->flush();
+                $request->getSession()->getFlashBag()->add('notice', 'tp  ajouter  ');
+                return $this->redirect($this->generateUrl('add_tp'));
 
-            return $this->redirect($this->generateUrl('add_connexion'));
+
+            }
 
         }
+//            if ($form_tp->handleRequest($request)->isValid()) {
+//                $labs = $tp->getLabs();
+//                foreach ($labs as $lab) {
+//                    $tp->addLab($lab);
+//                }
+//            }
+
+//        }
+
+
+        return $this->render(
+            'BackendBundle::add_tp.html.twig', array(
+            'user' => $user,
+            'form_tp' => $form_tp->createView()
+
+        ));
     }
+}
+
+

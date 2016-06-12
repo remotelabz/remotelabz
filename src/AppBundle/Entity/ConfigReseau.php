@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * ConfigReseau
@@ -23,6 +24,7 @@ class ConfigReseau
      * @var string
      *
      * @ORM\Column(name="IP", type="string", length=255,nullable=true)
+	 * @Assert\Ip
      */
     private $iP;
 
@@ -30,6 +32,7 @@ class ConfigReseau
      * @var string
      *
      * @ORM\Column(name="IPv6", type="string", length=255, nullable=true)
+	 * @Assert\Ip(version = "6")
      */
     private $iPv6;
 
@@ -37,6 +40,7 @@ class ConfigReseau
      * @var string
      *
      * @ORM\Column(name="IP_DNS", type="string", length=255, nullable=true)
+	 * @Assert\Ip
      */
     private $iPDNS;
 
@@ -44,6 +48,7 @@ class ConfigReseau
      * @var string
      *
      * @ORM\Column(name="IP_Gateway", type="string", length=255, nullable=true)
+	 * @Assert\Ip
      */
     private $iPGateway;
 
@@ -51,6 +56,7 @@ class ConfigReseau
      * @var string
      *
      * @ORM\Column(name="Masque", type="string", length=255,nullable=true)
+	 * @Assert\Ip
      */
     private $masque;
 
@@ -62,12 +68,11 @@ class ConfigReseau
     private $protocole;
 	
 	/**
-     * @var int
-		*
-     * @ORM\Column(name="Port", type="integer", nullable=true)
+     * @var string
+     * @ORM\Column(name="Port", type="string", nullable=true)
+     * @Assert\Regex(pattern="/^[\d]*$/")
      */
     private $port;
-
 
     /**
      * Get id
@@ -226,7 +231,7 @@ class ConfigReseau
     /**
      * Set port
      *
-     * @param integer $port
+     * @param string $port
      *
      * @return ConfigReseau
      */
@@ -240,7 +245,7 @@ class ConfigReseau
     /**
      * Get port
      *
-     * @return integer
+     * @return string
      */
     public function getPort()
     {
