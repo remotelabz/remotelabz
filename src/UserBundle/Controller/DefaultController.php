@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use UserBundle\Entity\User;
 use UserBundle\Form\Type\AddUserFormType;
 use UserBundle\Form\Type\PasswordFormType;
+use UserBundle\Form\Type\GroupeFormType;
 
 
 class DefaultController extends Controller
@@ -85,8 +86,7 @@ class DefaultController extends Controller
 
 			return $this->redirect($this->generateUrl('add_user', array(
 				'id' => $new_user->getId(),
-				)
-			
+				)		
 			));
     }
 
@@ -167,6 +167,33 @@ class DefaultController extends Controller
 		'user' => $user,
 		'list_user' => $list_user
 		));*/
+	}
+	
+	/**
+     * @Route("/admin/change_role", name="change_role")
+     */
+	public function change_role(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$userManager = $this->container->get('fos_user.user_manager');
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+				
+		$form = $this->get('form.factory')->create(new GroupeFormType(), array('method' => 'POST'));
+		
+		$check="";
+		
+		if ($form->handleRequest($request)->isValid()) {
+			$test = $form->get('Groupe')->getData();
+		}
+	
+		return $this->render(
+        'UserBundle:Gestion:change_role.html.twig',array(
+		'user' => $user,
+		'form' => $form->createView(),
+		));
+		
 	}
 	
 	function stripAccents($str, $encoding='utf-8')
