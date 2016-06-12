@@ -208,7 +208,7 @@ class DefaultController extends Controller
                 }
                 $em->persist($lab);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Lab ajouté  ');
+                $request->getSession()->getFlashBag()->add('notice', 'Lab ajouté');
                 return $this->redirect($this->generateUrl('add_lab'));
             }
         }
@@ -325,7 +325,7 @@ class DefaultController extends Controller
                 $connexion->setPod($pod);
                 $em->persist($connexion);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'connexion ajouter  ');
+                $request->getSession()->getFlashBag()->add('notice', 'connexion ajoutée');
                 return $this->redirect($this->generateUrl('add_connexion'));
             }
         }
@@ -352,7 +352,7 @@ class DefaultController extends Controller
                 }
                 $em->persist($tp);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'tp  ajouter  ');
+                $request->getSession()->getFlashBag()->add('notice', 'TP ajouté');
                 return $this->redirect($this->generateUrl('add_tp'));
 
 

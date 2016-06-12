@@ -24,7 +24,7 @@ class GroupeFormType extends AbstractType
 		
 		$builder->add('User', EntityType::class, array(
 		'class' => 'UserBundle:User',
-		'choice_label' => 'lastname',
+		'choice_label' => 'label',
 		'multiple' => true,
 		'expanded' => true
 		)		
