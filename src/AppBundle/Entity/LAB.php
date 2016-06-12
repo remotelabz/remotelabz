@@ -36,6 +36,13 @@ class LAB
      */
     private $connexions;
 
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TP" ,inversedBy="labs")
+     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
+     */
+    private $tp;
+
     /**
      * Get id
      *
@@ -147,5 +154,29 @@ class LAB
     public function getConnexions()
     {
         return $this->connexions;
+    }
+
+    /**
+     * Set tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     *
+     * @return LAB
+     */
+    public function setTp(\AppBundle\Entity\TP $tp = null)
+    {
+        $this->tp = $tp;
+
+        return $this;
+    }
+
+    /**
+     * Get tp
+     *
+     * @return \AppBundle\Entity\TP
+     */
+    public function getTp()
+    {
+        return $this->tp;
     }
 }

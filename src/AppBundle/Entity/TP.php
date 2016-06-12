@@ -3,11 +3,14 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * TP
  *
  * @ORM\Entity(repositoryClass="AppBundle\Repository\TPRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class TP
 {
@@ -22,67 +25,191 @@ class TP
         private $id;
 
     /**
-     * @return mixed
+     * @ORM\OneToMany(targetEntity="AppBundle\Entity\LAB", mappedBy="tp")
      */
-    public function getFile()
+    private $labs;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank
+     */
+    private  $nom;
+
+    /**
+     * @Assert\File(maxSize="6000000")
+     */
+    private $file;
+
+    private $temp;
+
+
+    //store the relative path to the file to use it in twig 
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    public $path;
+    
+    public function getAbsolutePath()
     {
-        return $this->file;
+        return null === $this->path
+            ? null
+//            : $this->getUploadRootDir().'/'.$this->id.'.'.$this->path;
+            : $this->getUploadRootDir().'/'.$this->id.'.'.$this->path;
     }
 
-    private $file;
+    public function getWebPath()
+    {
+        return null === $this->path
+            ? null
+            : $this->getUploadDir().'/';
+    }
+
+
+    /**
+     * @ORM\PrePersist()
+     * @ORM\PreUpdate()
+     */
+    public function preUpload()
+    {
+        if (null !== $this->getFile()) {
+            $this->path = $this->getFile()->guessExtension();
+        }
+    }
+
+    /**
+     * @ORM\PostPersist()
+     * @ORM\PostUpdate()
+     */
+    public function upload()
+    {
+        if (null === $this->getFile()) {
+            return;
+        }
+
+        // check if we have an old image
+        if (isset($this->temp)) {
+            // delete the old image
+            unlink($this->temp);
+            // clear the temp image path
+            $this->temp = null;
+        }
+
+        // you must throw an exception here if the file cannot be moved
+        // so that the entity is not persisted to the database
+        // which the UploadedFile move() method does
+        $this->getFile()->move(
+            $this->getUploadRootDir(),
+            $this->id.'.'.$this->getFile()->guessExtension()
+        );
+
+        $this->setFile(null);
+
+
+    }
+    /**
+     * @ORM\PreRemove()
+     */
+    public function storeFilenameForRemove()
+    {
+        $this->temp = $this->getAbsolutePath();
+    }
+
+    /**
+     * @ORM\PostRemove()
+     */
+    public function removeUpload()
+    {
+        if (isset($this->temp)) {
+            unlink($this->temp);
+        }
+    }
+
+
+
+
+    protected function getUploadRootDir()
+    {
+        // the absolute directory path where uploaded
+        // documents should be saved
+        return __DIR__.'/../../../web/'.$this->getUploadDir();
+
+    }
+    protected function getUploadDir()
+    {
+        // get rid of the __DIR__ so it doesn't screw up
+        // when displaying uploaded doc/image in the view.
+        return 'uploads/documents';
+    }
+
+
     /**
      * Get id
      *
      * @return int
      */
-    /**
-     * @ORM\Column(name="url", type="string", length=255)
-     */
-    private $url;
-    /**
-     * @ORM\Column(name="nom_fichier", type="string", length=255)
-     */
-    private $nom;
-    /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\TP",cascade={"persist"})
-     *@ORM\JoinColumn(nullable=false)
-     */
-    private $lab;
+
+
     public function getId()
     {
         return $this->id;
     }
 
-
-    public function setFile(UploadedFile $file = null )
-    {
-        $this->file = $file;
-    }
-
-
-
     /**
-     * Set url
+     * Set lab
      *
-     * @param string $url
+     * @param \AppBundle\Entity\TP $lab
      *
      * @return TP
      */
-    public function setUrl($url)
+    public function setLab(\AppBundle\Entity\TP $lab)
     {
-        $this->url = $url;
+        $this->lab = $lab;
+
+        return $this;
+    }
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->labs = new \Doctrine\Common\Collections\ArrayCollection();
+
+    }
+
+    /**
+     * Add lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return TP
+     */
+    public function addLab(\AppBundle\Entity\LAB $lab)
+    {
+        $this->labs[] = $lab;
+        $lab->setTp($this);
 
         return $this;
     }
 
     /**
-     * Get url
+     * Remove lab
      *
-     * @return string
+     * @param \AppBundle\Entity\LAB $lab
      */
-    public function getUrl()
+    public function removeLab(\AppBundle\Entity\LAB $lab)
     {
-        return $this->url;
+        $this->labs->removeElement($lab);
+    }
+
+    /**
+     * Get labs
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getLabs()
+    {
+        return $this->labs;
     }
 
     /**
@@ -110,26 +237,30 @@ class TP
     }
 
     /**
-     * Set lab
+     * Sets file.
      *
-     * @param \AppBundle\Entity\TP $lab
-     *
-     * @return TP
+     * @param UploadedFile $file
      */
-    public function setLab(\AppBundle\Entity\TP $lab)
+    public function setFile(UploadedFile $file = null)
     {
-        $this->lab = $lab;
-
-        return $this;
+        $this->file = $file;
+        // check if we have an old image path
+        if (is_file($this->getAbsolutePath())) {
+            // store the old name to delete after the update
+            $this->temp = $this->getAbsolutePath();
+            $this->path = null;
+        } else {
+            $this->path = 'initial';
+        }
     }
 
     /**
-     * Get lab
+     * Get file.
      *
-     * @return \AppBundle\Entity\TP
+     * @return UploadedFile
      */
-    public function getLab()
+    public function getFile()
     {
-        return $this->lab;
+        return $this->file;
     }
 }
