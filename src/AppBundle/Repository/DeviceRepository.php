@@ -46,5 +46,13 @@ class DeviceRepository extends \Doctrine\ORM\EntityRepository
             ->setParameter('device_id', $dev);
             return $res = $qb->getQuery()->getResult();
     }
+	 public function getControleInterfaceForList()
+    {
+        return $this
+            ->createQueryBuilder('dev')
+            ->where('dev.interfaceControle IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
 }
 

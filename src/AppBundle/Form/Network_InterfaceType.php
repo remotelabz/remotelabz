@@ -5,6 +5,7 @@ namespace AppBundle\Form;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\RangeType;
 
 class Network_InterfaceType extends AbstractType
 {
@@ -16,6 +17,7 @@ class Network_InterfaceType extends AbstractType
     {
         $builder
             ->add('nom')
+//            ->add('nbr_interface','integer')
             ->add('configreseau',new ConfigReseauType())
             ->add('save','submit')
 

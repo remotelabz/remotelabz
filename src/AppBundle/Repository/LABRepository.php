@@ -10,4 +10,15 @@ namespace AppBundle\Repository;
  */
 class LABRepository extends \Doctrine\ORM\EntityRepository
 {
+        function getLabWithoutTpQueryBuilder(){
+            $qb = $this->_em->createQueryBuilder();
+            return $qb->select('lab')
+                ->from('AppBundle:LAB', 'lab')
+                ->where($qb->expr()->isNull('lab.tp'));
+        }
+
+
+
+
+
 }

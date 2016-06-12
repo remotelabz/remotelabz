@@ -19,7 +19,6 @@ class AppKernel extends Kernel
             new UserBundle\UserBundle(),
 			new FOS\UserBundle\FOSUserBundle(),
 			new Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle(),
-            new TestBundle\TestBundle(),
             new BackendBundle\BackendBundle(),
             new ControlBundle\ControlBundle(),
             new VerifyBundle\VerifyBundle(),
