@@ -17,18 +17,22 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
         $qb_used_interface = $em->createQueryBuilder()
         ->select('net')
 		->from('AppBundle:Network_Interface', 'net')
-		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle = net.id')
-		->getQuery()
-		->getArrayResult();
+		->andWhere('net.config_reseau IS NOT NULL')
+		->andWhere('net.device IS NULL')
+		//->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.interfaceControle = net.id')
+		;
+		return $qb_used_interface;
+
+/*		->getQuery()
+		->getArrayResult();*/
 		
-		$qb = $em->createQueryBuilder();
+		/*$qb = $em->createQueryBuilder();
 		return $qb
 		->select('net')
 		->from('AppBundle:Network_Interface', 'net')
 		->where($qb->expr()->notin('net.id',':qb_used_interface'))
-		->andWhere(' net.config_reseau IS NOT NULL')
 		->setParameter('qb_used_interface',$qb_used_interface)
-		;
+		;*/
 		
 
     }

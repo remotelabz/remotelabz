@@ -16,7 +16,7 @@ class HyperviseurType extends AbstractType
     {
         $builder
             ->add('nom','choice', array(
-                'choices' => array('lxc' => 'LXC', 'qemu' => 'QEMU')))
+                'choices' => array('lxc' => 'LXC', 'qemu' => 'QEMU', 'ovs' => 'Open vSwitch')))
             ->add('commande')
             ->add('save','submit')
         ;
