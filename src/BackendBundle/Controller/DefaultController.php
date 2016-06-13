@@ -73,14 +73,14 @@ class DefaultController extends Controller
                 $em1->persist($interfaceControle->getConfigReseau());
                 $em1->persist($interfaceControle);
                 $em1->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface de controle ' . $interfaceControle->getNom() . ' bien enregistrée.');
+                $request->getSession()->getFlashBag()->add('notice', 'Interface de contrôle ' . $interfaceControle->getNom() . ' bien enregistrée.');
                 return $this->redirect($this->generateUrl('add_device'));
             }
             if ($Interfaceform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
 				$em->persist($interface);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface  ' . $interface->getNom() . ' bien enregistrée .');
+                $request->getSession()->getFlashBag()->add('notice', 'Interface ' . $interface->getNom() . ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
             }
 
@@ -89,7 +89,7 @@ class DefaultController extends Controller
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($parametre);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'parametres enregistrés');
+                $request->getSession()->getFlashBag()->add('notice', 'Paramètres enregistrés');
                 return $this->redirect($this->generateUrl('add_device'
                 ));
             }
@@ -97,14 +97,14 @@ class DefaultController extends Controller
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($hyperviseur);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'hyperviseur ajouté avec succé ');
+                $request->getSession()->getFlashBag()->add('notice', 'hyperviseur ajouté avec succès ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
             if ($systemForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($systeme);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Systeme ajouté avec succé ');
+                $request->getSession()->getFlashBag()->add('notice', 'Systeme ajouté avec succès ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
             if ($deviceForm->handleRequest($request)->isValid()) {
@@ -122,7 +122,7 @@ class DefaultController extends Controller
                 }
                 $em->persist($device);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'device ajouté avec succé  ');
+                $request->getSession()->getFlashBag()->add('notice', 'Device ajouté avec succès  ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
         }
@@ -170,7 +170,7 @@ class DefaultController extends Controller
             }
             $em->persist($pod);
             $em->flush();
-            $request->getSession()->getFlashBag()->add('notice', 'pod ajouté  ');
+            $request->getSession()->getFlashBag()->add('notice', 'POD ajouté');
             return $this->redirect($this->generateUrl('add_pod'));
         }
         return $this->render(
