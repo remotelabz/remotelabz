@@ -15,17 +15,18 @@ class ConfigReseauType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('iP')
-            ->add('iPv6')
-            ->add('iPDNS')
-            ->add('iPGateway')
-            ->add('masque')
+            ->add('IP')
+			->add('masque')
+            ->add('IPv6')
+			->add('prefix')
+            ->add('IPDNS')
+            ->add('IPGateway')          
             ->add('protocole','choice', array(
                 'choices' => array('vnc' => 'VNC', 
 									'telnet' => 'Telnet',
 									'SSH' => 'SSH'))
             )
-        ->add('port','text');
+			->add('port','text');
     }
     
     /**

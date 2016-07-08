@@ -37,7 +37,7 @@
 							<th>systeme</th>
 							<th>Interfaces</th>
 							<th>Interface de controle</th>
-
+							<th>Action</th>
 
 						</tr>
                     </thead>
@@ -50,6 +50,7 @@
 					<td>{{ device.modele }}</td>
 					<td>{{ device.marque }}</td>
 					<td>{{ device.systeme.nom }}</td>
+					
 					{% if device.networkInterfaces is empty %}
 							<td> device sans interface</td>
 				{%else%}
