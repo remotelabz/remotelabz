@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GestionController extends Controller
 {
@@ -154,7 +154,6 @@ class GestionController extends Controller
 
         $list_parameter = $repository->findAll();
 
-
         return $this->render(
             'BackendBundle:Gestion:list_parameter.html.twig',array(
             'user' => $user,
@@ -198,7 +197,6 @@ class GestionController extends Controller
 			));
 
     }
-
 
     /**
      * @Route("/admin/delete_entite{id}", name="delete_entite")
