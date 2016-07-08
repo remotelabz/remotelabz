@@ -111,11 +111,10 @@ class DefaultController extends Controller
                 $em = $this->getDoctrine()->getManager();
                 if ($device->getInterfaceControle() != null) {
                     $em->persist($device->getInterfaceControle());
-                    $em->flush();
                     $device->setInterfaceControle($device->getInterfaceControle());
+					$device->getInterfaceControle()->setDevice($device);
                 }
                 if ($device->getNetworkInterfaces() != null) {
-
                     foreach ($device->getNetworkInterfaces() as $net) {
                         $device->addNetworkInterface($net);
                     }
