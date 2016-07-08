@@ -17,17 +17,18 @@ class SystemeRepository extends \Doctrine\ORM\EntityRepository
         $qb_used_systeme = $em->createQueryBuilder()
         ->select('sys')
 		->from('AppBundle:Systeme', 'sys')
-		->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.systeme = sys.id')
+		;
+		/*->innerJoin('AppBundle:Device','dev', 'WITH', 'dev.systeme = sys.id')
 		->getQuery()
-		->getArrayResult();
+		->getArrayResult();*/
 		
-		$qb = $em->createQueryBuilder();
-		return $qb
-		->select('sys')
+//		$qb = $em->createQueryBuilder();
+		return $qb_used_systeme;
+/*		->select('sys')
 		->from('AppBundle:Systeme', 'sys')
 		->where($qb->expr()->notin('sys.id',':qb_used_systeme'))
 		->setParameter('qb_used_systeme',$qb_used_systeme)
-		;
+		;*/
 		
        
    }

@@ -16,8 +16,8 @@ class ParameterType extends AbstractType
     {
         $builder
 			->add('nom')
-			->add('seize_memoire')
-            ->add('seize_disque')
+			->add('size_memoire')
+            ->add('size_disque')
             ->add('save','submit')
         ;
     }

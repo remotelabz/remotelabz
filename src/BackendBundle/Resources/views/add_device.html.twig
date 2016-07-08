@@ -46,55 +46,17 @@
                                     </div>
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.configreseau.iP, "Adresse IP", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.configreseau.IP, "Adresse IP", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.configreseau.iP) }}
+                                        {{ form_errors(InterfaceControleform.configreseau.IP) }}
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.configreseau.iP, {'attr': {'class': 'form-control'}}) }}
+                                            {{ form_widget(InterfaceControleform.configreseau.IP, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
-
-                                    <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.configreseau.iPv6, 'Adresse IPv6', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
-
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.configreseau.iPv6) }}
-
-                                        <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.configreseau.iPv6, {'attr': {'class': 'form-control'}}) }}
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.configreseau.iPDNS, "DNS", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
-
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.configreseau.iPDNS) }}
-
-                                        <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.configreseau.iPDNS, {'attr': {'class': 'form-control'}}) }}
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.configreseau.iPGateway, "Passerelle par défaut", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
-
-                                        {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.configreseau.iPGateway) }}
-
-                                        <div class="col-sm-2">
-                                            {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.configreseau.iPGateway, {'attr': {'class': 'form-control'}}) }}
-                                        </div>
-
-                                    </div>
-                                    <div class="form-group">
+									<div class="form-group">
                                         {# Génération du label. #}
                                         {{ form_label(InterfaceControleform.configreseau.masque, "Masque de sous-réseau", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
                                         {# Affichage des erreurs pour ce champ précis. #}
@@ -105,9 +67,60 @@
                                             {{ form_widget(InterfaceControleform.configreseau.masque, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
+
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.configreseau.protocole, "Protocole", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.configreseau.IPv6, 'Adresse IPv6', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(InterfaceControleform.configreseau.IPv6) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(InterfaceControleform.configreseau.IPv6, {'attr': {'class': 'form-control'}}) }}
+                                        </div>
+                                    </div>
+									<div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(InterfaceControleform.configreseau.prefix, 'Prefix', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(InterfaceControleform.configreseau.prefix) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(InterfaceControleform.configreseau.prefix, {'attr': {'class': 'form-control'}}) }}
+                                        </div>
+                                    </div>
+									
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(InterfaceControleform.configreseau.IPDNS, "DNS", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(InterfaceControleform.configreseau.IPDNS) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(InterfaceControleform.configreseau.IPDNS, {'attr': {'class': 'form-control'}}) }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(InterfaceControleform.configreseau.IPGateway, "Passerelle par défaut", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(InterfaceControleform.configreseau.IPGateway) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(InterfaceControleform.configreseau.IPGateway, {'attr': {'class': 'form-control'}}) }}
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(InterfaceControleform.configreseau.protocole, "Protocole de connexion", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
                                         {{ form_errors(InterfaceControleform.configreseau.protocole) }}
@@ -223,26 +236,26 @@
 										
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(parametreForm.seize_memoire, "La taille mémoire", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(parametreForm.size_memoire, "La taille mémoire (en Mo)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(parametreForm.seize_memoire) }}
+                                            {{ form_errors(parametreForm.size_memoire) }}
 
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
-                                                {{ form_widget(parametreForm.seize_memoire, {'attr': {'class': 'form-control'}}) }}
+                                                {{ form_widget(parametreForm.size_memoire, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(parametreForm.seize_disque, "La taille disque", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(parametreForm.size_disque, "La taille disque (en Mo)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(parametreForm.seize_disque) }}
+                                            {{ form_errors(parametreForm.size_disque) }}
 
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
-                                                {{ form_widget(parametreForm.seize_disque, {'attr': {'class': 'form-control'}}) }}
+                                                {{ form_widget(parametreForm.size_disque, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
 
@@ -270,7 +283,7 @@
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="panel panel-primary">
-                                <div class="panel-heading">Choisissez un Hyperviseur</div>
+                                <div class="panel-heading">Choisissez le mode de démarrage de votre device</div>
                                 <div class="panel-body">
 
                                     <div class="x_content">
@@ -280,7 +293,7 @@
                                         {{ form_errors(hyperForm) }}
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(hyperForm.nom, 'Hyperviseur', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(hyperForm.nom, 'Démarreur', {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(hyperForm.nom) }}
