@@ -58,7 +58,7 @@ class Device
     private $marque;
 
     /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Systeme",cascade={"persist","remove"})
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Systeme",cascade={"persist","remove"})
      * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      *
      */

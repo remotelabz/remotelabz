@@ -26,7 +26,7 @@ class ConfigReseau
      * @ORM\Column(name="IP", type="string", length=255,nullable=true)
 	 * @Assert\Ip
      */
-    private $iP;
+    private $IP;
 
     /**
      * @var string
@@ -34,7 +34,14 @@ class ConfigReseau
      * @ORM\Column(name="IPv6", type="string", length=255, nullable=true)
 	 * @Assert\Ip(version = "6")
      */
-    private $iPv6;
+    private $IPv6;
+	
+	/**
+     * @var string
+		*
+     * @ORM\Column(name="Prefix", type="string", length=255, nullable=true)
+     */
+    private $Prefix;
 
     /**
      * @var string
@@ -42,15 +49,15 @@ class ConfigReseau
      * @ORM\Column(name="IP_DNS", type="string", length=255, nullable=true)
 	 * @Assert\Ip
      */
-    private $iPDNS;
+    private $IPDNS;
 
     /**
      * @var string
      *
      * @ORM\Column(name="IP_Gateway", type="string", length=255, nullable=true)
-	 * @Assert\Ip
+	 * @Assert\IP
      */
-    private $iPGateway;
+    private $IPGateway;
 
     /**
      * @var string
@@ -58,7 +65,7 @@ class ConfigReseau
      * @ORM\Column(name="Masque", type="string", length=255,nullable=true)
 	 * @Assert\Ip
      */
-    private $masque;
+    private $Masque;
 
     /**
      * @var string
@@ -74,10 +81,11 @@ class ConfigReseau
      */
     private $port;
 
+
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -93,7 +101,7 @@ class ConfigReseau
      */
     public function setIP($iP)
     {
-        $this->iP = $iP;
+        $this->IP = $iP;
 
         return $this;
     }
@@ -105,7 +113,7 @@ class ConfigReseau
      */
     public function getIP()
     {
-        return $this->iP;
+        return $this->IP;
     }
 
     /**
@@ -117,7 +125,7 @@ class ConfigReseau
      */
     public function setIPv6($iPv6)
     {
-        $this->iPv6 = $iPv6;
+        $this->IPv6 = $iPv6;
 
         return $this;
     }
@@ -129,7 +137,31 @@ class ConfigReseau
      */
     public function getIPv6()
     {
-        return $this->iPv6;
+        return $this->IPv6;
+    }
+
+    /**
+     * Set prefix
+     *
+     * @param string $prefix
+     *
+     * @return ConfigReseau
+     */
+    public function setPrefix($prefix)
+    {
+        $this->Prefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Get prefix
+     *
+     * @return string
+     */
+    public function getPrefix()
+    {
+        return $this->Prefix;
     }
 
     /**
@@ -141,7 +173,7 @@ class ConfigReseau
      */
     public function setIPDNS($iPDNS)
     {
-        $this->iPDNS = $iPDNS;
+        $this->IPDNS = $iPDNS;
 
         return $this;
     }
@@ -153,7 +185,7 @@ class ConfigReseau
      */
     public function getIPDNS()
     {
-        return $this->iPDNS;
+        return $this->IPDNS;
     }
 
     /**
@@ -165,7 +197,7 @@ class ConfigReseau
      */
     public function setIPGateway($iPGateway)
     {
-        $this->iPGateway = $iPGateway;
+        $this->IPGateway = $iPGateway;
 
         return $this;
     }
@@ -177,7 +209,7 @@ class ConfigReseau
      */
     public function getIPGateway()
     {
-        return $this->iPGateway;
+        return $this->IPGateway;
     }
 
     /**
@@ -189,7 +221,7 @@ class ConfigReseau
      */
     public function setMasque($masque)
     {
-        $this->masque = $masque;
+        $this->Masque = $masque;
 
         return $this;
     }
@@ -201,7 +233,7 @@ class ConfigReseau
      */
     public function getMasque()
     {
-        return $this->masque;
+        return $this->Masque;
     }
 
     /**

@@ -30,17 +30,17 @@ class Parameter
     /**
      * @var float
      *
-     * @ORM\Column(name="seize_memoire", type="float", length=40)
+     * @ORM\Column(name="size_memoire", type="float", length=40)
      */
-    private $seize_memoire;
+    private $size_memoire;
 
     /**
      * @var float
      *
-     * @ORM\Column(name="seize_disque", type="float", length=40)
+     * @ORM\Column(name="size_disque", type="float", length=40)
      */
 
-    private $seize_disque;
+    private $size_disque;
 
     /**
      * Get id
@@ -60,9 +60,9 @@ class Parameter
      *
      * @return Parameter
      */
-    public function setSeizeMemoire($seizeMemoire)
+    public function setSizeMemoire($sizeMemoire)
     {
-        $this->seize_memoire = $seizeMemoire;
+        $this->size_memoire = $sizeMemoire;
 
         return $this;
     }
@@ -72,9 +72,9 @@ class Parameter
      *
      * @return float
      */
-    public function getSeizeMemoire()
+    public function getSizeMemoire()
     {
-        return $this->seize_memoire;
+        return $this->size_memoire;
     }
 
     /**
@@ -84,9 +84,9 @@ class Parameter
      *
      * @return Parameter
      */
-    public function setSeizeDisque($seizeDisque)
+    public function setSizeDisque($sizeDisque)
     {
-        $this->seize_disque = $seizeDisque;
+        $this->size_disque = $sizeDisque;
 
         return $this;
     }
@@ -96,9 +96,9 @@ class Parameter
      *
      * @return float
      */
-    public function getSeizeDisque()
+    public function getSizeDisque()
     {
-        return $this->seize_disque;
+        return $this->size_disque;
     }
 
     /**
