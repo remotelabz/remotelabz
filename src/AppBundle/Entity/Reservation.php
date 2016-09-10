@@ -215,5 +215,35 @@ class Reservation
     {
         return $this->propriete;
     }
-}
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->Propriete = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
+    /**
+     * Add propriete
+     *
+     * @param \AppBundle\Entity\Propriete $propriete
+     *
+     * @return Reservation
+     */
+    public function addPropriete(\AppBundle\Entity\Propriete $propriete)
+    {
+        $this->Propriete[] = $propriete;
+
+        return $this;
+    }
+
+    /**
+     * Remove propriete
+     *
+     * @param \AppBundle\Entity\Propriete $propriete
+     */
+    public function removePropriete(\AppBundle\Entity\Propriete $propriete)
+    {
+        $this->Propriete->removeElement($propriete);
+    }
+}
