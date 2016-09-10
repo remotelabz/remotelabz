@@ -29,16 +29,18 @@
 					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
 						<thead>
 						<tr>
-							<th class="sorting" >Nom</th>
+							<th class="sorting" >Nom virtuel</th>
+							<th class="sorting" >Nom physique</th>
 							<th class="sorting" >Device</th>
-							<th class="sorting" >Addresse Ip</th>
+							<th class="sorting" >Addresse IP</th>
 
 						</tr>
                     </thead>
 				    <tbody>
 				{% for interface in list_interface %}
 
-						<td class="sorting_1" tabindex="0">{{ interface.nom }}</td>
+						<td class="sorting_1" tabindex="0">{{ interface.NomVirtuel }}</td>
+						<td class="sorting_1" tabindex="0">{{ interface.NomPhysique }}</td>
 
 					{% if interface.device is empty %}
 								<td> aucun device attaché </td>
@@ -57,7 +59,8 @@
 				{% endfor %}
 				{% for dev in list_interfaceControle %}
 
-						<td class="sorting_1" tabindex="0">{{ dev.interfaceControle.nom }}</td>
+						<td class="sorting_1" tabindex="0">{{ dev.interfaceControle.NomVirtuel }}</td>
+						<td class="sorting_1" tabindex="0">{{ dev.interfaceControle.NomPhysique }}</td>
 							<td>{{ dev.nom }}</td>
 							<td> {{ dev.interfaceControle.configReseau.Ip }} </td>
 

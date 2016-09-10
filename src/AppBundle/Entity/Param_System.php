@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Param_System
+ * Paramètre du système de virtualisation 
  *
  * @ORM\Table(name="param__system")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\Param_SystemRepository")
@@ -63,6 +64,13 @@ class Param_System
      */
     private $consolePortMax;
 
+	/**
+     * @var int
+     * Index actuel des interfaces par rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
+	 * libre sera la tap14 par exemple.
+     * @ORM\Column(name="index_interface", type="integer")
+     */
+    private $indexInterface;
 
     /**
      * Get id
@@ -217,5 +225,28 @@ class Param_System
     {
         return $this->consolePortMax;
     }
-}
 
+    /**
+     * Set indexInterface
+     *
+     * @param integer $indexInterface
+     *
+     * @return Param_System
+     */
+    public function setIndexInterface($indexInterface)
+    {
+        $this->indexInterface = $indexInterface;
+
+        return $this;
+    }
+
+    /**
+     * Get indexInterface
+     *
+     * @return integer
+     */
+    public function getIndexInterface()
+    {
+        return $this->indexInterface;
+    }
+}

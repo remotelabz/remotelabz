@@ -34,14 +34,26 @@
                                     {{ form_errors(InterfaceControleform) }}
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.nom, "Nom de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom virtuel de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(InterfaceControleform.nom) }}
+                                        {{ form_errors(InterfaceControleform.nom_virtuel) }}
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(InterfaceControleform.nom, {'attr': {'class': 'form-control'}}) }}
+                                            {{ form_widget(InterfaceControleform.nom_virtuel, {'attr': {'class': 'form-control'}}) }}
+                                        </div>
+                                    </div>
+									<div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom physique de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(InterfaceControleform.nom_physique) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(InterfaceControleform.nom_physique, {'attr': {'class': 'form-control'}}) }}
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -177,17 +189,30 @@
                                 {{ form_errors(Interfaceform) }}
                                 <div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfaceform.nom, "Nom de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nom_virtuel, "Nom virtuel de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
-                                    {{ form_errors(Interfaceform.nom) }}
+                                    {{ form_errors(Interfaceform.nom_virtuel) }}
 
                                     <div class="col-sm-2">
                                         {# Génération de l'input. #}
-                                        {{ form_widget(Interfaceform.nom, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_widget(Interfaceform.nom_virtuel, {'attr': {'class': 'form-control'}}) }}
                                     </div>
                                 </div>
 
+								<div class="form-group">
+                                    {# Génération du label. #}
+                                    {{ form_label(Interfaceform.nom_physique, "Nom physique de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                    {# Affichage des erreurs pour ce champ précis. #}
+                                    {{ form_errors(Interfaceform.nom_physique) }}
+
+                                    <div class="col-sm-2">
+                                        {# Génération de l'input. #}
+                                        {{ form_widget(Interfaceform.nom_physique, {'attr': {'class': 'form-control'}}) }}
+                                    </div>
+                                </div>
+								
                                 {{ form_widget(Interfaceform.save, {'attr': {'class': 'btn btn-primary'}}) }}
 
                                 {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}

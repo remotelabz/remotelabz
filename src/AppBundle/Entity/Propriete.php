@@ -27,7 +27,7 @@ class Propriete
     /**
      * @var \stdClass
      *
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Device" )
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device" )
      */
     private $device;
 
@@ -39,11 +39,13 @@ class Propriete
     private $procId;
 
     /**
-     * @var \stdClass
-     *
-     @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau" )
+     * @var int
+     * Chaque device possède des interfaces qui sont dupliquées à chaque instantiation. (exemple : les tap sont uniques par VM)
+	 * Il faut donc savoir si la réservation utilise la tap10 ou la tap23 par exemple. Dans l'interface enregistrée lors de la création
+	 * du device dans le système, on définit juste les interfaces dans l'ordre classique
+     * @ORM\Column(name="index_deb_interface", type="integer")
      */
-    private $configReseau;
+    private $index_deb_interface;
 
 
     /**
@@ -126,5 +128,29 @@ class Propriete
     public function getConfigReseau()
     {
         return $this->configReseau;
+    }
+
+    /**
+     * Set indexDebInterface
+     *
+     * @param integer $indexDebInterface
+     *
+     * @return Propriete
+     */
+    public function setIndexDebInterface($indexDebInterface)
+    {
+        $this->index_deb_interface = $indexDebInterface;
+
+        return $this;
+    }
+
+    /**
+     * Get indexDebInterface
+     *
+     * @return integer
+     */
+    public function getIndexDebInterface()
+    {
+        return $this->index_deb_interface;
     }
 }

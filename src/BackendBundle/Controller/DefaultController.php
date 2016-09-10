@@ -33,10 +33,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
-
-
-
-
 class DefaultController extends Controller
 {
 
@@ -64,8 +60,6 @@ class DefaultController extends Controller
         $Interfaceform->remove('configreseau');
 
         if ('POST' === $request->getMethod()) {
-
-
             if ($InterfaceControleform->handleRequest($request)->isValid() and ($interfaceControle->getConfigReseau()->getIP() != null)) {
 //                    echo 'interface de controle  ';
 //                    die();
@@ -73,17 +67,16 @@ class DefaultController extends Controller
                 $em1->persist($interfaceControle->getConfigReseau());
                 $em1->persist($interfaceControle);
                 $em1->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface de contrôle ' . $interfaceControle->getNom() . ' bien enregistrée.');
+              //  $request->getSession()->getFlashBag()->add('notice', 'Interface de contrôle ' . $interfaceControle->getNomVirtuel() . ' bien enregistrée.');
                 return $this->redirect($this->generateUrl('add_device'));
             }
             if ($Interfaceform->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
 				$em->persist($interface);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Interface ' . $interface->getNom() . ' bien enregistrée .');
+               // $request->getSession()->getFlashBag()->add('notice', 'Interface ' . $interface->getNomVirtuel() . ' bien enregistrée .');
                 return $this->redirect($this->generateUrl('add_device'));
             }
-
 
             if ($parametreForm->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
@@ -125,7 +118,6 @@ class DefaultController extends Controller
                 return $this->redirect($this->generateUrl('add_device'));
             }
         }
-
 
         return $this->render(
             'BackendBundle::add_device.html.twig', array(
@@ -236,10 +228,7 @@ class DefaultController extends Controller
                     ->Network_Interface($id);
                 return new JsonResponse($data);
             }
-
         }
-
-
     }
 
     /**
@@ -247,7 +236,6 @@ class DefaultController extends Controller
      */
     public function ajaxActionAddConnexion(Request $request)
     {
-
         if ($request->isXmlHttpRequest()) // pour vérifier la présence d'une requete Ajax
         {
             $id = $request->request->get('id');
@@ -272,9 +260,7 @@ class DefaultController extends Controller
         $form_pod = $this->get('form.factory')->create(new Connexion_select_podType(), $pod, array('method' => 'POST'));
         if ('POST' === $request->getMethod()) {
             if ($form_pod->handleRequest($request)->isValid() and ($pod->getPod()->getId() != null)) {
-
                 $id_pod = $pod->getPod()->getId();
-
                 return $this->redirect($this->generateUrl('add_connexion_after_getpod', array('pod_id' => $id_pod)));
             }
         }
@@ -283,22 +269,17 @@ class DefaultController extends Controller
             'BackendBundle::add_connexion_pod.html.twig', array(
             'user' => $user,
             'form_pod' => $form_pod->createView()
-
         ));
-
     }
 
     /**
      * @Route("/admin/add_connexion_after_getpod{pod_id}", name="add_connexion_after_getpod")
      */
-    public
-    function Add_Connexion_after_getpod(Request $request, $pod_id)
-
+    public function Add_Connexion_after_getpod(Request $request, $pod_id)
     {
         $em = $this->getDoctrine()->getManager();
 
         $connexion = new Connexion();
-
 
         $user = $this->get('security.token_storage')->getToken()->getUser();
 
@@ -307,11 +288,9 @@ class DefaultController extends Controller
         $form_connexion->remove('Suivant');
         if ('GET' === $request->getMethod()) {
             return $this->render(
-
                 'BackendBundle::add_connexion.html.twig', array(
                 'user' => $user,
                 'form_connexion' => $form_connexion->createView()
-
             ));
         }
         if ('POST' === $request->getMethod()) {
@@ -330,7 +309,6 @@ class DefaultController extends Controller
         }
 
         return $this->redirect($this->generateUrl('add_connexion'));
-
     }
 
     /**

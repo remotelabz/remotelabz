@@ -5,7 +5,7 @@
         <div class="left_col scroll-view">
 
           <div class="navbar nav_title" style="border: 0;">
-            <a href="index.html" class="site_title"><i class="fa fa-paw"></i> <span>La Valise</span></a>
+            <a href="{{asset('/app_dev.php')}}" class="site_title"><i class="fa fa-paw"></i> <span>La Valise</span></a>
           </div>
           <div class="clearfix"></div>
 
@@ -63,16 +63,16 @@
 
 					</ul>
                 </li>
-				<li><a><i class="fa fa-laptop"></i> Control VM <span class="fa fa-chevron-down"></span></a>
+				<li><a><i class="fa fa-laptop"></i>Travaux pratiques<span class="fa fa-chevron-down"></span></a>
 					<ul class="nav child_menu" style="display: none">
-						<li><a href="{{path('control_vm')}}">Controler VM</a></li>
+						<li><a href="{{path('control_vm')}}">TEST - TP1</a></li>
 					</ul>
                 </li>
-				<li><a><i class="fa fa-paw"></i> Etudiant <span class="fa fa-chevron-down"></span></a>
+			{#	<li><a><i class="fa fa-paw"></i> Etudiant <span class="fa fa-chevron-down"></span></a>
 					<ul class="nav child_menu" style="display: none">
 						<li><a href="{{path('control_vm')}}"> Liste des TP disponibles </a></li>
 					</ul>
-                </li>
+                </li>#}
                 
               </ul>
             </div>
