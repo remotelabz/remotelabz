@@ -40,7 +40,7 @@ class DeviceType extends AbstractType
             ->add('interfaceControle', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
         'empty_value'   => 'Select',
-        'property' => 'nom',
+        'property' => 'nom_virtuel',
         'multiple' => false,
         'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
@@ -49,10 +49,9 @@ class DeviceType extends AbstractType
 		))
            ->add('network_interfaces', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
-
-        'property' => 'nom',
+        'property' => 'nom_virtuel',
         'multiple' => true,
-               'required' => false,
+        'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
             return $repo->getNotUsedInterfacesQueryBuilder();
         }
