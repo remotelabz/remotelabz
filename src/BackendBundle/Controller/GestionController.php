@@ -235,11 +235,5 @@ class GestionController extends Controller
 
             return $response;
         }
-
-
     }
-
-
-
-
 }

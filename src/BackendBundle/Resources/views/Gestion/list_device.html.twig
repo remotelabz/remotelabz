@@ -56,7 +56,7 @@
 				{%else%}
 					<td>
 						{% for interface in device.networkInterfaces %}
-							{{ interface.nom }}
+							{{ interface.NomVirtuel }} ({{ interface.NomPhysique }})
 								<br>
 						{% endfor %}
 					</td>
@@ -65,7 +65,7 @@
 							<td> device sans interface <br> de controle </td>
 				{%else%}
 					<td>
-						{{ device.interfaceControle.nom }}
+						{{ device.interfaceControle.NomVirtuel }} ({{ device.interfaceControle.NomPhysique }})
 					</td>
 				{%endif%}
 

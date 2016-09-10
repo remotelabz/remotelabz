@@ -22,12 +22,21 @@ class Network_Interface
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
-    /**
+    
+	/**
      * @var string
-     * @ORM\Column(name="nom_interface", type="string", length=255)
+     * @ORM\Column(name="nom_virtuel_interface", type="string", length=255)
      *  @Assert\NotBlank()
      */
-    private $nom;
+    private $nom_virtuel;
+	
+	/**
+     * @var string
+     * @ORM\Column(name="nom_physique_interface", type="string", length=255)
+     *  @Assert\NotBlank()
+     */
+    private $nom_physique;
+
 
     /**
      * @ORM\OneToOne(targetEntity="AppBundle\Entity\ConfigReseau", cascade={"persist","remove"})
@@ -51,40 +60,7 @@ class Network_Interface
     {
         return $this->id;
     }
-    /**
-     * (Add this method into your class)
-     *
-     * @return string String representation of this class
-     */
-    public function __toString()
-    {
-        return $this->nom;
-    }
-    /**
-     * Set nom
-     *
-     * @param string $nom
-     *
-     * @return Network_Interface
-     */
-    public function setNom($nom)
-    {
-        $this->nom = $nom;
-
-        return $this;
-    }
-
-    /**
-     * Get nom
-     *
-     * @return string
-     */
-    public function getNom()
-    {
-        return $this->nom;
-    }
-
-    /**
+     /**
      * Set configReseau
      *
      * @param \AppBundle\Entity\ConfigReseau $configReseau
@@ -143,4 +119,52 @@ class Network_Interface
 //    {
 //        return $this->nbr_interface;
 //    }
+
+    /**
+     * Set nomVirtuel
+     *
+     * @param string $nomVirtuel
+     *
+     * @return Network_Interface
+     */
+    public function setNomVirtuel($nomVirtuel)
+    {
+        $this->nom_virtuel = $nomVirtuel;
+
+        return $this;
+    }
+
+    /**
+     * Get nomVirtuel
+     *
+     * @return string
+     */
+    public function getNomVirtuel()
+    {
+        return $this->nom_virtuel;
+    }
+
+    /**
+     * Set nomPhysique
+     *
+     * @param string $nomPhysique
+     *
+     * @return Network_Interface
+     */
+    public function setNomPhysique($nomPhysique)
+    {
+        $this->nom_physique = $nomPhysique;
+
+        return $this;
+    }
+
+    /**
+     * Get nomPhysique
+     *
+     * @return string
+     */
+    public function getNomPhysique()
+    {
+        return $this->nom_physique;
+    }
 }

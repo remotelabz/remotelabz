@@ -94,13 +94,13 @@
                                         </div>
                                         <div class="form-group">
                                                 {#Génération du label. #}
-                                                {{ form_label(form_connexion.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2 '}}) }}
+                                                {{ form_label(form_connexion.Interface2, "Interface2", {'label_attr': {'class': 'col-sm-2'}}) }}
 
                                                 {#Affichage des erreurs pour ce champ précis. #}
                                                 {{ form_errors(form_connexion.Interface2) }}
                                               <div class="col-sm-2">
                                                 {#Génération de l'input.#}
-                                                {{ form_widget(form_connexion.Interface2, {'attr': {'class': 'net2 span3'}}) }}
+                                                {{ form_widget(form_connexion.Interface2, {'attr': {'class': 'net2 span4'}}) }}
                                              </div>
                                         <div class="form-group">
                                             {#Génération du label. #}
@@ -157,7 +157,7 @@
             $(".dev2").change(function () {
                         var val = $(this).val();
                         if (val != null){
-                            console.log(val);
+                            //console.log(val);
                             mafonctionchange2();
                         }
 
@@ -168,7 +168,7 @@
             });
 
             function mafonctionchange1() {
-                console.log("dev1");
+                //console.log("device1");
                 $.ajax({
                     url: "{{ url('ajax_connexion_call') }}",
                     type: 'POST',
@@ -183,11 +183,11 @@
 
                         $('.net1').empty();
                         if (reponse != null){
-                            console.log("réponse ");
+                            //console.log(reponse);
                             $('.net1').empty();
 
                         $.each(reponse, function (index, element) {
-                            $('.net1').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');
+                            $('.net1').append('<option value="' + element.id + '" selected="selected"> ' + element.nom_virtuel +' ('+element.nom_physique+') </option>');
                         });
                         }
                         else $('.net1').empty();
@@ -197,7 +197,7 @@
                 });
             }
             function mafonctionchange2() {
-                console.log("device2");
+                //	console.log("device2");
                 $.ajax({
                     url: "{{ url('ajax_connexion_call') }}",
                     type: 'POST',
@@ -216,7 +216,7 @@
                             $('.net2').empty();
                         }
                         $.each(reponse, function (index, element) {
-                            $('.net2').append('<option value="' + element.id + '" selected="selected"> ' + element.nom + ' </option>');
+                            $('.net2').append('<option value="' + element.id + '" selected="selected"> ' + element.nom_virtuel +' ('+element.nom_physique+') </option>');
                         });
                     }
 

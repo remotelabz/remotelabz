@@ -42,9 +42,7 @@ class Network_InterfaceRepository extends \Doctrine\ORM\EntityRepository
         return  $qb = $em->createQueryBuilder()
             ->select('net')
             ->from('AppBundle:Network_Interface', 'net')
-            ->where('net.device IS NULL and net.config_reseau IS NULL')
-			;
-
+            ->where('net.device IS NULL and net.config_reseau IS NULL');
 
     }
 
