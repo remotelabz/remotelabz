@@ -27,7 +27,8 @@ class ConnexionRepository extends \Doctrine\ORM\EntityRepository
             ->createQueryBuilder('con')
             ->where('con.pod = :pod')
 			//->andwhere('con.lab IS NULL')
-            ->setParameter('pod', $pod);
+            ->setParameter('pod', $pod)
+			;
 
     }
 }

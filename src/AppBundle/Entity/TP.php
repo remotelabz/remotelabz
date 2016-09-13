@@ -25,9 +25,9 @@ class TP
         private $id;
 
     /**
-     * @ORM\OneToMany(targetEntity="AppBundle\Entity\LAB", mappedBy="tp")
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB")
      */
-    private $labs;
+    private $lab;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -156,61 +156,57 @@ class TP
     }
 
     /**
-     * Set lab
+     * Sets file.
      *
-     * @param \AppBundle\Entity\TP $lab
+     * @param UploadedFile $file
+     */
+    public function setFile(UploadedFile $file = null)
+    {
+        $this->file = $file;
+        // check if we have an old image path
+        if (is_file($this->getAbsolutePath())) {
+            // store the old name to delete after the update
+            $this->temp = $this->getAbsolutePath();
+            $this->path = null;
+        } else {
+            $this->path = 'initial';
+        }
+    }
+
+    /**
+     * Get file.
+     *
+     * @return UploadedFile
+     */
+    public function getFile()
+    {
+        return $this->file;
+    }
+
+    /**
+     * Set path
+     *
+     * @param string $path
      *
      * @return TP
      */
-    public function setLab(\AppBundle\Entity\TP $lab)
+    public function setPath($path)
     {
-        $this->lab = $lab;
-
-        return $this;
-    }
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->labs = new \Doctrine\Common\Collections\ArrayCollection();
-
-    }
-
-    /**
-     * Add lab
-     *
-     * @param \AppBundle\Entity\LAB $lab
-     *
-     * @return TP
-     */
-    public function addLab(\AppBundle\Entity\LAB $lab)
-    {
-        $this->labs[] = $lab;
-        $lab->setTp($this);
+        $this->path = $path;
 
         return $this;
     }
 
     /**
-     * Remove lab
+     * Get path
      *
-     * @param \AppBundle\Entity\LAB $lab
+     * @return string
      */
-    public function removeLab(\AppBundle\Entity\LAB $lab)
+    public function getPath()
     {
-        $this->labs->removeElement($lab);
+        return $this->path;
     }
 
-    /**
-     * Get labs
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getLabs()
-    {
-        return $this->labs;
-    }
 
     /**
      * Set nom
@@ -237,30 +233,26 @@ class TP
     }
 
     /**
-     * Sets file.
+     * Set lab
      *
-     * @param UploadedFile $file
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return TP
      */
-    public function setFile(UploadedFile $file = null)
+    public function setLab(\AppBundle\Entity\LAB $lab = null)
     {
-        $this->file = $file;
-        // check if we have an old image path
-        if (is_file($this->getAbsolutePath())) {
-            // store the old name to delete after the update
-            $this->temp = $this->getAbsolutePath();
-            $this->path = null;
-        } else {
-            $this->path = 'initial';
-        }
+        $this->lab = $lab;
+
+        return $this;
     }
 
     /**
-     * Get file.
+     * Get lab
      *
-     * @return UploadedFile
+     * @return \AppBundle\Entity\LAB
      */
-    public function getFile()
+    public function getLab()
     {
-        return $this->file;
+        return $this->lab;
     }
 }

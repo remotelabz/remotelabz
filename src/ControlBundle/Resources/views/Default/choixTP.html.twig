@@ -1,0 +1,26 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+
+<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des TP disponibles</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+					{% if list_tp is not null %}
+					{% for tp in list_tp %}
+					<li><a href="{{path('generate_xml',{'tp_id': tp.id})}}">{{ tp.nom }}</a></li>
+					{% endfor %}
+					{% else %}
+					Aucun TP disponibles
+					{% endif %}
+					</div>
+				</div>
+			</div>
+</div>
+
+{% endblock %}

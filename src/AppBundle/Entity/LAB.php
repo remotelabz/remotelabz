@@ -19,7 +19,7 @@ class LAB
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
-
+	
     /**
      * @var string
      *
@@ -28,73 +28,28 @@ class LAB
     private $nomlab;
 
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\POD", mappedBy="lab")
+     *  @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD")
      */
     private $pod;
+
     /**
-     *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Connexion", mappedBy="lab")
+     *  @ORM\ManyToMany(targetEntity="AppBundle\Entity\Connexion", mappedBy="labs")
      */
     private $connexions;
+	
+	public function __construct() {
+        $this->connexions = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
-
-    /**
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TP" ,inversedBy="labs")
-     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
-     */
-    private $tp;
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
         return $this->id;
-    }
-
-
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->pod = new \Doctrine\Common\Collections\ArrayCollection();
-    }
-
-    /**
-     * Add pod
-     *
-     * @param \AppBundle\Entity\POD $pod
-     *
-     * @return LAB
-     */
-    public function addPod(\AppBundle\Entity\POD $pod)
-    {
-        $this->pod[] = $pod;
-        $pod->setLab($this);
-
-        return $this;
-    }
-
-    /**
-     * Remove pod
-     *
-     * @param \AppBundle\Entity\POD $pod
-     */
-    public function removePod(\AppBundle\Entity\POD $pod)
-    {
-        $this->pod->removeElement($pod);
-    }
-
-    /**
-     * Get pod
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getPod()
-    {
-        return $this->pod;
     }
 
     /**
@@ -122,6 +77,30 @@ class LAB
     }
 
     /**
+     * Set pod
+     *
+     * @param \AppBundle\Entity\POD $pod
+     *
+     * @return LAB
+     */
+    public function setPod(\AppBundle\Entity\POD $pod = null)
+    {
+        $this->pod = $pod;
+
+        return $this;
+    }
+
+    /**
+     * Get pod
+     *
+     * @return \AppBundle\Entity\POD
+     */
+    public function getPod()
+    {
+        return $this->pod;
+    }
+
+    /**
      * Add connexion
      *
      * @param \AppBundle\Entity\Connexion $connexion
@@ -131,7 +110,6 @@ class LAB
     public function addConnexion(\AppBundle\Entity\Connexion $connexion)
     {
         $this->connexions[] = $connexion;
-        $connexion->setLab($this);
 
         return $this;
     }
@@ -154,29 +132,5 @@ class LAB
     public function getConnexions()
     {
         return $this->connexions;
-    }
-
-    /**
-     * Set tp
-     *
-     * @param \AppBundle\Entity\TP $tp
-     *
-     * @return LAB
-     */
-    public function setTp(\AppBundle\Entity\TP $tp = null)
-    {
-        $this->tp = $tp;
-
-        return $this;
-    }
-
-    /**
-     * Get tp
-     *
-     * @return \AppBundle\Entity\TP
-     */
-    public function getTp()
-    {
-        return $this->tp;
     }
 }
