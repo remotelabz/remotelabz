@@ -14,13 +14,10 @@ class TPType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            -> add('labs', 'entity', array(
+            -> add('lab', 'entity', array(
                 'class'    => 'AppBundle:LAB',
                 'property' => 'nomlab',
-                'multiple' => true,
-                'query_builder' => function(LABRepository $repo) {
-                    return $repo->getLabWithoutTpQueryBuilder();
-                }
+                'multiple' => false,
                             
             ))
             ->add('nom','text')

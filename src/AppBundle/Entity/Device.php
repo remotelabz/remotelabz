@@ -58,7 +58,7 @@ class Device
     private $marque;
 
     /**
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Systeme",cascade={"persist","remove"})
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Systeme")
      * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      *
      */
@@ -74,6 +74,21 @@ class Device
      *  @ORM\OneToMany(targetEntity="AppBundle\Entity\Network_Interface", mappedBy="device")
      */
     private $network_interfaces;
+	
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="script", type="string", length=255)
+     */
+	private $script;
+	
+	/**
+     * @var int
+     *
+     * @ORM\Column(name="order", type="integer")
+     */
+	private $order;
+	
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\POD", inversedBy="devices")
@@ -322,5 +337,53 @@ class Device
     public function getPod()
     {
         return $this->pod;
+    }
+
+    /**
+     * Set script
+     *
+     * @param string $script
+     *
+     * @return Device
+     */
+    public function setScript($script)
+    {
+        $this->script = $script;
+
+        return $this;
+    }
+
+    /**
+     * Get script
+     *
+     * @return string
+     */
+    public function getScript()
+    {
+        return $this->script;
+    }
+
+    /**
+     * Set order
+     *
+     * @param integer $order
+     *
+     * @return Device
+     */
+    public function setOrder($order)
+    {
+        $this->order = $order;
+
+        return $this;
+    }
+
+    /**
+     * Get order
+     *
+     * @return integer
+     */
+    public function getOrder()
+    {
+        return $this->order;
     }
 }

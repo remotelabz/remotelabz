@@ -46,14 +46,14 @@
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(form_tp.labs, "LAB", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(form_tp.lab, "LAB", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(form_tp.labs) }}
+                                            {{ form_errors(form_tp.lab) }}
 
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
-                                                {{ form_widget(form_tp.labs, {'attr': {'class': 'form-control'}}) }}
+                                                {{ form_widget(form_tp.lab, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
 

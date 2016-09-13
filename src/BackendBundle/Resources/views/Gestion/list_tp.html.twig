@@ -30,7 +30,7 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th class="sorting" >LABs</th>
+							<th class="sorting" >LAB</th>
 
 						</tr>
                     </thead>
@@ -39,15 +39,10 @@
 
 					<td class="sorting_1" tabindex="0">{{ tp.nom }}</td>
 
-				{% if tp.labs is empty %}
+				{% if tp.lab is empty %}
 							<td> aucun  labs attaché a ce tp</td>
 				{%else%}
-					<td>
-						{% for lab in tp.labs %}
-							{{ lab.nomlab }}
-								<br>
-						{% endfor %}
-					</td>
+					<td>{{ tp.lab.nomlab }}</td>
 				{%endif%}
 
 					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
