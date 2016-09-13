@@ -51,7 +51,7 @@ class ConnexionType extends AbstractType
                 'property' => 'nom',
                 'multiple' => false,
                 'required' => false,
-                'empty_value' => '-- Choose a pod --',
+                'empty_value' => '-- Choose a device --',
                 'query_builder' => function (DeviceRepository $repo) use ($id)
                 {
                     return $repo->Device($id);
@@ -61,7 +61,7 @@ class ConnexionType extends AbstractType
                 'property' => 'nom',
                 'multiple' => false,
                 'required' => false,
-                'empty_value' => '-- Choose a pod --',
+                'empty_value' => '-- Choose a device --',
                 'query_builder' => function (DeviceRepository $repo) use ($id)
                 {
                     return $repo->Device($id);
@@ -70,7 +70,7 @@ class ConnexionType extends AbstractType
         ->add('Interface2','choice');
 
         $formModifie1 = function(FormInterface $form,Device $device) {
-             $id_dev = $device->getId();
+            $id_dev = $device->getId();
             $interfaces_dev1 = $this->em->getRepository('AppBundle:Network_Interface')->getInterfacesAttachedToDevice($id_dev);
 
             $form->add('Interface1', 'entity', array(

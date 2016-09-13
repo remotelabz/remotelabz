@@ -20,13 +20,6 @@ class Connexion
      */
     private $id;
 
-
-    //je veux pas des connexions sans interface ni sans device JoinColumn(nullable=false)
-    /**
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device")
-     *  * @ORM\JoinColumn(nullable=false)
-     */
-
     /**
      * @var string
      *
@@ -98,20 +91,22 @@ class Connexion
      * @ORM\Column(name="NomDevice2", type="string", length=255)
      */
     private $nomdevice2;
+
     /**
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
+     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\LAB", inversedBy="connexions")
      * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
      */
-    private $lab;
-
-
-
+    private $labs;
+	
+	public function __construct() {
+        $this->labs = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -119,99 +114,75 @@ class Connexion
     }
 
     /**
-     * Set interface1
+     * Set nomconnexion
      *
-     * @param \stdClass $interface1
+     * @param string $nomconnexion
      *
      * @return Connexion
      */
-    public function setInterface1($interface1)
+    public function setNomconnexion($nomconnexion)
     {
-        $this->interface1 = $interface1;
+        $this->nomconnexion = $nomconnexion;
 
         return $this;
     }
 
     /**
-     * Get interface1
-     *
-     * @return \stdClass
-     */
-    public function getInterface1()
-    {
-        return $this->interface1;
-    }
-
-    /**
-     * Set interface2
-     *
-     * @param string $interface2
-     *
-     * @return Connexion
-     */
-    public function setInterface2($interface2)
-    {
-        $this->interface2 = $interface2;
-
-        return $this;
-    }
-
-    /**
-     * Get interface2
+     * Get nomconnexion
      *
      * @return string
      */
-    public function getInterface2()
+    public function getNomconnexion()
     {
-        return $this->interface2;
+        return $this->nomconnexion;
     }
 
     /**
-     * Set device1
+     * Set vlan1
      *
-     * @param \AppBundle\Entity\Device $device1
+     * @param integer $vlan1
      *
      * @return Connexion
      */
-    public function setDevice1(\AppBundle\Entity\Device $device1 = null)
+    public function setVlan1($vlan1)
     {
-        $this->Device1 = $device1;
+        $this->vlan1 = $vlan1;
 
         return $this;
     }
 
     /**
-     * Get device1
+     * Get vlan1
      *
-     * @return \AppBundle\Entity\Device
+     * @return integer
      */
-    public function getDevice1()
+    public function getVlan1()
     {
-        return $this->Device1;
+        return $this->vlan1;
     }
 
     /**
-     * Set device2
+     * Set vlan2
      *
-     * @param \AppBundle\Entity\Device $device2
+     * @param integer $vlan2
      *
      * @return Connexion
      */
-    public function setDevice2(\AppBundle\Entity\Device $device2 = null)
+    public function setVlan2($vlan2)
     {
-        $this->Device2 = $device2;
+        $this->vlan2 = $vlan2;
 
         return $this;
     }
 
     /**
-     * Get device2
+     * Get vlan2
      *
-     * @return \AppBundle\Entity\Device
+     * @return integer
      */
-    public function getDevice2()
+    public function getVlan2()
     {
-        return $this->Device2;
+        return $this->vlan2;
     }
 
     /**
@@ -263,54 +234,6 @@ class Connexion
     }
 
     /**
-     * Set lab
-     *
-     * @param \AppBundle\Entity\LAB $lab
-     *
-     * @return Connexion
-     */
-    public function setLab(\AppBundle\Entity\LAB $lab = null)
-    {
-        $this->lab = $lab;
-
-        return $this;
-    }
-
-    /**
-     * Get lab
-     *
-     * @return \AppBundle\Entity\LAB
-     */
-    public function getLab()
-    {
-        return $this->lab;
-    }
-
-    /**
-     * Set nomconnexion
-     *
-     * @param string $nomconnexion
-     *
-     * @return Connexion
-     */
-    public function setNomconnexion($nomconnexion)
-    {
-        $this->nomconnexion = $nomconnexion;
-
-        return $this;
-    }
-
-    /**
-     * Get nomconnexion
-     *
-     * @return string
-     */
-    public function getNomconnexion()
-    {
-        return $this->nomconnexion;
-    }
-
-    /**
      * Set pod
      *
      * @param \AppBundle\Entity\POD $pod
@@ -335,50 +258,132 @@ class Connexion
     }
 
     /**
-     * Set vlan1
+     * Set device1
      *
-     * @param string $vlan1
+     * @param \AppBundle\Entity\Device $device1
      *
      * @return Connexion
      */
-    public function setVlan1($vlan1)
+    public function setDevice1(\AppBundle\Entity\Device $device1 = null)
     {
-        $this->vlan1 = $vlan1;
+        $this->Device1 = $device1;
 
         return $this;
     }
 
     /**
-     * Get vlan1
+     * Get device1
      *
-     * @return string
+     * @return \AppBundle\Entity\Device
      */
-    public function getVlan1()
+    public function getDevice1()
     {
-        return $this->vlan1;
+        return $this->Device1;
     }
 
     /**
-     * Set vlan2
+     * Set device2
      *
-     * @param string $vlan2
+     * @param \AppBundle\Entity\Device $device2
      *
      * @return Connexion
      */
-    public function setVlan2($vlan2)
+    public function setDevice2(\AppBundle\Entity\Device $device2 = null)
     {
-        $this->vlan2 = $vlan2;
+        $this->Device2 = $device2;
 
         return $this;
     }
 
     /**
-     * Get vlan2
+     * Get device2
      *
-     * @return string
+     * @return \AppBundle\Entity\Device
      */
-    public function getVlan2()
+    public function getDevice2()
     {
-        return $this->vlan2;
+        return $this->Device2;
+    }
+
+    /**
+     * Set interface1
+     *
+     * @param \AppBundle\Entity\Network_Interface $interface1
+     *
+     * @return Connexion
+     */
+    public function setInterface1(\AppBundle\Entity\Network_Interface $interface1 = null)
+    {
+        $this->interface1 = $interface1;
+
+        return $this;
+    }
+
+    /**
+     * Get interface1
+     *
+     * @return \AppBundle\Entity\Network_Interface
+     */
+    public function getInterface1()
+    {
+        return $this->interface1;
+    }
+
+    /**
+     * Set interface2
+     *
+     * @param \AppBundle\Entity\Network_Interface $interface2
+     *
+     * @return Connexion
+     */
+    public function setInterface2(\AppBundle\Entity\Network_Interface $interface2 = null)
+    {
+        $this->interface2 = $interface2;
+
+        return $this;
+    }
+
+    /**
+     * Get interface2
+     *
+     * @return \AppBundle\Entity\Network_Interface
+     */
+    public function getInterface2()
+    {
+        return $this->interface2;
+    }
+
+    /**
+     * Add lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return Connexion
+     */
+    public function addLab(\AppBundle\Entity\LAB $lab)
+    {
+        $this->labs[] = $lab;
+
+        return $this;
+    }
+
+    /**
+     * Remove lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     */
+    public function removeLab(\AppBundle\Entity\LAB $lab)
+    {
+        $this->labs->removeElement($lab);
+    }
+
+    /**
+     * Get labs
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getLabs()
+    {
+        return $this->labs;
     }
 }
