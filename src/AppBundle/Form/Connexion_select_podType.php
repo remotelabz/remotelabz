@@ -31,7 +31,7 @@ class Connexion_select_podType extends AbstractType
                 'property' => 'nom',
                 'multiple' => false,
                 'required' => false,
-                'empty_value' => '-- Choose a pod --',
+                'empty_value' => '-- Choose a device --',
                 'query_builder' => function (PODRepository $repo) {
                     return $repo->getNotUsedPodQueryBuilder();
                 }))
