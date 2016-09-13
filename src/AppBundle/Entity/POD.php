@@ -43,11 +43,6 @@ class POD
 
     private $nom;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB",inversedBy="pod")
-     * @ORM\joinColumn(onDelete="SET NULL",nullable=true)
-     */
-    private $lab;
 
 
 

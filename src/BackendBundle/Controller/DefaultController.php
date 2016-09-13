@@ -161,7 +161,7 @@ class DefaultController extends Controller
             }
             $em->persist($pod);
             $em->flush();
-            $request->getSession()->getFlashBag()->add('notice', 'POD ajouté');
+            $request->getSession()->getFlashBag()->add('notice', 'POD ajouté avec succès');
             return $this->redirect($this->generateUrl('add_pod'));
         }
         return $this->render(
@@ -185,22 +185,20 @@ class DefaultController extends Controller
         $labForm = $this->get('form.factory')->create(new LABType($em), $lab, array('method' => 'POST'));
 
         if ('POST' === $request->getMethod()) {
-
-            if ($labForm->handleRequest($request)->isValid()) {
-                $pod = $lab->getPod();
-                $connexion = $lab->getConnexions();
-
-                foreach ($pod as $p) {
-                    $lab->addPod($p);
-                }
-
-                foreach ($connexion as $con) {
-                    $lab->addConnexion($con);
-                }
+			$labForm->handleRequest($request);
+            if ($labForm->isValid()) {
+               
+				foreach($lab->getConnexions() as $con) {
+					//$lab->addConnexion($con);
+					$con->addLab($lab);
+				}
                 $em->persist($lab);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Lab ajouté');
-                return $this->redirect($this->generateUrl('add_lab'));
+				
+                $request->getSession()->getFlashBag()->add('notice', 'Lab ajouté avec succès');
+				
+				
+                //return $this->redirect($this->generateUrl('add_lab'));
             }
         }
         return $this->render(
@@ -323,10 +321,7 @@ class DefaultController extends Controller
         if ('POST' === $request->getMethod()) {
             if ($form_tp->handleRequest($request)->isValid()) {
                 $em = $this->getDoctrine()->getManager();
-                $labs = $tp->getLabs();
-                foreach ($labs as $lab) {
-                    $tp->addLab($lab);
-                }
+                
                 $em->persist($tp);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'TP ajouté');
