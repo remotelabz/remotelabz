@@ -40,4 +40,4 @@ security:
 
     access_control:
         - { path: ^/admin, roles: [ROLE_SUPERADMIN,ROLE_ADMIN] }
-        - { path: ^/control, roles: [ROLE_SUPERADMIN,ROLE_ADMIN] }
+        - { path: ^/control, roles: [ROLE_SUPERADMIN,ROLE_ADMIN,ROLE_ENSEIGNANT,ROLE_ETUDIANT] }
