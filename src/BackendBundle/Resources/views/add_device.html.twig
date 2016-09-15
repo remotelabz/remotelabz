@@ -34,7 +34,7 @@
                                     {{ form_errors(InterfaceControleform) }}
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom virtuel de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom virtuel de l'interface (nom de l'interface sur le serveur de virtualisation)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
                                         {{ form_errors(InterfaceControleform.nom_virtuel) }}
@@ -46,7 +46,7 @@
                                     </div>
 									<div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom physique de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(InterfaceControleform.nom_virtuel, "Nom physique de l'interface (utilisé pour l'affichage du schéma d'un lab)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
                                         {{ form_errors(InterfaceControleform.nom_physique) }}
@@ -189,7 +189,7 @@
                                 {{ form_errors(Interfaceform) }}
                                 <div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfaceform.nom_virtuel, "Nom virtuel de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nom_virtuel, "Nom virtuel de l'interface (nom de l'interface sur le serveur de virtualisation)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
                                     {{ form_errors(Interfaceform.nom_virtuel) }}
@@ -202,7 +202,7 @@
 
 								<div class="form-group">
                                     {# Génération du label. #}
-                                    {{ form_label(Interfaceform.nom_physique, "Nom physique de l'interface", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                    {{ form_label(Interfaceform.nom_physique, "Nom physique de l'interface (utilisé pour l'affichage du schéma d'un lab)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                     {# Affichage des erreurs pour ce champ précis. #}
                                     {{ form_errors(Interfaceform.nom_physique) }}
@@ -523,6 +523,18 @@
                                             <div class="col-sm-2">
                                                 {# Génération de l'input. #}
                                                 {{ form_widget(deviceForm.marque, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
+										<div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(deviceForm.script, "Script de lancement (chemin absolu)", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(deviceForm.script) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(deviceForm.script, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
                                         <div class="form-group">
