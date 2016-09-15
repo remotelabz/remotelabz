@@ -22,12 +22,14 @@ class DeviceType extends AbstractType
         $builder
             ->add('nom')
             ->add('type','choice' , array(
-                'choices' => array('virtuel' => 'Virtuel', 'physique' => 'Physique')))
-            ->add('propriete')
+                'choices' => array('virtuel' => 'Virtuel', 'physique' => 'Physique', 'comp_physique' => 'Comportement équivalent physique (OVS)')))
+            ->add('propriete','choice' , array(
+                'choices' => array('ordi' => 'Ordinateur', 'Switch' => 'Switch', 'Routeur' => 'Router')))
             ->add('modele')
             ->add('marque')
+			->add('script')
 //
-              ->add('systeme', 'entity', array(
+             ->add('systeme', 'entity', array(
                 'class'    => 'AppBundle:Systeme',
                 'property' => 'nom',
                 'multiple' => false,

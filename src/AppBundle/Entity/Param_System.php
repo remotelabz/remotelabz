@@ -63,7 +63,30 @@ class Param_System
      * @ORM\Column(name="Console_Port_max", type="integer")
      */
     private $consolePortMax;
+	
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="IPv4", type="string", length=255,nullable=true)
+     */
+    private $ipv4;
+	
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="IPv6", type="string", length=255,nullable=true)
+     */
+    private $ipv6;
 
+	
+	/**
+     * @var int
+     * Index minimal à utiliser rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
+	 * libre sera la tap14 par exemple.
+     * @ORM\Column(name="index_min_interface", type="integer")
+     */
+    private $index_min_Interface;
+	
 	/**
      * @var int
      * Index actuel des interfaces par rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
@@ -248,5 +271,77 @@ class Param_System
     public function getIndexInterface()
     {
         return $this->indexInterface;
+    }
+
+    /**
+     * Set ipv4
+     *
+     * @param integer $ipv4
+     *
+     * @return Param_System
+     */
+    public function setIpv4($ipv4)
+    {
+        $this->ipv4 = $ipv4;
+
+        return $this;
+    }
+
+    /**
+     * Get ipv4
+     *
+     * @return integer
+     */
+    public function getIpv4()
+    {
+        return $this->ipv4;
+    }
+
+    /**
+     * Set ipv6
+     *
+     * @param integer $ipv6
+     *
+     * @return Param_System
+     */
+    public function setIpv6($ipv6)
+    {
+        $this->ipv6 = $ipv6;
+
+        return $this;
+    }
+
+    /**
+     * Get ipv6
+     *
+     * @return integer
+     */
+    public function getIpv6()
+    {
+        return $this->ipv6;
+    }
+
+    /**
+     * Set indexMinInterface
+     *
+     * @param integer $indexMinInterface
+     *
+     * @return Param_System
+     */
+    public function setIndexMinInterface($indexMinInterface)
+    {
+        $this->index_min_Interface = $indexMinInterface;
+
+        return $this;
+    }
+
+    /**
+     * Get indexMinInterface
+     *
+     * @return integer
+     */
+    public function getIndexMinInterface()
+    {
+        return $this->index_min_Interface;
     }
 }

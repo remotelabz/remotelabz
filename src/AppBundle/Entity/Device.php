@@ -40,6 +40,7 @@ class Device
      * @var string
      *
      * @ORM\Column(name="propriete", type="string", length=255)
+	 * Doit être au choix : Ordi, Switch, Routeur
      */
     private $propriete;
 
