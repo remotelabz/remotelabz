@@ -21,63 +21,29 @@
           </div>
           <!-- /menu prile quick info -->
 
-          <br />
-
+          <br />		  
           <!-- sidebar menu -->
           <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
 
+		  
             <div class="menu_section">
-              <h3>General</h3>
-              <ul class="nav side-menu">
-                <li><a><i class="fa fa-users"></i> Utilisateurs <span class="fa fa-chevron-down"></span></a>
-                  <ul class="nav child_menu" style="display: none">
-                    <li><a href="{{path('add_user')}}">Ajouter</a></li>
-					<li><a href="{{path('change_role')}}">Changer rôle</a></li>                 
-					<li><a href="{{path('list_user')}}">Lister</a></li>                 
-                  </ul>
-				<li><a><i class="fa fa-cog"></i> Gestion TP <span class="fa fa-chevron-down"></span></a>
-					<ul class="nav child_menu" style="display: none">
-                          <li><a><i class="fa fa-cog"></i> Configuration <span class="fa fa-chevron-down"></span></a>
-                                <ul class="nav child_menu" style="display: none">
-                                      <li><a href="{{path('add_device')}}">Ajouter Device</a></li>
-                                      <li><a href="{{path('add_pod')}}">Ajouter POD</a></li>
-                                    <li><a href="{{path('add_connexion')}}">Ajouter Connexion</a></li>
-                                       <li><a href="{{path('add_lab')}}">Ajouter LAB</a></li>
-                                    <li><a href="{{path('add_tp')}}">Ajouter TP</a></li>
-                                  </ul>
-                          </li>
-                        <li><a><i class="fa fa-cog"></i> Gestion <span class="fa fa-chevron-down"></span></a>
-                            <ul class="nav child_menu" style="display: none" >
-                                <li><a href="{{path('list_Device')}}">List Device</a></li>
-                                <li><a href="{{path('list_Network_Interface')}}">List Interface</a></li>
-                                <li><a href="{{path('list_POD')}}">List POD</a></li>
-                                <li><a href="{{path('list_Connexion')}}">List Connexion</a></li>
-                                <li><a href="{{path('list_LAB')}}">List LAB</a></li>
-                                <li><a href="{{path('list_TP')}}">List TP</a></li>
-								<li><a href="{{path('list_Parameter')}}">List Parametre</a></li>
-								<li><a href="{{path('list_Hyperviseur')}}">List Hyperviseur</a></li>
-								<li><a href="{{path('list_ConfigReseau')}}">List Config_Reseau</a></li>
-								
-                            </ul>
-                        </li>
-
-					</ul>
-                </li>
+			<br/>
+			{% if group.role == "ROLE_ADMIN" %}
+			 {% include 'AppBundle::menu_admin.html.twig' %}
+			 {% include 'AppBundle::menu_enseignant.html.twig' %}
+			{% endif %}
+          	
+              <h3>Travaux pratiques</h3>
+			  <ul class="nav side-menu">
 				<li><a><i class="fa fa-laptop"></i>Travaux pratiques<span class="fa fa-chevron-down"></span></a>
 					<ul class="nav child_menu" style="display: none">
 						<li><a href="{{path('control_vm')}}">TEST - TP1</a></li>
 						<li><a href="{{path('choixTP')}}">Choix TP</a></li>
 					</ul>
-                </li>
-			{#	<li><a><i class="fa fa-paw"></i> Etudiant <span class="fa fa-chevron-down"></span></a>
-					<ul class="nav child_menu" style="display: none">
-						<li><a href="{{path('control_vm')}}"> Liste des TP disponibles </a></li>
-					</ul>
-                </li>#}
-                
+                </li>              
               </ul>
-            </div>
-          
+			</div>
+			
           </div>
           <!-- /sidebar menu -->
 
