@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Reservation
- *
+ * Reservation en cours et futur
  * @ORM\Table(name="reservation")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ReservationRepository")
  */
@@ -57,9 +57,9 @@ class Reservation
 
     /**
      *
-     * @ORM\OneToMany(targetEntity="AppBundle\Entity\Propriete", mappedBy="reservation" )
+     * @ORM\OneToMany(targetEntity="AppBundle\Entity\Run", mappedBy="reservation" )
      */
-    private $Propriete;
+    private $Run;
 
 
     /**
@@ -245,5 +245,39 @@ class Reservation
     public function removePropriete(\AppBundle\Entity\Propriete $propriete)
     {
         $this->Propriete->removeElement($propriete);
+    }
+
+    /**
+     * Add run
+     *
+     * @param \AppBundle\Entity\Run $run
+     *
+     * @return Reservation
+     */
+    public function addRun(\AppBundle\Entity\Run $run)
+    {
+        $this->Run[] = $run;
+
+        return $this;
+    }
+
+    /**
+     * Remove run
+     *
+     * @param \AppBundle\Entity\Run $run
+     */
+    public function removeRun(\AppBundle\Entity\Run $run)
+    {
+        $this->Run->removeElement($run);
+    }
+
+    /**
+     * Get run
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getRun()
+    {
+        return $this->Run;
     }
 }

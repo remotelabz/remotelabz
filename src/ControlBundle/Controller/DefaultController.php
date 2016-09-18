@@ -12,19 +12,20 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class DefaultController extends Controller
 {
     /**
-     * @Route("/control/index", name="control_vm")
+     * @Route("/control", name="control_vm")
      */
     public function indexAction()
     {
 			
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		
+		$group=$user->getGroupe();
 		// Si l'utilisateur courant est anonyme, $user vaut « anon. »
 		// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
 		
         return $this->render('ControlBundle:Default:index.html.twig', array(
 		'user' => $user,
+		'group' => $group,
 		'host' => "194.57.105.124",
 		'port' => "7220" // Linux
 		//'port' => "7224" // Windows 7
@@ -38,9 +39,11 @@ class DefaultController extends Controller
 		 
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		
 			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
 		'user' => $user,
+		'group' => $group,
 		'host' => "194.57.105.124",
 		//'port' => "7220"
 		'port' => "7227" // Windows 7
@@ -54,6 +57,7 @@ class DefaultController extends Controller
     {		
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
         $list_tp = $repository->findAll();
@@ -61,6 +65,7 @@ class DefaultController extends Controller
 		
         return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 		'user' => $user,
+		'group' => $group,
 		'list_tp' => $list_tp
 		));
     }
@@ -68,6 +73,7 @@ class DefaultController extends Controller
 	public function UpdateInterfaceIndex($tp_id,$increment) { // increment permet de définir si il faut augmenter (+1) ou diminuer (-1) l'index des interfaces utilisables
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		$em = $this->getDoctrine()->getManager();
 				
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -98,7 +104,8 @@ class DefaultController extends Controller
 	public function stopLab($tp_id){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
 
 		$this->UpdateInterfaceIndex($tp_id,-1);
@@ -107,8 +114,19 @@ class DefaultController extends Controller
 				
         return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 		'user' => $user,
+		'group' => $group,
 		'list_tp' => $list_tp
 		));
+	}
+	
+	/**
+     * @Route("/control/startLab{tp_id}", name="startLab")
+     */
+    public function startLabAction($tp_id)
+    {	
+	// Ajouter la gestion de l'objet réservation
+	// Faire le exec avec le fichier XML stocké par generate_xml
+	
 	}
 	
 	/**
@@ -118,6 +136,7 @@ class DefaultController extends Controller
     {	
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
 		
