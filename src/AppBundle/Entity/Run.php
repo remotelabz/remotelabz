@@ -5,15 +5,15 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Propriete
+ * Run
  *
  * Permet de définir les propriétés relatives à une reservation et surtout les ports utilisées pour accéder à un device virtuel
- * Chaque device est instantié au fur et à mesure des démarrages et donc pour éviter de dupliquer les devices, nous passons pas cet objet
+ * Chaque device est instantié au fur et à mesure des démarrages et donc pour éviter de dupliquer les devices, nous passons par cet objet
  *
- * @ORM\Table(name="propriete")
- * @ORM\Entity(repositoryClass="AppBundle\Repository\ProprieteRepository")
+ * @ORM\Table(name="run")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\RunRepository")
  */
-class Propriete
+class Run
 {
     /**
      * @var int
@@ -38,15 +38,12 @@ class Propriete
      */
     private $procId;
 
-    /**
-     * @var int
-     * Chaque device possède des interfaces qui sont dupliquées à chaque instantiation. (exemple : les tap sont uniques par VM)
-	 * Il faut donc savoir si la réservation utilise la tap10 ou la tap23 par exemple. Dans l'interface enregistrée lors de la création
-	 * du device dans le système, on définit juste les interfaces dans l'ordre classique
-     * @ORM\Column(name="index_deb_interface", type="integer")
+	/**
+     * @var string
+     *
+     * @ORM\Column(name="br_num", type="string", length=255)
      */
-    private $index_deb_interface;
-
+    private $br_num;
 
     /**
      * Get id
@@ -152,5 +149,29 @@ class Propriete
     public function getIndexDebInterface()
     {
         return $this->index_deb_interface;
+    }
+
+    /**
+     * Set brNum
+     *
+     * @param string $brNum
+     *
+     * @return Run
+     */
+    public function setBrNum($brNum)
+    {
+        $this->br_num = $brNum;
+
+        return $this;
+    }
+
+    /**
+     * Get brNum
+     *
+     * @return string
+     */
+    public function getBrNum()
+    {
+        return $this->br_num;
     }
 }

@@ -1,0 +1,42 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Ajout d'étudiant dans une classe</h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					{% for user in list_etudiant %}
+					{{user.nom}}
+					{% endfor %}
+					
+					{% for user in list_classe %}
+					{{user.nom}}<br/>
+					{% endfor %}
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+		
+			
+			
+	     
+    
+{% endblock %}

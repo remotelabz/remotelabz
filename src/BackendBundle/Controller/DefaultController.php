@@ -19,7 +19,10 @@ use AppBundle\Form\Network_InterfaceType;
 use AppBundle\Form\ParameterType;
 use AppBundle\Form\PODType;
 use AppBundle\Form\SystemeType;
-
+use UserBundle\Entity\User;
+use UserBundle\Entity\Classe;
+use UserBundle\Form\Type\AddClasseFormType;
+use UserBundle\Form\Type\AddUserFormType;
 
 use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
@@ -31,6 +34,9 @@ use Symfony\Component\HttpFoundation\Request;
 use AppBundle\Entity\Device;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\HttpFoundation\Response;
+
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 class DefaultController extends Controller
@@ -42,7 +48,8 @@ class DefaultController extends Controller
     public function Add_DeviceAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
         $interface = new Network_Interface();
         $interfaceControle = new Network_Interface();
         $hyperviseur = new Hyperviseur();
@@ -122,6 +129,7 @@ class DefaultController extends Controller
         return $this->render(
             'BackendBundle::add_device.html.twig', array(
             'user' => $user,
+			'group' => $group,
             'InterfaceControleform' => $InterfaceControleform->createView(),
             'Interfaceform' => $Interfaceform->createView(),
             'parametreForm' => $parametreForm->createView(),
@@ -137,7 +145,8 @@ class DefaultController extends Controller
     public function Add_PodAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
         $pod = new POD();
 
         $podForm = $this->get('form.factory')->create(new PODType(), $pod, array('method' => 'POST'));
@@ -167,6 +176,7 @@ class DefaultController extends Controller
         return $this->render(
             'BackendBundle::add_pod.html.twig', array(
             'user' => $user,
+			'group' => $group,
             'podForm' => $podForm->createView()
 
         ));
@@ -180,6 +190,7 @@ class DefaultController extends Controller
     public function Add_LabAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
         $em = $this->getDoctrine()->getManager();
         $lab = new LAB();
         $labForm = $this->get('form.factory')->create(new LABType($em), $lab, array('method' => 'POST'));
@@ -204,6 +215,7 @@ class DefaultController extends Controller
         return $this->render(
             'BackendBundle::add_lab.html.twig', array(
             'user' => $user,
+			'group' => $group,
             'labForm' => $labForm->createView()
 
         ));
@@ -253,7 +265,8 @@ class DefaultController extends Controller
     public function Add_Connexion(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
         $pod = new Connexion();
         $form_pod = $this->get('form.factory')->create(new Connexion_select_podType(), $pod, array('method' => 'POST'));
         if ('POST' === $request->getMethod()) {
@@ -266,6 +279,7 @@ class DefaultController extends Controller
         return $this->render(
             'BackendBundle::add_connexion_pod.html.twig', array(
             'user' => $user,
+			'group'=> $group,
             'form_pod' => $form_pod->createView()
         ));
     }
@@ -280,7 +294,8 @@ class DefaultController extends Controller
         $connexion = new Connexion();
 
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
         $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id, $em), $connexion, array('method' => 'POST'));
         $form_connexion->remove('pod');
         $form_connexion->remove('Suivant');
@@ -288,6 +303,7 @@ class DefaultController extends Controller
             return $this->render(
                 'BackendBundle::add_connexion.html.twig', array(
                 'user' => $user,
+				'group' => $group,
                 'form_connexion' => $form_connexion->createView()
             ));
         }
@@ -315,6 +331,7 @@ class DefaultController extends Controller
     public function addTp(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 
         $tp = new TP();
         $form_tp = $this->get('form.factory')->create(new TPType(), $tp, array('method' => 'POST'));
@@ -344,10 +361,112 @@ class DefaultController extends Controller
         return $this->render(
             'BackendBundle::add_tp.html.twig', array(
             'user' => $user,
+			'group' => $group,
             'form_tp' => $form_tp->createView()
 
         ));
     }
+	
+	/**
+     * @Route("/ens/add_classe", name="ens_add_classe")
+     */
+	public function add_classe(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+
+		$classe=new Classe;
+		
+		$form = $this->get('form.factory')->create(AddClasseFormType::class, $classe,array('method' => 'POST'));
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$list_classe = $repository->findAll();
+				
+		if ('POST' === $request->getMethod()) {
+
+			if ($form->handleRequest($request)->isValid()) {
+				$em = $this->getDoctrine()->getManager();
+				//Tester si cette classe existe déjà
+				$em->persist($classe);
+				$em->flush();
+				$request->getSession()->getFlashBag()->add('notice', 'Classe ajoutée avec succès');
+				return $this->redirect($this->generateUrl('ens_add_classe'));
+			}
+		}
+    	return $this->render(
+			'UserBundle:Gestion:add_classe.html.twig',array(
+			'user' => $user,
+			'group' => $group,
+			'list_classe' => $list_classe,
+			'form' => $form->createView(),
+		));
+	}
+	
+	/**
+     * @Route("/admin/delete_classe", name="delete_classe")
+     */
+	public function delete_classe(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$userManager = $this->container->get('fos_user.user_manager');
+
+        if($request->isXmlHttpRequest()) {
+		
+		$id='';
+		$id=$request->get('data');
+		if ($id != '') {
+
+			$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+			$select_classe = new Classe();
+			$classe_id=preg_split("/_/",$id)[1];
+			$select_classe = $repository->find($classe_id);
+			
+			$em = $this->getDoctrine()->getManager();
+			$em->remove($select_classe);
+			$em->flush();
+			$return="Supprimer";
+			$result=$classe_id.":".$return;
+			return new Response($result);
+			}
+		return new Response(0);
+		}
+		else return new Response(0);
+	}
+
+	/**
+     * @Route("/ens/add_inclasse", name="ens_add_inclasse")
+     */
+	public function add_inclasse(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$em = $this->getDoctrine()->getManager();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$list_classe = $repository->findAll();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+		$list_alletudiant = $repository->findAll();
+		$list_etudiant=array();
+		foreach ( $list_etudiant as $etudiant) {
+			if ($etudiant->getGroupe()->getNom()=="Etudiant")
+				$list_etudiant->add($etudiant);	
+		}
+		
+		
+		return $this->render(
+			'BackendBundle:User:add_inclasse.html.twig',array(
+			'user' => $user,
+			'group' => $group,
+			'list_classe' => $list_classe,
+			'list_etudiant' => $list_etudiant,
+			//'form' => $form->createView(),
+		));
+	}
 }
 
 
