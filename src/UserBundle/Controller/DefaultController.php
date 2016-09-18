@@ -21,6 +21,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		$userManager = $this->container->get('fos_user.user_manager');
 	
 		$new_user = new User();
@@ -30,33 +31,12 @@ class DefaultController extends Controller
 			
 			$test = $userManager->findUserByEmail($form->get('email')->getData());	
 			if (count($test)==0) {
-			$last_name = $this->stripAccents($new_user->getLastName());
-            $first_name = $this->stripAccents($new_user->getFirstName());
-            
-
-            // Première lettre du prénom
-            $username = substr($first_name, 0, 1);
-            // 6 première lettres du nom
-            $username .= substr($last_name, 0, 6);
-			$username = str_replace(' ','',$username);
-            // Calcul d'une suite de chiffres aléatoires
-            $identifiant_unique = $this->genchaine((10-strlen($username)));
-
-            $username .= $identifiant_unique;
 			
-            $new_user->setUsername(strtolower($username));
-			
-			$encoder = $this->container->get('security.password_encoder');
-			$clear_password=$this->genpassword(10);
-			$new_user->setPassword($encoder->encodePassword($new_user,$clear_password));
-			$new_user->SetEnabled(1);
-			$em = $this->getDoctrine()->getManager();
-			$em->persist($new_user);
-			$em->flush();
+			$clear_password=$this->genuseraccount($new_user);
 
 			$request->getSession()->getFlashBag()->add('notice', 'Utilisateur créé.');
 			
-			$subject = "Compte créé - ".$new_user->getfirstname()." ".strtoupper($this->stripAccents($new_user->getLastName()));
+			$subject = "[Remotelabz-v2] - Création de votre compte - ".$new_user->getfirstname()." ".strtoupper($this->stripAccents($new_user->getLastName()));
 			
 			$mail_from=$this->getParameter('mail_from');
 			$message = \Swift_Message::newInstance()
@@ -73,6 +53,7 @@ class DefaultController extends Controller
 				'UserBundle:Gestion:add_user.html.twig',array(
 				'new_user' => $new_user,
 				'user' => $user,
+				'group' => $group,
 				'form' => $form->createView(),
 			));
 			
@@ -94,6 +75,7 @@ class DefaultController extends Controller
         'UserBundle:Gestion:add_user.html.twig',array(
 		'new_user' => $new_user,
 		'user' => $user,
+		'group' => $group,
 		'form' => $form->createView(),
 		)
 	);
@@ -107,6 +89,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		$userManager = $this->container->get('fos_user.user_manager');
 
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
@@ -117,10 +100,9 @@ class DefaultController extends Controller
 		return $this->render(
         'UserBundle:Gestion:list_user.html.twig',array(
 		'user' => $user,
+		'group' => $group,
 		'list_user' => $list_user
 		));
-		
-		
 	}
 	
 	/**
@@ -130,6 +112,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		$userManager = $this->container->get('fos_user.user_manager');
 
         if($request->isXmlHttpRequest()) {
@@ -176,6 +159,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 		$userManager = $this->container->get('fos_user.user_manager');
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
@@ -194,16 +178,122 @@ class DefaultController extends Controller
 				$em->persist($userid);
 			}
 		$em->flush();
-		
 		}
 	
 		return $this->render(
         'UserBundle:Gestion:change_role.html.twig',array(
 		'user' => $user,
+		'group' => $group,
 		'form' => $form->createView(),
 		));
-		
 	}
+	
+	/**
+     * @Route("/ens/add_user", name="ens_add_user")
+     */
+	public function ens_add_user(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$userManager = $this->container->get('fos_user.user_manager');
+		
+		$new_user = new User();
+		$form = $this->get('form.factory')->create(AddUserFormType::class, $new_user,array('method' => 'PUT'));
+	
+		if ($form->handleRequest($request)->isValid()) {
+			
+			$test = $userManager->findUserByEmail($form->get('email')->getData());	
+			if (count($test)==0) {
+			
+			$clear_password=$this->genuseraccount($new_user);
+
+			$request->getSession()->getFlashBag()->add('notice', 'Compte étudiant créé.');
+			
+			$subject = "[Remotelabz-v2] - Création de votre compte - ".$new_user->getfirstname()." ".strtoupper($this->stripAccents($new_user->getLastName()));
+			$em=$this->getDoctrine()->getManager();
+			$new_user->setGroupe($em->getRepository('UserBundle:Groupe')->findOneBy(array('nom' => "Etudiant")));
+			//Ajouter le bon role aux user.
+
+			
+			$em->persist($new_user);
+			$em->flush();
+			$mail_from=$this->getParameter('mail_from');
+			$message = \Swift_Message::newInstance()
+				->setSubject($subject)
+				->setFrom(array($mail_from => 'Administrateur'))
+				->setTo($new_user->getEmail())
+				->setBcc($mail_from)
+				->setBody($this->container->get('templating')->render('UserBundle:Gestion:add_user.email.twig',array('user' => $new_user,
+					'password' => $clear_password,				
+					),'text/plain'));
+			$this->container->get('mailer')->send($message);
+				
+			return $this->render(
+				'UserBundle:Gestion:add_user.html.twig',array(
+				'new_user' => $new_user,
+				'user' => $user,
+				'group' => $group,
+				'form' => $form->createView(),
+			));
+			
+			}
+			else
+			{
+			$this->container->get('session')->getFlashBag()->add('danger',
+            'Ce mail est déjà utilisé');			
+				
+			}
+
+			return $this->redirect($this->generateUrl('ens_add_user', array(
+				'id' => $new_user->getId(),
+				)		
+			));
+		}
+
+    	return $this->render(
+        'UserBundle:Gestion:add_user.html.twig',array(
+		'new_user' => $new_user,
+		'user' => $user,
+		'group' => $group,
+		'form' => $form->createView(),
+		));
+	
+	}
+	
+	/**
+     * @Route("/admin/delete_user", name="delete_user")
+     */
+	public function delete_user(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$userManager = $this->container->get('fos_user.user_manager');
+
+        if($request->isXmlHttpRequest()) {
+		
+		$id='';
+		$id=$request->get('data');
+		if ($id != '') {
+
+			$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+			$select_user = new User();
+			$user_id=preg_split("/_/",$id)[1];
+			$select_user = $repository->find($user_id);
+			
+			$em = $this->getDoctrine()->getManager();
+			$em->remove($select_user);
+			$em->flush();
+			$return="Supprimer";
+			$result=$user_id.":".$return;
+			return new Response($result);
+			}
+		return new Response(0);
+		}
+		else return new Response(0);
+	}
+	
 	
 	function stripAccents($str, $encoding='utf-8')
 	{
@@ -246,7 +336,33 @@ class DefaultController extends Controller
         }
         return $newstring;
     }
-	
+
+	public function genuseraccount($new_user) {
+		
+		$last_name = $this->stripAccents($new_user->getLastName());
+        $first_name = $this->stripAccents($new_user->getFirstName());
+         
+            // Première lettre du prénom
+            $username = substr($first_name, 0, 1);
+            // 6 première lettres du nom
+            $username .= substr($last_name, 0, 6);
+			$username = str_replace(' ','',$username);
+            // Calcul d'une suite de chiffres aléatoires
+            $identifiant_unique = $this->genchaine((10-strlen($username)));
+
+            $username .= $identifiant_unique;
+			
+            $new_user->setUsername(strtolower($username));
+			
+			$encoder = $this->container->get('security.password_encoder');
+			$clear_password=$this->genpassword(10);
+			$new_user->setPassword($encoder->encodePassword($new_user,$clear_password));
+			$new_user->SetEnabled(1);
+			$em = $this->getDoctrine()->getManager();
+			$em->persist($new_user);
+			$em->flush();
+			return $clear_password;
+	}
 }
 
 ?>

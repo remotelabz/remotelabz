@@ -3,6 +3,9 @@ namespace AppBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Router;
+
 
 class DefaultController extends Controller
 {
@@ -19,12 +22,39 @@ class DefaultController extends Controller
     }
 	
 	/**
+     * @Route("/auth", name="auth")
+     */
+    public function authAction()
+    {
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+
+
+// Si l'utilisateur courant est anonyme, $user vaut « anon. »
+
+// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
+	
+		if ($group->getRole() != 'ROLE_ADMIN')
+			return $this->render('AppBundle::accueil_auth.html.twig', array(
+					'user' => $user,
+					'group' => $group
+			));
+		else
+			
+			return $this->redirect($this->generateUrl('admin'));
+
+	
+    }
+	
+	/**
      * @Route("/admin", name="admin")
      */
     public function adminAction()
     {
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
 
 
 // Si l'utilisateur courant est anonyme, $user vaut « anon. »
@@ -32,8 +62,9 @@ class DefaultController extends Controller
 // Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
 	
 
-    return $this->render('AppBundle::accueil_auth.html.twig', array(
+		return $this->render('AppBundle::accueil_auth.html.twig', array(
 					'user' => $user,
+					'group' => $group
 				));
 	
 	
