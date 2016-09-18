@@ -37,6 +37,7 @@ class ChangePasswordController extends Controller
     public function changePasswordAction(Request $request)
     {
         $user = $this->getUser();
+		$group=$user->getGroupe();
         if (!is_object($user) || !$user instanceof UserInterface) {
             throw new AccessDeniedException('This user does not have access to this section.');
         }
@@ -80,6 +81,7 @@ class ChangePasswordController extends Controller
 
         return $this->render('UserBundle:ChangePassword:changePassword.html.twig', array(
 			'user' => $user,
+			'group' => $group,
             'form' => $form->createView(),
 		));
     }

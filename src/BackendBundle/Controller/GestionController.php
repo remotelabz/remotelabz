@@ -21,7 +21,8 @@ class GestionController extends Controller
      */
     public function list_device(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
+		
         $repository = $this->getDoctrine()->getRepository('AppBundle:Device');
 
         $list_device = $repository->findAll();
@@ -30,6 +31,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_device.html.twig',array(
             'user' => $user,
+			'group' => $group,
             'list_device' => $list_device
         ));
 
@@ -39,7 +41,7 @@ class GestionController extends Controller
      */
     public function list_interface(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
 		$repo = $this->getDoctrine()->getRepository('AppBundle:Device');
 
@@ -50,6 +52,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_interface.html.twig',array(
             'user' 						=> $user,
+			'group'	=>$group,
 			'list_interfaceControle'	=> $list_interfaceControle,
             'list_interface'			 => $list_interface
         ));
@@ -60,7 +63,7 @@ class GestionController extends Controller
      */
     public function list_ConfigReseau(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
 		$repo = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
 		$list_interfaceControle = $repo->getInterfaceControleForList();
 
@@ -68,6 +71,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_configReseau.html.twig',array(
             'user' 						=> $user,
+			'group'=> $group,
 			'list_interfaceControle'	=> $list_interfaceControle,
         ));
 
@@ -77,7 +81,7 @@ class GestionController extends Controller
      */
     public function list_pod(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:POD');
 
         $list_pod = $repository->findAll();
@@ -86,7 +90,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_pod.html.twig',array(
             'user' => $user,
-            'list_pod' => $list_pod
+			'group' => $group,            'list_pod' => $list_pod
         ));
 
     }
@@ -95,7 +99,7 @@ class GestionController extends Controller
      */
     public function list_connexion(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Connexion');
 
         $list_connexion = $repository->findAll();
@@ -104,7 +108,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_connexion.html.twig',array(
             'user' => $user,
-            'list_connexion' => $list_connexion
+			'group' => $group,            'list_connexion' => $list_connexion
         ));
 
     }
@@ -113,7 +117,7 @@ class GestionController extends Controller
      */
     public function list_lab(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:LAB');
 
         $list_lab = $repository->findAll();
@@ -122,7 +126,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_lab.html.twig',array(
             'user' => $user,
-            'list_lab' => $list_lab
+			'group' => $group,            'list_lab' => $list_lab
         ));
 
     }
@@ -131,7 +135,7 @@ class GestionController extends Controller
      */
     public function list_tp(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:TP');
 
         $list_tp = $repository->findAll();
@@ -140,7 +144,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_tp.html.twig',array(
             'user' => $user,
-            'list_tp' => $list_tp
+			'group' => $group,            'list_tp' => $list_tp
         ));
 
     }
@@ -149,7 +153,7 @@ class GestionController extends Controller
      */
     public function list_parameter(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Parameter');
 
         $list_parameter = $repository->findAll();
@@ -157,7 +161,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_parameter.html.twig',array(
             'user' => $user,
-            'list_parameter' => $list_parameter
+			'group' => $group,            'list_parameter' => $list_parameter
         ));
 
     }
@@ -166,7 +170,7 @@ class GestionController extends Controller
      */
     public function list_hyperviseur(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Hyperviseur');
 
         $list_hyperviseur = $repository->findAll();
@@ -175,7 +179,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_hyperviseur.html.twig',array(
             'user' => $user,
-            'list_hyperviseur' => $list_hyperviseur
+			'group' => $group,            'list_hyperviseur' => $list_hyperviseur
         ));
 
     }
@@ -184,7 +188,7 @@ class GestionController extends Controller
      */
     public function list_systeme(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-
+		$group=$user->getGroupe();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Systeme');
 
         $list_systeme = $repository->findAll();
@@ -193,7 +197,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_systeme.html.twig',array(
             'user' => $user,
-            'list_systeme' => $list_systeme
+			'group' => $group,            'list_systeme' => $list_systeme
 			));
 
     }
