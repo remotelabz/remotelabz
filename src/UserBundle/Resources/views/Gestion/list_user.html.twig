@@ -33,6 +33,7 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
+							<th>Groupe</th>
 							<th>Activation/Désactivation</th>
 						</tr>
                     </thead>
@@ -42,26 +43,29 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
-							<th>Activation/Désactivation</th>
+							<th>Groupe</th>
+							<th>Action</th>
 						</tr>
                     </tfoot>
 				    <tbody>
 				{% for user in list_user %}
-				<tr id="tr_{{user.id}}"{% if user.enabled == 0 %}  class="danger" {% endif %} class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
+				
+				<tr id={% if user.username != "admin" %}"tr_{{user.id}}" {% else %} "tr" {%endif %} {% if user.enabled == 0 %}  class="danger" {% endif %} class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
 					<td class="sorting_1" tabindex="0">{{ user.lastname }}</td>
 					<td>{{ user.firstname }}</td>
 					<td>{{ user.email }}</td>
 					<td>{{ user.username }}</td>
 					<td>
+					{% if user.groupe is not null %} {{ user.groupe.nom }} {% endif %}</td>
+					<td>
 					{% if user.username != "admin" %}
 					{% if user.enabled == 1 %}
-						
-						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Desactive('{{user.id}}')" value="Désactiver" >Désactiver</button>
-					{%else%}
-						
-						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Active('{{user.id}}')" value="Activer" >Activer</button>
-					{%endif%}
-					{%endif %}</td>
+						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Activation(this)" value="Désactiver" >Désactiver</button>
+					{%else%}					
+						<button class="btn btn-primary" id="button_{{user.id}}" onclick="Change_Activation(this)" value="Activer" >Activer</button>
+					{% endif %}
+						<button class="btn btn-primary" id="sup_{{user.id}}" onclick="Supprimer(this)" value="Supprimer" >Supprimer</button>
+					{% endif %}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
@@ -129,7 +133,7 @@
    
         $(document).ready(function() {
 			$('#datatable').DataTable( {
-				"order": [[ 3, "asc" ]],
+				"order": [[ 5, "asc" ]],
 			});
 			TableManageButtons.init();
 		});
@@ -151,12 +155,29 @@
 				})
 		}
 		
-		var buttons = document.getElementsByTagName('button');
+		function Supprimer(button) {
+				var user_id=button.id;
+				$(function(){
+					$.post(
+						"{{path('delete_user')}}",
+						{ data: user_id},
+						function(data,status){
+							var result = data.split(":");
+							document.getElementById("button_"+result[0]).innerHTML=result[1];
+							var existingElement=document.getElementById("tr_"+result[0]);
+							
+							if (result[1]=="Supprimer")
+								existingElement.style.display="none";
+						});			
+				})
+		}
+				
+		{# var buttons = document.getElementsByTagName('button');
 		for (var i = 0, len = buttons.length; i < len; i++) {
 			buttons[i].onclick = function (){
-				Change_Activation(this);
+					Change_Activation(this);
 			}
-		}
+		}#}
 		
 		{#
 		function readData(sData) {
