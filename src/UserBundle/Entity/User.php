@@ -43,16 +43,20 @@ class User extends BaseUser
      */
     protected $groupe;
 	
-    /**
-     * Get id
+	/**
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\Classe", inversedBy="users")
      *
-     * @return int
      */
-    public function getId()
-    {
-        return $this->id;
-    }
+    private $classes;
 
+
+	public function getLabel()
+    {
+        
+
+        return $this->lastname." ".$this->firstname;
+    }
+	
     /**
      * Set firstname
      *
@@ -100,12 +104,6 @@ class User extends BaseUser
     {
         return $this->lastname;
     }
-	
-	public function __construct()
-    {
-        parent::__construct();
-        // your own logic
-    }
 
     /**
      * Set groupe
@@ -130,10 +128,38 @@ class User extends BaseUser
     {
         return $this->groupe;
     }
-	
-	public function getLabel()
-	{
-		return $this->lastname .' '. $this->firstname;
-	}
-	
+
+    /**
+     * Add class
+     *
+     * @param \UserBundle\Entity\Classe $class
+     *
+     * @return User
+     */
+    public function addClasse(\UserBundle\Entity\Classe $class)
+    {
+        $this->classes[] = $class;
+
+        return $this;
+    }
+
+    /**
+     * Remove class
+     *
+     * @param \UserBundle\Entity\Classe $class
+     */
+    public function removeClasse(\UserBundle\Entity\Classe $class)
+    {
+        $this->classes->removeElement($class);
+    }
+
+    /**
+     * Get classes
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getClasses()
+    {
+        return $this->classes;
+    }
 }

@@ -1,7 +1,5 @@
 <?php
-
 namespace UserBundle\Repository;
-
 /**
  * UserRepository
  *
@@ -10,4 +8,55 @@ namespace UserBundle\Repository;
  */
 class UserRepository extends \Doctrine\ORM\EntityRepository
 {
+	public function UserIsStudent($classe)
+    {
+	$qb=$this->createQueryBuilder('u');
+		$qb->innerjoin('u.classes','c', 'WITH', 'c.id= :classe')
+		->setParameter('classe',$classe);
+		
+	$qb1=$this->createQueryBuilder('us');
+	$query_class=$qb1->select('us')
+		->join('us.groupe','g','WITH','g.nom= :etudiant')
+		->andwhere($qb->expr()->notIn('us.id',$qb->getDQL()))
+		->orderBy('us.lastname', 'ASC')
+		->setParameter('etudiant', 'Etudiant')
+		->setParameter('classe',$classe);
+		
+	return $qb1;
+    }
 }
+
+/* not in solution
+$qb = $em->createQueryBuilder();
+
+$nots = $qb->select('arl')
+          ->from('$MineMyBundle:MineAssetRequestLine', 'arl')
+          ->where($qb->expr()->eq('arl.asset_id',1))
+          ->getQuery()
+          ->getResult();
+
+$linked = $qb->select('rl')
+             ->from('MineMyBundle:MineRequestLine', 'rl')
+             ->where($qb->expr()->notIn('rl.request_id', $nots))
+             ->getQuery()
+             ->getResult();
+			 */
+
+
+/**
+ $qb = $em->createQueryBuilder()
+                ->select('ca')
+                ->from('UrcaApplyBundle:Candidat', 'ca')
+                ->where('ca.validated=1 AND ca.numCampus IS NULL')
+                ->innerJoin('UrcaApplyBundle:CandParcModSess', 'c', 'WITH', 'c.parcmodsess= :parcmodsess AND ca.id = c.candidat')
+                ->innerJoin('UrcaAdminBundle:ParcModSess', 'p', 'WITH', 'p.id = c.parcmodsess AND p.session = :session')
+                ->setParameter('session', $session_id)
+                ->setParameter('parcmodsess', $parcmodsess)
+
+$qb = $em->createQueryBuilder()
+                ->select('c')
+                ->from('UrcaApplyBundle:Candidat', 'c')
+                ->WHERE('c.validated = 1')
+                ->addOrderBy('c.nomC', 'ASC')
+        ;
+				*/

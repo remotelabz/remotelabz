@@ -22,13 +22,30 @@
                     </div>
                     <div class="x_content">
                         <!-- content starts here -->
-					{% for user in list_etudiant %}
-					{{user.nom}}
-					{% endfor %}
 					
-					{% for user in list_classe %}
-					{{user.nom}}<br/>
-					{% endfor %}
+					 {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+                                    {# Les erreurs générales du formulaire. #}
+                                    {{ form_errors(form) }}
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(form.nom, "Classe", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(form.nom) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(form.nom, {'attr': {'class': 'PODclass span3'}}) }}
+                                        </div>
+                                    </div>
+
+                                    {{ form_widget(form.Suivant, {'attr': {'class': 'btn btn-primary'}}) }}
+
+                                    {{ form_rest(form) }}
+
+                                    {# Fermeture de la balise <form> du formulaire HTML #}
+                                    {{ form_end(form) }}
+
                         <!-- content ends here -->
                     </div>
                 </div>
