@@ -32,6 +32,10 @@
 			 {% include 'AppBundle::menu_admin.html.twig' %}
 			 {% include 'AppBundle::menu_enseignant.html.twig' %}
 			{% endif %}
+			
+			{% if group.role == "ROLE_ENSEIGNANT" %}
+			 {% include 'AppBundle::menu_enseignant.html.twig' %}
+			{% endif %}
           	
               <h3>Travaux pratiques</h3>
 			  <ul class="nav side-menu">
