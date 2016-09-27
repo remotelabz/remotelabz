@@ -145,10 +145,13 @@ class DefaultController extends Controller
 		$lab=$tp->getLab();
 		
 		$rootNode = new \SimpleXMLElement("<?xml version='1.0' encoding='UTF-8' standalone='yes'?><lab></lab>" );
-        $nodes = $rootNode->addChild('nodes');
-		
-		$order=1;
+        $user_node=$rootNode->addChild('user');
 		$index=$param_system->getIndexInterface();
+		$nomlab_node=$rootNode->addChild('lab_name',$lab->getNomlab()."_".$param_system->getIndexInterface());
+		$user_node->addAttribute('login',$user->getUsername());
+		$nodes = $rootNode->addChild('nodes');
+		$order=1;
+		
 		foreach ($lab->getPod()->getDevices() as $dev) {
 			$device=$nodes->addChild('device');
 			$device->addChild('nom', $dev->getNom());
@@ -159,15 +162,20 @@ class DefaultController extends Controller
 			$device->addAttribute('image',$dev->getSysteme()->getPathMaster());
 			$device->addAttribute('relativ_path',$dev->getSysteme()->getPathRelatif());
 			$device->addAttribute('order',$order); //A remplacer par un $dev
+			$device->addAttribute('hypervisor',$dev->getSysteme()->getHyperviseur()->getNom());
+			$system=$dev->getSysteme();
+			$system_node=$device->addChild('system', $system->getNom());
+			$system_node->addAttribute('memory',$system->getParametres()->getSizeMemoire()." Mo");
+			$system_node->addAttribute('disk',$system->getParametres()->getSizeDisque()." Go");
 			$order++;
 			foreach ($dev->getNetworkInterfaces() as $int) {
 				if ($dev->getInterfaceControle()) {
 					if ( $int->getId() != $dev->getInterfaceControle()->getId() ) {
 						$interface=$device->addChild('interface');
 						$interface->addAttribute('id',$int->getId());
-						$interface->addAttribute('nom_physique',$int->getNomPhysique());
+						$interface->addAttribute('physique_name',$int->getNomPhysique());
 						if ($int->getNomVirtuel() == "tap") {
-							$interface->addAttribute('nom_virtuel',"tap".$index);
+							$interface->addAttribute('logical_name',"tap".$index);
 							$index++;
 						}
 					}
@@ -176,24 +184,24 @@ class DefaultController extends Controller
 					$interface=$device->addChild('interface');
 						$interface->addAttribute('id',$int->getId());
 						$interface->addAttribute('nom_physique',$int->getNomPhysique());
-						$interface->addAttribute('nom_virtuel',$int->getNomVirtuel());
+						$interface->addAttribute('virtual_name',$int->getNomVirtuel());
 				}
 			}
 			$int_ctrl=$dev->getInterfaceControle();
 			if ($int_ctrl) {
 			$int_ctrl_node=$device->addChild('interface_control');
 			$int_ctrl_node->addAttribute('id',$int_ctrl->getId());
-			$int_ctrl_node->addAttribute('nom_physique',$int_ctrl->getNomPhysique());
-			$int_ctrl_node->addAttribute('nom_virtuel',$int_ctrl->getNomVirtuel());
+			$int_ctrl_node->addAttribute('physique_name',$int_ctrl->getNomPhysique());
+			$int_ctrl_node->addAttribute('logical_name',$int_ctrl->getNomVirtuel());
 			if ($int_ctrl->getConfigReseau()) {
 				$int_ctrl_node->addAttribute('IPv4',$int_ctrl->getConfigReseau()->getIP());
-				$int_ctrl_node->addAttribute('Masque',$int_ctrl->getConfigReseau()->getMasque());
+				$int_ctrl_node->addAttribute('mask',$int_ctrl->getConfigReseau()->getMasque());
 				$int_ctrl_node->addAttribute('IPv6',$int_ctrl->getConfigReseau()->getIPv6());
-				$int_ctrl_node->addAttribute('Prefix',$int_ctrl->getConfigReseau()->getPrefix());
+				$int_ctrl_node->addAttribute('prefix',$int_ctrl->getConfigReseau()->getPrefix());
 				$int_ctrl_node->addAttribute('DNSv4',$int_ctrl->getConfigReseau()->getIPDNS());
-				$int_ctrl_node->addAttribute('Gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
-				$int_ctrl_node->addAttribute('Protocole',$int_ctrl->getConfigReseau()->getProtocole());
-				$int_ctrl_node->addAttribute('Port',$int_ctrl->getConfigReseau()->getPort());
+				$int_ctrl_node->addAttribute('gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
+				$int_ctrl_node->addAttribute('protocol',$int_ctrl->getConfigReseau()->getProtocole());
+				$int_ctrl_node->addAttribute('port',$int_ctrl->getConfigReseau()->getPort());
 			}
 			}
 			if ($dev->getPropriete() == "switch") {
