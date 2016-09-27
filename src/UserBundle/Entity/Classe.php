@@ -12,6 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Classe
 {
+	
+	
     /**
      * @var int
      *
@@ -29,16 +31,24 @@ class Classe
     private $nom;
 
   /**
-     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\User")
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\User", mappedBy="classes")
      *
      */
-    private $user;
+    private $users;
 
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -70,37 +80,6 @@ class Classe
     }
 
     /**
-     * Set user
-     *
-     * @param \stdClass $user
-     *
-     * @return Classe
-     */
-    public function setUser($user)
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * Get user
-     *
-     * @return \stdClass
-     */
-    public function getUser()
-    {
-        return $this->user;
-    }
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->user = new \Doctrine\Common\Collections\ArrayCollection();
-    }
-
-    /**
      * Add user
      *
      * @param \UserBundle\Entity\User $user
@@ -109,7 +88,7 @@ class Classe
      */
     public function addUser(\UserBundle\Entity\User $user)
     {
-        $this->user[] = $user;
+        $this->users[] = $user;
 
         return $this;
     }
@@ -121,6 +100,16 @@ class Classe
      */
     public function removeUser(\UserBundle\Entity\User $user)
     {
-        $this->user->removeElement($user);
+        $this->users->removeElement($user);
+    }
+
+    /**
+     * Get users
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getUsers()
+    {
+        return $this->users;
     }
 }

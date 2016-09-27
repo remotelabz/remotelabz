@@ -23,6 +23,9 @@ use UserBundle\Entity\User;
 use UserBundle\Entity\Classe;
 use UserBundle\Form\Type\AddClasseFormType;
 use UserBundle\Form\Type\AddUserFormType;
+use BackendBundle\Form\Type\SelectClasseFormType;
+use BackendBundle\Form\Type\AddinclasseFormType;
+
 
 use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
@@ -97,7 +100,7 @@ class DefaultController extends Controller
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($hyperviseur);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'hyperviseur ajouté avec succès ');
+                $request->getSession()->getFlashBag()->add('notice', 'Hyperviseur ajouté avec succès ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
             if ($systemForm->handleRequest($request)->isValid()) {
@@ -121,7 +124,7 @@ class DefaultController extends Controller
                 }
                 $em->persist($device);
                 $em->flush();
-                $request->getSession()->getFlashBag()->add('notice', 'Device ajouté avec succès  ');
+                $request->getSession()->getFlashBag()->add('notice', 'Device ajouté avec succès ');
                 return $this->redirect($this->generateUrl('add_device'));
             }
         }
@@ -387,7 +390,7 @@ class DefaultController extends Controller
 
 			if ($form->handleRequest($request)->isValid()) {
 				$em = $this->getDoctrine()->getManager();
-				//Tester si cette classe existe déjà
+				//A FAIRE - Tester si cette classe existe déjà
 				$em->persist($classe);
 				$em->flush();
 				$request->getSession()->getFlashBag()->add('notice', 'Classe ajoutée avec succès');
@@ -450,22 +453,108 @@ class DefaultController extends Controller
 		$list_classe = $repository->findAll();
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
-		$list_alletudiant = $repository->findAll();
-		$list_etudiant=array();
-		foreach ( $list_etudiant as $etudiant) {
-			if ($etudiant->getGroupe()->getNom()=="Etudiant")
-				$list_etudiant->add($etudiant);	
-		}
 		
 		
+		$classe = new Classe();
+        $form = $this->get('form.factory')->create(new SelectClasseFormType(), $classe, array('method' => 'POST'));
+        if ('POST' === $request->getMethod()) {
+			
+            if ($form->handleRequest($request)->isValid() and ($classe->getNom()->getId() != null)) {
+				$id_classe=$classe->getNom()->getId();
+                return $this->redirect($this->generateUrl('ens_add_studentinclasse', array('id_classe' => $id_classe)));
+            }
+        }
 		return $this->render(
 			'BackendBundle:User:add_inclasse.html.twig',array(
 			'user' => $user,
 			'group' => $group,
 			'list_classe' => $list_classe,
-			'list_etudiant' => $list_etudiant,
-			//'form' => $form->createView(),
+			'form' => $form->createView(),
 		));
+	}
+	
+	/**
+     * @Route("/ens/add_studentinclasse{id_classe}", name="ens_add_studentinclasse")
+     */
+	public function add_studentinclasse(Request $request, $id_classe)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$em = $this->getDoctrine()->getManager();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$classe = $repository->findOneBy(array('id' => $id_classe));
+		
+			
+		$choix_etudiant=array();
+        $form = $this->createForm(AddinclasseFormType::class, $choix_etudiant, array('method' => 'POST', 'id_classe' => $id_classe
+		));
+        if ('POST' === $request->getMethod()) {
+			$form->handleRequest($request);
+
+            if ($form->isValid()) {
+				
+				$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+					
+				foreach($request->request->get('addinclasse_form')['firstname'] as $user_id) {
+					$user=$repository->find($user_id);
+					
+					if (!in_array($user,$classe->getUsers()->toArray()))
+						//$classe->addUser($user);
+						$user->addClasse($classe);
+				}
+				$em->persist($classe);
+				$em->flush();
+				
+                
+            }
+			return $this->redirect($this->generateUrl('ens_add_studentinclasse',array('id_classe' => $id_classe)));
+		}
+		
+		return $this->render(
+			'BackendBundle:User:add_studentinclasse.html.twig',array(
+			'user' => $user,
+			'group' => $group,
+			'id_classe' => $id_classe,
+			'list_student' => $classe->getUsers(),
+			'form' => $form->createView(),
+		));
+	}
+	
+	/**
+     * @Route("/ens/delete_student_inclasse", name="delete_student_inclasse")
+     */
+	public function delete_student_inclasse(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		$userManager = $this->container->get('fos_user.user_manager');
+
+        if($request->isXmlHttpRequest()) {
+		
+		$id='';
+		$id=$request->get('data');
+		if ($id != '') {
+			$select_classe = new Classe();
+			$classe_id=preg_split("/_/",$id)[2];
+			$student_id=preg_split("/_/",$id)[1];
+			$select_classe = $this->getDoctrine()->getRepository('UserBundle:Classe')->find($classe_id);
+			$select_student = $this->getDoctrine()->getRepository('UserBundle:User')->find($student_id);
+
+			$em = $this->getDoctrine()->getManager();
+			//$select_classe->removeUser($select_student);
+			$select_student->removeClasse($select_classe);
+			$em->flush();
+			$return="Supprimer";
+			$result=$student_id.":".$return;
+			
+			return new Response($result);
+			}
+		return new Response(0);
+		}
+		else return new Response(0);
 	}
 }
 
