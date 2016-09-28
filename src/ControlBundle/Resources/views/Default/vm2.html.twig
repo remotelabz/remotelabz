@@ -1,0 +1,43 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+
+<div style="height:1024px">
+
+		<div style="float:left">
+		{% include 'page2.html' %}
+		</div>		
+</div>
+	
+{% endblock%}
+
+{% block javascripts %}
+<script src="{{asset('js/novnc/util.js')}}"></script>
+ <script>
+        /*jslint white: false */
+        /*global window, $, Util, RFB, */
+        "use strict";
+
+        // Load supporting scripts
+        Util.load_scripts(["{{asset('js/novnc/webutil.js')}}", "{{asset('js/novnc/base64.js')}}",
+							"{{asset('js/novnc/websock.js')}}", "{{asset('js/novnc/des.js')}}",
+                           "{{asset('js/novnc/keysymdef.js')}}", "{{asset('js/novnc/keyboard.js')}}",
+						   "{{asset('js/novnc/input.js')}}", "{{asset('js/novnc/display.js')}}",
+                           "{{asset('js/novnc/inflator.js')}}", "{{asset('js/novnc/rfb.js')}}",
+						   "{{asset('js/novnc/keysym.js')}}"]);
+
+        
+	
+        window.onscriptsload = function () {
+			window.open("{{path("view_vm1")}}", "_blank", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=750,height=480");
+			
+			window.open("{{path("view_vm2")}}", "toto", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1200,height=920");
+			
+			window.open("{{path("view_vm3")}}", "toto2", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=750,height=480");
+			
+			window.open("{{path("view_vm4")}}", "toto3", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=750,height=480");
+			
+        };
+        </script>
+
+{% endblock %}
