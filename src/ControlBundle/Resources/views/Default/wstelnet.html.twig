@@ -1,0 +1,37 @@
+
+{% block body %}
+
+
+   Host: <input id='host' style='width:100'>&nbsp;
+        Port: <input id='port' style='width:50'>&nbsp;
+        Encrypt: <input id='encrypt' type='checkbox'>&nbsp;
+        <input id='connectButton' type='button' value='Connect' style='width:100px'
+            onclick="connect();">&nbsp;
+
+        <br><br>
+
+        <pre id="terminal"></pre>
+
+
+	
+	
+{% endblock%}
+
+{% block javascripts %}
+<script src="{{asset('js/novnc/util.js')}}"></script>
+ <script>
+        /*jslint white: false */
+        /*global window, $, Util, RFB, */
+        "use strict";
+
+        // Load supporting scripts
+        Util.load_scripts(["{{asset('js/novnc/webutil.js')}}", "{{asset('js/novnc/base64.js')}}", "{{asset('js/novnc/util.js')}}",
+							"{{asset('js/novnc/websock.js')}}", "{{asset('js/novnc/des.js')}}","{{asset('js/novnc/webutil.js')}}",
+                           "{{asset('js/novnc/keyboard.js')}}",
+						   "{{asset('js/novnc/input.js')}}", "{{asset('js/novnc/display.js')}}","{{asset('js/novnc/wstelnet.js')}}",
+                           "{{asset('js/novnc/inflator.js')}}", "{{asset('js/novnc/rfb.js')}}","{{asset('js/novnc/VT100.js')}}",
+						   "{{asset('js/novnc/keysym.js')}}"]);
+
+        </script>
+		
+{% endblock %}
