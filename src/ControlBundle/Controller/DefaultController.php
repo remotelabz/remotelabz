@@ -50,6 +50,95 @@ class DefaultController extends Controller
 		));
 	 }
 	 
+	 /**
+     * @Route("/control2", name="control_vm2")
+     */
+    public function indexVM2Action()
+    {
+			
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		// Si l'utilisateur courant est anonyme, $user vaut « anon. »
+		// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
+		
+        return $this->render('ControlBundle:Default:vm2.html.twig', array(
+		'user' => $user,
+		'group' => $group		
+		));
+    }
+	/**
+     * @Route("/control/view_vm1", name="view_vm1")
+     */
+	 public function view_vm1Action() {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => "194.57.105.124",
+		//'port' => "7220"
+		'port' => "6686" // Windows 7
+		));
+	 }
+	 
+	/**
+     * @Route("/control/view_vm2", name="view_vm2")
+     */
+	 public function view_vm2Action() {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => "194.57.105.124",
+		//'port' => "7220"
+		'port' => "6688" // Windows 7
+		));
+	 }
+	 
+	 /**
+     * @Route("/control/view_vm3", name="view_vm3")
+     */
+	 public function view_vm3Action() {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => "194.57.105.124",
+		//'port' => "7220"
+		'port' => "6687"
+		));
+	 }
+	 
+	 /**
+     * @Route("/control/view_vm4", name="view_vm4")
+     */
+	 public function view_vm4Action() {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+		return $this->render('ControlBundle:Default:wstelnet.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => "194.57.105.124",
+		//'port' => "7220"
+		'port' => "6689"
+		));
+	 }
+	 
 	/**
      * @Route("/control/choixTP", name="choixTP")
      */
