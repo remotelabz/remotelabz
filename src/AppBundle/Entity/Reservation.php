@@ -61,39 +61,22 @@ class Reservation
      */
     private $Run;
 
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->Run = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Set user
-     *
-     * @param \stdClass $user
-     *
-     * @return Reservation
-     */
-    public function setUser($user)
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * Get user
-     *
-     * @return \stdClass
-     */
-    public function getUser()
-    {
-        return $this->user;
     }
 
     /**
@@ -105,7 +88,7 @@ class Reservation
      */
     public function setIPSrc($iPSrc)
     {
-        $this->iPSrc = $iPSrc;
+        $this->IPSrc = $iPSrc;
 
         return $this;
     }
@@ -117,7 +100,7 @@ class Reservation
      */
     public function getIPSrc()
     {
-        return $this->iPSrc;
+        return $this->IPSrc;
     }
 
     /**
@@ -129,7 +112,7 @@ class Reservation
      */
     public function setTP($tP)
     {
-        $this->tP = $tP;
+        $this->TP = $tP;
 
         return $this;
     }
@@ -141,7 +124,7 @@ class Reservation
      */
     public function getTP()
     {
-        return $this->tP;
+        return $this->TP;
     }
 
     /**
@@ -153,7 +136,7 @@ class Reservation
      */
     public function setDateDebut($dateDebut)
     {
-        $this->dateDebut = $dateDebut;
+        $this->DateDebut = $dateDebut;
 
         return $this;
     }
@@ -165,7 +148,7 @@ class Reservation
      */
     public function getDateDebut()
     {
-        return $this->dateDebut;
+        return $this->DateDebut;
     }
 
     /**
@@ -177,7 +160,7 @@ class Reservation
      */
     public function setDateFin($dateFin)
     {
-        $this->dateFin = $dateFin;
+        $this->DateFin = $dateFin;
 
         return $this;
     }
@@ -189,62 +172,31 @@ class Reservation
      */
     public function getDateFin()
     {
-        return $this->dateFin;
+        return $this->DateFin;
     }
 
     /**
-     * Set propriete
+     * Set user
      *
-     * @param \stdClass $propriete
+     * @param \UserBundle\Entity\User $user
      *
      * @return Reservation
      */
-    public function setPropriete($propriete)
+    public function setUser(\UserBundle\Entity\User $user = null)
     {
-        $this->propriete = $propriete;
+        $this->user = $user;
 
         return $this;
     }
 
     /**
-     * Get propriete
+     * Get user
      *
-     * @return \stdClass
+     * @return \UserBundle\Entity\User
      */
-    public function getPropriete()
+    public function getUser()
     {
-        return $this->propriete;
-    }
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->Propriete = new \Doctrine\Common\Collections\ArrayCollection();
-    }
-
-    /**
-     * Add propriete
-     *
-     * @param \AppBundle\Entity\Propriete $propriete
-     *
-     * @return Reservation
-     */
-    public function addPropriete(\AppBundle\Entity\Propriete $propriete)
-    {
-        $this->Propriete[] = $propriete;
-
-        return $this;
-    }
-
-    /**
-     * Remove propriete
-     *
-     * @param \AppBundle\Entity\Propriete $propriete
-     */
-    public function removePropriete(\AppBundle\Entity\Propriete $propriete)
-    {
-        $this->Propriete->removeElement($propriete);
+        return $this->user;
     }
 
     /**

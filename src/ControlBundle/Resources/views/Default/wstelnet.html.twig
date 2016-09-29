@@ -1,13 +1,14 @@
-
+<html>
+<head>
+<title>{{title}}</title>
+</head>
+<body>
 {% block body %}
-Host: <input id='host' style='width:100'>&nbsp;
-        Port: <input id='port' style='width:50'>&nbsp;
-        Encrypt: <input id='encrypt' type='checkbox'>&nbsp;
+{#Host: #}<input type="hidden" id='host' style='width:100'>&nbsp;
+        {#Port: #}<input type="hidden" id='port' style='width:50'>&nbsp;
+        {# Encrypt: #}<input type="hidden" id='encrypt' type='checkbox'>&nbsp;
         <input id='connectButton' type='button' value='Connect' style='width:100px'
             onclick="connect();">&nbsp;
-
-        <br><br>
-
         <pre id="terminal"></pre>	
 {% endblock %}
 
@@ -51,12 +52,15 @@ Host: <input id='host' style='width:100'>&nbsp;
 
             window.onload = function() {
                 console.log("onload");
-                var url = document.location.href;
-                $D('host').value = (url.match(/host=([^&#]*)/) || ['',''])[1];
-                $D('port').value = (url.match(/port=([^&#]*)/) || ['',''])[1];
+                var url = "";{#document.location.href;#}
+                {# $D('host').value = (url.match(/host=([^&#]*)/) || ['',''])[1];
+                $D('port').value = (url.match(/port=([^&#]*)/) || ['',''])[1]; #}
+				$D('host').value = '{{host}}';
+				$D('port').value = '{{port}}';
 
                 telnet = Telnet('terminal', connected, disconnected);
             }
 </script>
 		
 {% endblock %}
+</body></html>
