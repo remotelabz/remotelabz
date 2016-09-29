@@ -81,7 +81,8 @@ class DefaultController extends Controller
 		'group' => $group,
 		'host' => "194.57.105.124",
 		//'port' => "7220"
-		'port' => "6686" // Windows 7
+		'port' => "6686",
+		'title' => "VM_1"
 		));
 	 }
 	 
@@ -99,7 +100,8 @@ class DefaultController extends Controller
 		'group' => $group,
 		'host' => "194.57.105.124",
 		//'port' => "7220"
-		'port' => "6688" // Windows 7
+		'port' => "6688",
+		'title' => "VM_3"
 		));
 	 }
 	 
@@ -117,7 +119,8 @@ class DefaultController extends Controller
 		'group' => $group,
 		'host' => "194.57.105.124",
 		//'port' => "7220"
-		'port' => "6687"
+		'port' => "6687",
+		'title' => "VM_2"
 		));
 	 }
 	 
@@ -135,7 +138,8 @@ class DefaultController extends Controller
 		'group' => $group,
 		'host' => "194.57.105.124",
 		//'port' => "7220"
-		'port' => "6689"
+		'port' => "6689",
+		'title' => "CLI ASA"
 		));
 	 }
 	 
@@ -236,7 +240,8 @@ class DefaultController extends Controller
 		$rootNode = new \SimpleXMLElement("<?xml version='1.0' encoding='UTF-8' standalone='yes'?><lab></lab>" );
         $user_node=$rootNode->addChild('user');
 		$index=$param_system->getIndexInterface();
-		$nomlab_node=$rootNode->addChild('lab_name',$lab->getNomlab()."_".$param_system->getIndexInterface());
+		$lab_name=$lab->getNomlab()."_".$param_system->getIndexInterface();
+		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
 		$user_node->addAttribute('login',$user->getUsername());
 		$nodes = $rootNode->addChild('nodes');
 		$order=1;
@@ -319,8 +324,15 @@ class DefaultController extends Controller
 		$response->headers->set('Content-Type', 'application/xml');
 		//$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT,'foo.xml');
 		//$response->headers->set('Content-Disposition', $disposition);
-        return $response;
-
+        
+		$filename='/home/RLv2_'.$user->getUsername().'/'.$lab_name.'.xml';
+		$fp = fopen($filename,'x');
+		fwrite($fp,$rootNode->asXML());
+		fclose($fp);
+		
+		return $response;
+		
+		
     }
 	
 }
