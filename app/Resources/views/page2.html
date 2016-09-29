@@ -1,2 +1,17 @@
-<h2>
-Sécurité Firewalling Cisco ASA</h2>
+<h2>Sécurité Firewalling Cisco ASA</h2>
+Vous trouverez ci-dessous le schéma de la topologie du réseau. Vous devez configurer le firewall afin de filtrer les accès au serveur Web à configurer sous Linux, sur la VM_3. La configuration du firewall peut se faire :
+<ul>
+<li>soit via le CLI sur la fenêtre intitulée CLI ASA</li>
+<li>soit via l'interface graphique sous windows</li>
+</ul>
+<img src="{{asset('images/TP/TP_ASA.png')}}"/>
+<h2>Configuration de l'accès à la configuration en mode graphique de l'ASA</h2>
+<ul>
+<li>Configurer le Windows sur l'IP 10.10.10.1/24</li>
+<li>Connectez-vous en CLI sur l'ASA</li>
+<li>Configurer l'accès en http à l'ASA par les commandes :
+<pre>username admin password admin
+http server enable
+http 10.10.10.1 255.255.255.0 management</pre>
+<li>Connectez-vous maintenant depuis un navigateur Web à l'adresse https://10.10.10.254</li>
+</ul>
