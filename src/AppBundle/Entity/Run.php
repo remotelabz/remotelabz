@@ -48,7 +48,7 @@ class Run
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -56,35 +56,11 @@ class Run
     }
 
     /**
-     * Set device
-     *
-     * @param \stdClass $device
-     *
-     * @return Prorpriete
-     */
-    public function setDevice($device)
-    {
-        $this->device = $device;
-
-        return $this;
-    }
-
-    /**
-     * Get device
-     *
-     * @return \stdClass
-     */
-    public function getDevice()
-    {
-        return $this->device;
-    }
-
-    /**
      * Set procId
      *
      * @param integer $procId
      *
-     * @return Prorpriete
+     * @return Run
      */
     public function setProcId($procId)
     {
@@ -96,59 +72,11 @@ class Run
     /**
      * Get procId
      *
-     * @return int
+     * @return integer
      */
     public function getProcId()
     {
         return $this->procId;
-    }
-
-    /**
-     * Set configReseau
-     *
-     * @param \stdClass $configReseau
-     *
-     * @return Prorpriete
-     */
-    public function setConfigReseau($configReseau)
-    {
-        $this->configReseau = $configReseau;
-
-        return $this;
-    }
-
-    /**
-     * Get configReseau
-     *
-     * @return \stdClass
-     */
-    public function getConfigReseau()
-    {
-        return $this->configReseau;
-    }
-
-    /**
-     * Set indexDebInterface
-     *
-     * @param integer $indexDebInterface
-     *
-     * @return Propriete
-     */
-    public function setIndexDebInterface($indexDebInterface)
-    {
-        $this->index_deb_interface = $indexDebInterface;
-
-        return $this;
-    }
-
-    /**
-     * Get indexDebInterface
-     *
-     * @return integer
-     */
-    public function getIndexDebInterface()
-    {
-        return $this->index_deb_interface;
     }
 
     /**
@@ -173,5 +101,29 @@ class Run
     public function getBrNum()
     {
         return $this->br_num;
+    }
+
+    /**
+     * Set device
+     *
+     * @param \AppBundle\Entity\Device $device
+     *
+     * @return Run
+     */
+    public function setDevice(\AppBundle\Entity\Device $device = null)
+    {
+        $this->device = $device;
+
+        return $this;
+    }
+
+    /**
+     * Get device
+     *
+     * @return \AppBundle\Entity\Device
+     */
+    public function getDevice()
+    {
+        return $this->device;
     }
 }
