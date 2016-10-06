@@ -37,24 +37,23 @@ var RFB;
 
         // In preference order
         this._encodings = [
-            ['COPYRECT',            0x01 ],
-            ['TIGHT',               0x07 ],
-            ['TIGHT_PNG',           -260 ],
-            ['HEXTILE',             0x05 ],
-            ['RRE',                 0x02 ],
-            ['RAW',                 0x00 ],
-            ['DesktopSize',         -223 ],
-            ['Cursor',              -239 ],
+            ['COPYRECT',         0x01 ],
+            ['TIGHT',            0x07 ],
+            ['TIGHT_PNG',        -260 ],
+            ['HEXTILE',          0x05 ],
+            ['RRE',              0x02 ],
+            ['RAW',              0x00 ],
+            ['DesktopSize',      -223 ],
+            ['Cursor',           -239 ],
 
             // Psuedo-encoding settings
-            //['JPEG_quality_lo',    -32 ],
-            ['JPEG_quality_med',     -26 ],
-            //['JPEG_quality_hi',    -23 ],
-            //['compress_lo',       -255 ],
-            ['compress_hi',         -247 ],
-            ['last_rect',           -224 ],
-            ['xvp',                 -309 ],
-            ['ExtendedDesktopSize', -308 ]
+            //['JPEG_quality_lo',   -32 ],
+            ['JPEG_quality_med',    -26 ],
+            //['JPEG_quality_hi',   -23 ],
+            //['compress_lo',      -255 ],
+            ['compress_hi',        -247 ],
+            ['last_rect',          -224 ],
+            ['xvp',                -309 ]
         ];
 
         this._encHandlers = {};
@@ -92,9 +91,6 @@ var RFB;
         this._fb_height = 0;
         this._fb_name = "";
 
-        this._destBuff = null;
-        this._paletteBuff = new Uint8Array(1024);  // 256 * 4 (max palette size * max bytes-per-pixel)
-
         this._rre_chunk_sz = 100;
 
         this._timing = {
@@ -109,10 +105,6 @@ var RFB;
             fbu_rt_cnt: 0,
             pixels: 0
         };
-
-        this._supportsSetDesktopSize = false;
-        this._screen_id = 0;
-        this._screen_flags = 0;
 
         // Mouse state
         this._mouse_buttonMask = 0;
@@ -131,7 +123,7 @@ var RFB;
             'view_only': false,                     // Disable client mouse/keyboard
             'xvp_password_sep': '@',                // Separator for XVP password fields
             'disconnectTimeout': 3,                 // Time (s) to wait for disconnection
-            'wsProtocols': ['binary'],              // Protocols to use in the WebSocket connection
+            'wsProtocols': ['binary', 'base64'],    // Protocols to use in the WebSocket connection
             'repeaterID': '',                       // [UltraVNC] RepeaterID to connect to
             'viewportDrag': false,                  // Move the viewport on mouse drags
 
@@ -162,13 +154,11 @@ var RFB;
             this._encStats[this._encodings[i][1]] = [0, 0];
         }
 
-        // NB: nothing that needs explicit teardown should be done
-        // before this point, since this can throw an exception
         try {
             this._display = new Display({target: this._target});
         } catch (exc) {
             Util.Error("Display exception: " + exc);
-            throw exc;
+            this._updateState('fatal', "No working Display");
         }
 
         this._keyboard = new Keyboard({target: this._focusContainer,
@@ -207,7 +197,6 @@ var RFB;
             } else {
                 this._fail("Server disconnected" + msg);
             }
-            this._sock.off('close');
         }.bind(this));
         this._sock.on('error', function (e) {
             Util.Warn("WebSocket on-error event");
@@ -220,8 +209,14 @@ var RFB;
             Util.Info("Using native WebSockets");
             this._updateState('loaded', 'noVNC ready: native WebSockets, ' + rmode);
         } else {
-            this._cleanupSocket('fatal');
-            throw new Error("WebSocket support is required to use noVNC");
+            Util.Warn("Using web-socket-js bridge.  Flash version: " + Util.Flash.version);
+            if (!Util.Flash || Util.Flash.version < 9) {
+                this._updateState('fatal', "WebSockets or <a href='http://get.adobe.com/flashplayer'>Adobe Flash</a> is required");
+            } else if (document.location.href.substr(0, 7) === 'file://') {
+                this._updateState('fatal', "'file://' URL is incompatible with Adobe Flash");
+            } else {
+                this._updateState('loaded', 'noVNC ready: WebSockets emulation, ' + rmode);
+            }
         }
 
         Util.Debug("<< RFB.constructor");
@@ -244,9 +239,6 @@ var RFB;
 
         disconnect: function () {
             this._updateState('disconnect', 'Disconnecting');
-            this._sock.off('error');
-            this._sock.off('message');
-            this._sock.off('open');
         },
 
         sendPassword: function (passwd) {
@@ -259,14 +251,14 @@ var RFB;
             if (this._rfb_state !== 'normal' || this._view_only) { return false; }
             Util.Info("Sending Ctrl-Alt-Del");
 
-            RFB.messages.keyEvent(this._sock, XK_Control_L, 1);
-            RFB.messages.keyEvent(this._sock, XK_Alt_L, 1);
-            RFB.messages.keyEvent(this._sock, XK_Delete, 1);
-            RFB.messages.keyEvent(this._sock, XK_Delete, 0);
-            RFB.messages.keyEvent(this._sock, XK_Alt_L, 0);
-            RFB.messages.keyEvent(this._sock, XK_Control_L, 0);
-
-            this._sock.flush();
+            var arr = [];
+            arr = arr.concat(RFB.messages.keyEvent(0xFFE3, 1)); // Control
+            arr = arr.concat(RFB.messages.keyEvent(0xFFE9, 1)); // Alt
+            arr = arr.concat(RFB.messages.keyEvent(0xFFFF, 1)); // Delete
+            arr = arr.concat(RFB.messages.keyEvent(0xFFFF, 0)); // Delete
+            arr = arr.concat(RFB.messages.keyEvent(0xFFE9, 0)); // Alt
+            arr = arr.concat(RFB.messages.keyEvent(0xFFE3, 0)); // Control
+            this._sock.send(arr);
         },
 
         xvpOp: function (ver, op) {
@@ -292,49 +284,22 @@ var RFB;
         // followed by an up key.
         sendKey: function (code, down) {
             if (this._rfb_state !== "normal" || this._view_only) { return false; }
+            var arr = [];
             if (typeof down !== 'undefined') {
                 Util.Info("Sending key code (" + (down ? "down" : "up") + "): " + code);
-                RFB.messages.keyEvent(this._sock, code, down ? 1 : 0);
+                arr = arr.concat(RFB.messages.keyEvent(code, down ? 1 : 0));
             } else {
                 Util.Info("Sending key code (down + up): " + code);
-                RFB.messages.keyEvent(this._sock, code, 1);
-                RFB.messages.keyEvent(this._sock, code, 0);
+                arr = arr.concat(RFB.messages.keyEvent(code, 1));
+                arr = arr.concat(RFB.messages.keyEvent(code, 0));
             }
-
-            this._sock.flush();
+            this._sock.send(arr);
         },
 
         clipboardPasteFrom: function (text) {
             if (this._rfb_state !== 'normal') { return; }
-            RFB.messages.clientCutText(this._sock, text);
-            this._sock.flush();
+            this._sock.send(RFB.messages.clientCutText(text));
         },
-
-        setDesktopSize: function (width, height) {
-            if (this._rfb_state !== "normal") { return; }
-
-            if (this._supportsSetDesktopSize) {
-
-                var arr = [251];    // msg-type
-                arr.push8(0);       // padding
-                arr.push16(width);  // width
-                arr.push16(height); // height
-
-                arr.push8(1);       // number-of-screens
-                arr.push8(0);       // padding
-
-                // screen array
-                arr.push32(this._screen_id);    // id
-                arr.push16(0);                  // x-position
-                arr.push16(0);                  // y-position
-                arr.push16(width);              // width
-                arr.push16(height);             // height
-                arr.push32(this._screen_flags); // flags
-
-                this._sock.send(arr);
-            }
-        },
-
 
         // Private methods
 
@@ -358,6 +323,8 @@ var RFB;
 
         _init_vars: function () {
             // reset state
+            this._sock.init();
+
             this._FBU.rects        = 0;
             this._FBU.subrects     = 0;  // RRE and HEXTILE
             this._FBU.lines        = 0;  // RAW
@@ -374,7 +341,8 @@ var RFB;
             }
 
             for (i = 0; i < 4; i++) {
-                this._FBU.zlibs[i] = new inflator.Inflate();
+                this._FBU.zlibs[i] = new TINF();
+                this._FBU.zlibs[i].init();
             }
         },
 
@@ -395,32 +363,6 @@ var RFB;
             }
         },
 
-        _cleanupSocket: function (state) {
-            if (this._sendTimer) {
-                clearInterval(this._sendTimer);
-                this._sendTimer = null;
-            }
-
-            if (this._msgTimer) {
-                clearInterval(this._msgTimer);
-                this._msgTimer = null;
-            }
-
-            if (this._display && this._display.get_context()) {
-                this._keyboard.ungrab();
-                this._mouse.ungrab();
-                if (state !== 'connect' && state !== 'loaded') {
-                    this._display.defaultCursor();
-                }
-                if (Util.get_logging() !== 'debug' || state === 'loaded') {
-                    // Show noVNC logo on load and when disconnected, unless in
-                    // debug mode
-                    this._display.clear();
-                }
-            }
-
-            this._sock.close();
-        },
 
         /*
          * Page states:
@@ -455,7 +397,29 @@ var RFB;
              */
             if (state in {'disconnected': 1, 'loaded': 1, 'connect': 1,
                           'disconnect': 1, 'failed': 1, 'fatal': 1}) {
-                this._cleanupSocket(state);
+
+                if (this._sendTimer) {
+                    clearInterval(this._sendTimer);
+                    this._sendTimer = null;
+                }
+
+                if (this._msgTimer) {
+                    clearInterval(this._msgTimer);
+                    this._msgTimer = null;
+                }
+
+                if (this._display && this._display.get_context()) {
+                    this._keyboard.ungrab();
+                    this._mouse.ungrab();
+                    this._display.defaultCursor();
+                    if (Util.get_logging() !== 'debug' || state === 'loaded') {
+                        // Show noVNC logo on load and when disconnected, unless in
+                        // debug mode
+                        this._display.clear();
+                    }
+                }
+
+                this._sock.close();
             }
 
             if (oldstate === 'fatal') {
@@ -481,7 +445,6 @@ var RFB;
                 Util.Debug("Clearing disconnect timer");
                 clearTimeout(this._disconnTimer);
                 this._disconnTimer = null;
-                this._sock.off('close');  // make sure we don't get a double event
             }
 
             switch (state) {
@@ -571,10 +534,16 @@ var RFB;
             }
         },
 
+        _checkEvents: function () {
+            if (this._rfb_state === 'normal' && !this._viewportDragging && this._mouse_arr.length > 0) {
+                this._sock.send(this._mouse_arr);
+                this._mouse_arr = [];
+            }
+        },
+
         _handleKeyPress: function (keysym, down) {
             if (this._view_only) { return; } // View only, skip keyboard, events
-            RFB.messages.keyEvent(this._sock, keysym, down);
-            this._sock.flush();
+            this._sock.send(RFB.messages.keyEvent(keysym, down));
         },
 
         _handleMouseButton: function (x, y, down, bmask) {
@@ -598,8 +567,10 @@ var RFB;
 
             if (this._view_only) { return; } // View only, skip mouse events
 
-            if (this._rfb_state !== "normal") { return; }
-            RFB.messages.pointerEvent(this._sock, this._display.absX(x), this._display.absY(y), this._mouse_buttonMask);
+            this._mouse_arr = this._mouse_arr.concat(
+                    RFB.messages.pointerEvent(this._display.absX(x), this._display.absY(y), this._mouse_buttonMask));
+            this._sock.send(this._mouse_arr);
+            this._mouse_arr = [];
         },
 
         _handleMouseMove: function (x, y) {
@@ -608,7 +579,7 @@ var RFB;
                 var deltaY = this._viewportDragPos.y - y;
                 this._viewportDragPos = {'x': x, 'y': y};
 
-                this._display.viewportChangePos(deltaX, deltaY);
+                this._display.viewportChange(deltaX, deltaY);
 
                 // Skip sending mouse events
                 return;
@@ -616,8 +587,10 @@ var RFB;
 
             if (this._view_only) { return; } // View only, skip mouse events
 
-            if (this._rfb_state !== "normal") { return; }
-            RFB.messages.pointerEvent(this._sock, this._display.absX(x), this._display.absY(y), this._mouse_buttonMask);
+            this._mouse_arr = this._mouse_arr.concat(
+                    RFB.messages.pointerEvent(this._display.absX(x), this._display.absY(y), this._mouse_buttonMask));
+
+            this._checkEvents();
         },
 
         // Message Handlers
@@ -737,13 +710,11 @@ var RFB;
                 // an RFB state change and a UI interface issue
                 this._updateState('password', "Password Required");
                 this._onPasswordRequired(this);
-                return false;
             }
 
             if (this._sock.rQwait("auth challenge", 16)) { return false; }
 
-            // TODO(directxman12): make genDES not require an Array
-            var challenge = Array.prototype.slice.call(this._sock.rQshiftBytes(16));
+            var challenge = this._sock.rQshiftBytes(16);
             var response = RFB.genDES(this._rfb_password, challenge);
             this._sock.send(response);
             this._updateState("SecurityResult");
@@ -885,7 +856,6 @@ var RFB;
             /* Screen size */
             this._fb_width  = this._sock.rQshift16();
             this._fb_height = this._sock.rQshift16();
-            this._destBuff = new Uint8Array(this._fb_width * this._fb_height * 4);
 
             /* PIXEL_FORMAT */
             var bpp         = this._sock.rQshift8();
@@ -920,17 +890,18 @@ var RFB;
                 var totalMessagesLength = (numServerMessages + numClientMessages + numEncodings) * 16;
                 if (this._sock.rQwait('TightVNC extended server init header', totalMessagesLength, 32 + name_length)) { return false; }
 
-                // we don't actually do anything with the capability information that TIGHT sends,
-                // so we just skip the all of this.
+                var i;
+                for (i = 0; i < numServerMessages; i++) {
+                    var srvMsg = this._sock.rQshiftStr(16);
+                }
 
-                // TIGHT server message capabilities
-                this._sock.rQskipBytes(16 * numServerMessages);
+                for (i = 0; i < numClientMessages; i++) {
+                    var clientMsg = this._sock.rQshiftStr(16);
+                }
 
-                // TIGHT client message capabilities
-                this._sock.rQskipBytes(16 * numClientMessages);
-
-                // TIGHT encoding capabilities
-                this._sock.rQskipBytes(16 * numEncodings);
+                for (i = 0; i < numEncodings; i++) {
+                    var encoding = this._sock.rQshiftStr(16);
+                }
             }
 
             // NB(directxman12): these are down here so that we don't run them multiple times
@@ -967,8 +938,8 @@ var RFB;
             }
 
             this._display.set_true_color(this._true_color);
-            this._display.resize(this._fb_width, this._fb_height);
             this._onFBResize(this, this._fb_width, this._fb_height);
+            this._display.resize(this._fb_width, this._fb_height);
             this._keyboard.grab();
             this._mouse.grab();
 
@@ -980,13 +951,18 @@ var RFB;
                 this._fb_depth = 1;
             }
 
-            RFB.messages.pixelFormat(this._sock, this._fb_Bpp, this._fb_depth, this._true_color);
-            RFB.messages.clientEncodings(this._sock, this._encodings, this._local_cursor, this._true_color);
-            RFB.messages.fbUpdateRequests(this._sock, this._display.getCleanDirtyReset(), this._fb_width, this._fb_height);
+            var response = RFB.messages.pixelFormat(this._fb_Bpp, this._fb_depth, this._true_color);
+            response = response.concat(
+                            RFB.messages.clientEncodings(this._encodings, this._local_cursor, this._true_color));
+            response = response.concat(
+                            RFB.messages.fbUpdateRequests(this._display.getCleanDirtyReset(),
+                                                          this._fb_width, this._fb_height));
 
             this._timing.fbu_rt_start = (new Date()).getTime();
             this._timing.pixels = 0;
-            this._sock.flush();
+            this._sock.send(response);
+
+            this._checkEvents();
 
             if (this._encrypt) {
                 this._updateState('normal', 'Connected (encrypted) to: ' + this._fb_name);
@@ -1088,8 +1064,8 @@ var RFB;
                 case 0:  // FramebufferUpdate
                     var ret = this._framebufferUpdate();
                     if (ret) {
-                        RFB.messages.fbUpdateRequests(this._sock, this._display.getCleanDirtyReset(), this._fb_width, this._fb_height);
-                        this._sock.flush();
+                        this._sock.send(RFB.messages.fbUpdateRequests(this._display.getCleanDirtyReset(),
+                                                                      this._fb_width, this._fb_height));
                     }
                     return ret;
 
@@ -1161,14 +1137,7 @@ var RFB;
 
                 this._timing.last_fbu = (new Date()).getTime();
 
-                var handler = this._encHandlers[this._FBU.encoding];
-                try {
-                    //ret = this._encHandlers[this._FBU.encoding]();
-                    ret = handler();
-                } catch (ex)  {
-                    console.log("missed " + this._FBU.encoding + ": " + handler);
-                    ret = this._encHandlers[this._FBU.encoding]();
-                }
+                ret = this._encHandlers[this._FBU.encoding]();
 
                 now = (new Date()).getTime();
                 this._timing.cur_fbu += (now - this._timing.last_fbu);
@@ -1246,13 +1215,11 @@ var RFB;
     RFB.prototype.set_local_cursor = function (cursor) {
         if (!cursor || (cursor in {'0': 1, 'no': 1, 'false': 1})) {
             this._local_cursor = false;
-            this._display.disableLocalCursor(); //Only show server-side cursor
         } else {
             if (this._display.get_cursor_uri()) {
                 this._local_cursor = true;
             } else {
                 Util.Warn("Browser does not support local cursor");
-                this._display.disableLocalCursor();
             }
         }
     };
@@ -1263,111 +1230,64 @@ var RFB;
 
     // Class Methods
     RFB.messages = {
-        keyEvent: function (sock, keysym, down) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
-
-            buff[offset] = 4;  // msg-type
-            buff[offset + 1] = down;
-
-            buff[offset + 2] = 0;
-            buff[offset + 3] = 0;
-
-            buff[offset + 4] = (keysym >> 24);
-            buff[offset + 5] = (keysym >> 16);
-            buff[offset + 6] = (keysym >> 8);
-            buff[offset + 7] = keysym;
-
-            sock._sQlen += 8;
+        keyEvent: function (keysym, down) {
+            var arr = [4];
+            arr.push8(down);
+            arr.push16(0);
+            arr.push32(keysym);
+            return arr;
         },
 
-        pointerEvent: function (sock, x, y, mask) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
-
-            buff[offset] = 5; // msg-type
-
-            buff[offset + 1] = mask;
-
-            buff[offset + 2] = x >> 8;
-            buff[offset + 3] = x;
-
-            buff[offset + 4] = y >> 8;
-            buff[offset + 5] = y;
-
-            sock._sQlen += 6;
+        pointerEvent: function (x, y, mask) {
+            var arr = [5];  // msg-type
+            arr.push8(mask);
+            arr.push16(x);
+            arr.push16(y);
+            return arr;
         },
 
         // TODO(directxman12): make this unicode compatible?
-        clientCutText: function (sock, text) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
-
-            buff[offset] = 6; // msg-type
-
-            buff[offset + 1] = 0; // padding
-            buff[offset + 2] = 0; // padding
-            buff[offset + 3] = 0; // padding
-
+        clientCutText: function (text) {
+            var arr = [6];  // msg-type
+            arr.push8(0);   // padding
+            arr.push8(0);   // padding
+            arr.push8(0);   // padding
+            arr.push32(text.length);
             var n = text.length;
-
-            buff[offset + 4] = n >> 24;
-            buff[offset + 5] = n >> 16;
-            buff[offset + 6] = n >> 8;
-            buff[offset + 7] = n;
-
             for (var i = 0; i < n; i++) {
-                buff[offset + 8 + i] =  text.charCodeAt(i);
+                arr.push(text.charCodeAt(i));
             }
 
-            sock._sQlen += 8 + n;
+            return arr;
         },
 
-        pixelFormat: function (sock, bpp, depth, true_color) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
+        pixelFormat: function (bpp, depth, true_color) {
+            var arr = [0]; // msg-type
+            arr.push8(0);  // padding
+            arr.push8(0);  // padding
+            arr.push8(0);  // padding
 
-            buff[offset] = 0;  // msg-type
+            arr.push8(bpp * 8); // bits-per-pixel
+            arr.push8(depth * 8); // depth
+            arr.push8(0);  // little-endian
+            arr.push8(true_color ? 1 : 0);  // true-color
 
-            buff[offset + 1] = 0; // padding
-            buff[offset + 2] = 0; // padding
-            buff[offset + 3] = 0; // padding
+            arr.push16(255);  // red-max
+            arr.push16(255);  // green-max
+            arr.push16(255);  // blue-max
+            arr.push8(16);    // red-shift
+            arr.push8(8);     // green-shift
+            arr.push8(0);     // blue-shift
 
-            buff[offset + 4] = bpp * 8;             // bits-per-pixel
-            buff[offset + 5] = depth * 8;           // depth
-            buff[offset + 6] = 0;                   // little-endian
-            buff[offset + 7] = true_color ? 1 : 0;  // true-color
-
-            buff[offset + 8] = 0;    // red-max
-            buff[offset + 9] = 255;  // red-max
-
-            buff[offset + 10] = 0;   // green-max
-            buff[offset + 11] = 255; // green-max
-
-            buff[offset + 12] = 0;   // blue-max
-            buff[offset + 13] = 255; // blue-max
-
-            buff[offset + 14] = 16;  // red-shift
-            buff[offset + 15] = 8;   // green-shift
-            buff[offset + 16] = 0;   // blue-shift
-
-            buff[offset + 17] = 0;   // padding
-            buff[offset + 18] = 0;   // padding
-            buff[offset + 19] = 0;   // padding
-
-            sock._sQlen += 20;
+            arr.push8(0);     // padding
+            arr.push8(0);     // padding
+            arr.push8(0);     // padding
+            return arr;
         },
 
-        clientEncodings: function (sock, encodings, local_cursor, true_color) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
+        clientEncodings: function (encodings, local_cursor, true_color) {
+            var i, encList = [];
 
-            buff[offset] = 2; // msg-type
-            buff[offset + 1] = 0; // padding
-
-            // offset + 2 and offset + 3 are encoding count
-
-            var i, j = offset + 4, cnt = 0;
             for (i = 0; i < encodings.length; i++) {
                 if (encodings[i][0] === "Cursor" && !local_cursor) {
                     Util.Debug("Skipping Cursor pseudo-encoding");
@@ -1375,25 +1295,23 @@ var RFB;
                     // TODO: remove this when we have tight+non-true-color
                     Util.Warn("Skipping tight as it is only supported with true color");
                 } else {
-                    var enc = encodings[i][1];
-                    buff[j] = enc >> 24;
-                    buff[j + 1] = enc >> 16;
-                    buff[j + 2] = enc >> 8;
-                    buff[j + 3] = enc;
-
-                    j += 4;
-                    cnt++;
+                    encList.push(encodings[i][1]);
                 }
             }
 
-            buff[offset + 2] = cnt >> 8;
-            buff[offset + 3] = cnt;
+            var arr = [2];  // msg-type
+            arr.push8(0);   // padding
 
-            sock._sQlen += j - offset;
+            arr.push16(encList.length);  // encoding count
+            for (i = 0; i < encList.length; i++) {
+                arr.push32(encList[i]);
+            }
+
+            return arr;
         },
 
-        fbUpdateRequests: function (sock, cleanDirty, fb_width, fb_height) {
-            var offsetIncrement = 0;
+        fbUpdateRequests: function (cleanDirty, fb_width, fb_height) {
+            var arr = [];
 
             var cb = cleanDirty.cleanBox;
             var w, h;
@@ -1401,7 +1319,7 @@ var RFB;
                 w = typeof cb.w === "undefined" ? fb_width : cb.w;
                 h = typeof cb.h === "undefined" ? fb_height : cb.h;
                 // Request incremental for clean box
-                RFB.messages.fbUpdateRequest(sock, 1, cb.x, cb.y, w, h);
+                arr = arr.concat(RFB.messages.fbUpdateRequest(1, cb.x, cb.y, w, h));
             }
 
             for (var i = 0; i < cleanDirty.dirtyBoxes.length; i++) {
@@ -1409,33 +1327,24 @@ var RFB;
                 // Force all (non-incremental) for dirty box
                 w = typeof db.w === "undefined" ? fb_width : db.w;
                 h = typeof db.h === "undefined" ? fb_height : db.h;
-                RFB.messages.fbUpdateRequest(sock, 0, db.x, db.y, w, h);
+                arr = arr.concat(RFB.messages.fbUpdateRequest(0, db.x, db.y, w, h));
             }
+
+            return arr;
         },
 
-        fbUpdateRequest: function (sock, incremental, x, y, w, h) {
-            var buff = sock._sQ;
-            var offset = sock._sQlen;
-
+        fbUpdateRequest: function (incremental, x, y, w, h) {
             if (typeof(x) === "undefined") { x = 0; }
             if (typeof(y) === "undefined") { y = 0; }
 
-            buff[offset] = 3;  // msg-type
-            buff[offset + 1] = incremental;
+            var arr = [3];  // msg-type
+            arr.push8(incremental);
+            arr.push16(x);
+            arr.push16(y);
+            arr.push16(w);
+            arr.push16(h);
 
-            buff[offset + 2] = (x >> 8) & 0xFF;
-            buff[offset + 3] = x & 0xFF;
-
-            buff[offset + 4] = (y >> 8) & 0xFF;
-            buff[offset + 5] = y & 0xFF;
-
-            buff[offset + 6] = (w >> 8) & 0xFF;
-            buff[offset + 7] = w & 0xFF;
-
-            buff[offset + 8] = (h >> 8) & 0xFF;
-            buff[offset + 9] = h & 0xFF;
-
-            sock._sQlen += 10;
+            return arr;
         }
     };
 
@@ -1481,10 +1390,15 @@ var RFB;
         COPYRECT: function () {
             this._FBU.bytes = 4;
             if (this._sock.rQwait("COPYRECT", 4)) { return false; }
-            this._display.copyImage(this._sock.rQshift16(), this._sock.rQshift16(),
-                                    this._FBU.x, this._FBU.y, this._FBU.width,
-                                    this._FBU.height);
-
+            this._display.renderQ_push({
+                'type': 'copy',
+                'old_x': this._sock.rQshift16(),
+                'old_y': this._sock.rQshift16(),
+                'x': this._FBU.x,
+                'y': this._FBU.y,
+                'width': this._FBU.width,
+                'height': this._FBU.height
+            });
             this._FBU.rects--;
             this._FBU.bytes = 0;
             return true;
@@ -1589,21 +1503,11 @@ var RFB;
                     rQi += this._FBU.bytes - 1;
                 } else {
                     if (this._FBU.subencoding & 0x02) {  // Background
-                        if (this._fb_Bpp == 1) {
-                            this._FBU.background = rQ[rQi];
-                        } else {
-                            // fb_Bpp is 4
-                            this._FBU.background = [rQ[rQi], rQ[rQi + 1], rQ[rQi + 2], rQ[rQi + 3]];
-                        }
+                        this._FBU.background = rQ.slice(rQi, rQi + this._fb_Bpp);
                         rQi += this._fb_Bpp;
                     }
                     if (this._FBU.subencoding & 0x04) {  // Foreground
-                        if (this._fb_Bpp == 1) {
-                            this._FBU.foreground = rQ[rQi];
-                        } else {
-                            // this._fb_Bpp is 4
-                            this._FBU.foreground = [rQ[rQi], rQ[rQi + 1], rQ[rQi + 2], rQ[rQi + 3]];
-                        }
+                        this._FBU.foreground = rQ.slice(rQi, rQi + this._fb_Bpp);
                         rQi += this._fb_Bpp;
                     }
 
@@ -1615,12 +1519,7 @@ var RFB;
                         for (var s = 0; s < subrects; s++) {
                             var color;
                             if (this._FBU.subencoding & 0x10) {  // SubrectsColoured
-                                if (this._fb_Bpp === 1) {
-                                    color = rQ[rQi];
-                                } else {
-                                    // _fb_Bpp is 4
-                                    color = [rQ[rQi], rQ[rQi + 1], rQ[rQi + 2], rQ[rQi + 3]];
-                                }
+                                color = rQ.slice(rQi, rQi + this._fb_Bpp);
                                 rQi += this._fb_Bpp;
                             } else {
                                 color = this._FBU.foreground;
@@ -1686,105 +1585,69 @@ var RFB;
 
             var resetStreams = 0;
             var streamId = -1;
-            var decompress = function (data, expected) {
+            var decompress = function (data) {
                 for (var i = 0; i < 4; i++) {
                     if ((resetStreams >> i) & 1) {
                         this._FBU.zlibs[i].reset();
-                        console.debug('RESET!');
                         Util.Info("Reset zlib stream " + i);
                     }
                 }
 
-                //var uncompressed = this._FBU.zlibs[streamId].uncompress(data, 0);
-                var uncompressed = this._FBU.zlibs[streamId].inflate(data, true, expected);
-                /*if (uncompressed.status !== 0) {
+                var uncompressed = this._FBU.zlibs[streamId].uncompress(data, 0);
+                if (uncompressed.status !== 0) {
                     Util.Error("Invalid data in zlib stream");
-                }*/
+                }
 
-                //return uncompressed.data;
-                return uncompressed;
+                return uncompressed.data;
             }.bind(this);
 
-            var indexedToRGBX2Color = function (data, palette, width, height) {
+            var indexedToRGB = function (data, numColors, palette, width, height) {
                 // Convert indexed (palette based) image data to RGB
                 // TODO: reduce number of calculations inside loop
-                var dest = this._destBuff;
-                var w = Math.floor((width + 7) / 8);
-                var w1 = Math.floor(width / 8);
+                var dest = [];
+                var x, y, dp, sp;
+                if (numColors === 2) {
+                    var w = Math.floor((width + 7) / 8);
+                    var w1 = Math.floor(width / 8);
 
-                /*for (var y = 0; y < height; y++) {
-                    var b, x, dp, sp;
-                    var yoffset = y * width;
-                    var ybitoffset = y * w;
-                    var xoffset, targetbyte;
-                    for (x = 0; x < w1; x++) {
-                        xoffset = yoffset + x * 8;
-                        targetbyte = data[ybitoffset + x];
-                        for (b = 7; b >= 0; b--) {
-                            dp = (xoffset + 7 - b) * 3;
-                            sp = (targetbyte >> b & 1) * 3;
-                            dest[dp] = palette[sp];
-                            dest[dp + 1] = palette[sp + 1];
-                            dest[dp + 2] = palette[sp + 2];
+                    for (y = 0; y < height; y++) {
+                        var b;
+                        for (x = 0; x < w1; x++) {
+                            for (b = 7; b >= 0; b--) {
+                                dp = (y * width + x * 8 + 7 - b) * 3;
+                                sp = (data[y * w + x] >> b & 1) * 3;
+                                dest[dp] = palette[sp];
+                                dest[dp + 1] = palette[sp + 1];
+                                dest[dp + 2] = palette[sp + 2];
+                            }
                         }
-                    }
 
-                    xoffset = yoffset + x * 8;
-                    targetbyte = data[ybitoffset + x];
-                    for (b = 7; b >= 8 - width % 8; b--) {
-                        dp = (xoffset + 7 - b) * 3;
-                        sp = (targetbyte >> b & 1) * 3;
-                        dest[dp] = palette[sp];
-                        dest[dp + 1] = palette[sp + 1];
-                        dest[dp + 2] = palette[sp + 2];
-                    }
-                }*/
-
-                for (var y = 0; y < height; y++) {
-                    var b, x, dp, sp;
-                    for (x = 0; x < w1; x++) {
-                        for (b = 7; b >= 0; b--) {
-                            dp = (y * width + x * 8 + 7 - b) * 4;
+                        for (b = 7; b >= 8 - width % 8; b--) {
+                            dp = (y * width + x * 8 + 7 - b) * 3;
                             sp = (data[y * w + x] >> b & 1) * 3;
                             dest[dp] = palette[sp];
                             dest[dp + 1] = palette[sp + 1];
                             dest[dp + 2] = palette[sp + 2];
-                            dest[dp + 3] = 255;
                         }
                     }
-
-                    for (b = 7; b >= 8 - width % 8; b--) {
-                        dp = (y * width + x * 8 + 7 - b) * 4;
-                        sp = (data[y * w + x] >> b & 1) * 3;
-                        dest[dp] = palette[sp];
-                        dest[dp + 1] = palette[sp + 1];
-                        dest[dp + 2] = palette[sp + 2];
-                        dest[dp + 3] = 255;
+                } else {
+                    for (y = 0; y < height; y++) {
+                        for (x = 0; x < width; x++) {
+                            dp = (y * width + x) * 3;
+                            sp = data[y * width + x] * 3;
+                            dest[dp] = palette[sp];
+                            dest[dp + 1] = palette[sp + 1];
+                            dest[dp + 2] = palette[sp + 2];
+                        }
                     }
                 }
 
                 return dest;
             }.bind(this);
 
-            var indexedToRGBX = function (data, palette, width, height) {
-                // Convert indexed (palette based) image data to RGB
-                var dest = this._destBuff;
-                var total = width * height * 4;
-                for (var i = 0, j = 0; i < total; i += 4, j++) {
-                    var sp = data[j] * 3;
-                    dest[i] = palette[sp];
-                    dest[i + 1] = palette[sp + 1];
-                    dest[i + 2] = palette[sp + 2];
-                    dest[i + 3] = 255;
-                }
-
-                return dest;
-            }.bind(this);
-
+            var rQ = this._sock.get_rQ();
             var rQi = this._sock.get_rQi();
-            var rQ = this._sock.rQwhole();
-            var cmode, data;
-            var cl_header, cl_data;
+            var cmode, clength, data;
 
             var handlePalette = function () {
                 var numColors = rQ[rQi + 2] + 1;
@@ -1797,51 +1660,37 @@ var RFB;
                 var raw = false;
                 if (rowSize * this._FBU.height < 12) {
                     raw = true;
-                    cl_header = 0;
-                    cl_data = rowSize * this._FBU.height;
-                    //clength = [0, rowSize * this._FBU.height];
+                    clength = [0, rowSize * this._FBU.height];
                 } else {
-                    // begin inline getTightCLength (returning two-item arrays is bad for performance with GC)
-                    var cl_offset = rQi + 3 + paletteSize;
-                    cl_header = 1;
-                    cl_data = 0;
-                    cl_data += rQ[cl_offset] & 0x7f;
-                    if (rQ[cl_offset] & 0x80) {
-                        cl_header++;
-                        cl_data += (rQ[cl_offset + 1] & 0x7f) << 7;
-                        if (rQ[cl_offset + 1] & 0x80) {
-                            cl_header++;
-                            cl_data += rQ[cl_offset + 2] << 14;
-                        }
-                    }
-                    // end inline getTightCLength
+                    clength = RFB.encodingHandlers.getTightCLength(this._sock.rQslice(3 + paletteSize,
+                                                                                      3 + paletteSize + 3));
                 }
 
-                this._FBU.bytes += cl_header + cl_data;
+                this._FBU.bytes += clength[0] + clength[1];
                 if (this._sock.rQwait("TIGHT " + cmode, this._FBU.bytes)) { return false; }
 
                 // Shift ctl, filter id, num colors, palette entries, and clength off
                 this._sock.rQskipBytes(3);
-                //var palette = this._sock.rQshiftBytes(paletteSize);
-                this._sock.rQshiftTo(this._paletteBuff, paletteSize);
-                this._sock.rQskipBytes(cl_header);
+                var palette = this._sock.rQshiftBytes(paletteSize);
+                this._sock.rQskipBytes(clength[0]);
 
                 if (raw) {
-                    data = this._sock.rQshiftBytes(cl_data);
+                    data = this._sock.rQshiftBytes(clength[1]);
                 } else {
-                    data = decompress(this._sock.rQshiftBytes(cl_data), rowSize * this._FBU.height);
+                    data = decompress(this._sock.rQshiftBytes(clength[1]));
                 }
 
                 // Convert indexed (palette based) image data to RGB
-                var rgbx;
-                if (numColors == 2) {
-                    rgbx = indexedToRGBX2Color(data, this._paletteBuff, this._FBU.width, this._FBU.height);
-                    this._display.blitRgbxImage(this._FBU.x, this._FBU.y, this._FBU.width, this._FBU.height, rgbx, 0, false);
-                } else {
-                    rgbx = indexedToRGBX(data, this._paletteBuff, this._FBU.width, this._FBU.height);
-                    this._display.blitRgbxImage(this._FBU.x, this._FBU.y, this._FBU.width, this._FBU.height, rgbx, 0, false);
-                }
+                var rgb = indexedToRGB(data, numColors, palette, this._FBU.width, this._FBU.height);
 
+                this._display.renderQ_push({
+                    'type': 'blitRgb',
+                    'data': rgb,
+                    'x': this._FBU.x,
+                    'y': this._FBU.y,
+                    'width': this._FBU.width,
+                    'height': this._FBU.height
+                });
 
                 return true;
             }.bind(this);
@@ -1851,37 +1700,30 @@ var RFB;
                 var uncompressedSize = this._FBU.width * this._FBU.height * this._fb_depth;
                 if (uncompressedSize < 12) {
                     raw = true;
-                    cl_header = 0;
-                    cl_data = uncompressedSize;
+                    clength = [0, uncompressedSize];
                 } else {
-                    // begin inline getTightCLength (returning two-item arrays is for peformance with GC)
-                    var cl_offset = rQi + 1;
-                    cl_header = 1;
-                    cl_data = 0;
-                    cl_data += rQ[cl_offset] & 0x7f;
-                    if (rQ[cl_offset] & 0x80) {
-                        cl_header++;
-                        cl_data += (rQ[cl_offset + 1] & 0x7f) << 7;
-                        if (rQ[cl_offset + 1] & 0x80) {
-                            cl_header++;
-                            cl_data += rQ[cl_offset + 2] << 14;
-                        }
-                    }
-                    // end inline getTightCLength
+                    clength = RFB.encodingHandlers.getTightCLength(this._sock.rQslice(1, 4));
                 }
-                this._FBU.bytes = 1 + cl_header + cl_data;
+                this._FBU.bytes = 1 + clength[0] + clength[1];
                 if (this._sock.rQwait("TIGHT " + cmode, this._FBU.bytes)) { return false; }
 
                 // Shift ctl, clength off
-                this._sock.rQshiftBytes(1 + cl_header);
+                this._sock.rQshiftBytes(1 + clength[0]);
 
                 if (raw) {
-                    data = this._sock.rQshiftBytes(cl_data);
+                    data = this._sock.rQshiftBytes(clength[1]);
                 } else {
-                    data = decompress(this._sock.rQshiftBytes(cl_data), uncompressedSize);
+                    data = decompress(this._sock.rQshiftBytes(clength[1]));
                 }
 
-                this._display.blitRgbImage(this._FBU.x, this._FBU.y, this._FBU.width, this._FBU.height, data, 0, false);
+                this._display.renderQ_push({
+                    'type': 'blitRgb',
+                    'data': data,
+                    'x': this._FBU.x,
+                    'y': this._FBU.y,
+                    'width': this._FBU.width,
+                    'height': this._FBU.height
+                });
 
                 return true;
             }.bind(this);
@@ -1929,34 +1771,28 @@ var RFB;
             // Determine FBU.bytes
             switch (cmode) {
                 case "fill":
-                    // skip ctl byte
-                    this._display.fillRect(this._FBU.x, this._FBU.y, this._FBU.width, this._FBU.height, [rQ[rQi + 3], rQ[rQi + 2], rQ[rQi + 1]], false);
-                    this._sock.rQskipBytes(4);
+                    this._sock.rQskip8();  // shift off ctl
+                    var color = this._sock.rQshiftBytes(this._fb_depth);
+                    this._display.renderQ_push({
+                        'type': 'fill',
+                        'x': this._FBU.x,
+                        'y': this._FBU.y,
+                        'width': this._FBU.width,
+                        'height': this._FBU.height,
+                        'color': [color[2], color[1], color[0]]
+                    });
                     break;
                 case "png":
                 case "jpeg":
-                    // begin inline getTightCLength (returning two-item arrays is for peformance with GC)
-                    var cl_offset = rQi + 1;
-                    cl_header = 1;
-                    cl_data = 0;
-                    cl_data += rQ[cl_offset] & 0x7f;
-                    if (rQ[cl_offset] & 0x80) {
-                        cl_header++;
-                        cl_data += (rQ[cl_offset + 1] & 0x7f) << 7;
-                        if (rQ[cl_offset + 1] & 0x80) {
-                            cl_header++;
-                            cl_data += rQ[cl_offset + 2] << 14;
-                        }
-                    }
-                    // end inline getTightCLength
-                    this._FBU.bytes = 1 + cl_header + cl_data;  // ctl + clength size + jpeg-data
+                    clength = RFB.encodingHandlers.getTightCLength(this._sock.rQslice(1, 4));
+                    this._FBU.bytes = 1 + clength[0] + clength[1];  // ctl + clength size + jpeg-data
                     if (this._sock.rQwait("TIGHT " + cmode, this._FBU.bytes)) { return false; }
 
                     // We have everything, render it
-                    this._sock.rQskipBytes(1 + cl_header);  // shift off clt + compact length
+                    this._sock.rQskipBytes(1 + clength[0]);  // shift off clt + compact length
                     var img = new Image();
                     img.src = "data: image/" + cmode +
-                        RFB.extract_data_uri(this._sock.rQshiftBytes(cl_data));
+                        RFB.extract_data_uri(this._sock.rQshiftBytes(clength[1]));
                     this._display.renderQ_push({
                         'type': 'img',
                         'img': img,
@@ -1996,82 +1832,18 @@ var RFB;
             return true;
         },
 
-        handle_FB_resize: function () {
+        DesktopSize: function () {
+            Util.Debug(">> set_desktopsize");
             this._fb_width = this._FBU.width;
             this._fb_height = this._FBU.height;
-            this._destBuff = new Uint8Array(this._fb_width * this._fb_height * 4);
-            this._display.resize(this._fb_width, this._fb_height);
             this._onFBResize(this, this._fb_width, this._fb_height);
+            this._display.resize(this._fb_width, this._fb_height);
             this._timing.fbu_rt_start = (new Date()).getTime();
 
             this._FBU.bytes = 0;
-            this._FBU.rects -= 1;
-            return true;
-        },
+            this._FBU.rects--;
 
-        ExtendedDesktopSize: function () {
-            this._FBU.bytes = 1;
-            if (this._sock.rQwait("ExtendedDesktopSize", this._FBU.bytes)) { return false; }
-
-            this._supportsSetDesktopSize = true;
-            var number_of_screens = this._sock.rQpeek8();
-
-            this._FBU.bytes = 4 + (number_of_screens * 16);
-            if (this._sock.rQwait("ExtendedDesktopSize", this._FBU.bytes)) { return false; }
-
-            this._sock.rQskipBytes(1);  // number-of-screens
-            this._sock.rQskipBytes(3);  // padding
-
-            for (var i = 0; i < number_of_screens; i += 1) {
-                // Save the id and flags of the first screen
-                if (i === 0) {
-                    this._screen_id = this._sock.rQshiftBytes(4);    // id
-                    this._sock.rQskipBytes(2);                       // x-position
-                    this._sock.rQskipBytes(2);                       // y-position
-                    this._sock.rQskipBytes(2);                       // width
-                    this._sock.rQskipBytes(2);                       // height
-                    this._screen_flags = this._sock.rQshiftBytes(4); // flags
-                } else {
-                    this._sock.rQskipBytes(16);
-                }
-            }
-
-            /*
-             * The x-position indicates the reason for the change:
-             *
-             *  0 - server resized on its own
-             *  1 - this client requested the resize
-             *  2 - another client requested the resize
-             */
-
-            // We need to handle errors when we requested the resize.
-            if (this._FBU.x === 1 && this._FBU.y !== 0) {
-                var msg = "";
-                // The y-position indicates the status code from the server
-                switch (this._FBU.y) {
-                case 1:
-                    msg = "Resize is administratively prohibited";
-                    break;
-                case 2:
-                    msg = "Out of resources";
-                    break;
-                case 3:
-                    msg = "Invalid screen layout";
-                    break;
-                default:
-                    msg = "Unknown reason";
-                    break;
-                }
-                Util.Info("Server did not accept the resize request: " + msg);
-                return true;
-            }
-
-            this._encHandlers.handle_FB_resize();
-            return true;
-        },
-
-        DesktopSize: function () {
-            this._encHandlers.handle_FB_resize();
+            Util.Debug("<< set_desktopsize");
             return true;
         },
 
