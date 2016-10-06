@@ -1,0 +1,599 @@
+/*
+ * noVNC base CSS
+ * Copyright (C) 2012 Joel Martin
+ * Copyright (C) 2016 Samuel Mannehed for Cendio AB
+ * Copyright (C) 2016 Pierre Ossman for Cendio AB
+ * noVNC is licensed under the MPL 2.0 (see LICENSE.txt)
+ * This file is licensed under the 2-Clause BSD license (see LICENSE.txt).
+ */
+
+body {
+  margin:0;
+  padding:0;
+  font-family: Helvetica;
+  /*Background image with light grey curve.*/
+  background-color:#494949;
+  background-repeat:no-repeat;
+  background-position:right bottom;
+  height:100%;
+}
+
+html {
+  height:100%;
+}
+
+.noVNC_only_touch.noVNC_hidden {
+  display: none;
+}
+
+/* ----------------------------------------
+ * Input Elements
+ * ----------------------------------------
+ */
+
+input[type=input], input[type=password], input:not([type]), textarea {
+  /* Disable default rendering */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+
+  margin: 2px;
+  padding: 2px;
+  border: 1px solid rgb(192, 192, 192);
+  border-radius: 5px;
+  color: black;
+  background: linear-gradient(to top, rgb(255, 255, 255) 80%, rgb(240, 240, 240));
+}
+
+input[type=button], select {
+  /* Disable default rendering */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+
+  margin: 2px;
+  padding: 2px;
+  border: 1px solid rgb(192, 192, 192);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: black;
+  background: linear-gradient(to top, rgb(255, 255, 255), rgb(240, 240, 240));
+
+  /* This avoids it jumping around when :active */
+  vertical-align: middle;
+}
+
+input[type=button] {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+option {
+  color: black;
+  background: white;
+}
+
+input[type=input]:focus, input[type=password]:focus,
+input:not([type]):focus, input[type=button]:focus,
+textarea:focus, select:focus {
+  box-shadow: 0px 0px 3px rgba(74, 144, 217, 0.5);
+  border-color: rgb(74, 144, 217);
+  outline: none;
+}
+
+input[type=button]::-moz-focus-inner {
+  border: none;
+}
+
+input[type=input]:disabled, input[type=password]:disabled,
+input:not([type]):disabled, input[type=button]:disabled,
+textarea:disabled, select:disabled {
+  color: rgb(128, 128, 128);
+  background: rgb(240, 240, 240);
+}
+
+input[type=button]:active, select:active {
+  border-bottom-width: 1px;
+  margin-top: 3px;
+}
+
+:root:not(.noVNC_touch) input[type=button]:hover:not(:disabled), :root:not(.noVNC_touch) select:hover:not(:disabled) {
+  background: linear-gradient(to top, rgb(255, 255, 255), rgb(250, 250, 250));
+}
+
+/* ----------------------------------------
+ * WebKit centering hacks
+ * ----------------------------------------
+ */
+
+.noVNC_center {
+  /*
+   * This is a workaround because webkit misrenders transforms and
+   * uses non-integer coordinates, resulting in blurry content.
+   * Ideally we'd use "top: 50%; transform: translateY(-50%);" on
+   * the objects instead.
+   */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.noVNC_center > * {
+  pointer-events: auto;
+}
+.noVNC_vcenter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+}
+.noVNC_vcenter > * {
+  pointer-events: auto;
+}
+
+/* ----------------------------------------
+ * Control Bar
+ * ----------------------------------------
+ */
+
+#noVNC_control_bar_anchor {
+  /* The anchor is needed to get z-stacking to work */
+  position: fixed;
+  z-index: 2;
+
+  transition: 0.5s ease-in-out;
+
+  /* Edge misrenders animations wihthout this */
+  transform: translateX(0);
+}
+:root.noVNC_connected #noVNC_control_bar_anchor.noVNC_idle {
+  opacity: 0.8;
+}
+
+#noVNC_control_bar {
+  position: relative;
+  /* left: calc(-35px - 10px - 5px - 30px), but IE doesn't animate calc */
+  left: -80px;
+
+  transition: 0.5s ease-in-out;
+
+  background-color: rgb(110, 132, 163);
+  border-radius: 0 10px 10px 0;
+
+  /* The extra border is to get a proper shadow */
+  border-color: rgb(110, 132, 163);
+  border-style: solid;
+  border-width: 0 0 0 30px;
+}
+#noVNC_control_bar.noVNC_open {
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
+  left: -30px;
+}
+
+#noVNC_control_bar_handle {
+  position: absolute;
+  right: -15px;
+  top: 0;
+  transform: translateY(35px);
+  width: 50px;
+  height: 50px;
+  z-index: -2;
+  cursor: pointer;
+  border-radius: 0 5px 5px 0;
+  background-color: rgb(83, 99, 122);
+  background-image: url("../images/handle_bg.svg");
+  background-repeat: no-repeat;
+  background-position: right;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+}
+#noVNC_control_bar_handle:after {
+  content: "";
+  transition: 0.5s ease-in-out;
+  background: url("../images/handle.svg");
+  position: absolute;
+  top: 22px; /* (50px-6px)/2 */
+  right: 5px;
+  width: 5px;
+  height: 6px;
+}
+#noVNC_control_bar.noVNC_open #noVNC_control_bar_handle:after {
+  transform: translateX(1px) rotate(180deg);
+}
+:root:not(.noVNC_connected) #noVNC_control_bar_handle {
+  display: none;
+}
+#noVNC_control_bar_handle div {
+  position: absolute;
+  right: -35px;
+  top: 0;
+  width: 50px;
+  height: 50px;
+}
+:root:not(.noVNC_touch) #noVNC_control_bar_handle div {
+  display: none;
+}
+
+#noVNC_control_bar .noVNC_scroll {
+  max-height: 100vh; /* Chrome is buggy with 100% */
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 10px 0 5px;
+}
+
+/* General button style */
+.noVNC_button {
+  display: block;
+  padding: 4px 4px;
+  margin: 10px 0;
+  vertical-align: middle;
+  border:1px solid rgba(255, 255, 255, 0.2);
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+}
+.noVNC_button.noVNC_selected {
+  border-color: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
+}
+.noVNC_button:disabled {
+  opacity: 0.4;
+}
+.noVNC_button:focus {
+  outline: none;
+}
+.noVNC_button:active {
+  padding-top: 5px;
+  padding-bottom: 3px;
+}
+:root:not(.noVNC_touch) .noVNC_button.noVNC_selected:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+}
+:root:not(.noVNC_touch) .noVNC_button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.noVNC_button.noVNC_hidden {
+  display: none;
+}
+
+/* Panels */
+.noVNC_panel {
+  transform: translateX(25px);
+
+  transition: 0.5s ease-in-out;
+
+  max-height: 100vh; /* Chrome is buggy with 100% */
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  visibility: hidden;
+  opacity: 0;
+
+  padding: 15px;
+
+  background: #fff;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  color: #000;
+  border: 2px solid #E0E0E0;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.5);
+}
+.noVNC_panel.noVNC_open {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(75px);
+}
+
+.noVNC_panel hr {
+  border: none;
+  border-top: 1px solid rgb(192, 192, 192);
+}
+
+.noVNC_panel label {
+  display: block;
+}
+
+.noVNC_panel .noVNC_heading {
+  background-color: rgb(110, 132, 163);
+  border-radius: 5px;
+  padding: 5px;
+  /* Compensate for padding in image */
+  padding-right: 8px;
+  color: white;
+  font-size: 20px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+.noVNC_panel .noVNC_heading img {
+  vertical-align: bottom;
+}
+
+.noVNC_submit {
+  float: right;
+}
+
+:root:not(.noVNC_connected) #noVNC_view_drag_button {
+  display: none;
+}
+
+/* noVNC Touch Device only buttons */
+:root:not(.noVNC_connected) #noVNC_mobile_buttons {
+  display: none;
+}
+:root:not(.noVNC_touch) #noVNC_mobile_buttons {
+  display: none;
+}
+
+#noVNC_keyboardinput {
+  width: 1px;
+  height: 1px;
+  background-color: #fff;
+  color: #fff;
+  border: 0;
+  position: relative;
+  left: -40px;
+  z-index: -1;
+  ime-mode: disabled;
+}
+
+/* Extra manual keys */
+:root:not(.noVNC_connected) #noVNC_extra_keys {
+  display: none;
+}
+
+#noVNC_modifiers {
+  background-color: rgb(92, 92, 92);
+  border: none;
+  padding: 0 10px;
+}
+
+/* XVP Shutdown/Reboot */
+:root:not(.noVNC_connected) #noVNC_xvp_button {
+  display: none;
+}
+#noVNC_xvp {
+}
+#noVNC_xvp_buttons {
+  display: none;
+}
+
+#noVNC_xvp input[type=button] {
+  width: 100%;
+}
+
+/* Clipboard */
+:root:not(.noVNC_connected) #noVNC_clipboard_button {
+  display: none;
+}
+#noVNC_clipboard {
+  /* Full screen, minus padding and left and right margins */
+  max-width: calc(100vw - 2*15px - 75px - 25px);
+}
+#noVNC_clipboard_text {
+  width: 500px;
+  max-width: 100%;
+}
+
+/* Settings */
+#noVNC_settings {
+}
+#noVNC_settings ul {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+}
+#noVNC_setting_path {
+  width: 100px;
+}
+
+/* Connection Controls */
+:root.noVNC_connected #noVNC_connect_controls_button {
+  display: none;
+}
+:root:not(.noVNC_connected) #noVNC_disconnect_button {
+  display: none;
+}
+#noVNC_connect_controls ul {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+}
+#noVNC_setting_port {
+  width: 80px;
+}
+
+/* ----------------------------------------
+ * Status Dialog
+ * ----------------------------------------
+ */
+
+#noVNC_status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 3;
+  transform: translateY(-100%);
+
+  transition: 0.5s ease-in-out;
+
+  visibility: hidden;
+  opacity: 0;
+
+  padding: 5px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+
+  line-height: 25px;
+  word-wrap: break-word;
+  color: #fff;
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.9);
+}
+#noVNC_status.noVNC_open {
+  transform: translateY(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+#noVNC_status::before {
+  content: "";
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  margin-right: 5px;
+}
+
+#noVNC_status.noVNC_status_normal {
+  background: rgba(128,128,128,0.9);
+}
+#noVNC_status.noVNC_status_normal::before {
+  content: url("../images/info.svg") " ";
+}
+#noVNC_status.noVNC_status_error {
+  background: rgba(200,55,55,0.9);
+}
+#noVNC_status.noVNC_status_error::before {
+  content: url("../images/error.svg") " ";
+}
+#noVNC_status.noVNC_status_warn {
+  background: rgba(180,180,30,0.9);
+}
+#noVNC_status.noVNC_status_warn::before {
+  content: url("../images/warning.svg") " ";
+}
+
+/* ----------------------------------------
+ * Password Dialog
+ * ----------------------------------------
+ */
+
+#noVNC_password_dlg {
+  transform: translateY(-50px);
+}
+#noVNC_password_dlg.noVNC_open {
+  transform: translateY(0);
+}
+#noVNC_password_dlg ul {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+/* ----------------------------------------
+ * Main Area
+ * ----------------------------------------
+ */
+
+#noVNC_container {
+  display: table;
+  width: 100%;
+  height: 100%;
+  background-color: #313131;
+  border-bottom-right-radius: 800px 600px;
+  /*border-top-left-radius: 800px 600px;*/
+}
+
+/* HTML5 Canvas */
+#noVNC_screen {
+  position: absolute;
+  margin: 0px;
+  padding: 0px;
+  bottom: 0px;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  width: auto;
+  height: auto;
+}
+:root:not(.noVNC_connected) #noVNC_screen {
+  display: none;
+}
+
+/* Do not set width/height for VNC_canvas or incorrect
+ * scaling will occur. Canvas size depends on remote VNC
+ * settings and noVNC settings. */
+#noVNC_canvas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/*Default noVNC logo.*/
+/* From: http://fonts.googleapis.com/css?family=Orbitron:700 */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700;
+  src: local('?'), url('Orbitron700.woff') format('woff'),
+                   url('Orbitron700.ttf') format('truetype');
+}
+
+.noVNC_logo {
+  color:yellow;
+  text-align:left;
+  font-family: 'Orbitron', 'OrbitronTTF', sans-serif;
+  font-size: 13px;
+  line-height:90%;
+  text-shadow: 1px 1px 0 #000;
+}
+.noVNC_logo span{
+  color:green;
+}
+
+#noVNC_logo {
+  margin-top: 60px;
+  margin-left: 60px;
+  font-size: 180px;
+  text-shadow:
+       5px 5px 0 #000,
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px 1px 0 #000,
+       1px 1px 0 #000;
+}
+:root.noVNC_connected #noVNC_logo {
+  display: none;
+}
+
+#noVNC_bell {
+  display: none;
+}
+
+/* ----------------------------------------
+ * Media sizing
+ * ----------------------------------------
+ */
+
+@media screen and (max-width: 640px){
+  #noVNC_logo {
+    font-size: 150px;
+  }
+}
+
+@media screen and (min-width: 321px) and (max-width: 480px) {
+  #noVNC_logo {
+    font-size: 110px;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  #noVNC_logo {
+    font-size: 90px;
+  }
+}

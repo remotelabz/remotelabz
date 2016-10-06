@@ -11,137 +11,41 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class DefaultController extends Controller
 {
-    /**
-     * @Route("/control", name="control_vm")
-     */
-    public function indexAction()
-    {
-			
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		// Si l'utilisateur courant est anonyme, $user vaut « anon. »
-		// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
-		
-        return $this->render('ControlBundle:Default:index.html.twig', array(
-		'user' => $user,
-		'group' => $group,
-		'host' => "194.57.105.124",
-		'port' => "7220" // Linux
-		//'port' => "7224" // Windows 7
-		));
-    }
 	
 	/**
-     * @Route("/control/view_vm", name="view_vm")
+     * @Route("/control/view_vm{device_id}", name="view_vm")
      */
-	 public function view_vmAction() {
+	 public function view_vmAction($device_id) {
 		 
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
 		
-			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Device');
+        $device = $repository->find($device_id);
+		
+		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='vnc')
+			{
+			 return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
 		'user' => $user,
 		'group' => $group,
-		'host' => "194.57.105.124",
-		//'port' => "7220"
-		'port' => "7227" // Windows 7
+		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
+		'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'title' => $device->getNom()
 		));
+			}
+		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='telnet')
+		{
+				 return $this->render('ControlBundle:Default:wstelnet.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
+		'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'title' => $device->getNom()
+		));
+		}
 	 }
 	 
-	 /**
-     * @Route("/control2", name="control_vm2")
-     */
-    public function indexVM2Action()
-    {
-			
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		// Si l'utilisateur courant est anonyme, $user vaut « anon. »
-		// Sinon, c'est une instance de notre entité User, on peut l'utiliser normalement
-		
-        return $this->render('ControlBundle:Default:vm2.html.twig', array(
-		'user' => $user,
-		'group' => $group		
-		));
-    }
-	/**
-     * @Route("/control/view_vm1", name="view_vm1")
-     */
-	 public function view_vm1Action() {
-		 
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		
-			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
-		'user' => $user,
-		'group' => $group,
-		'host' => "194.57.105.124",
-		//'port' => "7220"
-		'port' => "6686",
-		'title' => "VM_1"
-		));
-	 }
-	 
-	/**
-     * @Route("/control/view_vm2", name="view_vm2")
-     */
-	 public function view_vm2Action() {
-		 
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		
-			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
-		'user' => $user,
-		'group' => $group,
-		'host' => "194.57.105.124",
-		//'port' => "7220"
-		'port' => "6688",
-		'title' => "VM_3"
-		));
-	 }
-	 
-	 /**
-     * @Route("/control/view_vm3", name="view_vm3")
-     */
-	 public function view_vm3Action() {
-		 
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		
-			return $this->render('ControlBundle:Default:vm_view.html.twig', array(
-		'user' => $user,
-		'group' => $group,
-		'host' => "194.57.105.124",
-		//'port' => "7220"
-		'port' => "6687",
-		'title' => "VM_2"
-		));
-	 }
-	 
-	 /**
-     * @Route("/control/view_vm4", name="view_vm4")
-     */
-	 public function view_vm4Action() {
-		 
-		$authenticationUtils = $this->get('security.authentication_utils');
-		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
-		
-		return $this->render('ControlBundle:Default:wstelnet.html.twig', array(
-		'user' => $user,
-		'group' => $group,
-		'host' => "194.57.105.124",
-		//'port' => "7220"
-		'port' => "6689",
-		'title' => "CLI ASA"
-		));
-	 }
 	 
 	/**
      * @Route("/control/choixTP", name="choixTP")
@@ -217,21 +121,39 @@ class DefaultController extends Controller
      */
     public function startLabAction($tp_id)
     {	
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
 	// Ajouter la gestion de l'objet réservation
 	// Faire le exec avec le fichier XML stocké par generate_xml
+	$tp_array=$this->generate_xml($tp_id);
 	
+	$file_name='ControlBundle:Default:'.$tp_array['lab_name'].'.html.twig';
+	
+	// Ajouter paramètre avec les param pour chaque fenetre
+	// indiquer telnet ou vnc et l'id du device à chaque fois
+	// appel ainsi à un controller unique avec pour param l'id du device
+	
+	return $this->render($file_name, array(
+		'user' => $user,
+		'group' => $group,
+		'tp_array' => $tp_array,
+		'host' => "194.57.105.124",
+		'port' => "7220" // Linux
+		//'port' => "7224" // Windows 7
+		));
 	}
 	
-	/**
-     * @Route("/control/generate_xml{tp_id}", name="generate_xml")
-     */
-    public function generate_xmlAction($tp_id)
+	
+    public function generate_xml($tp_id)
     {	
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
+		
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
         $tp = $repository->find($tp_id);
@@ -240,12 +162,15 @@ class DefaultController extends Controller
 		$rootNode = new \SimpleXMLElement("<?xml version='1.0' encoding='UTF-8' standalone='yes'?><lab></lab>" );
         $user_node=$rootNode->addChild('user');
 		$index=$param_system->getIndexInterface();
-		$lab_name=$lab->getNomlab()."_".$param_system->getIndexInterface();
+		$lab_name_tp=$lab->getNomlab();
+		$lab_name=$lab_name_tp."_".$param_system->getIndexInterface();
+		$Structure_tp['lab_name']=$lab_name_tp;
+		
 		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
 		$user_node->addAttribute('login',$user->getUsername());
 		$nodes = $rootNode->addChild('nodes');
 		$order=1;
-		
+		$devices=array();
 		foreach ($lab->getPod()->getDevices() as $dev) {
 			$device=$nodes->addChild('device');
 			$device->addChild('nom', $dev->getNom());
@@ -296,6 +221,14 @@ class DefaultController extends Controller
 				$int_ctrl_node->addAttribute('gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
 				$int_ctrl_node->addAttribute('protocol',$int_ctrl->getConfigReseau()->getProtocole());
 				$int_ctrl_node->addAttribute('port',$int_ctrl->getConfigReseau()->getPort());
+				array_push($devices,array('id'=>$dev->getId()
+				/*,
+					'nom'=>$dev->getNom(),
+					'protocol'=>$int_ctrl->getConfigReseau()->getProtocole(),
+					'port'=>$int_ctrl->getConfigReseau()->getPort(),
+					'IPv4'=>$int_ctrl->getConfigReseau()->getIP(),
+					'IPv6'=>$int_ctrl->getConfigReseau()->getIPv6()*/
+				));
 			}
 			}
 			if ($dev->getPropriete() == "switch") {
@@ -313,6 +246,7 @@ class DefaultController extends Controller
 				}
 			}
 		}
+		$Structure_tp['devices']=$devices;
 		$init = $rootNode->addChild('init');
 		$serveur = $init->addChild('serveur');	
 		$serveur->addChild('IPv4',$param_system->getIpv4());
@@ -329,9 +263,8 @@ class DefaultController extends Controller
 		$fp = fopen($filename,'x');
 		fwrite($fp,$rootNode->asXML());
 		fclose($fp);
-		
-		return $response;
-		
+
+		return $Structure_tp;
 		
     }
 	
