@@ -17,7 +17,8 @@ class Network_InterfaceType extends AbstractType
     {
         $builder
 			->add('nom_virtuel','choice' , array(
-                'choices' => array('tap' => 'Interface de type tap'),
+                'choices' => array('tap' => 'Interface de type tap',
+				'port' => 'Port d\'un OVS'),
 				'empty_value' => '-- Choose a type --'
 				))
 			->add('nom_physique')

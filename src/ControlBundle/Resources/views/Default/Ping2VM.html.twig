@@ -4,11 +4,11 @@
 
 <div style="height:1024px">
 
-		<div style="float:left">
+		<div {# style="float:left"#}>
 		{% include 'page.html' %}
 		</div>
 
-		<div id="noVNC_screen" style="float:right; width:720px">
+		{# <div id="noVNC_screen" style="float:right; width:720px">
             <div id="noVNC_status_bar" class="noVNC_status_bar" style="margin-top: 0px;"> 
                 <table border=0 width="100%"><tr>
                  <td> <div id="noVNC_status" style="position: relative; height: auto;">
@@ -31,26 +31,26 @@
             <canvas id="noVNC_canvas" width="640px" height="20px">
                 Canvas not supported.
             </canvas>
-		</div>	
+		</div>	#}
 </div>
 	
 {% endblock%}
 
 {% block javascripts %}
-<script src="{{asset('js/novnc/util.js')}}"></script>
+{#<script src="{{asset('js/novnc/util.js')}}"></script>#}
  <script>
         /*jslint white: false */
         /*global window, $, Util, RFB, */
         "use strict";
 
-        // Load supporting scripts
-        Util.load_scripts(["{{asset('js/novnc/webutil.js')}}", "{{asset('js/novnc/base64.js')}}",
+       // Load supporting scripts
+{#        Util.load_scripts(["{{asset('js/novnc/webutil.js')}}", "{{asset('js/novnc/base64.js')}}",
 							"{{asset('js/novnc/websock.js')}}", "{{asset('js/novnc/des.js')}}",
                            "{{asset('js/novnc/keysymdef.js')}}", "{{asset('js/novnc/keyboard.js')}}",
 						   "{{asset('js/novnc/input.js')}}", "{{asset('js/novnc/display.js')}}",
                            "{{asset('js/novnc/inflator.js')}}", "{{asset('js/novnc/rfb.js')}}",
 						   "{{asset('js/novnc/keysym.js')}}"]);
-
+		
         var rfb;
         var resizeTimeout;
 
@@ -145,10 +145,14 @@
                 xvpbuttons.style.display = 'none';
             }
         }
-	
-        window.onscriptsload = function () {
-			window.open("{{path("view_vm")}}", "toto", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820");
+		#}
+        
+		
+		{% for device in tp_array['devices'] %}
+			window.open("{{path('view_vm',{'device_id':device.id})}}", "{{user}}VM{{loop.index}}", "location=1,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
+		{% endfor %}
 			
+		{#	
 			var host, port, password, path, token;
 			            
 			$D('sendCtrlAltDelButton').style.display = "inline";
@@ -213,7 +217,8 @@
             }
 
             rfb.connect(host, port, password, path);
-        };
+		#}
+        
         </script>
 
 {% endblock %}
