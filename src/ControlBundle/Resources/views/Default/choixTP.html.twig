@@ -16,7 +16,7 @@
 					<div class="col-md-4 col-sm-4 col-xs-12">
 					{{ tp.nom }}</div>
 					<div class="col-md-4 col-sm-4 col-xs-12">
-					<a href="{{path('generate_xml',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a></div>
+					<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a></div>
 					<div class="col-md-4 col-sm-4 col-xs-12">
 					<a href="{{path('stopLab',{'tp_id': tp.id})}}"><button class="btn btn-danger">Stop</button></a></div>
 					{% endfor %}

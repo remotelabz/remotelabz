@@ -167,4 +167,14 @@ class Network_Interface
     {
         return $this->nom_physique;
     }
+	
+	public function getLabel()
+	{
+		return $this->getNomPhysique()." ".$this->config_reseau->getProtocole()." ".$this->config_reseau->getPort();
+	}
+	
+	public function getNomVirtuelPhysique()
+	{
+		return $this->getNomVirtuel()." ".$this->getNomPhysique();
+	}
 }

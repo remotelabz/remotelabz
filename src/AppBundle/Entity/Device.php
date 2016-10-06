@@ -86,9 +86,9 @@ class Device
 	/**
      * @var int
      *
-     * @ORM\Column(name="order", type="integer")
+     * @ORM\Column(name="ordre", type="integer")
      */
-	private $order;
+	private $ordre;
 	
 
     /**
@@ -365,16 +365,15 @@ class Device
     }
 
     /**
-     * Set order
+     * Set ordre
      *
-     * @param integer $order
+     * @param integer $ordre
      *
      * @return Device
      */
-    public function setOrder($order)
+    public function setOrdre($ordre)
     {
-        $this->order = $order;
-
+        $this->ordre = $ordre;
         return $this;
     }
 
@@ -383,8 +382,8 @@ class Device
      *
      * @return integer
      */
-    public function getOrder()
+    public function getOrdre()
     {
-        return $this->order;
-    }
+        return $this->ordre;
+    }	
 }
