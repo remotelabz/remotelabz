@@ -24,10 +24,12 @@ class DeviceType extends AbstractType
             ->add('type','choice' , array(
                 'choices' => array('virtuel' => 'Virtuel', 'physique' => 'Physique', 'comp_physique' => 'Comportement équivalent physique (OVS)')))
             ->add('propriete','choice' , array(
-                'choices' => array('ordi' => 'Ordinateur', 'Switch' => 'Switch', 'Routeur' => 'Router')))
+                'choices' => array('Ordi' => 'Ordinateur', 'Switch' => 'Switch', 'Routeur' => 'Router',
+				'Firewall' => 'Firewall')))
             ->add('modele')
             ->add('marque')
 			->add('script')
+			->add('ordre')
 //
              ->add('systeme', 'entity', array(
                 'class'    => 'AppBundle:Systeme',
@@ -41,8 +43,8 @@ class DeviceType extends AbstractType
             ))
             ->add('interfaceControle', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
-        'empty_value'   => 'Select',
-        'property' => 'nom_virtuel',
+        'empty_value'   => 'Select ou Aucun',
+        'property' => 'label',
         'multiple' => false,
         'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
@@ -51,7 +53,7 @@ class DeviceType extends AbstractType
 		))
            ->add('network_interfaces', 'entity', array(
         'class'    => 'AppBundle:Network_Interface',
-        'property' => 'nom_virtuel',
+        'property' => 'nom_virtuel_physique',
         'multiple' => true,
         'required' => false,
         'query_builder' => function(Network_InterfaceRepository $repo) {
