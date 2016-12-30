@@ -9,9 +9,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 use UserBundle\Entity\User;
 
+
 class UserData extends AbstractFixture implements ContainerAwareInterface
 {
-  // Dans l'argument de la m�thode load, l'objet $manager est l'EntityManager
+  // Dans l'argument de la méthode load, l'objet $manager est l'EntityManager
   public function load(ObjectManager $manager)
   {
     $adminuser=new User();
@@ -27,12 +28,22 @@ class UserData extends AbstractFixture implements ContainerAwareInterface
 	$adminuser->setEmail("florent.nolot@univ-reims.fr");
 	$adminuser->addRole('ROLE_SUPERADMIN');
 	
+	$adminuser->setGroupe($this->getReference('admin-group'));
+		
 	$manager->persist($adminuser); 
     $manager->flush();
 	
-//	$this->addReference('admin-user', $adminuser);
+	
+
   }
-  
+
+public function getOrder()
+    {
+        // the order in which fixtures will be loaded
+        // the lower the number, the sooner that this fixture is loaded
+        return 2;
+    }
+	
 	public function setContainer(ContainerInterface $container = null){
 		$this->container = $container;
 	}
