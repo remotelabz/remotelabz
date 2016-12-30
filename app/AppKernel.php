@@ -22,6 +22,8 @@ class AppKernel extends Kernel
             new BackendBundle\BackendBundle(),
             new ControlBundle\ControlBundle(),
             new VerifyBundle\VerifyBundle(),
+			new LightSaml\SymfonyBridgeBundle\LightSamlSymfonyBridgeBundle(),
+			new LightSaml\SpBundle\LightSamlSpBundle(),
         );
 
         if (in_array($this->getEnvironment(), array('dev', 'test'), true)) {

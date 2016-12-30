@@ -6,6 +6,10 @@ security:
     providers:
         main:
             id: fos_user.user_provider.username
+        db_provider:
+            entity:
+                class: AppBundle:UserSAML
+                property: username
 
     encoders:
         UserBundle\Entity\User: sha512
@@ -26,11 +30,19 @@ security:
             pattern: ^/
             anonymous: true
             provider: main
-            
+            remote_user:
+                provider: db_provider
+                user: REMOTE_USER
+            light_saml_sp:
+                provider: db_provider       # user provider name configured in step 9
+                user_creator: user_creator  # name of the user creator service created in step 10
+                login_path: /saml/login
+                check_path: /saml/login_check
             form_login:
                 login_path: fos_user_security_login
                 check_path: fos_user_security_check
                 default_target_path: /auth
+                always_use_default_target_path: false
                 csrf_token_generator: security.csrf.token_manager
             logout:
                 path:       fos_user_security_logout
