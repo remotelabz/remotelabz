@@ -26,7 +26,6 @@ use UserBundle\Form\Type\AddUserFormType;
 use BackendBundle\Form\Type\SelectClasseFormType;
 use BackendBundle\Form\Type\AddinclasseFormType;
 
-
 use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
 

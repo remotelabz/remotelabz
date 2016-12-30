@@ -11,3 +11,15 @@ services:
        class: UserBundle\Form\Type\ProfileFormType
        tags:
          - { name: form.type, alias: user_profile_edit }
+# Pour fonctionnement de lightSAML
+    id_store:
+        class: AppBundle\Store\IdStore
+        arguments:
+            - "@=service('doctrine').getManager()"
+            - "@lightsaml.system.time_provider"
+
+    user_creator:
+        class: AppBundle\Security\User\UserCreator
+        arguments:
+            - "@=service('doctrine').getManager()"
+            - "@lightsaml_sp.username_mapper.simple"
