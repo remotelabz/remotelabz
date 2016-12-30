@@ -88,3 +88,23 @@ fos_user:
     profile:
         form:
             type: UserBundle\Form\Type\ProfileFormType
+
+light_saml_symfony_bridge:
+    own:
+        entity_id: https://remotelabz.univ-reims.fr
+        credentials:
+            -
+                #certificate: "%kernel.root_dir%/../vendor/lightsaml/lightsaml/web/sp/saml.crt"
+                certificate: /etc/shibboleth/sp-cert.pem
+                #key:         "%kernel.root_dir%/../vendor/lightsaml/lightsaml/web/sp/saml.key"
+                key: /etc/shibboleth/sp-key.pem
+                password:    ~
+    party:
+        idp:
+            files:
+                #- "%kernel.root_dir%/../vendor/lightsaml/lightsaml/web/sp/openidp.feide.no.xml"
+                #- "%kernel.root_dir%/../vendor/lightsaml/lightsaml/web/sp/testshib-providers.xml"
+                - https://metadata.federation.renater.fr/test/preview/preview-all-renater-test-metadata.xml
+
+    store:
+        id_state: id_store  # name of id store service created in step 6
