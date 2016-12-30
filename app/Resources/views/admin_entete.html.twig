@@ -26,7 +26,12 @@
                   <li>
                     <a href="{{path('fos_user_change_password')}}">Mot de passe</a>
                   </li>
-                  <li><a href="{{path('fos_user_security_logout')}}"><i class="fa fa-sign-out pull-right"></i>Log Out</a>
+                  
+				  <li><a href="
+				  {% if app.request.server.get("REMOTE_USER") %}
+				  {{ path('logout_shib')
+					}} {% else %} {{path('fos_user_security_logout')}} {%endif%}"><i class="fa fa-sign-out pull-right"></i> Log Out</a>
+				  
                   </li>
                 </ul>
               </li>
