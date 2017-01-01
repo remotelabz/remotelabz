@@ -1,0 +1,183 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+<link href="{{asset('css/icheck/flat/green.css')}}" rel="stylesheet">
+
+{% endblock %}
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+			<div class="flash-notice">
+				{{ flash_message }}
+			</div>
+		{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des utilisateurs</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+						{{ form_start(form) }}
+							<div class="form-group">
+			<div class="col-sm-2 control-label">
+			Liste des enseignants
+			</div>
+			<div class="col-sm-10 checkbox">
+			{% for utilisateur in form.User %}
+				{{ form_widget(utilisateur) }} {{ form_label(utilisateur) }} 
+			{% endfor %}
+			</div>
+		</div>
+                        <!-- content ends here -->
+							<div class="col-sm-2">
+				{# Génération du label. #}
+								{{ form_label(form.Groupe, "Groupe", {'label_attr': {'class': 'control-label'}}) }}
+				{# Affichage des erreurs pour ce champ précis. #}
+								{{ form_errors(form.Groupe) }}
+							</div>
+							<div class="col-sm-10">
+								{{ form_widget(form.Groupe, {'attr': {'class': 'form-control'}}) }}
+							</div>
+							<div class="col-sm-12">
+								{{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+								{{ form_rest(form) }}
+							</div>
+					</div>
+				</div>
+						
+  
+						{# Fermeture de la balise <form> du formulaire HTML #}
+						{{ form_end(form) }}
+				
+			</div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block javascripts %}
+  <!-- Datatables-->
+        <script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+		<script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+		<script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.bootstrap.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/vfs_fonts.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.html5.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.fixedHeader.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.keyTable.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.responsive.min.js')}}"></script>
+        <script src="{{asset('js/datatables/responsive.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.scroller.min.js')}}"></script>
+
+        <script>
+          var handleDataTableButtons = function() {
+              "use strict";
+              0 !== $("#datatable-buttons").length && $("#datatable-buttons").DataTable({
+                dom: "Bfrtip",
+				
+                buttons: [],
+                responsive: !0
+              })
+            },
+            TableManageButtons = function() {
+              "use strict";
+              return {
+                init: function() {
+                  handleDataTableButtons()
+                }
+              }
+            }();
+   
+        $(document).ready(function() {
+			$('#datatable').DataTable( {
+				"order": [[ 3, "asc" ]],
+			});
+			TableManageButtons.init();
+		});
+
+		function Change_Activation(button) {
+				var user_id=button.id;
+				$(function(){
+					$.post(
+						"{{path('active_user')}}",
+						{ data: user_id},
+						function(data,status){
+							var result = data.split(":");
+							document.getElementById("button_"+result[0]).innerHTML=result[1];
+							var existingclass=document.getElementById("tr_"+result[0]).className;
+							if (result[1]=="Activer")
+								document.getElementById("tr_"+result[0]).className="danger "+existingclass;
+							else document.getElementById("tr_"+result[0]).className=existingclass.replace("danger ","");
+						});			
+				})
+		}
+		
+		var buttons = document.getElementsByTagName('button');
+		for (var i = 0, len = buttons.length; i < len; i++) {
+			buttons[i].onclick = function (){
+				Change_Activation(this);
+			}
+		}
+		
+		{#
+		function readData(sData) {
+	var arr_item=new Array();
+	var arr_cand=new Array();
+	arr_item=sData.getElementsByTagName("item");
+	for (var i = 0; i < arr_item.length; i++) {  
+         decision=arr_item[i].getAttribute('decision');
+		 choix=arr_item[i].getAttribute('choix');
+		 parcmodsess=arr_item[i].getAttribute('parcmodsess');
+		 
+    }
+	arr_cand=sData.getElementsByTagName("candidat");
+	for (var i = 0; i < arr_cand.length; i++) {  
+         id=arr_cand[i].getAttribute('id');
+    }
+	id_element=id+"_"+parcmodsess+"_"+choix;
+	
+	arr = document.getElementById("decision_"+id_element);  
+	arr.innerHTML=decision;
+}
+
+function request(oSelect) {
+	var value = oSelect.options[oSelect.selectedIndex].value;
+	var formid= oSelect.form.id;
+	var temp1="candidature"+"_"+formid+"_id_candidat";
+	var temp2="candidature"+"_"+formid+"_id_parcmodsess";
+	var temp3="candidature"+"_"+formid+"_choix";
+	var id_candidat= document.getElementById(temp1).value;
+	var id_parcmodsess= document.getElementById(temp2).value;
+	var choix= document.getElementById(temp3).value;
+
+	var xhr   = new getXMLHttpRequest();
+	
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
+			readData(xhr.responseXML);	
+		}
+	}
+	
+	xhr.open("POST", "decision", true);
+	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	xhr.send("id_candidat=" + id_candidat+"&id_parcmodsess="+id_parcmodsess+"&choix="+choix+"&decision="+value);
+}
+		#}
+		
+		
+
+        </script>
+{% endblock %}
