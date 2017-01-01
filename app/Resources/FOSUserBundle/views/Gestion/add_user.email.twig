@@ -1,0 +1,10 @@
+{% block body_text %}
+Bonjour {{ user.firstname }} {{ user.lastname }},
+
+Nous vous confirmons la création de votre compte.
+
+Votre login de connexion est : {{ user.username }}
+Votre mot de passe est : {{password}}
+
+Cordialement
+{% endblock %}
