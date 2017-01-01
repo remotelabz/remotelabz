@@ -11,6 +11,8 @@ services:
        class: UserBundle\Form\Type\ProfileFormType
        tags:
          - { name: form.type, alias: user_profile_edit }
+
+
 # Pour fonctionnement de lightSAML
     id_store:
         class: AppBundle\Store\IdStore

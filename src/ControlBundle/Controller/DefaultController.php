@@ -24,7 +24,7 @@ class DefaultController extends Controller
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Device');
         $device = $repository->find($device_id);
 		
-		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='vnc')
+		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='websocket')
 			{
 			 return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
 		'user' => $user,
@@ -67,7 +67,7 @@ class DefaultController extends Controller
 		));
     }
 	
-	public function UpdateInterfaceIndex($tp_id,$increment) { // increment permet de définir si il faut augmenter (+1) ou diminuer (-1) l'index des interfaces utilisables
+	public function UpdateInterfaceIndex($tp_id,$increment) { // increment permet de définir s'il faut augmenter (+1) ou diminuer (-1) l'index des interfaces utilisables
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
@@ -195,6 +195,7 @@ class DefaultController extends Controller
 						$interface->addAttribute('physique_name',$int->getNomPhysique());
 						if ($int->getNomVirtuel() == "tap") {
 							$interface->addAttribute('logical_name',"tap".$index);
+							$interface->addAttribute('mac_address',"01:02:03:04:05:".$this->MacEnd($index));
 							$index++;
 						}
 					}
@@ -267,5 +268,9 @@ class DefaultController extends Controller
 		return $Structure_tp;
 		
     }
-	
+
+	public function MacEnd($nb) {
+		
+		return dechex(floor($nb/256)).":".dechex($nb%256);
+	}
 }
