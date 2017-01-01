@@ -77,7 +77,8 @@ fos_user:
     firewall_name: main
     user_class: UserBundle\Entity\User
     from_email:
-        address:        florent.nolot@univ-reims.fr
+        address:        "%mailer_from%"
+        sender_name:    "%mailer_from_name%"
     service:
         mailer: fos_user.mailer.twig_swift
     resetting:
