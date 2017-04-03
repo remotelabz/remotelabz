@@ -38,7 +38,7 @@ class DefaultController extends Controller
 			
 			$subject = "[Remotelabz-v2] - Création de votre compte - ".$new_user->getfirstname()." ".strtoupper($this->stripAccents($new_user->getLastName()));
 			
-			$mail_from=$this->getParameter('mail_from');
+			$mail_from=$this->getParameter('mailer_from');
 			$message = \Swift_Message::newInstance()
 				->setSubject($subject)
 				->setFrom(array($mail_from => 'Administrateur'))
