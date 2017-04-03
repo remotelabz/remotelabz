@@ -7,6 +7,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 
 class DefaultController extends Controller
@@ -129,6 +131,15 @@ class DefaultController extends Controller
 	// Faire le exec avec le fichier XML stocké par generate_xml
 	$tp_array=$this->generate_xml($tp_id);
 	
+	$script_name=$this->getParameter('script_start_lab');
+	//$cmd="".escapeshellarg($script_name." ".$tp_array['lab_name_avec_id_absolutepath']);
+	//$output=exec(sprintf('/usr/bin/python $script_name %s',escapeshellcmd($tp_array['lab_name_avec_id_absolutepath'])));
+	//$output=exec(sprintf('/usr/bin/python $script_name %s',"/home/RLv2_fnolot/3VM_1ASA_883.xml"));
+	$cmd="/usr/bin/python $script_name ".$tp_array['lab_name_avec_id_absolutepath'];
+	$output=passthru($cmd);
+	$logger = $this->get('logger');
+	$logger->debug($output);
+   
 	$file_name='ControlBundle:Default:'.$tp_array['lab_name'].'.html.twig';
 	
 	// Ajouter paramètre avec les param pour chaque fenetre
@@ -139,9 +150,7 @@ class DefaultController extends Controller
 		'user' => $user,
 		'group' => $group,
 		'tp_array' => $tp_array,
-		'host' => "194.57.105.124",
-		'port' => "7220" // Linux
-		//'port' => "7224" // Windows 7
+		'output' => $cmd
 		));
 	}
 	
@@ -166,6 +175,7 @@ class DefaultController extends Controller
 		$lab_name=$lab_name_tp."_".$param_system->getIndexInterface();
 		$Structure_tp['lab_name']=$lab_name_tp;
 		
+		
 		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
 		$user_node->addAttribute('login',$user->getUsername());
 		$nodes = $rootNode->addChild('nodes');
@@ -173,9 +183,14 @@ class DefaultController extends Controller
 		$devices=array();
 		foreach ($lab->getPod()->getDevices() as $dev) {
 			$device=$nodes->addChild('device');
-			$device->addChild('nom', $dev->getNom());
+			$property=$dev->getPropriete();	
+			$device->addAttribute('property',$property);
+			if ($property =='switch')
+				$device->addChild('nom', $dev->getNom().$index);
+			else
+				$device->addChild('nom', $dev->getNom());
 			$device->addAttribute('type',$dev->getType());
-			$device->addAttribute('property',$dev->getPropriete());
+			
 			$device->addAttribute('id',$dev->getId());
 			$device->addAttribute('script',$dev->getScript());
 			$device->addAttribute('image',$dev->getSysteme()->getPathMaster());
@@ -184,8 +199,8 @@ class DefaultController extends Controller
 			$device->addAttribute('hypervisor',$dev->getSysteme()->getHyperviseur()->getNom());
 			$system=$dev->getSysteme();
 			$system_node=$device->addChild('system', $system->getNom());
-			$system_node->addAttribute('memory',$system->getParametres()->getSizeMemoire()." Mo");
-			$system_node->addAttribute('disk',$system->getParametres()->getSizeDisque()." Go");
+			$system_node->addAttribute('memory',$system->getParametres()->getSizeMemoire());
+			$system_node->addAttribute('disk',$system->getParametres()->getSizeDisque());
 			$order++;
 			foreach ($dev->getNetworkInterfaces() as $int) {
 				if ($dev->getInterfaceControle()) {
@@ -195,7 +210,7 @@ class DefaultController extends Controller
 						$interface->addAttribute('physique_name',$int->getNomPhysique());
 						if ($int->getNomVirtuel() == "tap") {
 							$interface->addAttribute('logical_name',"tap".$index);
-							$interface->addAttribute('mac_address',"01:02:03:04:05:".$this->MacEnd($index));
+							$interface->addAttribute('mac_address',"00:02:03:04:".$this->MacEnd($index));
 							$index++;
 						}
 					}
@@ -220,8 +235,16 @@ class DefaultController extends Controller
 				$int_ctrl_node->addAttribute('prefix',$int_ctrl->getConfigReseau()->getPrefix());
 				$int_ctrl_node->addAttribute('DNSv4',$int_ctrl->getConfigReseau()->getIPDNS());
 				$int_ctrl_node->addAttribute('gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
-				$int_ctrl_node->addAttribute('protocol',$int_ctrl->getConfigReseau()->getProtocole());
-				$int_ctrl_node->addAttribute('port',$int_ctrl->getConfigReseau()->getPort());
+				$proto=$int_ctrl->getConfigReseau()->getProtocole();
+				$int_ctrl_node->addAttribute('protocol',$proto);
+				
+				if ($proto="websocket")
+					$port=$this->getParameter('port_start_websocket')+$int_ctrl->getId()+$index;
+				if ($proto="telnet")
+					$port=$this->getParameter('port_start_telnet')+$int_ctrl->getId()+$index;
+				//$int_ctrl->getConfigReseau()->getPort()
+				
+				$int_ctrl_node->addAttribute('port',$port);
 				array_push($devices,array('id'=>$dev->getId()
 				/*,
 					'nom'=>$dev->getNom(),
@@ -257,15 +280,17 @@ class DefaultController extends Controller
 
 		$response=new Response($rootNode->asXML());
 		$response->headers->set('Content-Type', 'application/xml');
-		//$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT,'foo.xml');
-		//$response->headers->set('Content-Disposition', $disposition);
+		#$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT,'foo.xml');
+		#$response->headers->set('Content-Disposition', $disposition);
         
 		$filename='/home/RLv2_'.$user->getUsername().'/'.$lab_name.'.xml';
+		$Structure_tp['lab_name_avec_id_absolutepath']=$filename;
 		$fp = fopen($filename,'x');
 		fwrite($fp,$rootNode->asXML());
 		fclose($fp);
 
 		return $Structure_tp;
+		
 		
     }
 

@@ -11,8 +11,5 @@ parameters:
     mailer_password: null
     secret: b304407397855af94b35faf72b1140f4656360fc
     mailer_from: florent.nolot@univ-reims.fr
-    mailer_from_name: 'Webmaster RemoteLabzv2'
-    script_start_lab: '%kernel.root_dir%/../src/bin/startlab.py'
-    port_start_websocket: 6400
-    port_start_telnet: 6600
-
+    mailer_from_name: Webmaster RemoteLabzv2
+    script_start_lab: %kernel.root_dir%/src/bin/startlab.py
