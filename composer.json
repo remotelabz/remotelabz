@@ -24,7 +24,7 @@
         "incenteev/composer-parameter-handler": "~2.0",
         "friendsofsymfony/user-bundle": "~2.0@dev",
         "oneup/flysystem-bundle": "^1.4",
-        "lightsaml/sp-bundle": "^1.0"
+        "lightsaml/sp-bundle": "^1.0"		
     },    
     "require-dev": {
         "sensio/generator-bundle": "~3.0",

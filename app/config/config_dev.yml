@@ -14,6 +14,13 @@ web_profiler:
 monolog:
     handlers:
         main:
+            type:   fingers_crossed
+            handler: grouped
+            action_level:  critical
+        grouped:
+            type: group
+            members: [streamed, console]
+        streamed:
             type:   stream
             path:   "%kernel.logs_dir%/%kernel.environment%.log"
             level:  debug
@@ -40,6 +47,19 @@ monolog:
         #chromephp:
         #    type:   chromephp
         #    level:  info
+        deduplicated:
+            type:    deduplication
+            handler: swift
+        swift:
+            type:       swift_mailer
+            from_email: 'florent.nolot@univ-reims.fr'
+            to_email:   'florent.nolot@univ-reims.fr'
+            # or list of recipients
+            # to_email:   ['dev1@example.com', 'dev2@example.com', ...]
+            subject:    '[RemoteLabzv2] An Error Occurred! %%message%%'
+            level:      error
+            formatter:  monolog.formatter.html
+            content_type: text/html
 
 twig:
     cache: false

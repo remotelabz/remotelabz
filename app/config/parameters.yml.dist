@@ -17,3 +17,10 @@ parameters:
 
     # A secret key that's used to generate certain security-related tokens
     secret:            ThisTokenIsNotSoSecretChangeIt
+    mailer_from: florent.nolot@univ-reims.fr
+    mailer_from_name: Webmaster RemoteLabzv2
+    script_start_lab: '%kernel.root_dir%/../src/bin/startlab.py'
+    port_start_websocket: 6400
+    port_start_telnet: 6600
+
+
