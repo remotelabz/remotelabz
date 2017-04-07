@@ -1,3 +1,0 @@
-svc1 ansible_ssh_host=194.57.105.124 ansible_ssh_user=adminVM ansible_ssh_pass='floli16NOFL' ansible_sudo_pass='floli16NOFL'
-[server]
-svc1
