@@ -13,7 +13,7 @@ import sys
 #                           |___/
 
 def save_script(script_string,script_file):
-    text_file = open(script_file, "w")
+    text_file = open(user_dir_front+"/"+script_file, "w")
     text_file.write(script_string)
     text_file.close()
 
@@ -26,6 +26,8 @@ def save_script(script_string,script_file):
 
 if __name__ == "__main__":
     ficlab = sys.argv[1]
+    addr_svc=sys.argv[2]
+    user_dir_front=sys.argv[3]
     lab = etree.parse(ficlab)
     
 
@@ -39,8 +41,8 @@ if __name__ == "__main__":
     lab_name = lab.xpath("/lab/lab_name")[0].text
 
     ansible_user="adminVM"
-    ansible_pass="floli16NOFL"
-    addr_svc="194.57.105.124"
+    ansible_pass="adminVM1516"
+    #addr_svc="10.22.9.117"
 
     #####################
     # Création de l'utilisateur si nécessaire
@@ -69,12 +71,14 @@ if __name__ == "__main__":
 
     script_vm += "##########\n# Gestion des VM Qemu##########\n"
     nb_vm = int(lab.xpath("count(/lab/nodes/device[@hypervisor='qemu'])"))
+    #VERIFIER LE CALCUL CAR CA MARCHE MAIS PAS SUR QUE NOUS N'AYONS PAS UN PROBLEME SUR LES PORTS
+    index_port_vnc = int(lab.xpath("/lab/init/serveur/index")[0].text)
     for i in range (1, nb_vm + 1):
         script_vm += "\n# VM %s\n"%i
         vm_path = "/lab/nodes/device[@hypervisor='qemu'][%s]"%i
 
         # création de l'image relative
-        source = "/usr/local/Virtualize/kvm-image/images/" + lab.xpath(vm_path + "/@image")[0]
+        source = "/home/" + ansible_user + "/images/" + lab.xpath(vm_path + "/@image")[0]
         #dest = "/home/" + user + "/" + lab_name + "/" + lab.xpath(vm_path +"/@relativ_path")[0] + "/" + lab.xpath(vm_path +"/@image")[0] + "-" + str(i)
         dest = "/home/" + user + "/" + lab_name + "/" + lab.xpath(vm_path +"/@image")[0] + "-" + str(i)
         script_vm += "qemu-img create -b %s -f qcow2 %s \n"%(source,dest)
@@ -102,8 +106,7 @@ if __name__ == "__main__":
 
         vnc_addr = lab.xpath(vm_path + "/interface_control/@IPv4")[0]
         vnc_port = lab.xpath(vm_path + "/interface_control/@port")[0]
-        access_param = "-vnc %s:%s,websocket=%s "%(vnc_addr,i,vnc_port)
-
+        access_param = "-vnc %s:%s,websocket=%s "%(vnc_addr,i+index_port_vnc,vnc_port)
         local_param = "-k fr -localtime -usbdevice tablet "
 
         script_vm += start_vm + sys_param + net_param + access_param + local_param + "\n"
@@ -117,20 +120,20 @@ if __name__ == "__main__":
 
     ansible_host = "svc1 ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(addr_svc,ansible_user,ansible_pass,ansible_pass)
     ansible_host += "[server]\nsvc1\n"
-    text_file = open("script_hosts", "w")
+    text_file = open(user_dir_front+"/"+"script_hosts", "w")
     text_file.write(ansible_host)
     text_file.close()
 
-    ansible_user = "ansible svc1 -i script_hosts -m script -a './script_user.sh' -s"
-    ansible_ovs = "ansible svc1 -i script_hosts -m script -a './script_ovs.sh' -s"
-    ansible_vm = "ansible svc1 -i script_hosts -m script -a './script_vm.sh' -s"
+    ansible_user = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_user.sh -s"
+    ansible_ovs = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_ovs.sh -s"
+    ansible_vm = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_vm.sh -s"
 
     #####################
     # Exec ansible
     #####################
     status_user = subprocess.call(ansible_user , shell=True)
-    print status_user
+    #print status_user
     status_ovs =subprocess.call(ansible_ovs , shell=True)
-    print status_ovs
+    #print status_ovs
     status_vm =subprocess.call(ansible_vm , shell=True)
-    print status_vm
+    #print status_vm
