@@ -16,7 +16,7 @@ monolog:
         main:
             type:   fingers_crossed
             handler: grouped
-            action_level:  critical
+            action_level:  info
         grouped:
             type: group
             members: [streamed, console]
