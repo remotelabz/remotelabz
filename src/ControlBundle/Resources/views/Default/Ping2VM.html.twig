@@ -5,7 +5,7 @@
 <div style="height:1024px">
 
 		<div {# style="float:left"#}>
-		TOTO : {{ output }}
+
 		{% include 'page.html' %}
 		
 		</div>
@@ -151,7 +151,7 @@
         
 		
 		{% for device in tp_array['devices'] %}
-			window.open("{{path('view_vm',{'device_id':device.id})}}", "{{user}}VM{{loop.index}}", "location=1,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
+			window.open("{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}", "{{user}}VM{{loop.index}}", "location=1,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
 		{% endfor %}
 			
 		{#	

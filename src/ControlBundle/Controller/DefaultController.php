@@ -15,9 +15,9 @@ class DefaultController extends Controller
 {
 	
 	/**
-     * @Route("/control/view_vm{device_id}", name="view_vm")
+     * @Route("/control/view_vm{device_id}/{protocol}/{port}", name="view_vm")
      */
-	 public function view_vmAction($device_id) {
+	 public function view_vmAction($device_id,$protocol,$port) {
 		 
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
@@ -26,23 +26,29 @@ class DefaultController extends Controller
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Device');
         $device = $repository->find($device_id);
 		
-		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='websocket')
+		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='websocket')
+		if ($protocol=='websocket')
 			{
-			 return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
+			 /*return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
 		'user' => $user,
 		'group' => $group,
 		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
-		'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'port' => $port,
 		'title' => $device->getNom()
-		));
+		));*/
+			return $this->redirect('http://194.57.105.124/vnc_auto.html?host='.$device->getInterfaceControle()->getConfigReseau()->getIP(). '&port='.$port);
+		
 			}
-		if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='telnet')
+		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='telnet')
+			if ($protocol=='telnet')
 		{
 				 return $this->render('ControlBundle:Default:wstelnet.html.twig', array(
 		'user' => $user,
 		'group' => $group,
 		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
-		'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'port' => $port,
 		'title' => $device->getNom()
 		));
 		}
@@ -126,7 +132,8 @@ class DefaultController extends Controller
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
-		
+	$logger = $this->get('logger');
+	
 	// Ajouter la gestion de l'objet réservation
 	// Faire le exec avec le fichier XML stocké par generate_xml
 	$tp_array=$this->generate_xml($tp_id);
@@ -135,10 +142,10 @@ class DefaultController extends Controller
 	//$cmd="".escapeshellarg($script_name." ".$tp_array['lab_name_avec_id_absolutepath']);
 	//$output=exec(sprintf('/usr/bin/python $script_name %s',escapeshellcmd($tp_array['lab_name_avec_id_absolutepath'])));
 	//$output=exec(sprintf('/usr/bin/python $script_name %s',"/home/RLv2_fnolot/3VM_1ASA_883.xml"));
-	$cmd="/usr/bin/python $script_name ".$tp_array['lab_name_avec_id_absolutepath'];
+	$cmd="/usr/bin/python $script_name ".$tp_array['lab_name_avec_id_absolutepath']." ".$tp_array['IPv4_Serv']." ".$tp_array['dir'];
 	$output=passthru($cmd);
-	$logger = $this->get('logger');
-	$logger->debug($output);
+	$logger->info($cmd);
+	$logger->info($output);
    
 	$file_name='ControlBundle:Default:'.$tp_array['lab_name'].'.html.twig';
 	
@@ -157,6 +164,7 @@ class DefaultController extends Controller
 	
     public function generate_xml($tp_id)
     {	
+		$dir_prefix='/home/RLv2_';
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
@@ -238,20 +246,20 @@ class DefaultController extends Controller
 				$proto=$int_ctrl->getConfigReseau()->getProtocole();
 				$int_ctrl_node->addAttribute('protocol',$proto);
 				
-				if ($proto="websocket")
+				if ($proto=="websocket")
 					$port=$this->getParameter('port_start_websocket')+$int_ctrl->getId()+$index;
-				if ($proto="telnet")
+				if ($proto=="telnet")
 					$port=$this->getParameter('port_start_telnet')+$int_ctrl->getId()+$index;
 				//$int_ctrl->getConfigReseau()->getPort()
 				
 				$int_ctrl_node->addAttribute('port',$port);
 				array_push($devices,array('id'=>$dev->getId()
-				/*,
+				,
 					'nom'=>$dev->getNom(),
-					'protocol'=>$int_ctrl->getConfigReseau()->getProtocole(),
-					'port'=>$int_ctrl->getConfigReseau()->getPort(),
+					'protocol'=>$proto,
+					'port'=>$port,
 					'IPv4'=>$int_ctrl->getConfigReseau()->getIP(),
-					'IPv6'=>$int_ctrl->getConfigReseau()->getIPv6()*/
+					'IPv6'=>$int_ctrl->getConfigReseau()->getIPv6()
 				));
 			}
 			}
@@ -274,6 +282,8 @@ class DefaultController extends Controller
 		$init = $rootNode->addChild('init');
 		$serveur = $init->addChild('serveur');	
 		$serveur->addChild('IPv4',$param_system->getIpv4());
+		$Structure_tp['IPv4_Serv']=$param_system->getIpv4();
+		$Structure_tp['IPv6_Serv']=$param_system->getIpv6();
 		$serveur->addChild('IPv6',$param_system->getIpv6());
 		$serveur->addChild('index',$param_system->getIndexInterface());
 		$this->UpdateInterfaceIndex($tp_id,1);
@@ -282,20 +292,21 @@ class DefaultController extends Controller
 		$response->headers->set('Content-Type', 'application/xml');
 		#$disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT,'foo.xml');
 		#$response->headers->set('Content-Disposition', $disposition);
-        
-		$filename='/home/RLv2_'.$user->getUsername().'/'.$lab_name.'.xml';
+        $dir=$dir_prefix.$user->getUsername();
+		$filename=$dir.'/'.$lab_name.'.xml';
 		$Structure_tp['lab_name_avec_id_absolutepath']=$filename;
+		$Structure_tp['dir']=$dir;
+			if (!is_dir($dir))
+				mkdir($dir,0770);
+		
 		$fp = fopen($filename,'x');
 		fwrite($fp,$rootNode->asXML());
 		fclose($fp);
 
 		return $Structure_tp;
-		
-		
     }
 
 	public function MacEnd($nb) {
-		
 		return dechex(floor($nb/256)).":".dechex($nb%256);
 	}
 }
