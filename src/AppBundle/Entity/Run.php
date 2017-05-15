@@ -24,26 +24,33 @@ class Run
      */
     private $id;
 
-    /**
+	/**
      * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\Device" )
+     * @ORM\OneToOne(targetEntity="UserBundle\Entity\User" )
      */
-    private $device;
-
-    /**
-     * @var int
+    private $user;
+	
+	/**
+     * @var \stdClass
      *
-     * @ORM\Column(name="proc_id", type="integer")
+     * @ORM\OneToOne(targetEntity="AppBundle\Entity\TP" )
      */
-    private $procId;
-
+    private $tp;
+	
 	/**
      * @var string
-     *
-     * @ORM\Column(name="br_num", type="string", length=255)
+     * Nom de l'instance du TP sur le système de virtualisation afin de retrouver le répertoire dans lequel est stocké les images et les scripts de lancement et d'arrêt des VM
+	 * @ORM\Column(name="tp_process_name", type="string", length=255)
      */
-    private $br_num;
+    private $tp_process_name;
+	
+	/**
+     * @var string
+     * Répertoire dans lequel est stocké les configurations xml des TP et les scripts de lancement, arrêt, ...
+	 * @ORM\Column(name="dir_tp_user", type="string", length=255)
+     */
+    private $dir_tp_user; 
 
     /**
      * Get id
@@ -56,74 +63,98 @@ class Run
     }
 
     /**
-     * Set procId
+     * Set tpProcessName
      *
-     * @param integer $procId
+     * @param string $tpProcessName
      *
      * @return Run
      */
-    public function setProcId($procId)
+    public function setTpProcessName($tpProcessName)
     {
-        $this->procId = $procId;
+        $this->tp_process_name = $tpProcessName;
 
         return $this;
     }
 
     /**
-     * Get procId
-     *
-     * @return integer
-     */
-    public function getProcId()
-    {
-        return $this->procId;
-    }
-
-    /**
-     * Set brNum
-     *
-     * @param string $brNum
-     *
-     * @return Run
-     */
-    public function setBrNum($brNum)
-    {
-        $this->br_num = $brNum;
-
-        return $this;
-    }
-
-    /**
-     * Get brNum
+     * Get tpProcessName
      *
      * @return string
      */
-    public function getBrNum()
+    public function getTpProcessName()
     {
-        return $this->br_num;
+        return $this->tp_process_name;
     }
 
     /**
-     * Set device
+     * Set dirTpUser
      *
-     * @param \AppBundle\Entity\Device $device
+     * @param string $dirTpUser
      *
      * @return Run
      */
-    public function setDevice(\AppBundle\Entity\Device $device = null)
+    public function setDirTpUser($dirTpUser)
     {
-        $this->device = $device;
+        $this->dir_tp_user = $dirTpUser;
 
         return $this;
     }
 
     /**
-     * Get device
+     * Get dirTpUser
      *
-     * @return \AppBundle\Entity\Device
+     * @return string
      */
-    public function getDevice()
+    public function getDirTpUser()
     {
-        return $this->device;
+        return $this->dir_tp_user;
+    }
+
+    /**
+     * Set user
+     *
+     * @param \UserBundle\Entity\User $user
+     *
+     * @return Run
+     */
+    public function setUser(\UserBundle\Entity\User $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \UserBundle\Entity\User
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Set tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     *
+     * @return Run
+     */
+    public function setTp(\AppBundle\Entity\TP $tp = null)
+    {
+        $this->tp = $tp;
+
+        return $this;
+    }
+
+    /**
+     * Get tp
+     *
+     * @return \AppBundle\Entity\TP
+     */
+    public function getTp()
+    {
+        return $this->tp;
     }
 }
