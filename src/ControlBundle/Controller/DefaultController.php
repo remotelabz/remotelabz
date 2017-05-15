@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+use AppBundle\Entity\Run;
 
 
 class DefaultController extends Controller
@@ -29,15 +30,15 @@ class DefaultController extends Controller
 		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='websocket')
 		if ($protocol=='websocket')
 			{
-			 /*return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
+			 return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
 		'user' => $user,
 		'group' => $group,
 		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
 		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
 		'port' => $port,
 		'title' => $device->getNom()
-		));*/
-			return $this->redirect('http://194.57.105.124/vnc_auto.html?host='.$device->getInterfaceControle()->getConfigReseau()->getIP(). '&port='.$port);
+		));
+		/*	return $this->redirect('http://194.57.105.124/vnc_auto.html?host='.$device->getInterfaceControle()->getConfigReseau()->getIP(). '&port='.$port); */
 		
 			}
 		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='telnet')
@@ -64,15 +65,31 @@ class DefaultController extends Controller
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
 		
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Run');
+        $run = $repository->findOneBy(array('user'=> $user));
+		
+		if ($run != null) {
+		//Analyse du XML
+		$tp_array=$this->read_xml($run->getDirTpUser(),$run->getTpProcessName());
+	
+		
+		return $this->render('ControlBundle:Default:'.$run->getTp()->getNom().'.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'tp_array' => $tp_array
+		));
+			
+		}
+		else {//User n'a pas de TP lancé
 		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
         $list_tp = $repository->findAll();
-		
-		
+				
         return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 		'user' => $user,
 		'group' => $group,
 		'list_tp' => $list_tp
 		));
+		}
     }
 	
 	public function UpdateInterfaceIndex($tp_id,$increment) { // increment permet de définir s'il faut augmenter (+1) ou diminuer (-1) l'index des interfaces utilisables
@@ -106,17 +123,31 @@ class DefaultController extends Controller
 	/**
      * @Route("/control/stopLab{tp_id}", name="stopLab")
      */
-	public function stopLab($tp_id){
+	public function stopLabAction($tp_id){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
-		
+						$em = $this->getDoctrine()->getManager();
+
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
 
 		$this->UpdateInterfaceIndex($tp_id,-1);
 		
 		$list_tp = $this->getDoctrine()->getRepository('AppBundle:TP')->findAll();
-				
+		
+		$logger = $this->get('logger');
+		$script_name=$this->getParameter('script_stop_lab');
+		
+		$run=$em->getRepository('AppBundle:Run')->findOneBy(array('user'=>$user));
+					
+		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser()." ".$run->getTpProcessName();
+		
+		$em->remove($run);
+		$em->flush();
+		$output=passthru($cmd);
+		$logger->info($cmd);
+		$logger->info($output);
+	
         return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 		'user' => $user,
 		'group' => $group,
@@ -131,6 +162,8 @@ class DefaultController extends Controller
     {	
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$em = $this->getDoctrine()->getManager();
+
 		$group=$user->getGroupe();
 	$logger = $this->get('logger');
 	
@@ -142,6 +175,18 @@ class DefaultController extends Controller
 	//$cmd="".escapeshellarg($script_name." ".$tp_array['lab_name_avec_id_absolutepath']);
 	//$output=exec(sprintf('/usr/bin/python $script_name %s',escapeshellcmd($tp_array['lab_name_avec_id_absolutepath'])));
 	//$output=exec(sprintf('/usr/bin/python $script_name %s',"/home/RLv2_fnolot/3VM_1ASA_883.xml"));
+	
+	//Je stocke dans un run les informations du TP executé :
+	$run=new Run();
+	$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+    $tp = $repository->find($tp_id);
+	$run->setTp($tp);
+	$run->setTpProcessName($tp_array['lab_name_instance']);
+	$run->setUser($user);
+	$run->setDirTpUser($tp_array['dir']);
+	$em->persist($run);
+    $em->flush();
+	
 	$cmd="/usr/bin/python $script_name ".$tp_array['lab_name_avec_id_absolutepath']." ".$tp_array['IPv4_Serv']." ".$tp_array['dir'];
 	$output=passthru($cmd);
 	$logger->info($cmd);
@@ -182,6 +227,7 @@ class DefaultController extends Controller
 		$lab_name_tp=$lab->getNomlab();
 		$lab_name=$lab_name_tp."_".$param_system->getIndexInterface();
 		$Structure_tp['lab_name']=$lab_name_tp;
+		$Structure_tp['lab_name_instance']=$lab_name;
 		
 		
 		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
@@ -305,7 +351,75 @@ class DefaultController extends Controller
 
 		return $Structure_tp;
     }
+	public function xml_attribute($object, $attribute)
+	{
+		if(isset($object[$attribute]))
+			return (string) $object[$attribute];
+	}
 
+	public function read_xml($tp_dir,$tp_instance_name) {
+		$dir_prefix=$this->getParameter('homedir');
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+        
+		$devices=array();
+			
+		$xml_file = simplexml_load_file($tp_dir."/".$tp_instance_name.".xml");
+		$xml_devices = $xml_file->xpath('/lab/nodes/device');
+		$protocol="";
+		$port="";
+		$IPv4="";
+		$IPv6="";
+		foreach ($xml_devices as $node) {
+		if ($this->xml_attribute($node,'property') != "switch") {
+		  $id=$this->xml_attribute($node,'id');		  
+		  foreach ($node->children() as $element) {	  
+				$nom_element=$element->getName();
+			if ($nom_element=='nom') {
+				$nom=(string) $element;
+			}
+			if ($nom_element=='interface_control') {
+				foreach($element->attributes() as $attribute) {
+					switch($attribute->getName()) {
+						case 'protocol':
+							$protocol=(string) $attribute;
+							break;
+						case 'port':
+							$port=(string) $attribute;
+							break;
+						case 'IPv4':
+							$IPv4=(string) $attribute;
+							break;
+						case 'IPv6':
+							$IPv6=(string) $attribute;
+				}
+			}
+			}
+
+		  }
+		  array_push($devices,array(
+					'id'=>$id,
+					'nom'=>$nom,
+					'protocol'=>$protocol,
+					'port'=>$port,
+					'IPv4'=>$IPv4,
+					'IPv6'=>$IPv6
+				));	  
+		  
+		  //$protocol=$this->xml_attribute($protocole,'protocol');
+			  
+		}
+		}
+	$Structure_tp['devices']=$devices;
+
+
+		return $Structure_tp;
+		
+	}	
+	
 	public function MacEnd($nb) {
 		return dechex(floor($nb/256)).":".dechex($nb%256);
 	}
