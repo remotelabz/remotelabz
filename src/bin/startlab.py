@@ -35,7 +35,7 @@ if __name__ == "__main__":
     script_ovs = "#!/bin/bash \n\n"
     script_vm = "#!/bin/bash \n\n"
 
-    script_del = ""
+    script_del=""
 
     user = lab.xpath("/lab/user/@login")[0]
     lab_name = lab.xpath("/lab/lab_name")[0].text
@@ -60,10 +60,10 @@ if __name__ == "__main__":
 
     ovs_name = lab.xpath("/lab/nodes/device[@property='switch']/nom")[0].text
     script_ovs += "ovs-vsctl add-br %s \n"%ovs_name
-    script_del = "ovs-vsctl del-br %s\n"%ovs_name
+    script_del = "ovs-vsctl del-br %s\n"%ovs_name + script_del
 
     script_ovs += "ip link set %s up \n"%ovs_name
-    script_del = "ovs-vsctl dlink set  %s down\n"%ovs_name + script_del
+    #script_del = "ovs-vsctl dlink set  %s down\n"%ovs_name + script_del
 
     #####################
     # Gestion des VM Qemu
@@ -110,6 +110,9 @@ if __name__ == "__main__":
         local_param = "-k fr -localtime -usbdevice tablet "
 
         script_vm += start_vm + sys_param + net_param + access_param + local_param + "\n"
+
+    script_del = "for i in `ps -ef | grep qemu |grep %s | grep -v grep | awk '{print $2}'`; do kill -9 $i; done\n"%lab_name + script_del
+    script_del = "#!/bin/bash \n\n" + script_del
 
     save_script(script_ovs,"script_ovs.sh")
     save_script(script_vm,"script_vm.sh")
