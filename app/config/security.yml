@@ -33,11 +33,6 @@ security:
             remote_user:
                 provider: db_provider
                 user: REMOTE_USER
-            light_saml_sp:
-                provider: db_provider       # user provider name configured in step 9
-                user_creator: user_creator  # name of the user creator service created in step 10
-                login_path: /saml/login
-                check_path: /saml/login_check
             form_login:
                 provider: main
                 login_path: fos_user_security_login

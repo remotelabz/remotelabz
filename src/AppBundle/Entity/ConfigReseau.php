@@ -79,7 +79,7 @@ class ConfigReseau
      * @ORM\Column(name="Port", type="string", nullable=true)
      * @Assert\Regex(pattern="/^[\d]*$/")
      */
-    private $port;
+//    private $port;
 
 
     /**

@@ -32,9 +32,8 @@ class Run
     private $user;
 	
 	/**
-     * @var \stdClass
      *
-     * @ORM\OneToOne(targetEntity="AppBundle\Entity\TP" )
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TP" )
      */
     private $tp;
 	
@@ -51,6 +50,8 @@ class Run
 	 * @ORM\Column(name="dir_tp_user", type="string", length=255)
      */
     private $dir_tp_user; 
+
+
 
     /**
      * Get id
