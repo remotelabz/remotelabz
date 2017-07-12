@@ -1,0 +1,95 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+{% block stylesheets %}
+<link href="{{asset('js/datatables/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{asset('js/datatables/buttons.bootstrap.min.css')}}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+			<div class="flash-notice">
+				{{ flash_message }}
+			</div>
+		{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des systêmes</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					<table id="datatable-buttons" class="table table-striped table-bordered dataTable no-footer" width="100%" >
+						<thead>
+						<tr>
+							<th class="sorting" >Nom</th>
+							<th>Hyperviseur</th>
+							<th>Nom du fichier image</th>
+							<th>Répertoire des images relatives</th>
+							<th>Taille disque (Go)</th>
+							<th>Taille mémoire (Mo)</th>
+							<th>Action</th>
+
+						</tr>
+                    </thead>
+				    <tbody>
+				{% for system in list_system %}
+
+					<td class="sorting_1" tabindex="0">{{ system.nom }}</td>
+					<td>{{ system.hyperviseur.nom }}</td>
+					<td>{{ system.PathMaster }}</td>
+					<td>{{ system.PathRelatif }}</td>
+					<td>{{ system.parametres.SizeDisque}}</td>
+					<td>{{ system.parametres.SizeMemoire}}</td>
+					
+
+					{#<td><button class="btn btn-primary" id="button_{{device.id}}" onclick="delete_device('{{device.id}}')" value="delete" >Delete</button></td>#}
+					<td> <a  class="btn btn-link" href="{{ path('delete_entite',{'id': system.id, 'bundle':'Systeme'}) }}" data-type = "post" >
+							<i class="icon-trash icon-white"></i>  Supprimer </a>  </td>
+
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+	{#<script type="text/javascript">#}
+		{#$(function () {#}
+			{#jQuery(document).ready(function () {#}
+				{#console.log("jQuery est prêt !");#}
+			{#})#}
+		{#});#}
+
+			{#function delete_device(id_device) {#}
+				{#$.ajax({#}
+					{#url: "{{ url('delete_device') }}",#}
+					{#type: 'POST',#}
+					{#data: {#}
+						{#id: id_device,#}
+
+					{#},#}
+					{#dataType: 'json',#}
+
+
+					{#success: function (reponse) {#}
+						{#console.log('succes');#}
+
+
+					{#}#}
+
+				{#});#}
+			{#}#}
+
+	{#</script>#}
+
+{% endblock %}

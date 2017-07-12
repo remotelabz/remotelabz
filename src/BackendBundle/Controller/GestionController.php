@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: zohir
- * Date: 20/05/2016
- * Time: 01:00
- */
 
 namespace BackendBundle\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -16,6 +10,27 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GestionController extends Controller
 {
+	/**
+     * @Route("/admin/list_system", name="list_system")
+     */
+    public function list_system(){
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getGroupe();
+		
+        $repository = $this->getDoctrine()->getRepository('AppBundle:Systeme');
+
+        $list_system = $repository->findAll();
+
+
+        return $this->render(
+            'BackendBundle:Gestion:list_system.html.twig',array(
+            'user' => $user,
+			'group' => $group,
+            'list_system' => $list_system
+        ));
+
+    }
+	
     /**
      * @Route("/admin/list_device", name="list_Device")
      */
@@ -197,7 +212,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_systeme.html.twig',array(
             'user' => $user,
-			'group' => $group,            'list_systeme' => $list_systeme
+			'group' => $group, 'list_systeme' => $list_systeme
 			));
 
     }
@@ -210,16 +225,31 @@ class GestionController extends Controller
         if ($id != null) {
             $em = $this->getDoctrine()->getManager();
             $entite= $em->getRepository('AppBundle:'.$bundle)->findOneBy(array('id' => $id));
+			if ($bundle="TP")
+				$run_exist=$em->getRepository('AppBundle:Run')->findOneBy(array('tp' => $id));
             if ($entite != null) {
+				if ($bundle=="TP" && $run_exist != null) {
+					$request->getSession()->getFlashBag()->add('notice', 'Le TP est en cours d\'exécution');
+					return $this->redirect($this->generateUrl('list_'.$bundle));
+				}
+				else {					
                 $em->remove($entite);
                 $em->flush();
+				if ($bundle=="TP") {
+					unlink($this->getParameter('tp_twig_directory').'/'.$entite->getNom().'.html.twig');
+					unlink($this->getParameter('tp_directory').'/'.$entite->getNom().'.html');
+				}
 				$request->getSession()->getFlashBag()->add('notice', "le "." ".$bundle." a bien été supprimée.");
                 return $this->redirect($this->generateUrl('list_'.$bundle));
-            }else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
+				}
+            }
+				else throw new NotFoundHttpException("Le device d'id ".$id." n'existe pas.");
         }
-        
         return $this->redirect($this->generateUrl('list_'.$bundle));
     }
+	
+	
+	
     /**
      * @Route("/admin/show_tp{id}", name="show_tp")
      */
@@ -227,10 +257,10 @@ class GestionController extends Controller
         $em = $this->getDoctrine()->getManager();
         $tp= $em->getRepository('AppBundle:TP')->findOneBy(array('id' => $id));
         if ($tp != null) {
-            $chemin = $tp->getWebPath();
-            $fichier = $id.".pdf";
+            $chemin = $tp->getFile();
+            if ($chemin != "") {
             $response = new Response();
-            $response->setContent(file_get_contents($chemin . $fichier));
+            $response->setContent(file_get_contents($chemin));
             $response->headers->set(
                 'Content-Type',
                 'application/pdf'
@@ -238,6 +268,8 @@ class GestionController extends Controller
             $response->headers->set('Content-disposition', 'filename=' . $fichier);
 
             return $response;
+			}
+			else return $this->redirectToRoute('list_TP');
         }
     }
 }

@@ -121,6 +121,8 @@ class DefaultController extends Controller
                         $device->addNetworkInterface($net);
                     }
                 }
+				$nom_tmp=$device->getNom();
+				$device->setNom(str_replace(" ","_",$nom_tmp));
                 $em->persist($device);
                 $em->flush();
                 $request->getSession()->getFlashBag()->add('notice', 'Device ajouté avec succès ');
@@ -182,9 +184,7 @@ class DefaultController extends Controller
             'podForm' => $podForm->createView()
 
         ));
-
-
-    }
+	}
 
     /**
      * @Route("/admin/add_lab", name="add_lab")
@@ -336,13 +336,118 @@ class DefaultController extends Controller
 		$group=$user->getGroupe();
 
         $tp = new TP();
-        $form_tp = $this->get('form.factory')->create(new TPType(), $tp, array('method' => 'POST'));
+        $form_tp = $this->get('form.factory')->create(TPType::class, $tp, array('method' => 'POST'));
         if ('POST' === $request->getMethod()) {
             if ($form_tp->handleRequest($request)->isValid()) {
-                $em = $this->getDoctrine()->getManager();
-                
+                $file=$tp->getFile();
+				$fileName = md5(uniqid()).'.'.$file->guessExtension();
+				$file->move($this->getParameter('abs_web_directory'),$fileName);
+				$tp->setFile($this->getParameter('abs_web_directory').'/'.$fileName);
+				$em = $this->getDoctrine()->getManager();
                 $em->persist($tp);
                 $em->flush();
+				
+				//Création du fichier html appelé par le twig du TP
+				$filename_html=$this->getParameter('tp_directory').'/'.$tp->getNom().'.html';
+				$fileidx=fopen($filename_html,"w+");
+				
+				$file_content="<html><body><a href=\"/".$this->getParameter('web_directory')."/".basename($tp->getFile())."\">Fichier TP</body></html>";
+				fwrite($fileidx,$file_content);
+				fclose($fileidx);
+				
+				//Création du fichier twig du TP
+				$fileidx=fopen($this->getParameter('tp_twig_directory').'/'.$tp->getNom().'.html.twig',"w+");
+				$file_content='
+{% extends \'AppBundle::accueil_auth.html.twig\' %}
+{% block body %}
+
+<div class="row">
+	<div class="col-md-12">
+		{% for flash_message in app.session.flashbag.get(\'notice\') %}
+			<span class="label label-success">	
+				{{ flash_message }}
+			</span>	
+		{% endfor %}
+				
+				
+		{% for flash_message in app.session.flashbag.get(\'danger\') %}
+			<span class="label label-danger">	
+				{{ flash_message }}
+			</span>
+		{% endfor %}
+		<div class="clearfix"></div>
+
+	</div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="x_panel">
+            <div class="x_title">
+				<h2>TP {{tp_array[\'lab_name\']}}</h2>
+				<div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					Arrêter votre laboratoire virtuel
+				</div>
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					<a href="{{path(\'stopLab\',{\'tp_id\': tp_array.tp_id})}}"><button class="btn btn-danger">Stop</button></a>
+				</div>
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					Connexion à Internet
+				</div>
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					<a href="{{path(\'startNetLab\',{\'tp_id\': tp_array.tp_id})}}"><button class="btn btn-success">Connect</button></a>
+				</div>				
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					Déconnexion d\'Internet
+				</div>
+				<div class="col-md-6 col-sm-6 col-xs-12">
+					<a href="{{path(\'stopNetLab\',{\'tp_id\': tp_array.tp_id})}}"><button class="btn btn-danger">Deconnexion</button></a>
+				</div>
+			
+				{% for device in tp_array[\'devices\'] %}
+					{% if device.type != \'Switch\' %}
+						<div class="col-md-6 col-sm-6 col-xs-12">Redémarage du device {{device.nom}}
+						</div>
+						<div class="col-md-6 col-sm-6 col-xs-12">
+							<a href="{{path(\'rebootVM\',{\'tp_id\': tp_array.tp_id, \'name\': device.nom})}}"><button class="btn btn-warning">Reboot</button></a></div>
+						</div>
+					{% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-12">
+        <div class="x_panel">
+			<div class="x_title">
+				<h2>Sujet de la séance</h2>
+                <div class="clearfix"></div>
+			</div>
+			<div class="x_content">
+				{% include "\'.$this->getParameter(\'tp_directory\').\'/\'.$tp->getNom().\'.html" %}
+			</div>		
+		</div>
+	</div>
+</div>
+{% endblock%}
+
+{% block javascripts %}
+<script>
+	/*jslint white: false */
+	/*global window, $, Util, RFB, */
+	"use strict";
+	{% for device in tp_array[\'devices\'] %}
+		window.open("{{path(\'view_vm\',{\'device_id\':device.id,\'protocol\':device.protocol,\'port\':device.port})}}", "{{user}}VM{{loop.index}}", "location=0,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
+	{% endfor %}
+</script>
+{% endblock %}';
+
+				fwrite($fileidx,$file_content);
+				fclose($fileidx);
                 $request->getSession()->getFlashBag()->add('notice', 'TP ajouté');
                 return $this->redirect($this->generateUrl('add_tp'));
 
@@ -358,7 +463,6 @@ class DefaultController extends Controller
 //            }
 
 //        }
-
 
         return $this->render(
             'BackendBundle::add_tp.html.twig', array(

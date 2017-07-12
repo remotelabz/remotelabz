@@ -3,9 +3,10 @@
 {% block body %}
 
 <div style="height:1024px">
-
+<div>
+<a href="{{path('stopLab',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-danger">Stop</button></a></div>
 		<div style="float:left">
-		{% include 'page2.html' %}
+		{% include '3VM_1ASA.html' %}
 		</div>		
 </div>
 	
@@ -19,7 +20,7 @@
     "use strict";
 		
 	{% for device in tp_array['devices'] %}
-		window.open("{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}", "{{user}}VM{{loop.index}}", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820");
+		window.open("{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}", "{{user}}VM{{loop.index}}", "location=0,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
 {#window.open("http://194.57.105.124/vnc_auto.html?host=10.22.9.117&port=6864","{{user}}VM{{loop.index}}", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820")#}
 	{% endfor %}
         </script>
