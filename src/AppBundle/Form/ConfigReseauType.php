@@ -22,11 +22,12 @@ class ConfigReseauType extends AbstractType
             ->add('IPDNS')
             ->add('IPGateway')          
             ->add('protocole','choice', array(
-                'choices' => array('vnc' => 'VNC', 
+                'choices' => array('vnc' => 'VNC',
+									'websocket' => 'WebSocket',				
 									'telnet' => 'Telnet',
-									'SSH' => 'SSH'))
-            )
-			->add('port','text');
+									'ssh' => 'SSH'))
+            );
+//			->add('port','text');
     }
     
     /**

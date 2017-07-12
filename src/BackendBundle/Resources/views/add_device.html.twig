@@ -141,19 +141,6 @@
                                             {# Génération de l'input. #}
                                             {{ form_widget(InterfaceControleform.configreseau.protocole, {'attr': {'class': 'form-control'}}) }}
                                         </div>
-                                        <div class="form-group">
-                                            {# Génération du label. #}
-                                            {{ form_label(InterfaceControleform.configreseau.port, "Port", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
-
-                                            {# Affichage des erreurs pour ce champ précis. #}
-                                            {{ form_errors(InterfaceControleform.configreseau.port) }}
-
-                                            <div class="col-sm-2">
-                                                {# Génération de l'input. #}
-                                                {{ form_widget(InterfaceControleform.configreseau.port, {'attr': {'class': 'form-control'}}) }}
-                                            </div>
-                                    </div>
-
                                     {{ form_widget(InterfaceControleform.save, {'attr': {'class': 'btn btn-primary'}}) }}
 
                                     {# Pour le bouton, pas de label ni d'erreur, on affiche juste le widget #}
@@ -387,7 +374,7 @@
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(systemForm.path_master, "Path Master", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(systemForm.path_master, "Nom du fichier image du système", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(systemForm.path_master) }}
@@ -399,7 +386,7 @@
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(systemForm.path_relatif, "Path Relatif", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(systemForm.path_relatif, "nom du répertoire de stockage des images relatives", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(systemForm.path_relatif) }}
@@ -411,7 +398,7 @@
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(systemForm.hyperviseur, "Hyperviseur", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(systemForm.hyperviseur, "Type d'hyperviseur", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(systemForm.hyperviseur) }}
@@ -423,7 +410,7 @@
                                         </div>
                                         <div class="form-group">
                                             {# Génération du label. #}
-                                            {{ form_label(systemForm.parametres, "Paramétres", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                            {{ form_label(systemForm.parametres, "Paramétres du système", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(systemForm.parametres) }}
