@@ -13,12 +13,10 @@
                     <div class="x_content">
 					{% if list_tp is not null %}
 					{% for tp in list_tp %}
-					<div class="col-md-4 col-sm-4 col-xs-12">
+					<div class="col-md-6 col-sm-6 col-xs-12">
 					{{ tp.nom }}</div>
-					<div class="col-md-4 col-sm-4 col-xs-12">
+					<div class="col-md-6 col-sm-6 col-xs-12">
 					<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a></div>
-					<div class="col-md-4 col-sm-4 col-xs-12">
-					<a href="{{path('stopLab',{'tp_id': tp.id})}}"><button class="btn btn-danger">Stop</button></a></div>
 					{% endfor %}
 					{% else %}
 					Aucun TP disponibles

@@ -7,6 +7,7 @@ use AppBundle\Repository\TPRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 
 class TPType extends AbstractType
 {
@@ -17,11 +18,10 @@ class TPType extends AbstractType
             -> add('lab', 'entity', array(
                 'class'    => 'AppBundle:LAB',
                 'property' => 'nomlab',
-                'multiple' => false,
-                            
+                'multiple' => false,                            
             ))
             ->add('nom','text')
-            ->add('file','file')
+            ->add('file',FileType::class, array('label' => 'Sujet du TP'))
             ->add('save','submit')
         ;
     }

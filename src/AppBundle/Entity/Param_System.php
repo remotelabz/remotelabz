@@ -89,16 +89,25 @@ class Param_System
 	
 	/**
      * @var int
-     * Index actuel des interfaces par rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
+     * Index actuel des interfaces de contrôle par rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
+	 * libre sera la tap14 par exemple.
+     * @ORM\Column(name="index_interface_controle", type="integer")
+     */
+    private $indexInterfaceControle;
+	
+	/**
+     * @var int
+     * Index actuel des interfaces classique par rapport au système. Exemple : nous avons déjà 13 interfaces de créer donc la prochaine interface_exists
 	 * libre sera la tap14 par exemple.
      * @ORM\Column(name="index_interface", type="integer")
      */
     private $indexInterface;
 
+
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -114,7 +123,7 @@ class Param_System
      */
     public function setVNCPortMin($vNCPortMin)
     {
-        $this->vNCPortMin = $vNCPortMin;
+        $this->VNCPortMin = $vNCPortMin;
 
         return $this;
     }
@@ -122,11 +131,11 @@ class Param_System
     /**
      * Get vNCPortMin
      *
-     * @return int
+     * @return integer
      */
     public function getVNCPortMin()
     {
-        return $this->vNCPortMin;
+        return $this->VNCPortMin;
     }
 
     /**
@@ -138,7 +147,7 @@ class Param_System
      */
     public function setVNCPortMax($vNCPortMax)
     {
-        $this->vNCPortMax = $vNCPortMax;
+        $this->VNCPortMax = $vNCPortMax;
 
         return $this;
     }
@@ -146,11 +155,11 @@ class Param_System
     /**
      * Get vNCPortMax
      *
-     * @return int
+     * @return integer
      */
     public function getVNCPortMax()
     {
-        return $this->vNCPortMax;
+        return $this->VNCPortMax;
     }
 
     /**
@@ -170,7 +179,7 @@ class Param_System
     /**
      * Get websocketPortMin
      *
-     * @return int
+     * @return integer
      */
     public function getWebsocketPortMin()
     {
@@ -194,7 +203,7 @@ class Param_System
     /**
      * Get websocketPortMax
      *
-     * @return int
+     * @return integer
      */
     public function getWebsocketPortMax()
     {
@@ -218,7 +227,7 @@ class Param_System
     /**
      * Get consolePortMin
      *
-     * @return int
+     * @return integer
      */
     public function getConsolePortMin()
     {
@@ -242,7 +251,7 @@ class Param_System
     /**
      * Get consolePortMax
      *
-     * @return int
+     * @return integer
      */
     public function getConsolePortMax()
     {
@@ -250,33 +259,9 @@ class Param_System
     }
 
     /**
-     * Set indexInterface
-     *
-     * @param integer $indexInterface
-     *
-     * @return Param_System
-     */
-    public function setIndexInterface($indexInterface)
-    {
-        $this->indexInterface = $indexInterface;
-
-        return $this;
-    }
-
-    /**
-     * Get indexInterface
-     *
-     * @return integer
-     */
-    public function getIndexInterface()
-    {
-        return $this->indexInterface;
-    }
-
-    /**
      * Set ipv4
      *
-     * @param integer $ipv4
+     * @param string $ipv4
      *
      * @return Param_System
      */
@@ -290,7 +275,7 @@ class Param_System
     /**
      * Get ipv4
      *
-     * @return integer
+     * @return string
      */
     public function getIpv4()
     {
@@ -300,7 +285,7 @@ class Param_System
     /**
      * Set ipv6
      *
-     * @param integer $ipv6
+     * @param string $ipv6
      *
      * @return Param_System
      */
@@ -314,7 +299,7 @@ class Param_System
     /**
      * Get ipv6
      *
-     * @return integer
+     * @return string
      */
     public function getIpv6()
     {
@@ -343,5 +328,53 @@ class Param_System
     public function getIndexMinInterface()
     {
         return $this->index_min_Interface;
+    }
+
+    /**
+     * Set indexInterfaceControle
+     *
+     * @param integer $indexInterfaceControle
+     *
+     * @return Param_System
+     */
+    public function setIndexInterfaceControle($indexInterfaceControle)
+    {
+        $this->indexInterfaceControle = $indexInterfaceControle;
+
+        return $this;
+    }
+
+    /**
+     * Get indexInterfaceControle
+     *
+     * @return integer
+     */
+    public function getIndexInterfaceControle()
+    {
+        return $this->indexInterfaceControle;
+    }
+
+    /**
+     * Set indexInterface
+     *
+     * @param integer $indexInterface
+     *
+     * @return Param_System
+     */
+    public function setIndexInterface($indexInterface)
+    {
+        $this->indexInterface = $indexInterface;
+
+        return $this;
+    }
+
+    /**
+     * Get indexInterface
+     *
+     * @return integer
+     */
+    public function getIndexInterface()
+    {
+        return $this->indexInterface;
     }
 }

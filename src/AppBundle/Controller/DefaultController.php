@@ -101,10 +101,9 @@ class DefaultController extends Controller
      */
     public function adminAction()
     {
-		$authenticationUtils = $this->get('security.authentication_utils');
+	$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getGroupe();
-
 
 // Si l'utilisateur courant est anonyme, $user vaut « anon. »
 
