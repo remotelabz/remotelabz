@@ -69,7 +69,7 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
-							<th>Groupe</th>
+							<th>Role</th>
 							<th>Suppression</th>
 						</tr>
                     </thead>
@@ -79,7 +79,7 @@
 							<th>Prénom</th>
 							<th>Mail</th>
 							<th>Username</th>
-							<th>Groupe</th>
+							<th>Role</th>
 							<th>Suppression</th>
 						</tr>
                     </tfoot>
@@ -92,7 +92,7 @@
 					<td>{{ user.email }}</td>
 					<td>{{ user.username }}</td>
 					<td>
-					{% if user.groupe is not null %} {{ user.groupe.nom }} {% endif %}</td>
+					{% if user.role is not null %} {{ user.role.nom }} {% endif %}</td>
 					<td>
 					{#{% if user.username != "admin" %}			#}
 						<button class="btn btn-primary" id="sup_{{user.id}}_{{id_classe}}" onclick="Supprimer(this)" value="Supprimer" >Supprimer</button>

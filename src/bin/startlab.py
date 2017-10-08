@@ -88,7 +88,8 @@ if __name__ == "__main__":
 
 		#démarrage d'une machine
         name = lab.xpath(vm_path + "/nom")[0].text
-        start_vm = "qemu-system-x86_64 -machine accel=kvm:tcg -name \"%s\" -daemonize "%name
+        start_vm = "qemu-system-x86_64 -machine accel=kvm:tcg -cpu Opteron_G2 -name \"%s\" -daemonize "%name
+        #start_vm = "qemu-system-x86_64 -machine accel=kvm:tcg -name \"%s\" -daemonize "%name
         #start_vm = "qemu-system-x86_64 -name %s -daemonize "%name
 
         memory = lab.xpath(vm_path + "/system/@memory")[0]
@@ -169,13 +170,17 @@ if __name__ == "__main__":
     ansible_user = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_user.sh -s"
     ansible_ovs = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_ovs.sh -s"
     ansible_vm = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_vm.sh -s"
+    
 #   print ansible_vm
     #####################
     # Exec ansible
     #####################
     status_user = subprocess.call(ansible_user , shell=True)
-    #print status_user
+    print status_user
+    print ansible_user
     status_ovs =subprocess.call(ansible_ovs , shell=True)
-    #print status_ovs
+    print status_ovs
+    print ansible_ovs
     status_vm =subprocess.call(ansible_vm , shell=True)
-    #print status_vm
+    print status_vm
+    print ansible_vm
