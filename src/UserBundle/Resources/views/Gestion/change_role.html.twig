@@ -42,12 +42,12 @@
                         <!-- content ends here -->
 							<div class="col-sm-2">
 				{# Génération du label. #}
-								{{ form_label(form.Groupe, "Groupe", {'label_attr': {'class': 'control-label'}}) }}
+								{{ form_label(form.Role, "Role", {'label_attr': {'class': 'control-label'}}) }}
 				{# Affichage des erreurs pour ce champ précis. #}
-								{{ form_errors(form.Groupe) }}
+								{{ form_errors(form.Role) }}
 							</div>
 							<div class="col-sm-10">
-								{{ form_widget(form.Groupe, {'attr': {'class': 'form-control'}}) }}
+								{{ form_widget(form.Role, {'attr': {'class': 'form-control'}}) }}
 							</div>
 							<div class="col-sm-12">
 								{{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}

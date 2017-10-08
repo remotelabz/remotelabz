@@ -13,25 +13,5 @@ parameters:
     mailer_from: florent.nolot@univ-reims.fr
     mailer_from_name: 'Webmaster RemoteLabzv2'
     script_start_lab: '%kernel.root_dir%/../src/bin/startlab.py'
-    script_stop_lab: '%kernel.root_dir%/../src/bin/stoplab.py'
-    script_reboot_vm: '%kernel.root_dir%/../src/bin/rebootvm.py'
-    script_addnet: '%kernel.root_dir%/../src/bin/addnet.py'
-    script_delnet: '%kernel.root_dir%/../src/bin/delnet.py'
     port_start_websocket: 6400
     port_start_telnet: 6600
-    port_start_vnc: 6800
-    port_start_ssh: 7000
-    homedir: '/home/RLv2_'
-    ansible_user: 'adminVM'
-    ansible_pass: 'adminVM1516'
-    tp_directory: '%kernel.root_dir%/Resources/views/TP'
-    web_directory: 'remotelabzv2/web/uploads'
-    abs_web_directory: '/home/www-data/remotelabzv2/web/uploads'
-    tp_twig_directory: /home/www-data/remotelabzv2/src/ControlBundle/Resources/views/TP
-# Network used to offer remote access on the VM. The administrator have to create subnet from this network, with the fixture function of symfony
-# The entity ip_plage will be populate from the fixture function.
-    network: '172.22.0.0/16'
-# With the fixture, the previous network will be subnet in subnet with the following mask. All the possible subnets are publish on entity ip_plage
-# The plage_ip entity is used with the run entity. Each run, if needed, use one network/mask
-    mask: '24'
-
