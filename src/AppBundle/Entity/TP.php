@@ -49,8 +49,19 @@ class TP
      * @Assert\NotBlank
      */
     private  $type;
-	
 
+	/**
+	* The access type to the lab : vpn or web
+	* @ORM\Column(type="string", length=16)
+	* @Assert\NotBlank
+	*/	
+	private $access;
+	
+	/**
+	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\NetworkUsed" )
+	*/
+	private $network_used;
+	
     /**
      * Get id
      *
@@ -131,5 +142,77 @@ class TP
     public function getFile()
     {
         return $this->file;
+    }
+
+    /**
+     * Set type
+     *
+     * @param string $type
+     *
+     * @return TP
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * Get type
+     *
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Set access
+     *
+     * @param string $access
+     *
+     * @return TP
+     */
+    public function setAccess($access)
+    {
+        $this->access = $access;
+
+        return $this;
+    }
+
+    /**
+     * Get access
+     *
+     * @return string
+     */
+    public function getAccess()
+    {
+        return $this->access;
+    }
+
+    /**
+     * Set networkUsed
+     *
+     * @param \AppBundle\Entity\NetworkUsed $networkUsed
+     *
+     * @return TP
+     */
+    public function setNetworkUsed(\AppBundle\Entity\NetworkUsed $networkUsed = null)
+    {
+        $this->network_used = $networkUsed;
+
+        return $this;
+    }
+
+    /**
+     * Get networkUsed
+     *
+     * @return \AppBundle\Entity\NetworkUsed
+     */
+    public function getNetworkUsed()
+    {
+        return $this->network_used;
     }
 }
