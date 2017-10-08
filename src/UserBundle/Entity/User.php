@@ -39,9 +39,9 @@ class User extends BaseUser
 
 	/**
 	 *
-     * @ORM\ManyToOne(targetEntity="UserBundle\Entity\Groupe", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="UserBundle\Entity\Role", cascade={"persist"})
      */
-    protected $groupe;
+    protected $role;
 	
 	/**
      * @ORM\ManyToMany(targetEntity="UserBundle\Entity\Classe", inversedBy="users")
@@ -52,11 +52,11 @@ class User extends BaseUser
 
 	public function getLabel()
     {
-        
-
         return $this->lastname." ".$this->firstname;
     }
 	
+  
+
     /**
      * Set firstname
      *
@@ -106,27 +106,27 @@ class User extends BaseUser
     }
 
     /**
-     * Set groupe
+     * Set role
      *
-     * @param \UserBundle\Entity\Groupe $groupe
+     * @param \UserBundle\Entity\Role $role
      *
      * @return User
      */
-    public function setGroupe(\UserBundle\Entity\Groupe $groupe = null)
+    public function setRole(\UserBundle\Entity\Role $role = null)
     {
-        $this->groupe = $groupe;
+        $this->role = $role;
 
         return $this;
     }
 
     /**
-     * Get groupe
+     * Get role
      *
-     * @return \UserBundle\Entity\Groupe
+     * @return \UserBundle\Entity\Role
      */
-    public function getGroupe()
+    public function getRole()
     {
-        return $this->groupe;
+        return $this->role;
     }
 
     /**
@@ -136,7 +136,7 @@ class User extends BaseUser
      *
      * @return User
      */
-    public function addClasse(\UserBundle\Entity\Classe $class)
+    public function addClass(\UserBundle\Entity\Classe $class)
     {
         $this->classes[] = $class;
 
@@ -148,7 +148,7 @@ class User extends BaseUser
      *
      * @param \UserBundle\Entity\Classe $class
      */
-    public function removeClasse(\UserBundle\Entity\Classe $class)
+    public function removeClass(\UserBundle\Entity\Classe $class)
     {
         $this->classes->removeElement($class);
     }

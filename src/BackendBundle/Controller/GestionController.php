@@ -15,7 +15,7 @@ class GestionController extends Controller
      */
     public function list_system(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $repository = $this->getDoctrine()->getRepository('AppBundle:Systeme');
 
@@ -36,7 +36,7 @@ class GestionController extends Controller
      */
     public function list_device(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $repository = $this->getDoctrine()->getRepository('AppBundle:Device');
 
@@ -56,7 +56,7 @@ class GestionController extends Controller
      */
     public function list_interface(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
 		$repo = $this->getDoctrine()->getRepository('AppBundle:Device');
 
@@ -78,7 +78,7 @@ class GestionController extends Controller
      */
     public function list_ConfigReseau(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$repo = $this->getDoctrine()->getRepository('AppBundle:Network_Interface');
 		$list_interfaceControle = $repo->getInterfaceControleForList();
 
@@ -96,7 +96,7 @@ class GestionController extends Controller
      */
     public function list_pod(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:POD');
 
         $list_pod = $repository->findAll();
@@ -114,7 +114,7 @@ class GestionController extends Controller
      */
     public function list_connexion(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Connexion');
 
         $list_connexion = $repository->findAll();
@@ -132,7 +132,7 @@ class GestionController extends Controller
      */
     public function list_lab(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:LAB');
 
         $list_lab = $repository->findAll();
@@ -150,7 +150,7 @@ class GestionController extends Controller
      */
     public function list_tp(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:TP');
 
         $list_tp = $repository->findAll();
@@ -168,7 +168,7 @@ class GestionController extends Controller
      */
     public function list_parameter(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Parameter');
 
         $list_parameter = $repository->findAll();
@@ -185,7 +185,7 @@ class GestionController extends Controller
      */
     public function list_hyperviseur(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Hyperviseur');
 
         $list_hyperviseur = $repository->findAll();
@@ -203,7 +203,7 @@ class GestionController extends Controller
      */
     public function list_systeme(){
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $repository = $this->getDoctrine()->getRepository('AppBundle:Systeme');
 
         $list_systeme = $repository->findAll();

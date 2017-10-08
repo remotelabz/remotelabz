@@ -5,12 +5,12 @@ namespace UserBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Groupe
+ * Role
  *
- * @ORM\Table(name="groupe")
- * @ORM\Entity(repositoryClass="UserBundle\Repository\GroupeRepository")
+ * @ORM\Table(name="role")
+ * @ORM\Entity(repositoryClass="UserBundle\Repository\RoleRepository")
  */
-class Groupe
+class Role
 {
     /**
      * @var int
@@ -23,22 +23,21 @@ class Groupe
 
     /**
      * @var string
-     *
      * @ORM\Column(name="Nom", type="string", length=255)
      */
     private $nom;
-
+	
 	/**
      * @var string
-		*
      * @ORM\Column(name="Role", type="string", length=255)
      */
     private $role;
 
+
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -50,7 +49,7 @@ class Groupe
      *
      * @param string $nom
      *
-     * @return Groupe
+     * @return Role
      */
     public function setNom($nom)
     {
@@ -74,7 +73,7 @@ class Groupe
      *
      * @param string $role
      *
-     * @return Groupe
+     * @return Role
      */
     public function setRole($role)
     {
