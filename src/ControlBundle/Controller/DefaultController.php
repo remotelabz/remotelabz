@@ -22,7 +22,7 @@ class DefaultController extends Controller
 		 
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Device');
         $device = $repository->find($device_id);
@@ -73,7 +73,7 @@ class DefaultController extends Controller
     {		
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Run');
         $run = $repository->findOneBy(array('user'=> $user));
@@ -105,7 +105,7 @@ class DefaultController extends Controller
 	public function UpdateInterfaceControleIndex($tp_id,$increment) { // increment permet de définir s'il faut augmenter (+1) ou diminuer (-1) l'index des interfaces utilisables
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 				
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -139,7 +139,7 @@ class DefaultController extends Controller
 	public function stopLabAction($tp_id){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -208,7 +208,7 @@ class DefaultController extends Controller
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$em = $this->getDoctrine()->getManager();
 
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$logger = $this->get('logger');
 	
 	// Ajouter la gestion de l'objet réservation
@@ -261,7 +261,7 @@ class DefaultController extends Controller
 	public function rebootVM($tp_id,$name){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -316,7 +316,7 @@ class DefaultController extends Controller
 	public function addnet($tp_id){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -371,7 +371,7 @@ class DefaultController extends Controller
 	public function delnet($tp_id){
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -427,7 +427,7 @@ class DefaultController extends Controller
 		$dir_prefix=$this->getParameter('homedir');
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
 		
@@ -587,7 +587,7 @@ class DefaultController extends Controller
 		$dir_prefix=$this->getParameter('homedir');
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
         

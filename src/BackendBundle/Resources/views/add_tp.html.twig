@@ -56,6 +56,32 @@
                                                 {{ form_widget(form_tp.lab, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
+										
+										<div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.type, "Type de TP", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.type) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form_tp.type, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
+										
+										<div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.access, "Méthode d'access", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.access) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form_tp.access, {'attr': {'class': 'form-control'}}) }}
+                                            </div>
+                                        </div>
 
                                         <div class="form-group">
                                             {# Génération du label. #}
@@ -63,7 +89,7 @@
 
                                             {# Affichage des erreurs pour ce champ précis. #}
                                             {{ form_errors(form_tp.file) }}
-                                            <br>
+                                            
                                             <div class="col-sm-2 ">
                                                  {#Génération de l'input. #}
                                                 {{ form_widget(form_tp.file) }}
