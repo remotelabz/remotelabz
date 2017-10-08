@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use UserBundle\Entity\User;
 use UserBundle\Form\Type\AddUserFormType;
 use UserBundle\Form\Type\PasswordFormType;
-use UserBundle\Form\Type\GroupeFormType;
+use UserBundle\Form\Type\RoleFormType;
 
 
 class DefaultController extends Controller
@@ -21,7 +21,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 	
 		$new_user = new User();
@@ -89,7 +89,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
@@ -112,7 +112,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 
         if($request->isXmlHttpRequest()) {
@@ -159,12 +159,12 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
 				
-		$form = $this->get('form.factory')->create(new GroupeFormType(), array('method' => 'POST'));
+		$form = $this->get('form.factory')->create(new RoleFormType(), array('method' => 'POST'));
 		
 		$check="";
 		
@@ -195,7 +195,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 		
 		$new_user = new User();
@@ -268,7 +268,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 
         if($request->isXmlHttpRequest()) {

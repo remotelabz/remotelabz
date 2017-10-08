@@ -14,7 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\EmailType;
 
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 
-class GroupeFormType extends AbstractType
+class RoleFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
@@ -30,8 +30,8 @@ class GroupeFormType extends AbstractType
 		)		
 		);
 		
-		$builder->add('Groupe', EntityType::class, array(
-		'class' => 'UserBundle:Groupe',
+		$builder->add('Role', EntityType::class, array(
+		'class' => 'UserBundle:Role',
 		'property' => 'nom',
 		'multiple' => false,
 		'expanded' => false

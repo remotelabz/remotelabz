@@ -41,7 +41,15 @@ class TP
      */
     private $file;
 
-
+    /**
+	 * Type peut être individuel ou groupe
+	 * Individuel : peut être exécuté pour une seule personne et seule cette personne y aura accès
+	 * Groupe : un groupe d'utilisateur aura accès au même TP. Cas de VM pré-configuré avec des IP et usage du VPN
+     * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank
+     */
+    private  $type;
+	
 
     /**
      * Get id

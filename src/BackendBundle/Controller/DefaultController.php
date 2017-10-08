@@ -50,7 +50,7 @@ class DefaultController extends Controller
     public function Add_DeviceAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $interface = new Network_Interface();
         $interfaceControle = new Network_Interface();
@@ -149,7 +149,7 @@ class DefaultController extends Controller
     public function Add_PodAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $pod = new POD();
 
@@ -192,7 +192,7 @@ class DefaultController extends Controller
     public function Add_LabAction(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
         $em = $this->getDoctrine()->getManager();
         $lab = new LAB();
         $labForm = $this->get('form.factory')->create(new LABType($em), $lab, array('method' => 'POST'));
@@ -267,7 +267,7 @@ class DefaultController extends Controller
     public function Add_Connexion(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $pod = new Connexion();
         $form_pod = $this->get('form.factory')->create(new Connexion_select_podType(), $pod, array('method' => 'POST'));
@@ -296,7 +296,7 @@ class DefaultController extends Controller
         $connexion = new Connexion();
 
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		
         $form_connexion = $this->get('form.factory')->create(new ConnexionType($pod_id, $em), $connexion, array('method' => 'POST'));
         $form_connexion->remove('pod');
@@ -333,7 +333,7 @@ class DefaultController extends Controller
     public function addTp(Request $request)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 
         $tp = new TP();
         $form_tp = $this->get('form.factory')->create(TPType::class, $tp, array('method' => 'POST'));
@@ -480,7 +480,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 
 		$classe=new Classe;
 		
@@ -516,7 +516,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 
         if($request->isXmlHttpRequest()) {
@@ -549,7 +549,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
@@ -583,7 +583,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
@@ -605,7 +605,7 @@ class DefaultController extends Controller
 					
 					if (!in_array($user,$classe->getUsers()->toArray()))
 						//$classe->addUser($user);
-						$user->addClasse($classe);
+						$user->addClass($classe);
 				}
 				$em->persist($classe);
 				$em->flush();
@@ -632,7 +632,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 
         if($request->isXmlHttpRequest()) {

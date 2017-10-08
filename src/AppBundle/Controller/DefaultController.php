@@ -73,11 +73,11 @@ class DefaultController extends Controller
 			else 
 				$user=$users[0];
 			
-			$group=$user->getGroupe();
+			$group=$user->getRole();
 			
 		} else { //Authentification local et non externe
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 		}
 
 	// Si l'utilisateur courant est anonyme, $user vaut « anon. »
@@ -103,7 +103,7 @@ class DefaultController extends Controller
     {
 	$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getGroupe();
+		$group=$user->getRole();
 
 // Si l'utilisateur courant est anonyme, $user vaut « anon. »
 

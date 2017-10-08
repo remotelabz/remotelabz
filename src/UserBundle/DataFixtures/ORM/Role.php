@@ -7,10 +7,10 @@ use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-use UserBundle\Entity\Groupe;
+use UserBundle\Entity\Role;
 
 
-class GroupeData extends AbstractFixture implements ContainerAwareInterface
+class RoleData extends AbstractFixture implements ContainerAwareInterface
 {
   // Dans l'argument de la méthode load, l'objet $manager est l'EntityManager
   public function load(ObjectManager $manager)
@@ -18,13 +18,13 @@ class GroupeData extends AbstractFixture implements ContainerAwareInterface
     
 	$list=array(
 		array("Super Admin","ROLE_SUPERADMIN"),
-		array("Admin","ROLE_ADMIN"),
-		array("Enseignant","ROLE_ENSEIGNANT"),
-		array("Etudiant","ROLE_ETUDIANT")
+		array("Admin","ROLE_ADMIN"),//Administrator
+		array("Enseignant","ROLE_ENSEIGNANT"),//Teacher
+		array("Etudiant","ROLE_ETUDIANT")//Student
 		);
 	
 	for ($i=1; $i< sizeof($list); $i++) {
-		$role[$i]=new Groupe();
+		$role[$i]=new Role();
 		$role[$i]->setNom($list[$i][0]);
 		$role[$i]->setRole($list[$i][1]);
 		if ($i==1) $this->addReference('admin-group', $role[$i]);

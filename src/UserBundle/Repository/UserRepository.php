@@ -16,7 +16,7 @@ class UserRepository extends \Doctrine\ORM\EntityRepository
 		
 	$qb1=$this->createQueryBuilder('us');
 	$query_class=$qb1->select('us')
-		->join('us.groupe','g','WITH','g.nom= :etudiant')
+		->join('us.role','g','WITH','g.nom= :etudiant')
 		->andwhere($qb->expr()->notIn('us.id',$qb->getDQL()))
 		->orderBy('us.lastname', 'ASC')
 		->setParameter('etudiant', 'Etudiant')
