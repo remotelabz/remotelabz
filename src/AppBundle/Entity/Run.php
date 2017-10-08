@@ -46,12 +46,22 @@ class Run
 	
 	/**
      * @var string
-     * Répertoire dans lequel est stocké les configurations xml des TP et les scripts de lancement, arrêt, ...
+     * Répertoire dans lequel sont stockées les configurations xml des TP et les scripts de lancement, arrêt, ...
 	 * @ORM\Column(name="dir_tp_user", type="string", length=255)
      */
     private $dir_tp_user; 
 
-
+	/**
+	* Réseau affecté à la maquette réseau
+	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\NetworkUsed" )
+	*/
+	private $network_used;
+	
+	/**
+	* Réseau affecté aux utilisateurs
+	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\NetworkUsed" )
+	*/
+	private $network_used_user;
 
     /**
      * Get id
@@ -157,5 +167,53 @@ class Run
     public function getTp()
     {
         return $this->tp;
+    }
+
+    /**
+     * Set networkUsed
+     *
+     * @param \AppBundle\Entity\NetworkUsed $networkUsed
+     *
+     * @return Run
+     */
+    public function setNetworkUsed(\AppBundle\Entity\NetworkUsed $networkUsed = null)
+    {
+        $this->network_used = $networkUsed;
+
+        return $this;
+    }
+
+    /**
+     * Get networkUsed
+     *
+     * @return \AppBundle\Entity\NetworkUsed
+     */
+    public function getNetworkUsed()
+    {
+        return $this->network_used;
+    }
+
+    /**
+     * Set networkUsedUser
+     *
+     * @param \AppBundle\Entity\NetworkUsed $networkUsedUser
+     *
+     * @return Run
+     */
+    public function setNetworkUsedUser(\AppBundle\Entity\NetworkUsed $networkUsedUser = null)
+    {
+        $this->network_used_user = $networkUsedUser;
+
+        return $this;
+    }
+
+    /**
+     * Get networkUsedUser
+     *
+     * @return \AppBundle\Entity\NetworkUsed
+     */
+    public function getNetworkUsedUser()
+    {
+        return $this->network_used_user;
     }
 }

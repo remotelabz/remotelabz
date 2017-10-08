@@ -15,3 +15,5 @@ parameters:
     script_start_lab: '%kernel.root_dir%/../src/bin/startlab.py'
     port_start_websocket: 6400
     port_start_telnet: 6600
+    network_lab: 10.8.7.0/24
+    network_user: 10.8.6.0/24
