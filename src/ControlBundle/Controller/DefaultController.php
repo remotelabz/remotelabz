@@ -232,6 +232,7 @@ class DefaultController extends Controller
 
 	$cmd="/usr/bin/python \"$script_name\" \"".$for_run['lab_name_avec_id_absolutepath']."\" \"".$for_run['IPv4_Serv']."\" \"".$for_run['dir']."\" ".$this->getParameter('ansible_user')." ".$this->getParameter('ansible_pass');
 	
+	echo $cmd;
 	$output = array();
 	exec($cmd,$output);
 	$logger->info($cmd);
@@ -346,7 +347,7 @@ class DefaultController extends Controller
 		$output = implode("",$output);
 		
 		$logger->info($output);
-		if (strstr($output,"success")) {
+		if (strstr($output,"SUCCESS")) {
 			$msg="Laboratoire connecté avec succès à Internet";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
 		}
@@ -402,7 +403,7 @@ class DefaultController extends Controller
 		
 		$logger->info($output);
 		
-		if (strstr($output,"success")) {
+		if (strstr($output,"SUCCESS")) {
 			$msg="Laboratoire déconnecté d'Internet avec succès";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
 		}
