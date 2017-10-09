@@ -32,6 +32,13 @@ class Run
     private $user;
 	
 	/**
+     * @var \stdClass
+     *
+     * @ORM\OneToOne(targetEntity="UserBundle\Entity\UserGroup" )
+     */
+    private $user_group;
+	
+	/**
      *
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TP" )
      */
@@ -39,14 +46,14 @@ class Run
 	
 	/**
      * @var string
-     * Nom de l'instance du TP sur le système de virtualisation afin de retrouver le répertoire dans lequel est stocké les images et les scripts de lancement et d'arrêt des VM
+     * Nom de l'instance du TP sur le système de virtualisation afin de retrouver le répertoire dans lequel sont stockés les images et les scripts de lancement et d'arrêt des VM
 	 * @ORM\Column(name="tp_process_name", type="string", length=255)
      */
     private $tp_process_name;
 	
 	/**
      * @var string
-     * Répertoire dans lequel sont stockées les configurations xml des TP et les scripts de lancement, arrêt, ...
+     * Répertoire dans lequel sont stockés les configurations xml des TP et les scripts de lancement, arrêt, ...
 	 * @ORM\Column(name="dir_tp_user", type="string", length=255)
      */
     private $dir_tp_user; 
@@ -215,5 +222,29 @@ class Run
     public function getNetworkUsedUser()
     {
         return $this->network_used_user;
+    }
+
+    /**
+     * Set userGroup
+     *
+     * @param \UserBundle\Entity\UserGroup $userGroup
+     *
+     * @return Run
+     */
+    public function setUserGroup(\UserBundle\Entity\UserGroup $userGroup = null)
+    {
+        $this->user_group = $userGroup;
+
+        return $this;
+    }
+
+    /**
+     * Get userGroup
+     *
+     * @return \UserBundle\Entity\UserGroup
+     */
+    public function getUserGroup()
+    {
+        return $this->user_group;
     }
 }
