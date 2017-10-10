@@ -82,6 +82,19 @@
                                                 {{ form_widget(form_tp.access, {'attr': {'class': 'form-control'}}) }}
                                             </div>
                                         </div>
+										
+										<div class="form-group">
+                                            {# Génération du label. #}
+                                            {{ form_label(form_tp.managed, "Control supervisé", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                            {# Affichage des erreurs pour ce champ précis. #}
+                                            {{ form_errors(form_tp.managed) }}
+
+                                            <div class="col-sm-2">
+                                                {# Génération de l'input. #}
+                                                {{ form_widget(form_tp.managed, {'attr': {'class': 'btn-group'}}) }}
+                                            </div>
+                                        </div>
 
                                         <div class="form-group">
                                             {# Génération du label. #}

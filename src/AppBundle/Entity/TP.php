@@ -58,6 +58,13 @@ class TP
 	private $access;
 	
 	/**
+	* A TP can be managed by a teacher or not. 
+* @ORM\Column(type="boolean",options={"default":false})
+	* @Assert\NotBlank
+	*/	
+	private $managed;
+	
+	/**
 	 * @ORM\OneToOne(targetEntity="AppBundle\Entity\NetworkUsed" )
 	*/
 	private $network_used;
@@ -214,5 +221,29 @@ class TP
     public function getNetworkUsed()
     {
         return $this->network_used;
+    }
+
+    /**
+     * Set managed
+     *
+     * @param boolean $managed
+     *
+     * @return TP
+     */
+    public function setManaged($managed)
+    {
+        $this->managed = $managed;
+
+        return $this;
+    }
+
+    /**
+     * Get managed
+     *
+     * @return boolean
+     */
+    public function getManaged()
+    {
+        return $this->managed;
     }
 }

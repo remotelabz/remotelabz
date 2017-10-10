@@ -5,6 +5,8 @@ parameters:
     database_name: symfony
     database_user: symfony
     database_password: KNCC2xqCDRFNYQVz
+    ansible_user: 'adminVM'
+    ansible_pass: 'adminVM1516'
     mailer_transport: smtp
     mailer_host: 127.0.0.1
     mailer_user: null
@@ -13,7 +15,19 @@ parameters:
     mailer_from: florent.nolot@univ-reims.fr
     mailer_from_name: 'Webmaster RemoteLabzv2'
     script_start_lab: '%kernel.root_dir%/../src/bin/startlab.py'
+    script_stop_lab: '%kernel.root_dir%/../src/bin/stoplab.py'
+    script_reboot_vm: '%kernel.root_dir%/../src/bin/rebootvm.py'
+    script_addnet: '%kernel.root_dir%/../src/bin/addnet.py'
+    script_delnet: '%kernel.root_dir%/../src/bin/delnet.py'
     port_start_websocket: 6400
     port_start_telnet: 6600
+    port_start_vnc: 6800
+    port_start_ssh: 7000
+    homedir: '/home/RLv2_'
+    tp_directory: '%kernel.root_dir%/Resources/views/TP'
+    web_directory: 'remotelabzv2/web/uploads'
+    abs_web_directory: '/home/www-data/remotelabzv2/web/uploads'
+    tp_twig_directory: /home/www-data/remotelabzv2/src/ControlBundle/Resources/views/TP
     network_lab: 10.8.7.0/24
     network_user: 10.8.6.0/24
+

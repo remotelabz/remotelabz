@@ -39,6 +39,15 @@ class TPType extends AbstractType
 			),
             'multiple' => false,                            
 			))
+            ->add('managed',ChoiceType::class, array(
+				'choices' => array (
+				'true' => 'Oui',
+				'false' => 'Non',
+			),
+			'multiple' => false,                            
+			'expanded' => true,
+				))
+
 
             ->add('file',FileType::class, array('label' => 'Sujet du TP'))
             ->add('save','submit')
