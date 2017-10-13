@@ -73,7 +73,8 @@ class DefaultController extends Controller
     {		
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getRole();
+		$classes = $user->getClasses();
+		$role=$user->getRole();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Run');
         $run = $repository->findOneBy(array('user'=> $user));
@@ -85,18 +86,24 @@ class DefaultController extends Controller
 		
 		return $this->render('ControlBundle:TP:'.$run->getTp()->getNom().'.html.twig', array(
 		'user' => $user,
-		'group' => $group,
+		'group' => $role,
 		'tp_array' => $tp_array
 		));
 			
 		}
 		else {//User n'a pas de TP lancé
 		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
-        $list_tp = $repository->findAll();
+		$list_tp=array();
+		foreach($classes as $class) {
+			foreach($class->getTps()->toArray() as $tp)
+				array_push($list_tp,$tp);
+		}
+		
+        //$list_tp = $repository->findAll();
 				
         return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 		'user' => $user,
-		'group' => $group,
+		'group' => $role,
 		'list_tp' => $list_tp
 		));
 		}

@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UserGroup
  *
- * @ORM\Table(name="user_group")
+ * @ORM\Table(name="usergroup")
  * @ORM\Entity(repositoryClass="UserBundle\Repository\UserGroupRepository")
  */
 class UserGroup
@@ -33,11 +33,24 @@ class UserGroup
      */
     private $user;
 
+	/**
+     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\TP", inversedBy="usergroups")
+     *
+     */
+    private $tps;
+	
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->tps = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -67,5 +80,62 @@ class UserGroup
     {
         return $this->name;
     }
-}
 
+    /**
+     * Set user
+     *
+     * @param \UserBundle\Entity\User $user
+     *
+     * @return UserGroup
+     */
+    public function setUser(\UserBundle\Entity\User $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \UserBundle\Entity\User
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Add tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     *
+     * @return UserGroup
+     */
+    public function addTp(\AppBundle\Entity\TP $tp)
+    {
+        $this->tps[] = $tp;
+
+        return $this;
+    }
+
+    /**
+     * Remove tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     */
+    public function removeTp(\AppBundle\Entity\TP $tp)
+    {
+        $this->tps->removeElement($tp);
+    }
+
+    /**
+     * Get tps
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getTps()
+    {
+        return $this->tps;
+    }
+}

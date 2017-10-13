@@ -22,7 +22,7 @@ class TP
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-        private $id;
+	private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LAB")
@@ -44,11 +44,11 @@ class TP
     /**
 	 * Type peut être individuel ou groupe
 	 * Individuel : peut être exécuté pour une seule personne et seule cette personne y aura accès
-	 * Groupe : un groupe d'utilisateur aura accès au même TP. Cas de VM pré-configuré avec des IP et usage du VPN
+	 * Groupe : un groupe d'utilisateur aura accès au même TP. Cas de VMs pré-configurées avec des IP et usage du VPN
      * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank
      */
-    private  $type;
+    private $type;
 
 	/**
 	* The access type to the lab : vpn or web
@@ -69,6 +69,29 @@ class TP
 	*/
 	private $network_used;
 	
+	
+	/**
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\Classe", mappedBy="tps")
+     *
+     */
+    private $classes;
+	
+	/**
+     * @ORM\ManyToMany(targetEntity="UserBundle\Entity\UserGroup", mappedBy="tps")
+     *
+     */
+    private $usergroups;
+	
+  
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->classes = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->usergroups = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
     /**
      * Get id
      *
@@ -101,30 +124,6 @@ class TP
     public function getNom()
     {
         return $this->nom;
-    }
-
-    /**
-     * Set lab
-     *
-     * @param \AppBundle\Entity\LAB $lab
-     *
-     * @return TP
-     */
-    public function setLab(\AppBundle\Entity\LAB $lab = null)
-    {
-        $this->lab = $lab;
-
-        return $this;
-    }
-
-    /**
-     * Get lab
-     *
-     * @return \AppBundle\Entity\LAB
-     */
-    public function getLab()
-    {
-        return $this->lab;
     }
 
     /**
@@ -200,6 +199,54 @@ class TP
     }
 
     /**
+     * Set managed
+     *
+     * @param boolean $managed
+     *
+     * @return TP
+     */
+    public function setManaged($managed)
+    {
+        $this->managed = $managed;
+
+        return $this;
+    }
+
+    /**
+     * Get managed
+     *
+     * @return boolean
+     */
+    public function getManaged()
+    {
+        return $this->managed;
+    }
+
+    /**
+     * Set lab
+     *
+     * @param \AppBundle\Entity\LAB $lab
+     *
+     * @return TP
+     */
+    public function setLab(\AppBundle\Entity\LAB $lab = null)
+    {
+        $this->lab = $lab;
+
+        return $this;
+    }
+
+    /**
+     * Get lab
+     *
+     * @return \AppBundle\Entity\LAB
+     */
+    public function getLab()
+    {
+        return $this->lab;
+    }
+
+    /**
      * Set networkUsed
      *
      * @param \AppBundle\Entity\NetworkUsed $networkUsed
@@ -224,26 +271,70 @@ class TP
     }
 
     /**
-     * Set managed
+     * Add class
      *
-     * @param boolean $managed
+     * @param \UserBundle\Entity\Classe $class
      *
      * @return TP
      */
-    public function setManaged($managed)
+    public function addClass(\UserBundle\Entity\Classe $class)
     {
-        $this->managed = $managed;
+        $this->classes[] = $class;
 
         return $this;
     }
 
     /**
-     * Get managed
+     * Remove class
      *
-     * @return boolean
+     * @param \UserBundle\Entity\Classe $class
      */
-    public function getManaged()
+    public function removeClass(\UserBundle\Entity\Classe $class)
     {
-        return $this->managed;
+        $this->classes->removeElement($class);
+    }
+
+    /**
+     * Get classes
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getClasses()
+    {
+        return $this->classes;
+    }
+
+    /**
+     * Add usergroup
+     *
+     * @param \UserBundle\Entity\UserGroup $usergroup
+     *
+     * @return TP
+     */
+    public function addUsergroup(\UserBundle\Entity\UserGroup $usergroup)
+    {
+        $this->usergroups[] = $usergroup;
+
+        return $this;
+    }
+
+    /**
+     * Remove usergroup
+     *
+     * @param \UserBundle\Entity\UserGroup $usergroup
+     */
+    public function removeUsergroup(\UserBundle\Entity\UserGroup $usergroup)
+    {
+        $this->usergroups->removeElement($usergroup);
+    }
+
+    /**
+     * Get usergroups
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getUsergroups()
+    {
+        return $this->usergroups;
     }
 }

@@ -35,14 +35,22 @@ class Classe
      *
      */
     private $users;
+	
+	/**
+     * @ORM\ManyToMany(targetEntity="AppBundle\Entity\TP", inversedBy="classes")
+     *
+     */
+    private $tps;
+	
 
-
+   
     /**
      * Constructor
      */
     public function __construct()
     {
         $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->tps = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     /**
@@ -111,5 +119,39 @@ class Classe
     public function getUsers()
     {
         return $this->users;
+    }
+
+    /**
+     * Add tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     *
+     * @return Classe
+     */
+    public function addTp(\AppBundle\Entity\TP $tp)
+    {
+        $this->tps[] = $tp;
+
+        return $this;
+    }
+
+    /**
+     * Remove tp
+     *
+     * @param \AppBundle\Entity\TP $tp
+     */
+    public function removeTp(\AppBundle\Entity\TP $tp)
+    {
+        $this->tps->removeElement($tp);
+    }
+
+    /**
+     * Get tps
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getTps()
+    {
+        return $this->tps;
     }
 }

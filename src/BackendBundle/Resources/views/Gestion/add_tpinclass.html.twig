@@ -1,23 +1,24 @@
 {% extends 'AppBundle::accueil_auth.html.twig' %}
 
 {% block body %}
-	<div id="page-wrapper">
-            {% for flash_message in app.session.flashbag.get('notice') %}
-    <div class="flash-notice">
-        {{ flash_message }}
-    </div>
-	{% endfor %}
-	    {% for flash_message in app.session.flashbag.get('danger') %}
-    <div class="flash-notice">
-        {{ flash_message }}
-    </div>
-	{% endfor %}
+	{% for flash_message in app.session.flashbag.get('notice') %}
+				<span class="label label-success">	
+						{{ flash_message }}
+				</span>	
+				{% endfor %}
+				
+				
+				{% for flash_message in app.session.flashbag.get('danger') %}
+				<span class="label label-danger">	
+					{{ flash_message }}
+				</span>
+				{% endfor %}
 
 	<div class="row">
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Ajout d'étudiant dans la classe {{ classe.nom }}</h2>
+                        <h2>Ajout de travaux pratiques dans une classe</h2>
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
@@ -28,14 +29,14 @@
                                     {{ form_errors(form) }}
                                     <div class="form-group">
                                         {# Génération du label. #}
-                                        {{ form_label(form.firstname, "Etudiant", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+                                        {{ form_label(form.nom, "TP", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
 
                                         {# Affichage des erreurs pour ce champ précis. #}
-                                        {{ form_errors(form.firstname) }}
+                                        {{ form_errors(form.nom) }}
 
                                         <div class="col-sm-2">
                                             {# Génération de l'input. #}
-                                            {{ form_widget(form.firstname, {'attr': {'class': 'span3'}}) }}
+                                            {{ form_widget(form.nom, {'attr': {'class': 'span3'}}) }}
                                         </div>
                                     </div>
 
@@ -56,7 +57,7 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Liste des utilisateurs</h2>
+                        <h2>Liste des TP autorisés dans cette classe</h2>
                         
                         <div class="clearfix"></div>
                     </div>
@@ -66,40 +67,37 @@
 						<thead>
 						<tr>
 							<th class="sorting" >Nom</th>
-							<th>Prénom</th>
-							<th>Mail</th>
-							<th>Username</th>
-							<th>Role</th>
+							<th>Type</th>
+							<th>Accès</th>
+							<th>Supervisé</th>
 							<th>Suppression</th>
 						</tr>
                     </thead>
 					<tfoot>
 						<tr role="row">
 							<th>Nom</th>
-							<th>Prénom</th>
-							<th>Mail</th>
-							<th>Username</th>
-							<th>Role</th>
+							<th>Type</th>
+							<th>Accès</th>
+							<th>Supervisé</th>
 							<th>Suppression</th>
 						</tr>
                     </tfoot>
 				    <tbody>
-				{% for user in list_student %}
+				{% for tp in list_tp %}
 				
-				<tr id={% if user.username != "admin" %}"tr_{{user.id}}" {% else %} "tr" {%endif %} {% if user.enabled == 0 %}  class="danger" {% endif %} class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
-					<td class="sorting_1" tabindex="0">{{ user.lastname }}</td>
-					<td>{{ user.firstname }}</td>
-					<td>{{ user.email }}</td>
-					<td>{{ user.username }}</td>
+				<tr id="tr_{{tp.id}}" class="{% if loop.index is odd %}odd{%else%}even{%endif%}" role="row">
+					<td class="sorting_1" tabindex="0">{{ tp.nom }}</td>
+					<td>{{ tp.Type }}</td>
+					<td>{{ tp.Access }}</td>
+					<td>{{ tp.Managed }}</td>
 					<td>
-					{% if user.role is not null %} {{ user.role.nom }} {% endif %}</td>
-					<td>
-					{#{% if user.username != "admin" %}			#}
-						<button class="btn btn-primary" id="sup_{{user.id}}_{{ classe.id }}" onclick="Supprimer(this)" value="Supprimer" >Supprimer</button>
-					{#{% endif %}#}</td>
+					{% if user.username != "admin" %}
+						<button class="btn btn-primary" id="sup_{{tp.id}}_{{id_classe}}" onclick="Supprimer(this)" value="Supprimer" >Supprimer</button>
+					{% endif %}</td>
 				</tr>
 				{% endfor %}
-				</tbody>
+				
+		</tbody>
 				</table>
                         <!-- content ends here -->
                     </div>
@@ -174,7 +172,7 @@
 				var user_id=button.id;
 				$(function(){
 					$.post(
-						"{{path('delete_student_inclass')}}",
+						"{{path('delete_tp_ofclass')}}",
 						{ data: user_id},
 						function(data,status){
 							var result = data.split(":");

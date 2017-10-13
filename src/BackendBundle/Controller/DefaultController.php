@@ -21,10 +21,12 @@ use AppBundle\Form\PODType;
 use AppBundle\Form\SystemeType;
 use UserBundle\Entity\User;
 use UserBundle\Entity\Classe;
+use UserBundle\Entity\Role;
 use UserBundle\Form\Type\AddClasseFormType;
 use UserBundle\Form\Type\AddUserFormType;
 use BackendBundle\Form\Type\SelectClasseFormType;
 use BackendBundle\Form\Type\AddinclasseFormType;
+use BackendBundle\Form\Type\AddTpInClassFormType;
 
 use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
@@ -480,8 +482,9 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getRole();
-
+		$role=new Role();
+		$role=$user->getRole();
+		
 		$classe=new Classe;
 		
 		$form = $this->get('form.factory')->create(AddClasseFormType::class, $classe,array('method' => 'POST'));
@@ -503,7 +506,7 @@ class DefaultController extends Controller
     	return $this->render(
 			'UserBundle:Gestion:add_classe.html.twig',array(
 			'user' => $user,
-			'group' => $group,
+			'group' => $role,
 			'list_classe' => $list_classe,
 			'form' => $form->createView(),
 		));
@@ -571,7 +574,100 @@ class DefaultController extends Controller
 			'BackendBundle:User:add_inclasse.html.twig',array(
 			'user' => $user,
 			'group' => $group,
+			'titre' => "Ajout d'étudiants dans une classe",
 			'list_classe' => $list_classe,
+			'form' => $form->createView(),
+		));
+	}
+	
+	
+	
+	/**
+     * @Route("/ens/tp_add_inclasse", name="tp_add_inclasse")
+     */
+	public function tp_add_inclasse(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		$em = $this->getDoctrine()->getManager();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$list_classe = $repository->findAll();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
+		
+		
+		$classe = new Classe();
+        $form = $this->get('form.factory')->create(new SelectClasseFormType(), $classe, array('method' => 'POST'));
+        if ('POST' === $request->getMethod()) {
+			
+            if ($form->handleRequest($request)->isValid() and ($classe->getNom()->getId() != null)) {
+				$id_classe=$classe->getNom()->getId();
+                return $this->redirect($this->generateUrl('ens_add_tpinclasse', array('id_classe' => $id_classe)));
+            }
+        }
+		return $this->render(
+			'BackendBundle:User:add_inclasse.html.twig',array(
+			'user' => $user,
+			'group' => $group,
+			'titre' => "Ajout de TP pour une classe",
+			'list_classe' => $list_classe,
+			'form' => $form->createView(),
+		));
+	}
+	
+	/**
+     * @Route("/ens/add_tpinclasse{id_classe}", name="ens_add_tpinclasse")
+     */
+	public function add_tpinclasse(Request $request, $id_classe)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		$em = $this->getDoctrine()->getManager();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$classe = $repository->findOneBy(array('id' => $id_classe));
+		
+		$choix_tp=array();
+        $form = $this->createForm(AddTpInClassFormType::class, $choix_tp, array('method' => 'POST', 'id_classe' => $id_classe
+		));
+		$list_tp=array();
+		$list_alltp=$this->getDoctrine()->getRepository('AppBundle:TP')->findAll();
+
+        if ('POST' === $request->getMethod()) {
+			$form->handleRequest($request);	
+
+            if ($form->isValid()) {
+				
+				$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+				
+				foreach($request->request->get('add_tp_in_class_form')['nom'] as $tp_id) {
+					$tp=$repository->find($tp_id);
+					if ( !in_array($classe,$tp->getClasses()->toArray()) )
+						$classe->addTp($tp);
+					else
+						$this->get('session')->getFlashBag()->add('danger',"TP déjà disponible pour cette classe");
+				}
+				$em->persist($classe);
+				$em->flush();
+
+            }
+			return $this->redirect($this->generateUrl('ens_add_tpinclasse',array('id_classe' => $id_classe)));
+		}
+		
+		foreach($list_alltp as $tp) {
+			if ( in_array($classe,$tp->getClasses()->toArray()) )
+				array_push($list_tp,$tp);
+		}
+		
+		return $this->render(
+			'BackendBundle:Gestion:add_tpinclass.html.twig',array(
+			'user' => $user,
+			'group' => $group,
+			'id_classe' => $id_classe,
+			'list_tp' => $list_tp,
 			'form' => $form->createView(),
 		));
 	}
@@ -620,15 +716,54 @@ class DefaultController extends Controller
 			'user' => $user,
 			'group' => $group,
 			'id_classe' => $id_classe,
+			'classe' => $classe,
 			'list_student' => $classe->getUsers(),
 			'form' => $form->createView(),
 		));
 	}
 	
 	/**
-     * @Route("/ens/delete_student_inclasse", name="delete_student_inclasse")
+     * @Route("/ens/delete_tp_ofclass", name="delete_tp_ofclass")
      */
-	public function delete_student_inclasse(Request $request)
+	public function delete_tp_ofclass(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		$userManager = $this->container->get('fos_user.user_manager');
+
+        if($request->isXmlHttpRequest()) {
+		
+		$id='';
+		$id=$request->get('data');
+		if ($id != '') {
+			//$select_classe = new Classe();
+			$classe_id=preg_split("/_/",$id)[2];
+			$tp_id=preg_split("/_/",$id)[1];
+			$select_classe = $this->getDoctrine()->getRepository('UserBundle:Classe')->find($classe_id);
+			$select_tp = $this->getDoctrine()->getRepository('AppBundle:TP')->find($tp_id);
+
+			$em = $this->getDoctrine()->getManager();
+			//$select_classe->removeUser($select_student);
+			
+			$select_classe->removeTp($select_tp);
+			
+			$em->flush();
+			$return="Supprimer";
+			$result=$tp_id.":".$return;
+			
+			return new Response($result);
+			}
+		return new Response(0);
+		}
+		else return new Response(0);
+	}
+	
+	
+	/**
+     * @Route("/ens/delete_student_inclass", name="delete_student_inclass")
+     */
+	public function delete_student_inclass(Request $request)
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
@@ -648,7 +783,7 @@ class DefaultController extends Controller
 
 			$em = $this->getDoctrine()->getManager();
 			//$select_classe->removeUser($select_student);
-			$select_student->removeClasse($select_classe);
+			$select_student->removeClass($select_classe);
 			$em->flush();
 			$return="Supprimer";
 			$result=$student_id.":".$return;

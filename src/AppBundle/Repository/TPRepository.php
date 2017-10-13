@@ -10,4 +10,36 @@ namespace AppBundle\Repository;
  */
 class TPRepository extends \Doctrine\ORM\EntityRepository
 {
+	/*
+	public function getConnexionByPOD($pod)
+    {
+        return $this
+            ->createQueryBuilder('con')
+            ->where('con.pod = :pod')
+			//->andwhere('con.lab IS NULL')
+            ->setParameter('pod', $pod)
+            ->getQuery()
+            ->getArrayResult();
+    }
+    public function getConnexionByPOD_QueryBuilder($pod)
+    {
+        return $this
+            ->createQueryBuilder('con')
+            ->where('con.pod = :pod')
+			//->andwhere('con.lab IS NULL')
+            ->setParameter('pod', $pod)
+			;
+
+    }
+	*/
+	public function getTPFromClass($class) //Get all TP from one class
+    {
+        /*$qb = $this->_em->createQueryBuilder();
+        return $qb->select('TP')
+            ->from('AppBundle:TP', 'pod')
+           // ->where($qb->expr()->isNull('pod.lab'))
+//            ->andWhere($qb->expr()->isNull('net.config_reseau'));
+            ;
+        ;*/
+    }
 }

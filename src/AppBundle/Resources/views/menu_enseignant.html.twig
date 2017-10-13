@@ -1,10 +1,17 @@
 <h3>Enseignant</h3>
  <ul class="nav side-menu">
-  <li><a><i class="fa fa-users"></i>Gestion Etudiants <span class="fa fa-chevron-down"></span></a>
+  <li><a><i class="fa fa-users"></i>Gestion Etudiants<span class="fa fa-chevron-down"></span></a>
                   <ul class="nav child_menu" style="display: none">
                     <li><a href="{{path('ens_add_classe')}}">Ajouter classe</a></li>
 					<li><a href="{{path('ens_add_user')}}">Ajouter étudiants</a></li>
 					<li><a href="{{path('ens_add_inclasse')}}">Ajouter dans une classe</a></li>
+                  </ul>
+ </ul>
+ <ul class="nav side-menu">
+  <li><a><i class="fa fa-folder-open "></i>Gestion Travaux pratiques<span class="fa fa-chevron-down"></span></a>
+                  <ul class="nav child_menu" style="display: none">
+                    <li><a href="{{path('tp_add_inclasse')}}">Ajouter TP à une classe</a></li>
+					
                   </ul>
  </ul>
  <br/>

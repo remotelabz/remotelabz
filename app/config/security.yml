@@ -50,3 +50,4 @@ security:
         - { path: ^/auth, roles: [ROLE_USER] }
         - { path: ^/admin, roles: [ROLE_SUPERADMIN,ROLE_ADMIN] }
         - { path: ^/control, roles: [ROLE_SUPERADMIN,ROLE_ADMIN,ROLE_ENSEIGNANT,ROLE_ETUDIANT] }
+        - { path: ^/ens, roles: [ROLE_SUPERADMIN,ROLE_ADMIN,ROLE_ENSEIGNANT] }
