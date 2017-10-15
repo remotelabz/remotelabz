@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use AppBundle\Entity\Run;
+use AppBundle\Entity\NetworkUsed;
 
 
 class DefaultController extends Controller
@@ -169,6 +170,22 @@ class DefaultController extends Controller
 		
 		rename($filename,$filename_old);
 		
+		$tp = $this->getDoctrine()->getRepository('AppBundle:TP')->find($tp_id);
+		
+		if ( $tp->getAccess()==="vpn") {
+		// VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
+		
+		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
+		$indexNetwork=$param_system->getIndexNetwork();
+		$param_system->setIndexNetwork($indexNetwork-1);
+		$em->persist($param_system);
+		//For device network
+		$network=$em->getRepository('AppBundle:NetworkUsed')->findOneById($run->getNetworkUsed());
+		$em->remove($network);
+		$network=$em->getRepository('AppBundle:NetworkUsed')->findOneById($run->getNetworkUsedUser());
+		$em->remove($network);		
+		}		
+		
 		$em->remove($run);
 		$em->flush();
 		$output = array();
@@ -234,12 +251,47 @@ class DefaultController extends Controller
 	$run->setTpProcessName($for_run['lab_name_instance']);
 	$run->setUser($user);
 	$run->setDirTpUser($for_run['dir']);
+
+	
+		
+	if ( $tp->getAccess()==="vpn") {
+		// VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
+		
+		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
+		$indexNetwork=$param_system->getIndexNetwork();
+		$param_system->setIndexNetwork($indexNetwork+1);
+		$em->persist($param_system);
+		//For device network
+		$networkcidr=$this->getParameter('network_lab'); // Network in CIDR (/X) notation
+		$network_device_size=$this->getParameter('network_lab_max_size');
+		list($network,$mask)=explode('/',$networkcidr);
+		$network_size=(32-log($network_device_size,2));
+		$network_device=new NetworkUsed();
+		$network_device->setIpAddress(long2ip(ip2long($network)+$indexNetwork*$network_device_size));
+		$network_device->setNetmask($this->createNetmaskAddr($network_size));
+		$em->persist($network_device);
+		$run->setNetworkUsed($network_device);
+		
+		//For user network with the VPN
+		$networkcidr=$this->getParameter('network_user'); // Network in CIDR (/X) notation
+		$network_device_size=$this->getParameter('network_user_max_size');
+		list($network,$mask)=explode('/',$networkcidr);
+		$network_size=(32-log($network_device_size,2));
+		$network_device=new NetworkUsed();
+		$network_device->setIpAddress(long2ip(ip2long($network)+$indexNetwork*$network_device_size));
+		$network_device->setNetmask($this->createNetmaskAddr($network_size));
+		$em->persist($network_device);
+		$run->setNetworkUsedUser($network_device);
+		//network_user=new NetworkUsed();*/
+	}
+	
 	$em->persist($run);
+	
     $em->flush();
 
 	$cmd="/usr/bin/python \"$script_name\" \"".$for_run['lab_name_avec_id_absolutepath']."\" \"".$for_run['IPv4_Serv']."\" \"".$for_run['dir']."\" ".$this->getParameter('ansible_user')." ".$this->getParameter('ansible_pass');
 	
-	echo $cmd;
+	//echo $cmd;
 	$output = array();
 	exec($cmd,$output);
 	$logger->info($cmd);
@@ -666,4 +718,25 @@ class DefaultController extends Controller
 	public function MacEnd($nb) {
 		return dechex(floor($nb/256)).":".dechex($nb%256);
 	}
+	
+	function cidr2NetmaskAddr($cidr) { // return 255.255.255.240 from cidr2NetmaskAddr('194.234.213.0/28');
+    $ta = substr($cidr, strpos($cidr, '/') + 1) * 1;
+    $netmask = str_split(str_pad(str_pad('', $ta, '1'), 32, '0'), 8);
+    foreach ($netmask as &$element) $element = bindec($element);
+    return join('.', $netmask);
+    }
+	
+	function createNetmaskAddr($bitcount) { //return 255.255.255.240 from createNetmaskAddr(28);
+    $netmask = str_split(str_pad(str_pad('', $bitcount, '1'), 32, '0'), 8);
+    foreach ($netmask as &$element) $element = bindec($element);
+    return join('.', $netmask);
+    }
+	
+	function cidr2NetAddr($cidr) { // return 194.234.213.0 from cidr2NetAddr('194.234.213.0/28');
+    $ta = substr($cidr,0,strpos($cidr, '/'));
+	
+    //$netmask = str_split(str_pad(str_pad('', $ta, '1'), 32, '0'), 8);
+
+    return $ta;
+    }
 }

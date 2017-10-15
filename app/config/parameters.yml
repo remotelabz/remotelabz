@@ -30,4 +30,8 @@ parameters:
     tp_twig_directory: /home/www-data/remotelabzv2/src/ControlBundle/Resources/views/TP
     network_lab: 10.8.7.0/24
     network_user: 10.8.6.0/24
+# Must be a power of 2 -> maximum number of device in a lab
+    network_lab_max_size: 16
+# Must be a power of 2 -> maximum number of user which can be connected on a same lab
+    network_user_max_size: 32
 

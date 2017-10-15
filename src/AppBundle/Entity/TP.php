@@ -58,7 +58,7 @@ class TP
 	private $access;
 	
 	/**
-	* A TP can be managed by a teacher or not. 
+	* A TP can be managed by a teacher or not. If a TP is managed then only the teacher can starting it.
 * @ORM\Column(type="boolean",options={"default":false})
 	* @Assert\NotBlank
 	*/	

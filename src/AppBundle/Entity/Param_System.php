@@ -103,7 +103,13 @@ class Param_System
      */
     private $indexInterface;
 
-
+	/**
+     * @var int
+     * Index of the network used
+     * @ORM\Column(name="index_networkused", type="integer")
+     */
+    private $indexNetwork;
+	
     /**
      * Get id
      *
@@ -376,5 +382,29 @@ class Param_System
     public function getIndexInterface()
     {
         return $this->indexInterface;
+    }
+
+    /**
+     * Set indexNetwork
+     *
+     * @param integer $indexNetwork
+     *
+     * @return Param_System
+     */
+    public function setIndexNetwork($indexNetwork)
+    {
+        $this->indexNetwork = $indexNetwork;
+
+        return $this;
+    }
+
+    /**
+     * Get indexNetwork
+     *
+     * @return integer
+     */
+    public function getIndexNetwork()
+    {
+        return $this->indexNetwork;
     }
 }
