@@ -13,16 +13,37 @@
                     <div class="x_content">
 					{% if list_tp is not null %}
 					{% for tp in list_tp %}
-					<div class="col-md-6 col-sm-6 col-xs-12">
-					{{ tp.nom }}</div>
-					<div class="col-md-6 col-sm-6 col-xs-12">
-					<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a></div>
+						<div class="col-md-6 col-sm-6 col-xs-12">{{ tp.nom }}</div>
+						<div class="col-md-6 col-sm-6 col-xs-12">
+							<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a>
+						</div>
 					{% endfor %}
 					{% else %}
 					Aucun TP disponibles
 					{% endif %}
 					</div>
 				</div>
+				
+				<div class="x_panel">
+                    <div class="x_title">
+                        <h2>Liste des TP lancés</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+					{% if run is not null %}
+					{% for tp in run %}
+						<div class="col-md-6 col-sm-6 col-xs-12">{{ tp.tp.nom }}</div>
+						<div class="col-md-6 col-sm-6 col-xs-12">
+							<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a>
+						</div>
+					{% endfor %}
+					{% else %}
+					Aucun TP disponibles
+					{% endif %}
+					</div>
+				</div>
+				
 			</div>
 </div>
 

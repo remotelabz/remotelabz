@@ -10,4 +10,17 @@ namespace UserBundle\Repository;
  */
 class UserGroupRepository extends \Doctrine\ORM\EntityRepository
 {
+	
+
+	
+	public function GroupsOfUser($user) {
+	$qb=$this->createQueryBuilder('ug');
+	
+	$qbl=$qb->where('ug.user = :user')
+		->setParameter('user',$user);
+			
+	return $qbl->getQuery()->getResult();
+
+    }
+	
 }

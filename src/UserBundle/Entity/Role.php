@@ -28,6 +28,7 @@ class Role
     private $nom;
 	
 	/**
+	 * Role pour la table User ROLE_ADMIN ROLE_ENSEIGNANT ...
      * @var string
      * @ORM\Column(name="Role", type="string", length=255)
      */

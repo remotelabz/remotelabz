@@ -363,6 +363,8 @@ class DefaultController extends Controller
 			$em->flush();
 			return $clear_password;
 	}
+	
+
 }
 
 ?>

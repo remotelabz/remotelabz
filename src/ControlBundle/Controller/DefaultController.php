@@ -78,35 +78,95 @@ class DefaultController extends Controller
 		$role=$user->getRole();
 		
 		$repository = $this->getDoctrine()->getRepository('AppBundle:Run');
-        $run = $repository->findOneBy(array('user'=> $user));
+        
+		//Looking for executed TP by connected user
+		$run = $repository->findBy(array('user'=> $user));
 		
-		if ($run != null) {
-		//Analyse du XML
-		$tp_array=$this->read_xml($run->getDirTpUser(),$run->getTpProcessName());
-	
+		//Check if user is in group
+		$groups=$this->getDoctrine()->getRepository('UserBundle:UserGroup')->GroupsOfUser($user);
+		//For debug only
+		/*		foreach ($groups as $group)
+					echo $group;
+				echo count($groups);
+		*/
+		//
+		foreach ($groups as $group) {
+				foreach($repository->findBy(array('usergroup'=> $group)) as $new_run)
+					array_push($run,$new_run);
+		}
 		
-		return $this->render('ControlBundle:TP:'.$run->getTp()->getNom().'.html.twig', array(
-		'user' => $user,
-		'group' => $role,
-		'tp_array' => $tp_array
-		));
+		
+		foreach ($classes as $class) {
+			//echo $class->getNom();
+			foreach ($class->getUsers() as $oneuser) { // If one teacher from one of my class has started a TP
+				//echo $oneuser->getLastname();
+				//echo $oneuser->getRole()->getNom();
+				//echo "<br/>";
+				if ($oneuser != $user && $oneuser->getRole()->getNom() == 'Enseignant')
+					foreach($repository->findBy(array('user'=> $oneuser)) as $new_run) 
+						array_push($run,$new_run);
+			}
+		}
+		
+		//exit();
+		
+		//$run = $repository->findOneBy(array('user'=> $user));$user_group
+		
+		if (count($run) != null) {//If a TP is executed by the user
+			//foreach ($run as $onerun) echo $onerun->getTpProcessName();
+			if (count($run)>1 ) { // Many TP are executed by this user
+				$list_tp=array();
+				foreach($classes as $class) {
+					foreach($class->getTps()->toArray() as $tp)
+						array_push($list_tp,$tp);
+				}
+
+				
+				return $this->render('ControlBundle:Default:choixTP.html.twig', array(
+					'user' => $user,
+					'group' => $role,
+					'list_tp' => $list_tp,
+					'run' => $run
+					));
+			}
+		
+			else {// Only one TP is executed by this user
 			
+			$executed_tp=$run[0];
+			$tp_array=$this->read_xml($executed_tp->getDirTpUser(),$executed_tp->getTpProcessName());
+			
+			if ($executed_tp->getTp()->getManaged()==0) { // this TP is not managed
+				//Analyse du XML
+				return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
+						'user' => $user,
+						'group' => $role,
+						'tp_array' => $tp_array
+						));
+			}
+			else {//Only 1 executed TP and it's managed
+				return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
+						'user' => $user,
+						'group' => $role,
+						'tp_array' => $tp_array
+						));
+			}
+		}
 		}
 		else {//User n'a pas de TP lancé
-		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
-		$list_tp=array();
-		foreach($classes as $class) {
-			foreach($class->getTps()->toArray() as $tp)
-				array_push($list_tp,$tp);
-		}
+			$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+			$list_tp=array();
+			foreach($classes as $class) {
+				foreach($class->getTps()->toArray() as $tp)
+					array_push($list_tp,$tp);
+			}
 		
-        //$list_tp = $repository->findAll();
+			//$list_tp = $repository->findAll();
 				
-        return $this->render('ControlBundle:Default:choixTP.html.twig', array(
-		'user' => $user,
-		'group' => $role,
-		'list_tp' => $list_tp
-		));
+			return $this->render('ControlBundle:Default:choixTP.html.twig', array(
+				'user' => $user,
+				'group' => $role,
+				'list_tp' => $list_tp
+				));
 		}
     }
 	
@@ -506,6 +566,13 @@ class DefaultController extends Controller
 		
 		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
 		$rootNode->addChild('tp_id',$tp_id);
+		$rootNode->addChild('tp_managed',$tp->getManaged());
+		$rootNode->addChild('tp_type',$tp->getType());
+		$rootNode->addChild('tp_access',$tp->getAccess());
+		$Structure_tp['tp_managed']=$tp->getManaged();
+		$Structure_tp['tp_type']=$tp->getType();
+		$Structure_tp['tp_access']=$tp->getAccess();
+		
 		$user_node->addAttribute('login',$user->getUsername());
 		$nodes = $rootNode->addChild('nodes');
 		$order=1;
@@ -655,6 +722,9 @@ class DefaultController extends Controller
 		$xml_file = simplexml_load_file($tp_dir."/".$tp_instance_name.".xml");
 		$xml_devices = $xml_file->xpath('/lab/nodes/device');
 		$tp_id = $xml_file->xpath('/lab/tp_id');
+		$tp_managed = $xml_file->xpath('/lab/tp_managed');
+		$tp_access = $xml_file->xpath('/lab/tp_access');
+		$tp_type = $xml_file->xpath('/lab/tp_type');
 		
         $tp = $repository->find($tp_id[0]);
 		$lab_name=$tp->getLab()->getNomlab();
@@ -709,6 +779,9 @@ class DefaultController extends Controller
 	$Structure_tp['devices']=$devices;
 	$Structure_tp['tp_id']=(string) $tp_id[0];
 	$Structure_tp['lab_name']=$lab_name;
+	$Structure_tp['tp_managed']=$tp_managed;
+	$Structure_tp['tp_type']=$tp_type;
+	$Structure_tp['tp_access']=$tp_access;
 
 
 		return $Structure_tp;

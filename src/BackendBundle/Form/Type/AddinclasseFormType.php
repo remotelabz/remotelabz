@@ -43,7 +43,7 @@ class AddinclasseFormType extends AbstractType
                 'placeholder' => '-- Choose a user --',
 				'query_builder' => function (UserRepository $repo) use ($classe_selected)
                 {
-                    return $repo->UserIsStudent($classe_selected);
+                    return $repo->UserIsStudentTeacher($classe_selected);
                 }
                 ))
 				

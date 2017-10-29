@@ -24,6 +24,25 @@ class UserRepository extends \Doctrine\ORM\EntityRepository
 		
 	return $qb1;
     }
+	
+	public function UserIsStudentTeacher($classe)
+    {
+	$qb=$this->createQueryBuilder('u');
+		$qb->innerjoin('u.classes','c', 'WITH', 'c.id= :classe')
+		->setParameter('classe',$classe);
+		
+	$qb1=$this->createQueryBuilder('us');
+	$query_class=$qb1->select('us')
+		->join('us.role','g','WITH','g.nom= :etudiant OR g.nom=:teacher')
+		->andwhere($qb->expr()->notIn('us.id',$qb->getDQL()))
+		->orderBy('us.lastname', 'ASC')
+		->setParameter('etudiant', 'Etudiant')
+		->setParameter('teacher', 'Enseignant')
+		->setParameter('classe',$classe);
+		
+	return $qb1;
+    }
+	
 }
 
 /* not in solution
