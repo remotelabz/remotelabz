@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}VPN client configuration{% endblock %}
+
+{% block body %}
+<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>VPN client configuration file</h2>
+                        
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+					Le fichier suivant est à copier dans le répertoire C:\Users\xxxx\OpenVPN\config de votre configuration personnelle OpenVPN : 
+					<a href="http://194.57.105.124:6341/ovpn/{{user.lastname}}.ovpn" target="_blank"><button class="btn btn-success">Configuration File</button></a>
+					
+					</div>
+					<div class="x_content">
+					OpenVPN peut être télécharger à l'adresse suivante : 
+					<a href="https://openvpn.net/index.php/download/community-downloads.html" target="_blank">https://openvpn.net/index.php/download/community-downloads.html</a>
+					
+					</div>
+				</div>
+				
+				
+			</div>
+</div>
+
+{% endblock %}

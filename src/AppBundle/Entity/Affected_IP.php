@@ -55,38 +55,16 @@ class Affected_IP
      */
     private $device;
 	
+ 
+
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Set idNetwork
-     *
-     * @param string $idNetwork
-     *
-     * @return Affected_IP
-     */
-    public function setIdNetwork($idNetwork)
-    {
-        $this->idNetwork = $idNetwork;
-
-        return $this;
-    }
-
-    /**
-     * Get idNetwork
-     *
-     * @return string
-     */
-    public function getIdNetwork()
-    {
-        return $this->idNetwork;
     }
 
     /**
@@ -106,7 +84,7 @@ class Affected_IP
     /**
      * Get indexIp
      *
-     * @return int
+     * @return integer
      */
     public function getIndexIp()
     {
@@ -138,51 +116,27 @@ class Affected_IP
     }
 
     /**
-     * Set deviceId
+     * Set idNetwork
      *
-     * @param integer $deviceId
+     * @param \AppBundle\Entity\NetworkUsed $idNetwork
      *
      * @return Affected_IP
      */
-    public function setDeviceId($deviceId)
+    public function setIdNetwork(\AppBundle\Entity\NetworkUsed $idNetwork = null)
     {
-        $this->deviceId = $deviceId;
+        $this->idNetwork = $idNetwork;
 
         return $this;
     }
 
     /**
-     * Get deviceId
+     * Get idNetwork
      *
-     * @return int
+     * @return \AppBundle\Entity\NetworkUsed
      */
-    public function getDeviceId()
+    public function getIdNetwork()
     {
-        return $this->deviceId;
-    }
-
-    /**
-     * Set userId
-     *
-     * @param integer $userId
-     *
-     * @return Affected_IP
-     */
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-
-        return $this;
-    }
-
-    /**
-     * Get userId
-     *
-     * @return int
-     */
-    public function getUserId()
-    {
-        return $this->userId;
+        return $this->idNetwork;
     }
 
     /**

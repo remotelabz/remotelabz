@@ -7,17 +7,15 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Connexion à l'équipement : {{title}}</h2>
+                        <h2>Configuration de l'équipement : {{title}}</h2>
                         
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
-
-            Connexion par VNC, application externe<br/>
-			Host : {{host}}<br/>
-			Port : {{port}}<br/>			
-			
- 					</div>
+						Adresse réseau de l'équipement : {{ network_ip }}/{{ netmask }}<br/>
+						Masque du réseau : {{ netmask }}<br/>
+						Adresse IPv4 de l'équipement : {{ip_calc}}/{{ netmask }}<br/>
+					</div>
 				</div>
 				
 				

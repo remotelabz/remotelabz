@@ -15,11 +15,16 @@
 					{% for tp in list_tp %}
 						<div class="col-md-6 col-sm-6 col-xs-12">{{ tp.nom }}</div>
 						<div class="col-md-6 col-sm-6 col-xs-12">
-							<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a>
+						{% if (tp.managed and user.role.nom != "Enseignant") %}
+						 TP supervisé - Seul votre enseignant peut le démarrer
+							
+						{%else %}
+						 <a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a>						
+						{% endif %}
 						</div>
 					{% endfor %}
 					{% else %}
-					Aucun TP disponibles
+					Aucun TP disponible
 					{% endif %}
 					</div>
 				</div>
@@ -31,15 +36,15 @@
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
-					{% if run is not null %}
+					{% if run is defined and run is not null %}
 					{% for tp in run %}
 						<div class="col-md-6 col-sm-6 col-xs-12">{{ tp.tp.nom }}</div>
 						<div class="col-md-6 col-sm-6 col-xs-12">
-							<a href="{{path('startLab',{'tp_id': tp.id})}}"><button class="btn btn-success">Start</button></a>
+							<a href="{{path('viewLab',{'tp_id': tp.id})}}"><button class="btn btn-success">View</button></a>
 						</div>
 					{% endfor %}
 					{% else %}
-					Aucun TP disponibles
+					Aucun TP exécuté par l'utilisateur
 					{% endif %}
 					</div>
 				</div>

@@ -4,21 +4,26 @@
 	
 	<div class="row">
             <div class="col-md-12">
-                
-				{% for flash_message in app.session.flashbag.get('notice') %}
-				<span class="label label-success">	
-						{{ flash_message }}
-				</span>	
-				{% endfor %}
+			<div class="x_panel">
+				<div class="x_content">
+                {% if app.session.flashBag.has('notice') %}
+					{% for flash_message in app.session.flashbag.get('notice') %}
+						<div class="label label-success">	
+							{{ flash_message }}
+						</div>
+					{% endfor %}
+				{% endif %}
 				
-				
-				{% for flash_message in app.session.flashbag.get('danger') %}
-				<span class="label label-danger">	
-					{{ flash_message }}
-				</span>
-				{% endfor %}
-                <div class="clearfix"></div>
-
+				{% if app.session.flashBag.has('danger') %}
+					{% for flash_message in app.session.flashbag.get('danger') %}
+						<span class="label label-danger">	
+							{{ flash_message }}
+						</span>
+					{% endfor %}
+				{% endif %}
+				</div>
+               
+			</div>
 			</div>
 	</div>
 	
@@ -32,6 +37,8 @@
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
+					
+					
 					{% if (tp_array['tp_managed'] and group.nom == 'Enseignant') %}
 					<div class="col-md-6 col-sm-6 col-xs-12">Arrêter votre laboratoire virtuel</div>
 					<div class="col-md-6 col-sm-6 col-xs-12">
@@ -43,7 +50,6 @@
 						<a href="{{path('addnet',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-success">Connect</button></a>
 					</div>				
 					
-					
 					<div class="col-md-6 col-sm-6 col-xs-12">Déconnexion d'Internet</div>
 					<div class="col-md-6 col-sm-6 col-xs-12">
 						<a href="{{path('delnet',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-danger">Deconnexion</button></a>
@@ -52,12 +58,32 @@
 					
 						{% for device in tp_array['devices'] %}
 							{% if device.type != 'Switch' %}
-							<div class="col-md-6 col-sm-6 col-xs-12">Redémarage du device {{device.nom}}</div>
+								<div class="col-md-6 col-sm-6 col-xs-12">Redémarage du device {{device.nom_brute}}</div>
+								<div class="col-md-6 col-sm-6 col-xs-12">
+									<a href="{{path('rebootVM',{'tp_id': tp_array.tp_id, 'name': device.nom})}}"><button class="btn btn-warning">Reboot</button></a>
+							
+								{% if (tp_array['tp_access'] == "vpn") %}
+									<a href="{{path('view_vm_access',{'device_id':device.id})}}" target="_blank"><button class="btn btn-success">View configuration</button></a>
+								{%endif%}
+								{% if (tp_array['tp_managed'] and user.role.nom == "Enseignant") %}
+									<a href="{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}" target="_blank"><button class="btn btn-success">Connection</button></a>						
+								{% endif %}				
+								</div>
+							{% endif %}
+							{% if device.type == 'Switch' %}
+							<div class="col-md-6 col-sm-6 col-xs-12">Routeur par default {{device.nom_brute}}</div>
 							<div class="col-md-6 col-sm-6 col-xs-12">
-							<a href="{{path('rebootVM',{'tp_id': tp_array.tp_id, 'name': device.nom})}}"><button class="btn btn-warning">Reboot</button></a>
+								<a href="{{path('view_vm_access',{'device_id':device.id})}}" target="_blank"><button class="btn btn-success">View configuration</button></a>
 							</div>
 							{% endif %}
+							
 						{% endfor %}
+						{% if (tp_array['tp_access'] == "vpn") %}
+						<div class="col-md-6 col-sm-6 col-xs-12">Configuration VPN du client</div>
+							<div class="col-md-6 col-sm-6 col-xs-12">
+								<a href="{{path('get_vpn_client_config')}}" target="_blank"><button class="btn btn-success">Get configuration</button></a>
+							</div>
+						{% endif %}
 					</div>
 				</div>
 			</div>
@@ -79,6 +105,8 @@
 {% endblock%}
 
 				{% block javascripts %}
+				
+{% if (tp_array['tp_access'] == "web") %}
 				<script>
  				/*jslint white: false */
 				/*global window, $, Util, RFB, */
@@ -89,4 +117,5 @@
 					{% endif %}
 				{% endfor %}
 				</script>
+				{%endif%}
 				{% endblock %}

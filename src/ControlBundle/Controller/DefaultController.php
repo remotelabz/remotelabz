@@ -11,6 +11,7 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use AppBundle\Entity\Run;
 use AppBundle\Entity\NetworkUsed;
+use AppBundle\Entity\Affected_IP;
 
 
 class DefaultController extends Controller
@@ -67,6 +68,53 @@ class DefaultController extends Controller
 		}
 	 }
 	 
+	 /**
+     * @Route("/control/view_vm_access/{device_id}", name="view_vm_access")
+     */
+	 public function view_vm_accessAction($device_id) {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Affected_IP');
+        
+		$repository_device = $this->getDoctrine()->getRepository('AppBundle:Device');
+        $device = $repository_device->findOneById($device_id);
+		
+		$affected_ip_device = $repository->findByDevice($device_id);
+		
+		return $this->render('ControlBundle:Default:view_config.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'title' => $device->getNom(),
+		//Probleme sur ce calcul à mon avis
+		'ip_calc' => $this->calculateIP($affected_ip_device[0]->getIdNetwork()->getIpAddress(),$affected_ip_device[0]->getIndexIp()),
+		'netmask' => $affected_ip_device[0]->getIdNetwork()->getNetmask(),
+		'network_ip' => $affected_ip_device[0]->getIdNetwork()->getIpAddress()
+		));
+	}
+	
+	/**
+     * @Route("/control/get_vpn_client_config", name="get_vpn_client_config")
+     */
+	 public function get_vpn_client_configAction() {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Affected_IP');
+        
+		$repository_device = $this->getDoctrine()->getRepository('AppBundle:Device');
+        
+		
+		return $this->render('ControlBundle:Default:get_vpn_config.html.twig', array(
+		'user' => $user,
+		'group' => $group
+		));
+	}
+	
 	/**
      * @Route("/control/choixTP", name="choixTP")
      */
@@ -95,7 +143,7 @@ class DefaultController extends Controller
 					array_push($run,$new_run);
 		}
 		
-		
+
 		foreach ($classes as $class) {
 			//echo $class->getNom();
 			foreach ($class->getUsers() as $oneuser) { // If one teacher from one of my class has started a TP
@@ -120,8 +168,6 @@ class DefaultController extends Controller
 					foreach($class->getTps()->toArray() as $tp)
 						array_push($list_tp,$tp);
 				}
-
-				
 				return $this->render('ControlBundle:Default:choixTP.html.twig', array(
 					'user' => $user,
 					'group' => $role,
@@ -132,25 +178,25 @@ class DefaultController extends Controller
 		
 			else {// Only one TP is executed by this user
 			
-			$executed_tp=$run[0];
-			$tp_array=$this->read_xml($executed_tp->getDirTpUser(),$executed_tp->getTpProcessName());
+				$executed_tp=$run[0];
+				$tp_array=$this->read_xml($executed_tp->getDirTpUser(),$executed_tp->getTpProcessName());
 			
-			if ($executed_tp->getTp()->getManaged()==0) { // this TP is not managed
-				//Analyse du XML
-				return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
-						'user' => $user,
-						'group' => $role,
-						'tp_array' => $tp_array
-						));
+				if ($executed_tp->getTp()->getManaged()==0) { // this TP is not managed
+					//Analyse du XML
+					return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
+							'user' => $user,
+							'group' => $role,
+							'tp_array' => $tp_array
+							));
+				}
+				else {//Only 1 executed TP and it's managed
+					return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
+							'user' => $user,
+							'group' => $role,
+							'tp_array' => $tp_array
+							));
+				}
 			}
-			else {//Only 1 executed TP and it's managed
-				return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
-						'user' => $user,
-						'group' => $role,
-						'tp_array' => $tp_array
-						));
-			}
-		}
 		}
 		else {//User n'a pas de TP lancé
 			$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
@@ -209,13 +255,22 @@ class DefaultController extends Controller
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$group=$user->getRole();
 		$em = $this->getDoctrine()->getManager();
-
+		$vpn_delete_user_shell_file="script_delete_vpn_user.sh";		
+		
+		
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
 
 		//$this->UpdateInterfaceControleIndex($tp_id,-1);
 		//Inutile car cela peut entrainer des chevauchements.
 		
-		$list_tp = $this->getDoctrine()->getRepository('AppBundle:TP')->findAll();
+		/*$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+		$list_tp=array();
+		$classes = $user->getClasses();
+		foreach($classes as $class) {
+			foreach($class->getTps()->toArray() as $tp)
+				array_push($list_tp,$tp);
+		}*/
+			
 		
 		$logger = $this->get('logger');
 		$script_name=$this->getParameter('script_stop_lab');
@@ -239,11 +294,26 @@ class DefaultController extends Controller
 		$indexNetwork=$param_system->getIndexNetwork();
 		$param_system->setIndexNetwork($indexNetwork-1);
 		$em->persist($param_system);
+		
+		//Remove Affected_IP for devices
+		$repository_affected_ip=$this->getDoctrine()->getRepository('AppBundle:Affected_IP');
+		$affected_ips=$repository_affected_ip->findByidNetwork($run->getNetworkUsed());
+	
+		foreach($affected_ips as $affected_ip) {
+			$em->remove($affected_ip);
+		}
+		//Remove Affected_IP for users
+		$affected_ips=$repository_affected_ip->findByidNetwork($run->getNetworkUsedUser());
+	
+		foreach($affected_ips as $affected_ip) {
+			$em->remove($affected_ip);
+		}
+		
 		//For device network
 		$network=$em->getRepository('AppBundle:NetworkUsed')->findOneById($run->getNetworkUsed());
 		$em->remove($network);
 		$network=$em->getRepository('AppBundle:NetworkUsed')->findOneById($run->getNetworkUsedUser());
-		$em->remove($network);		
+		$em->remove($network);
 		}		
 		
 		$em->remove($run);
@@ -258,6 +328,36 @@ class DefaultController extends Controller
 					
 		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser();
 	
+		$logger->info($cmd);
+		$logger->info($output);
+		//echo $output;
+		//$output = implode("",$output);
+		$logger->info($output);
+		
+		if ( $tp->getAccess()==="vpn") {
+		$script_name=$this->getParameter('script_delvpn');			
+		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser();
+		//echo $cmd;
+		$output = array();
+		exec($cmd,$output);
+		$logger->info($cmd);
+		$output = implode("",$output);
+		//echo $output."<br/>";
+		$logger->info($output);
+		
+		$script_vpn_delete_user=$this->getParameter('script_delete_vpn_user');
+		$cmd="/usr/bin/python ".$script_vpn_delete_user." ".$run->getDirTpUser()." ".$vpn_delete_user_shell_file;
+		//echo $cmd;
+		$output = array();
+		exec($cmd,$output);
+		$logger->info($cmd);
+		$output = implode("",$output);
+		//echo $output;
+		$logger->info($output);
+		
+		
+		}
+		
 		$filename=$run->getDirTpUser()."/script_addnet.sh";
 		if (file_exists($filename)) unlink($filename);
 		$filename=$run->getDirTpUser()."/script_delnet.sh";
@@ -275,11 +375,27 @@ class DefaultController extends Controller
 		if (file_exists($filename)) unlink($filename);
 		$filename=$run->getDirTpUser()."/script_reboot.sh";
 		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_addvpn_servvm.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_addvpn_frontend.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_addvpn_servvpn.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_delvpn_servvm.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_delvpn_frontend.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_delvpn_servvpn.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/script_create_vpn_user.sh";
+		if (file_exists($filename)) unlink($filename);
+		$filename=$run->getDirTpUser()."/".$vpn_delete_user_shell_file;
+		if (file_exists($filename)) unlink($filename);
 	
-        return $this->render('ControlBundle:Default:choixTP.html.twig', array(
+		
+        return $this->forward('ControlBundle:Default:choixTP', array(
 		'user' => $user,
-		'group' => $group,
-		'list_tp' => $list_tp
+		'group' => $group
 		));
 	}
 	
@@ -291,7 +407,9 @@ class DefaultController extends Controller
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
 		$em = $this->getDoctrine()->getManager();
-
+		$vpn_create_user_shell_file="script_create_vpn_user.sh";
+		$vpn_delete_user_shell_file="script_delete_vpn_user.sh";
+		
 		$group=$user->getRole();
 		$logger = $this->get('logger');
 	
@@ -312,9 +430,170 @@ class DefaultController extends Controller
 	$run->setUser($user);
 	$run->setDirTpUser($for_run['dir']);
 
+	if ( $tp->getAccess()==="vpn") {
+		// VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
+				
+		$run->setNetworkUsed($for_run['network_used']);
+		
+		$network_user=$for_run['network_user'];
+		$run->setNetworkUsedUser($network_user);
+	
+		/*$repository_device=$this->getDoctrine()->getRepository('AppBundle:Device');
+		foreach($for_run['devices'] as $device) {
+			$ip=new Affected_IP();
+			$ip->setIndexIp($i);
+			$ip->setTpProcessName($for_run['lab_name_instance']);
+			$ip->setIdNetwork($network_device);
+			$ip->setUser(NULL);
+			$ip->setDevice($repository_device->findOneById($device['id']));
+			$em->persist($ip);
+			$i++;
+		}*/
+	
+		//For user network with the VPN
+
+		//Affected_IP for the users of the class or for the group
+		//Create vpn configuration file for each user
+		$i=1;
+		$classes = $user->getClasses();
+		//Create a file with the list of all users
+		file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"#!/bin/bash\ncd /home/adminVM/easy-rsa/\nsource vars\n");
+		file_put_contents($for_run['dir']."/".$vpn_delete_user_shell_file,"#!/bin/bash\ncd /home/adminVM/easy-rsa/\nsource vars\n");
+		
+		foreach ($classes as $class) {
+			foreach ($class->getUsers() as $oneuser) {
+			$ip=new Affected_IP();
+			$ip->setIndexIp($i);
+			$ip->setTpProcessName($for_run['lab_name_instance']);
+			$ip->setIdNetwork($network_user);
+			$ip->setUser($oneuser);
+			$ip->setDevice(NULL);
+			$em->persist($ip);
+			$i++;
+			file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/easy-rsa/pkitool ".$oneuser->getLastname()."\n",FILE_APPEND);
+			//file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/easy-rsa/pkitool --sign ".$oneuser->getLastname()."\n",FILE_APPEND);
+			file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/client-config/make_config.sh ".$oneuser->getLastname()."\n",FILE_APPEND);
+			file_put_contents($for_run['dir']."/".$vpn_delete_user_shell_file,"/home/adminVM/easy-rsa/revoke-full ".$oneuser->getLastname()."\n",FILE_APPEND);
+			file_put_contents($for_run['dir']."/".$vpn_delete_user_shell_file,"/etc/init.d/openvpn restart\n",FILE_APPEND);
+			}
+		}
+	}
+
+	$em->persist($run);
+    $em->flush();
+
+	$cmd="/usr/bin/python \"$script_name\" \"".$for_run['lab_name_avec_id_absolutepath']."\" \"".$for_run['IPv4_Serv']."\" \"".$for_run['dir']."\" ".$this->getParameter('ansible_user')." ".$this->getParameter('ansible_pass');
+	
+	//echo $cmd;
+	$output = array();
+	exec($cmd,$output);
+	$logger->info($cmd);
+	$output = implode("",$output);
+	//echo $output;
+	$logger->info($output);
+	$msg="";
+	$msg_warning="";
+	if (strstr($output,"SUCCESS")) {
+			$msg="Laboratoire démarré avec succès";
+			$this->get('session')->getFlashBag()->add('notice', $msg);
+	}
+	else {
+			$msg_warning="Echec de démarrage";
+			$this->get('session')->getFlashBag()->add('danger', $msg_warning);
+	}
+
+	if ( $tp->getAccess()==="vpn") {
+		$script_name_addvpn=$this->getParameter('script_addvpn');
+		$cmd="/usr/bin/python \"$script_name_addvpn\" "." ".$run->getDirTpUser();
+		//echo $cmd;	
+		$output = array();
+		exec($cmd,$output);
+		$logger->info($cmd);
+		$output = implode("",$output);
+		$logger->info($output);
+		//echo $output."<br/>";
+		
+		if (strstr($output,"SUCCESS")) {
+			$msg="Connexion VPN démarrée avec succès";
+			$this->get('session')->getFlashBag()->add('notice', $msg);
+		}
+		else {
+			$msg_warning="Echec de mise en place de la connexion VPN";
+			$this->get('session')->getFlashBag()->add('danger', $msg_warning);
+		}
+	
+		$script_vpn_create_user=$this->getParameter('script_create_vpn_user');
+		$cmd="/usr/bin/python ".$script_vpn_create_user." ".$run->getDirTpUser()." ".$vpn_create_user_shell_file;
+		//echo $cmd;
+		$output = array();
+		exec($cmd,$output);
+		$logger->info($cmd);
+		$output = implode("",$output);
+		//echo $output;
+		$logger->info($output);
+		if (strstr($output,"SUCCESS")) {
+			$msg="Utilisateurs VPN créés avec succès";
+			$this->get('session')->getFlashBag()->add('notice', $msg);
+		}
+		else {
+			$msg_warning="Echec dans la création des utilisateurs du VPN";
+			$this->get('session')->getFlashBag()->add('danger', $msg_warning);
+		}
+	}	
+	
+	
+	
+	
+	$file_name='ControlBundle:TP:'.$tp->getNom().'.html.twig';
+	
+	// Ajouter paramètre avec les param pour chaque fenetre
+	// indiquer telnet ou vnc et l'id du device à chaque fois
+	// appel ainsi à un controller unique avec pour param l'id du device
+
+	return $this->render($file_name, array(
+		'user' => $user,
+		'group' => $group,
+		'tp_array' => $for_run,
+		'output' => $cmd,
+		'msg' => $msg
+		));
+		
+	
+	}
+	
+		/**
+     * @Route("/control/viewLab/{tp_id}", name="viewLab")
+     */
+    public function viewLabAction($tp_id)
+    {	// A FINIR D'ECRIRE - POUR L'INSTANT IL NE MARCHE PAS
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$em = $this->getDoctrine()->getManager();
+
+		$group=$user->getRole();
+		$logger = $this->get('logger');
+	
+	// Ajouter la gestion de l'objet réservation
+	// Faire le exec avec le fichier XML stocké par generate_xml
+	$for_run=$this->generate_xml($tp_id);
+	$script_name=$this->getParameter('script_start_lab');
+	//$cmd="".escapeshellarg($script_name." ".$tp_array['lab_name_avec_id_absolutepath']);
+	//$output=exec(sprintf('/usr/bin/python $script_name %s',escapeshellcmd($tp_array['lab_name_avec_id_absolutepath'])));
+	//$output=exec(sprintf('/usr/bin/python $script_name %s',"/home/RLv2_fnolot/3VM_1ASA_883.xml"));
+	
+	
+	
+	//$run=new Run();
+	$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+    $tp = $repository->find($tp_id);
+	$run->setTp($tp);
+	$run->setTpProcessName($for_run['lab_name_instance']);
+	$run->setUser($user);
+	$run->setDirTpUser($for_run['dir']);
+
 	
 		
-	if ( $tp->getAccess()==="vpn") {
+	/*if ( $tp->getAccess()==="vpn") {
 		// VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
 		
 		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
@@ -343,7 +622,7 @@ class DefaultController extends Controller
 		$em->persist($network_device);
 		$run->setNetworkUsedUser($network_device);
 		//network_user=new NetworkUsed();*/
-	}
+	//} 
 	
 	$em->persist($run);
 	
@@ -464,8 +743,9 @@ class DefaultController extends Controller
 		
 		$logger->info($cmd);
 		$output = implode("",$output);
-		
+	
 		$logger->info($output);
+		
 		if (strstr($output,"SUCCESS")) {
 			$msg="Laboratoire connecté avec succès à Internet";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
@@ -541,8 +821,9 @@ class DefaultController extends Controller
 	}
 	
 	
-    public function generate_xml($tp_id)
-    {	
+    public function generate_xml($tp_id) {
+		$em = $this->getDoctrine()->getManager();
+
 		$dir_prefix=$this->getParameter('homedir');
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
@@ -577,14 +858,73 @@ class DefaultController extends Controller
 		$nodes = $rootNode->addChild('nodes');
 		$order=1;
 		$devices=array();
+		$repository_affected_ip_device = $this->getDoctrine()->getRepository('AppBundle:Affected_IP');
+		$init = $rootNode->addChild('init');
+		if ($Structure_tp['tp_access']==="vpn") {
+			$i=1;
+			$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
+			$indexNetwork=$param_system->getIndexNetwork();
+			$param_system->setIndexNetwork($indexNetwork+1);
+			$em->persist($param_system);
+			//For lab network
+			$networkcidr=$this->getParameter('network_lab'); // Network in CIDR (/X) notation
+			$network_device_size=$this->getParameter('network_lab_max_size');
+			
+			list($network,$mask)=explode('/',$networkcidr);
+			$network_size=(32-log($network_device_size,2));
+			$network_device=new NetworkUsed();
+			$ip_address=long2ip(ip2long($network)+$indexNetwork*$network_device_size);
+			$network_device->setIpAddress($ip_address);
+			$network_device->setNetmask($network_size);
+			$em->persist($network_device);
+			
+			$Structure_tp['network_used']=$network_device;
+			$init->addChild('network_lab',$ip_address."/".$network_size);
+			
+			$networkcidr=$this->getParameter('network_user'); // Network in CIDR (/X) notation
+			$network_device_size=$this->getParameter('network_user_max_size');
+			list($network,$mask)=explode('/',$networkcidr);
+			$network_user_size=(32-log($network_device_size,2));
+			$network_user=new NetworkUsed();
+			$ip_user_network=long2ip(ip2long($network)+$indexNetwork*$network_device_size);
+			$network_user->setIpAddress($ip_user_network);
+			$network_user->setNetmask($network_user_size);
+			$em->persist($network_user);
+			
+			$init->addChild('network_user',$ip_user_network."/".$network_user_size);
+			$Structure_tp['network_user']=$network_user;
+			
+		}
 		foreach ($lab->getPod()->getDevices() as $dev) {
 			$device=$nodes->addChild('device');
+			if ($Structure_tp['tp_access']==="vpn") {
+					$ip=new Affected_IP();
+					$ip->setIndexIp($i);
+					$ip->setTpProcessName($lab_name);
+					$ip->setIdNetwork($network_device);
+					$ip->setUser(NULL);
+					$ip->setDevice($dev);
+					$em->persist($ip);
+					
+					
+				$direct_access=$device->addChild('direct_access');
+				$direct_access->addChild('IPv4',
+					$this->calculateIP($ip_address,$i)."/".$network_size);
+				$direct_access->addChild('IPv6',"");
+				$i++;
+				}
+			
 			$property=$dev->getPropriete();	
 			$device->addAttribute('property',$property);
-			if ($property =='Switch')
+			if ($property =='Switch') {
 				$device->addChild('nom', $dev->getNom().$index);
+				$device->addChild('nom_brute', $dev->getNom().$index);
+			}
 			else
+			{
 				$device->addChild('nom', $dev->getNom()."_".$tp_id);
+				$device->addChild('nom_brute', $dev->getNom()."_".$tp_id);
+			}
 			$device->addAttribute('type',$dev->getType());
 			
 			$device->addAttribute('id',$dev->getId());
@@ -620,40 +960,41 @@ class DefaultController extends Controller
 			}
 			$int_ctrl=$dev->getInterfaceControle();
 			if ($int_ctrl) {
-			$int_ctrl_node=$device->addChild('interface_control');
-			$int_ctrl_node->addAttribute('id',$int_ctrl->getId());
-			$int_ctrl_node->addAttribute('physical_name',$int_ctrl->getNomPhysique());
-			$int_ctrl_node->addAttribute('logical_name',$int_ctrl->getNomVirtuel());
-			if ($int_ctrl->getConfigReseau()) {
-				$int_ctrl_node->addAttribute('IPv4',$int_ctrl->getConfigReseau()->getIP());
-				$int_ctrl_node->addAttribute('mask',$int_ctrl->getConfigReseau()->getMasque());
-				$int_ctrl_node->addAttribute('IPv6',$int_ctrl->getConfigReseau()->getIPv6());
-				$int_ctrl_node->addAttribute('prefix',$int_ctrl->getConfigReseau()->getPrefix());
-				$int_ctrl_node->addAttribute('DNSv4',$int_ctrl->getConfigReseau()->getIPDNS());
-				$int_ctrl_node->addAttribute('gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
-				$proto=$int_ctrl->getConfigReseau()->getProtocole();
-				$int_ctrl_node->addAttribute('protocol',$proto);
-				
-				if ($proto=="websocket")
-					$port=$this->getParameter('port_start_websocket')+$indexControl;
-				if ($proto=="telnet")
-					$port=$this->getParameter('port_start_telnet')+$indexControl;
-				if ($proto=="vnc")
-					$port=$this->getParameter('port_start_vnc')+$indexControl;
-				if ($proto=="ssh")
-					$port=$this->getParameter('port_start_ssh')+$indexControl;
-				//$int_ctrl->getConfigReseau()->getPort()
-				$indexControl++;
-				$int_ctrl_node->addAttribute('port',$port);
-				array_push($devices,array('id'=>$dev->getId(),
-					'nom'=>$dev->getNom()."_".$tp_id,
-					'type'=>$property,
-					'protocol'=>$proto,
-					'port'=>$port,
-					'IPv4'=>$int_ctrl->getConfigReseau()->getIP(),
-					'IPv6'=>$int_ctrl->getConfigReseau()->getIPv6()
-				));
-			}
+				$int_ctrl_node=$device->addChild('interface_control');
+				$int_ctrl_node->addAttribute('id',$int_ctrl->getId());
+				$int_ctrl_node->addAttribute('physical_name',$int_ctrl->getNomPhysique());
+				$int_ctrl_node->addAttribute('logical_name',$int_ctrl->getNomVirtuel());
+				if ($int_ctrl->getConfigReseau()) {
+					$int_ctrl_node->addAttribute('IPv4',$int_ctrl->getConfigReseau()->getIP());
+					$int_ctrl_node->addAttribute('mask',$int_ctrl->getConfigReseau()->getMasque());
+					$int_ctrl_node->addAttribute('IPv6',$int_ctrl->getConfigReseau()->getIPv6());
+					$int_ctrl_node->addAttribute('prefix',$int_ctrl->getConfigReseau()->getPrefix());
+					$int_ctrl_node->addAttribute('DNSv4',$int_ctrl->getConfigReseau()->getIPDNS());
+					$int_ctrl_node->addAttribute('gatewayv4',$int_ctrl->getConfigReseau()->getIPGateway());
+					$proto=$int_ctrl->getConfigReseau()->getProtocole();
+					$int_ctrl_node->addAttribute('protocol',$proto);
+					
+					if ($proto=="websocket")
+						$port=$this->getParameter('port_start_websocket')+$indexControl;
+					if ($proto=="telnet")
+						$port=$this->getParameter('port_start_telnet')+$indexControl;
+					if ($proto=="vnc")
+						$port=$this->getParameter('port_start_vnc')+$indexControl;
+					if ($proto=="ssh")
+						$port=$this->getParameter('port_start_ssh')+$indexControl;
+					//$int_ctrl->getConfigReseau()->getPort()
+					$indexControl++;
+					$int_ctrl_node->addAttribute('port',$port);
+					array_push($devices,array('id'=>$dev->getId(),
+						'nom'=>$dev->getNom()."_".$tp_id,
+						'nom_brute'=>$dev->getNom(),
+						'type'=>$property,
+						'protocol'=>$proto,
+						'port'=>$port,
+						'IPv4'=>$int_ctrl->getConfigReseau()->getIP(),
+						'IPv6'=>$int_ctrl->getConfigReseau()->getIPv6()
+					));
+				}
 			}
 			if ($dev->getPropriete() == "switch") {
 				$networks=$rootNode->addChild('networks');
@@ -668,10 +1009,19 @@ class DefaultController extends Controller
 					$interface->addAttribute('interface_id2',$con->getInterface2()->getId());
 					$interface->addAttribute('vlan2',$con->getVlan2());
 				}
+				array_push($devices,array('id'=>$dev->getId(),
+						'nom'=>$dev->getNom()."_".$tp_id,
+						'nom_brute'=>$dev->getNom(),
+						'type'=>$property,
+						'protocol'=>"",
+						'port'=>"",
+						'IPv4'=>"",
+						'IPv6'=>""
+					));
 			}
 		}
 		$Structure_tp['devices']=$devices;
-		$init = $rootNode->addChild('init');
+		
 		$serveur = $init->addChild('serveur');	
 		$serveur->addChild('IPv4',$param_system->getIpv4());
 		$Structure_tp['IPv4_Serv']=$param_system->getIpv4();
@@ -703,8 +1053,7 @@ class DefaultController extends Controller
 		return $Structure_tp;
     }
 	
-	public function xml_attribute($object, $attribute)
-	{
+	public function xml_attribute($object, $attribute) {
 		if(isset($object[$attribute]))
 			return (string) $object[$attribute];
 	}
@@ -723,7 +1072,7 @@ class DefaultController extends Controller
 		$xml_devices = $xml_file->xpath('/lab/nodes/device');
 		$tp_id = $xml_file->xpath('/lab/tp_id');
 		$tp_managed = $xml_file->xpath('/lab/tp_managed');
-		$tp_access = $xml_file->xpath('/lab/tp_access');
+		$tp_access = implode($xml_file->xpath('/lab/tp_access'));
 		$tp_type = $xml_file->xpath('/lab/tp_type');
 		
         $tp = $repository->find($tp_id[0]);
@@ -734,38 +1083,43 @@ class DefaultController extends Controller
 		$port="";
 		$IPv4="";
 		$IPv6="";
+		$nom_brute="";
 		foreach ($xml_devices as $node) {
 			$property=$this->xml_attribute($node,'property');
-		if ( $property != "switch") {
-		  $id=$this->xml_attribute($node,'id');		  
-		  foreach ($node->children() as $element) {	  
-				$nom_element=$element->getName();
-			if ($nom_element=='nom') {
-				$nom=(string) $element;
-			}
-			if ($nom_element=='interface_control') {
-				foreach($element->attributes() as $attribute) {
-					switch($attribute->getName()) {
-						case 'protocol':
-							$protocol=(string) $attribute;
-							break;
-						case 'port':
-							$port=(string) $attribute;
-							break;
-						case 'IPv4':
-							$IPv4=(string) $attribute;
-							break;
-						case 'IPv6':
-							$IPv6=(string) $attribute;
+			if ( $property != "switch") {
+			  $id=$this->xml_attribute($node,'id');		  
+			  foreach ($node->children() as $element) {	  
+					$nom_element=$element->getName();
+				if ($nom_element=='nom') {
+					$nom=(string) $element;
 				}
-			}
-			}
+				if ($nom_element=='nom_brute') {
+					$nom_brute=(string) $element;
+				}
+				if ($nom_element=='interface_control') {
+					foreach($element->attributes() as $attribute) {
+						switch($attribute->getName()) {
+							case 'protocol':
+								$protocol=(string) $attribute;
+								break;
+							case 'port':
+								$port=(string) $attribute;
+								break;
+							case 'IPv4':
+								$IPv4=(string) $attribute;
+								break;
+							case 'IPv6':
+								$IPv6=(string) $attribute;
+					}
+				}
+				}
 
-		  }
+			  }
 		  array_push($devices,array(
 					'id'=>$id,
 					'type'=>$property,
 					'nom'=>$nom,
+					'nom_brute'=>$nom_brute,
 					'protocol'=>$protocol,
 					'port'=>$port,
 					'IPv4'=>$IPv4,
@@ -774,7 +1128,7 @@ class DefaultController extends Controller
 		  
 		  //$protocol=$this->xml_attribute($protocole,'protocol');
 			  
-		}
+			}
 		}
 	$Structure_tp['devices']=$devices;
 	$Structure_tp['tp_id']=(string) $tp_id[0];
@@ -782,15 +1136,14 @@ class DefaultController extends Controller
 	$Structure_tp['tp_managed']=$tp_managed;
 	$Structure_tp['tp_type']=$tp_type;
 	$Structure_tp['tp_access']=$tp_access;
-
-
 		return $Structure_tp;
-		
+
 	}	
-	
+
 	public function MacEnd($nb) {
 		return dechex(floor($nb/256)).":".dechex($nb%256);
 	}
+
 	
 	function cidr2NetmaskAddr($cidr) { // return 255.255.255.240 from cidr2NetmaskAddr('194.234.213.0/28');
     $ta = substr($cidr, strpos($cidr, '/') + 1) * 1;
@@ -798,18 +1151,26 @@ class DefaultController extends Controller
     foreach ($netmask as &$element) $element = bindec($element);
     return join('.', $netmask);
     }
-	
+
+	function NetmaskAddr2cidr($cidr) { // return 194.234.213.0/28 from NetmaskAddr2cidr('194.234.213.0','255.255.255.240');
+    $ta = substr($cidr, strpos($cidr, '/') + 1) * 1;
+    $netmask = str_split(str_pad(str_pad('', $ta, '1'), 32, '0'), 8);
+    foreach ($netmask as &$element) $element = bindec($element);
+    return join('.', $netmask);
+    }
+
+	function calculateIP($cidr,$indexip) { // return  194.234.213.5 from cidr2NetmaskAddr('194.234.213.0',5); 
+	return long2ip(ip2long($cidr)+$indexip);
+    }
+
 	function createNetmaskAddr($bitcount) { //return 255.255.255.240 from createNetmaskAddr(28);
     $netmask = str_split(str_pad(str_pad('', $bitcount, '1'), 32, '0'), 8);
     foreach ($netmask as &$element) $element = bindec($element);
     return join('.', $netmask);
     }
-	
-	function cidr2NetAddr($cidr) { // return 194.234.213.0 from cidr2NetAddr('194.234.213.0/28');
-    $ta = substr($cidr,0,strpos($cidr, '/'));
-	
-    //$netmask = str_split(str_pad(str_pad('', $ta, '1'), 32, '0'), 8);
 
-    return $ta;
+	function cidr2NetAddr($cidr) { // return 194.234.213.0 from cidr2NetAddr('194.234.213.0/28');
+    list($network,$mask)=explode('/',$cidr);
+	return $network;
     }
 }

@@ -19,6 +19,10 @@ parameters:
     script_reboot_vm: '%kernel.root_dir%/../src/bin/rebootvm.py'
     script_addnet: '%kernel.root_dir%/../src/bin/addnet.py'
     script_delnet: '%kernel.root_dir%/../src/bin/delnet.py'
+    script_addvpn: '%kernel.root_dir%/../src/bin/addvpn.py'
+    script_delvpn: '%kernel.root_dir%/../src/bin/delvpn.py'
+    script_create_vpn_user: '%kernel.root_dir%/../src/bin/create_vpn_user.py'
+    script_delete_vpn_user: '%kernel.root_dir%/../src/bin/delete_vpn_user.py'
     port_start_websocket: 6400
     port_start_telnet: 6600
     port_start_vnc: 6800
@@ -28,9 +32,11 @@ parameters:
     web_directory: 'remotelabzv2/web/uploads'
     abs_web_directory: '/home/www-data/remotelabzv2/web/uploads'
     tp_twig_directory: /home/www-data/remotelabzv2/src/ControlBundle/Resources/views/TP
-    network_lab: 10.8.7.0/24
-    network_user: 10.8.6.0/24
-# Must be a power of 2 -> maximum number of device in a lab
+# Network that can be used for all TPs
+    network_lab: 10.8.6.0/24
+# Network that can be used for all users of the plateform
+    network_user: 10.8.7.0/24
+# Must be a power of 2 -> maximum number of device in a lab, for one TP
     network_lab_max_size: 16
 # Must be a power of 2 -> maximum number of user which can be connected on a same lab
     network_user_max_size: 32

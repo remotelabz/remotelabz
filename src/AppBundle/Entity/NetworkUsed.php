@@ -32,8 +32,9 @@ class NetworkUsed
     private $ipAddress;
 
     /**
+	 * Notation /xx 
      * @var string
-     *
+     * 
      * @ORM\Column(name="netmask", type="string", length=255)
      */
     private $netmask;

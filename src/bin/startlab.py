@@ -31,19 +31,29 @@ if __name__ == "__main__":
     ansible_user=sys.argv[4]
     ansible_pass=sys.argv[5]
     lab = etree.parse(ficlab)
-    
+    frontend_ip="10.22.9.119"
+    addr_vpn="10.0.3.2"
+    addr_host_vpn="10.0.3.1"
 
     script_user = "#!/bin/bash \n\n"
     script_ovs = "#!/bin/bash \n\n"
     script_vm = "#!/bin/bash \n\n"
     script_delnet = "#!/bin/bash \n\n"
-
+    script_addnet = "#!/bin/bash \n\n"
+    script_addvpn_servvm = "#!/bin/bash \n\n"
+    script_addvpn_frontend = "#!/bin/bash \n\n"
+    script_addvpn_servvpn = "#!/bin/bash \n\n"
+    script_delvpn_servvm = "#!/bin/bash \n\n"
+    script_delvpn_frontend = "#!/bin/bash \n\n"
+    script_delvpn_servvpn = "#!/bin/bash \n\n"
 
     script_del=""
     script_reboot=""
+ 
 
     user = lab.xpath("/lab/user/@login")[0]
     lab_name = lab.xpath("/lab/lab_name")[0].text
+    vpn_access = lab.xpath("/lab/tp_access")[0].text
 
     #####################
     # Création de l'utilisateur si nécessaire
@@ -62,10 +72,31 @@ if __name__ == "__main__":
     ovs_name = lab.xpath("/lab/nodes/device[@property='Switch']/nom")[0].text
     script_ovs += "ovs-vsctl add-br %s \n"%ovs_name
     script_del = "ovs-vsctl del-br %s\n"%ovs_name + script_del
-
+		
     script_ovs += "ip link set %s up \n"%ovs_name
     #script_del = "ovs-vsctl dlink set  %s down\n"%ovs_name + script_del
 
+    #####################
+    # Set all IP and route if TP access is vpn
+    #####################
+    ovs_ip = lab.xpath("/lab/nodes/device[@property='Switch']/direct_access/IPv4")[0].text
+    script_addvpn_servvm += "ip addr add %s dev %s\n"%(ovs_ip,ovs_name)
+	
+    network_lab = lab.xpath("/lab/init/network_lab")[0].text
+    network_user = lab.xpath("/lab/init/network_user")[0].text
+    script_addvpn_servvm += "ip route add %s via %s\n"%(network_user,frontend_ip)
+    script_delvpn_servvm += "ip route del %s via %s\n"%(network_user,frontend_ip)
+    addr_servvm = lab.xpath("/lab/init/serveur/IPv4")[0].text
+    
+    script_addvpn_frontend += "ip route add %s via %s\n"%(network_lab,addr_servvm)
+    script_addvpn_frontend += "ip route add %s via %s\n"%(network_user,addr_vpn)
+    script_delvpn_frontend += "ip route del %s via %s\n"%(network_lab,addr_servvm)
+    script_delvpn_frontend += "ip route del %s via %s\n"%(network_user,addr_vpn)
+	
+    script_addvpn_servvpn += "ip route add %s via %s\n"%(network_lab,addr_host_vpn)
+	
+    script_delvpn_servvpn += "ip route del %s via %s\n"%(network_lab,addr_host_vpn)
+	
     #####################
     # Gestion des VM Qemu
     #####################
@@ -147,8 +178,10 @@ if __name__ == "__main__":
 
 # Ajouter une connexion internet aux machines - Mise en place d'un patch entre l'OVS du system et l'OVS du lab
     script_addnet = "ovs-vsctl -- add-port %s patch-ovs%s-0 -- set interface patch-ovs%s-0 type=patch options:peer=patch-ovs0-%s -- add-port br0 patch-ovs0-%s  -- set interface patch-ovs0-%s type=patch options:peer=patch-ovs%s-0\n"%(ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name)
+    script_addnet += "iptables -t nat -A POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
     script_delnet += "ovs-vsctl del-port patch-ovs%s-0\n"%ovs_name
     script_delnet += "ovs-vsctl del-port patch-ovs0-%s\n"%ovs_name
+	script_delnet += "iptables -t nat -D POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
 
     save_script(script_addnet,"script_addnet.sh")
     save_script(script_delnet,"script_delnet.sh")
@@ -157,12 +190,17 @@ if __name__ == "__main__":
     save_script(script_user,"script_user.sh")
     save_script(script_del,"script_del.sh")
     save_script(script_reboot,"script_reboot.sh")
-
-
-#   addr_svc = lab.xpath("/lab/init/serveur/IPv4")[0].text
+    save_script(script_addvpn_servvm,"script_addvpn_servvm.sh")
+    save_script(script_addvpn_frontend,"script_addvpn_frontend.sh")
+    save_script(script_addvpn_servvpn,"script_addvpn_servvpn.sh")
+    save_script(script_delvpn_servvm,"script_delvpn_servvm.sh")
+    save_script(script_delvpn_frontend,"script_delvpn_frontend.sh")
+    save_script(script_delvpn_servvpn,"script_delvpn_servvpn.sh")
 
     ansible_host = "svc1 ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(addr_svc,ansible_user,ansible_pass,ansible_pass)
-    ansible_host += "[server]\nsvc1\n"
+    ansible_host += "frontend ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(frontend_ip,ansible_user,ansible_pass,ansible_pass)
+    ansible_host += "servvpn ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(addr_vpn,ansible_user,ansible_pass,ansible_pass)
+    ansible_host += "[server]\nsvc1\nfrontend\nservvpn"
     text_file = open(user_dir_front+"/"+"script_hosts", "w")
     text_file.write(ansible_host)
     text_file.close()
