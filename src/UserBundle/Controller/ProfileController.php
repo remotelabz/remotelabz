@@ -44,7 +44,7 @@ class ProfileController extends BaseController
 
         return $this->render('UserBundle:Profile:show.html.twig', array(
             'user' => $user,
-			'group' => $user->getGroupe()
+			'group' => $user->getRole()
         ));
     }
 
@@ -98,7 +98,7 @@ class ProfileController extends BaseController
         return $this->render('UserBundle:Profile:edit.html.twig', array(
             'form' => $form->createView(),
 			'user' => $user,
-			'group' => $user->getGroupe()
+			'group' => $user->getRole()
         ));
     }
 }

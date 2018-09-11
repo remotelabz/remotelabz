@@ -35,7 +35,6 @@
 							<th class="sorting" >DNS</th>
 							<th class="sorting" >Gateway</th>
 							<th class="sorting" >Protocole</th>
-							<th class="sorting" >Port</th>
 							<th class="sorting" >Action</th>
 						</tr>
                     </thead>
@@ -48,7 +47,7 @@
 					<td class="sorting_1" tabindex="0">{{ param.ConfigReseau.IPDNS }}</td>
 					<td class="sorting_1" tabindex="0">{{ param.ConfigReseau.IPGateway }}</td>			
 					<td class="sorting_1" tabindex="0">{{ param.ConfigReseau.Protocole }}</td>
-					<td class="sorting_1" tabindex="0">{{ param.ConfigReseau.Port }}</td>
+					{#<td class="sorting_1" tabindex="0">{{ param.ConfigReseau.Port }}</td>#}
 					<td>
 						 <a  class="btn btn-link" href="{{ path('delete_entite',{'id': param.id, 'bundle':'Parameter'}) }}" data-type = "post" >
 							<i class="icon-trash icon-white"></i>  Supprimer </a>

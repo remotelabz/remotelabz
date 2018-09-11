@@ -46,6 +46,8 @@ if __name__ == "__main__":
     script_delvpn_servvm = "#!/bin/bash \n\n"
     script_delvpn_frontend = "#!/bin/bash \n\n"
     script_delvpn_servvpn = "#!/bin/bash \n\n"
+    script_addwebsocket = "#!/bin/bash \n\n"
+    script_addpath2proxy = "#!/bin/bash \n\n"
 
     script_del=""
     script_reboot=""
@@ -79,23 +81,24 @@ if __name__ == "__main__":
     #####################
     # Set all IP and route if TP access is vpn
     #####################
-    ovs_ip = lab.xpath("/lab/nodes/device[@property='Switch']/direct_access/IPv4")[0].text
-    script_addvpn_servvm += "ip addr add %s dev %s\n"%(ovs_ip,ovs_name)
+    if vpn_access == "vpn":
+     ovs_ip = lab.xpath("/lab/nodes/device[@property='Switch']/direct_access/IPv4")[0].text
+     script_addvpn_servvm += "ip addr add %s dev %s\n"%(ovs_ip,ovs_name)
 	
-    network_lab = lab.xpath("/lab/init/network_lab")[0].text
-    network_user = lab.xpath("/lab/init/network_user")[0].text
-    script_addvpn_servvm += "ip route add %s via %s\n"%(network_user,frontend_ip)
-    script_delvpn_servvm += "ip route del %s via %s\n"%(network_user,frontend_ip)
-    addr_servvm = lab.xpath("/lab/init/serveur/IPv4")[0].text
-    
-    script_addvpn_frontend += "ip route add %s via %s\n"%(network_lab,addr_servvm)
-    script_addvpn_frontend += "ip route add %s via %s\n"%(network_user,addr_vpn)
-    script_delvpn_frontend += "ip route del %s via %s\n"%(network_lab,addr_servvm)
-    script_delvpn_frontend += "ip route del %s via %s\n"%(network_user,addr_vpn)
+     network_lab = lab.xpath("/lab/init/network_lab")[0].text
+     network_user = lab.xpath("/lab/init/network_user")[0].text
+     script_addvpn_servvm += "ip route add %s via %s\n"%(network_user,frontend_ip)
+     script_delvpn_servvm += "ip route del %s via %s\n"%(network_user,frontend_ip)
+     addr_servvm = lab.xpath("/lab/init/serveur/IPv4")[0].text
+     
+     script_addvpn_frontend += "ip route add %s via %s\n"%(network_lab,addr_servvm)
+     script_addvpn_frontend += "ip route add %s via %s\n"%(network_user,addr_vpn)
+     script_delvpn_frontend += "ip route del %s via %s\n"%(network_lab,addr_servvm)
+     script_delvpn_frontend += "ip route del %s via %s\n"%(network_user,addr_vpn)
 	
-    script_addvpn_servvpn += "ip route add %s via %s\n"%(network_lab,addr_host_vpn)
+     script_addvpn_servvpn += "ip route add %s via %s\n"%(network_lab,addr_host_vpn)
 	
-    script_delvpn_servvpn += "ip route del %s via %s\n"%(network_lab,addr_host_vpn)
+     script_delvpn_servvpn += "ip route del %s via %s\n"%(network_lab,addr_host_vpn)
 	
     #####################
     # Gestion des VM Qemu
@@ -145,6 +148,9 @@ if __name__ == "__main__":
 
         vnc_addr = lab.xpath(vm_path + "/interface_control/@IPv4")[0]
         vnc_port = lab.xpath(vm_path + "/interface_control/@port")[0]
+        script_addwebsocket += "/home/adminVM/websockify/run %s:%s %s:%s &\n"%(vnc_addr,int(vnc_port)+1000,vnc_addr,vnc_port)
+        script_del += "kill -9 `netstat -tnap | grep %s | awk -F \"[ /]*\" '{print $7}'`\n"%(int(vnc_port)+1000)
+
         proto = lab.xpath(vm_path + "/interface_control/@protocol")[0]
         if proto == "vnc":
            vnc_port=int(vnc_port)-5900
@@ -154,7 +160,6 @@ if __name__ == "__main__":
            access_param = "-vnc %s:%s,websocket=%s "%(vnc_addr,i+index_port_vnc,vnc_port)
         #access_param = "-vnc 0.0.0.0:%s,websocket=%s "%(i+index_port_vnc,vnc_port)
         local_param += "-localtime -usbdevice tablet "
-
         script_vm += start_vm + sys_param + net_param + access_param + local_param + "\n"
         script_reboot += "if [ \"$1\" = \"%s\" ]\nthen \n"%name
         script_reboot += "IMG=`ps -ef | grep qemu |grep \"%s\" | grep \"$1\" | grep -v grep | awk '{print $20}'`\n"%lab_name
@@ -177,11 +182,12 @@ if __name__ == "__main__":
     script_reboot  = "#!/bin/bash \n\n" + script_reboot 
 
 # Ajouter une connexion internet aux machines - Mise en place d'un patch entre l'OVS du system et l'OVS du lab
-    script_addnet = "ovs-vsctl -- add-port %s patch-ovs%s-0 -- set interface patch-ovs%s-0 type=patch options:peer=patch-ovs0-%s -- add-port br0 patch-ovs0-%s  -- set interface patch-ovs0-%s type=patch options:peer=patch-ovs%s-0\n"%(ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name)
-    script_addnet += "iptables -t nat -A POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
-    script_delnet += "ovs-vsctl del-port patch-ovs%s-0\n"%ovs_name
-    script_delnet += "ovs-vsctl del-port patch-ovs0-%s\n"%ovs_name
-	script_delnet += "iptables -t nat -D POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
+    if vpn_access == "vpn":
+     script_addnet = "ovs-vsctl -- add-port %s patch-ovs%s-0 -- set interface patch-ovs%s-0 type=patch options:peer=patch-ovs0-%s -- add-port br0 patch-ovs0-%s  -- set interface patch-ovs0-%s type=patch options:peer=patch-ovs%s-0\n"%(ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name,ovs_name)
+     script_addnet += "iptables -t nat -A POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
+     script_delnet += "ovs-vsctl del-port patch-ovs%s-0\n"%ovs_name
+     script_delnet += "ovs-vsctl del-port patch-ovs0-%s\n"%ovs_name
+     script_delnet += "iptables -t nat -D POSTROUTING -s %s -o br0 -j MASQUERADE"%network_lab
 
     save_script(script_addnet,"script_addnet.sh")
     save_script(script_delnet,"script_delnet.sh")
@@ -196,6 +202,8 @@ if __name__ == "__main__":
     save_script(script_delvpn_servvm,"script_delvpn_servvm.sh")
     save_script(script_delvpn_frontend,"script_delvpn_frontend.sh")
     save_script(script_delvpn_servvpn,"script_delvpn_servvpn.sh")
+    save_script(script_addwebsocket,"script_addwebsocket.sh")
+    save_script(script_addpath2proxy,"script_addpath2proxy.sh")
 
     ansible_host = "svc1 ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(addr_svc,ansible_user,ansible_pass,ansible_pass)
     ansible_host += "frontend ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(frontend_ip,ansible_user,ansible_pass,ansible_pass)
@@ -208,7 +216,8 @@ if __name__ == "__main__":
     ansible_user = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_user.sh -s"
     ansible_ovs = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_ovs.sh -s"
     ansible_vm = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_vm.sh -s"
-    
+    ansible_addwebsocket = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_addwebsocket.sh -s"
+
 #   print ansible_vm
     #####################
     # Exec ansible
@@ -222,3 +231,6 @@ if __name__ == "__main__":
     status_vm =subprocess.call(ansible_vm , shell=True)
     print status_vm
     print ansible_vm
+    status_addwebsocket =subprocess.call(ansible_addwebsocket , shell=True)
+    print status_addwebsocket
+    print ansible_addwebsocket

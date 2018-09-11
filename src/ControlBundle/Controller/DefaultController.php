@@ -139,17 +139,17 @@ class DefaultController extends Controller
 		*/
 		//
 		foreach ($groups as $group) {
+			//echo "groupe :".$group->getNom();
 				foreach($repository->findBy(array('usergroup'=> $group)) as $new_run)
 					array_push($run,$new_run);
-		}
-		
+		}		
 
 		foreach ($classes as $class) {
-			//echo $class->getNom();
+			//echo "classe :".$class->getNom();
 			foreach ($class->getUsers() as $oneuser) { // If one teacher from one of my class has started a TP
-				//echo $oneuser->getLastname();
-				//echo $oneuser->getRole()->getNom();
-				//echo "<br/>";
+				/*echo "Utilisateur :".$oneuser->getLastname();
+				echo $oneuser->getRole()->getNom();
+				echo "<br/>";*/
 				if ($oneuser != $user && $oneuser->getRole()->getNom() == 'Enseignant')
 					foreach($repository->findBy(array('user'=> $oneuser)) as $new_run) 
 						array_push($run,$new_run);
@@ -354,8 +354,6 @@ class DefaultController extends Controller
 		$output = implode("",$output);
 		//echo $output;
 		$logger->info($output);
-		
-		
 		}
 		
 		$filename=$run->getDirTpUser()."/script_addnet.sh";
@@ -514,7 +512,7 @@ class DefaultController extends Controller
 		//echo $output."<br/>";
 		
 		if (strstr($output,"SUCCESS")) {
-			$msg="Connexion VPN démarrée avec succès";
+			$msg="Connexion VPN démarée avec succès";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
 		}
 		else {

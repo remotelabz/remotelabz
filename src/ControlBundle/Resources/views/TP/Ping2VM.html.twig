@@ -1,232 +1,120 @@
 {% extends 'AppBundle::accueil_auth.html.twig' %}
 
 {% block body %}
-
-<div style="height:1024px">
-<div>
-<a href="{{path('stopLab',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-danger">Stop</button></a></div>
-
-		<div {# style="float:left"#}>
-
-		{% include 'Ping2VM.html' %}
-		
-		</div>
-
-		{# <div id="noVNC_screen" style="float:right; width:720px">
-            <div id="noVNC_status_bar" class="noVNC_status_bar" style="margin-top: 0px;"> 
-                <table border=0 width="100%"><tr>
-                 <td> <div id="noVNC_status" style="position: relative; height: auto;">
-                        Chargement
-                    </div></td>
-                    <td width="1%"><div id="noVNC_buttons">
-                        <input type=button value="Send CtrlAltDel"
-                            id="sendCtrlAltDelButton">
-                        <span id="noVNC_xvp_buttons">
-                        <input type=button value="Shutdown"
-                            id="xvpShutdownButton">
-                        <input type=button value="Reboot"
-                            id="xvpRebootButton">
-                        <input type=button value="Reset"
-                            id="xvpResetButton">
-                        </span>
-                            </div></td>
-                </tr></table>
-            </div>
-            <canvas id="noVNC_canvas" width="640px" height="20px">
-                Canvas not supported.
-            </canvas>
-		</div>	#}
-</div>
 	
+	<div class="row">
+            <div class="col-md-12">
+			<div class="x_panel">
+				<div class="x_content">
+                {% if app.session.flashBag.has('notice') %}
+					{% for flash_message in app.session.flashbag.get('notice') %}
+						<div class="label label-success">	
+							{{ flash_message }}
+						</div>
+					{% endfor %}
+				{% endif %}
+				
+				{% if app.session.flashBag.has('danger') %}
+					{% for flash_message in app.session.flashbag.get('danger') %}
+						<span class="label label-danger">	
+							{{ flash_message }}
+						</span>
+					{% endfor %}
+				{% endif %}
+				</div>
+               
+			</div>
+			</div>
+	</div>
+	
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+						<h2>TP {{tp_array['lab_name']}} 
+						{% if group.nom != 'Enseignant' %}
+						{% if tp_array['tp_managed'] %} - TP controlé par votre enseignant.{%endif%}{%endif%}</h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+					
+					
+					{% if (tp_array['tp_managed'] and group.nom == 'Enseignant') %}
+					<div class="col-md-6 col-sm-6 col-xs-12">Arrêter votre laboratoire virtuel</div>
+					<div class="col-md-6 col-sm-6 col-xs-12">
+						<a href="{{path('stopLab',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-danger">Stop</button></a>
+					</div>
+
+					<div class="col-md-6 col-sm-6 col-xs-12">Connexion à Internet</div>
+					<div class="col-md-6 col-sm-6 col-xs-12">
+						<a href="{{path('addnet',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-success">Connect</button></a>
+					</div>				
+					
+					<div class="col-md-6 col-sm-6 col-xs-12">Déconnexion d'Internet</div>
+					<div class="col-md-6 col-sm-6 col-xs-12">
+						<a href="{{path('delnet',{'tp_id': tp_array.tp_id})}}"><button class="btn btn-danger">Deconnexion</button></a>
+					</div>					
+					{% endif %}
+					
+						{% for device in tp_array['devices'] %}
+							{% if device.type != 'Switch' %}
+								<div class="col-md-6 col-sm-6 col-xs-12">Redémarage du device {{device.nom_brute}}</div>
+								<div class="col-md-6 col-sm-6 col-xs-12">
+									<a href="{{path('rebootVM',{'tp_id': tp_array.tp_id, 'name': device.nom})}}"><button class="btn btn-warning">Reboot</button></a>
+							
+								{% if (tp_array['tp_access'] == "vpn") %}
+									<a href="{{path('view_vm_access',{'device_id':device.id})}}" target="_blank"><button class="btn btn-success">View configuration</button></a>
+								{%endif%}
+								{% if (tp_array['tp_managed'] and user.role.nom == "Enseignant") %}
+									<a href="{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}" target="_blank"><button class="btn btn-success">Connection</button></a>						
+								{% endif %}				
+								</div>
+							{% endif %}
+							{% if device.type == 'Switch' %}
+							<div class="col-md-6 col-sm-6 col-xs-12">Routeur par default {{device.nom_brute}}</div>
+							<div class="col-md-6 col-sm-6 col-xs-12">
+								<a href="{{path('view_vm_access',{'device_id':device.id})}}" target="_blank"><button class="btn btn-success">View configuration</button></a>
+							</div>
+							{% endif %}
+							
+						{% endfor %}
+						{% if (tp_array['tp_access'] == "vpn") %}
+						<div class="col-md-6 col-sm-6 col-xs-12">Configuration VPN du client</div>
+							<div class="col-md-6 col-sm-6 col-xs-12">
+								<a href="{{path('get_vpn_client_config')}}" target="_blank"><button class="btn btn-success">Get configuration</button></a>
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+	</div>
+	<div class="row">
+			<div class="col-md-12">
+                <div class="x_panel">
+					<div class="x_title">
+						<h2>Sujet de la séance</h2>
+                        <div class="clearfix"></div>
+					</div>
+					<div class="x_content">
+						{% include "/home/www-data/remotelabzv2/app/Resources/views/TP/Ping2VM.html" %}
+					</div>
+				</div>
+			</div>
+	</div>
+
 {% endblock%}
 
 {% block javascripts %}
-{#<script src="{{asset('js/novnc/util.js')}}"></script>#}
- <script>
-        /*jslint white: false */
-        /*global window, $, Util, RFB, */
-        "use strict";
-
-       // Load supporting scripts
-{#        Util.load_scripts(["{{asset('js/novnc/webutil.js')}}", "{{asset('js/novnc/base64.js')}}",
-							"{{asset('js/novnc/websock.js')}}", "{{asset('js/novnc/des.js')}}",
-                           "{{asset('js/novnc/keysymdef.js')}}", "{{asset('js/novnc/keyboard.js')}}",
-						   "{{asset('js/novnc/input.js')}}", "{{asset('js/novnc/display.js')}}",
-                           "{{asset('js/novnc/inflator.js')}}", "{{asset('js/novnc/rfb.js')}}",
-						   "{{asset('js/novnc/keysym.js')}}"]);
-		
-        var rfb;
-        var resizeTimeout;
-
-
-        function UIresize() {
-            if (WebUtil.getConfigVar('resize', false)) {
-                var innerW = window.innerWidth;
-                var innerH = window.innerHeight;
-                var controlbarH = $D('noVNC_status_bar').offsetHeight;
-                var padding = 5;
-                if (innerW !== undefined && innerH !== undefined)
-                    rfb.setDesktopSize(innerW, innerH - controlbarH - padding);
-            }
-        }
-        function FBUComplete(rfb, fbu) {
-            UIresize();
-            rfb.set_onFBUComplete(function() { });
-        }
-        function passwordRequired(rfb) {
-            var msg;
-            msg = '<form onsubmit="return setPassword();"';
-            msg += '  style="margin-bottom: 0px">';
-            msg += 'Password Required: ';
-            msg += '<input type=password size=10 id="password_input" class="noVNC_status">';
-            msg += '<\/form>';
-            $D('noVNC_status_bar').setAttribute("class", "noVNC_status_warn");
-            $D('noVNC_status').innerHTML = msg;
-        }
-        function setPassword() {
-            rfb.sendPassword($D('password_input').value);
-            return false;
-        }
-        function sendCtrlAltDel() {
-            rfb.sendCtrlAltDel();
-            return false;
-        }
-        function xvpShutdown() {
-            rfb.xvpShutdown();
-            return false;
-        }
-        function xvpReboot() {
-            rfb.xvpReboot();
-            return false;
-        }
-        function xvpReset() {
-            rfb.xvpReset();
-            return false;
-        }
-        function updateState(rfb, state, oldstate, msg) {
-            var s, sb, cad, level;
-            s = $D('noVNC_status');
-            sb = $D('noVNC_status_bar');
-            cad = $D('sendCtrlAltDelButton');
-            switch (state) {
-                case 'failed':       level = "error";  break;
-                case 'fatal':        level = "error";  break;
-                case 'normal':       level = "normal"; break;
-                case 'disconnected': level = "normal"; break;
-                case 'loaded':       level = "normal"; break;
-                default:             level = "warn";   break;
-            }
-
-            if (state === "normal") {
-                cad.disabled = false;
-            } else {
-                cad.disabled = true;
-                xvpInit(0);
-            }
-
-            if (typeof(msg) !== 'undefined') {
-                sb.setAttribute("class", "noVNC_status_" + level);
-                s.innerHTML = msg;
-            }
-        }
-
-        window.onresize = function () {
-            // When the window has been resized, wait until the size remains
-            // the same for 0.5 seconds before sending the request for changing
-            // the resolution of the session
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(function(){
-                UIresize();
-            }, 500);
-        };
-
-        function xvpInit(ver) {
-            var xvpbuttons;
-            xvpbuttons = $D('noVNC_xvp_buttons');
-            if (ver >= 1) {
-                xvpbuttons.style.display = 'inline';
-            } else {
-                xvpbuttons.style.display = 'none';
-            }
-        }
-		#}
-        
-		
-		{% for device in tp_array['devices'] %}
-			window.open("{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}", "{{user}}VM{{loop.index}}", "location=0,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");			
-		{% endfor %}
-		{# window.open("http://194.57.105.124/vnc_auto.html?host={{device.IPv4}}&port={{device.port}}","{{user}}VM{{loop.index}}", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820")
-#}
-
-{# window.open("http://194.57.105.124/vnc_auto.html?host=10.22.9.117&port=6468","{{user}}VM1", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820")	
-window.open("http://194.57.105.124/vnc_auto.html?host=10.22.9.117&port=6470","{{user}}VM2", "location=0,menubar=0,directories=0,scrollbars=1,status=0,toolbar=0,resizable=1,top=10,left=10,width=1100,height=820")	#}
-		{#	
-			var host, port, password, path, token;
-			            
-			$D('sendCtrlAltDelButton').style.display = "inline";
-            $D('sendCtrlAltDelButton').onclick = sendCtrlAltDel;
-            $D('xvpShutdownButton').onclick = xvpShutdown;
-            $D('xvpRebootButton').onclick = xvpReboot;
-            $D('xvpResetButton').onclick = xvpReset;
-
-            WebUtil.init_logging(WebUtil.getConfigVar('logging', 'warn'));
-            document.title = unescape(WebUtil.getConfigVar('title', 'noVNC'));
-            // By default, use the host and port of server that served this file
-            //host = WebUtil.getConfigVar('host', window.location.hostname);
-			host = '{{ host }}';
-            // port = WebUtil.getConfigVar('port', window.location.port);
-			port = '{{ port }}';
-            // if port == 80 (or 443) then it won't be present and should be
-            // set manually
-            if (!port) {
-                if (window.location.protocol.substring(0,5) == 'https') {
-                    port = 443;
-                }
-                else if (window.location.protocol.substring(0,4) == 'http') {
-                    port = 80;
-                }
-            }
-
-            password = WebUtil.getConfigVar('password', '');
-            path = WebUtil.getConfigVar('path', 'websockify');
-
-            // If a token variable is passed in, set the parameter in a cookie.
-            // This is used by nova-novncproxy.
-            token = WebUtil.getConfigVar('token', null);
-            if (token) {
-
-                // if token is already present in the path we should use it
-                path = WebUtil.injectParamIfMissing(path, "token", token);
-
-                WebUtil.createCookie('token', token, 1)
-            }
-
-            if ((!host) || (!port)) {
-                updateState(null, 'fatal', null, 'Must specify host and port in URL');
-                return;
-            }
-
-            try {
-                rfb = new RFB({'target':       $D('noVNC_canvas'),
-                               'encrypt':      WebUtil.getConfigVar('encrypt',
-                                        (window.location.protocol === "https:")),
-                               'repeaterID':   WebUtil.getConfigVar('repeaterID', ''),
-                               'true_color':   WebUtil.getConfigVar('true_color', true),
-                               'local_cursor': WebUtil.getConfigVar('cursor', true),
-                               'shared':       WebUtil.getConfigVar('shared', true),
-                               'view_only':    WebUtil.getConfigVar('view_only', false),
-                               'onUpdateState':  updateState,
-                               'onXvpInit':    xvpInit,
-                               'onPasswordRequired':  passwordRequired,
-                               'onFBUComplete': FBUComplete});
-            } catch (exc) {
-                updateState(null, 'fatal', null, 'Unable to create RFB client -- ' + exc);
-                return; // don't continue trying to connect
-            }
-
-            rfb.connect(host, port, password, path);
-		#}
-        
-        </script>
-
+	{% if (tp_array['tp_access'] == "web") %}
+				<script>
+ 				/*jslint white: false */
+				/*global window, $, Util, RFB, */
+				"use strict";
+				{% for device in tp_array['devices'] %}
+					{% if device.type != 'Switch' %}
+						window.open("{{path('view_vm',{'device_id':device.id,'protocol':device.protocol,'port':device.port})}}", "{{user}}VM{{loop.index}}", "location=0,menubar=1,directories=1,scrollbars=1,status=1,toolbar=1,resizable=1,top=10,left=10,width=1100,height=820");
+					{% endif %}
+				{% endfor %}
+				</script>
+	{%endif%}
 {% endblock %}

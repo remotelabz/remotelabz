@@ -86,7 +86,7 @@ class GestionController extends Controller
         return $this->render(
             'BackendBundle:Gestion:list_configReseau.html.twig',array(
             'user' 						=> $user,
-			'group'=> $group,
+			'group'						=> $group,
 			'list_interfaceControle'	=> $list_interfaceControle,
         ));
 
