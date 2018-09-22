@@ -1,0 +1,154 @@
+{% extends 'AppBundle::accueil_auth.html.twig' %}
+
+{% block body %}
+	<div id="page-wrapper">
+            {% for flash_message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+	    {% for flash_message in app.session.flashbag.get('danger') %}
+    <div class="flash-notice">
+        {{ flash_message }}
+    </div>
+	{% endfor %}
+
+	<div class="row">
+            <div class="col-md-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Ajout d'étudiant dans la classe</h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <!-- content starts here -->
+					
+					 {{ form_start(form, {'attr': {'class': 'form-horizontal'}}) }}
+                                    {# Les erreurs générales du formulaire. #}
+                                    {{ form_errors(form) }}
+                                    <div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(form.nom, "Classe", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                        {# Affichage des erreurs pour ce champ précis. #}
+                                        {{ form_errors(form.nom) }}
+
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(form.nom, {'attr': {'class': 'PODclass span3'}}) }}
+                                        </div>
+                                    </div>
+									
+									<div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(form.file, "File", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                       
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(form.file, {'attr': {'class': 'PODclass span3'}}) }}
+                                        </div>
+                                    </div>
+									<div class="form-group">
+                                        {# Génération du label. #}
+                                        {{ form_label(form.send, "Send", {'label_attr': {'class': 'col-sm-2 control-label'}}) }}
+
+                                       
+                                        <div class="col-sm-2">
+                                            {# Génération de l'input. #}
+                                            {{ form_widget(form.send, {'attr': {'class': 'PODclass span3'}}) }}
+                                        </div>
+                                    </div>
+								
+
+                                    {# Fermeture de la balise <form> du formulaire HTML #}
+                                    {{ form_end(form) }}
+
+                        <!-- content ends here -->
+                    </div>
+                </div>
+            </div>
+    </div>
+	
+
+	
+{% endblock %}
+
+{% block javascripts %}
+  <!-- Datatables-->
+        <script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+		<script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+		<script src="{{asset('js/datatables/jquery.dataTables.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.bootstrap.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.buttons.min.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/jszip.min.js')}}"></script>
+        <script src="{{asset('js/datatables/pdfmake.min.js')}}"></script>
+        <script src="{{asset('js/datatables/vfs_fonts.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.html5.min.js')}}"></script>
+        <script src="{{asset('js/datatables/buttons.print.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.fixedHeader.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.keyTable.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.responsive.min.js')}}"></script>
+        <script src="{{asset('js/datatables/responsive.bootstrap.min.js')}}"></script>
+        <script src="{{asset('js/datatables/dataTables.scroller.min.js')}}"></script>
+
+        <script>
+          var handleDataTableButtons = function() {
+              "use strict";
+              0 !== $("#datatable-buttons").length && $("#datatable-buttons").DataTable({
+                dom: "Bfrtip",
+				
+                buttons: [{
+                  extend: "copy",
+                  className: "btn-sm"
+                }, {
+                  extend: "csv",
+                  className: "btn-sm"
+                }, {
+                  extend: "excel",
+                  className: "btn-sm"
+                }, {
+                  extend: "pdf",
+                  className: "btn-sm"
+                }, {
+                  extend: "print",
+                  className: "btn-sm"
+                }],
+                responsive: !0
+              })
+            },
+            TableManageButtons = function() {
+              "use strict";
+              return {
+                init: function() {
+                  handleDataTableButtons()
+                }
+              }
+            }();
+   
+        $(document).ready(function() {
+			$('#datatable').DataTable( {
+				"order": [[ 5, "asc" ]],
+			});
+			TableManageButtons.init();
+		});
+
+		
+		function Supprimer(button) {
+				var user_id=button.id;
+				$(function(){
+					$.post(
+						"{{path('delete_student_inclass')}}",
+						{ data: user_id},
+						function(data,status){
+							var result = data.split(":");
+							var existingElement=document.getElementById("tr_"+result[0]);						
+							if (result[1]=="Supprimer")
+								existingElement.style.display="none";
+						});			
+				})
+		}
+		</script>
+{% endblock %}
