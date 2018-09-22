@@ -81,7 +81,6 @@ class DefaultController extends Controller
 	);
 	}
 	
-	
 	/**
      * @Route("/admin/list_user", name="list_user")
      */
@@ -159,7 +158,7 @@ class DefaultController extends Controller
 	{
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
-		$group=$user->getRole();
+		$role=$user->getRole();
 		$userManager = $this->container->get('fos_user.user_manager');
 		
 		$repository = $this->getDoctrine()->getRepository('UserBundle:User');
@@ -170,11 +169,11 @@ class DefaultController extends Controller
 		
 		if ($form->handleRequest($request)->isValid()) {
 			$em = $this->getDoctrine()->getManager();
-			$groupe = $form->get('Groupe')->getData();
+			$role = $form->get('Role')->getData();
 			$userlist = $form->get('User')->getData();
 			foreach($userlist as $userid) {
-				$userid->setGroupe($groupe);
-				$userid->setRoles(array('roles'=>$groupe->getRole()));
+				//$userid->setGroupe($groupe);
+				$userid->setRole($role);
 				$em->persist($userid);
 			}
 		$em->flush();
@@ -183,7 +182,7 @@ class DefaultController extends Controller
 		return $this->render(
         'UserBundle:Gestion:change_role.html.twig',array(
 		'user' => $user,
-		'group' => $group,
+		'group' => $role,
 		'form' => $form->createView(),
 		));
 	}
@@ -260,6 +259,8 @@ class DefaultController extends Controller
 		));
 	
 	}
+
+	
 	
 	/**
      * @Route("/admin/delete_user", name="delete_user")

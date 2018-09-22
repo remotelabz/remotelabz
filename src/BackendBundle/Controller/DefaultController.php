@@ -27,6 +27,10 @@ use UserBundle\Form\Type\AddUserFormType;
 use BackendBundle\Form\Type\SelectClasseFormType;
 use BackendBundle\Form\Type\AddinclasseFormType;
 use BackendBundle\Form\Type\AddTpInClassFormType;
+use BackendBundle\Form\Type\AddByCSVInClasseFormType;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 use AppBundle\Form\TPType;
 use Proxies\__CG__\AppBundle\Entity\ConfigReseau;
@@ -580,7 +584,159 @@ class DefaultController extends Controller
 		));
 	}
 	
+	/**
+     * @Route("/ens/add_userbycsv", name="ens_add_userbycsv")
+     */
+	public function ens_add_userbycsvAction(Request $request)
+	{
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		$userManager = $this->container->get('fos_user.user_manager');
+		
+
+		$defaultData = array('message' => 'Import your student list by CSV file');
+		$form = $this->createFormBuilder($defaultData)
+			->add('nom', 'entity', array(
+                'class' => 'UserBundle:Classe',
+                'property' => 'nom',
+                'multiple' => false,
+                'required' => true,
+                'empty_value' => '-- Choose a class --'
+                ))
+			->add('file',FileType::class)
+			->add('send',SubmitType::class)
+			->getForm();
+			
+		$form->handleRequest($request);
+
+		if ($form->isSubmitted() && $form->isValid()) {
+        // data is an array with "name", "email", and "message" keys
+        $data = $form->getData();
+		
+		$repository = $this->getDoctrine()->getRepository('UserBundle:Classe');
+		$classe = $repository->findOneBy(array('id' => $data['nom']));
+		
+		$file=$data['file'];
+		$filename=md5(uniqid()).'.'.$file->guessExtension();
+		$file->move($this->getParameter('tmp_dir'),$filename);
+		$studentlist=$file->fgetcsv();
+		
+		//$fileSystem = new Filesystem();
+
+		/*try {
+			$fileSystem->mkdir(sys_get_temp_dir().'/'.random_int(0, 1000));
+		} catch (IOExceptionInterface $exception) {
+			echo "An error occurred while creating your directory at ".$exception->getPath();
+		}*/
+		
+		/*$converter = $this->getContainer()->get('import.csvtoarray');
+        $studentlist = $converter->convert($fileName, ';');
+		*/
+		$size = count($studentlist);
+        $batchSize = 20;
+        $i = 1;
+        
+        // Starting progress
+        $progress = new ProgressBar($output, $size);
+        $progress->start();
+        
+        // Processing on each row of data
+        foreach($studentlist as $row) {
+
+            $user2insert = $userManager->findUserByEmail($row('email'));	
+
+			// If the user mail exist, we only add the student in the class
+			if (count($user2insert)==1) {
+				$user2insert->addClass($classe);
+
+
+			}		
+			// Updating info
+            $user->setLastName($row['lastname']);
+            $user->setFirstName($row['firstname']);
+			
+			// Do stuff here !
 	
+			// Persisting the current user
+            $em->persist($user);
+            
+			// Each 20 users persisted we flush everything
+            if (($i % $batchSize) === 0) {
+
+                $em->flush();
+				// Detaches all objects from Doctrine for memory save
+                $em->clear();
+                
+				// Advancing for progress display on console
+                $progress->advance($batchSize);
+				
+                $now = new \DateTime();
+                $output->writeln(' of users imported ... | ' . $now->format('d-m-Y G:i:s'));
+
+            }
+
+            $i++;
+
+        }
+			
+		/*	$test = $userManager->findUserByEmail($form->get('email')->getData());	
+			if (count($test)==0) {
+			
+			$clear_password=$this->genuseraccount($new_user);
+
+			$request->getSession()->getFlashBag()->add('notice', 'Compte étudiant créé.');
+			
+			$subject = "[Remotelabz-v2] - Création de votre compte - ".$new_user->getfirstname()." ".strtoupper($this->stripAccents($new_user->getLastName()));
+			$em=$this->getDoctrine()->getManager();
+			$new_user->setGroupe($em->getRepository('UserBundle:Groupe')->findOneBy(array('nom' => "Etudiant")));
+			//Ajouter le bon role aux user.
+
+			
+			$em->persist($new_user);
+			$em->flush();
+			$mail_from=$this->getParameter('mail_from');
+			$message = \Swift_Message::newInstance()
+				->setSubject($subject)
+				->setFrom(array($mail_from => 'Administrateur'))
+				->setTo($new_user->getEmail())
+				->setBcc($mail_from)
+				->setBody($this->container->get('templating')->render('UserBundle:Gestion:add_user.email.twig',array('user' => $new_user,
+					'password' => $clear_password,				
+					),'text/plain'));
+			//$this->container->get('mailer')->send($message);
+				
+			return $this->render(
+				'UserBundle:Gestion:add_user.html.twig',array(
+				'new_user' => $new_user,
+				'user' => $user,
+				'group' => $group,
+				'form' => $form->createView(),
+			));
+			
+			}
+			else
+			{
+			$this->container->get('session')->getFlashBag()->add('danger',
+            'Ce mail est déjà utilisé');			
+				
+			}
+
+			return $this->redirect($this->generateUrl('ens_add_user', array(
+				'id' => $new_user->getId(),
+				)		
+			));*/
+			
+		
+		}
+
+    	return $this->render(
+        'BackendBundle:User:add_studentbycsvinclasse.html.twig',array(
+		'user' => $user,
+		'group' => $group,
+		'form' => $form->createView(),
+		));
+	}
 	
 	/**
      * @Route("/ens/tp_add_inclasse", name="tp_add_inclasse")

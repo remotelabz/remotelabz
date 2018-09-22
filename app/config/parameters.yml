@@ -28,6 +28,7 @@ parameters:
     port_start_vnc: 6800
     port_start_ssh: 7000
     homedir: '/home/RLv2_'
+    tmp_dir: '/home/www-data/remotelabzv2/tmp'
     tp_directory: '%kernel.root_dir%/Resources/views/TP'
     web_directory: 'remotelabzv2/web/uploads'
     abs_web_directory: '/home/www-data/remotelabzv2/web/uploads'
@@ -40,4 +41,8 @@ parameters:
     network_lab_max_size: 16
 # Must be a power of 2 -> maximum number of user which can be connected on a same lab
     network_user_max_size: 32
-
+    proxy_ip: 194.57.105.124
+    proxy_port: 6351
+    frontend_ip: 10.22.9.119
+    addr_vpn: 10.0.3.2
+    addr_host_vpn: 10.0.3.1

@@ -15,13 +15,14 @@ import sys
 if __name__ == "__main__":
     user_dir_front=sys.argv[1]
     name=sys.argv[2]
+    cmd=sys.argv[3]
 
     name=sys.argv[2].replace(" ","\ ")
     #####################
     # Création de l'utilisateur si nécessaire
     #####################
 
-    ansible_del = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a \"" + user_dir_front + "/script_reboot.sh '%s'\" -s"%name
+    ansible_del = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a \"" + user_dir_front + "/script_reboot.sh '%s' '%s'\" -s"%(name,cmd)
     #print ansible_del;
     #####################
     # Exec ansible

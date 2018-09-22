@@ -2,6 +2,7 @@
 <head>
 <title>{{title}}</title>
 <meta charset="utf-8">
+<link rel="stylesheet" href="{{asset('js/novnc/base.css')}}" title="plain">
 
     <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
                 Remove this if you use the .htaccess -->
@@ -18,11 +19,10 @@
     <!--
     <link rel="apple-touch-icon-precomposed" href="app/images/screen_57x57.png" />
     -->
-	<script src="{{asset('js/novnc-latest/core/util.js')}}"></script>
-    <script src="{{asset('js/novnc-latest/app/webutil.js')}}"></script>
+	<script src="{{asset('js/novnc/util.js')}}"></script>
 </head>
-<body>
- <div id="noVNC_container">
+<body style="margin: 0px;">
+    <div id="noVNC_screen">
             <div id="noVNC_status_bar" class="noVNC_status_bar" style="margin-top: 0px;">
                 <table border=0 width="100%"><tr>
                     <td><div id="noVNC_status" style="position: relative; height: auto;">
@@ -52,49 +52,42 @@
         /*jslint white: false */
         /*global window, $, Util, RFB, */
         "use strict";
-Util._log_level = 'debug';
+		Util._log_level = 'debug';
         // Load supporting scripts
-        WebUtil.load_scripts({
-            '{{asset('js/novnc-latest/core')}}': ["base64.js", "websock.js", "des.js", "input/keysymdef.js",
-                     "input/xtscancodes.js", "input/util.js", "input/devices.js",
-                     "display.js", "inflator.js", "rfb.js", "input/keysym.js"],
-            '{{asset('js/novnc-latest/app')}}': ["webutil.js"]});
+		var INCLUDE_URI='{{asset('js/novnc/')}}';
+		Util.load_scripts(["webutil.js", "base64.js", "websock.js", "des.js",
+                           "keysymdef.js", "keyboard.js", "input.js", "display.js",
+                           "inflator.js", "rfb.js", "keysym.js"]);
 
         var rfb;
-        var resizeTimeout;
-        var desktopName;
-
+        var resizeTimeout;  
 
         function UIresize() {
             if (WebUtil.getConfigVar('resize', false)) {
                 var innerW = window.innerWidth;
                 var innerH = window.innerHeight;
-                var controlbarH = document.getElementById('noVNC_status_bar').offsetHeight;
+                var controlbarH = $D('noVNC_status_bar').offsetHeight;
+                var padding = 5;
                 if (innerW !== undefined && innerH !== undefined)
-                    rfb.requestDesktopSize(innerW, innerH - controlbarH);
+                    rfb.setDesktopSize(innerW, innerH - controlbarH - padding);
             }
         }
         function FBUComplete(rfb, fbu) {
             UIresize();
             rfb.set_onFBUComplete(function() { });
         }
-        function updateDesktopName(rfb, name) {
-            desktopName = name;
-        }
-        function passwordRequired(rfb, msg) {
-            if (typeof msg === 'undefined') {
-                msg = 'Password Required: ';
-            }
-            var html;
-            html = '<form onsubmit="return setPassword();"';
-            html += '  style="margin-bottom: 0px">';
-            html += msg;
-            html += '<input type=password size=10 id="password_input" class="noVNC_status">';
-            html += '<\/form>';
-            status(html, "warn");
+        function passwordRequired(rfb) {
+            var msg;
+            msg = '<form onsubmit="return setPassword();"';
+            msg += '  style="margin-bottom: 0px">';
+            msg += 'Password Required: ';
+            msg += '<input type=password size=10 id="password_input" class="noVNC_status">';
+            msg += '<\/form>';
+            $D('noVNC_status_bar').setAttribute("class", "noVNC_status_warn");
+            $D('noVNC_status').innerHTML = msg;
         }
         function setPassword() {
-            rfb.sendPassword(document.getElementById('password_input').value);
+            rfb.sendPassword($D('password_input').value);
             return false;
         }
         function sendCtrlAltDel() {
@@ -113,54 +106,31 @@ Util._log_level = 'debug';
             rfb.xvpReset();
             return false;
         }
-        function status(text, level) {
-            switch (level) {
-                case 'normal':
-                case 'warn':
-                case 'error':
-                    break;
-                default:
-                    level = "warn";
-            }
-            document.getElementById('noVNC_status_bar').setAttribute("class", "noVNC_status_" + level);
-            document.getElementById('noVNC_status').innerHTML = text;
-        }
-        function updateState(rfb, state, oldstate) {
-            var cad = document.getElementById('sendCtrlAltDelButton');
-            var encrypt = (rfb && rfb.get_encrypt()) ? 'encrypted' : 'unencrypted';
+        function updateState(rfb, state, oldstate, msg) {
+            var s, sb, cad, level;
+            s = $D('noVNC_status');
+            sb = $D('noVNC_status_bar');
+            cad = $D('sendCtrlAltDelButton');
             switch (state) {
-                case 'connecting':
-                    status("Connecting", "normal");
-                    break;
-                case 'connected':
-                    status("Connected (" + encrypt + ") to: " + desktopName, "normal");
-                    break;
-                case 'disconnecting':
-                    status("Disconnecting", "normal");
-                    break;
-                case 'disconnected':
-                    status("Disconnected", "normal");
-                    break;
-                default:
-                    status(state, "warn");
-                    break;
+                case 'failed':       level = "error";  break;
+                case 'fatal':        level = "error";  break;
+                case 'normal':       level = "normal"; break;
+                case 'disconnected': level = "normal"; break;
+                case 'loaded':       level = "normal"; break;
+                default:             level = "warn";   break;
             }
 
-            if (state === 'connected') {
+            if (state === "normal") {
                 cad.disabled = false;
             } else {
                 cad.disabled = true;
                 xvpInit(0);
             }
 
-        }
-        function disconnected(rfb, reason) {
-            if (typeof(reason) !== 'undefined') {
-                status(reason, "error");
+            if (typeof(msg) !== 'undefined') {
+                sb.setAttribute("class", "noVNC_status_" + level);
+                s.innerHTML = msg;
             }
-        }
-        function notification(rfb, msg, level, options) {
-            status(msg, level);
         }
 
         window.onresize = function () {
@@ -175,7 +145,7 @@ Util._log_level = 'debug';
 
         function xvpInit(ver) {
             var xvpbuttons;
-            xvpbuttons = document.getElementById('noVNC_xvp_buttons');
+            xvpbuttons = $D('noVNC_xvp_buttons');
             if (ver >= 1) {
                 xvpbuttons.style.display = 'inline';
             } else {
@@ -186,14 +156,14 @@ Util._log_level = 'debug';
         window.onscriptsload = function () {
             var host, port, password, path, token;
 
-            document.getElementById('sendCtrlAltDelButton').style.display = "inline";
-            document.getElementById('sendCtrlAltDelButton').onclick = sendCtrlAltDel;
-            document.getElementById('xvpShutdownButton').onclick = xvpShutdown;
-            document.getElementById('xvpRebootButton').onclick = xvpReboot;
-            document.getElementById('xvpResetButton').onclick = xvpReset;
+            $D('sendCtrlAltDelButton').style.display = "inline";
+            $D('sendCtrlAltDelButton').onclick = sendCtrlAltDel;
+            $D('xvpShutdownButton').onclick = xvpShutdown;
+            $D('xvpRebootButton').onclick = xvpReboot;
+            $D('xvpResetButton').onclick = xvpReset;
 
             WebUtil.init_logging(WebUtil.getConfigVar('logging', 'warn'));
-            document.title = '{{title}}';//unescape(WebUtil.getConfigVar('title', 'noVNC'));
+            //document.title = unescape(WebUtil.getConfigVar('title', 'noVNC'));
             // By default, use the host and port of server that served this file
             host = '{{host}}';//WebUtil.getConfigVar('host', window.location.hostname);
             port = '{{port}}';//WebUtil.getConfigVar('port', window.location.port);
@@ -209,8 +179,8 @@ Util._log_level = 'debug';
                 }
             }
 
-            password = WebUtil.getConfigVar('password', '');
-            path = WebUtil.getConfigVar('path', 'websockify');
+            //password = WebUtil.getConfigVar('password', '');
+            path = '{{path}}';
 
             // If a token variable is passed in, set the parameter in a cookie.
             // This is used by nova-novncproxy.
@@ -224,12 +194,12 @@ Util._log_level = 'debug';
             }
 
             if ((!host) || (!port)) {
-                status('Must specify host and port in URL', 'error');
+                updateState(null, 'fatal', null, 'Must specify host and port in URL');
                 return;
             }
 
             try {
-                rfb = new RFB({'target':       document.getElementById('noVNC_canvas'),
+                rfb = new RFB({'target':       $D('noVNC_canvas'),
                                'encrypt':      WebUtil.getConfigVar('encrypt',
                                         (window.location.protocol === "https:")),
                                'repeaterID':   WebUtil.getConfigVar('repeaterID', ''),
@@ -237,15 +207,12 @@ Util._log_level = 'debug';
                                'local_cursor': WebUtil.getConfigVar('cursor', true),
                                'shared':       WebUtil.getConfigVar('shared', true),
                                'view_only':    WebUtil.getConfigVar('view_only', false),
-                               'onNotification':  notification,
                                'onUpdateState':  updateState,
-                               'onDisconnected': disconnected,
                                'onXvpInit':    xvpInit,
                                'onPasswordRequired':  passwordRequired,
-                               'onFBUComplete': FBUComplete,
-                               'onDesktopName': updateDesktopName});
+                               'onFBUComplete': FBUComplete});
             } catch (exc) {
-                status('Unable to create RFB client -- ' + exc, 'error');
+                updateState(null, 'fatal', null, 'Unable to create RFB client -- ' + exc);
                 return; // don't continue trying to connect
             }
 

@@ -30,10 +30,10 @@ if __name__ == "__main__":
     user_dir_front=sys.argv[3]
     ansible_user=sys.argv[4]
     ansible_pass=sys.argv[5]
+    frontend_ip=sys.argv[6]
+    addr_vpn=sys.argv[7]
+    addr_host_vpn=sys.argv[8]
     lab = etree.parse(ficlab)
-    frontend_ip="10.22.9.119"
-    addr_vpn="10.0.3.2"
-    addr_host_vpn="10.0.3.1"
 
     script_user = "#!/bin/bash \n\n"
     script_ovs = "#!/bin/bash \n\n"
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     nb_vm = int(lab.xpath("count(/lab/nodes/device[@hypervisor='qemu'])"))
     index_port_vnc = int(lab.xpath("/lab/init/serveur/index_interface")[0].text)
     
-    script_reboot += "if [ $# -eq 1 ]\nthen\n"
+    script_reboot += "if [ $# -eq 2 ] \nthen\n"
 
     for i in range (1, nb_vm + 1):
         script_vm += "\n# VM %s\n"%i
@@ -148,7 +148,9 @@ if __name__ == "__main__":
 
         vnc_addr = lab.xpath(vm_path + "/interface_control/@IPv4")[0]
         vnc_port = lab.xpath(vm_path + "/interface_control/@port")[0]
-        script_addwebsocket += "/home/adminVM/websockify/run %s:%s %s:%s &\n"%(vnc_addr,int(vnc_port)+1000,vnc_addr,vnc_port)
+        script_addwebsocket += "( (nohup /home/adminVM/websockify/run %s:%s %s:%s ) & )\n"%(vnc_addr,int(vnc_port)+1000,vnc_addr,vnc_port)
+        script_addpath2proxy += "curl -H \"Authorization: token $CONFIGPROXY_AUTH_TOKEN\" -X POST -d '{\"target\": \"ws://%s:%s\"}' http://localhost:82/api/routes/%s\n"%(vnc_addr,int(vnc_port)+1000,name.replace(" ","_"))
+
         script_del += "kill -9 `netstat -tnap | grep %s | awk -F \"[ /]*\" '{print $7}'`\n"%(int(vnc_port)+1000)
 
         proto = lab.xpath(vm_path + "/interface_control/@protocol")[0]
@@ -162,14 +164,13 @@ if __name__ == "__main__":
         local_param += "-localtime -usbdevice tablet "
         script_vm += start_vm + sys_param + net_param + access_param + local_param + "\n"
         script_reboot += "if [ \"$1\" = \"%s\" ]\nthen \n"%name
-        script_reboot += "IMG=`ps -ef | grep qemu |grep \"%s\" | grep \"$1\" | grep -v grep | awk '{print $20}'`\n"%lab_name
+        script_reboot += "IMG=`ps -ef | grep qemu |grep \"%s\" | grep \"$1\" | awk '{for(i=1;i<=NF;i++){ if($i==\"-hda\"){print $((i+1))} } }'`\n"%lab_name
+
         script_reboot += "for i in `ps -ef | grep qemu |grep \"%s\" | grep \"$1\" | grep -v grep | awk '{print $2}'`; do kill -9 $i; done\n"%lab_name
-        script_reboot += "rm %s\n"%dest
-        script_reboot += "qemu-img create -b %s -f qcow2 $IMG \n"%(source)
+        script_reboot += "if [ \"$2\" = \"reboot\" ]\nthen \n rm %s\n"%dest
+        script_reboot += "qemu-img create -b %s -f qcow2 $IMG \nfi\n"%(source)
         script_reboot += start_vm + sys_param + net_param + access_param + local_param + "\n"
         script_reboot += "fi\n"
-		
-		
 		
 #        print script_vm
     script_del = "for i in `ps -ef | grep qemu |grep \"%s\" | grep -v grep | awk '{print $2}'`; do kill -9 $i; done\n"%lab_name + script_del
@@ -204,6 +205,7 @@ if __name__ == "__main__":
     save_script(script_delvpn_servvpn,"script_delvpn_servvpn.sh")
     save_script(script_addwebsocket,"script_addwebsocket.sh")
     save_script(script_addpath2proxy,"script_addpath2proxy.sh")
+	
 
     ansible_host = "svc1 ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(addr_svc,ansible_user,ansible_pass,ansible_pass)
     ansible_host += "frontend ansible_ssh_host=%s ansible_ssh_user=%s ansible_ssh_pass='%s' ansible_sudo_pass='%s'\n"%(frontend_ip,ansible_user,ansible_pass,ansible_pass)
@@ -217,6 +219,7 @@ if __name__ == "__main__":
     ansible_ovs = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_ovs.sh -s"
     ansible_vm = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_vm.sh -s"
     ansible_addwebsocket = "ansible svc1 -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_addwebsocket.sh -s"
+    ansible_addpath2proxy = "ansible frontend -i " + user_dir_front + "/script_hosts -m script -a " + user_dir_front + "/script_addpath2proxy.sh -s"
 
 #   print ansible_vm
     #####################
@@ -234,3 +237,6 @@ if __name__ == "__main__":
     status_addwebsocket =subprocess.call(ansible_addwebsocket , shell=True)
     print status_addwebsocket
     print ansible_addwebsocket
+    status_addpath2proxy =subprocess.call(ansible_addpath2proxy , shell=True)
+    print status_addpath2proxy
+    print ansible_addpath2proxy

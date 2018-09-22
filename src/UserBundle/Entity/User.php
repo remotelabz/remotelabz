@@ -55,8 +55,6 @@ class User extends BaseUser
         return $this->lastname." ".$this->firstname;
     }
 	
-  
-
     /**
      * Set firstname
      *

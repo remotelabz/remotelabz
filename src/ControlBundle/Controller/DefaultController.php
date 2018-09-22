@@ -18,9 +18,65 @@ class DefaultController extends Controller
 {
 	
 	/**
-     * @Route("/control/view_vm/{device_id}/{protocol}/{port}", name="view_vm")
+     * @Route("/control/view_vm/{path}", name="view_vm")
      */
-	 public function view_vmAction($device_id,$protocol,$port) {
+	 public function view_vmAction($path) {
+		 
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		
+		$protocol='websocket';
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Device');
+        //$device = $repository->find($device_id);
+		
+		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='websocket')
+		if ($protocol=='websocket' || $protocol=='vnc')
+			{
+			 return $this->render('ControlBundle:Default:view_websocket.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		//'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
+		'host' => $this->getParameter('proxy_ip'),
+		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		//'port' => $port,
+		'port' => $this->getParameter('proxy_port'),
+		'path' => str_replace(" ","_",$path),
+		'title' => $path
+		));
+		/*	return $this->redirect('http://194.57.105.124/vnc_auto.html?host='.$device->getInterfaceControle()->getConfigReseau()->getIP(). '&port='.$port); */
+		
+			}
+		//if ($device->getInterfaceControle()->getConfigReseau()->getProtocole()=='telnet')
+			if ($protocol=='telnet')
+		{
+				 return $this->render('ControlBundle:Default:wstelnet.html.twig', array(
+		'user' => $user,
+		'group' => $group,
+		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
+		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'port' => $port,
+		//'title' => $device->getNom()
+		));
+		}
+		
+		/* if ($protocol=='vnc') {
+			return $this->render('ControlBundle:Default:view_vnc.html.twig', array(
+			'user' => $user,
+		'group' => $group,
+		'host' => $device->getInterfaceControle()->getConfigReseau()->getIP(),
+		//'port' => $device->getInterfaceControle()->getConfigReseau()->getPort(),
+		'port' => $port,
+		'title' => $device->getNom()
+		));
+		}
+		*/
+	 }
+	 
+	 /**
+     * @Route("/control/view_vm_conf/{device_id}/{protocol}/{port}", name="view_vm_conf")
+     */
+	 public function view_vm_confAction($device_id,$protocol,$port) {
 		 
 		$authenticationUtils = $this->get('security.authentication_utils');
 		$user = $this->get('security.token_storage')->getToken()->getUser();
@@ -180,23 +236,25 @@ class DefaultController extends Controller
 			
 				$executed_tp=$run[0];
 				$tp_array=$this->read_xml($executed_tp->getDirTpUser(),$executed_tp->getTpProcessName());
-			
-				if ($executed_tp->getTp()->getManaged()==0) { // this TP is not managed
-					//Analyse du XML
-					return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
+				
+		
+				//if ($executed_tp->getTp()->getManaged()==0) { // this TP is not managed
+					$tp_array['file']=$executed_tp->getTp()->getNom();
+					return $this->render('ControlBundle:TP:TP-skeleton.html.twig', array(
 							'user' => $user,
 							'group' => $role,
 							'tp_array' => $tp_array
 							));
-				}
+				/*}
 				else {//Only 1 executed TP and it's managed
 					return $this->render('ControlBundle:TP:'.$executed_tp->getTp()->getNom().'.html.twig', array(
 							'user' => $user,
 							'group' => $role,
 							'tp_array' => $tp_array
 							));
-				}
+				}*/
 			}
+			
 		}
 		else {//User n'a pas de TP lancé
 			$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
@@ -383,13 +441,24 @@ class DefaultController extends Controller
 		if (file_exists($filename)) unlink($filename);
 		$filename=$run->getDirTpUser()."/script_delvpn_frontend.sh";
 		if (file_exists($filename)) unlink($filename);
+		
 		$filename=$run->getDirTpUser()."/script_delvpn_servvpn.sh";
 		if (file_exists($filename)) unlink($filename);
+		
 		$filename=$run->getDirTpUser()."/script_create_vpn_user.sh";
 		if (file_exists($filename)) unlink($filename);
+		
 		$filename=$run->getDirTpUser()."/".$vpn_delete_user_shell_file;
 		if (file_exists($filename)) unlink($filename);
-	
+		
+		$filename=$run->getDirTpUser()."/script_delwebsocket.sh";
+		if (file_exists($filename)) unlink($filename);
+		
+		$filename=$run->getDirTpUser()."/script_addwebsocket.sh";	
+		if (file_exists($filename)) unlink($filename);
+		
+		$filename=$run->getDirTpUser()."/script_addpath2proxy.sh";	
+		if (file_exists($filename)) unlink($filename);
 		
         return $this->forward('ControlBundle:Default:choixTP', array(
 		'user' => $user,
@@ -468,7 +537,7 @@ class DefaultController extends Controller
 			$ip->setDevice(NULL);
 			$em->persist($ip);
 			$i++;
-			file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/easy-rsa/pkitool ".$oneuser->getLastname()."\n",FILE_APPEND);
+			file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"KEY_CN=\"".$oneuser->getLastname()."_".$oneuser->getFirstname()."\" /home/adminVM/easy-rsa/pkitool ".$oneuser->getLastname()."\n",FILE_APPEND);
 			//file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/easy-rsa/pkitool --sign ".$oneuser->getLastname()."\n",FILE_APPEND);
 			file_put_contents($for_run['dir']."/".$vpn_create_user_shell_file,"/home/adminVM/client-config/make_config.sh ".$oneuser->getLastname()."\n",FILE_APPEND);
 			file_put_contents($for_run['dir']."/".$vpn_delete_user_shell_file,"/home/adminVM/easy-rsa/revoke-full ".$oneuser->getLastname()."\n",FILE_APPEND);
@@ -480,7 +549,7 @@ class DefaultController extends Controller
 	$em->persist($run);
     $em->flush();
 
-	$cmd="/usr/bin/python \"$script_name\" \"".$for_run['lab_name_avec_id_absolutepath']."\" \"".$for_run['IPv4_Serv']."\" \"".$for_run['dir']."\" ".$this->getParameter('ansible_user')." ".$this->getParameter('ansible_pass');
+	$cmd="/usr/bin/python \"$script_name\" \"".$for_run['lab_name_avec_id_absolutepath']."\" \"".$for_run['IPv4_Serv']."\" \"".$for_run['dir']."\" ".$this->getParameter('ansible_user')." ".$this->getParameter('ansible_pass')." ".$this->getParameter('frontend_ip')." ".$this->getParameter('addr_vpn')." ".$this->getParameter('addr_host_vpn');
 	
 	//echo $cmd;
 	$output = array();
@@ -503,7 +572,7 @@ class DefaultController extends Controller
 	if ( $tp->getAccess()==="vpn") {
 		$script_name_addvpn=$this->getParameter('script_addvpn');
 		$cmd="/usr/bin/python \"$script_name_addvpn\" "." ".$run->getDirTpUser();
-		//echo $cmd;	
+		//echo $cmd;
 		$output = array();
 		exec($cmd,$output);
 		$logger->info($cmd);
@@ -512,7 +581,7 @@ class DefaultController extends Controller
 		//echo $output."<br/>";
 		
 		if (strstr($output,"SUCCESS")) {
-			$msg="Connexion VPN démarée avec succès";
+			$msg="Connexion VPN démarrée avec succès";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
 		}
 		else {
@@ -541,8 +610,8 @@ class DefaultController extends Controller
 	
 	
 	
-	
-	$file_name='ControlBundle:TP:'.$tp->getNom().'.html.twig';
+	$for_run['file']=$tp->getNom();
+	$file_name='ControlBundle:TP:TP-skeleton.html.twig';
 	
 	// Ajouter paramètre avec les param pour chaque fenetre
 	// indiquer telnet ou vnc et l'id du device à chaque fois
@@ -555,7 +624,6 @@ class DefaultController extends Controller
 		'output' => $cmd,
 		'msg' => $msg
 		));
-		
 	
 	}
 	
@@ -679,7 +747,7 @@ class DefaultController extends Controller
 
 		$run=$em->getRepository('AppBundle:Run')->findOneBy(array('user'=>$user,'tp'=>$tp_id));
 					
-		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser()." \"".$name."\"";
+		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser()." \"".$name."\" reboot";
 		
 		$output = array();
 		exec($cmd,$output);
@@ -688,7 +756,7 @@ class DefaultController extends Controller
 		$output = implode("",$output);
 		//print_r($cmd." ".$output);
 		$logger->info($output);
-		if (strstr($output,"success")) {
+		if (strstr($output,"SUCCESS")) {
 			$msg=$name."  rebooté avec succès";
 			$this->get('session')->getFlashBag()->add('notice', $msg);
 		}
@@ -696,7 +764,64 @@ class DefaultController extends Controller
 			$msg=$name."  non rebooté. Une erreur a eu lieu";
 			$this->get('session')->getFlashBag()->add('danger', $msg);
 		}
-		$file_name='ControlBundle:TP:'.$tp->getNom().'.html.twig';
+		$tp_array['file']=$tp->getNom();
+		$file_name='ControlBundle:TP:TP-skeleton.html.twig';
+
+		return $this->render($file_name, array(
+			'user' => $user,
+			'group' => $group,
+			'tp_array' => $tp_array,
+			'output' => $cmd
+		));
+	}
+	
+	/**
+     * @Route("/control/restartVM/{tp_id}/{name}", name="restartVM")
+     */
+	public function restartVM($tp_id,$name){
+		$authenticationUtils = $this->get('security.authentication_utils');
+		$user = $this->get('security.token_storage')->getToken()->getUser();
+		$group=$user->getRole();
+		$em = $this->getDoctrine()->getManager();
+
+		$param_system = $this->getDoctrine()->getRepository('AppBundle:Param_System')->findOneBy(array('id' => '1'));
+
+		//$this->UpdateInterfaceControleIndex($tp_id,-1);
+		//Inutile car cela peut entrainer des chevauchements.
+
+		
+		$repository = $this->getDoctrine()->getRepository('AppBundle:TP');
+		$tp = $repository->find($tp_id);
+	
+		$repository = $this->getDoctrine()->getRepository('AppBundle:Run');
+        $run = $repository->findOneBy(array('user'=> $user));
+				
+		$tp_array=$this->read_xml($run->getDirTpUser(),$run->getTpProcessName());
+		
+		$logger = $this->get('logger');
+		$script_name=$this->getParameter('script_reboot_vm');
+
+		$run=$em->getRepository('AppBundle:Run')->findOneBy(array('user'=>$user,'tp'=>$tp_id));
+					
+		$cmd="/usr/bin/python $script_name "." ".$run->getDirTpUser()." \"".$name."\" reset";
+		
+		$output = array();
+		exec($cmd,$output);
+		
+		$logger->info($cmd);
+		$output = implode("",$output);
+		print_r($cmd." ".$output);
+		$logger->info($output);
+		if (strstr($output,"SUCCESS")) {
+			$msg=$name."  rebooté avec succès";
+			$this->get('session')->getFlashBag()->add('notice', $msg);
+		}
+		else {
+			$msg=$name."  non rebooté. Une erreur a eu lieu";
+			$this->get('session')->getFlashBag()->add('danger', $msg);
+		}
+		$tp_array['file']=$tp->getNom();
+		$file_name='ControlBundle:TP:TP-skeleton.html.twig';
 
 		return $this->render($file_name, array(
 			'user' => $user,
@@ -752,7 +877,9 @@ class DefaultController extends Controller
 			$msg="Echec de connexion";
 			$this->get('session')->getFlashBag()->add('danger', $msg);
 		}
-		$file_name='ControlBundle:TP:'.$tp->getNom().'.html.twig';
+		$tp_array['file']=$tp->getNom();
+		
+		$file_name='ControlBundle:TP:TP-skeleton.html.twig';
 
 		return $this->render($file_name, array(
 			'user' => $user,
@@ -808,8 +935,11 @@ class DefaultController extends Controller
 			$msg="Erreur de déconnexion".$output;
 			$this->get('session')->getFlashBag()->add('danger', $msg);
 		}
-		$file_name='ControlBundle:TP:'.$tp->getNom().'.html.twig';
+		$tp_array['file']=$tp->getNom();
+		
+		$file_name='ControlBundle:TP:TP-skeleton.html.twig';
 
+		
 		return $this->render($file_name, array(
 			'user' => $user,
 			'group' => $group,
@@ -845,11 +975,12 @@ class DefaultController extends Controller
 		
 		$nomlab_node=$rootNode->addChild('lab_name',$lab_name);
 		$rootNode->addChild('tp_id',$tp_id);
-		$rootNode->addChild('tp_managed',$tp->getManaged());
+		$rootNode->addChild('tp_managed',(int)$tp->getManaged());
 		$rootNode->addChild('tp_type',$tp->getType());
 		$rootNode->addChild('tp_access',$tp->getAccess());
-		$Structure_tp['tp_managed']=$tp->getManaged();
-		$Structure_tp['tp_type']=$tp->getType();
+		$Structure_tp['tp_managed']=(int) $tp->getManaged();
+		
+		$Structure_tp['tp_type']=(string) $tp->getType();
 		$Structure_tp['tp_access']=$tp->getAccess();
 		
 		$user_node->addAttribute('login',$user->getUsername());
@@ -1069,9 +1200,9 @@ class DefaultController extends Controller
 		$xml_file = simplexml_load_file($tp_dir."/".$tp_instance_name.".xml");
 		$xml_devices = $xml_file->xpath('/lab/nodes/device');
 		$tp_id = $xml_file->xpath('/lab/tp_id');
-		$tp_managed = $xml_file->xpath('/lab/tp_managed');
+		$tp_managed = implode($xml_file->xpath('/lab/tp_managed'));
 		$tp_access = implode($xml_file->xpath('/lab/tp_access'));
-		$tp_type = $xml_file->xpath('/lab/tp_type');
+		$tp_type = implode($xml_file->xpath('/lab/tp_type'));
 		
         $tp = $repository->find($tp_id[0]);
 		$lab_name=$tp->getLab()->getNomlab();
