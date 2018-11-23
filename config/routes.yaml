@@ -1,3 +1,14 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
+
+logout:
+    path: /logout
+
+api_login_check:
+    path: /api/auth
+
+users:
+    type:     rest
+    prefix:    /api
+    resource: App\Controller\Rest\UserController

@@ -1,0 +1,32 @@
+# Read the documentation: https://symfony.com/doc/master/bundles/FOSRestBundle/index.html
+fos_rest:
+    disable_csrf_role: ROLE_API_USER
+    zone:
+        - { path: ^/api/* }
+    routing_loader:
+        default_format: json
+    format_listener:
+        enabled: true
+        rules:
+        - { path: '^/api', priorities: ['json', 'xml'], fallback_format: json, prefer_extension: false }
+    exception:
+        exception_controller: 'fos_rest.exception.controller::showAction'
+        # Set exceptions status code, may be useful for custom exceptions
+        codes:
+            'Doctrine\ORM\OptimisticLockException': HTTP_CONFLICT
+        # Set exceptions messages. Set to true for default messages
+        # messages:
+           # 'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
+#    param_fetcher_listener:  true
+#    allowed_methods_listener:  true
+#    routing_loader: true
+#    view:
+#        view_response_listener:  true
+#    exception:
+#        codes:
+#            App\Exception\MyException: 403
+#        messages:
+#            App\Exception\MyException: Forbidden area.
+#    format_listener:
+#        rules:
+#            - { path: ^/api, prefer_extension: true, fallback_format: json, priorities: [ json, html ] }

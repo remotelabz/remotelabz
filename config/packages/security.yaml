@@ -1,13 +1,47 @@
 security:
+    encoders:
+        App\Entity\User:
+            algorithm: bcrypt
+
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
-        in_memory: { memory: ~ }
+        # used to reload user from session & other features (e.g. switch_user)
+        app:
+            entity:
+                class: App\Entity\User
+                property: email
     firewalls:
+        auth:
+            pattern:  ^/api/auth
+            stateless: true
+            anonymous: true
+            json_login:
+                check_path:               /api/auth
+                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
+        api:
+            pattern: ^/api/
+            stateless: true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+            provider: app
+
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
+
+        default:
             anonymous: true
+            guard:
+                authenticators:
+                    - App\Security\LoginFormAuthenticator
+                entry_point: App\Security\LoginFormAuthenticator
+
+            logout:
+                path: /logout
+                target: /login
 
             # activate different ways to authenticate
 
@@ -20,5 +54,8 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/admin, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER'] }
+        - { path: ^/, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }
