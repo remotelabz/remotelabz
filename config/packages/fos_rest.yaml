@@ -14,8 +14,9 @@ fos_rest:
         # Set exceptions status code, may be useful for custom exceptions
         codes:
             'Doctrine\ORM\OptimisticLockException': HTTP_CONFLICT
-        # Set exceptions messages. Set to true for default messages
-        # messages:
+        # Set exceptions messages. Set to true to display messages
+        messages:
+           # 'Symfony\Component\Security\Core\Exception\AccessDeniedException': false
            # 'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
 #    param_fetcher_listener:  true
 #    allowed_methods_listener:  true

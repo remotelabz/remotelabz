@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use JMS\Serializer\Annotation\ExclusionPolicy;
+use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Expose;
 use JMS\Serializer\Annotation\Groups;
 
@@ -38,6 +39,7 @@ class User implements UserInterface
      * @ORM\Column(type="json")
      * 
      * @Expose
+     * @Accessor(getter="getRoles")
      */
     private $roles = [];
 
@@ -67,6 +69,13 @@ class User implements UserInterface
      * @Expose
      */
     private $swarms;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * 
+     * @Expose
+     */
+    private $enabled = true;
 
     public function __construct()
     {
@@ -117,6 +126,11 @@ class User implements UserInterface
         $this->roles = $roles;
 
         return $this;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->getRoles());
     }
 
     /**
@@ -197,6 +211,23 @@ class User implements UserInterface
         if ($this->swarms->contains($swarm)) {
             $this->swarms->removeElement($swarm);
         }
+
+        return $this;
+    }
+
+    public function getEnabled(): ?bool
+    {
+        return $this->enabled;
+    }
+
+    public function isEnabled(): ?bool
+    {
+        return $this->enabled;
+    }
+
+    public function setEnabled(bool $enabled): self
+    {
+        $this->enabled = $enabled;
 
         return $this;
     }

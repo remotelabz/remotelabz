@@ -1,41 +1,388 @@
-{% extends 'dashboard.base.html.twig' %}
+{% extends 'base.html.twig' %}
+
+{% block header %}
+<!-- Navigation -->
+{# <nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="/">La Valise</a>
+  </div>
+  <!-- /.navbar-header -->
+
+  <ul class="nav navbar-top-links navbar-right">
+      <li class="dropdown">
+          <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+              <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-user">
+              <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+              </li>
+              <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+              </li>
+              <li class="divider"></li>
+              <li><a href="{{path('logout')}}"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+              </li>
+          </ul>
+          <!-- /.dropdown-user -->
+      </li>
+      <!-- /.dropdown -->
+  </ul>
+  <!-- /.navbar-top-links -->
+
+  
+  <!-- /.navbar-static-side -->
+</nav> #}
+
+{# <div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav navbar-collapse">
+      <ul class="nav" id="side-menu">
+
+        {% if is_granted("ROLE_SUPER_ADMINISTRATOR") %}
+
+        <li>
+          <a href="#"><i class="fa fa-dashboard fa-fw"></i> Dashboard<span class="fa arrow"></span></a>
+          <ul class="nav nav-second-level">
+            <li>
+              <a href="{{path('users')}}"><i class="fa fa-users fa-fw"></i> Utilisateurs</a>
+            </li>
+            <li>
+              <a href="#"><i class="fa fa-cog fa-fw"></i> Gestion TP <span class="fa arrow"></span></a>
+              <ul class="nav nav-third-level">
+                <li><a href="{{path('add_device')}}">Ajouter Device</a></li>
+                <li><a href="{{path('add_pod')}}">Ajouter POD</a></li>
+                <li><a href="{{path('add_connexion')}}">Ajouter Connexion</a></li>
+                <li><a href="{{path('add_lab')}}">Ajouter LAB</a></li>
+                <li><a href="{{path('add_tp')}}">Ajouter TP</a></li>
+              </ul>
+            </li>
+            <li>
+              <a href="#"><i class="fa fa-cog fa-fw"></i> Gestion TP (List) <span class="fa arrow"></span></a>
+              <ul class="nav nav-third-level">
+                <li><a href="{{path('list_Device')}}">List Device</a></li>
+                <li><a href="{{path('list_Network_Interface')}}">List Interface</a></li>
+                <li><a href="{{path('list_POD')}}">List POD</a></li>
+                <li><a href="{{path('list_Connexion')}}">List Connexion</a></li>
+                <li><a href="{{path('list_LAB')}}">List LAB</a></li>
+                <li><a href="{{path('list_TP')}}">List TP</a></li>
+                <li><a href="{{path('list_Parameter')}}">List Parametre</a></li>
+                <li><a href="{{path('list_Hyperviseur')}}">List Hyperviseur</a></li>
+                <li><a href="{{path('list_ConfigReseau')}}">List Config_Reseau</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        {% endif %}
+
+        {% if is_granted("ROLE_TEACHER") %}
+
+        <li>
+          <a href="#"><i class="fa fa-user fa-fw"></i> Enseignants<span class="fa arrow"></span></a>
+          <ul class="nav nav-second-level">
+            <li><a href="{{path('ens_add_classe')}}">Ajouter classe</a></li>
+            <li><a href="{{path('ens_add_user')}}">Ajouter étudiants</a></li>
+            <li><a href="{{path('ens_add_inclasse')}}">Ajouter dans une classe</a></li>
+          </ul>
+        </li>
+
+        {% endif %}
+
+        <li>
+          <a href="#"><i class="fa fa-laptop fa-fw"></i>Travaux pratiques<span class="fa arrow"></span></a>
+          <ul class="nav nav-second-level">
+            <li><a href="{{path('choixTP')}}">Choix TP</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div> #}
+
+<nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+    <div class="text-center navbar-brand-wrapper d-flex align-items-top justify-content-center">
+      <a class="navbar-brand brand-logo">
+        <img src="{{ asset('build/images/logo.svg') }}" alt="logo" />
+      </a>
+      <a class="navbar-brand brand-logo-mini">
+        <img src="{{ asset('build/images/logo-mini.svg') }}" alt="logo" />
+      </a>
+    </div>
+    <div class="navbar-menu-wrapper d-flex align-items-center">
+      <ul class="navbar-nav navbar-nav-right">
+        {# <li class="nav-item dropdown">
+          <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
+            <i class="mdi mdi-file-document-box"></i>
+            <span class="count">7</span>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="messageDropdown">
+            <div class="dropdown-item">
+              <p class="mb-0 font-weight-normal float-left">You have 7 unread mails
+              </p>
+              <span class="badge badge-info badge-pill float-right">View all</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <img src="../../images/faces/face4.jpg" alt="image" class="profile-pic">
+              </div>
+              <div class="preview-item-content flex-grow">
+                <h6 class="preview-subject ellipsis font-weight-medium text-dark">David Grey
+                  <span class="float-right font-weight-light small-text">1 Minutes ago</span>
+                </h6>
+                <p class="font-weight-light small-text">
+                  The meeting is cancelled
+                </p>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <img src="../../images/faces/face2.jpg" alt="image" class="profile-pic">
+              </div>
+              <div class="preview-item-content flex-grow">
+                <h6 class="preview-subject ellipsis font-weight-medium text-dark">Tim Cook
+                  <span class="float-right font-weight-light small-text">15 Minutes ago</span>
+                </h6>
+                <p class="font-weight-light small-text">
+                  New product launch
+                </p>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <img src="../../images/faces/face3.jpg" alt="image" class="profile-pic">
+              </div>
+              <div class="preview-item-content flex-grow">
+                <h6 class="preview-subject ellipsis font-weight-medium text-dark"> Johnson
+                  <span class="float-right font-weight-light small-text">18 Minutes ago</span>
+                </h6>
+                <p class="font-weight-light small-text">
+                  Upcoming board meeting
+                </p>
+              </div>
+            </a>
+          </div>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+            <i class="mdi mdi-bell"></i>
+            <span class="count">4</span>
+          </a>
+          <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
+            <a class="dropdown-item">
+              <p class="mb-0 font-weight-normal float-left">You have 4 new notifications
+              </p>
+              <span class="badge badge-pill badge-warning float-right">View all</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <div class="preview-icon bg-success">
+                  <i class="mdi mdi-alert-circle-outline mx-0"></i>
+                </div>
+              </div>
+              <div class="preview-item-content">
+                <h6 class="preview-subject font-weight-medium text-dark">Application Error</h6>
+                <p class="font-weight-light small-text">
+                  Just now
+                </p>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <div class="preview-icon bg-warning">
+                  <i class="mdi mdi-comment-text-outline mx-0"></i>
+                </div>
+              </div>
+              <div class="preview-item-content">
+                <h6 class="preview-subject font-weight-medium text-dark">Settings</h6>
+                <p class="font-weight-light small-text">
+                  Private message
+                </p>
+              </div>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item preview-item">
+              <div class="preview-thumbnail">
+                <div class="preview-icon bg-info">
+                  <i class="mdi mdi-email-outline mx-0"></i>
+                </div>
+              </div>
+              <div class="preview-item-content">
+                <h6 class="preview-subject font-weight-medium text-dark">New user registration</h6>
+                <p class="font-weight-light small-text">
+                  2 days ago
+                </p>
+              </div>
+            </a>
+          </div>
+        </li> #}
+        <li class="nav-item dropdown d-none d-xl-inline-block">
+          <a class="nav-link dropdown-toggle" id="UserDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
+            <span class="profile-text">{{ app.user.firstName }} {{ app.user.lastName }}</span>
+            <img class="img-xs rounded-circle" src="{{ asset('build/images/faces/face1.jpg') }}" alt="Profile image">
+          </a>
+          <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
+            <a class="dropdown-item p-0">
+              <div class="d-flex border-bottom">
+                <div class="py-3 px-4 d-flex align-items-center justify-content-center">
+                  <i class="mdi mdi-bookmark-plus-outline mr-0 text-gray"></i>
+                </div>
+                <div class="py-3 px-4 d-flex align-items-center justify-content-center border-left border-right">
+                  <i class="mdi mdi-account-outline mr-0 text-gray"></i>
+                </div>
+                <div class="py-3 px-4 d-flex align-items-center justify-content-center">
+                  <i class="mdi mdi-alarm-check mr-0 text-gray"></i>
+                </div>
+              </div>
+            </a>
+            <a class="dropdown-item mt-2">
+              Manage Accounts
+            </a>
+            <a class="dropdown-item">
+              Change Password
+            </a>
+            <a class="dropdown-item">
+              Check Inbox
+            </a>
+            <a class="dropdown-item">
+              Sign Out
+            </a>
+          </div>
+        </li>
+      </ul>
+      <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+        <span class="mdi mdi-menu"></span>
+      </button>
+    </div>
+  </nav>
+{% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-4 col-md-offset-4">
-            <div class="login-panel panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Please Sign In</h3>
+<div class="container-fluid page-body-wrapper">
+    <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        <ul class="nav">
+          <li class="nav-item nav-profile">
+            <div class="nav-link">
+              <div class="user-wrapper">
+                <div class="profile-image">
+                  <img src="{{ asset('build/images/faces/face1.jpg') }}" alt="profile image">
                 </div>
-                <div class="panel-body">
-                    <form role="form" method="POST">
-                        {% if error %}
-                            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                        {% endif %}
-
-                        <fieldset>
-                            <div class="form-group">
-                                <input class="form-control" placeholder="E-mail" name="email" type="email" required autofocus>
-                            </div>
-                            <div class="form-group">
-                                <input class="form-control" placeholder="Password" name="password" type="password" value="" required>
-                            </div>
-
-                            {# <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}"> #}
-
-                            <div class="checkbox mb-3">
-                                <label>
-                                    <input type="checkbox" name="_remember_me"> Remember me
-                                </label>
-                            </div>
-                            <!-- Change this to a button or input when using this as a form -->
-                            <button class="btn btn-lg btn-success btn-block" type="submit">Login</button>
-                        </fieldset>
-                    </form>
+                <div class="text-wrapper">
+                  <p class="profile-name">{{ app.user.firstName }} {{ app.user.lastName }}</p>
+                  <div>
+                    <small class="designation text-muted">Manager</small>
+                    <span class="status-indicator online"></span>
+                  </div>
                 </div>
+              </div>
+              <button class="btn btn-success btn-block">New Project
+              </button>
             </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('users') }}">
+              <i class="menu-icon fas fa-users fa-fw"></i>
+              <span class="menu-title">Users</span>
+            </a>
+          </li>
+          {# <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+              <i class="menu-icon mdi mdi-content-copy"></i>
+              <span class="menu-title">Basic UI Elements</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="ui-basic">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/ui-features/buttons.html">Buttons</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/ui-features/typography.html">Typography</a>
+                </li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../../pages/forms/basic_elements.html">
+              <i class="menu-icon mdi mdi-backup-restore"></i>
+              <span class="menu-title">Form elements</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../../pages/charts/chartjs.html">
+              <i class="menu-icon mdi mdi-chart-line"></i>
+              <span class="menu-title">Charts</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../../pages/tables/basic-table.html">
+              <i class="menu-icon mdi mdi-table"></i>
+              <span class="menu-title">Tables</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../../pages/icons/font-awesome.html">
+              <i class="menu-icon mdi mdi-sticker"></i>
+              <span class="menu-title">Icons</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
+              <i class="menu-icon mdi mdi-restart"></i>
+              <span class="menu-title">User Pages</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="auth">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/samples/blank-page.html"> Blank Page </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/samples/login.html"> Login </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/samples/register.html"> Register </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/samples/error-404.html"> 404 </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="../../pages/samples/error-500.html"> 500 </a>
+                </li>
+              </ul>
+            </div>
+          </li> #}
+        </ul>
+      </nav>
+  
+
+    <div class="main-panel">
+      <div class="content-wrapper">
+        <div class="row">
+          <div class="flashbag-container col-lg-12">
+            {% for label, messages in app.flashes %}
+              {% for message in messages %}
+                  <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
+                    <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message }}
+                  </div>
+              {% endfor %}
+            {% endfor %}
+          </div>
         </div>
+        {% block wrapper %}{% endblock %}
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

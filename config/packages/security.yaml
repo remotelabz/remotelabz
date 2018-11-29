@@ -10,6 +10,12 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+
+    role_hierarchy:
+        ROLE_TEACHER: [ROLE_USER]
+        ROLE_ADMINISTRATOR: [ROLE_TEACHER]
+        ROLE_SUPER_ADMINISTRATOR: [ROLE_ADMINISTRATOR]
+
     firewalls:
         auth:
             pattern:  ^/api/auth

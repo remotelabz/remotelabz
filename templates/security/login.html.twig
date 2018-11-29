@@ -3,41 +3,70 @@
 {% block title %}Log in!{% endblock %}
 
 {% block body %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-4 col-md-offset-4">
-            <div class="login-panel panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Sign In</h3>
-                </div>
-                <div class="panel-body">
+<div class="container-fluid page-body-wrapper full-page-wrapper auth-page">
+    <div class="content-wrapper d-flex align-items-center auth auth-bg-1 theme-one">
+        <div class="row w-100">
+            <div class="col-lg-4 mx-auto">
+                
+                <div class="auto-form-wrapper">
+                    {% if error %}
+                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
                     <form role="form" method="POST">
-                        {% if error %}
-                            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                        {% endif %}
-
-                        <fieldset>
-                            <div class="form-group">
-                                <input class="form-control" placeholder="E-mail" name="email" type="email" required autofocus>
+                        <div class="form-group">
+                            <label class="label">Email</label>
+                            <div class="input-group">
+                                <input class="form-control" placeholder="user@domain.com" name="email" type="email" required autofocus>
+                                <div class="input-group-append">
+                                    <span class="input-group-text">
+                                        <i class="mdi mdi-check-circle-outline"></i>
+                                    </span>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <input class="form-control" placeholder="Password" name="password" type="password" value="" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" placeholder="*********" name="password" value="" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text">
+                                        <i class="mdi mdi-check-circle-outline"></i>
+                                    </span>
+                                </div>
                             </div>
+                        </div>
 
-                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                            <div class="checkbox mb-3">
-                                <label>
-                                    <input type="checkbox" name="_remember_me"> Remember me
+                        <div class="form-group">
+                            <button class="btn btn-primary submit-btn btn-block">Sign in</button>
+                        </div>
+                        {# Add remember_me and forgot_password #}
+                        {# <div class="form-group d-flex justify-content-between">
+                            <div class="form-check form-check-flat mt-0">
+                                <label class="form-check-label">
+                                    <input type="checkbox" class="form-check-input" checked> Keep me signed in
                                 </label>
                             </div>
-                            <!-- Change this to a button or input when using this as a form -->
-                            <button class="btn btn-lg btn-success btn-block" type="submit">Login</button>
-                        </fieldset>
+                            <a href="#" class="text-small forgot-password text-black">Forgot Password</a>
+                        </div> #}
                     </form>
                 </div>
+                <ul class="auth-footer">
+                    {# <li>
+                        <a href="#">Conditions</a>
+                    </li>
+                    <li>
+                        <a href="#">Help</a>
+                    </li>
+                    <li>
+                        <a href="#">Terms</a>
+                    </li> #}
+                </ul>
+                <p class="footer-text text-center">Design by Bootstrapdash. Made by F. Nolot, J. Hubert & O. Flauzac.</p>
             </div>
         </div>
     </div>
+    <!-- content-wrapper ends -->
 </div>
 {% endblock %}

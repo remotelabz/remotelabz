@@ -7,6 +7,8 @@ use FOS\RestBundle\Routing\ClassResourceInterface;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Version;
 
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+
 // To see how routes are automatically generated in FOSRestController, refer to :
 // https://symfony.com/doc/master/bundles/FOSRestBundle/5-automatic-route-generation_single-restful-controller.html
 class UserController extends FOSRestController implements ClassResourceInterface
@@ -28,7 +30,8 @@ class UserController extends FOSRestController implements ClassResourceInterface
     {
         $repository = $this->getDoctrine()->getRepository('App:User');
 
-        $view = $this->view(null, 200);
+        $code = 200;
+        $data = [];
 
         $user = $repository->find($id);
 
@@ -39,33 +42,54 @@ class UserController extends FOSRestController implements ClassResourceInterface
             $em->persist($user);
             $em->flush();
 
-            $data = array('user' => $user);
-
-            $view->setData($data);
+            $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
         else {
-            $view->setStatusCode(404);
+            $code = 404;
         }
+
+        $view = $this->view($data, $code);
 
         return $this->handleView($view);
     }
 
+    /**
+     * @IsGranted("ROLE_ADMINISTRATOR")
+     */
     public function deleteAction($id)
     {
         $repository = $this->getDoctrine()->getRepository('App:User');
-
-        $view = $this->view(null, 200);
+        
+        $code = 200;
+        $data = [];
         
         $user = $repository->find($id);
 
-        if ($user != null) {
+        if ($user == null) {
+            $code = 404;
+        }
+        // Prevent super admin deletion
+        else if ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+            $code = 403;
+        }
+        else {
             $em = $this->getDoctrine()->getManager();
             $em->remove($user);
             $em->flush();
+
+            $data['message'] = 'User has been deleted.';
         }
-        else {
-            $view->setStatusCode(404);
-        }
+
+        $view = $this->view($data, $code);
+
+        return $this->handleView($view);
+    }
+
+    public function meAction()
+    {
+        $user = $this->getUser();
+
+        $view = $this->view($user, 200);
 
         return $this->handleView($view);
     }

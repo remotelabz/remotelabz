@@ -12,3 +12,5 @@ users:
     type:     rest
     prefix:    /api
     resource: App\Controller\Rest\UserController
+    options:
+        expose: true
