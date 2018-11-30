@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\AddUserType;
 
+use App\Controller\AppControllerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -12,7 +13,10 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserController extends AbstractController implements WebController
+/**
+ * Undocumented class
+ */
+class UserController extends AbstractController implements AppControllerInterface
 {
     public $passwordEncoder;
 
@@ -25,7 +29,6 @@ class UserController extends AbstractController implements WebController
      * @Route("/admin/users", name="users")
      * 
      * @param $request The request
-     * 
      */
     public function index(Request $request)
     {

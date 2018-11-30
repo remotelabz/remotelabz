@@ -2,6 +2,6 @@
 
 namespace App\Controller;
 
-interface WebController {
+interface AppControllerInterface {
   
 }
