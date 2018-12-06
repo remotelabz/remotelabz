@@ -6,7 +6,7 @@ import API from './app';
 
 const api = new API('flavor')
   
-$(function() {
+$(function () {
     var flavorTable = $('#flavorTable').DataTable({
         ajax: {
             url: Routing.generate('get_flavors'),

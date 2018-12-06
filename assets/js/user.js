@@ -38,7 +38,7 @@ $(function () {
         }, {
             data: 'email'
         }, {
-            data: 'swarms[, ].name',
+            data: 'courses[, ].name',
             defaultContent: ''
         }]
     });
