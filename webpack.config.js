@@ -20,6 +20,7 @@ Encore
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
     .addEntry('flavor', './assets/js/flavor.js')
+    .addEntry('hypervisor', './assets/js/hypervisor.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

@@ -10,8 +10,8 @@ use Symfony\Component\Routing\Annotation\Route;
 class FlavorController extends AppController
 {
     /**
-    * @Route("/admin/flavors", name="flavors")
-    */
+     * @Route("/admin/flavors", name="flavors")
+     */
     public function indexAction(Request $request)
     {
         $flavor = new Flavor();
@@ -34,8 +34,8 @@ class FlavorController extends AppController
     }
         
     /**
-    * @Route("/flavors", name="get_flavors", methods="GET")
-    */
+     * @Route("/flavors", name="get_flavors", methods="GET")
+     */
     public function cgetAction()
     {
         $repository = $this->getDoctrine()->getRepository('App:Flavor');
@@ -46,8 +46,8 @@ class FlavorController extends AppController
     }
         
     /**
-    * @Route("/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
-    */
+     * @Route("/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
+     */
     public function deleteAction($id)
     {
         $repository = $this->getDoctrine()->getRepository('App:Flavor');

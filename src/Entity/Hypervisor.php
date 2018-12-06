@@ -33,6 +33,11 @@ class Hypervisor
      */
     private $operatingSystems;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $arguments;
+
     public function __construct()
     {
         $this->systems = new ArrayCollection();
@@ -94,6 +99,18 @@ class Hypervisor
                 $operatingSystem->setHypervisor(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getArguments(): ?string
+    {
+        return $this->arguments;
+    }
+
+    public function setArguments(?string $arguments): self
+    {
+        $this->arguments = $arguments;
 
         return $this;
     }

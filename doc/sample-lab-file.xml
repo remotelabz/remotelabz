@@ -1,0 +1,33 @@
+<lab>
+  <nodes>
+    <device type="virtuel" property="X" id="6" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="1">
+      <nom>VM_1</nom>
+      <interface id="19" nom_physique="eth0" nom_virtuel="tap12"/>
+      <interface_control id="14" nom_physique="eth0_phy_VM1" nom_virtuel="eth0_ctrl_VM1" IPv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" Protocole="vnc" Port="7220"/>
+    </device>
+    <device type="virtuel" property="X" id="9" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="2">
+      <nom>VM_2</nom>
+      <interface id="20" nom_physique="eth0" nom_virtuel="tap13"/>
+      <interface_control id="15" nom_physique="eth0_phy_ctrl_VM2" nom_virtuel="eth0_ctrl_VM2" IPv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" Protocole="vnc" Port="7221"/>
+    </device>
+    <device type="comp_physique" property="switch" id="10" script="" image="Sans" relativ_path="Sans" order="3">
+      <nom>OVS1</nom>
+      <interface id="16" nom_physique="port1" nom_virtuel="port1"/>
+      <interface id="21" nom_physique="port2" nom_virtuel="port2"/>
+      <interface id="24" nom_physique="port3" nom_virtuel="port3"/>
+    </device>
+  </nodes>
+  <networks>
+    <network type="OVS" device_id="10">
+      <port id="1" interface_id1="19" vlan1="1" interface_id2="16" vlan2="1"/>
+      <port id="2" interface_id1="20" vlan1="1" interface_id2="21" vlan2="1"/>
+    </network>
+  </networks>
+  <init>
+    <serveur>
+      <IPv4>194.57.105.124</IPv4>
+      <IPv6>0</IPv6>
+      <index>12</index>
+    </serveur>
+  </init>
+</lab>
