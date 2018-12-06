@@ -1,16 +1,15 @@
 /* Icons */
+
 .icons-list {
   border-left: 1px solid $border-color;
   border-bottom: 1px solid $border-color;
-
-  > div {
+  >div {
     background: $white;
     border-top: 1px solid $border-color;
     border-right: 1px solid $border-color;
     @include display-flex;
     @include align-items(center);
-    padding: 15px;
-    font-family: $type-1;
+    padding:15px 15px;
     font-size: $default-font-size;
 
     i {

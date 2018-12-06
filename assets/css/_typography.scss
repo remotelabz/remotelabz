@@ -1,59 +1,37 @@
 /* Typography */
-
-:root,
 body {
   font-size: 1rem;
-  font-family: $type-1;
+  font-family: $TYPE-1;
 }
 
-.h1,
-.h2,
-.h3,
-.h4,
-.h5,
-.h6,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: $type-1;
-  font-weight: 500;
-}
-
-p {
-  font-size: $default-font-size;
-}
-
-.h1,
 h1 {
-  font-size: 2.19rem;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
-.h2,
 h2 {
-  font-size: 1.88rem;
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 
-.h3,
 h3 {
-  font-size: 1.56rem;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
-.h4,
 h4 {
-  font-size: 1.13rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
 }
 
-.h5,
 h5 {
   font-size: 1rem;
+  font-weight: 700;
 }
 
-.h6,
 h6 {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 p {
@@ -61,116 +39,63 @@ p {
 }
 
 .display-1 {
-  font-size: 3.75rem;
+  @media (max-width: 991px) {
+    font-size: 4rem;
+  }
+}
+
+.display-2 {
+  @media (max-width: 991px) {
+    font-size: 3.5rem;
+  }
+}
+
+.display-3 {
   @media (max-width: 991px) {
     font-size: 3rem;
   }
 }
 
-.display-2 {
-  font-size: 3.125rem;
+.display-4 {
   @media (max-width: 991px) {
     font-size: 2.5rem;
   }
 }
 
-.display-3 {
-  font-size: 2.5rem;
-  @media (max-width: 991px) {
-    font-size: 2rem;
-  }
-}
-
-.display-4 {
-  font-size: 1.875rem;
-  @media (max-width: 991px) {
-    font-size: 1.5rem;
-  }
-}
-
-.display-5 {
-  font-size: 1.25rem;
-  @media (max-width: 991px) {
-    font-size: 1rem;
-  }
-}
-
-.blockquote {
-  padding: 1.25rem;
-  border: 1px solid $border-color;
-}
-
-address {
-  p {
-    margin-bottom: 0;
-  }
-}
-
-//blockqoute color variations
-@each $color,
-$value in $theme-colors {
-  .blockquote-#{$color} {
-    @include blockquote($value);
-  }
-}
-
-.page-title {
-  color: $black;
-  margin: 0.38rem 0 0.75rem;
-}
-
 .card-title {
-  font-family: $type-2;
+  border-bottom: 1px solid $border-color;
+  padding-bottom: 20px;
   font-weight: 500;
-  color: #404852;
-  margin-bottom: 22px;
-  font-size: 14px;
-  text-transform: capitalize;
-  .rtl & {
-    text-align: right;
-  }
-}
-
-.card-subtitle {
-  @extend .text-gray;
-  font-family: $type-1;
-  margin-top: 0.625rem;
-  margin-bottom: 0.625rem;
-}
-
-.card-description {
-  margin-bottom: 0.9375rem;
-  font-family: $type-1;
-  .rtl & {
-    text-align: right;
-  }
-}
-
-.font-weight-normal {
-  font-weight: 400;
+  font-family: $TYPE-2;
+  margin-bottom: 1.65rem;
 }
 
 .font-weight-medium {
   font-weight: 500;
 }
 
-.font-weight-semibold {
+.font-weight-bold {
   font-weight: 600;
 }
 
-small,
-.text-small {
-  font-size: 12px;
+.font-weight-regular {
+  font-weight: 400;
 }
 
-.icon-lg {
-  font-size: 2.5rem;
+.font-weight-light {
+  font-weight: 300;
+}
+.icon-sm{
+  font-size: 16px;
+}
+.icon-md{
+  font-size: 25px;
+}
+.icon-lg{
+  font-size: 40px;
 }
 
-.icon-md {
-  font-size: 1.875rem;
-}
-
-.icon-sm {
-  font-size: 1rem;
+.card-description {
+  font-size: $default-font-size;
+  color: #585858;
 }

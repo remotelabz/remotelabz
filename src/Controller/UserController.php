@@ -3,20 +3,23 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\AddUserType;
+use App\Form\UserType;
 
-use App\Controller\AppControllerInterface;
+use App\Controller\AppController;
+use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 /**
- * Undocumented class
+ * @IsGranted("ROLE_ADMINISTRATOR")
  */
-class UserController extends AbstractController implements AppControllerInterface
+class UserController extends AppController
 {
     public $passwordEncoder;
 
@@ -26,15 +29,13 @@ class UserController extends AbstractController implements AppControllerInterfac
     }
 
     /**
-     * @Route("/admin/users", name="users")
-     * 
-     * @param $request The request
+     * @Route("/admin/users", name="users", methods="GET")
      */
-    public function index(Request $request)
+    public function indexAction(Request $request)
     {
         $user = new User();
 
-        $addUserForm = $this->createForm(AddUserType::class, $user);
+        $addUserForm = $this->createForm(UserType::class, $user);
         $addUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class)
             ->add('submit', SubmitType::class)
@@ -43,25 +44,21 @@ class UserController extends AbstractController implements AppControllerInterfac
         $addUserForm->handleRequest($request);
         $addUserFromFileForm->handleRequest($request);
 
-        if ($addUserForm->isSubmitted() && $addUserForm->isValid())
-        {
+        if ($addUserForm->isSubmitted() && $addUserForm->isValid()) {
             $user = $addUserForm->getData();
-            $user->setPassword( $this->passwordEncoder->encodePassword($user, $user->getPassword()) );
+            $user->setPassword($this->passwordEncoder->encodePassword($user, $user->getPassword()));
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);
             $entityManager->flush();
 
             $this->addFlash('success', 'User has been created.');
-        }
-        else if ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid())
-        {
+        } elseif ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
             $file = $addUserFromFileForm->getData()['file'];
 
             $fileExtension = strtolower($file->getClientOriginalExtension());
 
-            if (in_array($fileExtension, ['csv']))
-            {
+            if (in_array($fileExtension, ['csv'])) {
                 $fileSocket = fopen($file, 'r');
 
                 $addedUsers = [];
@@ -91,6 +88,108 @@ class UserController extends AbstractController implements AppControllerInterfac
     }
 
     /**
+     * @Route("/users", name="get_users", methods="GET")
+     */
+    public function cgetAction()
+    {
+        $repository = $this->getDoctrine()->getRepository('App:User');
+
+        $data = $repository->findAll();
+
+        return $this->json($data);
+    }
+
+    // /**
+    //  * @Route("/users", name="post_user", methods="POST")
+    //  */
+    // public function postAction()
+    // {
+    //     $repository = $this->getDoctrine()->getRepository('App:User');
+    //     $em = $this->getDoctrine()->getManager();
+    // }
+
+    /**
+     * @Route("/users/{id<\d+>}", name="get_user", methods="GET")
+     */
+    public function getAction($id)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:User');
+
+        $user = $repository->find($id);
+
+        if ($user == null) {
+            throw new NotFoundHttpException('This user does not exist.');
+        }
+
+        return $this->json($user);
+    }
+
+    /**
+     * @Route("/users/{id<\d+>}/toggle", name="toggle_user", methods="PATCH")
+     */
+    public function toggleAction($id)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:User');
+
+        $data = [];
+
+        $user = $repository->find($id);
+
+        if ($user == null) {
+            throw new NotFoundHttpException('This user does not exist.');
+        } else {
+            $user->setEnabled(!$user->isEnabled());
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($user);
+            $em->flush();
+
+            $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
+        }
+
+        return $this->json($data);
+    }
+
+    /**
+     * @Route("/users/{id<\d+>}", name="delete_user", methods="DELETE")
+     */
+    public function deleteAction($id)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:User');
+        
+        $status = 200;
+        $data = [];
+        
+        $user = $repository->find($id);
+
+        if ($user == null) {
+            $status = 404;
+        }
+        // Prevent super admin deletion
+        elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+            $status = 403;
+        } else {
+            $em = $this->getDoctrine()->getManager();
+            $em->remove($user);
+            $em->flush();
+
+            $data['message'] = 'User has been deleted.';
+        }
+
+        return $this->json($data, $status);
+    }
+
+    /**
+     * @Route("/users/me", name="get_user_current", methods="GET")
+     */
+    public function meAction()
+    {
+        $user = $this->getUser();
+
+        return $this->json($user);
+    }
+
+    /**
      * Format du tableau :
      * Nom,Prénom,Mail
      * @return The number of elements added
@@ -116,9 +215,8 @@ class UserController extends AbstractController implements AppControllerInterfac
             $user->setFirstName($data[1]);
             $user->setEmail(trim($data[2])); // trim newline because this is the last field
 
-            if ( $repository->findByEmail(trim($data[2])) == null ) 
-            {
-                $user->setPassword( $this->passwordEncoder->encodePassword($user, \random_bytes(10)) );
+            if ($repository->findByEmail(trim($data[2])) == null) {
+                $user->setPassword($this->passwordEncoder->encodePassword($user, \random_bytes(10)));
                 $entityManager->persist($user);
 
                 $addedUsers[$i] = $user;

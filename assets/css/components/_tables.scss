@@ -1,68 +1,50 @@
 /* Tables */
+
 .table {
   margin-bottom: 0;
-
   thead {
     th {
       border-top: 0;
       border-bottom-width: 1px;
-      font-family: $type-2;
-      font-weight: 500;
-
-      i {
+      i{
         margin-left: 0.325rem;
       }
     }
   }
-
-  td,
-  th {
+  th,
+  td {
     vertical-align: middle;
     font-size: $default-font-size;
     line-height: 1;
-    white-space: nowrap;
-
     img {
-      @extend .img-xs;
+      width: 30px;
+      height: 30px;
       border-radius: 100%;
     }
-
     .badge {
       margin-bottom: 0;
     }
-
-    .form-check,
-    .form-radio {
-      margin-top: 0;
-      margin-bottom: -0px;
-    }
   }
-
-  &.table-borderless {
+  th{
+    font-family: $TYPE-2;
+    font-weight: 500;
+    color: theme-color(dark);
+  }
+  td{
+    font-family: $TYPE-1;
+    font-weight: 400;
+    font-size: 13px;
+  }
+  &.table-borderless{
     border: none;
-
-    td,
-    th,
-    tr {
+    tr,td,th{
       border: none;
     }
   }
-
-  &.table-bordered {
-    thead {
-      border: 1px solid $border-color;
-      border-bottom: none;
-      tr {
-        th {
-          border-left: none;
-          border-right: none;
-        }
-      }
-    }
-
-    tbody {
-      tr {
-        td {}
+  &.table-dark{
+    thead{
+      th{
+        color: $table-inverse-color;
       }
     }
   }

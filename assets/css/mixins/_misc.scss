@@ -47,3 +47,8 @@
 	max-width:100%;
 	white-space: nowrap;
 }
+
+// Color Functions Mixins
+@mixin text-color($color) {
+  color: $color !important;
+}

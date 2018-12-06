@@ -2,6 +2,12 @@ jms_serializer:
     visitors:
         xml:
             format_output: '%kernel.debug%'
+    
+    default_context:
+        serialization:
+            enable_max_depth_checks: true
+        deserialization:
+            enable_max_depth_checks: false
 #    metadata:
 #        auto_detection: false
 #        directories:

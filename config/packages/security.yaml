@@ -26,14 +26,6 @@ security:
                 success_handler:          lexik_jwt_authentication.handler.authentication_success
                 failure_handler:          lexik_jwt_authentication.handler.authentication_failure
 
-        api:
-            pattern: ^/api/
-            stateless: true
-            guard:
-                authenticators:
-                    - lexik_jwt_authentication.jwt_token_authenticator
-            provider: app
-
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -43,6 +35,7 @@ security:
             guard:
                 authenticators:
                     - App\Security\LoginFormAuthenticator
+                    - lexik_jwt_authentication.jwt_token_authenticator
                 entry_point: App\Security\LoginFormAuthenticator
 
             logout:
@@ -62,6 +55,5 @@ security:
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER'] }
         - { path: ^/, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }

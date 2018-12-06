@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+use JMS\Serializer\Annotation as Serializer;
 use JMS\Serializer\Annotation\ExclusionPolicy;
 use JMS\Serializer\Annotation\Accessor;
 use JMS\Serializer\Annotation\Expose;
@@ -64,11 +65,12 @@ class User implements UserInterface
     private $firstName;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Swarm", inversedBy="users")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
      * 
      * @Expose
+     * @Serializer\MaxDepth(2)
      */
-    private $swarms;
+    private $courses;
 
     /**
      * @ORM\Column(type="boolean")
@@ -79,7 +81,7 @@ class User implements UserInterface
 
     public function __construct()
     {
-        $this->swarms = new ArrayCollection();
+        $this->courses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -190,26 +192,26 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection|Swarm[]
+     * @return Collection|Course[]
      */
-    public function getSwarms(): Collection
+    public function getCourses(): Collection
     {
-        return $this->swarms;
+        return $this->courses;
     }
 
-    public function addSwarm(Swarm $swarm): self
+    public function addCourse(Course $course): self
     {
-        if (!$this->swarms->contains($swarm)) {
-            $this->swarms[] = $swarm;
+        if (!$this->courses->contains($course)) {
+            $this->courses[] = $course;
         }
 
         return $this;
     }
 
-    public function removeSwarm(Swarm $swarm): self
+    public function removeCourse(Course $course): self
     {
-        if ($this->swarms->contains($swarm)) {
-            $this->swarms->removeElement($swarm);
+        if ($this->courses->contains($course)) {
+            $this->courses->removeElement($course);
         }
 
         return $this;

@@ -1,5 +1,4 @@
 /* Utilities */
-
 .grid-margin {
   margin-bottom: $grid-gutter-width;
 }
@@ -57,10 +56,27 @@
   @include display-flex;
   @include align-items(stretch);
   @include justify-content(stretch);
-  >.card {
+
+  > .card {
     width: 100%;
     min-width: 100%;
   }
+}
+
+.border-top {
+  border-top: $border-width solid $border-color;
+}
+
+.border-bottom {
+  border-bottom: $border-width solid $border-color;
+}
+
+.border-right {
+  border-right: $border-width solid $border-color;
+}
+
+.border-left {
+  border-left: $border-width solid $border-color;
 }
 
 .border-right-sm {
@@ -87,47 +103,14 @@
   }
 }
 
-.border-strong {
-  border-color: darken($border-color, 80%);
-}
-
-.count-wrapper {
-  position: relative;
-  .count {
-    position: absolute;
-    width: auto;
-    min-width: 8px;
-    min-height: 8px;
-    padding: 2px 4px;
-    font-size: 75%;
-    line-height: 1;
-    vertical-align: middle;
-    @include border-radius(100%);
-    color: $white;
-    font-weight: 500;
-    &.top-right {
-      top: -5px;
-      right: 0;
-    }
-    &.bottom-right {
-      bottom: -5px;
-      right: 0;
-    }
-    &.bottom-left {
-      bottom: -5px;
-      left: 0;
-    }
-    &.top-left {
-      top: -5px;
-      left: 0;
-    }
-  }
-}
-
 .border-left-md {
   @media (min-width: 768px) {
     border-left: $border-width solid $border-color;
   }
+}
+
+.border-bottom-none {
+  border-bottom: none;
 }
 
 .border-left-lg {
@@ -137,7 +120,7 @@
 }
 
 .text-gray {
-  color: #969696;
+  color: #8c8c8c;
 }
 
 .text-black {
@@ -148,43 +131,35 @@
   flex-grow: 1;
 }
 
-.ellipsis {
-  max-width: 95%;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.no-wrap {
-  white-space: nowrap;
-}
-
-.status-indicator {
-  border-width: 2px;
-  border-style: solid;
-  border-color: theme-color(warning);
-  border-radius: 100%;
-  display: inline-block;
-  height: 8px;
-  width: 8px;
-  &.online {
-    border-color: theme-color(success);
-  }
-  &.offline {
-    border-color: theme-color(primary);
-  }
-  &.away {
-    border-color: theme-color(warning);
-  }
-}
-
 .bg-transparent {
   background: transparent;
 }
 
-@each $color,
-$value in $theme-colors {
-  .bg-inverse-#{$color} {
-    @include bg-inverse-variant($value);
+.item-relative {
+  position: relative;
+}
+
+.profile-image {
+  position: relative;
+
+  img {
+    width: 40px;
+    height: 40px;
+    @include border-radius(100%);
+  }
+
+  .online-status {
+    position: absolute;
+    bottom: 3px;
+    right: -3px;
+    height: 10px;
+    width: 10px;
+    border: 1px solid $white;
+    display: block;
+    @include border-radius(100%);
+
+    &.online {
+      background: theme-color(success);
+    }
   }
 }

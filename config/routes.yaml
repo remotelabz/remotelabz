@@ -7,10 +7,3 @@ logout:
 
 api_login_check:
     path: /api/auth
-
-users:
-    type:     rest
-    prefix:    /api
-    resource: App\Controller\Rest\UserController
-    options:
-        expose: true

@@ -5,9 +5,9 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\SystemRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\OperatingSystemRepository")
  */
-class System
+class OperatingSystem
 {
     /**
      * @ORM\Id()
@@ -22,7 +22,7 @@ class System
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor", inversedBy="systems")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor", inversedBy="operatingSystems")
      */
     private $hypervisor;
 

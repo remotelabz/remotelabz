@@ -1,9 +1,11 @@
 /*------------------------------------------------------------------
  [Master Stylesheet]
 
-  Project:	Star Admin Bootstrap Template [Free Version]
-  Version:	2.0.0
+  Project:	Stellar Admin [ FREE VERSION ]
+  Version:	1.0
 -------------------------------------------------------------------*/
+
+
 
 /*-------------------------------------------------------------------
   ===== Table of Contents =====
@@ -15,12 +17,11 @@
   * Template mixins
     + Animation Mixins
     + Background Mixins
-    + BlockQuote Mixins
     + Badges Mixins
+    + BlockQuote Mixins
     + Buttons Mixins
-    + Cards Mixins
     + Miscellaneous Mixins
-    + Text Mixins
+    + Paginations
   * Core Styles
     + Reset Styles
     + Fonts
@@ -36,61 +37,53 @@
     + Dashboard
   * Components
     + Badges
-    + Bootstrap Progress
     + Buttons
     + Cards
     + Checkboxes and Radios
-    + Dropdowns
     + Forms
     + Icons
     + Lists
-    + Nav
-    + New Account
+    + Pagination
     + Preview
+    + Pricing Table
     + Tables
+    + Flot Chart
   * Landing screens
     + Auth
     + Error
 -------------------------------------------------------------------*/
 
+
 /*-------------------------------------------------------------------*/
-
 /* === Import Bootstrap functions and variables === */
-
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/variables";
-/*-------------------------------------------------------------------*/
 
+/*-------------------------------------------------------------------*/
 /* === Import template variables === */
-
 @import "variables";
+
 /*-------------------------------------------------------------------*/
-
 /* === SCSS Compass Functions === */
-
 @import "~compass-mixins/lib/compass";
 @import "~compass-mixins/lib/animate";
-/*-------------------------------------------------------------------*/
 
+/*-------------------------------------------------------------------*/
 /* === Boostrap Main SCSS === */
-
 @import "~bootstrap/scss/bootstrap";
+
 /*-------------------------------------------------------------------*/
-
 /* === Template mixins === */
-
 @import "mixins/animation";
 @import "mixins/background";
-@import "mixins/blockqoute";
-@import "mixins/badges";
+@import "mixins/badge";
 @import "mixins/buttons";
-@import "mixins/cards";
 @import "mixins/misc";
-@import "mixins/text";
+@import "mixins/blockqoute";
+@import "mixins/pagination";
+
 /*-------------------------------------------------------------------*/
-
 /* === Core Styles === */
-
 @import "reset";
 @import "fonts";
 @import "functions";
@@ -102,26 +95,23 @@
 @import "utilities";
 @import "demo";
 @import "dashboard";
+
 /*-------------------------------------------------------------------*/
-
 /* === Components === */
-
 @import "components/badges";
 @import "components/bootstrap-progress";
 @import "components/buttons";
 @import "components/cards";
 @import "components/checkbox-radio";
-@import "components/dropdown";
 @import "components/forms";
 @import "components/icons";
 @import "components/lists";
-@import "components/nav";
-@import "components/new-account";
+@import "components/pagination";
 @import "components/preview";
 @import "components/tables";
+@import "plugin-overrides/flot-chart";
+
 /*-------------------------------------------------------------------*/
-
 /* === Landing screens === */
-
 @import "landing-screens/auth";
 @import "landing-screens/error";

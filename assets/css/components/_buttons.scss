@@ -1,8 +1,11 @@
 /* Buttons */
 .btn {
-  font-size: $btn-font-size;
+  font-size: $input-btn-font-size;
   line-height: 1;
-  font-family: $type-1;
+  font-size: 0.8rem;
+  padding: $input-btn-padding-y $input-btn-padding-x;
+  font-family: $TYPE-2;
+  font-weight: 500;
 
   i {
     margin-right: 0.3125rem;
@@ -28,19 +31,6 @@
     @include border-radius(50px);
   }
 
-  &.btn-icons {
-    width: 40px;
-    height: 40px;
-    padding: 10px;
-    text-align: center;
-    vertical-align: middle;
-
-    i {
-      margin: auto;
-      line-height: initial;
-    }
-  }
-
   &.btn-fw {
     min-width: $button-fixed-width;
   }
@@ -61,29 +51,32 @@
   }
 
   &.btn-sm {
-    font-size: $btn-font-size-sm;
+    font-size: $input-btn-font-size-sm;
   }
 
   &.btn-lg {
-    font-size: $btn-font-size-lg;
+    font-size: $input-btn-font-size-lg;
   }
 
   &.btn-xs {
-    padding: $btn-padding-y-xs $btn-padding-x-xs;
-    font-size: $btn-font-size-xs;
+    padding: $input-btn-padding-y-xs $input-btn-padding-x-xs;
+    font-size: $input-btn-font-size-xs;
   }
 
   &.btn-danger,
   &.btn-info,
-  &.btn-success,
-  &.btn-teal,
+  &.btn-primary,
+  &.btn-secondary,
   &.btn-warning {
     color: $white;
   }
 
+  &.btn-light {
+    color: $black;
+  }
+
   &.btn-outline-light {
-    border-color: darken(theme-color(light),15%);
-    color: darken(theme-color(light),15%);
+    @include button-outline-variant(theme-color(light), color(white));
   }
 
   &.btn-outline-secondary {
@@ -171,21 +164,9 @@
     @include social-button(social-color($color));
   }
 }
-/*social buttons*/
-@each $color, $value in $social-colors {
-  .btn-social-outline-#{$color} {
-    @include btn-social-outline-variant(social-color($color));
-  }
-}
 /* inverse buttons */
 @each $color, $value in $theme-colors {
   .btn-inverse-#{$color} {
     @include button-inverse-variant($value);
-  }
-}
-/* Inverse Outlined Buttons */
-@each $color, $value in $theme-colors {
-  .btn-inverse-outline-#{$color} {
-    @include button-inverse-outline-variant($value);
   }
 }

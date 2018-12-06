@@ -23,14 +23,15 @@ class UserFixtures extends Fixture
         $user = new User();
 
         $user->setLastName("Nolot")
-        ->setFirstName("Florent")
-        ->setEmail("root@localhost")
-        ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
-        ->addSwarm($this->getReference(SwarmFixtures::LAST_SWARM))
-        ->setPassword($this->passwordEncoder->encodePassword(
-            $user,
-            'admin'
-        ));
+            ->setFirstName("Florent")
+            ->setEmail("root@localhost")
+            ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
+            ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
+            ->setPassword($this->passwordEncoder->encodePassword(
+                $user,
+                'admin'
+            ))
+        ;
         
         $manager->persist($user);
 
@@ -44,12 +45,13 @@ class UserFixtures extends Fixture
             $user = new User();
 
             $user->setFirstName($faker->firstName)
-            ->setLastName($faker->lastName)
-            ->setEmail(sprintf('userdemo%d@example.com', $i))
-            ->setPassword($this->passwordEncoder->encodePassword(
-                $user,
-                'userdemo'
-            ));
+                ->setLastName($faker->lastName)
+                ->setEmail($faker->safeEmail)
+                ->setPassword($this->passwordEncoder->encodePassword(
+                    $user,
+                    'userdemo'
+                ))
+            ;
 
             $manager->persist($user);
         }
@@ -60,7 +62,7 @@ class UserFixtures extends Fixture
     public function getDependencies()
     {
         return [
-            SwarmFixtures::class,
+            CourseFixtures::class,
         ];
     }
 }

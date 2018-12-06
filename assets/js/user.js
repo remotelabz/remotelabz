@@ -1,154 +1,85 @@
 /**
- * This file implements JavaScript for users/
- */
+* This file implements JavaScript for users/
+*/
 
-/**
- * Creates a Bootstrap 3 customized alert.
- * @param {string} type 
- * @param {string} message 
- */
-function Notify(type, message) {
-var html = '<div class="flash-notice alert alert-' + type + ' alert-dismissible fade show">' +
-    '	<button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">' +
-    '		<span aria-hidden="true">&times;</span>' +
-    '	</button>' +
-    message +
-'</div>'
+import Noty from 'noty';
+import API from './app';
 
-$('.flashbag-container').append(html);
-}
+const api = new API('user')
 
 $(function () {
-    var userTable = $('#datatable-checkbox').DataTable({
-        dom: "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>" +
-        "<'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-        order: [
-            [1, "asc"]
-        ],
-        select: 'single',
-        buttons: {
-            dom: {
-                button: {
-                    tag: 'button',
-                    className: 'btn'
-                }
-            },
-            buttons: [{
-                extend: 'selectedSingle',
-                text: '<i class="fas fa-user-edit"></i> Edit',
-                className: 'btn-primary'
-            }, {
-                extend: 'selected',
-                text: '<i class="fas fa-user-lock"></i> (Un)lock',
-                className: 'btn-warning',
-                action: toggleUser
-            }, {
-                extend: 'selected',
-                text: '<i class="fas fa-user-times"></i> Delete',
-                className: 'btn-danger user-delete',
-                action: deleteUser
-            }]
-        },
+    var userTable = $('#userTable').DataTable({
         ajax: {
             url: Routing.generate('get_users'),
-            dataSrc: 'users'
+            dataSrc: ''
         },
+        buttons: [{
+            extend: 'edit'
+        }, {
+            extend: 'toggle',
+            action: function() {
+                api.toggle($('table tr.selected').data('id'));
+            }
+        }, {
+            extend: 'delete',
+            action: function() {
+                api.delete($('table tr.selected').data('id'));
+            }
+        }],
         columns: [{
-                data: 'enabled',
-                render: function(data) {
-                  return data === true ? '<i class="fas fa-check-square"></i>' : '<i class="fas fa-square"></i>'
-                }
-            }, {
-                data: 'last_name'
-            },
-            {
-                data: 'first_name'
-            },
-            {
-                data: 'email'
-            },
-            {
-                data: 'swarms[, ].name',
-                defaultContent: ''
+            data: 'enabled',
+            render: function(data) {
+                return data === true ? '<label class="badge badge-success">Active</label>' : '<label class="badge badge-danger">Inactive</label>'
             }
-        ],
-        createdRow: function (row, data, dataIndex) {
-            $(row).data('id', data['id']);
-      
-            if (!data.enabled) {
-                // $(row).addClass('danger')
+        }, {
+            data: 'last_name'
+        }, {
+            data: 'first_name'
+        }, {
+            data: 'email'
+        }, {
+            data: 'swarms[, ].name',
+            defaultContent: ''
+        }]
+    });
+    
+    $('#addUserFromFileForm').parent('form').submit(function (event) {
+        event.preventDefault();
+        
+        var formData = new FormData();
+        $.each($(this).find('input, button'), function(i, e) {
+            var value = e.getAttribute('value');
+            
+            if (e.getAttribute('type') === 'file') {
+                console.log(e.files[0] instanceof Blob);
+                formData.append(e.getAttribute('name'), e.files[0], e.files[0].name);
             }
-        }
-      });
-      
-      /* function toggleLoading(button) {
-      $(button).prop('disabled', function(i, v) { return !v; })
-        .html('<i class="fa fa-circle-o-notch fa-spin"></i>');
-      }	*/
-      
-      // Toggle user request
-      function toggleUser(e, dt, node, config) {
-        $.ajax({
-              url: Routing.generate('toggle_user', {
-                  id: $('table tr.selected').data('id')
-              }),
-              method: 'PATCH',
-              contentType: 'application/json'
-          })
-          .done(function (data, status) {
-              userTable.ajax.reload();
-      
-              Notify('success', data.message);
-          })
-          .fail(function (data, status) {
-              Notify('danger', data.message);
-          });
-      };
-      
-      // Delete user request
-      function deleteUser() {
-        $.ajax({
-              url: Routing.generate('delete_user', {
-                  id: $('table tr.selected').data('id')
-              }),
-              method: 'DELETE',
-              contentType: 'application/json'
-          })
-          .done(function (data, status) {
-              userTable.ajax.reload();
-      
-              Notify('success', data.message);
-          })
-          .fail(function (data, status) {
-              Notify('danger', data.message);
-          });
-      };
-      
-      /* Handle role change request */
-      $('.change-user-role-send').click(function () {
-        var token = $(this).data('csrfToken');
-        var role = $('select.change-user-role option:checked').val();
-        var users = [];
-      
-        $('#datatables-checkbox tr.selected').each(function (index) {
-            users.push($(this).closest('tr').data("userId"));
+            else {
+                formData.append(e.getAttribute('name'), e.getAttribute('value'));
+            }
         });
-      
-        $.post({
-                url: '',
-                data: JSON.stringify({
-                    users: users,
-                    role: role,
-                    token: token
-                }),
-                contentType: 'application/json'
-            })
-            .done(function (data, status) {
-                userTable.ajax.reload();
-      
-                Notify(data);
-            })
-      });
-      
+        var url = Routing.generate('users');
+        
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: "multipart/form-data"
+        })
+        .done(function (data) {
+            userTable.ajax.reload();
+            
+            new Noty({
+                type: 'success',
+                text: data.message
+            }).show();
+        })
+        .fail(function (data) {
+            new Noty({
+                type: 'error',
+                text: data.message
+            }).show();
+        });
+    });  
 })

@@ -29,9 +29,9 @@ class Hypervisor
     private $command;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\System", mappedBy="hypervisor")
+     * @ORM\OneToMany(targetEntity="App\Entity\OperatingSystem", mappedBy="hypervisor")
      */
-    private $systems;
+    private $operatingSystems;
 
     public function __construct()
     {
@@ -68,30 +68,30 @@ class Hypervisor
     }
 
     /**
-     * @return Collection|System[]
+     * @return Collection|OperatingSystem[]
      */
-    public function getSystems(): Collection
+    public function getOperatingSystems(): Collection
     {
-        return $this->systems;
+        return $this->operatingSystems;
     }
 
-    public function addSystem(System $system): self
+    public function addOperatingSystem(System $operatingSystem): self
     {
-        if (!$this->systems->contains($system)) {
-            $this->systems[] = $system;
-            $system->setHypervisor($this);
+        if (!$this->operatingSystems->contains($operatingSystem)) {
+            $this->operatingSystems[] = $operatingSystem;
+            $operatingSystem->setHypervisor($this);
         }
 
         return $this;
     }
 
-    public function removeSystem(System $system): self
+    public function removeOperatingSystem(System $operatingSystem): self
     {
-        if ($this->systems->contains($system)) {
-            $this->systems->removeElement($system);
+        if ($this->operatingSystems->contains($operatingSystem)) {
+            $this->operatingSystems->removeElement($operatingSystem);
             // set the owning side to null (unless already changed)
-            if ($system->getHypervisor() === $this) {
-                $system->setHypervisor(null);
+            if ($operatingSystem->getHypervisor() === $this) {
+                $operatingSystem->setHypervisor(null);
             }
         }
 
