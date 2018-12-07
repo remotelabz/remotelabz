@@ -3,3 +3,55 @@
   border-radius: 6px;
   border-right: 1px solid #e5e5e5;
 }
+
+/**
+ * Selectize.js
+ */
+
+.form-control.selectize-control
+{
+  height: auto;
+
+  .selectize-input.has-items div.item
+  {
+    background-color: theme-color(info);
+    padding: $input-btn-padding-y $input-btn-padding-x;
+    border-radius: $btn-border-raius;
+    color: $white;
+    display: inline-block;
+    margin: 0.125rem 0.185rem;
+
+    :last-child
+    {
+      margin-right: 0;
+    }
+
+    :first-child
+    {
+      margin-left: 0;
+    }
+  }
+
+  .selectize-dropdown
+  {
+    position: absolute;
+    min-height: 200px;
+    overflow-y: scroll;
+    padding: 0;
+
+    .selectize-dropdown-content
+    {
+      div.option
+      {
+        padding: $input-btn-padding-y $input-btn-padding-x;
+
+        &.active
+        {
+          color: $white;
+          background-color: theme-color(info);
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
