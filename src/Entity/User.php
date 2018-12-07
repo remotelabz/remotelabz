@@ -191,6 +191,11 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getName(): ?string
+    {
+        return $this->firstName . " " . $this->lastName;
+    }
+
     /**
      * @return Collection|Course[]
      */

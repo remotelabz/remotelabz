@@ -29,7 +29,7 @@ class UserController extends AppController
     }
 
     /**
-     * @Route("/admin/users", name="users", methods="GET")
+     * @Route("/admin/users", name="users", methods={"GET", "POST"})
      */
     public function indexAction(Request $request)
     {
@@ -98,15 +98,6 @@ class UserController extends AppController
 
         return $this->json($data);
     }
-
-    // /**
-    //  * @Route("/users", name="post_user", methods="POST")
-    //  */
-    // public function postAction()
-    // {
-    //     $repository = $this->getDoctrine()->getRepository('App:User');
-    //     $em = $this->getDoctrine()->getManager();
-    // }
 
     /**
      * @Route("/users/{id<\d+>}", name="get_user", methods="GET")
