@@ -1,0 +1,40 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block wrapper %}
+<div class="row">
+    {% embed 'modal.html.twig' with {'title': 'New course'|trans, 'class': 'create-course-modal'} %}
+        {% block body %}
+            {{ form(courseForm, {'id': 'courseForm'}) }}
+        {% endblock %}
+    {% endembed %}
+
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">{{ 'Courses'|trans }}</h4>
+                <p>
+                    <button class="btn btn-success" data-target=".create-course-modal" data-toggle="modal" type="button"><i
+                            class="fas fa-plus"></i> {{ 'New'|trans }}</button>
+                </p>
+                <table id="courseTable" class="table table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Name'|trans }}</th>
+                            <th class="sorting">{{ 'Command'|trans }}</th>
+                            <th>{{ 'Arguments'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('course') }}
+{% endblock %}

@@ -28,7 +28,7 @@ class Course
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="courses")
      * 
-     * @Serializer\MaxDepth(1)
+     * @Serializer\Accessor(getter="getUsersId")
      */
     private $users;
 
@@ -80,5 +80,21 @@ class Course
         }
 
         return $this;
+    }
+
+    /**
+     * Return only IDs of users.
+     *
+     * @return array|int[]
+     */
+    public function getUsersId(): array
+    {
+        $users = [];
+
+        foreach ($this->users as $user) {
+            $users[] = $user->getId();
+        }
+
+        return $users;
     }
 }

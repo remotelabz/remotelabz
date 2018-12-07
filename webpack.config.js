@@ -19,6 +19,7 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
+    .addEntry('course', './assets/js/course.js')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('hypervisor', './assets/js/hypervisor.js')
 
