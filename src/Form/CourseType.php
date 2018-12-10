@@ -9,6 +9,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 
 class CourseType extends AbstractType
 {
@@ -20,6 +21,7 @@ class CourseType extends AbstractType
                 'class' => User::class,
                 'choice_label' => "name",
                 'multiple' => true,
+                'by_reference' => false
             ])
             ->add('submit', SubmitType::class)
         ;

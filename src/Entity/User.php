@@ -68,7 +68,6 @@ class User implements UserInterface
      * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
      * 
      * @Expose
-     * @Serializer\MaxDepth(2)
      */
     private $courses;
 
@@ -191,6 +190,9 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @Serializer\VirtualProperty()
+     */
     public function getName(): ?string
     {
         return $this->firstName . " " . $this->lastName;

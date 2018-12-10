@@ -28,7 +28,7 @@ class Course
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="courses")
      * 
-     * @Serializer\Accessor(getter="getUsersId")
+     * @Serializer\Expose
      */
     private $users;
 
