@@ -163,6 +163,9 @@ export default class API {
         },
         createdRow: function (row, data) {
             $(row).data('id', data['id']);
+        },
+        drawCallback: function () {
+            $('.dataTables_paginate > .pagination').addClass('rounded-separated pagination-info');
         }
     } );
     /**
