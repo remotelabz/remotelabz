@@ -32,7 +32,8 @@ Noty.overrideDefaults({
 /**
 * Represents a default collection of request for common actions through the app.
 * 
-* @param object A string representing the concerned collection.
+* @param object A string representing the concerned collection. Typically the
+* common suffix of concerned routes name.
 */
 export default class API {
     constructor(object) {

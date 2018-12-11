@@ -22,6 +22,7 @@ Encore
     .addEntry('course', './assets/js/course.js')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('hypervisor', './assets/js/hypervisor.js')
+    .addEntry('network-settings', './assets/js/network-settings.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

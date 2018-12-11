@@ -35,11 +35,13 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/admin/courses'];
         yield ['/admin/flavors'];
         yield ['/admin/hypervisors'];
+        yield ['/admin/network-settings'];
 
         yield ['/users'];
         yield ['/courses'];
         yield ['/flavors'];
         yield ['/hypervisors'];
+        yield ['/network-settings'];
     }
 
     private function logIn()
