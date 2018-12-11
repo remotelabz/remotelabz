@@ -25,13 +25,13 @@ $(function () {
             }, {
                 data: 'ip',
                 render: (data, type, row) => {
-                    return row.ip + '/' + row.prefix4;
+                    return row.ip + '<strong>/' + row.prefix4 + '</strong>';
                 },
                 defaultContent: ''
             }, {
                 data: 'ipv6',
                 render: (data, type, row) => {
-                    return row.ipv6 + '/' + row.prefix6;
+                    return row.ipv6 + '<strong>/' + row.prefix6 + '</strong>';
                 },
                 defaultContent: ''
             }, {

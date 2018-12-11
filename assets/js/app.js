@@ -125,7 +125,7 @@ export default class API {
     $.fn.dataTable.ext.buttons.edit = {
         extend: 'selectedSingle',
         text: '<i class="fas fa-edit"></i> Edit',
-        className: 'btn-primary'
+        className: 'btn-secondary'
     };
     
     $.fn.dataTable.ext.buttons.toggle = {
