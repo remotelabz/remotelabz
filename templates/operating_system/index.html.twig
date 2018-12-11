@@ -1,0 +1,41 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block wrapper %}
+<div class="row">
+    {% embed 'modal.html.twig' with {'title': 'New Operating System'|trans, 'class': 'create-operating-system-modal'} %}
+        {% block body %}
+            {{ form(operatingSystemForm, {'id': 'operatingSystemForm'}) }}
+        {% endblock %}
+    {% endembed %}
+
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+
+                <h4 class="card-title">{{ 'Operating Systems'|trans }}</h4>
+                <p>
+                    <button class="btn btn-success" data-target=".create-operating-system-modal" data-toggle="modal" type="button"><i
+                            class="fas fa-plus"></i> {{ 'New'|trans }}</button>
+                </p>
+                <table id="operatingSystemTable" class="table table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Name'|trans }}</th>
+                            <th>{{ 'Path'|trans }}</th>
+                            <th>{{ 'Hypervisor'|trans }}</th>
+                            <th>{{ 'Flavor'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('operating-system') }}
+{% endblock %}

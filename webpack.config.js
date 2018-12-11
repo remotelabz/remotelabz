@@ -24,6 +24,7 @@ Encore
     .addEntry('hypervisor', './assets/js/hypervisor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
+    .addEntry('operating-system', './assets/js/operating-system.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

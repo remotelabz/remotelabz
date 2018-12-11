@@ -80,7 +80,7 @@ class Hypervisor
         return $this->operatingSystems;
     }
 
-    public function addOperatingSystem(System $operatingSystem): self
+    public function addOperatingSystem(OperatingSystem $operatingSystem): self
     {
         if (!$this->operatingSystems->contains($operatingSystem)) {
             $this->operatingSystems[] = $operatingSystem;
@@ -90,7 +90,7 @@ class Hypervisor
         return $this;
     }
 
-    public function removeOperatingSystem(System $operatingSystem): self
+    public function removeOperatingSystem(OperatingSystem $operatingSystem): self
     {
         if ($this->operatingSystems->contains($operatingSystem)) {
             $this->operatingSystems->removeElement($operatingSystem);
