@@ -32,6 +32,33 @@ class NetworkSettingsController extends AppController
             'networkSettingsForm' => $networkSettingsForm->createView(),
         ]);
     }
+
+    /**
+     * @Route("/admin/network-settings/{id<\d+>}",
+     * name="edit_network_settings", methods={"GET", "POST"})
+     */
+    public function editAction(Request $request, $id)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:NetworkSettings');
+        
+        $networkSettings = $repository->find($id);
+        $networkSettingsForm = $this->createForm(NetworkSettingsType::class, $networkSettings);
+        $networkSettingsForm->handleRequest($request);
+        
+        if ($networkSettingsForm->isSubmitted() && $networkSettingsForm->isValid()) {
+            $networkSettings = $networkSettingsForm->getData();
+            
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($networkSettings);
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Settings has been created.');
+        }
+        
+        return $this->render('network_settings/index.html.twig', [
+            'networkSettingsForm' => $networkSettingsForm->createView(),
+        ]);
+    }
         
     /**
      * @Route("/network-settings", name="get_network_settings", methods="GET")
