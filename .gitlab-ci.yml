@@ -1,6 +1,6 @@
 # This file is a template, and might need editing before it works on your project.
 # Select image from https://hub.docker.com/_/php/
-image: php:7
+image: php:7.2
 
 # Select what we should cache between builds
 cache:
@@ -15,7 +15,7 @@ stages:
 
 before_script:
 - apt-get update -yqq
-- apt-get install -yqq git
+- apt-get install -yqq git zlib1g-dev
 # Install PHP extensions
 - docker-php-ext-install pdo_mysql zip opcache
 # Install & enable Xdebug for code coverage reports
@@ -53,4 +53,4 @@ configure:
 test:
   stage: test
   script:
-  - bin/phpunit --configuration phpunit.xml.dist --coverage-text --colors=never
+    - bin/phpunit --configuration phpunit.xml.dist --coverage-text --colors=never
