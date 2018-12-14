@@ -50,16 +50,9 @@ variables:
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
 
-configure:
-  stage: prepare
-  script:
-    - bin/console doctrine:migrations:migrate -n
-    - bin/console doctrine:fixtures:load -n
-    
-
 # Run our tests
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
-test:
+phpunit:
   stage: test
   before_script:
     - bin/console doctrine:migrations:migrate -n
