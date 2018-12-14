@@ -52,7 +52,6 @@ variables:
 configure:
   stage: prepare
   script:
-    - bin/console doctrine:database:create -n
     - bin/console doctrine:migrations:migrate -n
     - bin/console doctrine:fixtures:load -n
     
