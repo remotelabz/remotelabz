@@ -5,6 +5,7 @@ image: php:7.2
 # Select what we should cache between builds
 cache:
   paths:
+  - .env
   - vendor/
   - node_modules/
 
@@ -50,7 +51,9 @@ variables:
 configure:
   stage: prepare
   script:
-    - echo 'DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony'
+    - bin/console doctrine:database:create -n
+    - bin/console doctrine:migrations:migrate -n
+    - bin/console doctrine:fixtures:load -n
     
 
 # Run our tests
