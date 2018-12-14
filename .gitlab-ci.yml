@@ -61,5 +61,8 @@ configure:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:
   stage: test
+  before_script:
+    - bin/console doctrine:migrations:migrate -n
+    - bin/console doctrine:fixtures:load -n
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
