@@ -15,7 +15,7 @@ stages:
 
 before_script:
 - apt-get update -yqq
-- apt-get install -yqq git gnupg zlib1g-dev
+- apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates
 # Install PHP extensions
 - docker-php-ext-install pdo_mysql zip opcache
 # Install & enable Xdebug for code coverage reports
