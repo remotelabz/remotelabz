@@ -36,6 +36,8 @@ before_script:
 - yarn encore dev
 # Configure mysql password
 - echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
+- bin/console doctrine:migrations:migrate -n
+- bin/console doctrine:fixtures:load -n
 
 # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
 # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
@@ -54,8 +56,5 @@ variables:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 phpunit:
   stage: test
-  before_script:
-    - bin/console doctrine:migrations:migrate -n
-    - bin/console doctrine:fixtures:load -n
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
