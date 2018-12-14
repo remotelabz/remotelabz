@@ -25,8 +25,10 @@ before_script:
 - curl -sS https://getcomposer.org/installer | php
 - php composer.phar install
 # Install and run yarn
-- curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-- curl -sL https://deb.nodesource.com/setup_11.x | bash - apt-get install -y nodejs
+- curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+- echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+- curl -sL https://deb.nodesource.com/setup_11.x | bash
+- apt-get install -yqq nodejs
 - apt-get update -yqq
 - apt-get install -yqq yarn
 - yarn encore dev
