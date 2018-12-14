@@ -17,7 +17,7 @@ before_script:
 - apt-get update -yqq
 - apt-get install -yqq git
 # Install PHP extensions
-- docker-php-ext-install mbstring mcrypt pdo_mysql curl json intl gd xml zip bz2 opcache
+- docker-php-ext-install pdo_mysql zip opcache
 # Install & enable Xdebug for code coverage reports
 - pecl install xdebug
 - docker-php-ext-enable xdebug
@@ -42,7 +42,8 @@ variables:
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
 
-prepare:
+configure:
+  stage: prepare
   script:
     - echo 'DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony'
     
@@ -50,5 +51,6 @@ prepare:
 # Run our tests
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:
+  stage: test
   script:
   - bin/phpunit --configuration phpunit.xml.dist --coverage-text --colors=never
