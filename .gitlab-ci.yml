@@ -31,6 +31,8 @@ before_script:
 - apt-get install -yqq nodejs
 - apt-get update -yqq
 - apt-get install -yqq yarn
+- yarn install
+# Pack assets
 - yarn encore dev
 
 # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
