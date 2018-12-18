@@ -1,0 +1,35 @@
+{% extends 'pod/index.html.twig' %}
+
+{% block breadcrumbs %}
+{%- set breadcrumbs = breadcrumbs|merge({ (pod.name): path('show_pod', {'id': pod.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ pod.name }}
+                    <div class="float-right">
+                        <a href="{{ path('edit_pod', {'id': pod.id}) }}" class="btn btn-secondary" role="button"><i
+                        class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+                    </div>
+                </h4>
+                <p>Devices :</p>
+                <ul>
+                    {% for device in pod.devices %}
+                        <li>{{ device.name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('pod') }} #}
+{% endblock %}
