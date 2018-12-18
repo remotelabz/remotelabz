@@ -1,3 +1,18 @@
+/////////// GENERAL ///////////
+
+.container-limited
+{
+  max-width: 1280px;
+}
+
+/////////// FORMS ///////////
+
+.form-group label
+{
+  text-align: right;
+  margin: auto;
+}
+
 .auth.theme-one .auto-form-wrapper .form-group .input-group .form-control
 {
   border-radius: 6px;

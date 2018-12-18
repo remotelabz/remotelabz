@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Filesystem\Filesystem;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -40,9 +41,9 @@ class Device
     private $launchOrder;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      * 
-     * @Assert\File(mimeTypes={ "text/plain" })
+     * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
      */
     private $launchScript;
 
@@ -114,12 +115,12 @@ class Device
         return $this;
     }
 
-    public function getLaunchScript(): ?string
+    public function getLaunchScript()
     {
         return $this->launchScript;
     }
 
-    public function setLaunchScript(string $launchScript): self
+    public function setLaunchScript($launchScript): self
     {
         $this->launchScript = $launchScript;
 
