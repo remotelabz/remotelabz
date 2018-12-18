@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class DeviceController extends AppController
@@ -52,7 +53,11 @@ class DeviceController extends AppController
 
         $data = $repository->find($id);
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonResponse) {
+        if (null === $data) {
+            throw new NotFoundHttpException();
+        }
+
+        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
             return $this->json($data);
         }
         
@@ -102,6 +107,11 @@ class DeviceController extends AppController
         $repository = $this->getDoctrine()->getRepository('App:Device');
 
         $device = $repository->find($id);
+
+        if (null === $device) {
+            throw new NotFoundHttpException();
+        }
+
         $launchScript = $device->getLaunchScript();
 
         $deviceForm = $this->createForm(DeviceType::class, $device);
