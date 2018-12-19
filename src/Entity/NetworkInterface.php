@@ -36,6 +36,9 @@ class NetworkInterface
      */
     private $device;
 
+    const TYPE_TAP = 'tap';
+    const TYPE_OVS = 'ovs';
+
     public function getId(): ?int
     {
         return $this->id;

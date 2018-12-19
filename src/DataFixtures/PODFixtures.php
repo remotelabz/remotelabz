@@ -3,30 +3,28 @@
 namespace App\DataFixtures;
 
 use Faker\Factory;
-use App\Entity\Hypervisor;
+use App\Entity\POD;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 
-class HypervisorFixtures extends Fixture
+class PODFixtures extends Fixture
 {
-    public const COUNT = 5;
+    public const COUNT = 10;
 
     public function load(ObjectManager $manager)
     {
         $faker = Factory::create();
 
         foreach (range(1, self::COUNT) as $number) {
-            $hypervisor = new Hypervisor();
+            $pod = new POD();
 
-            $hypervisor
+            $pod
                 ->setName($faker->firstName)
-                ->setCommand($faker->word)
-                ->setArguments('-v')
             ;
 
-            $manager->persist($hypervisor);
+            $manager->persist($pod);
 
-            $this->addReference('hypervisor' . $number, $hypervisor);
+            $this->addReference('pod' . $number, $pod);
         }
 
         $manager->flush();

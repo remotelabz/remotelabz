@@ -42,7 +42,7 @@ class Device
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
      */
     private $launchScript;
