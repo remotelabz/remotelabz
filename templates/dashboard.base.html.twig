@@ -112,11 +112,16 @@
         </div>
         <div class="container-fluid container-limited">
           {% block breadcrumbs %}
-            {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('users') }) %}
-            {% for breadcrumb, link in breadcrumbs|reverse(true) %}
-              <a href="{{ link }}">{{ breadcrumb }}</a>
-              {% if not loop.last %} > {% endif %}
-            {% endfor %}
+            <div class="breadcrumb">
+              {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('users') }) %}
+              {% for breadcrumb, link in breadcrumbs|reverse(true) %}
+                <div class="breadcrumb-item">
+                  {%- if loop.last -%}<strong>{%- endif -%}
+                  <a href="{{ link }}">{{ breadcrumb }}</a>
+                  {%- if loop.last -%}</strong>{%- endif -%}
+                </div>
+              {% endfor %}
+            </div>
           {% endblock %}
 
           {% block wrapper %}

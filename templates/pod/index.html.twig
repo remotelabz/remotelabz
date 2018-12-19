@@ -23,7 +23,7 @@
                                     </div>
                                     <input type="search" class="form-control input-sm" name="search"
                                     placeholder="Search by name"
-                                    spellcheck="false" value="{{ search|default('') }}">
+                                    spellcheck="false" value="{{ search|default('') }}" type="search">
                                 </div>
                             </div>
                             <div class="col-md-auto">
@@ -33,15 +33,13 @@
                         </div>
                     </form>
                 </p>
-                <ul>
-                    {% for pod in pods %}
-                        <li>
-                            <a href="{{ path('show_pod', {'id': pod.id}) }}">
-                                {{ pod.name }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% for pod in pods %}
+                    <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <a href="{{ path('show_pod', {'id': pod.id}) }}">
+                            {{ pod.name }}
+                        </a>
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>

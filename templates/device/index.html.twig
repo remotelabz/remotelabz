@@ -33,15 +33,13 @@
                         </div>
                     </form>
                 </p>
-                <ul>
-                    {% for device in devices %}
-                        <li>
-                            <a href="{{ path('show_device', {'id': device.id}) }}">
-                                {{ device.name }}
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% for device in devices %}
+                    <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <a href="{{ path('show_device', {'id': device.id}) }}">
+                            {{ device.name }}
+                        </a>
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>

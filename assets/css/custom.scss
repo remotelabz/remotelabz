@@ -5,6 +5,14 @@
   max-width: 1280px;
 }
 
+a {
+  color: #2e2e2e;
+
+  :hover {
+    color: #2e2e2e;
+  }
+}
+
 /////////// FORMS ///////////
 
 .form-group label
@@ -12,6 +20,31 @@
   text-align: right;
   margin: auto;
 }
+
+/////////// MENU ///////////
+
+.sidebar .nav .nav-item.active {
+  color: $white;
+  border-left: 3px solid $white;
+}
+
+.sidebar .nav .nav-item.active a.nav-link {
+  color: $white;
+}
+
+/////////// BREADCRUMBS ///////////
+
+.breadcrumb {
+  border: initial;
+  border-bottom: 1px solid $border-color;
+  background: initial;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+}
+
+/////////// AUTH LANDING PAGE ///////////
 
 .auth.theme-one .auto-form-wrapper .form-group .input-group .form-control
 {
