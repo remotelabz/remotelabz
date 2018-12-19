@@ -1,6 +1,19 @@
 $content-bg: #ffffff;
 $border-color: #e1e1e1;
 
+$theme-colors: (
+  primary: #564D80,
+  secondary: #FF6700,
+  success: #33c92e,
+  info: #6569df,
+  warning: #fed961,
+  danger: #fd3258,
+  light: #f5f7fa,
+  dark: #32323d
+);
+
+$navbar-light-color: theme-color(primary);
+
 ////////// BREADCRUMBS ///////////
 
 $breadcrumb-font-size: 0.875rem;

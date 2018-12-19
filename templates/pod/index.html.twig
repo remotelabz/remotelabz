@@ -10,29 +10,27 @@
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">{{ 'PODs'|trans }}</h4>
-                <p>
-                    <form action="{{ path('pods') }}" method="GET">
-                        <div class="row">
-                            <div class="col">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">
-                                            <i class="fa fa-search"></i>
-                                        </span>
-                                    </div>
-                                    <input type="search" class="form-control input-sm" name="search"
-                                    placeholder="Search by name"
-                                    spellcheck="false" value="{{ search|default('') }}" type="search">
+                <form action="{{ path('pods') }}" method="GET">
+                    <div class="row">
+                        <div class="col">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="col-md-auto">
-                                <a class="btn btn-success btn-block" role="button" href="{{
-                                path('new_pod') }}">{{ 'New POD'|trans }}</a>
+                                <input type="search" class="form-control input-sm" name="search"
+                                placeholder="Search by name"
+                                spellcheck="false" value="{{ search|default('') }}" type="search">
                             </div>
                         </div>
-                    </form>
-                </p>
+                        <div class="col-md-auto">
+                            <a class="btn btn-success btn-block" role="button" href="{{
+                            path('new_pod') }}">{{ 'New POD'|trans }}</a>
+                        </div>
+                    </div>
+                </form>
+                <p>
                 {% for pod in pods %}
                     <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
                         <a href="{{ path('show_pod', {'id': pod.id}) }}">
@@ -40,6 +38,7 @@
                         </a>
                     </div>
                 {% endfor %}
+                </p>
             </div>
         </div>
     </div>
