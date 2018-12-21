@@ -1,5 +1,15 @@
 /////////// GENERAL ///////////
 
+html
+{
+  font-size: $default-font-size;
+}
+
+body
+{
+  font-family: $default-font-family;
+}
+
 .container-limited
 {
   max-width: 1280px;
@@ -41,10 +51,27 @@ a {
 
 /////////// FORMS ///////////
 
+legend
+{
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+}
+
 .form-group label
 {
   text-align: right;
   margin: auto;
+}
+
+.form-actions
+{
+  padding: 16px;
+  border-top: 1px solid $border-color;
+
+  .btn.btn-secondary
+  {
+    float: right;
+  }
 }
 
 /////////// MENU ///////////

@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ConnexionRepository")
@@ -39,24 +40,16 @@ class Connexion
     private $vlan2;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     */
-    private $device1;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     */
-    private $device2;
-
-    /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=false)
+     * @Assert\NotIdenticalTo(propertyPath="networkInterface2")
      */
     private $networkInterface1;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=false)
+     * @Assert\NotIdenticalTo(propertyPath="networkInterface1")
      */
     private $networkInterface2;
 
@@ -119,30 +112,6 @@ class Connexion
     public function setVlan2(int $vlan2): self
     {
         $this->vlan2 = $vlan2;
-
-        return $this;
-    }
-
-    public function getDevice1(): ?Device
-    {
-        return $this->device1;
-    }
-
-    public function setDevice1(?Device $device1): self
-    {
-        $this->device1 = $device1;
-
-        return $this;
-    }
-
-    public function getDevice2(): ?Device
-    {
-        return $this->device2;
-    }
-
-    public function setDevice2(?Device $device2): self
-    {
-        $this->device2 = $device2;
 
         return $this;
     }

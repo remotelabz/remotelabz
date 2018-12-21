@@ -1,7 +1,7 @@
-{% extends 'pod/index.html.twig' %}
+{% extends 'connexion/index.html.twig' %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_pod') }) %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_connexion') }) %}
     {{ parent() }}
 {% endblock %}
 
@@ -13,7 +13,7 @@
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                {{ form(podForm) }}
+                {{ form(connexionForm) }}
             </div>
         </div>
     </div>
@@ -22,5 +22,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('pod') }} #}
+    {# {{ encore_entry_script_tags('connexion') }} #}
 {% endblock %}

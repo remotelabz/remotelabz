@@ -22,6 +22,7 @@ require('datatables.net-buttons-bs4');
 require('datatables.net-select-bs4');
 require('icheck');
 require('selectize');
+require('select2');
 
 import Noty from 'noty';
 

@@ -2,8 +2,8 @@
 
 namespace App\Form;
 
-use App\Entity\POD;
-use App\Entity\Device;
+use App\Entity\Connexion;
+use App\Entity\NetworkInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -11,17 +11,21 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ResetType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
-class PODType extends AbstractType
+class ConnexionType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
             ->add('name')
-            ->add('devices', EntityType::class, [
-                'class' => Device::class,
+            ->add('vlan1')
+            ->add('vlan2')
+            ->add('networkInterface1', EntityType::class, [
+                'class' => NetworkInterface::class,
                 'choice_label' => 'name',
-                'multiple' => true,
-                'by_reference' => false
+            ])
+            ->add('networkInterface2', EntityType::class, [
+                'class' => NetworkInterface::class,
+                'choice_label' => 'name',
             ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)
@@ -31,7 +35,7 @@ class PODType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'data_class' => POD::class,
+            'data_class' => Connexion::class,
         ]);
     }
 }
