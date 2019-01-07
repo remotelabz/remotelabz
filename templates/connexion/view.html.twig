@@ -17,10 +17,11 @@
                         class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
                 </h4>
-                {% for key, value in connexion|cast_to_array %}
+                {{ dump(connexion|cast_to_array)}}
+                {# {% for key, value in connexion|cast_to_array %}
                     <p>{{ key }} : {{ value }}</p>
                     <hr>
-                {% endfor %}
+                {% endfor %} #}
             </div>
         </div>
     </div>

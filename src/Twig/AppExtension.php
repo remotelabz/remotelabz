@@ -4,6 +4,7 @@ namespace App\Twig;
 
 use Twig\TwigFilter;
 use Twig\Extension\AbstractExtension;
+use Doctrine\ORM\PersistentCollection;
 
 class AppExtension extends AbstractExtension
 {
@@ -16,19 +17,10 @@ class AppExtension extends AbstractExtension
 
     public function stdClassObject($object)
     {
-        $properties = array();
+        $properties = [];
 
-        foreach ($object as $key => $value) {
-            if (is_object($value)) {
-                $value = '<a href="' .
-                    $value->getId() .
-                    '">' .
-                    $value->getName() .
-                    '</a>'
-                ;
-            }
-            
-            $properties[] = array($key, $value);
+        foreach ((array) $object as $key => $value) {
+            $properties[$key] = $value;
         }
 
         return $properties;
