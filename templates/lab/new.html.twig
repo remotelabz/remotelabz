@@ -1,0 +1,26 @@
+{% extends 'lab/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_lab') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{%- set edit = app.request.uri ends with 'edit' -%}
+
+{% block wrapper %}
+
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                {{ form(labForm) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('lab') }} #}
+{% endblock %}
