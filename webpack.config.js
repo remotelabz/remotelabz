@@ -25,6 +25,7 @@ Encore
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
     .addEntry('operating-system', './assets/js/operating-system.js')
+    .addEntry('activity', './assets/js/activity.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

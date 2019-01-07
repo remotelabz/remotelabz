@@ -1,0 +1,34 @@
+{% extends 'activity/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ (activity.name): path('show_activity', {'id': activity.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ activity.name }}
+                    <div class="float-right">
+                        <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i
+                        class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+                    </div>
+                </h4>
+                {{ dump(activity|cast_to_array)}}
+                {# {% for key, value in activity|cast_to_array %}
+                    <p>{{ key }} : {{ value }}</p>
+                    <hr>
+                {% endfor %} #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('activity') }}
+{% endblock %}

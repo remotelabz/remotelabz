@@ -1,0 +1,51 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Activities': path('activities') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <form action="{{ path('activities') }}" method="GET">
+                    <div class="row">
+                        <div class="col">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-search"></i>
+                                    </span>
+                                </div>
+                                <input type="search" class="form-control input-sm" name="search"
+                                placeholder="Search by name"
+                                spellcheck="false" value="{{ search|default('') }}" type="search">
+                            </div>
+                        </div>
+                        <div class="col-md-auto">
+                            <a class="btn btn-success btn-block" role="button" href="{{
+                            path('new_activity') }}">{{ 'New Activity'|trans }}</a>
+                        </div>
+                    </div>
+                </form>
+                <p>
+                {% for activity in activities %}
+                    <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <a href="{{ path('show_activity', {'id': activity.id}) }}">
+                            {{ activity.name }}
+                        </a>
+                    </div>
+                {% endfor %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('activity') }}
+{% endblock %}

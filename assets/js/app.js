@@ -14,9 +14,10 @@ require('datatables.net-select-bs4/css/select.bootstrap4.css');
 require('flag-icon-css/sass/flag-icon.scss');
 require('noty/src/noty.scss')
 require('noty/src/themes/mint.scss')
+require('simplemde/dist/simplemde.min.css')
+require('font-awesome/scss/font-awesome.scss')
 
 require('bootstrap');
-require('@fortawesome/fontawesome-free/js/all');
 require('datatables.net-bs4');
 require('datatables.net-buttons-bs4');
 require('datatables.net-select-bs4');
