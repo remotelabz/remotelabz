@@ -8,7 +8,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class DeviceFixtures extends Fixture implements DependentFixtureInterface
+class DeviceFixtures extends Fixture
 {
     public const COUNT = 10;
 
