@@ -2,9 +2,9 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
@@ -24,10 +24,9 @@ class Lab
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\POD")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
      */
-    private $pod;
+    private $devices;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Connexion", inversedBy="labs")
@@ -41,6 +40,7 @@ class Lab
 
     public function __construct()
     {
+        $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
         $this->activities = new ArrayCollection();
     }
@@ -62,14 +62,28 @@ class Lab
         return $this;
     }
 
-    public function getPod(): ?POD
+    /**
+     * @return Collection|Devices[]
+     */
+    public function getDevices(): Collection
     {
-        return $this->pod;
+        return $this->devices;
     }
 
-    public function setPod(?POD $pod): self
+    public function addDevice(Device $device): self
     {
-        $this->pod = $pod;
+        if (!$this->devices->contains($device)) {
+            $this->devices[] = $device;
+        }
+
+        return $this;
+    }
+
+    public function removeDevice(Device $device): self
+    {
+        if ($this->devices->contains($device)) {
+            $this->devices->removeElement($device);
+        }
 
         return $this;
     }

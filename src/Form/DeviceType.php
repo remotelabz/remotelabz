@@ -2,7 +2,6 @@
 
 namespace App\Form;
 
-use App\Entity\POD;
 use App\Entity\Device;
 use App\Entity\NetworkInterface;
 use Symfony\Component\Form\AbstractType;
@@ -38,11 +37,6 @@ class DeviceType extends AbstractType
                 'class' => NetworkInterface::class,
                 'choice_label' => 'name',
                 'multiple' => true,
-                'required' => false
-            ])
-            ->add('pod', EntityType::class, [
-                'class' => POD::class,
-                'choice_label' => 'name',
                 'required' => false
             ])
             ->add('submit', SubmitType::class)

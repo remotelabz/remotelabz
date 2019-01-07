@@ -8,6 +8,7 @@
         "friendsofsymfony/jsrouting-bundle": "^2.2",
         "friendsofsymfony/rest-bundle": ">=2.4-dev",
         "jms/serializer-bundle": "2.*",
+        "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
         "sensio/framework-extra-bundle": "^5.2",
         "symfony/asset": "4.1.*",

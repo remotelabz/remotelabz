@@ -3,7 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Lab;
-use App\Entity\POD;
+use App\Entity\Device;
 use App\Entity\Connexion;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -18,9 +18,11 @@ class LabType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('pod', EntityType::class, [
-                'class' => \App\Entity\POD::class,
-                'choice_label' => 'name'
+            ->add('devices', EntityType::class, [
+                'class' => Device::class,
+                'choice_label' => 'name',
+                'by_reference' => false,
+                'multiple' => true
             ])
             ->add('connexions', EntityType::class, [
                 'class' => Connexion::class,

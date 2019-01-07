@@ -24,14 +24,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
                 ->setBrand($faker->company)
                 ->setModel($faker->lastName)
                 ->setLaunchOrder($faker->numberBetween(0, 999))
-                ->setPod(
-                    $this->getReference(
-                        'pod' . $faker->numberBetween(
-                            1,
-                            PODFixtures::COUNT
-                        )
-                    )
-                )
             ;
 
             $manager->persist($device);
@@ -45,7 +37,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
     public function getDependencies()
     {
         return [
-            PODFixtures::class
         ];
     }
 }

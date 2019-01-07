@@ -39,7 +39,6 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/admin/network-interfaces'];
         yield ['/admin/operating-systems'];
         yield ['/admin/devices'];
-        yield ['/admin/pods'];
     }
 
     private function logIn()

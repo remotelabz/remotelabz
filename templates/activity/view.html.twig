@@ -17,11 +17,10 @@
                         class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
                 </h4>
-                {{ dump(activity|cast_to_array)}}
-                {# {% for key, value in activity|cast_to_array %}
-                    <p>{{ key }} : {{ value }}</p>
-                    <hr>
-                {% endfor %} #}
+                <hr>
+                <h1>{{ activity.name }}</h1>
+                <hr>
+                {{ activity.description|markdown }}
             </div>
         </div>
     </div>

@@ -53,9 +53,9 @@ class Device
     private $networkInterfaces;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\POD", inversedBy="devices")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
      */
-    private $pod;
+    private $labs;
 
     public function __construct()
     {
@@ -158,14 +158,30 @@ class Device
         return $this;
     }
 
-    public function getPod(): ?POD
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getLabs(): Collection
     {
-        return $this->pod;
+        return $this->labs;
     }
 
-    public function setPod(?POD $pod): self
+    public function addLab(Lab $lab): self
     {
-        $this->pod = $pod;
+        if (!$this->labs->contains($lab)) {
+            $this->labs[] = $lab;
+            $lab->addDevice($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLab(Lab $lab): self
+    {
+        if ($this->labs->contains($lab)) {
+            $this->labs->removeElement($lab);
+            $lab->removeDevice($this);
+        }
 
         return $this;
     }

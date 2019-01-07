@@ -24,10 +24,12 @@
                                 spellcheck="false" value="{{ search|default('') }}" type="search">
                             </div>
                         </div>
-                        <div class="col-md-auto">
-                            <a class="btn btn-success btn-block" role="button" href="{{
-                            path('new_activity') }}">{{ 'New Activity'|trans }}</a>
-                        </div>
+                        {% if is_granted('ROLE_ADMINISTRATOR') %}
+                            <div class="col-md-auto">
+                                <a class="btn btn-success btn-block" role="button" href="{{
+                                path('new_activity') }}">{{ 'New Activity'|trans }}</a>
+                            </div>
+                        {% endif %}
                     </div>
                 </form>
                 <p>

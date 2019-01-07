@@ -20,4 +20,5 @@ return [
     Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
     FOS\JsRoutingBundle\FOSJsRoutingBundle::class => ['all' => true],
     Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
+    Knp\Bundle\MarkdownBundle\KnpMarkdownBundle::class => ['all' => true],
 ];

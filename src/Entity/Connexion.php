@@ -25,11 +25,6 @@ class Connexion
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\POD")
-     */
-    private $pod;
-
-    /**
      * @ORM\Column(type="integer")
      */
     private $vlan1;
@@ -76,18 +71,6 @@ class Connexion
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getPod(): ?POD
-    {
-        return $this->pod;
-    }
-
-    public function setPod(?POD $pod): self
-    {
-        $this->pod = $pod;
 
         return $this;
     }
