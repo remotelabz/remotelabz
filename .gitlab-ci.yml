@@ -109,7 +109,6 @@ deploy:staging:
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
     - docker-compose -f docker-compose.yml pull
     - docker-compose -f docker-compose.yml up -d app php mysql
-    - docker-compose logs php
   script:
     - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
     - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
