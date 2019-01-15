@@ -92,6 +92,9 @@ build:app:
 
 
 deploy:staging:
+  image: docker:latest
+  services:
+    - docker:dind
   variables:
     SYMFONY_ENV: prod
     MYSQL_PASSWORD: "$MYSQL_PASSWORD"
@@ -100,6 +103,8 @@ deploy:staging:
     COMPOSER_CACHE_DIR: "$(pwd -P)/.composer-cache"
     ASSET_VERSION: ${CI_COMMIT_SHA:0:8}
   before_script:
+    - apk add --no-cache py-pip
+    - pip install docker-compose
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
     - docker-compose -f docker-compose.prod.yml pull --parallel
   script:
