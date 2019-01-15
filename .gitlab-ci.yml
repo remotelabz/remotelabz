@@ -108,10 +108,12 @@ deploy:staging:
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
     - docker-compose -f docker-compose.yml pull
+    - docker-compose -f docker-compose.yml up -d --force-recreate app php mysql
+    - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
+    - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
   script:
-    - docker-compose -f docker-compose.yml up -d --force-recreate app php mysql composer
     # - docker-compose -f docker-compose.yml restart php
-    - docker-compose -f docker-compose.yml exec -T --user www-data composer composer install
+    - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
   environment:
