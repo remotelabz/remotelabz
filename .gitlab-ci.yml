@@ -92,7 +92,7 @@ build:app:
 
 
 deploy:staging:
-  image: docker:latest
+  image: marcadia/remotelabz:symfony4
   services:
     - docker:dind
   variables:
