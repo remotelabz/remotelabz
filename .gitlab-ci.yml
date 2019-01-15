@@ -111,7 +111,7 @@ deploy:staging:
   script:
     - docker-compose -f docker-compose.yml up -d --force-recreate app php mysql composer
     - docker-compose -f docker-compose.yml restart php
-    - docker-compose -f docker-compose.yml exec -T --user www-data composer composer install --no-dev --no-suggest --no-progress --prefer-dist --optimize-autoloader
+    - docker-compose -f docker-compose.yml exec -T --user www-data composer composer install
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
   environment:
