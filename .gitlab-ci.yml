@@ -92,7 +92,7 @@ build:app:
 
 
 deploy:staging:
-  image: marcadia/remotelabz:symfony4
+  image: docker:latest
   services:
     - docker:dind
   variables:
@@ -106,12 +106,12 @@ deploy:staging:
     - apk add --no-cache py-pip
     - pip install docker-compose
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker-compose -f docker-compose.prod.yml pull --parallel
+    - docker-compose -f docker-compose.yml pull --parallel
   script:
-    - docker-compose -f docker-compose.prod.yml up -d --force-recreate app
-    - docker-compose -f docker-compose.prod.yml restart php
-    - docker-compose -f docker-compose.prod.yml exec -T --user www-data php composer install --no-dev --no-suggest --no-progress --prefer-dist --optimize-autoloader
-    - docker-compose -f docker-compose.prod.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    - docker-compose -f docker-compose.yml up -d --force-recreate app
+    - docker-compose -f docker-compose.yml restart php
+    - docker-compose -f docker-compose.yml exec -T --user www-data php composer install --no-dev --no-suggest --no-progress --prefer-dist --optimize-autoloader
+    - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
   environment:
     name: staging
