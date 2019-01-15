@@ -23,7 +23,7 @@ services:
         restart: always
 
     php:
-        image: php:7.2-fpm
+        image: php:7.2
         working_dir: /var/www/app
         environment:
             DATABASE_HOST: "mysql"
@@ -33,6 +33,13 @@ services:
             DATABASE_PASSWORD: "${MYSQL_PASSWORD}"
             SECRET_TOKEN: "${SECRET_TOKEN}"
             SYMFONY_ENV: prod
+        volumes_from:
+            - app
+        restart: always
+
+    composer:
+        image: composer
+        working_dir: /var/www/app
         volumes_from:
             - app
         restart: always
