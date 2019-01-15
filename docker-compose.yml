@@ -45,7 +45,7 @@ services:
             VIRTUAL_HOST: "staging.remotelabz.local"
         restart: always
 
-networks:
-  default:
-    external:
-      name: nginx-proxy
+# networks:
+#   default:
+#     external:
+#       name: nginx-proxy
