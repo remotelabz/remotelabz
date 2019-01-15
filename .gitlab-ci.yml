@@ -79,7 +79,7 @@ build:app:
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export IMAGE_TAG=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
   script:
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app composer:1.4 install --no-dev --ignore-platform-reqs --no-suggest --no-progress --no-scripts --prefer-dist
+    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app composer install --no-dev --ignore-platform-reqs --no-suggest --no-progress --no-scripts --prefer-dist
     # - cp app/config/parameters.yml.dist app/config/parameters.yml
     - docker build --pull -t "marcadia/remotelabz:$IMAGE_TAG" .
     - docker push "marcadia/remotelabz:$IMAGE_TAG"
@@ -108,12 +108,13 @@ deploy:staging:
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
     - docker-compose -f docker-compose.yml pull
-    - docker-compose -f docker-compose.yml up -d --force-recreate app php mysql
+    - docker-compose -f docker-compose.yml up -d app php mysql
+    - docker-compose logs php
   script:
     - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
     - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
     # - docker-compose -f docker-compose.yml restart php
-    - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
+    # - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
   environment:
