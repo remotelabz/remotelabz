@@ -107,7 +107,7 @@ deploy:staging:
     - pip install docker-compose
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker-compose -f docker-compose.yml pull --parallel
+    - docker-compose -f docker-compose.yml pull
   script:
     - docker-compose -f docker-compose.yml up -d --force-recreate app php mysql composer
     - docker-compose -f docker-compose.yml restart php
