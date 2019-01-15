@@ -1,0 +1,51 @@
+version: '1'
+
+volumes:
+    database-volume:
+
+services:
+    app:
+        image: "marcadia/remotelabz:${BRANCH}"
+        environment:
+            BRANCH: symfony4
+        tty: true
+        restart: always
+
+    mysql:
+        image: mysql:5.7
+        volumes:
+            - database-volume:/var/lib/mysql
+        environment:
+            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+            MYSQL_USER: symfony
+            MYSQL_DATABASE: symfony
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        restart: always
+
+    php:
+        image: php:7.2-fpm
+        working_dir: /var/www/app
+        environment:
+            DATABASE_HOST: "mysql"
+            DATABASE_PORT: "3306"
+            DATABASE_NAME: "symfony"
+            DATABASE_USERNAME: "symfony"
+            DATABASE_PASSWORD: "${MYSQL_PASSWORD}"
+            SECRET_TOKEN: "${SECRET_TOKEN}"
+            SYMFONY_ENV: prod
+        volumes_from:
+            - app
+        restart: always
+
+    apache:
+        image: httpd:latest
+        volumes_from:
+            - app
+        environment:
+            VIRTUAL_HOST: "staging.remotelabz.local"
+        restart: always
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
