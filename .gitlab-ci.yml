@@ -114,7 +114,7 @@ deploy:staging:
     # - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
     # - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
     # - docker-compose -f docker-compose.yml restart php
-    - docker-compose -f docker-compose.yml exec --user www-data php curl -sS https://getcomposer.org/installer | php
+    - docker-compose -f docker-compose.yml exec -T --user www-data php curl -sS https://getcomposer.org/installer | php
     - docker-compose -f docker-compose.yml exec -T --user www-data php php composer.phar install
     # - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration

@@ -23,8 +23,9 @@ services:
         # restart: always
 
     php:
-        image: php:7.2-apache
+        image: php:7.2
         working_dir: /var/www/app
+        tty: true
         environment:
             DATABASE_HOST: "mysql"
             DATABASE_PORT: "3306"
