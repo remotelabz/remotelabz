@@ -83,7 +83,7 @@ build:app:
     # - cp app/config/parameters.yml.dist app/config/parameters.yml
     - docker build --pull -t "marcadia/remotelabz:$IMAGE_TAG" .
     - docker push "marcadia/remotelabz:$IMAGE_TAG"
-  only: [symfony4]
+  only: [gitlab-ci-setup]
   # dependencies:
   #   - test:php7.0
   #   - test:php7.1
@@ -99,7 +99,7 @@ deploy:staging:
     SYMFONY_ENV: prod
     MYSQL_PASSWORD: "$MYSQL_PASSWORD"
     SECRET_TOKEN: "$SECRET_TOKEN"
-    COMPOSE_PROJECT_NAME: "remotelabz_staging"
+    # COMPOSE_PROJECT_NAME: "remotelabz_staging"
     COMPOSER_CACHE_DIR: "$(pwd -P)/.composer-cache"
     ASSET_VERSION: ${CI_COMMIT_SHA:0:8}
   before_script:
