@@ -108,7 +108,7 @@ deploy:staging:
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
     - docker-compose -f docker-compose.yml pull
-    - docker-compose -f docker-compose.yml --verbose up -d
+    - docker-compose -f docker-compose.yml --verbose up -d --force-recreate
     - docker-compose ps
   script:
     - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip

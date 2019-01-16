@@ -23,7 +23,7 @@ services:
         # restart: always
 
     php:
-        image: php:7.2
+        image: php:7.2-apache
         working_dir: /var/www/app
         environment:
             DATABASE_HOST: "mysql"
