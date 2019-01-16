@@ -26,6 +26,7 @@ services:
         image: php:7.2
         working_dir: /var/www/app
         tty: true
+        command: /bin/sh
         environment:
             DATABASE_HOST: "mysql"
             DATABASE_PORT: "3306"
