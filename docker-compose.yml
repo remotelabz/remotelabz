@@ -9,7 +9,7 @@ services:
         environment:
             BRANCH: symfony4
         tty: true
-        restart: always
+        # restart: always
 
     mysql:
         image: mysql:5.7
@@ -20,7 +20,7 @@ services:
             MYSQL_USER: symfony
             MYSQL_DATABASE: symfony
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        restart: always
+        # restart: always
 
     php:
         image: php:7.2
@@ -35,14 +35,14 @@ services:
             SYMFONY_ENV: prod
         volumes_from:
             - app
-        restart: always
+        # restart: always
 
     composer:
         image: composer
         working_dir: /var/www/app
         volumes_from:
             - app
-        restart: always
+        # restart: always
 
     apache:
         image: httpd:latest
@@ -50,7 +50,7 @@ services:
             - app
         environment:
             VIRTUAL_HOST: "staging.remotelabz.local"
-        restart: always
+        # restart: always
 
 # networks:
 #   default:
