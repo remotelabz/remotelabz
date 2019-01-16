@@ -83,7 +83,7 @@ build:app:
     # - cp app/config/parameters.yml.dist app/config/parameters.yml
     - docker build --pull -t "marcadia/remotelabz:$IMAGE_TAG" .
     - docker push "marcadia/remotelabz:$IMAGE_TAG"
-  only: [gitlab-ci-setup]
+  only: [symfony4]
   # dependencies:
   #   - test:php7.0
   #   - test:php7.1
@@ -111,10 +111,10 @@ deploy:staging:
     - docker-compose -f docker-compose.yml --verbose up -d --force-recreate
     - docker-compose ps
   script:
-    - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
-    - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
+    # - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
+    # - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
     # - docker-compose -f docker-compose.yml restart php
-    # - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
+    - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
   environment:
