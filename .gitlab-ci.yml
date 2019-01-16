@@ -120,7 +120,7 @@ deploy:staging:
   environment:
     name: staging
     url: http://staging.remotelabz.local
-  only: [symfony4]
+  only: [gitlab-ci-setup]
   dependencies:
     - build:app
   tags:
