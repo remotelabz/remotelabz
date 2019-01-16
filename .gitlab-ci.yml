@@ -1,8 +1,5 @@
-This file is a template, and might need editing before it works on your project.
-Select image from https://hub.docker.com/_/php/
 image: php:7.2
 
-Select what we should cache between builds
 cache:
   paths:
   - vendor/
