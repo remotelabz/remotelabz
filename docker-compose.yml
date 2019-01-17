@@ -8,6 +8,8 @@ services:
         image: "marcadia/remotelabz:${BRANCH}"
         environment:
             BRANCH: gitlab-ci-setup
+        volumes:
+            - /app:/var/www/app
         tty: true
         restart: always
 
