@@ -59,7 +59,7 @@ phpunit:
 
 deploy:
   stage: deploy
-  image: docker:latest
+  image: ubuntu:latest
   script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
