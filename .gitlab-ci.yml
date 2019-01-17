@@ -66,12 +66,12 @@ deploy:
     # - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app composer:latest 'install --no-suggest --no-progress && chmod 777 /vendor'
+    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
     - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
     - docker push "marcadia/remotelabz:$BRANCH"
     - docker-compose -f docker-compose.yml pull --parallel
     - docker-compose -f docker-compose.yml up -d
-    - docker-compose -f docker-compose.yml run -T --user www-data composer composer install --no-suggest --no-progress
+    # - docker-compose -f docker-compose.yml run -T --user www-data composer composer install --no-suggest --no-progress
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
     # - ssh jhubert@10.22.9.136 'docker-compose -f docker-compose.yml pull'
   environment:
