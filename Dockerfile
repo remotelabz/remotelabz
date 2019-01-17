@@ -13,5 +13,3 @@ RUN mkdir -p /app/vendor && \
     apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip && \
     docker-php-ext-install pdo_mysql zip opcache && \
     pecl install xdebug
-
-WORKDIR /app

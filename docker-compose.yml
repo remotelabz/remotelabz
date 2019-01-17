@@ -7,6 +7,7 @@ volumes:
 services:
     app:
         image: "marcadia/remotelabz:${BRANCH}"
+        working_dir: /app
         environment:
             BRANCH: gitlab-ci-setup
         volumes:
