@@ -9,7 +9,7 @@ services:
         environment:
             BRANCH: symfony4
         tty: true
-        # restart: always
+        restart: always
 
     mysql:
         image: mysql:5.7
@@ -20,13 +20,12 @@ services:
             MYSQL_USER: symfony
             MYSQL_DATABASE: symfony
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        # restart: always
+        restart: always
 
     php:
         image: php:7.2
         working_dir: /var/www/app
         tty: true
-        command: /bin/sh
         environment:
             DATABASE_HOST: "mysql"
             DATABASE_PORT: "3306"
@@ -42,17 +41,18 @@ services:
     composer:
         image: composer
         working_dir: /var/www/app
+        command: composer install
         volumes_from:
             - app
         # restart: always
 
     apache:
-        image: httpd:latest
+        image: php:7.2-apache
         volumes_from:
             - app
         environment:
             VIRTUAL_HOST: "staging.remotelabz.local"
-        # restart: always
+        restart: always
 
 # networks:
 #   default:
