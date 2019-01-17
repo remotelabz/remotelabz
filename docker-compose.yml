@@ -9,7 +9,7 @@ services:
         environment:
             BRANCH: gitlab-ci-setup
         volumes:
-            - /app:/var/www/app
+            - app:/app
         tty: true
         restart: always
 
@@ -37,7 +37,7 @@ services:
             SECRET_TOKEN: "${SECRET_TOKEN}"
             SYMFONY_ENV: prod
         volumes_from:
-            - app
+            - app:app:/var/www/app
         # restart: always
 
     composer:
