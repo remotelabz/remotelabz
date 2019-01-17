@@ -2,6 +2,7 @@ version: '2'
 
 volumes:
     database-volume:
+    app:
 
 services:
     app:
@@ -36,8 +37,8 @@ services:
             DATABASE_PASSWORD: "${MYSQL_PASSWORD}"
             SECRET_TOKEN: "${SECRET_TOKEN}"
             SYMFONY_ENV: prod
-        volumes_from:
-            - app:app:/var/www/app
+        volumes:
+            - app:/var/www/app
         # restart: always
 
     composer:
