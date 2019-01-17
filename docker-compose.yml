@@ -39,6 +39,7 @@ services:
 
     composer:
         image: composer
+        working_dir: /var/www/app
         volumes_from:
             - app
         # restart: always
