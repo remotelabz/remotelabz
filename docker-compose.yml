@@ -24,7 +24,6 @@ services:
 
     php:
         image: php:7.2
-        working_dir: /var/www/app
         tty: true
         environment:
             DATABASE_HOST: "mysql"
@@ -40,7 +39,6 @@ services:
 
     composer:
         image: composer
-        working_dir: /var/www/app
         volumes_from:
             - app
         # restart: always
