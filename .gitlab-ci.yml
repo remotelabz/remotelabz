@@ -71,14 +71,17 @@ deploy:
     - docker push "marcadia/remotelabz:$BRANCH"
     - docker-compose -f docker-compose.yml pull --parallel
     - docker-compose -f docker-compose.yml up -d
-    - docker-compose -f docker-compose.yml exec -T php apt-get update -yqq
-    - docker-compose -f docker-compose.yml exec -T php apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip
-    # Install PHP extensions
-    - docker-compose -f docker-compose.yml exec -T php docker-php-ext-install pdo_mysql zip opcache
-    # Install & enable Xdebug for code coverage reports
-    - docker-compose -f docker-compose.yml exec -T php pecl install xdebug
-    - docker-compose -f docker-compose.yml exec -T php docker-php-ext-enable xdebug
-    - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    # - docker-compose -f docker-compose.yml exec -T php apt-get update -yqq
+    # - docker-compose -f docker-compose.yml exec -T php apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip
+    # # Install PHP extensions
+    # - docker-compose -f docker-compose.yml exec -T php docker-php-ext-install pdo_mysql zip opcache
+    # # Install & enable Xdebug for code coverage reports
+    # - docker-compose -f docker-compose.yml exec -T php pecl install xdebug
+    # - docker-compose -f docker-compose.yml exec -T php docker-php-ext-enable xdebug
+    - docker-compose -f docker-compose.yml exec -T --user www-data app echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
+    - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console doctrine:fixtures:load --no-interaction
+    - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console server:run
     # - ssh jhubert@10.22.9.136 'docker-compose -f docker-compose.yml pull'
   environment:
     name: staging
