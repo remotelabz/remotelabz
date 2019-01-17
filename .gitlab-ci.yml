@@ -66,6 +66,8 @@ deploy:
     # - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
+    - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
+    - docker push "marcadia/remotelabz:$BRANCH"
     - docker-compose -f docker-compose.yml pull --parallel
     - docker-compose -f docker-compose.yml up -d
     - docker-compose -f docker-compose.yml run -T --user www-data composer composer install
