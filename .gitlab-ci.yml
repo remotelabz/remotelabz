@@ -64,9 +64,9 @@ deploy:
     # - ssh-add <(echo "$DEPLOY_SSH_PRIVATE_KEY")
     # - mkdir -p ~/.ssh
     # - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-    - sudo docker login -u marcadia -p $DOCKER_PASSWORD
+    - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - sudo docker-compose -f docker-compose.yml pull
+    - docker-compose -f docker-compose.yml pull
     # - ssh jhubert@10.22.9.136 'docker-compose -f docker-compose.yml pull'
   environment:
     name: staging
