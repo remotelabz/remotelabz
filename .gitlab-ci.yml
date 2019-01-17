@@ -10,32 +10,6 @@ stages:
 - test
 - deploy
 
-before_script:
-- apt-get update -yqq
-- apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip
-# Install PHP extensions
-- docker-php-ext-install pdo_mysql zip opcache
-# Install & enable Xdebug for code coverage reports
-- pecl install xdebug
-- docker-php-ext-enable xdebug
-# Install and run Composer
-- curl -sS https://getcomposer.org/installer | php
-- php composer.phar install
-# Install and run yarn
-- curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-- echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-- curl -sL https://deb.nodesource.com/setup_11.x | bash
-- apt-get install -yqq nodejs
-- apt-get update -yqq
-- apt-get install -yqq yarn
-- yarn install
-# Pack assets
-- yarn encore dev
-# Configure mysql password
-- echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
-- bin/console doctrine:migrations:migrate -n
-- bin/console doctrine:fixtures:load -n
-
 # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
 # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
 services:
@@ -53,6 +27,31 @@ variables:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 phpunit:
   stage: test
+  before_script:
+  - apt-get update -yqq
+  - apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip
+  # Install PHP extensions
+  - docker-php-ext-install pdo_mysql zip opcache
+  # Install & enable Xdebug for code coverage reports
+  - pecl install xdebug
+  - docker-php-ext-enable xdebug
+  # Install and run Composer
+  - curl -sS https://getcomposer.org/installer | php
+  - php composer.phar install
+  # Install and run yarn
+  - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+  - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+  - curl -sL https://deb.nodesource.com/setup_11.x | bash
+  - apt-get install -yqq nodejs
+  - apt-get update -yqq
+  - apt-get install -yqq yarn
+  - yarn install
+  # Pack assets
+  - yarn encore dev
+  # Configure mysql password
+  - echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
+  - bin/console doctrine:migrations:migrate -n
+  - bin/console doctrine:fixtures:load -n
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
   only: [symfony4]
