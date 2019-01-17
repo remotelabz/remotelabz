@@ -66,7 +66,7 @@ deploy:
     # - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app --user gitlab-runner composer:latest 'install --no-suggest --no-progress && chmod 777 /vendor'
+    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app composer:latest 'install --no-suggest --no-progress && chmod 777 /vendor'
     - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
     - docker push "marcadia/remotelabz:$BRANCH"
     - docker-compose -f docker-compose.yml pull --parallel
