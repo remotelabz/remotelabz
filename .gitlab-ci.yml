@@ -72,6 +72,7 @@ deploy:
     - docker-compose -f docker-compose.yml pull --parallel
     - docker-compose -f docker-compose.yml up -d
     # - docker-compose -f docker-compose.yml run -T --user www-data composer composer install --no-suggest --no-progress
+    - docker-compose -f docker-compose.yml exec -T --user www-data php ls -la
     - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
     # - ssh jhubert@10.22.9.136 'docker-compose -f docker-compose.yml pull'
   environment:
