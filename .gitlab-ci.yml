@@ -66,7 +66,10 @@ deploy:
     # - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker-compose -f docker-compose.yml pull
+    - docker-compose -f docker-compose.yml pull --parallel
+    - docker-compose -f docker-compose.yml up -d --force-recreate app
+    - docker-compose -f docker-compose.yml exec -T --user www-data composer composer install
+    - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
     # - ssh jhubert@10.22.9.136 'docker-compose -f docker-compose.yml pull'
   environment:
     name: staging
@@ -117,8 +120,6 @@ deploy:
 #     - docker-compose -f docker-compose.yml --verbose up -d --force-recreate
 #     - docker-compose ps
 #   script:
-#     # - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
-#     # - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
 #     # - docker-compose -f docker-compose.yml restart php
 #     - docker-compose -f docker-compose.yml exec -T --user www-data php curl -sS https://getcomposer.org/installer | php
 #     - docker-compose -f docker-compose.yml exec -T --user www-data php php composer.phar install
