@@ -7,7 +7,7 @@ services:
     app:
         image: "marcadia/remotelabz:${BRANCH}"
         environment:
-            BRANCH: symfony4
+            BRANCH: gitlab-ci-setup
         tty: true
         restart: always
 
