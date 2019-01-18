@@ -6,7 +6,7 @@ volumes:
 
 services:
     app:
-        image: "localhost:5000/crestic/remotelabzv2:${CI_COMMIT_REF_SLUG}"
+        image: "194.57.105.124:6361/crestic/remotelabzv2:${CI_COMMIT_REF_SLUG}"
         working_dir: /app
         environment:
             MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
