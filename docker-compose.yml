@@ -6,7 +6,7 @@ volumes:
 
 services:
     app:
-        image: "marcadia/remotelabz:${BRANCH}"
+        image: "marcadia/remotelabz:${CI_COMMIT_REF_SLUG}"
         working_dir: /app
         environment:
             MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
