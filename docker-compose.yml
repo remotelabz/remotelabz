@@ -9,6 +9,10 @@ services:
         image: "marcadia/remotelabz:${BRANCH}"
         working_dir: /app
         environment:
+            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+            MYSQL_USER: symfony
+            MYSQL_DATABASE: symfony
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
             BRANCH: gitlab-ci-setup
             DATABASE_HOST: "mysql"
             DATABASE_PORT: "3306"

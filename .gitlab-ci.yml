@@ -79,6 +79,7 @@ deploy:
     # - docker-compose -f docker-compose.yml exec -T php pecl install xdebug
     # - docker-compose -f docker-compose.yml exec -T php docker-php-ext-enable xdebug
     - docker-compose -f docker-compose.yml exec -T --user www-data app echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
+    - docker-compose -f docker-compose.yml exec -T --user www-data app cat .env
     - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
     - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console doctrine:fixtures:load --no-interaction
     - docker-compose -f docker-compose.yml exec -T --user www-data app bin/console server:run
