@@ -11,5 +11,5 @@ RUN mkdir -p /app/vendor && \
     chown 33:33 /app/.env && \
     apt-get update -yqq && \
     apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip && \
-    docker-php-ext-install pdo_mysql zip opcache && \
+    docker-php-ext-install pdo_mysql zip opcache pcntl && \
     pecl install xdebug
