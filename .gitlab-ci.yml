@@ -1,16 +1,14 @@
-image: php:7.2
-
 stages:
-- build
-- test
-- deploy
+  - build
+  - test
+  - deploy
 
 variables:
   MYSQL_DATABASE: symfony
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
-  BRANCH: 'echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-''
+  BRANCH: "$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')"
 
 build:app:
   stage: build
