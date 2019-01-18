@@ -15,19 +15,20 @@ build:app:
   services:
     - docker:dind
   script:
-    - docker login -u marcadia -p $DOCKER_PASSWORD
+    # - docker login -u marcadia -p $DOCKER_PASSWORD
     - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
-    - docker build --pull -t "marcadia/remotelabz:$CI_COMMIT_REF_SLUG" .
-    - docker push "marcadia/remotelabz:$CI_COMMIT_REF_SLUG"
+    - docker build --pull -t "localhost:5000/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG" .
+    - docker push "localhost:5000/crestic/remotelabzv2z:$CI_COMMIT_REF_SLUG"
   tags:
     - build
 
 test:phpunit:
   stage: test
-  image: "marcadia/remotelabz:$CI_COMMIT_REF_SLUG"
+  image: "localhost:5000/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG"
   services:
     - mysql:5.7
   before_script:
+    # - docker login -u marcadia -p $DOCKER_PASSWORD
     - cd /app
     - echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
     - bin/console doctrine:migrations:migrate -n
