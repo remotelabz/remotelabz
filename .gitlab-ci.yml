@@ -18,7 +18,7 @@ build:app:
     # - docker login -u marcadia -p $DOCKER_PASSWORD
     - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
     - docker build --pull -t "localhost:5000/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG" .
-    - docker push "localhost:5000/crestic/remotelabzv2z:$CI_COMMIT_REF_SLUG"
+    - docker push "localhost:5000/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG"
   tags:
     - build
 
