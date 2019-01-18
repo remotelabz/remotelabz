@@ -2,9 +2,10 @@
 
 namespace App\Controller;
 
-use App\Utils\RequestType;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\HtmlRequest;
+use Symfony\Component\HttpFoundation\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -42,15 +43,13 @@ class AppController extends AbstractController
 
     protected function getRequestedFormat(Request $request): ?string
     {
-        if ($request->headers->get('Accept') === 'application/json')
-        {
-            return RequestType::JsonRequest;
+        if ($request->headers->get('Accept') === 'application/json') {
+            return JsonRequest::class;
         }
-        if ($request->getRequestFormat() === 'json')
-        {
-            return RequestType::JsonRequest;
+        if ($request->getRequestFormat() === 'json') {
+            return JsonRequest::class;
         }
 
-        return RequestType::HtmlRequest;
+        return HtmlRequest::class;
     }
 }

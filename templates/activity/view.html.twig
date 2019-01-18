@@ -17,6 +17,14 @@
                         class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
                 </h4>
+                <h1>{{ 'Available devices'|trans }}</h1>
+                {% for device in activity.lab.devices %}
+                    <p>
+                        {{ device.name }}
+
+                        <a href="{{ path('start_device', {'id': device.id}) }}" class="btn btn-success" role="button"><i class="fa fa-play"></i> {{ 'Start'|trans }}</a>
+                    </p> 
+                {% endfor %}
                 <hr>
                 <h1>{{ activity.name }}</h1>
                 <hr>

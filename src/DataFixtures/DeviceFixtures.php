@@ -24,6 +24,7 @@ class DeviceFixtures extends Fixture
                 ->setBrand($faker->company)
                 ->setModel($faker->lastName)
                 ->setLaunchOrder($faker->numberBetween(0, 999))
+                ->setVirtuality($faker->numberBetween(0, 2))
             ;
 
             $manager->persist($device);

@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Lab;
 use App\Form\LabType;
-use App\Utils\RequestType;
+
 use App\Service\FileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
@@ -30,7 +30,7 @@ class LabController extends AppController
             $data = $repository->findAll();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -57,7 +57,7 @@ class LabController extends AppController
             throw new NotFoundHttpException();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -153,7 +153,7 @@ class LabController extends AppController
             ];
         }
             
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data, $status);
         }
 

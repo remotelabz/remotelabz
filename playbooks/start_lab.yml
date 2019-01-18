@@ -1,0 +1,34 @@
+---
+- gather_facts: no
+  tasks:
+  - name: Encrypt user password
+    shell: "openssl passwd -crypt {{ user }}"
+    register: user_password
+
+  - name: Create user account
+    user:
+      name: "{{ user }}"
+      create_home: yes
+      shell: /bin/bash
+      password: user_password
+
+  - name: Create lab directory
+    file:
+      path: "/home/{{ user }}/{{ lab_name }}"
+      state: directory
+      mode: 755
+
+  - name: Create OVS bridge
+    openvswitch_bridge:
+      bridge: "{{ ovs_bridge_name }}"
+
+  - name: Start OVS bridge
+    shell: "ip link set {{ ovs_bridge_name }} up"
+
+  - name: Create qemu image
+    shell: "qemu-img create -b {{ image_source_path }} -f qcow2 {{ image_destination_path }}"
+
+  - name: Start qemu vm
+    shell: "qemu-system-x86_64 -machine accel=kvm:tcg -cpu Opteron_G2 -name {{ vm_name }} -daemonize "
+
+  

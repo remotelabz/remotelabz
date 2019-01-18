@@ -1,9 +1,25 @@
 <lab>
+  <lab_name>Lab_name</lab_name>
+  <id>1</id>
+  <tp_managed>1</tp_managed>
+  <tp_type>supervised</tp_type>
+  <tp_access>vpn</tp_access>
+  <!-- personne qui a lancé le lab -->
+  <user>
+    <login>root@localhost</login>
+  </user>
   <nodes>
-    <device type="virtuel" property="X" id="6" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="1">
+    <device type="virtuel" property="X" id="6" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="1" hypervisor="qemu">
       <nom>VM_1</nom>
+      <nom_brute>VM_1</nom_brute>
       <interface id="19" nom_physique="eth0" nom_virtuel="tap12"/>
       <interface_control id="14" nom_physique="eth0_phy_VM1" nom_virtuel="eth0_ctrl_VM1" IPv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" Protocole="vnc" Port="7220"/>
+      <!-- if vpn access -->
+      <direct_access>
+        <IPv4>1.2.3.4/24</IPv4>
+        <IPv6></IPv6>
+      </direct_access>
+      <system memory="8192" disk="40"></system>
     </device>
     <device type="virtuel" property="X" id="9" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="2">
       <nom>VM_2</nom>
@@ -24,10 +40,13 @@
     </network>
   </networks>
   <init>
+    <network_lab>1.2.3.0/24</network_lab>
+    <network_user>1.2.3.16/26</network_user>
     <serveur>
       <IPv4>194.57.105.124</IPv4>
       <IPv6>0</IPv6>
-      <index>12</index>
+      <index_interface>12</index_interface>
+      <index_interface_control>1</index_interface_control>
     </serveur>
   </init>
 </lab>

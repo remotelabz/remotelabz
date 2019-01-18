@@ -57,6 +57,26 @@ class Device
      */
     private $labs;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $type;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $virtuality;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
+     */
+    private $operatingSystem;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
+     */
+    private $controlInterface;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
@@ -182,6 +202,54 @@ class Device
             $this->labs->removeElement($lab);
             $lab->removeDevice($this);
         }
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getVirtuality(): ?int
+    {
+        return $this->virtuality;
+    }
+
+    public function setVirtuality(int $virtuality): self
+    {
+        $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getOperatingSystem(): ?OperatingSystem
+    {
+        return $this->operatingSystem;
+    }
+
+    public function setOperatingSystem(?OperatingSystem $operatingSystem): self
+    {
+        $this->operatingSystem = $operatingSystem;
+
+        return $this;
+    }
+
+    public function getControlInterface(): ?NetworkInterface
+    {
+        return $this->controlInterface;
+    }
+
+    public function setControlInterface(?NetworkInterface $controlInterface): self
+    {
+        $this->controlInterface = $controlInterface;
 
         return $this;
     }

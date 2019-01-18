@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Connexion;
-use App\Utils\RequestType;
+
 use App\Form\ConnexionType;
 use App\Service\FileUploader;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +30,7 @@ class ConnexionController extends AppController
             $data = $repository->findAll();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -57,7 +57,7 @@ class ConnexionController extends AppController
             throw new NotFoundHttpException();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -153,7 +153,7 @@ class ConnexionController extends AppController
             ];
         }
             
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data, $status);
         }
 

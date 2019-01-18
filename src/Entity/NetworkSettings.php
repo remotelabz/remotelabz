@@ -24,35 +24,35 @@ class NetworkSettings
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip(version="4")
      */
     private $ip;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip(version="6")
      */
     private $ipv6;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=64)
      */
     private $prefix4;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=128)
      */
     private $prefix6;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip
      */
     private $gateway;
@@ -64,7 +64,7 @@ class NetworkSettings
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=65536)
      */
     private $port;

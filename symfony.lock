@@ -197,6 +197,9 @@
     "psr/simple-cache": {
         "version": "1.0.1"
     },
+    "s1lentium/iptools": {
+        "version": "v1.1.1"
+    },
     "sensio/framework-extra-bundle": {
         "version": "5.2",
         "recipe": {

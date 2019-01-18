@@ -15,14 +15,14 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 class RenderExceptionSubscriber implements EventSubscriberInterface
 {
-    public function onKernelException(GetResponseForExceptionEvent $event) {
+    public function onKernelException(GetResponseForExceptionEvent $event)
+    {
         $exception = $event->getException();
         $request = $event->getRequest();
         $response = $event->getResponse();
 
         // test if we want a json return
-        if ($request->isXmlHttpRequest() || $request->headers->has('Authorization'))
-        {
+        if ($request->isXmlHttpRequest() || $request->headers->has('Authorization')) {
             $status = $response === null ? 400 : $response->getStatusCode();
 
             $response = new JsonResponse();

@@ -10,6 +10,7 @@
         "jms/serializer-bundle": "2.*",
         "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
+        "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
         "symfony/asset": "4.1.*",
         "symfony/console": "4.1.*",

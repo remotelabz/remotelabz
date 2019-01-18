@@ -155,9 +155,8 @@ class UserController extends AppController
 
         if ($user == null) {
             $status = 404;
-        }
-        // Prevent super admin deletion
-        elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+        } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+            // Prevent super admin deletion
             $status = 403;
         } else {
             $em = $this->getDoctrine()->getManager();

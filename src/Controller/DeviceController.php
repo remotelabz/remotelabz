@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Device;
 use App\Form\DeviceType;
-use App\Utils\RequestType;
+
 use App\Service\FileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
@@ -30,7 +30,7 @@ class DeviceController extends AppController
             $data = $repository->findAll();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -57,7 +57,7 @@ class DeviceController extends AppController
             throw new NotFoundHttpException();
         }
 
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
         
@@ -171,7 +171,7 @@ class DeviceController extends AppController
             ];
         }
             
-        if ($this->getRequestedFormat($request) === RequestType::JsonRequest) {
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data, $status);
         }
 

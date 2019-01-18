@@ -1,0 +1,26 @@
+{
+    "id": 1,
+    "user": {
+        "id": 1
+    },
+    "devices": [
+        {
+            "id": 6,
+            "type": "vm",
+            "virtuality": "virtual",
+            "script": "",
+            "image": "debian-testing20160512.img",
+            "path": "/usr/local/Virtualize/kvm-image/images/img-rel",
+            "order": 1,
+            "hypervisor": "qemu",
+            "name": "VM_1",
+            "rawName": "VM_1",
+            "interfaces": [
+                {
+                    "id": 19,
+                    "name": "eth0"
+                }
+            ]
+        }
+    ]
+}
