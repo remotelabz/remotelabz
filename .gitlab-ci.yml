@@ -1,12 +1,7 @@
 image: php:7.2
 
-# cache:
-#   paths:
-#   - vendor/
-#   - node_modules/
-
 stages:
-- prepare
+- build
 - test
 - deploy
 
@@ -22,6 +17,18 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
+
+build:app:
+  stage: build
+  image: docker:dind
+  script:
+    - docker login -u marcadia -p $DOCKER_PASSWORD
+    - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
+    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
+    - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
+    - docker push "marcadia/remotelabz:$BRANCH"
+  tags:
+    - build
 
 # Run our tests
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
@@ -56,14 +63,9 @@ phpunit:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
   only: [symfony4]
 
-deploy:
+deploy:staging:
   stage: deploy
   script:
-    - docker login -u marcadia -p $DOCKER_PASSWORD
-    - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
-    - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
-    - docker push "marcadia/remotelabz:$BRANCH"
     - docker-compose -f docker-compose.yml pull --parallel
     - docker-compose -f docker-compose.yml up -d
     - docker-compose -f docker-compose.yml exec -T app sh -c 'echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env'
@@ -73,6 +75,8 @@ deploy:
   environment:
     name: staging
     url: http://10.22.9.136/
+  dependencies:
+    - build:app
   tags:
     - deploy
 
