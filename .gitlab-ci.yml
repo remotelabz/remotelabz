@@ -10,7 +10,7 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
-  BRANCH: "echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-'"
+  BRANCH: 'echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-''
 
 build:app:
   stage: build
@@ -19,7 +19,6 @@ build:app:
     - docker:dind
   script:
     - docker login -u marcadia -p $DOCKER_PASSWORD
-    - "export BRANCH=$BRANCH"
     - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
     - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
     - docker push "marcadia/remotelabz:$BRANCH"
@@ -38,7 +37,6 @@ test:phpunit:
     - bin/console doctrine:fixtures:load -n
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
-  only: [symfony4]
   tags:
     - test
 
