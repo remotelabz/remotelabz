@@ -20,11 +20,13 @@ variables:
 
 build:app:
   stage: build
-  image: docker:dind
+  image: docker:latest
+  services:
+    - docker:dind
   script:
     - docker login -u marcadia -p $DOCKER_PASSWORD
     - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
+    - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
     - docker build --pull -t "marcadia/remotelabz:$BRANCH" .
     - docker push "marcadia/remotelabz:$BRANCH"
   tags:
