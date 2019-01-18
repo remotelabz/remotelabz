@@ -23,6 +23,8 @@ services:
             SYMFONY_ENV: prod
         volumes:
             - app:/app
+        ports:
+            - "80:8000"
         tty: true
         restart: always
 
