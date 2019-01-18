@@ -2,6 +2,8 @@ FROM php:7.2
 
 COPY . /app
 
+WORKDIR /app
+
 RUN mkdir -p /app/vendor && \
     mkdir -p /app/var && \
     mkdir -p /.composer && \
