@@ -46,12 +46,12 @@ test:phpunit:
 deploy:staging:
   stage: deploy
   script:
-    - docker-compose -f docker-compose.yml pull --parallel
-    - docker-compose -f docker-compose.yml up -d
-    - docker-compose -f docker-compose.yml exec -T app sh -c 'echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env'
-    - docker-compose -f docker-compose.yml exec -T app bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
-    - docker-compose -f docker-compose.yml exec -T app bin/console doctrine:fixtures:load --no-interaction
-    - docker-compose -f docker-compose.yml exec -T -d app bin/console server:start 0.0.0.0:8000
+    - docker-compose -f docker-compose.prod.yml pull --parallel
+    - docker-compose -f docker-compose.prod.yml up -d
+    - docker-compose -f docker-compose.prod.yml exec -T app sh -c 'echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env'
+    - docker-compose -f docker-compose.prod.yml exec -T app bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    - docker-compose -f docker-compose.prod.yml exec -T app bin/console doctrine:fixtures:load --no-interaction
+    - docker-compose -f docker-compose.prod.yml exec -T -d app bin/console server:start 0.0.0.0:8000
   environment:
     name: staging
     url: http://10.22.9.136/
