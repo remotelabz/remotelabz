@@ -39,7 +39,7 @@ test:phpunit:
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
   only:
-    - [master]
+    - master
   tags:
     - test
 
