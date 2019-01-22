@@ -9,6 +9,9 @@ variables:
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
 
+before_script:
+  - docker login -u marcadia -p $DOCKER_PASSWORD
+
 build:app:
   stage: build
   image: docker:latest
@@ -35,6 +38,8 @@ test:phpunit:
     - bin/console doctrine:fixtures:load -n
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
+  only:
+    - [master]
   tags:
     - test
 
