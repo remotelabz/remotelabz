@@ -1,127 +1,62 @@
-# This file is a template, and might need editing before it works on your project.
-# Select image from https://hub.docker.com/_/php/
-# image: php:7.2
+stages:
+  - build
+  - test
+  - deploy
 
-# Select what we should cache between builds
-# cache:
-#   paths:
-#   - vendor/
-#   - node_modules/
+variables:
+  MYSQL_DATABASE: symfony
+  MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+  MYSQL_USER: symfony
+  MYSQL_PASSWORD: $MYSQL_PASSWORD
 
-# stages:
-# - prepare
-# - test
-# - deploy
-
-# before_script:
-# - apt-get update -yqq
-# - apt-get install -yqq git gnupg zlib1g-dev apt-transport-https ca-certificates unzip
-# # Install PHP extensions
-# - docker-php-ext-install pdo_mysql zip opcache
-# # Install & enable Xdebug for code coverage reports
-# - pecl install xdebug
-# - docker-php-ext-enable xdebug
-# # Install and run Composer
-# - curl -sS https://getcomposer.org/installer | php
-# - php composer.phar install
-# # Install and run yarn
-# - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-# - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-# - curl -sL https://deb.nodesource.com/setup_11.x | bash
-# - apt-get install -yqq nodejs
-# - apt-get update -yqq
-# - apt-get install -yqq yarn
-# - yarn install
-# # Pack assets
-# - yarn encore dev
-# # Configure mysql password
-# - echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
-# - bin/console doctrine:migrations:migrate -n
-# - bin/console doctrine:fixtures:load -n
-
-# # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
-# # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
-# services:
-#   - mysql:5.7
-
-# # Set any variables we need
-# variables:
-#   # Configure mysql environment variables (https://hub.docker.com/r/_/mysql/)
-#   MYSQL_DATABASE: symfony
-#   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-#   MYSQL_USER: symfony
-#   MYSQL_PASSWORD: $MYSQL_PASSWORD
-
-# # Run our tests
-# # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
-# phpunit:
-#   stage: test
-#   script:
-#     - bin/phpunit --configuration phpunit.xml.dist --colors=never
-
-# deploy:
-#   stage: deploy
-#   script:
-#     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-#     - eval $(ssh-agent -s)
-#     - ssh-add <(echo "$SSH_PRIVATE_KEY")
-#     - mkdir -p ~/.ssh
-#     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+before_script:
+  - docker login -u marcadia -p $DOCKER_PASSWORD
 
 build:app:
+  stage: build
   image: docker:latest
   services:
     - docker:dind
-  stage: build
-  variables:
-    SYMFONY_ENV: "prod"
-  before_script:
-    - docker login -u marcadia -p $DOCKER_PASSWORD
-    - export IMAGE_TAG=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
   script:
-    - docker run --rm --name composerinstall -v "$PWD":/var/www/app -w /var/www/app composer install --no-dev --ignore-platform-reqs --no-suggest --no-progress --no-scripts --prefer-dist
-    # - cp app/config/parameters.yml.dist app/config/parameters.yml
-    - docker build --pull -t "marcadia/remotelabz:$IMAGE_TAG" .
-    - docker push "marcadia/remotelabz:$IMAGE_TAG"
-  only: [symfony4]
-  # dependencies:
-  #   - test:php7.0
-  #   - test:php7.1
+    # - docker login -u marcadia -p $DOCKER_PASSWORD
+    - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
+    - docker build --pull -t "194.57.105.124:6361/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG" .
+    - docker push "194.57.105.124:6361/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG"
   tags:
-    - autoscale
+    - build
 
+test:phpunit:
+  stage: test
+  image: "194.57.105.124:6361/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG"
+  services:
+    - mysql:5.7
+  before_script:
+    # - docker login -u marcadia -p $DOCKER_PASSWORD
+    - cd /app
+    - echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env
+    - bin/console doctrine:migrations:migrate -n
+    - bin/console doctrine:fixtures:load -n
+  script:
+    - bin/phpunit --configuration phpunit.xml.dist --colors=never
+  only:
+    - master
+  tags:
+    - test
 
 deploy:staging:
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    SYMFONY_ENV: prod
-    MYSQL_PASSWORD: "$MYSQL_PASSWORD"
-    SECRET_TOKEN: "$SECRET_TOKEN"
-    COMPOSE_PROJECT_NAME: "remotelabz_staging"
-    COMPOSER_CACHE_DIR: "$(pwd -P)/.composer-cache"
-    ASSET_VERSION: ${CI_COMMIT_SHA:0:8}
-  before_script:
-    - apk add --no-cache py-pip
-    - pip install docker-compose
-    - docker login -u marcadia -p $DOCKER_PASSWORD
-    - export BRANCH=$(echo -en $CI_COMMIT_REF_NAME | tr -c '[:alnum:]_.-' '-')
-    - docker-compose -f docker-compose.yml pull
-    - docker-compose -f docker-compose.yml up -d
-    - docker-compose ps
-  script:
-    - docker-compose -f docker-compose.yml exec -T --user www-data php apk add --no-cache py-pip
-    - docker-compose -f docker-compose.yml exec -T --user www-data php pip install docker-compose
-    # - docker-compose -f docker-compose.yml restart php
-    # - docker-compose -f docker-compose.yml exec -T --user www-data php composer install
-    - docker-compose -f docker-compose.yml exec -T --user www-data php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
   stage: deploy
+  script:
+    - docker-compose -f docker-compose.prod.yml pull --parallel
+    - docker-compose -f docker-compose.prod.yml up -d
+    - docker-compose -f docker-compose.prod.yml exec -T app sh -c 'echo "DATABASE_URL=mysql://symfony:$MYSQL_PASSWORD@mysql/symfony" >> .env'
+    - docker-compose -f docker-compose.prod.yml exec -T app bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    - docker-compose -f docker-compose.prod.yml exec -T app bin/console doctrine:fixtures:load --no-interaction
+    - docker-compose -f docker-compose.prod.yml exec -T -d app bin/console server:start 0.0.0.0:8000
   environment:
     name: staging
-    url: http://staging.remotelabz.local
-  only: [symfony4]
+    url: http://10.22.9.136/
   dependencies:
     - build:app
+    - test:phpunit
   tags:
     - deploy
