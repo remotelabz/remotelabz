@@ -421,7 +421,7 @@ class ActivityController extends AppController
                         $interfaceNode->addAttribute('name', $networkInterface->getName());
                         if ($networkInterface->getType() == "tap") {
                             $interfaceNode->addAttribute('type', "tap" . $index);
-                            $interfaceNode->addAttribute('mac_address', "00:02:03:04:".$this->MacEnd($index));
+                            $interfaceNode->addAttribute('mac_address', $networkInterface->getMacAddress());
                             $index++;
                         }
                     }
@@ -451,45 +451,46 @@ class ActivityController extends AppController
                     $controlInterfaceNode->addAttribute('protocol', $protocol);
                     
                     if ($protocol === "websocket") {
-                        $port = $this->getParameter('port_start_websocket')+$indexControl;
+                        $port = $this->getenv('WEBSOCKET_PORT_START') + $indexControl;
                     }
                     if ($protocol === "telnet") {
-                        $port = $this->getParameter('port_start_telnet')+$indexControl;
+                        $port = $this->getenv('TELNET_PORT_START') + $indexControl;
                     }
                     if ($protocol === "vnc") {
-                        $port = $this->getParameter('port_start_vnc')+$indexControl;
+                        $port = $this->getenv('VNC_PORT_START') + $indexControl;
                     }
                     if ($protocol === "ssh") {
-                        $port = $this->getParameter('port_start_ssh')+$indexControl;
+                        $port = $this->getenv('SSH_PORT_START') + $indexControl;
                     }
-                    //$controlInterface->getConfigReseau()->getPort()
-                    $indexControl++;
+                    
                     $controlInterfaceNode->addAttribute('port', $port);
+                    
+                    $indexControl++;
                 }
             }
+
             if ($device->getType() === "switch") {
-                $networks=$rootNode->addChild('networks');
-                $network=$networks->addChild('network');
+                $networks = $rootNode->addChild('networks');
+                $network = $networks->addChild('network');
                 $network->addAttribute('type', 'OVS');
                 $network->addAttribute('device_id', $device->getId());
-                foreach ($lab->getConnexions() as $con) {
-                    $interface=$network->addChild('port');
-                    $interface->addAttribute('id', $con->getId());
-                    $interface->addAttribute('interface_id1', $con->getInterface1()->getId());
-                    $interface->addAttribute('vlan1', $con->getVlan1());
-                    $interface->addAttribute('interface_id2', $con->getInterface2()->getId());
-                    $interface->addAttribute('vlan2', $con->getVlan2());
+
+                foreach ($lab->getConnexions() as $connexion) {
+                    $interface = $network->addChild('port');
+                    $interface->addAttribute('id', $connexion->getId());
+                    $interface->addAttribute('interface_id1', $connexion->getInterface1()->getId());
+                    $interface->addAttribute('vlan1', $connexion->getVlan1());
+                    $interface->addAttribute('interface_id2', $connexion->getInterface2()->getId());
+                    $interface->addAttribute('vlan2', $connexion->getVlan2());
                 }
             }
         }
         
         $serveur = $init->addChild('serveur');
-        $serveur->addChild('IPv4', $hypervisorSettings->getIpv4());
-        $serveur->addChild('IPv6', $hypervisorSettings->getIpv6());
-        $serveur->addChild('index_interface', $hypervisorSettings->getIndexInterface());
-        $serveur->addChild('index_interface_control', $hypervisorSettings->getIndexInterface());
-        $hypervisorSettings->setIndexInterface($index);
-        $hypervisorSettings->setIndexInterfaceControle($indexControl);
+        $serveur->addChild('IPv4', getenv('HYPERVISOR_IP'));
+        $serveur->addChild('IPv6', '');
+        $serveur->addChild('index_interface', $index);
+        $serveur->addChild('index_interface_control', $hypervisorSettings->getIndexInterface($indexControl));
 
         $dir = $dir_prefix . $user->getUsername();
         $filename = $dir . '/' . $labName . '.xml';
@@ -502,7 +503,5 @@ class ActivityController extends AppController
     
         fwrite($fp, $rootNode->asXML());
         fclose($fp);
-
-        return new Response($rootNode->asXML());
     }
 }

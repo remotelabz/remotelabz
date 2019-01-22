@@ -1,40 +1,42 @@
-version: '2'
+version: '3'
 
 volumes:
     database-volume:
     app:
 
+
+
 services:
     app:
-        image: "194.57.105.124:6361/crestic/remotelabzv2:${CI_COMMIT_REF_SLUG}"
-        working_dir: /app
-        environment:
-            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            MYSQL_USER: symfony
-            MYSQL_DATABASE: symfony
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-            BRANCH: gitlab-ci-setup
-            DATABASE_HOST: "mysql"
-            DATABASE_PORT: "3306"
-            DATABASE_NAME: "symfony"
-            DATABASE_USERNAME: "symfony"
-            DATABASE_PASSWORD: "${MYSQL_PASSWORD}"
-            SECRET_TOKEN: "${SECRET_TOKEN}"
-            SYMFONY_ENV: prod
+        build: .
+        image: app:latest
         volumes:
-            - app:/app
+            - .:/app
+        env_file: .env
+        environment:
+            # MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+            # MYSQL_USER: "${MYSQL_USER}"
+            # MYSQL_DATABASE: "${MYSQL_DATABASE}"
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
         ports:
             - "80:8000"
+        depends_on:
+            - mysql
         tty: true
-        restart: always
+        restart: on-failure
 
     mysql:
         image: mysql:5.7
         volumes:
             - database-volume:/var/lib/mysql
+        env_file: .env
         environment:
-            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            MYSQL_USER: symfony
-            MYSQL_DATABASE: symfony
+            # MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+            # MYSQL_USER: "${MYSQL_USER}"
+            # MYSQL_DATABASE: "${MYSQL_DATABASE}"
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        restart: always
+        restart: on-failure
+
+    node:
+        build: yarn/.
+        restart: on-failure
