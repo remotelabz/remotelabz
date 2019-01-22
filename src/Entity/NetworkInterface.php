@@ -36,6 +36,11 @@ class NetworkInterface
      */
     private $device;
 
+    /**
+     * @ORM\Column(type="string", length=17)
+     */
+    private $macAddress;
+
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
 
@@ -88,6 +93,18 @@ class NetworkInterface
     public function setDevice(?Device $device): self
     {
         $this->device = $device;
+
+        return $this;
+    }
+
+    public function getMacAddress(): ?string
+    {
+        return $this->macAddress;
+    }
+
+    public function setMacAddress(string $macAddress): self
+    {
+        $this->macAddress = $macAddress;
 
         return $this;
     }

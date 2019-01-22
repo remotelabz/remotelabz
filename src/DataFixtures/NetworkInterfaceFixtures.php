@@ -40,6 +40,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                         )
                     )
                 )
+                ->setMacAddress($faker->macAddress);
             ;
 
             $manager->persist($networkInterface);
