@@ -3,9 +3,9 @@ FROM php:7.2
 RUN mkdir -p /app/vendor && \
     mkdir -p /app/var && \
     mkdir -p /.composer && \
-    chown 33:33 -R /.composer && \
-    chown 33:33 -R /app/var && \
-    chown 33:33 -R /app/vendor
+    chmod 777 -R /.composer && \
+    chmod 777 -R /app/var && \
+    chmod 777 -R /app/vendor
 
 RUN apt-get -yqq update > /dev/null && \
     apt-get -yqq install git gnupg zlib1g-dev apt-transport-https ca-certificates unzip > /dev/null
