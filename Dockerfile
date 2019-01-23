@@ -32,6 +32,6 @@ WORKDIR /app
 
 COPY entrypoint.sh /usr/local/bin/
 
-RUN chown 33:33 /usr/bin/local/entrypoint.sh
+RUN chown 33:33 /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT [ "/app/bin/console" ]
