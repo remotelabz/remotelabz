@@ -32,4 +32,6 @@ WORKDIR /app
 
 COPY entrypoint.sh /usr/local/bin/
 
+RUN chmod 33:33 /usr/bin/local/entrypoint.sh
+
 ENTRYPOINT [ "/app/bin/console" ]
