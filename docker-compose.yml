@@ -7,10 +7,6 @@ services:
     app:
         build: ${PWD}
         image: app:latest
-        environment:
-            PWD:
-            USER:
-        user: ${USER}
         volumes:
             - ${PWD}:/app
         ports:
