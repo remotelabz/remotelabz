@@ -31,7 +31,7 @@ test:phpunit:
     - apk add --no-cache py-pip
     - pip install docker-compose
     - cp -rf .env.dist .env
-    - "export >> .env"
+    - "printenv >> .env"
     - docker-compose up --build -d
   script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
@@ -45,7 +45,7 @@ deploy:staging:
   stage: deploy
   before_script:
     - cp -rf .env.dist .env
-    - "export >> .env"
+    - "printenv >> .env"
   script:
     - docker-compose stop
     - docker-compose up --build -d
