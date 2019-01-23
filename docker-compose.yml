@@ -5,10 +5,10 @@ volumes:
 
 services:
     app:
-        build: .
+        build: ${PWD}
         image: app:latest
         volumes:
-            - .:/app
+            - ${PWD}:/app
         ports:
             - "80:8000"
         depends_on:
