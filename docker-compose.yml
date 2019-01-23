@@ -2,9 +2,6 @@ version: '3'
 
 volumes:
     database-volume:
-    app:
-
-
 
 services:
     app:
@@ -12,17 +9,13 @@ services:
         image: app:latest
         volumes:
             - .:/app
-        env_file: .env
-        environment:
-            # MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            # MYSQL_USER: "${MYSQL_USER}"
-            # MYSQL_DATABASE: "${MYSQL_DATABASE}"
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
         ports:
             - "80:8000"
         depends_on:
             - mysql
         tty: true
+        entrypoint: docker-php-entrypoint
+        command: entrypoint.sh
         restart: on-failure
 
     mysql:
@@ -30,13 +23,4 @@ services:
         volumes:
             - database-volume:/var/lib/mysql
         env_file: .env
-        environment:
-            # MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            # MYSQL_USER: "${MYSQL_USER}"
-            # MYSQL_DATABASE: "${MYSQL_DATABASE}"
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        restart: on-failure
-
-    node:
-        build: yarn/.
         restart: on-failure
