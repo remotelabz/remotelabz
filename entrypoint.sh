@@ -2,11 +2,11 @@
 set -e
 
 cd /app
-composer install
-yarn install
-yarn encore dev
-chmod 777 -R vendor/
-chmod 777 -R node_modules/
+gosu composer install
+gosu yarn install
+gosu yarn encore dev
+# chmod 777 -R vendor/
+# chmod 777 -R node_modules/
 /app/bin/console make:migration
 /app/bin/console doctrine:migrations:migrate -n
 /app/bin/console doctrine:fixtures:load -n
