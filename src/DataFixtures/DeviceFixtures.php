@@ -25,6 +25,7 @@ class DeviceFixtures extends Fixture
                 ->setModel($faker->lastName)
                 ->setLaunchOrder($faker->numberBetween(0, 999))
                 ->setVirtuality($faker->numberBetween(0, 2))
+                ->setType($faker->randomElement(['switch', 'vm']))
             ;
 
             $manager->persist($device);
