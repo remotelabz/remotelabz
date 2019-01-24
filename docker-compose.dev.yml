@@ -5,11 +5,10 @@ volumes:
 
 services:
     app:
-        build: .
-        image: app:latest
+        build: ${PWD}
+        image: app:dev
         volumes:
-            - .:/app
-        env_file: .env
+            - ${PWD}:/app
         ports:
             - "80:8000"
         depends_on:
@@ -23,9 +22,5 @@ services:
         image: mysql:5.7
         volumes:
             - database-volume:/var/lib/mysql
-        environment:
-            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            MYSQL_USER: "${MYSQL_USER}"
-            MYSQL_DATABASE: "${MYSQL_DATABASE}"
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        env_file: .env
         restart: on-failure
