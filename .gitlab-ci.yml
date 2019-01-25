@@ -10,6 +10,9 @@ variables:
   MYSQL_PASSWORD: $MYSQL_PASSWORD
   GIT_SSL_NO_VERIFY: "1"
 
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+
 build:app:
   stage: build
   image: docker:latest
@@ -28,13 +31,12 @@ test:phpunit:
   services:
     - mysql:5.7
     - docker:dind
-  before_script:
+  script:
     - apk add --no-cache py-pip
     - pip install docker-compose
     - cp -rf .env.dist .env
     - "printenv >> .env"
     - docker-compose up --build -d
-  script:
     - bin/phpunit --configuration phpunit.xml.dist --colors=never
   only:
     - master
@@ -44,10 +46,9 @@ test:phpunit:
 # TODO stage with apache to upload on public server
 deploy:staging:
   stage: deploy
-  before_script:
+  script:
     - cp -rf .env.dist .env
     - "printenv >> .env"
-  script:
     - docker-compose stop
     - docker-compose up --build -d
   environment:
