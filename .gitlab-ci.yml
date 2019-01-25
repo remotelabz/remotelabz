@@ -39,13 +39,13 @@ test:phpunit:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d
-    # Docker volumes workaround
-    - docker cp .env "$(docker-compose ps -q app)":/app/.env
+    - docker-compose exec -T app /bin/ls -la /app
+    - docker-compose exec -T app /bin/cat /app/.env
     - docker-compose exec -T app /app/bin/console make:migration
     - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
     - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
     - docker-compose exec -T app /app/bin/console assets:install --symlink public
-    - bin/phpunit --configuration phpunit.xml.dist
+    - docker-compose exec -T app /app/bin/phpunit --configuration phpunit.xml.dist
   tags:
     - test
 
