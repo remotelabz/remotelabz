@@ -9,6 +9,10 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
+  DOCKER_HOST: tcp://docker:2375/
+  # When using dind, it's wise to use the overlayfs driver for
+  # improved performance.
+  DOCKER_DRIVER: overlay2
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -20,8 +24,7 @@ build:app:
     - docker:dind
   script:
     - docker pull $CONTAINER_IMAGE:latest || true
-    - docker build -f ./docker/Dockerfile --cache-from $CONTAINER_IMAGE --tag $CONTAINER_IMAGE:$CI_COMMIT_SHA --tag $CONTAINER_IMAGE:latest .
-    - docker push $CONTAINER_IMAGE:$CI_COMMIT_SHA
+    - docker build -f ./docker/Dockerfile --cache-from $CONTAINER_IMAGE --tag $CONTAINER_IMAGE:latest .
     - docker push $CONTAINER_IMAGE:latest
   tags:
     - build
