@@ -38,8 +38,8 @@ test:phpunit:
     - pip install docker-compose
     - cp -rf .env.dist .env
     - "printenv >> .env"
-    - docker-compose up --build -d
-    - bin/phpunit --configuration phpunit.xml.dist --colors=never
+    - docker-compose up -d
+    - bin/phpunit --configuration phpunit.xml.dist
   only:
     - master
   tags:
@@ -50,7 +50,7 @@ deploy:staging:
   stage: deploy
   script:
     - cp -rf .env.dist .env
-    - "printenv >> .env"
+    - "echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env"
     - docker-compose stop
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d
