@@ -5,22 +5,21 @@ volumes:
 
 services:
     app:
-        build: ${PWD}
         image: app:latest
-        volumes:
-            - ${PWD}:/app
         ports:
             - "80:8000"
         depends_on:
             - mysql
         tty: true
-        entrypoint: docker-php-entrypoint
-        command: entrypoint.sh
         restart: on-failure
 
     mysql:
         image: mysql:5.7
         volumes:
             - database-volume:/var/lib/mysql
-        env_file: .env
+        environment:
+            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+            MYSQL_USER: "${MYSQL_USER}"
+            MYSQL_DATABASE: "${MYSQL_DATABASE}"
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
         restart: on-failure

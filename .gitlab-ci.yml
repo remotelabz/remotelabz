@@ -10,18 +10,18 @@ variables:
   MYSQL_PASSWORD: $MYSQL_PASSWORD
   GIT_SSL_NO_VERIFY: "1"
 
-# build:app:
-#   stage: build
-#   image: docker:latest
-#   services:
-#     - docker:dind
-#   script:
-#     - docker run --rm --name composer_install -v "$PWD":/var/www/app -w /var/www/app --user $(id -u):$(id -g) composer:latest install --no-suggest --no-progress
-#     - docker build --pull -t "194.57.105.124:6361/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG" .
-#     - docker push "194.57.105.124:6361/crestic/remotelabzv2:$CI_COMMIT_REF_SLUG"
-#   tags:
-#     - build
+build:app:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -f ./docker/Dockerfile --pull -t "registry.remotelabz.com/crestic/remotelabzv2/app:latest" .
+    - docker push "registry.remotelabz.com/crestic/remotelabzv2/app:latest"
+  tags:
+    - build
 
+# TODO edit test mode
 test:phpunit:
   stage: test
   image: docker
