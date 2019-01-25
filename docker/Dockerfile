@@ -46,4 +46,4 @@ RUN yarn encore dev
 ADD . /app
 
 ENTRYPOINT [ "/app/bin/console" ]
-CMD [ "server:start", "0.0.0.0:8000" ]
+CMD [ "server:run", "0.0.0.0:8000" ]
