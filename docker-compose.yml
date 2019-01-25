@@ -5,7 +5,7 @@ volumes:
 
 services:
     app:
-        image: app:latest
+        image: registry.remotelabz.com/crestic/remotelabzv2:latest
         ports:
             - "80:8000"
         depends_on:

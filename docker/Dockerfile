@@ -45,8 +45,5 @@ RUN yarn encore dev
 
 ADD . /app
 
-ENV SERVER_HOST 0.0.0.0
-ENV SERVER_PORT 8000
-
 ENTRYPOINT [ "/app/bin/console" ]
-CMD [ "server:start", "${SERVER_HOST}:${SERVER_PORT}" ]
+CMD [ "server:start", "0.0.0.0:8000" ]
