@@ -44,6 +44,7 @@ test:phpunit:
     - docker-compose up -d
     - docker-compose exec -T app /bin/ls -la /app
     - docker-compose exec -T app /bin/cat /app/.env
+    - docker-compose exec -T mysql /bin/echo $MYSQL_PASSWORD
     - docker-compose exec -T app /app/bin/console make:migration
     - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
     - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
