@@ -42,6 +42,7 @@ test:phpunit:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d
+    - sleep 15
     - docker-compose logs
     - docker ps -a
     - docker-compose exec -T app /app/bin/console make:migration
