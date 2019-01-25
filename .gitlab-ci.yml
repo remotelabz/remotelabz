@@ -50,7 +50,7 @@ deploy:staging:
   stage: deploy
   script:
     - cp -rf .env.dist .env
-    - "echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env"
+    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d

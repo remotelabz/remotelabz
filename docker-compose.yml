@@ -9,7 +9,7 @@ services:
         ports:
             - "80:8000"
         volumes:
-            - ./.env:/app/.env
+            - ${CI_PROJECT_DIR}/.env:/app/.env
         depends_on:
             - mysql
         tty: true
