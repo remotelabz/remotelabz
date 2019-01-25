@@ -69,7 +69,21 @@ deploy:staging:
   environment:
     name: staging
     url: http://10.22.9.136/
+    on_stop: deploy:staging:stop
   dependencies:
     - test:phpunit
+  tags:
+    - deploy
+
+deploy:staging:stop:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker-compose stop
+  when: manual
+  environment:
+    name: staging
+    action: stop
   tags:
     - deploy
