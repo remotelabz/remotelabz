@@ -54,6 +54,9 @@ deploy:staging:
     - docker-compose stop
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d
+    - docker-compose exec app /app/bin/console make:migration
+    - docker-compose exec app /app/bin/console doctrine:migrations:migrate -n
+    - docker-compose exec app /app/bin/console doctrine:fixtures:load -n
   environment:
     name: staging
     url: http://10.22.9.136/
