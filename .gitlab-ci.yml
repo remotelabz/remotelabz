@@ -57,6 +57,7 @@ deploy:staging:
     - docker-compose exec -T app /app/bin/console make:migration
     - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
     - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
+    - docker-compose exec -T app /app/bin/console assets:install --symlink public
   environment:
     name: staging
     url: http://10.22.9.136/
