@@ -8,6 +8,8 @@ services:
         image: registry.remotelabz.com/crestic/remotelabzv2:latest
         ports:
             - "80:8000"
+        volumes:
+            - .env:/app/.env
         depends_on:
             - mysql
         tty: true
@@ -17,9 +19,5 @@ services:
         image: mysql:5.7
         volumes:
             - database-volume:/var/lib/mysql
-        environment:
-            MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-            MYSQL_USER: "${MYSQL_USER}"
-            MYSQL_DATABASE: "${MYSQL_DATABASE}"
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        env_file: .env
         restart: on-failure
