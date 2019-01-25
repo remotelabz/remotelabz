@@ -20,4 +20,6 @@ services:
         volumes:
             - database-volume:/var/lib/mysql
         env_file: .env
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: 1
         restart: on-failure
