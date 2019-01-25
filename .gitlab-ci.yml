@@ -45,7 +45,6 @@ test:phpunit:
     - docker-compose up -d
     # TODO Replace with an healthcheck script
     - sleep 15
-    - docker-compose exec -T app /app/bin/console make:migration
     - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
     - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
     - docker-compose exec -T app /app/bin/console assets:install --symlink public
@@ -62,7 +61,6 @@ deploy:staging:
     - docker-compose stop
     - docker pull $CONTAINER_IMAGE:latest || true
     - docker-compose up -d
-    - docker-compose exec -T app /app/bin/console make:migration
     - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
     - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
     - docker-compose exec -T app /app/bin/console assets:install --symlink public
