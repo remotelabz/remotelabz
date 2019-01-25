@@ -6,6 +6,7 @@
 /public/bundles/
 /var/
 /vendor/
+/src/Migrations/
 ###< symfony/framework-bundle ###
 
 ###> symfony/phpunit-bridge ###
