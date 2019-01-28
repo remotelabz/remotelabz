@@ -48,7 +48,7 @@ class Device
     private $launchScript;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device")
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
      */
     private $networkInterfaces;
 

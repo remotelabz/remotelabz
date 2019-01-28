@@ -18,13 +18,13 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     apt-get -yqq update > /dev/null && \
     apt-get -yqq install yarn > /dev/null
 
-ENV SERVER_HOST 0.0.0.0
-ENV SERVER_PORT 8000
+ADD ./docker/dev/bootstrap /usr/local/bin/
+ADD ./docker/dev/install /usr/local/bin/
+
+RUN ["chmod", "+x", "/usr/local/bin/bootstrap"]
+RUN ["chmod", "+x", "/usr/local/bin/install"]
 
 WORKDIR /app
 
-COPY entrypoint.sh /usr/local/bin/
-
-RUN ["chmod", "+x", "/usr/local/bin/entrypoint.sh"]
-
-ENTRYPOINT [ "/app/bin/console" ]
+ENTRYPOINT [ "docker-php-entrypoint" ]
+CMD [ "bootstrap" ]

@@ -32,7 +32,8 @@ class NetworkInterface
     private $settings;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(onDelete="CASCADE")
      */
     private $device;
 
