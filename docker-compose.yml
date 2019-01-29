@@ -1,19 +1,25 @@
-version: '3'
+version: '3.2'
 
 volumes:
     database-volume:
+    symfony-cache:
+    symfony-logs:
 
 services:
-    app:
-        image: registry.remotelabz.com/crestic/remotelabzv2:latest
-        ports:
-            - "80:8000"
+    console:
+        build: ./docker/console
+        image: registry.remotelabz.com/crestic/remotelabzv2/console
         volumes:
-            - ${CI_PROJECT_DIR}/.env:/app/.env
+            - ${CI_PROJECT_DIR-./}:/app
+            - symfony-cache:/var/www/cache
+            - symfony-logs:/var/www/log
+        entrypoint:
+            - docker-php-entrypoint
+            - /app/bin/console
         depends_on:
             - mysql
+        stdin_open: true
         tty: true
-        restart: on-failure
 
     mysql:
         image: mysql:5.7
@@ -23,3 +29,32 @@ services:
         environment:
             MYSQL_RANDOM_ROOT_PASSWORD: 1
         restart: on-failure
+
+    apache:
+        build:
+            context: ./docker/apache
+            args:
+                userid: ${UID-1000}
+        image: registry.remotelabz.com/crestic/remotelabzv2/apache
+        volumes:
+            - ${CI_PROJECT_DIR-./}:/var/www/html
+            - symfony-cache:/var/www/cache
+            - symfony-logs:/var/www/log
+        ports:
+            - "80:8000"
+        user: www-data
+        restart: on-failure
+
+    yarn:
+        image: node
+        volumes:
+            - ${CI_PROJECT_DIR-./}:/app
+        working_dir: /app
+        entrypoint:
+            - yarn
+
+    composer:
+        build: ./docker/composer
+        image: registry.remotelabz.com/crestic/remotelabzv2/composer
+        volumes:
+            - ${CI_PROJECT_DIR-./}:/app

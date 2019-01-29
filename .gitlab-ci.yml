@@ -4,7 +4,7 @@ stages:
   - deploy
 
 variables:
-  CONTAINER_IMAGE: registry.remotelabz.com/$CI_PROJECT_PATH
+  REGISTRY_URL: registry.remotelabz.com/$CI_PROJECT_PATH/
   MYSQL_DATABASE: symfony
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
@@ -13,19 +13,25 @@ variables:
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
-build:app:
+build:docker:
   stage: build
-  image: docker:latest
+  image: docker:stable
   services:
     - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
   script:
-    - docker pull $CONTAINER_IMAGE:latest || true
-    - docker build -f ./docker/Dockerfile --cache-from $CONTAINER_IMAGE --tag $CONTAINER_IMAGE:latest .
-    - docker push $CONTAINER_IMAGE:latest
+    - apk add --no-cache py-pip
+    - pip install docker-compose
+    - docker-compose pull --ignore-pull-failures
+    - docker-compose build
+    - docker-compose push
   tags:
     - build
 
-# TODO edit test mode
 test:phpunit:
   stage: test
   image: docker:stable
@@ -41,41 +47,48 @@ test:phpunit:
     - pip install docker-compose
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker pull $CONTAINER_IMAGE:latest || true
+    - docker-compose pull
     - docker-compose up -d
-    # TODO Replace with an healthcheck script
-    - sleep 15
-    - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
-    - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
-    - docker-compose exec -T app /app/bin/console assets:install --symlink public
-    - docker-compose exec -T app /app/bin/phpunit --configuration phpunit.xml.dist
+    - docker-compose run -T composer install
+    - docker-compose run -T yarn install
+    - docker-compose run -T yarn encore dev
+    - docker-compose run -T console doctrine:migrations:migrate -n
+    - docker-compose run -T console doctrine:fixtures:load -n
+    - docker-compose run -T console assets:install --symlink public
+    - docker-compose run -T --entrypoint /app/bin/phpunit console --configuration phpunit.xml.dist
+    - docker-compose stop
+  dependencies:
+    - build:apache
+    - build:console
+    - build:composer
   tags:
     - test
 
 # TODO stage with apache to upload on public server
-deploy:staging:
+deploy:review:
   stage: deploy
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
-    - docker pull $CONTAINER_IMAGE:latest || true
+    - docker-compose pull
     - docker-compose up -d
-    # TODO Replace with an healthcheck script
-    - sleep 10
-    - docker-compose exec -T app /app/bin/console doctrine:migrations:migrate -n
-    - docker-compose exec -T app /app/bin/console doctrine:fixtures:load -n
-    - docker-compose exec -T app /app/bin/console assets:install --symlink public
+    - docker-compose run -T composer install
+    - docker-compose run -T yarn install
+    - docker-compose run -T yarn encore dev
+    - docker-compose run -T console doctrine:migrations:migrate -n
+    - docker-compose run -T console doctrine:fixtures:load -n
+    - docker-compose run -T console assets:install --symlink public
   environment:
-    name: staging
+    name: review
     url: http://10.22.9.136/
-    on_stop: deploy:staging:stop
+    on_stop: deploy:review:stop
   dependencies:
     - test:phpunit
   tags:
     - deploy
 
-deploy:staging:stop:
+deploy:review:stop:
   stage: deploy
   variables:
     GIT_STRATEGY: none
@@ -83,7 +96,17 @@ deploy:staging:stop:
     - docker-compose stop
   when: manual
   environment:
-    name: staging
+    name: review
     action: stop
   tags:
     - deploy
+
+deploy:staging:
+  stage: deploy
+  when: manual
+  environment:
+    name: staging
+    url: http://www.remotelabz.com/
+    # on_stop: deploy:staging:stop
+  tags:
+    - staging
