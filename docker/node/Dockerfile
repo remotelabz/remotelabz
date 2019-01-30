@@ -1,7 +1,7 @@
 FROM node
 ARG userid
 
-RUN usermod -u ${userid} ${user}
+RUN useradd ${user} --uid ${userid} 
 
 USER ${user}
 WORKDIR /app
