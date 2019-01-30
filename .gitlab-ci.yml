@@ -24,6 +24,8 @@ build:docker:
     # improved performance.
     DOCKER_DRIVER: overlay2
   script:
+    - cp -rf .env.dist .env
+    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - apk add --no-cache py-pip
     - pip install docker-compose
     - docker-compose pull --ignore-pull-failures
