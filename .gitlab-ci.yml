@@ -58,9 +58,7 @@ test:phpunit:
     - docker-compose run -T --entrypoint /app/bin/phpunit console --configuration phpunit.xml.dist
     - docker-compose stop
   dependencies:
-    - build:apache
-    - build:console
-    - build:composer
+    - build:docker
   tags:
     - test
 
