@@ -46,6 +46,7 @@ test:phpunit:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose pull
     - docker-compose up -d
+    - sleep 20
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
@@ -65,6 +66,7 @@ deploy:review:
     - docker-compose stop
     - docker-compose pull
     - docker-compose up -d
+    - sleep 20
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
