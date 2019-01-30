@@ -51,14 +51,11 @@ test:phpunit:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose pull
     - docker-compose up -d
-    - docker-compose run -T composer install
-    - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public
     - docker-compose run -T --entrypoint /app/bin/phpunit console --configuration phpunit.xml.dist
-    - docker-compose stop
   dependencies:
     - build:docker
   tags:
@@ -73,8 +70,6 @@ deploy:review:
     - docker-compose stop
     - docker-compose pull
     - docker-compose up -d
-    - docker-compose run -T composer install
-    - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
