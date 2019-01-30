@@ -10,7 +10,10 @@ volumes:
 
 services:
     console:
-        build: ./docker/console
+        build: 
+            context: ./docker/console
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/console
         image: registry.remotelabz.com/crestic/remotelabzv2/console
         volumes:
             - ${CI_PROJECT_DIR-.}:/app
@@ -20,10 +23,7 @@ services:
             - node-modules:/app/node_modules
             - public-assets:/app/public/build
         entrypoint:
-            - docker-php-entrypoint
-            - /app/bin/console
-        depends_on:
-            - mysql
+            - entrypoint
         stdin_open: true
         tty: true
 
@@ -39,6 +39,8 @@ services:
     apache:
         build:
             context: ./docker/apache
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/apache
             args:
                 userid: ${UID-1000}
         image: registry.remotelabz.com/crestic/remotelabzv2/apache
@@ -57,9 +59,8 @@ services:
     yarn:
         build:
             context: ./docker/node
-            args:
-                user: ${USER-nobody}
-                userid: ${UID-1000}
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
         volumes:
             - ${CI_PROJECT_DIR-./assets}:/app/assets
@@ -72,7 +73,10 @@ services:
             - public-assets:/app/public/build
 
     composer:
-        build: ./docker/composer
+        build:
+            context: ./docker/composer
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/composer
         image: registry.remotelabz.com/crestic/remotelabzv2/composer
         volumes:
             - ${CI_PROJECT_DIR-./composer.json}:/app/composer.json

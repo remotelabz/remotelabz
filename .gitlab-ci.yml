@@ -54,7 +54,7 @@ test:phpunit:
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public
+    - docker-compose run -T console assets:install --symlink public --relative
     - docker-compose run -T --entrypoint /app/bin/phpunit console --configuration phpunit.xml.dist
   dependencies:
     - build:docker
@@ -73,7 +73,7 @@ deploy:review:
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public
+    - docker-compose run -T console assets:install --symlink public --relative
   environment:
     name: review
     url: http://10.22.9.136/
