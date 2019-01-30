@@ -104,6 +104,8 @@ deploy:review:stop:
 deploy:staging:
   stage: deploy
   when: manual
+  script:
+    - echo 1
   environment:
     name: staging
     url: http://www.remotelabz.com/
