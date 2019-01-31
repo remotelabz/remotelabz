@@ -47,7 +47,7 @@ test:phpunit:
     - docker-compose pull
     - docker-compose up --no-start
     - docker-compose start apache mysql
-    - docker-compose run -T composer install
+    - docker-compose run -T composer install --no-scripts
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev 
     - docker-compose run -T console doctrine:migrations:migrate -n
@@ -69,7 +69,7 @@ deploy:review:
     - docker-compose pull
     - docker-compose up --no-start
     - docker-compose start apache mysql
-    - docker-compose run -T composer install
+    - docker-compose run -T composer install --no-scripts
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
