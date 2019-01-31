@@ -47,8 +47,9 @@ test:phpunit:
     - docker-compose pull
     - docker-compose up -d
     - sleep 20
-    - docker-compose run -T --entrypoint /bin/ls yarn -la 
-    - docker-compose run -T yarn --verbose encore dev 
+    - docker-compose logs
+    - docker-compose run -T yarn install
+    - docker-compose run -T yarn encore dev 
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
@@ -68,6 +69,8 @@ deploy:review:
     - docker-compose pull
     - docker-compose up -d
     - sleep 20
+    - docker-compose logs
+    - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
