@@ -63,11 +63,11 @@ services:
                 - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
         volumes:
-            - ${CI_PROJECT_DIR-./assets}:/app/assets
-            - ${CI_PROJECT_DIR-./public}:/app/public
-            - ${CI_PROJECT_DIR-./package.json}:/app/package.json
-            - ${CI_PROJECT_DIR-./yarn.lock}:/app/yarn.lock
-            - ${CI_PROJECT_DIR-./webpack.config.js}:/app/webpack.config.js
+            - ${CI_PROJECT_DIR-.}/assets:/app/assets
+            - ${CI_PROJECT_DIR-.}/public:/app/public
+            - ${CI_PROJECT_DIR-.}/package.json:/app/package.json
+            - ${CI_PROJECT_DIR-.}/yarn.lock:/app/yarn.lock
+            - ${CI_PROJECT_DIR-.}/webpack.config.js:/app/webpack.config.js
             - vendor:/app/vendor
             - node-modules:/app/node_modules
             - public-assets:/app/public/build
@@ -79,7 +79,7 @@ services:
                 - registry.remotelabz.com/crestic/remotelabzv2/composer
         image: registry.remotelabz.com/crestic/remotelabzv2/composer
         volumes:
-            - ${CI_PROJECT_DIR-./composer.json}:/app/composer.json
-            - ${CI_PROJECT_DIR-./composer.lock}:/app/composer.lock
-            - ${CI_PROJECT_DIR-./symfony.lock}:/app/symfony.lock
+            - ${CI_PROJECT_DIR-.}/composer.json:/app/composer.json
+            - ${CI_PROJECT_DIR-.}/composer.lock:/app/composer.lock
+            - ${CI_PROJECT_DIR-.}/symfony.lock:/app/symfony.lock
             - vendor:/app/vendor
