@@ -7,3 +7,9 @@ logout:
 
 api_login_check:
     path: /api/auth
+
+home:
+    path: /
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: users
