@@ -52,7 +52,7 @@ services:
             - node-modules:/var/www/html/node_modules
             - public-assets:/var/www/html/public/build
         ports:
-            - "80:80"
+            - "8000:8000"
         # user: www-data
         restart: on-failure
 
