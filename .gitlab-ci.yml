@@ -13,7 +13,7 @@ variables:
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
-build:docker:
+Docker:
   stage: build
   image: docker:stable
   services:
@@ -34,7 +34,7 @@ build:docker:
   tags:
     - build
 
-test:phpunit:
+PHPUnit:
   stage: test
   image: docker:stable
   services: 
@@ -55,12 +55,12 @@ test:phpunit:
     - docker-compose run -T console assets:install --symlink public --relative
     - docker-compose run -T console /app/bin/phpunit --configuration /app/phpunit.xml.dist
   dependencies:
-    - build:docker
+    - Docker
   tags:
     - test
 
 # TODO stage with apache to upload on public server
-deploy:review:
+Deploy to review:
   stage: deploy
   script:
     - cp -rf .env.dist .env
@@ -76,15 +76,15 @@ deploy:review:
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
   environment:
-    name: review
+    name: Review
     url: http://10.22.9.136/
-    on_stop: deploy:review:stop
+    on_stop: Stop review
   dependencies:
-    - test:phpunit
+    - PHPUnit
   tags:
     - deploy
 
-deploy:review:stop:
+Stop review:
   stage: deploy
   variables:
     GIT_STRATEGY: none
@@ -92,19 +92,43 @@ deploy:review:stop:
     - docker-compose stop
   when: manual
   environment:
-    name: review
+    name: Review
     action: stop
   tags:
     - deploy
 
-deploy:staging:
+Deploy to staging:
   stage: deploy
   when: manual
   script:
-    - echo 1
+    - cp -rf .env.dist .env
+    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
+    - docker-compose stop
+    - docker-compose pull
+    - docker-compose up --no-start
+    - docker-compose start apache mysql
+    - docker-compose run -T composer install --no-scripts
+    - docker-compose run -T yarn install
+    - docker-compose run -T yarn encore dev
+    - docker-compose run -T console doctrine:migrations:migrate -n
+    - docker-compose run -T console doctrine:fixtures:load -n
+    - docker-compose run -T console assets:install --symlink public --relative
   environment:
-    name: staging
-    url: http://www.remotelabz.com/
-    # on_stop: deploy:staging:stop
+    name: Staging
+    url: http://staging.remotelabz.com/
+    on_stop: Stop staging
   tags:
     - staging
+
+Stop staging:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker-compose stop
+  when: manual
+  environment:
+    name: Staging
+    action: stop
+  tags:
+    - deploy
