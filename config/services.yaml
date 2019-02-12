@@ -6,6 +6,8 @@
 parameters:
     locale: 'en'
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
+    shibboleth_idp_url: '/Shibboleth.sso'
+    shibboleth_remote_user_var: 'eppn'
 
 services:
     # default configuration for services in *this* file
@@ -39,3 +41,9 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%launch_scripts_directory%'
+
+    App\Security\ShibbolethAuthenticator:
+        arguments:
+            - "@router"
+            - "%shibboleth_idp_url%"
+            - "%shibboleth_remote_user_var%"

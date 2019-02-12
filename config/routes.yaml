@@ -13,3 +13,9 @@ home:
     controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
     defaults:
         route: users
+
+shib_login:
+    path: /Shibboleth.sso/Login
+
+shib_logout:
+    path: /Shibboleth.sso/Logout

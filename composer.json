@@ -21,7 +21,6 @@
         "symfony/framework-bundle": "^4.0",
         "symfony/monolog-bundle": "^3.1",
         "symfony/orm-pack": "^1.0",
-        "symfony/phpunit-bridge": "*@dev",
         "symfony/process": "^4.0",
         "symfony/security-bundle": "^4.0",
         "symfony/serializer": "^4.0",
@@ -43,6 +42,7 @@
         "symfony/debug-pack": "*",
         "symfony/dotenv": "^4.0",
         "symfony/maker-bundle": "^1.9",
+        "symfony/phpunit-bridge": "*",
         "symfony/profiler-pack": "*",
         "symfony/test-pack": "*",
         "symfony/web-server-bundle": "^4.0"
@@ -90,12 +90,6 @@
         "symfony": {
             "allow-contrib": false,
             "require": "^4.0"
-        }
-    },
-    "repositories": {
-        "phpunit-bridge": {
-            "type": "path",
-            "url": "/app/vendor/symfony/phpunit-bridge"
         }
     }
 }

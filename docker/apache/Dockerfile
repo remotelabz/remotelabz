@@ -38,6 +38,7 @@ ADD ./000-default.conf /etc/apache2/sites-enabled/
 ADD ./shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 
 RUN sed -i '/exec apache2 -DFOREGROUND "$@"/iservice shibd start' /usr/local/bin/apache2-foreground
+RUN sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
 
 RUN mkdir -p /var/www/cache && \
     mkdir -p /var/www/log && \
@@ -48,5 +49,3 @@ RUN mkdir -p /var/www/cache && \
 # ARG userid=1000
 
 # RUN usermod -u ${userid} www-data
-
-# TODO: Add Shibboleth SP to apache workflow

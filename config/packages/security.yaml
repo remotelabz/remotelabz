@@ -30,6 +30,13 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        # shib:
+        #     stateless: true
+        #     guard:
+        #         authenticators:
+        #             - App\Security\ShibbolethAuthenticator
+        #         entry_point: App\Security\ShibbolethAuthenticator
+
         default:
             anonymous: true
             guard:
