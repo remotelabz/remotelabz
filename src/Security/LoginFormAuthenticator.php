@@ -20,8 +20,9 @@ use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Security\Http\Logout\LogoutSuccessHandlerInterface;
 
-class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
+class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements LogoutSuccessHandlerInterface
 {
     use TargetPathTrait;
 
@@ -102,5 +103,18 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
     protected function getLoginUrl()
     {
         return $this->router->generate('login');
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return Response never null
+     */
+    public function onLogoutSuccess(Request $request)
+    {
+        if ($request->server->has('eppn'))
+            return new RedirectResponse($this->router->generate('shib_logout'));
+        else
+            return new RedirectResponse($this->router->generate('login'));
     }
 }

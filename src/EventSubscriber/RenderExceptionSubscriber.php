@@ -22,7 +22,7 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
         $response = $event->getResponse();
 
         // test if we want a json return
-        if ($request->isXmlHttpRequest() || $request->headers->has('Authorization')) {
+        if ($request->isXmlHttpRequest()) {
             $status = $response === null ? 400 : $response->getStatusCode();
 
             $response = new JsonResponse();

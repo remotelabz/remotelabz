@@ -12,6 +12,8 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\User;
 
 class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 {
@@ -30,11 +32,14 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     private $urlGenerator;
 
-    public function __construct(UrlGeneratorInterface $urlGenerator, $idpUrl = null, $remoteUserVar = null)
+    private $entityManager;
+
+    public function __construct(UrlGeneratorInterface $urlGenerator, $idpUrl = null, $remoteUserVar = null, EntityManagerInterface $entityManager)
     {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
         $this->urlGenerator = $urlGenerator;
+        $this->entityManager = $entityManager;
     }
 
     protected function getRedirectUrl()
@@ -49,17 +54,9 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        if (!$request->server->has($this->remoteUserVar)) {
-            return;
-        }
+        $credentials = ['eppn' => $request->server->get($this->remoteUserVar)];
 
-        $id = $request->server->get($this->remoteUserVar);
-
-        if ($id) {
-            return array('eppn' => $id);
-        } else {
-            return null;
-        }
+        return $credentials;
     }
 
     /**
@@ -73,7 +70,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        return $userProvider->loadUserByUsername($credentials['eppn']);
+        return $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
     }
 
     /**
@@ -105,7 +102,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 'redirect' => $redirectTo,
             ), Response::HTTP_FORBIDDEN);
         } else {
-            return new RedirectResponse($redirectTo);
+            return new Response();//RedirectResponse($redirectTo);
         }
     }
 
@@ -120,15 +117,17 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         $response = new RedirectResponse('/');
 
-        if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
-            $response->setTargetUrl($targetPath);
-        }
-        else {
-            $response->setTargetUrl($this->router->generate('users'));
-        }
+        // // if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
+        // //     $response->setTargetUrl($targetPath);
+        // // }
+        // // else {
+        // //     $response->setTargetUrl($this->router->generate('users'));
+        // // }
 
-        return $response;
-        // return null;
+        //$response->setTargetUrl($this->urlGenerator->generate('users'));
+
+        //return $response;
+        return null;
     }
 
     /**
@@ -161,19 +160,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
+        if ($request->server->has($this->remoteUserVar)) {
+            return true;
+        }
 
-    }
-
-    /**
-     * @param Request $request
-     *
-     * @return Response never null
-     */
-    public function onLogoutSuccess(Request $request)
-    {
-        $redirectTo = $this->urlGenerator->generate('shib_logout', array(
-            'return'  => $this->idpUrl . '/Logout'
-        ));
-        return new RedirectResponse($redirectTo);
+        return false;
     }
 }

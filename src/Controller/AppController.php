@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\HtmlRequest;
 use Symfony\Component\HttpFoundation\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 /**
@@ -51,5 +52,13 @@ class AppController extends AbstractController
         }
 
         return HtmlRequest::class;
+    }
+
+    /**
+     * @Route("/", name="index")
+     */
+    public function indexAction(Request $request)
+    {
+        return $this->render('dashboard.base.html.twig');
     }
 }

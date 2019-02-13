@@ -80,6 +80,14 @@ legend
   }
 }
 
+.input-group-prepend {
+  margin-right: -2px;
+}
+
+.input-group > .form-control, .input-group > .custom-select, .input-group > .custom-file {
+  height: auto;
+}
+
 /////////// MENU ///////////
 
 .sidebar .nav .nav-item.active {

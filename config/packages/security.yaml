@@ -30,24 +30,18 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # shib:
-        #     stateless: true
-        #     guard:
-        #         authenticators:
-        #             - App\Security\ShibbolethAuthenticator
-        #         entry_point: App\Security\ShibbolethAuthenticator
-
         default:
             anonymous: true
             guard:
                 authenticators:
                     - App\Security\LoginFormAuthenticator
+                    - App\Security\ShibbolethAuthenticator
                     - lexik_jwt_authentication.jwt_token_authenticator
                 entry_point: App\Security\LoginFormAuthenticator
 
             logout:
-                path: /logout
-                target: /login
+                path: logout
+                success_handler: App\Security\LoginFormAuthenticator
 
             # activate different ways to authenticate
 
