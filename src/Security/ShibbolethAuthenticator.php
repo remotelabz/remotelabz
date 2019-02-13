@@ -12,6 +12,7 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 
@@ -34,12 +35,15 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     private $entityManager;
 
-    public function __construct(UrlGeneratorInterface $urlGenerator, $idpUrl = null, $remoteUserVar = null, EntityManagerInterface $entityManager)
+    private $passwordEncoder;
+ 
+    public function __construct(UrlGeneratorInterface $urlGenerator, $idpUrl = null, $remoteUserVar = null, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder)
     {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
         $this->urlGenerator = $urlGenerator;
         $this->entityManager = $entityManager;
+        $this->passwordEncoder = $passwordEncoder;
     }
 
     protected function getRedirectUrl()
@@ -70,7 +74,26 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        return $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
+        
+        if (!$user) {
+            $user = new User();
+            $user->setEmail($credentials['eppn'])
+                ->setPassword($this->passwordEncoder->encodePassword(
+                    $user,
+                    random_bytes(32)
+                ))
+                ->setFirstName('Firstname')
+                ->setLastName('Lastname')
+            ;
+
+            # TODO: Add user's firstname and lastname fetching
+
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+
+        return $user;
     }
 
     /**
