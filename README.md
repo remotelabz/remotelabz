@@ -112,3 +112,10 @@ The same logic is applying to other services. Otherwise, if you need to run a co
 docker-compose exec apache <command>
 ```
 
+## Run tests
+
+To run the project test suite, you can use the following command :
+
+```bash
+docker-compose run --rm console phpunit --configuration /app/phpunit.xml.dist
+```

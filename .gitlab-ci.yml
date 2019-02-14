@@ -53,7 +53,7 @@ PHPUnit:
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
-    - docker-compose run -T console /app/bin/phpunit --configuration /app/phpunit.xml.dist
+    - docker-compose run -T console phpunit --configuration /app/phpunit.xml.dist
   dependencies:
     - Docker
   tags:
