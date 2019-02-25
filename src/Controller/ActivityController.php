@@ -143,15 +143,12 @@ class ActivityController extends AppController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $repository = $this->getDoctrine()->getRepository('App:Activity');
-        $networkRepository = $this->getDoctrine()->getRepository('App:Network');
 
         $activity = $repository->find($id);
-        
-        $script = $_ENV['SCRIPTS_PATH'] . 'start_lab.py';
 
         $instance = Instance::create()
             ->setActivity($activity)
-            ->setProcessName($activity->getLab()->getName() . '_' . 'aaa') // TODO change 'aaa' to a parameter (UUID ?)
+            ->setProcessName($activity->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
             ->setUser($this->getUser())
             ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
         ;
@@ -215,20 +212,23 @@ class ActivityController extends AppController
         $entityManager->persist($instance);
         $entityManager->flush();
 
-        // TODO Replace this function with a object and a serializer
-        $this->generateXMLLabFile($id);
+        // TODO: Replace this function with a object and a serializer
+        $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
 
-        $command = '/usr/bin/python ' .
-            $script . ' ' .
-            $instance->getStoragePath() . '/' . $instance->getProcessName() . '.xml ' .
-            getenv('VM_SERVER_IP') . ' ' .
-            $instance->getStoragePath() . ' ' .
-            getenv('ANSIBLE_USER') . ' ' .
-            getenv('ANSIBLE_PASSWORD') . ' ' .
-            getenv('FRONTEND_IP') . ' ' .
-            getenv('VPN_IP') . ' ' .
-            getenv('VPN_HOST_IP') . ' '
-        ;
+        // $command = '/usr/bin/python ' .
+        //     $script . ' ' .
+        //     $instance->getStoragePath() . '/' . $instance->getProcessName() . '.xml ' .
+        //     getenv('VM_SERVER_IP') . ' ' .
+        //     $instance->getStoragePath() . ' ' .
+        //     getenv('ANSIBLE_USER') . ' ' .
+        //     getenv('ANSIBLE_PASSWORD') . ' ' .
+        //     getenv('FRONTEND_IP') . ' ' .
+        //     getenv('VPN_IP') . ' ' .
+        //     getenv('VPN_HOST_IP') . ' '
+        // ;
+
+        // TODO: Get interest in Process component (symfony/process)
+        $command = [ $_ENV['SCRIPTS_PATH'] . 'start-lab.sh ', $labFile ];
 
         $output = [];
         exec($command, $output);
@@ -238,49 +238,50 @@ class ActivityController extends AppController
         if (strstr($output, "SUCCESS")) {
             $this->addFlash('success', 'Lab has been started.');
         } else {
-            $this->addFlash('success', 'There was an error starting lab. Please try again.');
+            $this->addFlash('danger', 'There was an error starting lab. Please try again.');
         }
 
-        if ($activity->getAccessType() === Activity::VPN_ACCESS) {
-            $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn.py';
+        // TODO: Keep this for later - when workers will be ready
+        // if ($activity->getAccessType() === Activity::VPN_ACCESS) {
+        //     $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn.py';
 
-            $command = '/usr/bin/python' .
-                $script . ' ' .
-                $instance->getStoragePath()
-            ;
+        //     $command = '/usr/bin/python' .
+        //         $script . ' ' .
+        //         $instance->getStoragePath()
+        //     ;
 
-            $output = [];
-            exec($command, $output);
+        //     $output = [];
+        //     exec($command, $output);
             
-            $output = implode("", $output);
+        //     $output = implode("", $output);
             
-            if (strstr($output, "SUCCESS")) {
-                $this->addFlash('success', 'VPN connexion has been started.');
-            } else {
-                $this->addFlash('success', 'There was an error starting VPN connexion. Please try again.');
-            }
+        //     if (strstr($output, "SUCCESS")) {
+        //         $this->addFlash('success', 'VPN connexion has been started.');
+        //     } else {
+        //         $this->addFlash('danger', 'There was an error starting VPN connexion. Please try again.');
+        //     }
             
-            $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn_user.py';
+        //     $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn_user.py';
 
-            $command = '/usr/bin/python' .
-                $script . ' ' .
-                $instance->getStoragePath() . ' ' .
-                $createVpnUserFile
-            ;
+        //     $command = '/usr/bin/python' .
+        //         $script . ' ' .
+        //         $instance->getStoragePath() . ' ' .
+        //         $createVpnUserFile
+        //     ;
             
-            $output = [];
-            exec($command, $output);
+        //     $output = [];
+        //     exec($command, $output);
             
-            $output = implode("", $output);
+        //     $output = implode("", $output);
             
-            if (strstr($output, "SUCCESS")) {
-                $this->addFlash('success', 'VPN user has been created.');
-            } else {
-                $this->addFlash('success', 'There was an error creating VPN user. Please try again.');
-            }
+        //     if (strstr($output, "SUCCESS")) {
+        //         $this->addFlash('success', 'VPN user has been created.');
+        //     } else {
+        //         $this->addFlash('danger', 'There was an error creating VPN user. Please try again.');
+        //     }
+        // }
 
-            // Return something
-        }
+        // TODO: Return something
     }
 
     /**
@@ -323,6 +324,8 @@ class ActivityController extends AppController
      */
     public function getAvailableNetwork(string $cidr, int $maxSize): ?string
     {
+        $networkRepository = $this->getDoctrine()->getRepository('App:Network');
+
         $network = IPTools\Network::parse($cidr);
 
         // Get all possible subnetworks from specified config
@@ -335,12 +338,12 @@ class ActivityController extends AppController
         
         // Exclude all reserved subnetworks from the list
         foreach ($networkRepository->findAll() as $reservedNetwork) {
-            $subnets->exclude(new IPTools\Network($reservedNetwork->getCidr()));
+            $subnets->exclude(IPTools\Network::parse($reservedNetwork->CIDR));
         }
 
         // If subnets list is empty now, it means that every subnet is already allocated
         if (is_empty($subnets)) {
-            // TODO Throw a meaningful exception
+            // TODO: Create an new exception class
             throw new BadRequestHttpException(
                 'No available subnetwork.' .
                 'Please delete some networks or check your config and try again.'
@@ -450,17 +453,19 @@ class ActivityController extends AppController
                     $protocol = $controlInterfaceSettings->getProtocol();
                     $controlInterfaceNode->addAttribute('protocol', $protocol);
                     
-                    if ($protocol === "websocket") {
-                        $port = $this->getenv('WEBSOCKET_PORT_START') + $indexControl;
-                    }
-                    if ($protocol === "telnet") {
-                        $port = $this->getenv('TELNET_PORT_START') + $indexControl;
-                    }
-                    if ($protocol === "vnc") {
-                        $port = $this->getenv('VNC_PORT_START') + $indexControl;
-                    }
-                    if ($protocol === "ssh") {
-                        $port = $this->getenv('SSH_PORT_START') + $indexControl;
+                    switch ($protocol) {
+                        case 'websocket':
+                            $port = $this->getenv('WEBSOCKET_PORT_START') + $indexControl;
+                            break;
+                        case 'telnet':
+                            $port = $this->getenv('TELNET_PORT_START') + $indexControl;
+                            break;
+                        case 'vnc':
+                            $port = $this->getenv('VNC_PORT_START') + $indexControl;
+                            break;
+                        case 'ssh':
+                            $port = $this->getenv('SSH_PORT_START') + $indexControl;
+                            break;
                     }
                     
                     $controlInterfaceNode->addAttribute('port', $port);
@@ -503,5 +508,7 @@ class ActivityController extends AppController
     
         fwrite($fp, $rootNode->asXML());
         fclose($fp);
+
+        return $filename;
     }
 }

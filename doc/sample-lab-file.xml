@@ -1,5 +1,5 @@
 <lab>
-  <lab_name>Lab_name</lab_name>
+  <name>Lab_name</name>
   <id>1</id>
   <tp_managed>1</tp_managed>
   <tp_type>supervised</tp_type>
@@ -9,25 +9,28 @@
     <login>root@localhost</login>
   </user>
   <nodes>
-    <device type="virtuel" property="X" id="6" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="1" hypervisor="qemu">
-      <nom>VM_1</nom>
+    <device type="virtuel" property="X" id="6" script="" image="debian_squeeze_amd64_standard.qcow2" order="1" hypervisor="qemu">
+      <name>VM_1</name>
       <nom_brute>VM_1</nom_brute>
-      <interface id="19" nom_physique="eth0" nom_virtuel="tap12"/>
-      <interface_control id="14" nom_physique="eth0_phy_VM1" nom_virtuel="eth0_ctrl_VM1" IPv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" Protocole="vnc" Port="7220"/>
+      <interface id="19" nom_physique="eth0" nom_virtuel="tap12" type="1" mac_address="00:AA:BB:CC:DD:EE" />
+      <interface_control id="14" nom_physique="eth0_phy_VM1" nom_virtuel="eth0_ctrl_VM1" ipv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" protocol="vnc" port="7220"/>
       <!-- if vpn access -->
       <direct_access>
         <IPv4>1.2.3.4/24</IPv4>
         <IPv6></IPv6>
       </direct_access>
-      <system memory="8192" disk="40"></system>
+      <system memory="512" disk="40"></system>
     </device>
     <device type="virtuel" property="X" id="9" script="" image="/usr/local/Virtualize/kvm-image/images/debian-testing20160512.img" relativ_path="/usr/local/Virtualize/kvm-image/images/img-rel" order="2">
-      <nom>VM_2</nom>
+      <name>VM_2</name>
       <interface id="20" nom_physique="eth0" nom_virtuel="tap13"/>
-      <interface_control id="15" nom_physique="eth0_phy_ctrl_VM2" nom_virtuel="eth0_ctrl_VM2" IPv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" Protocole="vnc" Port="7221"/>
+      <interface_control id="15" nom_physique="eth0_phy_ctrl_VM2" nom_virtuel="eth0_ctrl_VM2" ipv4="194.57.105.124" Masque="255.255.255.0" IPv6="2001:660:4601:7008::124" Prefix="" DNSv4="8.8.8.8" Gatewayv4="0.0.0.0" protocol="vnc" port="7221"/>
     </device>
-    <device type="comp_physique" property="switch" id="10" script="" image="Sans" relativ_path="Sans" order="3">
-      <nom>OVS1</nom>
+    <device type="switch" property="switch" id="10" script="" image="Sans" relativ_path="Sans" order="3">
+      <name>OVS1</name>
+      <vpn>
+        <ipv4>1.2.3.4/24</ipv4>
+      </vpn>
       <interface id="16" nom_physique="port1" nom_virtuel="port1"/>
       <interface id="21" nom_physique="port2" nom_virtuel="port2"/>
       <interface id="24" nom_physique="port3" nom_virtuel="port3"/>

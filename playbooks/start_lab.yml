@@ -1,22 +1,22 @@
 ---
 - gather_facts: no
   tasks:
-  - name: Encrypt user password
-    shell: "openssl passwd -crypt {{ user }}"
-    register: user_password
+  # - name: Encrypt user password
+  #   shell: "openssl passwd -crypt {{ user }}"
+  #   register: user_password
 
-  - name: Create user account
-    user:
-      name: "{{ user }}"
-      create_home: yes
-      shell: /bin/bash
-      password: user_password
+  # - name: Create user account
+  #   user:
+  #     name: "{{ user }}"
+  #     create_home: yes
+  #     shell: /bin/bash
+  #     password: user_password
 
-  - name: Create lab directory
-    file:
-      path: "/home/{{ user }}/{{ lab_name }}"
-      state: directory
-      mode: 755
+  # - name: Create lab directory
+  #   file:
+  #     path: "/home/{{ user }}/{{ lab_name }}"
+  #     state: directory
+  #     mode: 755
 
   - name: Create OVS bridge
     openvswitch_bridge:
