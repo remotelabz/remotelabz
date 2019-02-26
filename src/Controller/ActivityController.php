@@ -9,11 +9,13 @@ use App\Entity\Activity;
 use App\Entity\Instance;
 use App\Form\ActivityType;
 use App\Service\FileUploader;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -214,32 +216,20 @@ class ActivityController extends AppController
 
         // TODO: Replace this function with a object and a serializer
         $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
+        
+        $process = new Process([ $_ENV['SCRIPTS_PATH'] . 'start-lab.sh ', $labFile ]);
 
-        // $command = '/usr/bin/python ' .
-        //     $script . ' ' .
-        //     $instance->getStoragePath() . '/' . $instance->getProcessName() . '.xml ' .
-        //     getenv('VM_SERVER_IP') . ' ' .
-        //     $instance->getStoragePath() . ' ' .
-        //     getenv('ANSIBLE_USER') . ' ' .
-        //     getenv('ANSIBLE_PASSWORD') . ' ' .
-        //     getenv('FRONTEND_IP') . ' ' .
-        //     getenv('VPN_IP') . ' ' .
-        //     getenv('VPN_HOST_IP') . ' '
-        // ;
-
-        // TODO: Get interest in Process component (symfony/process)
-        $command = [ $_ENV['SCRIPTS_PATH'] . 'start-lab.sh ', $labFile ];
-
-        $output = [];
-        exec($command, $output);
-
-        $output = implode("", $output);
-
-        if (strstr($output, "SUCCESS")) {
-            $this->addFlash('success', 'Lab has been started.');
-        } else {
-            $this->addFlash('danger', 'There was an error starting lab. Please try again.');
+        try {
+            $process->mustRun();
+        } catch (ProcessFailedException $exception) {
+            echo $exception;
         }
+
+        // if (strstr($output, "SUCCESS")) {
+        //     $this->addFlash('success', 'Lab has been started.');
+        // } else {
+        //     $this->addFlash('danger', 'There was an error starting lab. Please try again.');
+        // }
 
         // TODO: Keep this for later - when workers will be ready
         // if ($activity->getAccessType() === Activity::VPN_ACCESS) {
@@ -355,14 +345,13 @@ class ActivityController extends AppController
 
     public function generateXMLLabFile($activityId, $network, $userNetwork)
     {
-        $em = $this->getDoctrine()->getManager();
-        
+        $fileSystem = new Filesystem();
         $repository = $this->getDoctrine()->getRepository('App:Activity');
         $activity = $repository->find($activityId);
         $lab = $activity->getLab();
         
         $rootNode = new \SimpleXMLElement("<?xml version='1.0' encoding='UTF-8' standalone='yes'?><lab></lab>");
-        $user_node = $rootNode->addChild('user');
+        $userNode = $rootNode->addChild('user');
         $index = 1;
         $indexControl = 1;
         $labName = $lab->getName() . "_" . "aaa";
@@ -373,9 +362,8 @@ class ActivityController extends AppController
         $rootNode->addChild('tp_shared', $activity->getShared());
         $rootNode->addChild('tp_access', $activity->getAccessType());
         
-        $user_node->addAttribute('login', $user->getUsername());
+        $userNode->addAttribute('login', $this->getUser()->getEmail());
         $nodes = $rootNode->addChild('nodes');
-        $devices = [];
         $init = $rootNode->addChild('init');
 
         if ($activity->getAccessType() === Activity::VPN_ACCESS) {
@@ -495,20 +483,18 @@ class ActivityController extends AppController
         $serveur->addChild('IPv4', getenv('HYPERVISOR_IP'));
         $serveur->addChild('IPv6', '');
         $serveur->addChild('index_interface', $index);
-        $serveur->addChild('index_interface_control', $hypervisorSettings->getIndexInterface($indexControl));
+        $serveur->addChild('index_interface_control', 1); // TODO: Use a real value
 
-        $dir = $dir_prefix . $user->getUsername();
-        $filename = $dir . '/' . $labName . '.xml';
-        
-        if (!is_dir($dir)) {
-            mkdir($dir, 0770);
+        $dir = '/opt/remotelabz/' . $this->getUser()->getEmail() . '/' . $labName;
+        $fileName = $dir . '/Labfile';
+
+        try {
+            $fileSystem->appendToFile($fileName, $rootNode->asXML());
+            $fileSystem->chmod($dir, 0770, 0000, true);
+        } catch (IOExceptionInterface $exception) {
+            echo "An error occurred while creating your directory at ".$exception->getPath();
         }
         
-        $fp = fopen($filename, 'w');
-    
-        fwrite($fp, $rootNode->asXML());
-        fclose($fp);
-
-        return $filename;
+        return $fileName;
     }
 }

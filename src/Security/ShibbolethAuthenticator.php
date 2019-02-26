@@ -2,19 +2,19 @@
 
 namespace App\Security;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Doctrine\ORM\EntityManagerInterface;
-use App\Entity\User;
 
 class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 {
@@ -37,8 +37,13 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     private $passwordEncoder;
  
-    public function __construct(UrlGeneratorInterface $urlGenerator, $idpUrl = null, $remoteUserVar = null, EntityManagerInterface $entityManager, UserPasswordEncoderInterface $passwordEncoder)
-    {
+    public function __construct(
+        UrlGeneratorInterface $urlGenerator,
+        $idpUrl = null,
+        $remoteUserVar = null,
+        EntityManagerInterface $entityManager = null,
+        UserPasswordEncoderInterface $passwordEncoder = null
+    ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
         $this->urlGenerator = $urlGenerator;
