@@ -32,3 +32,5 @@ yarn-error.log
 ###< symfony/webpack-encore-bundle ###
 
 *.out
+*.log
+/.vagrant/
