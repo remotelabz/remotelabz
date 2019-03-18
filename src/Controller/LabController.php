@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Lab;
 use App\Form\LabType;
 
+use GuzzleHttp\Client;
 use App\Service\FileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use GuzzleHttp\Client;
 
 class LabController extends AppController
 {
@@ -168,13 +168,13 @@ class LabController extends AppController
     public function testWebsockify(Request $request)
     {
         return $this->render('lab/vm_view.html.twig', [
-            'host' => 'test',
-            'port' => 'test',
+            'host' => 'ws://10.22.9.173',
+            'port' => '8220/websockify',
             'path' => 'test'
         ]);
 
         $client = new Client();
-        $response = $client->request('POST', 'http://192.168.1.200:8080/lab', [
+        $response = $client->request('POST', 'http://10.22.9.173:8080/lab', [
             'body' => '<lab>
             <name>Lab_name</name>
             <id>1</id>
@@ -244,7 +244,7 @@ class LabController extends AppController
     public function testWebsockifyStop(Request $request)
     {
         $client = new Client();
-        $response = $client->request('POST', 'http://192.168.1.200:8080/lab/stop', [
+        $response = $client->request('POST', 'http://10.22.9.173:8080/lab/stop', [
             'body' => '<lab>
             <name>Lab_name</name>
             <id>1</id>
