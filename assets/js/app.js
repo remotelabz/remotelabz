@@ -24,8 +24,10 @@ require('datatables.net-select-bs4');
 require('icheck');
 require('selectize');
 require('select2');
+require('@novnc/novnc/core/rfb.js');
 
 import Noty from 'noty';
+import RFB from 'rfb';
 
 Noty.overrideDefaults({
     timeout: 5000

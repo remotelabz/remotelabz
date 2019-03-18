@@ -56,5 +56,6 @@ security:
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: /admin/labs, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }
         - { path: ^/admin, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER'] }
-        - { path: ^/, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }
+        - { path: ^/, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER', 'IS_AUTHENTICATED_ANONYMOUSLY'] }

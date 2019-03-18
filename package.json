@@ -17,6 +17,7 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.5.0",
         "@mdi/font": "^3.2.89",
+        "@novnc/novnc": "^1.0.0",
         "compass-mixins": "^0.12.10",
         "datatables.net-bs4": "^1.10.19",
         "datatables.net-buttons-bs4": "^1.5.4",

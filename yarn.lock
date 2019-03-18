@@ -600,6 +600,11 @@
   resolved "https://registry.yarnpkg.com/@mdi/font/-/font-3.2.89.tgz#91790717881c8839729286e516436e7b9f3d96ea"
   integrity sha512-K+E44jDkv7jwJbRYctw5+k+jE0j43dCN9KH3ZsIcqYjmhQ3ZN3/eBM2oXtFhxSOKYpEn/xFStS+SGRZjlJY/dg==
 
+"@novnc/novnc@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@novnc/novnc/-/novnc-1.0.0.tgz#76b0e89e6f8738ca8154195baf5b8e6a80bc9105"
+  integrity sha1-drDonm+HOMqBVBlbr1uOaoC8kQU=
+
 "@symfony/webpack-encore@^0.22.0":
   version "0.22.1"
   resolved "https://registry.yarnpkg.com/@symfony/webpack-encore/-/webpack-encore-0.22.1.tgz#76d04666c62ee693ddf5090b5d6f9f32169af3a9"
