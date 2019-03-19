@@ -20,6 +20,8 @@ mv /etc/shibboleth/attribute-map.xml /etc/shibboleth/attribute-map.xml.dist
 mv /etc/shibboleth/attribute-policy.xml /etc/shibboleth/attribute-policy.xml.dist
 cp /tmp/conf_sp2/attribute-map.xml /etc/shibboleth/attribute-map.xml
 cp /tmp/conf_sp2/attribute-policy.xml /etc/shibboleth/attribute-policy.xml
+rm /tmp/conf_sp2_renater.tar.gz
+rm -rf /tmp/conf_sp2
 curl -s https://metadata.federation.renater.fr/certs/renater-metadata-signing-cert-2016.pem -o /etc/shibboleth/renater-metadata-signing-cert-2016.pem
 cp "${REMOTELABZ_PATH}"/vagrant/shibboleth2.xml /etc/shibboleth/
 cp "${REMOTELABZ_PATH}"/vagrant/shib2.conf /etc/apache2/conf-available/
@@ -64,5 +66,6 @@ chgrp -R remotelabz /opt/remotelabz
 # Configure apache
 sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
 ln -fs "${REMOTELABZ_PATH}"/vagrant/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
+cp "${REMOTELABZ_PATH}"/.env.dist "${REMOTELABZ_PATH}"/.env
 service apache2 reload
 ln -fs "${REMOTELABZ_PATH}" ./remotelabz

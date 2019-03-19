@@ -7,7 +7,6 @@ Vagrant.configure("2") do |config|
 
     web.vm.hostname = "remotelabz"
 
-    web.vm.network "private_network", ip: "10.0.2.14", virtualbox__intnet: "remotelabz"
     web.vm.network "forwarded_port", guest: 8000, host: 8000
     web.vm.network "forwarded_port", guest: 8888, host: 8888
   

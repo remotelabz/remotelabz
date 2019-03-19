@@ -216,62 +216,6 @@ class ActivityController extends AppController
 
         // TODO: Replace this function with a object and a serializer
         $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
-        
-        $process = new Process([ $_ENV['SCRIPTS_PATH'] . 'start-lab.sh ', $labFile ]);
-
-        try {
-            $process->mustRun();
-        } catch (ProcessFailedException $exception) {
-            echo $exception;
-        }
-
-        // if (strstr($output, "SUCCESS")) {
-        //     $this->addFlash('success', 'Lab has been started.');
-        // } else {
-        //     $this->addFlash('danger', 'There was an error starting lab. Please try again.');
-        // }
-
-        // TODO: Keep this for later - when workers will be ready
-        // if ($activity->getAccessType() === Activity::VPN_ACCESS) {
-        //     $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn.py';
-
-        //     $command = '/usr/bin/python' .
-        //         $script . ' ' .
-        //         $instance->getStoragePath()
-        //     ;
-
-        //     $output = [];
-        //     exec($command, $output);
-            
-        //     $output = implode("", $output);
-            
-        //     if (strstr($output, "SUCCESS")) {
-        //         $this->addFlash('success', 'VPN connexion has been started.');
-        //     } else {
-        //         $this->addFlash('danger', 'There was an error starting VPN connexion. Please try again.');
-        //     }
-            
-        //     $script = $_ENV['SCRIPTS_PATH'] . 'add_vpn_user.py';
-
-        //     $command = '/usr/bin/python' .
-        //         $script . ' ' .
-        //         $instance->getStoragePath() . ' ' .
-        //         $createVpnUserFile
-        //     ;
-            
-        //     $output = [];
-        //     exec($command, $output);
-            
-        //     $output = implode("", $output);
-            
-        //     if (strstr($output, "SUCCESS")) {
-        //         $this->addFlash('success', 'VPN user has been created.');
-        //     } else {
-        //         $this->addFlash('danger', 'There was an error creating VPN user. Please try again.');
-        //     }
-        // }
-
-        // TODO: Return something
     }
 
     /**
