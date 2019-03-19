@@ -128,19 +128,19 @@ export default class API {
     
     $.fn.dataTable.ext.buttons.edit = {
         extend: 'selectedSingle',
-        text: '<i class="fas fa-edit"></i> Edit',
+        text: '<i class="fa fa-edit"></i> Edit',
         className: 'btn-secondary'
     };
     
     $.fn.dataTable.ext.buttons.toggle = {
         extend: 'selected',
-        text: '<i class="fas fa-lock"></i> (Un)lock',
+        text: '<i class="fa fa-lock"></i> (Un)lock',
         className: 'btn-warning'
     };
     
     $.fn.dataTable.ext.buttons.delete = {
         extend: 'selected',
-        text: '<i class="fas fa-times"></i> Delete',
+        text: '<i class="fa fa-times"></i> Delete',
         className: 'btn-danger'
     };
     

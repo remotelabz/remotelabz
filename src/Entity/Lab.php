@@ -10,6 +10,7 @@ use JMS\Serializer\Annotation as Serializer;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
  * @Serializer\XmlRoot("lab")
+ * @Serializer\XmlDiscriminator(cdata=false)
  */
 class Lab
 {
@@ -17,16 +18,24 @@ class Lab
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $id;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labs")
+     */
+    private $user;
+
+    /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
+     * @Serializer\XmlList(inline=true, entry="devices")
      */
     private $devices;
 
@@ -143,6 +152,18 @@ class Lab
                 $activity->setLab(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

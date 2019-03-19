@@ -78,9 +78,15 @@ class User implements UserInterface
      */
     private $enabled = true;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="user")
+     */
+    private $labs;
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
+        $this->labs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -237,6 +243,37 @@ class User implements UserInterface
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getLabs(): Collection
+    {
+        return $this->labs;
+    }
+
+    public function addLab(Lab $lab): self
+    {
+        if (!$this->labs->contains($lab)) {
+            $this->labs[] = $lab;
+            $lab->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLab(Lab $lab): self
+    {
+        if ($this->labs->contains($lab)) {
+            $this->labs->removeElement($lab);
+            // set the owning side to null (unless already changed)
+            if ($lab->getUser() === $this) {
+                $lab->setUser(null);
+            }
+        }
 
         return $this;
     }

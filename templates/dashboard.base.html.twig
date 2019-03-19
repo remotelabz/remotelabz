@@ -34,72 +34,77 @@
     <div class="row row-offcanvas row-offcanvas-right">
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
+          {% if is_granted('ROLE_ADMINISTRATOR') %}
           <li class="nav-item nav-category">
             <span class="nav-link">ADMINISTRATOR</span>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('users') }}">
               <span class="menu-title">Users</span>
-              <i class="menu-icon fas fa-users fa-fw"></i>
+              <i class="menu-icon fa fa-users"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('flavors') }}">
               <span class="menu-title">Flavors</span>
-              <i class="menu-icon fas fa-memory fa-fw"></i>
+              <i class="menu-icon fa fa-memory"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('hypervisors') }}">
               <span class="menu-title">Hypervisors</span>
-              <i class="menu-icon fas fa-building fa-fw"></i>
+              <i class="menu-icon fa fa-building"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('courses') }}">
               <span class="menu-title">Courses</span>
-              <i class="menu-icon fas fa-graduation-cap fa-fw"></i>
+              <i class="menu-icon fa fa-graduation-cap"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('network_settings') }}">
               <span class="menu-title">Network settings</span>
-              <i class="menu-icon fas fa-wifi fa-fw"></i>
+              <i class="menu-icon fa fa-wifi"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('network_interfaces') }}">
               <span class="menu-title">Network interfaces</span>
-              <i class="menu-icon fas fa-link fa-fw"></i>
+              <i class="menu-icon fa fa-link"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('operating_systems') }}">
               <span class="menu-title">Operating systems</span>
-              <i class="menu-icon fab fa-windows fa-fw"></i>
+              <i class="menu-icon fa fa-windows"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('devices') }}">
               <span class="menu-title">Devices</span>
-              <i class="menu-icon fas fa-desktop fa-fw"></i>
+              <i class="menu-icon fa fa-desktop"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('connexions') }}">
               <span class="menu-title">Connexions</span>
-              <i class="menu-icon fas fa-layer-group fa-fw"></i>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('labs') }}">
-              <span class="menu-title">Labs</span>
-              <i class="menu-icon fas fa-layer-group fa-fw"></i>
+              <i class="menu-icon fa fa-layer-group"></i>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ path('activities') }}">
               <span class="menu-title">Activities</span>
+              <i class="menu-icon fa fa-layer-group"></i>
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item nav-category">
+            <span class="nav-link">USER</span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('labs') }}">
+              <span class="menu-title">Labs</span>
               <i class="menu-icon fas fa-layer-group fa-fw"></i>
             </a>
           </li>

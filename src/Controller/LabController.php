@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use JMS\Serializer\SerializerInterface;
 
 class LabController extends AppController
 {
@@ -280,9 +281,22 @@ class LabController extends AppController
         return (string)$subnets[0];
     }
 
+    /**
+     * @Route("/lab/xml", name="test_lab_xml")
+     */
+    public function testLabXml(SerializerInterface $serializer)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:Lab');
+        $lab = $repository->find(1);
+        
+        return new Response($serializer->serialize($lab, 'xml'), 200, [
+            'Content-Type' => 'application/xml'
+        ]);
+    }
+
     public function generateXMLLabFile($labId, $network, $userNetwork)
     {
-        $fileSystem = new Filesystem();
+        // $fileSystem = new Filesystem();
         $repository = $this->getDoctrine()->getRepository('App:Lab');
         $lab = $repository->find($labId);
         
@@ -290,7 +304,7 @@ class LabController extends AppController
         $userNode = $rootNode->addChild('user');
         $index = 1;
         $indexControl = 1;
-        $labName = $lab->getName() . "_" . "aaa";
+        $labName = $lab->getName();
         
         $rootNode->addChild('name', $labName);
         $rootNode->addChild('id', $labId);
@@ -302,19 +316,19 @@ class LabController extends AppController
         $nodes = $rootNode->addChild('nodes');
         $init = $rootNode->addChild('init');
 
-        if ($lab->getAccessType() === Activity::VPN_ACCESS) {
-            $init->addChild('network_lab', $network->cidr);
-            $init->addChild('network_user', $userNetwork->cidr);
-        }
+        // if ($lab->getAccessType() === Activity::VPN_ACCESS) {
+        //     $init->addChild('network_lab', $network->cidr);
+        //     $init->addChild('network_user', $userNetwork->cidr);
+        // }
         
         foreach ($lab->getDevices() as $device) {
             $deviceNode = $nodes->addChild('device');
 
-            if ($lab->getAccessType() === Activity::VPN_ACCESS) {
-                $vpnNode = $deviceNode->addChild('vpn');
-                $vpnNode->addChild('ipv4', '127.0.0.1/24');
-                $vpnNode->addChild('ipv6', '');
-            }
+            // if ($lab->getAccessType() === Activity::VPN_ACCESS) {
+            //     $vpnNode = $deviceNode->addChild('vpn');
+            //     $vpnNode->addChild('ipv4', '127.0.0.1/24');
+            //     $vpnNode->addChild('ipv6', '');
+            // }
             
             $deviceNode->addAttribute('type', $device->getType());
 
@@ -421,17 +435,19 @@ class LabController extends AppController
         $serveur->addChild('index_interface', $index);
         $serveur->addChild('index_interface_control', 1); // TODO: Use a real value
 
-        $dir = '/opt/remotelabz/' . $this->getUser()->getEmail() . '/' . $labName;
-        $fileName = $dir . '/Labfile';
+        return $rootNode->asXML();
 
-        try {
-            $fileSystem->appendToFile($fileName, $rootNode->asXML());
-            $fileSystem->chmod($dir, 0770, 0000, true);
-        } catch (IOExceptionInterface $exception) {
-            echo "An error occurred while creating your directory at ".$exception->getPath();
-        }
+        // $dir = '/opt/remotelabz/' . $this->getUser()->getEmail() . '/' . $labName;
+        // $fileName = $dir . '/Labfile';
+
+        // try {
+        //     $fileSystem->appendToFile($fileName, $rootNode->asXML());
+        //     $fileSystem->chmod($dir, 0770, 0000, true);
+        // } catch (IOExceptionInterface $exception) {
+        //     echo "An error occurred while creating your directory at ".$exception->getPath();
+        // }
         
-        return $fileName;
+        // return $fileName;
     }
 
     /**
