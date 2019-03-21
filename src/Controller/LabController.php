@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 
 class LabController extends AppController
 {
@@ -81,6 +82,8 @@ class LabController extends AppController
         if ($labForm->isSubmitted() && $labForm->isValid()) {
             $lab = $labForm->getData();
             
+            $lab->setUser($this->getUser());
+            
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($lab);
             $entityManager->flush();
@@ -113,7 +116,7 @@ class LabController extends AppController
         
         if ($labForm->isSubmitted() && $labForm->isValid()) {
             $lab = $labForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($lab);
             $entityManager->flush();
@@ -282,14 +285,21 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/lab/xml", name="test_lab_xml")
+     * @Route("/lab/xml/{id<\d+>}", name="test_lab_xml")
      */
-    public function testLabXml(SerializerInterface $serializer)
+    public function testLabXml(int $id, SerializerInterface $serializer)
     {
         $repository = $this->getDoctrine()->getRepository('App:Lab');
-        $lab = $repository->find(1);
+        $lab = $repository->find($id);
+        $context = SerializationContext::create();
+        $context->setGroups([
+            "Default",
+            "user" => [
+                "lab"
+            ]
+        ]);
         
-        return new Response($serializer->serialize($lab, 'xml'), 200, [
+        return new Response($serializer->serialize($lab, 'xml', $context), 200, [
             'Content-Type' => 'application/xml'
         ]);
     }

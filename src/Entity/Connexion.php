@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ConnexionRepository")
@@ -16,21 +17,26 @@ class Connexion
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $vlan1;
 
     /**
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $vlan2;
 

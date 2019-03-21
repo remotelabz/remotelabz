@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
@@ -17,26 +18,32 @@ class Device
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\XmlAttribute
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\XmlAttribute
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $launchOrder;
 
@@ -49,31 +56,37 @@ class Device
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="network_interface")
      */
     private $networkInterfaces;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
+     * @Serializer\Groups({"details"})
      */
     private $labs;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $virtuality;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
+     * @Serializer\XmlList(inline=true, entry="operating_system")
      */
     private $operatingSystem;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="control_interface")
      */
     private $controlInterface;
 
