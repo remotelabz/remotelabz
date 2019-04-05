@@ -285,7 +285,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/lab/xml/{id<\d+>}", name="test_lab_xml")
+     * @Route("/lab/{id<\d+>}/xml", name="test_lab_xml")
      */
     public function testLabXml(int $id, SerializerInterface $serializer)
     {

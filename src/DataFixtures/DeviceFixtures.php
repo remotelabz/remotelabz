@@ -26,6 +26,7 @@ class DeviceFixtures extends Fixture
                 ->setLaunchOrder($faker->numberBetween(0, 999))
                 ->setVirtuality($faker->numberBetween(0, 2))
                 ->setType($faker->randomElement(['switch', 'vm']))
+                ->setHypervisor('qemu')
             ;
 
             $manager->persist($device);

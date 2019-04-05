@@ -79,6 +79,12 @@ class Device
     private $virtuality;
 
     /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     */
+    private $hypervisor;
+
+    /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
      * @Serializer\XmlList(inline=true, entry="operating_system")
      */
@@ -239,6 +245,18 @@ class Device
     public function setVirtuality(int $virtuality): self
     {
         $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getHypervisor(): ?string
+    {
+        return $this->hypervisor;
+    }
+
+    public function setHypervisor(string $hypervisor): self
+    {
+        $this->hypervisor = $hypervisor;
 
         return $this;
     }
