@@ -17,15 +17,7 @@ class OperatingSystemType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('path')
-            ->add('hypervisor', EntityType::class, [
-                'class' => Hypervisor::class,
-                'choice_label' => 'name'
-            ])
-            ->add('flavor', EntityType::class, [
-                'class' => Flavor::class,
-                'choice_label' => 'name'
-            ])
+            ->add('image')
             ->add('submit', SubmitType::class)
         ;
     }

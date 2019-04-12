@@ -8,7 +8,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class DeviceFixtures extends Fixture
+class DeviceFixtures extends Fixture implements DependentFixtureInterface
 {
     public const COUNT = 10;
 
@@ -25,6 +25,8 @@ class DeviceFixtures extends Fixture
                 ->setModel($faker->lastName)
                 ->setLaunchOrder($faker->numberBetween(0, 999))
                 ->setVirtuality($faker->numberBetween(0, 2))
+                ->setFlavor($this->getReference('flavor-x-small'))
+                ->setOperatingSystem($this->getReference('operating-system-debian'))
                 ->setType($faker->randomElement(['switch', 'vm']))
                 ->setHypervisor('qemu')
             ;
@@ -35,5 +37,13 @@ class DeviceFixtures extends Fixture
         }
 
         $manager->flush();
+    }
+
+    public function getDependencies()
+    {
+        return [
+            FlavorFixtures::class,
+            OperatingSystemFixtures::class
+        ];
     }
 }

@@ -86,7 +86,7 @@ class Device
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\XmlList(inline=true, entry="operating_system")
+     * @Serializer\XmlList(entry="operating_system")
      */
     private $operatingSystem;
 
@@ -95,6 +95,12 @@ class Device
      * @Serializer\XmlList(inline=true, entry="control_interface")
      */
     private $controlInterface;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
+     * @Serializer\XmlList(entry="flavor")
+     */
+    private $flavor;
 
     public function __construct()
     {
@@ -281,6 +287,18 @@ class Device
     public function setControlInterface(?NetworkInterface $controlInterface): self
     {
         $this->controlInterface = $controlInterface;
+
+        return $this;
+    }
+
+    public function getFlavor(): ?Flavor
+    {
+        return $this->flavor;
+    }
+
+    public function setFlavor(?Flavor $flavor): self
+    {
+        $this->flavor = $flavor;
 
         return $this;
     }

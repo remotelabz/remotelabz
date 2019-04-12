@@ -8,7 +8,7 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class OperatingSystemFixtures extends Fixture implements DependentFixtureInterface
+class OperatingSystemFixtures extends Fixture
 {
     public const COUNT = 5;
 
@@ -21,36 +21,23 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
             $operatingSystem
                 ->setName($faker->company . ' ' . $faker->numberBetween(10, 30))
-                ->setPath('/dev/null')
-                ->setHypervisor(
-                    $this->getReference(
-                        'hypervisor' . $faker->numberBetween(
-                            1,
-                            HypervisorFixtures::COUNT
-                        )
-                    )
-                )
-                ->setFlavor(
-                    $this->getReference(
-                        'flavor' . $faker->numberBetween(
-                            1,
-                            FlavorFixtures::COUNT
-                        )
-                    )
-                )
+                ->setImage('/dev/null')
             ;
 
             $manager->persist($operatingSystem);
         }
+
+        $operatingSystem = new OperatingSystem();
+
+        $operatingSystem
+            ->setName('Debian Squeeze')
+            ->setImage('https://people.debian.org/~aurel32/qemu/amd64/debian_squeeze_amd64_standard.qcow2')
+        ;
+
+        $manager->persist($operatingSystem);
+
+        $this->setReference('operating-system-debian', $operatingSystem);
         
         $manager->flush();
-    }
-
-    public function getDependencies()
-    {
-        return [
-            HypervisorFixtures::class,
-            FlavorFixtures::class
-        ];
     }
 }

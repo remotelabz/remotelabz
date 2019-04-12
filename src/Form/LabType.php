@@ -28,7 +28,8 @@ class LabType extends AbstractType
                 'class' => Connexion::class,
                 'choice_label' => 'name',
                 'by_reference' => false,
-                'multiple' => true
+                'multiple' => true,
+                'required' => false
             ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)

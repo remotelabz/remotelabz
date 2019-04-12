@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Device;
+use App\Entity\Flavor;
 use App\Entity\NetworkInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -12,6 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use App\Entity\OperatingSystem;
 
 class DeviceType extends AbstractType
 {
@@ -30,6 +32,11 @@ class DeviceType extends AbstractType
                     'min' => 0
                 ]
             ])
+            ->add('operatingSystem', EntityType::class, [
+                'class' => OperatingSystem::class,
+                'choice_label' => 'name',
+                'required' => false
+            ])
             ->add('launchScript', FileType::class, [
                 'required' => false
             ])
@@ -37,6 +44,11 @@ class DeviceType extends AbstractType
                 'class' => NetworkInterface::class,
                 'choice_label' => 'name',
                 'multiple' => true,
+                'required' => false
+            ])
+            ->add('flavor', EntityType::class, [
+                'class' => Flavor::class,
+                'choice_label' => 'name',
                 'required' => false
             ])
             ->add('submit', SubmitType::class)
