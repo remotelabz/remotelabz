@@ -1,16 +1,22 @@
 FROM php:7.2-apache
 
-RUN apt-get update > /dev/null && \
-    apt-get install -yqq gnupg curl > /dev/null
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN curl -O http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
-    shasum -a 256 SWITCHaai-swdistrib.asc && \
-    apt-key add SWITCHaai-swdistrib.asc && \
-    rm -f SWITCHaai-swdistrib.asc && \
-    echo 'deb http://pkg.switch.ch/switchaai/debian stretch main' | tee /etc/apt/sources.list.d/SWITCHaai-swdistrib.list > /dev/null
+RUN echo 'deb http://deb.debian.org/debian stretch-backports main' | tee /etc/apt/sources.list.d/stretch-backports.list
 
 RUN apt-get update > /dev/null && \
-    apt-get install -yqq --install-recommends shibboleth > /dev/null
+    apt-get install -yqq gnupg curl > /dev/null && \
+    apt-get -t stretch-backports install -yqq init-system-helpers libxerces-c3.2 > /dev/null
+
+RUN curl --output /etc/apt/trusted.gpg.d/SWITCHaai-swdistrib.asc http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
+    # curl -O http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
+    # shasum -a 256 SWITCHaai-swdistrib.asc && \
+    # apt-key add SWITCHaai-swdistrib.asc && \
+    # rm -f SWITCHaai-swdistrib.asc && \
+    echo 'deb http://pkg.switch.ch/switchaai/debian stretch main' | tee /etc/apt/sources.list.d/SWITCHaai-swdistrib.list
+
+RUN apt-get update && \
+    apt-get install -y --install-recommends shibboleth
     
 RUN shib-keygen -f -u _shibd -h staging.remotelabz.com -y 3 -e https://staging.remotelabz.com/shibboleth -o /etc/shibboleth/
 
