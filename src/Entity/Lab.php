@@ -52,6 +52,11 @@ class Lab
      */
     private $activities;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $isStarted = false;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -167,6 +172,18 @@ class Lab
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getIsStarted(): ?bool
+    {
+        return $this->isStarted;
+    }
+
+    public function setIsStarted(bool $isStarted): self
+    {
+        $this->isStarted = $isStarted;
 
         return $this;
     }
