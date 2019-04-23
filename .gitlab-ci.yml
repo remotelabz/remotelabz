@@ -15,7 +15,7 @@ before_script:
 
 Docker:
   stage: build
-  image: docker:latest
+  image: tiangolo/docker-with-compose
   services:
     - docker:dind
   variables:
@@ -24,24 +24,22 @@ Docker:
     # improved performance.
     DOCKER_DRIVER: overlay2
   script:
-    - cp -rf .env.dist .env
-    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - apk add --no-cache py-pip gcc python-dev libc-dev libffi-dev openssl-dev make
-    - pip install docker-compose
-    - docker-compose pull --ignore-pull-failures
-    - docker-compose build
-    - docker-compose push
+    - alias 'dockerize=git whatchanged HEAD^! | grep Dockerfile >/dev/null'
+    - apk add --no-cache git
+    - dockerize || (echo "No need to build new docker image" && exit 0)
+    - dockerize && docker-compose pull --ignore-pull-failures
+    - dockerize && docker-compose build
+    - dockerize && docker-compose push
+    - echo "Build done"
   tags:
     - build
 
 PHPUnit:
   stage: test
-  image: docker:latest
+  image: tiangolo/docker-with-compose
   services: 
     - docker:dind
   script:
-    - apk add --no-cache py-pip gcc python-dev libc-dev libffi-dev openssl-dev make
-    - pip install docker-compose
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose pull
@@ -62,6 +60,8 @@ PHPUnit:
 # TODO stage with apache to upload on public server
 Deploy to review:
   stage: deploy
+  except: 
+    - master
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
@@ -86,6 +86,8 @@ Deploy to review:
 
 Stop review:
   stage: deploy
+  except: 
+    - master
   variables:
     GIT_STRATEGY: none
   script:
@@ -99,7 +101,8 @@ Stop review:
 
 Deploy to staging:
   stage: deploy
-  when: manual
+  only: 
+    - master
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
@@ -122,6 +125,8 @@ Deploy to staging:
 
 Stop staging:
   stage: deploy
+  only:
+    - master
   variables:
     GIT_STRATEGY: none
   script:
@@ -131,4 +136,4 @@ Stop staging:
     name: Staging
     action: stop
   tags:
-    - deploy
+    - staging
