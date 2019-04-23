@@ -38,6 +38,8 @@ Docker:
 PHPUnit:
   stage: test
   image: tiangolo/docker-with-compose
+  variables:
+    CURRENT_UID: 'root:root'
   services: 
     - docker:dind
   script:

@@ -15,7 +15,7 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/console
         image: registry.remotelabz.com/crestic/remotelabzv2/console
-        user: ${CURRENT_UID-1000}
+        user: ${CURRENT_UID-0:0}
         volumes:
             - ${CI_PROJECT_DIR-.}:/app
             - symfony-cache:/var/www/cache
@@ -43,9 +43,9 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/apache
             args:
-                userid: ${UID-1000}
+                userid: ${UID-0}
         image: registry.remotelabz.com/crestic/remotelabzv2/apache
-        user: ${CURRENT_UID-1000}
+        user: ${CURRENT_UID-0:0}
         volumes:
             - ${CI_PROJECT_DIR-.}:/var/www/html
             - symfony-cache:/var/www/cache
@@ -64,7 +64,7 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
-        user: ${CURRENT_UID-1000}
+        user: ${CURRENT_UID-0:0}
         volumes:
             - ${CI_PROJECT_DIR-.}/assets:/app/assets
             - ${CI_PROJECT_DIR-.}/public:/app/public
