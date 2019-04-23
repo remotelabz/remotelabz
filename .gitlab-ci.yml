@@ -9,7 +9,6 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
-  CURRENT_UID: 'gitlab-runner:gitlab-runner'
 
 before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
@@ -66,6 +65,7 @@ Deploy to review:
   except: 
     - master
   script:
+    - export CURRENT_UID=$(id -u):$(id -g)
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
@@ -107,6 +107,7 @@ Deploy to staging:
   only: 
     - master
   script:
+    - export CURRENT_UID=$(id -u):$(id -g)
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
