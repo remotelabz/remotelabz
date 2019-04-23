@@ -28,7 +28,7 @@ Docker:
     - dockerize || (echo "No need to build new docker image" && exit 0)
     # - cp -rf .env.dist .env
     # - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - apk add --no-cache py-pip gcc python-dev libc-dev libffi-dev openssl-dev make
+    - apk add --no-cache git py-pip gcc python-dev libc-dev libffi-dev openssl-dev make
     - pip install docker-compose
     - dockerize && docker-compose pull --ignore-pull-failures
     - dockerize && docker-compose build
