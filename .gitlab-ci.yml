@@ -30,6 +30,7 @@ Docker:
     - dockerize && docker-compose pull --ignore-pull-failures
     - dockerize && docker-compose build
     - dockerize && docker-compose push
+    - echo "Build done"
   tags:
     - build
 
