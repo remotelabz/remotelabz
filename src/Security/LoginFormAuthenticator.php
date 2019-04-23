@@ -94,7 +94,7 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
             $response->setTargetUrl($targetPath);
         }
         else {
-            $response->setTargetUrl($this->router->generate('users'));
+            $response->setTargetUrl($this->router->generate('index'));
         }
 
         return $response;

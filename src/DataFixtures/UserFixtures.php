@@ -39,6 +39,21 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
         // Flush once before to ensure admin has ID == 1
         $manager->flush();
 
+        /* Traditional user */
+        $user = new User();
+        $user->setLastName("Hubert")
+            ->setFirstName("Julien")
+            ->setEmail("user@localhost")
+            ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
+            ->setPassword(
+                $this->passwordEncoder->encodePassword(
+                    $user,
+                    'user'
+                )
+            )
+        ;
+        $manager->persist($user);
+
         /* Other data, test purpose */
         $faker = RandomDataFactory::create('fr_FR');
  
