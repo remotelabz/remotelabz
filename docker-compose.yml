@@ -81,7 +81,6 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/composer
         image: registry.remotelabz.com/crestic/remotelabzv2/composer
-        user: ${CURRENT_UID-1000}
         volumes:
             - ${CI_PROJECT_DIR-.}/composer.json:/app/composer.json
             - ${CI_PROJECT_DIR-.}/composer.lock:/app/composer.lock
