@@ -15,7 +15,7 @@ before_script:
 
 Docker:
   stage: build
-  image: docker/compose
+  image: docker/compose:1.24.0
   services:
     - docker:dind
   variables:
@@ -38,7 +38,7 @@ Docker:
 
 PHPUnit:
   stage: test
-  image: docker/compose
+  image: docker/compose:1.24.0
   services: 
     - docker:dind
   script:
