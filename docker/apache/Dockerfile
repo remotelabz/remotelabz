@@ -45,7 +45,7 @@ ADD ./shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD ./shib2.conf /etc/apache2/conf-available/
 
 RUN a2enconf shib2 && \
-    a2enmod shib2
+    a2enmod shib
 RUN sed -i '/exec apache2 -DFOREGROUND "$@"/iservice shibd start' /usr/local/bin/apache2-foreground
 RUN sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
 
