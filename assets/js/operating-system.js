@@ -23,13 +23,7 @@ $(function () {
         columns: [{
                 data: 'name'
             }, {
-                data: 'path',
-            }, {
-                data: 'hypervisor.name',
-                defaultContent: 'None'
-            }, {
-                data: 'flavor.name',
-                defaultContent: 'None'
+                data: 'image'
         }]
     });
 })

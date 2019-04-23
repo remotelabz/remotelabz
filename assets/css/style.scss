@@ -62,6 +62,7 @@
 /*-------------------------------------------------------------------*/
 /* === Import template variables === */
 @import "variables";
+@import "variables.custom";
 
 /*-------------------------------------------------------------------*/
 /* === SCSS Compass Functions === */
@@ -77,6 +78,7 @@
 @import "mixins/animation";
 @import "mixins/background";
 @import "mixins/badge";
+@import "mixins/breadcrumb";
 @import "mixins/buttons";
 @import "mixins/misc";
 @import "mixins/blockqoute";
@@ -99,6 +101,7 @@
 /*-------------------------------------------------------------------*/
 /* === Components === */
 @import "components/badges";
+@import "components/breadcrumbs";
 @import "components/bootstrap-progress";
 @import "components/buttons";
 @import "components/cards";

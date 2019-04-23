@@ -35,12 +35,13 @@ security:
             guard:
                 authenticators:
                     - App\Security\LoginFormAuthenticator
+                    - App\Security\ShibbolethAuthenticator
                     - lexik_jwt_authentication.jwt_token_authenticator
                 entry_point: App\Security\LoginFormAuthenticator
 
             logout:
-                path: /logout
-                target: /login
+                path: logout
+                success_handler: App\Security\LoginFormAuthenticator
 
             # activate different ways to authenticate
 
@@ -55,5 +56,6 @@ security:
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/admin/labs, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }
         - { path: ^/admin, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER'] }
         - { path: ^/, roles: ['ROLE_SUPER_ADMINISTRATOR', 'ROLE_ADMINISTRATOR', 'ROLE_TEACHER', 'ROLE_USER'] }

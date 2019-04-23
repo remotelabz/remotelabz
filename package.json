@@ -17,16 +17,20 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.5.0",
         "@mdi/font": "^3.2.89",
+        "@novnc/novnc": "^1.0.0",
         "compass-mixins": "^0.12.10",
         "datatables.net-bs4": "^1.10.19",
         "datatables.net-buttons-bs4": "^1.5.4",
         "datatables.net-select-bs4": "^1.2.7",
+        "font-awesome": "^4.7.0",
         "icheck": "^1.0.2",
         "jquery": "^3.3.1",
         "node-sass": "^4.10.0",
         "noty": "^3.2.0-beta",
         "sass-loader": "^7.1.0",
+        "select2": "^4.0.6-rc.1",
         "selectize": "^0.12.6",
+        "simplemde": "^1.11.2",
         "ts-loader": "^5.3.1",
         "typescript": "^3.2.1"
     }

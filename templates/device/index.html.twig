@@ -1,0 +1,52 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Devices': path('devices') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ 'Devices'|trans }}</h4>
+                <p>
+                    <form action="{{ path('devices') }}" method="GET">
+                        <div class="row">
+                            <div class="col">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fa fa-search"></i>
+                                        </span>
+                                    </div>
+                                    <input type="search" class="form-control input-sm" name="search"
+                                    placeholder="Search by name"
+                                    spellcheck="false" value="{{ search|default('') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-auto">
+                                <a class="btn btn-success btn-block" role="button" href="{{
+                                path('new_device') }}">{{ 'New device'|trans }}</a>
+                            </div>
+                        </div>
+                    </form>
+                </p>
+                {% for device in devices %}
+                    <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <a href="{{ path('show_device', {'id': device.id}) }}">
+                            {{ device.name }}
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('device') }} #}
+{% endblock %}

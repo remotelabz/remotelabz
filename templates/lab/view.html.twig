@@ -1,0 +1,34 @@
+{% extends 'lab/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ (lab.name): path('show_lab', {'id': lab.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ lab.name }}
+                    <div class="float-right">
+                        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i
+                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                    </div>
+                </h4>
+                {{ dump(lab|cast_to_array)}}
+                {# {% for key, value in lab|cast_to_array %}
+                    <p>{{ key }} : {{ value }}</p>
+                    <hr>
+                {% endfor %} #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('lab') }} #}
+{% endblock %}

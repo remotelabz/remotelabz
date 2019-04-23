@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\OperatingSystemRepository")
@@ -13,28 +14,22 @@ class OperatingSystem
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor", inversedBy="operatingSystems")
-     */
-    private $hypervisor;
-
-    /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
-    private $path;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     */
-    private $flavor;
+    private $image;
 
     public function getId(): ?int
     {
@@ -53,38 +48,14 @@ class OperatingSystem
         return $this;
     }
 
-    public function getHypervisor(): ?Hypervisor
+    public function getImage(): ?string
     {
-        return $this->hypervisor;
+        return $this->image;
     }
 
-    public function setHypervisor(?Hypervisor $hypervisor): self
+    public function setImage(string $image): self
     {
-        $this->hypervisor = $hypervisor;
-
-        return $this;
-    }
-
-    public function getPath(): ?string
-    {
-        return $this->path;
-    }
-
-    public function setPath(string $path): self
-    {
-        $this->path = $path;
-
-        return $this;
-    }
-
-    public function getFlavor(): ?Flavor
-    {
-        return $this->flavor;
-    }
-
-    public function setFlavor(?Flavor $flavor): self
-    {
-        $this->flavor = $flavor;
+        $this->image = $image;
 
         return $this;
     }

@@ -8,15 +8,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 use JMS\Serializer\Annotation as Serializer;
-use JMS\Serializer\Annotation\ExclusionPolicy;
-use JMS\Serializer\Annotation\Accessor;
-use JMS\Serializer\Annotation\Expose;
-use JMS\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  * 
- * @ExclusionPolicy("all")
+ * @Serializer\ExclusionPolicy("all")
  */
 class User implements UserInterface
 {
@@ -25,22 +21,24 @@ class User implements UserInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * 
-     * @Expose
+     * @Serializer\Expose
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      * 
-     * @Expose
+     * @Serializer\Expose
+     * @Serializer\Groups({"lab"})
+     * @Serializer\XmlAttribute
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
      * 
-     * @Expose
-     * @Accessor(getter="getRoles")
+     * @Serializer\Expose
+     * @Serializer\Accessor(getter="getRoles")
      */
     private $roles = [];
 
@@ -53,34 +51,40 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255)
      * 
-     * @Expose
+     * @Serializer\Expose
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
      * 
-     * @Expose
+     * @Serializer\Expose
      */
     private $firstName;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
      * 
-     * @Expose
+     * @Serializer\Expose
      */
     private $courses;
 
     /**
      * @ORM\Column(type="boolean")
      * 
-     * @Expose
+     * @Serializer\Expose
      */
     private $enabled = true;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="user")
+     */
+    private $labs;
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
+        $this->labs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -237,6 +241,37 @@ class User implements UserInterface
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getLabs(): Collection
+    {
+        return $this->labs;
+    }
+
+    public function addLab(Lab $lab): self
+    {
+        if (!$this->labs->contains($lab)) {
+            $this->labs[] = $lab;
+            $lab->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLab(Lab $lab): self
+    {
+        if ($this->labs->contains($lab)) {
+            $this->labs->removeElement($lab);
+            // set the owning side to null (unless already changed)
+            if ($lab->getUser() === $this) {
+                $lab->setUser(null);
+            }
+        }
 
         return $this;
     }

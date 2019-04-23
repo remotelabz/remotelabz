@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkSettingsRepository")
@@ -14,58 +15,68 @@ class NetworkSettings
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"details"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip(version="4")
+     * @Serializer\XmlAttribute
      */
     private $ip;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip(version="6")
+     * @Serializer\XmlAttribute
      */
     private $ipv6;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=64)
+     * @Serializer\XmlAttribute
      */
     private $prefix4;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=128)
+     * @Serializer\XmlAttribute
      */
     private $prefix6;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * 
+     *
      * @Assert\Ip
+     * @Serializer\XmlAttribute
      */
     private $gateway;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\XmlAttribute
      */
     private $protocol;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * 
+     *
      * @Assert\Range(min=0, max=65536)
+     * @Serializer\XmlAttribute
      */
     private $port;
 

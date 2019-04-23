@@ -1,0 +1,85 @@
+version: '3.2'
+
+volumes:
+    database-volume:
+    symfony-cache:
+    symfony-logs:
+    node-modules:
+    public-assets:
+    vendor:
+
+services:
+    console:
+        build: 
+            context: ./docker/console
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/console
+        image: registry.remotelabz.com/crestic/remotelabzv2/console
+        volumes:
+            - ${CI_PROJECT_DIR-.}:/app
+            - symfony-cache:/var/www/cache
+            - symfony-logs:/var/www/log
+            - vendor:/app/vendor
+            - node-modules:/app/node_modules
+            - public-assets:/app/public/build
+        entrypoint:
+            - entrypoint
+        stdin_open: true
+        tty: true
+
+    mysql:
+        image: mysql:5.7
+        volumes:
+            - database-volume:/var/lib/mysql
+        env_file: .env
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: 1
+        restart: on-failure
+
+    apache:
+        build:
+            context: ./docker/apache
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/apache
+            args:
+                userid: ${UID-1000}
+        image: registry.remotelabz.com/crestic/remotelabzv2/apache
+        volumes:
+            - ${CI_PROJECT_DIR-.}:/var/www/html
+            - symfony-cache:/var/www/cache
+            - symfony-logs:/var/www/log
+            - vendor:/var/www/html/vendor
+            - node-modules:/var/www/html/node_modules
+            - public-assets:/var/www/html/public/build
+        ports:
+            - "8000:8000"
+        # user: www-data
+        restart: on-failure
+
+    yarn:
+        build:
+            context: ./docker/node
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/node
+        image: registry.remotelabz.com/crestic/remotelabzv2/node
+        volumes:
+            - ${CI_PROJECT_DIR-.}/assets:/app/assets
+            - ${CI_PROJECT_DIR-.}/public:/app/public
+            - ${CI_PROJECT_DIR-.}/package.json:/app/package.json
+            - ${CI_PROJECT_DIR-.}/yarn.lock:/app/yarn.lock
+            - ${CI_PROJECT_DIR-.}/webpack.config.js:/app/webpack.config.js
+            - vendor:/app/vendor
+            - node-modules:/app/node_modules
+            - public-assets:/app/public/build
+
+    composer:
+        build:
+            context: ./docker/composer
+            cache_from:
+                - registry.remotelabz.com/crestic/remotelabzv2/composer
+        image: registry.remotelabz.com/crestic/remotelabzv2/composer
+        volumes:
+            - ${CI_PROJECT_DIR-.}/composer.json:/app/composer.json
+            - ${CI_PROJECT_DIR-.}/composer.lock:/app/composer.lock
+            - ${CI_PROJECT_DIR-.}/symfony.lock:/app/symfony.lock
+            - vendor:/app/vendor

@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
+ * @Serializer\XmlRoot("lab")
  */
 class Lab
 {
@@ -15,28 +17,51 @@ class Lab
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labs")
+     * @Serializer\XmlElement(cdata=false)
+     */
+    private $user;
+
+    /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\POD")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
+     * @Serializer\XmlList(inline=true, entry="device")
      */
-    private $pod;
+    private $devices;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Connexion", inversedBy="labs")
+     * @Serializer\XmlList(inline=true, entry="connexion")
      */
     private $connexions;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="lab")
+     * @Serializer\XmlList(inline=true, entry="activity")
+     */
+    private $activities;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $isStarted = false;
+
     public function __construct()
     {
+        $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
+        $this->activities = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -56,14 +81,28 @@ class Lab
         return $this;
     }
 
-    public function getPod(): ?POD
+    /**
+     * @return Collection|Devices[]
+     */
+    public function getDevices(): Collection
     {
-        return $this->pod;
+        return $this->devices;
     }
 
-    public function setPod(?POD $pod): self
+    public function addDevice(Device $device): self
     {
-        $this->pod = $pod;
+        if (!$this->devices->contains($device)) {
+            $this->devices[] = $device;
+        }
+
+        return $this;
+    }
+
+    public function removeDevice(Device $device): self
+    {
+        if ($this->devices->contains($device)) {
+            $this->devices->removeElement($device);
+        }
 
         return $this;
     }
@@ -90,6 +129,61 @@ class Lab
         if ($this->connexions->contains($connexion)) {
             $this->connexions->removeElement($connexion);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Activity[]
+     */
+    public function getActivities(): Collection
+    {
+        return $this->activities;
+    }
+
+    public function addActivity(Activity $activity): self
+    {
+        if (!$this->activities->contains($activity)) {
+            $this->activities[] = $activity;
+            $activity->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeActivity(Activity $activity): self
+    {
+        if ($this->activities->contains($activity)) {
+            $this->activities->removeElement($activity);
+            // set the owning side to null (unless already changed)
+            if ($activity->getLab() === $this) {
+                $activity->setLab(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getIsStarted(): ?bool
+    {
+        return $this->isStarted;
+    }
+
+    public function setIsStarted(bool $isStarted): self
+    {
+        $this->isStarted = $isStarted;
 
         return $this;
     }

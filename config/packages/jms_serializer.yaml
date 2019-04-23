@@ -1,11 +1,12 @@
 jms_serializer:
     visitors:
-        xml:
+        xml_serialization:
             format_output: '%kernel.debug%'
     
     default_context:
         serialization:
             enable_max_depth_checks: true
+            serialize_null: false
         deserialization:
             enable_max_depth_checks: false
 #    metadata:

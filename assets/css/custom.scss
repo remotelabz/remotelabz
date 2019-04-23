@@ -1,3 +1,118 @@
+/////////// GENERAL ///////////
+
+html
+{
+  font-size: $default-font-size;
+}
+
+body
+{
+  font-family: $default-font-family;
+  background-color: $white;
+}
+
+.container-limited
+{
+  max-width: 1280px;
+}
+
+.navbar {
+  background-color: theme-color(primary);
+  color: $white;
+
+  .navbar-brand-wrapper .navbar-brand {
+    color: $white;
+  }
+
+  .navbar-menu-wrapper .navbar-nav .nav-item.lang-dropdown .nav-link, .navbar-menu-wrapper .page-name {
+    color: $white;
+
+    :hover {
+      color: $white
+    }
+  }
+}
+
+.sidebar {
+  position: fixed;
+  min-height: initial;
+  top: 60px;
+  bottom: 0;
+  left: 0;
+  overflow-y: scroll;
+  z-index: 2;
+}
+
+a {
+  color: theme-color(primary);
+
+  :hover, :active {
+    color: theme-color(primary);
+  }
+}
+
+.fixed-top {
+  z-index: 3;
+}
+
+/////////// FORMS ///////////
+
+legend
+{
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+}
+
+.form-group label
+{
+  text-align: right;
+  margin: auto;
+}
+
+.form-actions
+{
+  padding: 16px;
+  border-top: 1px solid $border-color;
+
+  .btn.btn-secondary
+  {
+    float: right;
+  }
+}
+
+.input-group-prepend {
+  margin-right: -2px;
+}
+
+.input-group > .form-control, .input-group > .custom-select, .input-group > .custom-file {
+  height: auto;
+}
+
+/////////// MENU ///////////
+
+.sidebar .nav .nav-item.active {
+  color: $white;
+  border-left: 3px solid $white;
+}
+
+.sidebar .nav .nav-item.active a.nav-link {
+  color: $white;
+}
+
+/////////// BREADCRUMBS ///////////
+
+.breadcrumb {
+  border: initial;
+  border-bottom: 1px solid $border-color;
+  background: initial;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+}
+
+/////////// AUTH LANDING PAGE ///////////
+
 .auth.theme-one .auto-form-wrapper .form-group .input-group .form-control
 {
   border-radius: 6px;

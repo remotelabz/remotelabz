@@ -9,25 +9,33 @@ use Doctrine\Common\Persistence\ObjectManager;
 
 class NetworkSettingsFixtures extends Fixture
 {
+    public const COUNT = 10;
+
     public function load(ObjectManager $manager)
     {
         $randomData = RandomDataFactory::create();
 
-        foreach (range(0, 9) as $number) {
+        foreach (range(1, self::COUNT) as $number) {
             $networkSettings = new NetworkSettings();
 
             $networkSettings
                 ->setName($randomData->lastName)
                 ->setIp($randomData->localIpv4)
                 ->setIpv6($randomData->ipv6)
-                ->setPrefix4($randomData->numberBetween(2,30))
-                ->setPrefix6($randomData->numberBetween(8,120))
+                ->setPrefix4($randomData->numberBetween(2, 30))
+                ->setPrefix6($randomData->numberBetween(8, 120))
                 ->setGateway($randomData->localIpv4)
-                ->setProtocol($randomData->randomElement(['VNC', 'Telnet', 'SSH']))
+                ->setProtocol($randomData->randomElement([
+                    'VNC',
+                    'Telnet',
+                    'SSH'
+                ]))
                 ->setPort($randomData->numberBetween(8192, 65536))
             ;
 
             $manager->persist($networkSettings);
+
+            $this->addReference('network_settings' . $number, $networkSettings);
         }
 
         $manager->flush();

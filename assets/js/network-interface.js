@@ -50,7 +50,20 @@ $(function () {
                 }
             }, {
                 data: 'device',
-                defaultContent: 'None'
+                defaultContent: 'None',
+                render: (data, type) => {
+                    if (type !== 'None') {
+                        var render = '<a href="' + 
+                        Routing.generate('edit_device', {
+                            id: data.id
+                        }) +
+                        '">' +
+                        data.name + 
+                        '</a>';
+
+                        return render;
+                    }
+                }
         }]
     });
 })

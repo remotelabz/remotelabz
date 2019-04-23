@@ -2,10 +2,12 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Filesystem\Filesystem;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
@@ -16,45 +18,89 @@ class Device
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\XmlAttribute
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\XmlAttribute
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
      */
     private $launchOrder;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * 
-     * @Assert\File(mimeTypes={ "text/plain" })
+     * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
      */
     private $launchScript;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device")
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="network_interface")
      */
     private $networkInterfaces;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\POD", inversedBy="devices")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
+     * @Serializer\Groups({"details"})
      */
-    private $pod;
+    private $labs;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     */
+    private $type;
+
+    /**
+     * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     */
+    private $virtuality;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     */
+    private $hypervisor;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
+     * @Serializer\XmlList(entry="operating_system")
+     */
+    private $operatingSystem;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="control_interface")
+     */
+    private $controlInterface;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
+     * @Serializer\XmlList(entry="flavor")
+     */
+    private $flavor;
 
     public function __construct()
     {
@@ -114,12 +160,12 @@ class Device
         return $this;
     }
 
-    public function getLaunchScript(): ?string
+    public function getLaunchScript()
     {
         return $this->launchScript;
     }
 
-    public function setLaunchScript(string $launchScript): self
+    public function setLaunchScript($launchScript): self
     {
         $this->launchScript = $launchScript;
 
@@ -157,14 +203,102 @@ class Device
         return $this;
     }
 
-    public function getPod(): ?POD
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getLabs(): Collection
     {
-        return $this->pod;
+        return $this->labs;
     }
 
-    public function setPod(?POD $pod): self
+    public function addLab(Lab $lab): self
     {
-        $this->pod = $pod;
+        if (!$this->labs->contains($lab)) {
+            $this->labs[] = $lab;
+            $lab->addDevice($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLab(Lab $lab): self
+    {
+        if ($this->labs->contains($lab)) {
+            $this->labs->removeElement($lab);
+            $lab->removeDevice($this);
+        }
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getVirtuality(): ?int
+    {
+        return $this->virtuality;
+    }
+
+    public function setVirtuality(int $virtuality): self
+    {
+        $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getHypervisor(): ?string
+    {
+        return $this->hypervisor;
+    }
+
+    public function setHypervisor(string $hypervisor): self
+    {
+        $this->hypervisor = $hypervisor;
+
+        return $this;
+    }
+
+    public function getOperatingSystem(): ?OperatingSystem
+    {
+        return $this->operatingSystem;
+    }
+
+    public function setOperatingSystem(?OperatingSystem $operatingSystem): self
+    {
+        $this->operatingSystem = $operatingSystem;
+
+        return $this;
+    }
+
+    public function getControlInterface(): ?NetworkInterface
+    {
+        return $this->controlInterface;
+    }
+
+    public function setControlInterface(?NetworkInterface $controlInterface): self
+    {
+        $this->controlInterface = $controlInterface;
+
+        return $this;
+    }
+
+    public function getFlavor(): ?Flavor
+    {
+        return $this->flavor;
+    }
+
+    public function setFlavor(?Flavor $flavor): self
+    {
+        $this->flavor = $flavor;
 
         return $this;
     }

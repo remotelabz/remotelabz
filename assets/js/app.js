@@ -14,15 +14,19 @@ require('datatables.net-select-bs4/css/select.bootstrap4.css');
 require('flag-icon-css/sass/flag-icon.scss');
 require('noty/src/noty.scss')
 require('noty/src/themes/mint.scss')
+require('simplemde/dist/simplemde.min.css')
+require('font-awesome/scss/font-awesome.scss')
 
 require('bootstrap');
-require('@fortawesome/fontawesome-free/js/all');
 require('datatables.net-bs4');
 require('datatables.net-buttons-bs4');
 require('datatables.net-select-bs4');
 require('icheck');
 require('selectize');
+require('select2');
+require('@novnc/novnc/core/rfb');
 
+import RFB from '@novnc/novnc/core/rfb'
 import Noty from 'noty';
 
 Noty.overrideDefaults({
@@ -124,19 +128,19 @@ export default class API {
     
     $.fn.dataTable.ext.buttons.edit = {
         extend: 'selectedSingle',
-        text: '<i class="fas fa-edit"></i> Edit',
+        text: '<i class="fa fa-edit"></i> Edit',
         className: 'btn-secondary'
     };
     
     $.fn.dataTable.ext.buttons.toggle = {
         extend: 'selected',
-        text: '<i class="fas fa-lock"></i> (Un)lock',
+        text: '<i class="fa fa-lock"></i> (Un)lock',
         className: 'btn-warning'
     };
     
     $.fn.dataTable.ext.buttons.delete = {
         extend: 'selected',
-        text: '<i class="fas fa-times"></i> Delete',
+        text: '<i class="fa fa-times"></i> Delete',
         className: 'btn-danger'
     };
     

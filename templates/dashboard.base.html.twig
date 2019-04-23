@@ -1,10 +1,11 @@
 {% extends 'base.html.twig' %}
 
+{% set breadcrumbs = breadcrumbs | default({}) %}
+
 {% block header %}
 <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
   <div class="text-center navbar-brand-wrapper">
-    <a class="navbar-brand brand-logo" href="#"><img src="{{asset('build/images/logo.svg')}}" alt="logo"></a>
-    <a class="navbar-brand brand-logo-mini" href="#"><img src="{{asset('build/images/logo_mini.svg')}}" alt="logo"></a>
+    <h4><a class="navbar-brand" href="#"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a></h4>
   </div>
   <div class="navbar-menu-wrapper d-flex align-items-center">
     <p class="page-name d-none d-lg-block">Hi, {{ app.user.firstName }} {{ app.user.lastName }}</p>
@@ -29,76 +30,123 @@
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid page-body-wrapper">
-  <div class="row row-offcanvas row-offcanvas-right">
-    <nav class="sidebar sidebar-offcanvas" id="sidebar">
-      <ul class="nav">
-        <li class="nav-item nav-category">
-          <span class="nav-link">ADMINISTRATOR</span>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('users') }}">
-            <span class="menu-title">Users</span>
-            <i class="menu-icon fas fa-users fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('flavors') }}">
-            <span class="menu-title">Flavors</span>
-            <i class="menu-icon fas fa-memory fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('hypervisors') }}">
-            <span class="menu-title">Hypervisors</span>
-            <i class="menu-icon fas fa-building fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('courses') }}">
-            <span class="menu-title">Courses</span>
-            <i class="menu-icon fas fa-graduation-cap fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('network_settings') }}">
-            <span class="menu-title">Network settings</span>
-            <i class="menu-icon fas fa-wifi fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('network_interfaces') }}">
-            <span class="menu-title">Network interfaces</span>
-            <i class="menu-icon fas fa-link fa-fw"></i>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ path('operating_systems') }}">
-            <span class="menu-title">Operating systems</span>
-            <i class="menu-icon fab fa-windows fa-fw"></i>
-          </a>
-        </li>
-      </ul>
-    </nav>
+  <div class="container-fluid page-body-wrapper">
+    <div class="row row-offcanvas row-offcanvas-right">
+      <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        <ul class="nav">
+          {% if is_granted('ROLE_ADMINISTRATOR') %}
+          <li class="nav-item nav-category">
+            <span class="nav-link">ADMINISTRATOR</span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('users') }}">
+              <span class="menu-title">Users</span>
+              <i class="menu-icon fa fa-users"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('flavors') }}">
+              <span class="menu-title">Flavors</span>
+              <i class="menu-icon fa fa-microchip"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('hypervisors') }}">
+              <span class="menu-title">Hypervisors</span>
+              <i class="menu-icon fa fa-building"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('courses') }}">
+              <span class="menu-title">Courses</span>
+              <i class="menu-icon fa fa-graduation-cap"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('network_settings') }}">
+              <span class="menu-title">Network settings</span>
+              <i class="menu-icon fa fa-cog"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('network_interfaces') }}">
+              <span class="menu-title">Network interfaces</span>
+              <i class="menu-icon fa fa-link"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('operating_systems') }}">
+              <span class="menu-title">Operating systems</span>
+              <i class="menu-icon fa fa-windows"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('devices') }}">
+              <span class="menu-title">Devices</span>
+              <i class="menu-icon fa fa-desktop"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('connexions') }}">
+              <span class="menu-title">Connexions</span>
+              <i class="menu-icon fa fa-wifi"></i>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('activities') }}">
+              <span class="menu-title">Activities</span>
+              <i class="menu-icon fa fa-book"></i>
+            </a>
+          </li>
+          {% endif %}
+          <li class="nav-item nav-category">
+            <span class="nav-link">USER</span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ path('labs') }}">
+              <span class="menu-title">Labs</span>
+              <i class="menu-icon fa fa-cubes"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
 
-    <div class="content-wrapper">
-      <div class="row">
-        <div class="flashbag-container col-lg-12">
-          {% for label, messages in app.flashes %}
-          {% for message in messages %}
-          <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-            <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            {{ message }}
+      <div class="content-wrapper">
+        <div class="row">
+          <div class="flashbag-container col-lg-12">
+            {% for label, messages in app.flashes %}
+              {% for message in messages %}
+              <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
+                <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                {{ message }}
+              </div>
+              {% endfor %}
+            {% endfor %}
           </div>
-          {% endfor %}
-          {% endfor %}
+        </div>
+        <div class="container-fluid container-limited">
+          {% block breadcrumbs %}
+            <div class="breadcrumb">
+              {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('users') }) %}
+              {% for breadcrumb, link in breadcrumbs|reverse(true) %}
+                <div class="breadcrumb-item">
+                  {%- if loop.last -%}<strong>{%- endif -%}
+                  <a href="{{ link }}">{{ breadcrumb }}</a>
+                  {%- if loop.last -%}</strong>{%- endif -%}
+                </div>
+              {% endfor %}
+            </div>
+          {% endblock %}
+
+          {% block wrapper %}
+            
+          {% endblock %}
         </div>
       </div>
-      {% block wrapper %}{% endblock %}
     </div>
   </div>
-</div>
-</div>
+  </div>
 {% endblock %}
+
