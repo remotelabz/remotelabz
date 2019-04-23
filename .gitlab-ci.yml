@@ -64,7 +64,8 @@ PHPUnit:
 # TODO stage with apache to upload on public server
 Deploy to review:
   stage: deploy
-  except: master
+  except: 
+    - master
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
@@ -89,7 +90,8 @@ Deploy to review:
 
 Stop review:
   stage: deploy
-  except: master
+  except: 
+    - master
   variables:
     GIT_STRATEGY: none
   script:
@@ -103,7 +105,8 @@ Stop review:
 
 Deploy to staging:
   stage: deploy
-  only: master
+  only: 
+    - master
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
@@ -126,6 +129,8 @@ Deploy to staging:
 
 Stop staging:
   stage: deploy
+  only:
+    - master
   variables:
     GIT_STRATEGY: none
   script:
