@@ -11,11 +11,11 @@ variables:
   MYSQL_PASSWORD: $MYSQL_PASSWORD
 
 before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 Docker:
   stage: build
-  image: tiangolo/docker-with-compose
+  image: docker:stable
   services:
     - docker:dind
   variables:
@@ -24,36 +24,27 @@ Docker:
     # improved performance.
     DOCKER_DRIVER: overlay2
   script:
-    - alias 'dockerize=git whatchanged HEAD^! | grep Dockerfile >/dev/null'
-    - apk add --no-cache git
-    - dockerize || (echo "No need to build new docker image" && exit 0)
-    - dockerize && docker-compose pull --ignore-pull-failures
-    - dockerize && docker-compose build
-    - dockerize && docker-compose push
-    - echo "Build done"
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
   tags:
     - build
 
 PHPUnit:
   stage: test
-  image: tiangolo/docker-with-compose
-  variables:
-    CURRENT_UID: 'root:root'
+  image: docker:stable
   services: 
     - docker:dind
+    - mysql:5.7
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose pull
-    - docker-compose up --no-start
-    - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
-    - docker-compose run -T yarn install
-    - docker-compose run -T yarn encore dev 
-    - docker-compose run -T console doctrine:migrations:migrate -n
-    - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public --relative
-    - docker-compose run -T console phpunit --configuration /app/phpunit.xml.dist
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz $CI_REGISTRY_IMAGE:latest
+    - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
+    - docker exec remotelabz php bin/console doctrine:fixtures:load -n
+    - docker exec remotelabz php bin/phpunit
   dependencies:
     - Docker
   tags:
@@ -65,19 +56,13 @@ Deploy to review:
   except: 
     - master
   script:
-    - export CURRENT_UID=$(id -u):$(id -g)
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose stop
-    - docker-compose pull
-    - docker-compose up --no-start
-    - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
-    - docker-compose run -T yarn install
-    - docker-compose run -T yarn encore dev
-    - docker-compose run -T console doctrine:migrations:migrate -n
-    - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public --relative
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker run -d --rm --name mysql -p 3306:3306 -e MYSQL_RANDOM_ROOT_PASSWORD=1 mysql
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz --link mysql $CI_REGISTRY_IMAGE:latest
+    - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
+    - docker exec remotelabz php bin/console doctrine:fixtures:load -n
   environment:
     name: Review
     url: http://10.22.9.136/
@@ -94,7 +79,8 @@ Stop review:
   variables:
     GIT_STRATEGY: none
   script:
-    - docker-compose stop
+    - docker stop remotelabz
+    - docker stop mysql
   when: manual
   environment:
     name: Review
@@ -107,14 +93,13 @@ Deploy to staging:
   only: 
     - master
   script:
-    - export CURRENT_UID=$(id -u):$(id -g)
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
     - docker-compose pull
     - docker-compose up --no-start
     - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
+    - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - docker-compose run -T console doctrine:migrations:migrate -n
