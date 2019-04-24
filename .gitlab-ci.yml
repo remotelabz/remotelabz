@@ -37,6 +37,11 @@ PHPUnit:
   services: 
     - docker:dind
     - mysql:5.7
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
