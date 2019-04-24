@@ -36,7 +36,6 @@ PHPUnit:
   image: docker:stable
   services: 
     - docker:dind
-    - mysql:5.7
   variables:
     DOCKER_HOST: tcp://docker:2375/
     # When using dind, it's wise to use the overlayfs driver for
@@ -46,7 +45,8 @@ PHPUnit:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz $CI_REGISTRY_IMAGE:latest
+    - docker run -d --rm --name mysql -p 3306:3306 -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz --link mysql $CI_REGISTRY_IMAGE:latest
     - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz php bin/console doctrine:fixtures:load -n
     - docker exec remotelabz php bin/phpunit
@@ -64,7 +64,7 @@ Deploy to review:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker run -d --rm --name mysql -p 3306:3306 -e MYSQL_RANDOM_ROOT_PASSWORD=1 mysql
+    - docker run -d --rm --name mysql -p 3306:3306 -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql
     - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz --link mysql $CI_REGISTRY_IMAGE:latest
     - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz php bin/console doctrine:fixtures:load -n
