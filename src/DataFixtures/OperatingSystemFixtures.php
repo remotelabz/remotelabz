@@ -16,22 +16,22 @@ class OperatingSystemFixtures extends Fixture
     {
         $faker = Factory::create();
 
-        foreach (range(1, self::COUNT) as $number) {
-            $operatingSystem = new OperatingSystem();
+        // foreach (range(1, self::COUNT) as $number) {
+        //     $operatingSystem = new OperatingSystem();
 
-            $operatingSystem
-                ->setName($faker->company . ' ' . $faker->numberBetween(10, 30))
-                ->setImage('/dev/null')
-            ;
+        //     $operatingSystem
+        //         ->setName($faker->company . ' ' . $faker->numberBetween(10, 30))
+        //         ->setImage('/dev/null')
+        //     ;
 
-            $manager->persist($operatingSystem);
-        }
+        //     $manager->persist($operatingSystem);
+        // }
 
         $operatingSystem = new OperatingSystem();
 
         $operatingSystem
-            ->setName('Debian Squeeze')
-            ->setImage('https://people.debian.org/~aurel32/qemu/amd64/debian_squeeze_amd64_standard.qcow2')
+            ->setName('CirrOS')
+            ->setImage('http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img')
         ;
 
         $manager->persist($operatingSystem);

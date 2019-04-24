@@ -13,11 +13,54 @@
                 <h4 class="card-title">
                     {{ lab.name }}
                     <div class="float-right">
-                        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        {% if not lab.isStarted %}
+                            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                <i class="fa fa-play"></i> {{ 'Start Lab'|trans }}
+                            </a>
+                        {% else %}
+                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">
+                                <i class="fa fa-stop"></i> {{ 'Stop Lab'|trans }}
+                            </a>
+                        {% endif %}
+                            
+                        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button">
+                            <i class="fa fa-edit"></i> {{ 'Edit'|trans }}
+                        </a>
                     </div>
                 </h4>
-                {{ dump(lab|cast_to_array)}}
+                <p>Created by {{ lab.user.firstName }} {{ lab.user.lastName }}</p>
+<br>
+                <h3>Devices :</h3>
+                <hr>
+                {% set isVNC = false %}
+
+                {% for device in lab.devices %}
+                <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
+                    <a href="{{ path('show_device', {'id': device.id}) }}">
+                        {{ device.name }}
+                    </a>
+                    {% for networkInterface in device.networkInterfaces %}
+                        {% if networkInterface.settings is defined %}
+                            {% if networkInterface.settings.protocol == "VNC" %}
+                                {% set isVNC = true %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if isVNC %}
+                    <div class="float-right">
+                            <a {% if lab.isStarted -%} href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" {% else %} href="#" {%- endif %} class="btn btn-success {%- if not lab.isStarted %} disabled {%- endif %}" role="button"><i
+                                class="fa fa-eye"></i> {{ 'View'|trans }}</a>
+                        </div>
+                    {% endif %}
+                    
+                </div>
+                {% endfor %}
+
+                {% if output is defined %}
+                {{ dump(output|cast_to_array)}}
+                {% endif %}
+                
+                {# {{ dump(lab|cast_to_array)}} #}
                 {# {% for key, value in lab|cast_to_array %}
                     <p>{{ key }} : {{ value }}</p>
                     <hr>

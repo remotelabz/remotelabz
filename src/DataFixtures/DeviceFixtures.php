@@ -16,25 +16,61 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
     {
         $faker = Factory::create();
 
-        foreach (range(1, self::COUNT) as $number) {
-            $device = new Device();
+        // foreach (range(1, self::COUNT) as $number) {
+        //     $device = new Device();
 
-            $device
-                ->setName($faker->firstName)
-                ->setBrand($faker->company)
-                ->setModel($faker->lastName)
-                ->setLaunchOrder($faker->numberBetween(0, 999))
-                ->setVirtuality($faker->numberBetween(0, 2))
-                ->setFlavor($this->getReference('flavor-x-small'))
-                ->setOperatingSystem($this->getReference('operating-system-debian'))
-                ->setType($faker->randomElement(['switch', 'vm']))
-                ->setHypervisor('qemu')
-            ;
+        //     $device
+        //         ->setName($faker->firstName)
+        //         ->setBrand($faker->company)
+        //         ->setModel($faker->lastName)
+        //         ->setLaunchOrder($faker->numberBetween(0, 999))
+        //         ->setVirtuality($faker->numberBetween(0, 2))
+        //         ->setFlavor($this->getReference('flavor-x-small'))
+        //         ->setOperatingSystem($this->getReference('operating-system-debian'))
+        //         ->setType($faker->randomElement(['switch', 'vm']))
+        //         ->setHypervisor('qemu')
+        //     ;
 
-            $manager->persist($device);
+        //     $manager->persist($device);
 
-            $this->addReference('device' . $number, $device);
-        }
+        //     $this->addReference('device' . $number, $device);
+        // }
+
+        $device = new Device();
+
+        $device
+            ->setName('Device1')
+            ->setBrand('Test')
+            ->setModel('Test model')
+            ->setLaunchOrder($faker->numberBetween(0, 999))
+            ->setVirtuality($faker->numberBetween(0, 2))
+            ->setFlavor($this->getReference('flavor-x-small'))
+            ->setOperatingSystem($this->getReference('operating-system-debian'))
+            ->setType($faker->randomElement(['vm']))
+            ->setHypervisor('qemu')
+        ;
+
+        $manager->persist($device);
+
+        $this->addReference('device1', $device);
+
+        $device = new Device();
+
+        $device
+            ->setName('Device2')
+            ->setBrand('Test')
+            ->setModel('Test model')
+            ->setLaunchOrder($faker->numberBetween(0, 999))
+            ->setVirtuality($faker->numberBetween(0, 2))
+            ->setFlavor($this->getReference('flavor-x-small'))
+            ->setOperatingSystem($this->getReference('operating-system-debian'))
+            ->setType($faker->randomElement(['vm']))
+            ->setHypervisor('qemu')
+        ;
+
+        $manager->persist($device);
+
+        $this->addReference('device2', $device);
 
         $manager->flush();
     }

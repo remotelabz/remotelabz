@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use GuzzleHttp\Exception\RequestException;
 
 class LabController extends AppController
 {
@@ -169,19 +170,79 @@ class LabController extends AppController
     /**
      * @Route("/admin/labs/{id<\d+>}/start", name="start_lab", methods="GET")
      */
-    public function startAction(Request $request, int $id)
+    public function startAction(Request $request, int $id, SerializerInterface $serializer)
     {
-        $entityManager = $this->getDoctrine()->getManager();
         $repository = $this->getDoctrine()->getRepository('App:Lab');
-
         $lab = $repository->find($id);
+        $context = SerializationContext::create();
+        $context->setGroups([
+            "Default",
+            "user" => [
+                "lab"
+            ]
+        ]);
+        
+        $labXml = $serializer->serialize($lab, 'xml', $context);
 
-        $instance = Instance::create()
-            ->setActivity($lab)
-            ->setProcessName($lab->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
-            ->setUser($this->getUser())
-            ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
-        ;
+        $client = new Client();
+        try {
+            $response = $client->request('POST', 'http://' . getenv('WORKER_SERVER') . ':' . getenv('WORKER_PORT') . '/lab', [
+                'body' => $labXml,
+                'headers' => [
+                    'Content-Type' => 'application/xml'
+                ]
+            ]);
+        } catch(RequestException $exception) {
+            dd($exception->getResponse()->getBody()->getContents());
+        }
+
+        foreach ($lab->getDevices() as $device) {
+            if ($device->getNetworkInterfaces()->count() > 0) {
+                try {
+                    $response = $client->request('POST', 'http://localhost:' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/lab/' . $lab->getId() . '/device/' . $device->getId(), [
+                        'body' => '{
+                            "target": "http://' . getenv('WORKER_SERVER') . ':'
+                            . ((int)$device->getNetworkInterfaces()->toArray()[0]->getSettings()->getPort() + 1000) . '"
+                        }',
+                        'headers' => [
+                            'Content-Type' => 'application/json'
+                        ]
+                    ]);
+                } catch(RequestException $exception) {
+                    dd($exception);
+                }
+            }
+        }
+        
+        $this->addFlash('success', 'Lab has been started.');
+
+        $lab->setIsStarted(true);
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id,
+            'output' => $response
+        ]);
+
+        // return $this->render('lab/vm_view.html.twig', [
+        //   'host' => 'ws://' . getenv('WORKER_SERVER'),
+        //   'port' => getenv('WORKER_PORT'),
+        //   'path' => 'websockify'
+        // ]);
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $repository = $this->getDoctrine()->getRepository('App:Lab');
+
+        // $lab = $repository->find($id);
+
+        // $instance = Instance::create()
+        //     ->setActivity($lab)
+        //     ->setProcessName($lab->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
+        //     ->setUser($this->getUser())
+        //     ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
+        // ;
 
         // if ($lab->getAccessType() === Activity::VPN_ACCESS) {
         //     // VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
@@ -239,11 +300,65 @@ class LabController extends AppController
         //     }
         // }
 
-        $entityManager->persist($instance);
+        // $entityManager->persist($instance);
+        // $entityManager->flush();
+
+        // // TODO: Replace this function with a object and a serializer
+        // $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
+     */
+    public function stopAction(Request $request, int $id, SerializerInterface $serializer)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:Lab');
+        $lab = $repository->find($id);
+        $context = SerializationContext::create();
+        $context->setGroups([
+            "Default",
+            "user" => [
+                "lab"
+            ]
+        ]);
+        
+        $labXml = $serializer->serialize($lab, 'xml', $context);
+
+        $client = new Client();
+        try {
+            $response = $client->request('POST', 'http://' . getenv('WORKER_SERVER') . ':' . getenv('WORKER_PORT') . '/lab/stop', [
+                'body' => $labXml,
+                'headers' => [
+                    'Content-Type' => 'application/xml'
+                ]
+            ]);
+        } catch(RequestException $exception) {
+            dd($exception->getResponse()->getBody()->getContents());
+        }
+
+        foreach ($lab->getDevices() as $device) {
+            if ($device->getNetworkInterfaces()->count() > 0) {
+                try {
+                    $response = $client->request('DELETE', 'http://localhost:' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/lab/' . $lab->getId() . '/device/' . $device->getId(), [
+                    ]);
+                } catch(RequestException $exception) {
+                    dd($exception);
+                }
+            }
+        }
+        
+
+        $this->addFlash('success', 'Lab has been stopped.');
+
+        $lab->setIsStarted(false);
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
         $entityManager->flush();
 
-        // TODO: Replace this function with a object and a serializer
-        $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id,
+            'output' => $response
+        ]);
     }
 
     /**
@@ -301,6 +416,26 @@ class LabController extends AppController
         
         return new Response($serializer->serialize($lab, 'xml', $context), 200, [
             'Content-Type' => 'application/xml'
+        ]);
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/device/{deviceId<\d+>}/view", name="view_lab_device")
+     */
+    public function viewLabDeviceAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
+    {
+        $repository = $this->getDoctrine()->getRepository('App:Lab');
+        $lab = $repository->find($id);
+
+        $repository = $this->getDoctrine()->getRepository('App:Device');
+        $device = $repository->find($deviceId);
+
+        return $this->render('lab/vm_view.html.twig', [
+            'lab' => $lab,
+            'device' => $device,
+            'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),
+            'port' => ((int)$device->getNetworkInterfaces()->toArray()[0]->getSettings()->getPort() + 1000),
+            'path' => 'lab/' . $id . '/device/' . $deviceId
         ]);
     }
 

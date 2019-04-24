@@ -23,15 +23,15 @@ $(function () {
         columns: [{
                 data: 'name'
             }, {
-                data: 'type',
-                render: (data) => {
-                    switch (data) {
-                        case 'INTERFACE_TYPE_TAP':
-                            return 'Linux Bridge';
-                        case 'INTERFACE_TYPE_OVS':
-                            return 'OpenVSwitch';
-                    }
-                }
+                data: 'type'
+                // render: (data) => {
+                //     switch (data) {
+                //         case 'INTERFACE_TYPE_TAP':
+                //             return 'Linux Bridge';
+                //         case 'INTERFACE_TYPE_OVS':
+                //             return 'OpenVSwitch';
+                //     }
+                // }
             }, {
                 data: 'settings',
                 defaultContent: 'None',
