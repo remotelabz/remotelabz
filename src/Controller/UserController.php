@@ -72,7 +72,11 @@ class UserController extends AppController
                 if (count($addedUsers) > 0) {
                     $this->addFlash('success', 'Utilisateur(s) créé(s).');
                 } else {
-                    $this->addFlash('warning', 'Aucun utilisateur créé. Veuillez vérifier que les utilisateurs spécifiés dans le fichier n\'existent pas déjà.');
+                    $this->addFlash(
+                        'warning',
+                        'Aucun utilisateur créé. Veuillez vérifier que les
+                        utilisateurs spécifiés dans le fichier n\'existent pas déjà.'
+                    );
                 }
                 
                 fclose($fileSocket);
