@@ -7,6 +7,9 @@ use App\Form\LabType;
 
 use GuzzleHttp\Client;
 use App\Service\FileUploader;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
+use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\File;
@@ -14,9 +17,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use JMS\Serializer\SerializerInterface;
-use JMS\Serializer\SerializationContext;
-use GuzzleHttp\Exception\RequestException;
 
 class LabController extends AppController
 {
@@ -201,7 +201,7 @@ class LabController extends AppController
                 try {
                     $response = $client->request('POST', 'http://localhost:' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/lab/' . $lab->getId() . '/device/' . $device->getId(), [
                         'body' => '{
-                            "target": "http://' . getenv('WORKER_SERVER') . ':'
+                            "target": "ws://' . getenv('WORKER_SERVER') . ':'
                             . ((int)$device->getNetworkInterfaces()->toArray()[0]->getSettings()->getPort() + 1000) . '"
                         }',
                         'headers' => [
@@ -434,7 +434,7 @@ class LabController extends AppController
             'lab' => $lab,
             'device' => $device,
             'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),
-            'port' => ((int)$device->getNetworkInterfaces()->toArray()[0]->getSettings()->getPort() + 1000),
+            'port' => 80,
             'path' => 'lab/' . $id . '/device/' . $deviceId
         ]);
     }
