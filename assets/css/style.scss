@@ -83,6 +83,7 @@
 @import "mixins/misc";
 @import "mixins/blockqoute";
 @import "mixins/pagination";
+@import "mixins/tooltips";
 
 /*-------------------------------------------------------------------*/
 /* === Core Styles === */
@@ -112,6 +113,7 @@
 @import "components/pagination";
 @import "components/preview";
 @import "components/tables";
+@import "components/tooltips";
 @import "plugin-overrides/flot-chart";
 
 /*-------------------------------------------------------------------*/
