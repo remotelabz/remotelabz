@@ -4,8 +4,8 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
@@ -57,11 +57,17 @@ class Lab
      */
     private $isStarted = false;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="lab", orphanRemoval=true)
+     */
+    private $instances;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
         $this->activities = new ArrayCollection();
+        $this->instances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -184,6 +190,37 @@ class Lab
     public function setIsStarted(bool $isStarted): self
     {
         $this->isStarted = $isStarted;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Instance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function addInstance(Instance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(Instance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            // set the owning side to null (unless already changed)
+            if ($instance->getLab() === $this) {
+                $instance->setLab(null);
+            }
+        }
 
         return $this;
     }

@@ -4,10 +4,10 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
-use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
@@ -102,9 +102,15 @@ class Device
      */
     private $flavor;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Instance", mappedBy="devices")
+     */
+    private $instances;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
+        $this->instances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -299,6 +305,34 @@ class Device
     public function setFlavor(?Flavor $flavor): self
     {
         $this->flavor = $flavor;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Instance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function addInstance(Instance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->addDevice($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(Instance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            $instance->removeDevice($this);
+        }
 
         return $this;
     }

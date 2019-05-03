@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\InstanceRepository")
@@ -17,120 +19,61 @@ class Instance
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\User", cascade={"persist", "remove"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
      * @ORM\JoinColumn(nullable=false)
      */
-    private $user;
+    private $lab;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Activity")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="instances")
      */
-    private $activity;
+    private $devices;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $processName;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $storagePath;
-
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Network", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $network;
-
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Network", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $userNetwork;
+    public function __construct()
+    {
+        $this->devices = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUser(): ?User
+    public function getLab(): ?Lab
     {
-        return $this->user;
+        return $this->lab;
     }
 
-    public function setUser(User $user): self
+    public function setLab(?Lab $lab): self
     {
-        $this->user = $user;
+        $this->lab = $lab;
 
         return $this;
     }
 
-    public function getActivity(): ?Activity
+    /**
+     * @return Collection|Device[]
+     */
+    public function getDevices(): Collection
     {
-        return $this->activity;
+        return $this->devices;
     }
 
-    public function setActivity(?Activity $activity): self
+    public function addDevice(Device $device): self
     {
-        $this->activity = $activity;
+        if (!$this->devices->contains($device)) {
+            $this->devices[] = $device;
+        }
 
         return $this;
     }
 
-    public function getProcessName(): ?string
+    public function removeDevice(Device $device): self
     {
-        return $this->processName;
-    }
-
-    public function setProcessName(string $processName): self
-    {
-        $this->processName = $processName;
+        if ($this->devices->contains($device)) {
+            $this->devices->removeElement($device);
+        }
 
         return $this;
-    }
-
-    public function getStoragePath(): ?string
-    {
-        return $this->storagePath;
-    }
-
-    public function setStoragePath(string $storagePath): self
-    {
-        $this->storagePath = $storagePath;
-
-        return $this;
-    }
-
-    public function getNetwork(): ?Network
-    {
-        return $this->network;
-    }
-
-    public function setNetwork(Network $network): self
-    {
-        $this->network = $network;
-
-        return $this;
-    }
-
-    public function getUserNetwork(): ?Network
-    {
-        return $this->userNetwork;
-    }
-
-    public function setUserNetwork(Network $userNetwork): self
-    {
-        $this->userNetwork = $userNetwork;
-
-        return $this;
-    }
-
-    public static function create(): self
-    {
-        $instance = new Instance();
-
-        return $instance;
     }
 }
