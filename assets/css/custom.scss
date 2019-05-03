@@ -19,6 +19,7 @@ body
 .navbar {
   background-color: theme-color(primary);
   color: $white;
+  min-height: 40px;
 
   .navbar-brand-wrapper .navbar-brand {
     color: $white;
@@ -34,9 +35,10 @@ body
 }
 
 .sidebar {
+  width: 220px;
   position: fixed;
   min-height: initial;
-  top: 60px;
+  top: 40px;
   bottom: 0;
   left: 0;
   overflow-y: scroll;
@@ -191,6 +193,6 @@ legend
 
 .navbar .navbar-brand-wrapper .navbar-brand img {
   width: unset;
-
-  max-width: 70%;
+  // max-width: 75%;
+  max-height: 18px;
 }

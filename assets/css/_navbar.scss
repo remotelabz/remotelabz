@@ -7,12 +7,11 @@
     -webkit-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
     -moz-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
     -ms-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
-    width: $sidebar-width-lg;
+    // width: $sidebar-width-lg;
 
     .navbar-brand {
       color: lighten(color("gray-dark"), 20%);
-      font-size: 1.8125rem;
-      line-height: 48px;
+      font-size: 1rem;
       margin-right: 0;
       font-family: $TYPE-2;
 
@@ -45,7 +44,7 @@
     -ms-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
     padding-left: 15px;
     padding-right: 15px;
-    width: calc(100% - #{$sidebar-width-lg});
+    width: 100%;// calc(100% - #{$sidebar-width-lg});
 
     .navbar-toggler {
       border: 0;
