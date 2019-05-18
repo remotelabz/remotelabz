@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
+use App\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -25,42 +27,64 @@ class Lab
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labs")
      * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Groups({"lab", "details"})
      */
     private $user;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $name;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
      * @Serializer\XmlList(inline=true, entry="device")
+     * @Serializer\Groups({"lab"})
      */
     private $devices;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Connexion", inversedBy="labs")
      * @Serializer\XmlList(inline=true, entry="connexion")
+     * @Serializer\Groups({"lab"})
      */
     private $connexions;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="lab")
      * @Serializer\XmlList(inline=true, entry="activity")
+     * @Serializer\Groups({"lab"})
      */
     private $activities;
 
     /**
      * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab"})
      */
     private $isStarted = false;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="lab", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="lab", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"lab"})
      */
     private $instances;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Groups({"lab"})
+     */
+    private $author;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
 
     public function __construct()
     {
@@ -68,6 +92,7 @@ class Lab
         $this->connexions = new ArrayCollection();
         $this->activities = new ArrayCollection();
         $this->instances = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -202,6 +227,19 @@ class Lab
         return $this->instances;
     }
 
+    public function getUserInstance(User $user): ?Instance
+    {
+        $instance = $this->instances->filter(function ($value) use ($user) {
+            return $value->getUser() == $user;
+        });
+        
+        if (is_null($instance)) {
+            return null;
+        }
+        
+        return $instance[0];
+    }
+
     public function addInstance(Instance $instance): self
     {
         if (!$this->instances->contains($instance)) {
@@ -221,6 +259,47 @@ class Lab
                 $instance->setLab(null);
             }
         }
+
+        return $this;
+    }
+
+    public function hasDeviceUserInstance(User $user): bool
+    {
+        return $this->devices->exists(function ($index, Device $device) use ($user) {
+            return $device->getUserInstance($user) != null;
+        });
+    }
+
+    public function setInstances(array $instances): self
+    {
+        $this->getInstances()->clear();
+        foreach ($instances as $instance) {
+            $this->addInstance($instance);
+        }
+
+        return $this;
+    }
+
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): self
+    {
+        $this->author = $author;
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

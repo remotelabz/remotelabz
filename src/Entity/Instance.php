@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
@@ -15,23 +17,46 @@ class Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
-     * @ORM\JoinColumn(nullable=false)
+     * @Serializer\Groups({"lab"})
      */
     private $lab;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="instances")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
+     * @Serializer\Groups({"lab"})
      */
-    private $devices;
+    private $device;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="instances")
+     * @Serializer\Groups({"user"})
+     */
+    private $user;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $isStarted = false;
 
     public function __construct()
     {
-        $this->devices = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -51,29 +76,61 @@ class Instance
         return $this;
     }
 
-    /**
-     * @return Collection|Device[]
-     */
-    public function getDevices(): Collection
+    public function getDevice(): ?Device
     {
-        return $this->devices;
+        return $this->device;
     }
 
-    public function addDevice(Device $device): self
+    public function setDevice(?Device $device): self
     {
-        if (!$this->devices->contains($device)) {
-            $this->devices[] = $device;
-        }
+        $this->device = $device;
 
         return $this;
     }
 
-    public function removeDevice(Device $device): self
+    public function getUuid(): ?string
     {
-        if ($this->devices->contains($device)) {
-            $this->devices->removeElement($device);
-        }
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function belongsToCurrentUser($object, $context): bool
+    {
+        return $context->getAttribute('user') == $this->user;
+    }
+
+    public function isStarted(): ?bool
+    {
+        return $this->isStarted;
+    }
+
+    public function setStarted(bool $isStarted): self
+    {
+        $this->isStarted = $isStarted;
+
+        return $this;
+    }
+
+    public static function belongsTo($user): bool
+    {
+        return $this->user == $user;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -26,24 +27,28 @@ class Device
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $launchOrder;
 
@@ -57,6 +62,7 @@ class Device
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="network_interface")
+     * @Serializer\Groups({"lab"})
      */
     private $networkInterfaces;
 
@@ -69,48 +75,64 @@ class Device
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $virtuality;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
      * @Serializer\XmlList(entry="operating_system")
+     * @Serializer\Groups({"lab"})
      */
     private $operatingSystem;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="control_interface")
+     * @Serializer\Groups({"lab"})
      */
     private $controlInterface;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
      * @Serializer\XmlList(entry="flavor")
+     * @Serializer\Groups({"lab"})
      */
     private $flavor;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Instance", mappedBy="devices")
+     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="device", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"lab"})
      */
     private $instances;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
 
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
         $this->instances = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -317,11 +339,24 @@ class Device
         return $this->instances;
     }
 
+    public function getUserInstance(User $user): ?Instance
+    {
+        $instance = $this->instances->filter(function ($value) use ($user) {
+            return $value->getUser() == $user;
+        });
+        
+        if (is_null($instance)) {
+            return null;
+        }
+        
+        return $instance[0];
+    }
+
     public function addInstance(Instance $instance): self
     {
         if (!$this->instances->contains($instance)) {
             $this->instances[] = $instance;
-            $instance->addDevice($this);
+            $instance->setDevice($this);
         }
 
         return $this;
@@ -331,8 +366,33 @@ class Device
     {
         if ($this->instances->contains($instance)) {
             $this->instances->removeElement($instance);
-            $instance->removeDevice($this);
+            // set the owning side to null (unless already changed)
+            if ($instance->getDevice() === $this) {
+                $instance->setDevice(null);
+            }
         }
+
+        return $this;
+    }
+
+    public function setInstances(array $instances): self
+    {
+        $this->getInstances()->clear();
+        foreach ($instances as $instance) {
+            $this->addInstance($instance);
+        }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
