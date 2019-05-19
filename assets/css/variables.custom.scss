@@ -4,7 +4,7 @@ $default-font-size: 14px;
 $default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
 $theme-colors: (
-  primary: #564D80,
+  primary: #40476D, // #564D80,
   secondary: #FF6700,
   success: #33c92e,
   info: #6569df,
@@ -14,6 +14,7 @@ $theme-colors: (
   dark: #32323d
 );
 
+$navbar-height: 40px;
 $navbar-light-color: theme-color(primary);
 
 ////////// BREADCRUMBS ///////////
@@ -25,3 +26,5 @@ $breadcrumb-custom-item-padding-x: 5px;
 $breadcrumb-custom-item-padding-y: 5px;
 $breadcrumb-item-bg: gray;
 $breadcrumb-custom-item-color: black;
+
+// $sidebar-width-lg: 0px;

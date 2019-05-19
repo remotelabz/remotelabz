@@ -17,8 +17,8 @@
                             <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-outline-primary" role="button">
                                 {{ 'Start all'|trans }}
                             </a>
-                            <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-outline-secondary" role="button">
-                                <i class="fa fa-edit"></i> {{ 'Edit'|trans }}
+                            <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-default" role="button">
+                                {{ 'Edit'|trans }}
                             </a>
                         {% endif %}
                         {% if lab.instances[0] is defined %}
@@ -59,25 +59,25 @@
                             {{ startDeviceButton }}
                         {%- endif -%}
 
-                        {%- set stopDeviceButton -%}
-                            <a href="{{ path('stop_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
-                                <i class="fa fa-stop"></i>
-                            </a>
-                        {%- endset -%}
-                        {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
-                            {{ stopDeviceButton }}
-                        {%- endif -%}
-
                         {% if isVNC %}
-                            {%- set viewDeviceButton -%}
+                            {% set viewDeviceButton -%}
                                 <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-primary" role="button" title="View console" data-toggle="tooltip" data-placement="top">
                                     <i class="fa fa-eye"></i>
                                 </a>
                             {%- endset -%}
                             {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
                                 {{ viewDeviceButton }}
-                            {%- endif -%}
+                            {%- endif %}
                         {% endif %}
+
+                        {% set stopDeviceButton -%}
+                            <a href="{{ path('stop_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                                <i class="fa fa-stop"></i>
+                            </a>
+                        {%- endset -%}
+                        {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
+                            {{ stopDeviceButton }}
+                        {%- endif %}
                     </div>
                 </div>
                 {% endfor %}
