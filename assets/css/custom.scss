@@ -17,6 +17,7 @@ body
 }
 
 .navbar {
+  min-height: $navbar-height;
   background-color: theme-color(primary);
   color: $white;
   min-height: 40px;
@@ -38,10 +39,10 @@ body
   width: 220px;
   position: fixed;
   min-height: initial;
-  top: 40px;
+  top: $navbar-height;
   bottom: 0;
   left: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
   z-index: 2;
 }
 
@@ -189,10 +190,12 @@ legend
   }
 }
 
-
-
 .navbar .navbar-brand-wrapper .navbar-brand img {
   width: unset;
-  // max-width: 75%;
-  max-height: 18px;
+  max-width: 70%;
+  max-height: 40px;
+}
+
+.btn i {
+  margin-right: 0;
 }

@@ -13,22 +13,21 @@
                 <h4 class="card-title">
                     {{ lab.name }}
                     <div class="float-right">
-                        {% if not lab.isStarted %}
-                            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                <i class="fa fa-play"></i> {{ 'Start Lab'|trans }}
+                        {% if lab.instances[0] is not defined or (lab.instances[0] is defined and not lab.instances[0].isStarted) %}
+                            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-outline-primary" role="button">
+                                {{ 'Start all'|trans }}
                             </a>
-                        {% else %}
-                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">
-                                <i class="fa fa-stop"></i> {{ 'Stop Lab'|trans }}
+                            <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-default" role="button">
+                                {{ 'Edit'|trans }}
                             </a>
                         {% endif %}
-                            
-                        <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button">
-                            <i class="fa fa-edit"></i> {{ 'Edit'|trans }}
-                        </a>
+                        {% if lab.instances[0] is defined %}
+                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-outline-danger" role="button">{{ 'Stop all'|trans }}
+                            </a>
+                        {% endif %}
                     </div>
                 </h4>
-                <p>Created by {{ lab.user.firstName }} {{ lab.user.lastName }}</p>
+                <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>
 <br>
                 <h3>Devices :</h3>
                 <hr>
@@ -46,13 +45,40 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    {% if isVNC %}
                     <div class="float-right">
-                            <a {% if lab.isStarted -%} href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" {% else %} href="#" {%- endif %} class="btn btn-success {%- if not lab.isStarted %} disabled {%- endif %}" role="button"><i
-                                class="fa fa-eye"></i> {{ 'View'|trans }}</a>
-                        </div>
-                    {% endif %}
-                    
+                        {%- set startDeviceButton -%}
+                            <a href="{{ path('start_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                                <i class="fa fa-play"></i>
+                            </a>
+                        {%- endset -%}
+                        {%- if device.instances[0] is defined -%}
+                            {%- if not device.instances[0].isStarted -%}
+                                {{ startDeviceButton }}
+                            {%- endif -%}
+                        {%- elseif device.instances[0] is not defined -%}
+                            {{ startDeviceButton }}
+                        {%- endif -%}
+
+                        {% if isVNC %}
+                            {% set viewDeviceButton -%}
+                                <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-primary" role="button" title="View console" data-toggle="tooltip" data-placement="top">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            {%- endset -%}
+                            {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
+                                {{ viewDeviceButton }}
+                            {%- endif %}
+                        {% endif %}
+
+                        {% set stopDeviceButton -%}
+                            <a href="{{ path('stop_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                                <i class="fa fa-stop"></i>
+                            </a>
+                        {%- endset -%}
+                        {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
+                            {{ stopDeviceButton }}
+                        {%- endif %}
+                    </div>
                 </div>
                 {% endfor %}
 

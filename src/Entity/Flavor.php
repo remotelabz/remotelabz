@@ -22,18 +22,21 @@ class Flavor
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $memory;
 
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $disk;
 

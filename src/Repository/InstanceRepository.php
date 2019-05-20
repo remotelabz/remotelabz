@@ -3,8 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Instance;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method Instance|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,6 +17,30 @@ class InstanceRepository extends ServiceEntityRepository
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Instance::class);
+    }
+
+    public function findByIdAndUser($id, $user)
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.id = :id')
+            ->setParameter('id', $id->getId())
+            ->andWhere('i.user = :user')
+            ->setParameter('user', $user->getId())
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findByUserAndLab($user, $lab)
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.user = :user')
+            ->setParameter('user', $user)
+            ->andWhere('i.lab = :lab')
+            ->setParameter('lab', $lab->getId())
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     // /**

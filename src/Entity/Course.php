@@ -17,23 +17,26 @@ class Course
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
      */
     private $name;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="courses")
-     *
-     * @Serializer\Expose
+     * @Serializer\Groups({"details"})
      */
     private $users;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Activity", mappedBy="courses")
+     * @Serializer\XmlList(inline=true, entry="activity")
+     * @Serializer\Groups({"details"})
      */
     private $activities;
 

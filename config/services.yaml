@@ -47,3 +47,7 @@ services:
             - "@router"
             - "%shibboleth_idp_url%"
             - "%shibboleth_remote_user_var%"
+
+    App\EventListener\InstanceSerializationListener:
+        tags:
+            - { name: jms_serializer.event_subscriber }
