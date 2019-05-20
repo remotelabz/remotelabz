@@ -20,6 +20,7 @@ body
   min-height: $navbar-height;
   background-color: theme-color(primary);
   color: $white;
+  min-height: 40px;
 
   .navbar-brand-wrapper .navbar-brand {
     color: $white;
@@ -35,6 +36,7 @@ body
 }
 
 .sidebar {
+  width: 220px;
   position: fixed;
   min-height: initial;
   top: $navbar-height;
