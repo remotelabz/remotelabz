@@ -70,9 +70,7 @@ class LabController extends AppController
      */
     public function showAction(Request $request, $id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Lab');
-
-        $data = $repository->find($id);
+        $data = $this->labRepository->find($id);
 
         if (null === $data) {
             throw new NotFoundHttpException();
@@ -83,7 +81,8 @@ class LabController extends AppController
         }
         
         return $this->render('lab/view.html.twig', [
-            'lab' => $data
+            'lab' => $data,
+            'labInstance' => $data->getUserInstance($this->getUser())
         ]);
     }
 

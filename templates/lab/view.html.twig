@@ -13,7 +13,7 @@
                 <h4 class="card-title">
                     {{ lab.name }}
                     <div class="float-right">
-                        {% if lab.instances[0] is not defined or (lab.instances[0] is defined and not lab.instances[0].isStarted) %}
+                        {% if labInstance is null or (labInstance is not null and not labInstance.isStarted) %}
                             <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-outline-primary" role="button">
                                 {{ 'Start all'|trans }}
                             </a>
@@ -21,7 +21,7 @@
                                 {{ 'Edit'|trans }}
                             </a>
                         {% endif %}
-                        {% if lab.instances[0] is defined %}
+                        {% if labInstance is not null %}
                             <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-outline-danger" role="button">{{ 'Stop all'|trans }}
                             </a>
                         {% endif %}
