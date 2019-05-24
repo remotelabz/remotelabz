@@ -2,7 +2,7 @@
 
 html
 {
-  font-size: $default-font-size;
+  //font-size: $default-font-size;
 }
 
 body
@@ -35,21 +35,10 @@ body
   }
 }
 
-.sidebar {
-  width: 220px;
-  position: fixed;
-  min-height: initial;
-  top: $navbar-height;
-  bottom: 0;
-  left: 0;
-  overflow-y: auto;
-  z-index: 2;
-}
-
 a {
   color: theme-color(primary);
 
-  :hover, :active {
+  &:hover, &:active {
     color: theme-color(primary);
   }
 }
@@ -91,23 +80,16 @@ legend
   height: auto;
 }
 
-/////////// MENU ///////////
-
-.sidebar .nav .nav-item.active {
-  color: $white;
-  border-left: 3px solid $white;
-}
-
-.sidebar .nav .nav-item.active a.nav-link {
-  color: $white;
-}
-
 /////////// BREADCRUMBS ///////////
 
 .breadcrumb {
   border: initial;
   border-bottom: 1px solid $border-color;
   background: initial;
+  padding: $breadcrumb-custom-padding-y $breadcrumb-custom-padding-x;
+  min-height: 48px;
+  align-items: center;
+  margin-bottom: 0;
 }
 
 .breadcrumb-item + .breadcrumb-item::before {
@@ -190,12 +172,92 @@ legend
   }
 }
 
-.navbar .navbar-brand-wrapper .navbar-brand img {
-  width: unset;
-  max-width: 70%;
-  max-height: 40px;
+.navbar .navbar-brand-wrapper .navbar-brand {
+  transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function, fill $action-transition-duration $action-transition-timing-function;
+
+  padding: 5px;
+  border-radius: 4px;
+
+  &:hover,
+  &:focus {
+    background-color: rgba(209,209,240,0.2);
+    fill: $white;
+  }
+
+  img {
+    width: unset;
+    // max-width: 70%;
+    max-height: 24px;
+  }
 }
 
 .btn i {
   margin-right: 0;
+}
+
+.top-panel, .search-panel {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.top-panel {
+  .nav-tabs {
+    border-bottom: none;
+  }
+
+  .nav-links {
+    li {
+      color: #707070;
+      &.active {
+        color: #2e2e2e;
+
+        a {
+          border-bottom: 2px solid lighten($color: theme-color(primary), $amount: 20%);
+          color: inherit;
+          font-weight: 600;
+          
+          .badge.badge-pill {
+            color: inherit;
+          }
+        }
+      }
+      a {
+        transition: color $action-transition-duration $action-transition-timing-function, border-bottom $action-transition-duration $action-transition-timing-function;
+        color: inherit;
+        text-decoration: none;
+        padding: 10px;
+        padding-bottom: 11px;
+        line-height: 28px;
+        display: inline-block;
+
+        &:hover {
+          color: #2e2e2e;
+          border-bottom: 2px solid #c4c4c4;
+        }
+
+        .badge.badge-pill {
+          background-color: rgba(0,0,0,0.07);
+          color: inherit;
+          vertical-align: baseline;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    float: right;
+    padding: 8px 0px;
+  }
+}
+
+.search-panel {
+  background-color: #fafafa;
+  padding:16px;
+}
+
+.labs-panel {
+  .lab-item {
+    .lab-item-name {
+      color: #2e2e2e;
+    }
+  }
 }

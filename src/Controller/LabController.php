@@ -37,18 +37,16 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs", name="labs")
+     * @Route("/labs", name="labs")
      */
     public function indexAction(Request $request)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Lab');
-
         $search = $request->query->get('search', '');
         
         if ($search !== '') {
-            $data = $repository->findByNameLike($search);
+            $data = $this->labRepository->findByNameLike($search);
         } else {
-            $data = $repository->findAll();
+            $data = $this->labRepository->findAll();
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
@@ -62,7 +60,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}.{_format}",
+     * @Route("/labs/{id<\d+>}.{_format}",
      *  defaults={"_format": "html"},
      *  requirements={"_format": "html|json"},
      *  name="show_lab",
@@ -87,7 +85,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/new", name="new_lab")
+     * @Route("/labs/new", name="new_lab")
      */
     public function newAction(Request $request, FileUploader $fileUploader)
     {
@@ -115,7 +113,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab", methods={"GET", "POST"})
+     * @Route("/labs/{id<\d+>}/edit", name="edit_lab", methods={"GET", "POST"})
      */
     public function editAction(Request $request, $id, FileUploader $fileUploader)
     {
@@ -152,7 +150,7 @@ class LabController extends AppController
     }
         
     /**
-     * @Route("/admin/labs/{id<\d+>}", name="delete_lab", methods="DELETE")
+     * @Route("/labs/{id<\d+>}", name="delete_lab", methods="DELETE")
      */
     public function deleteAction(Request $request, $id)
     {
@@ -183,7 +181,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/start", name="start_lab", methods="GET")
+     * @Route("/labs/{id<\d+>}/start", name="start_lab", methods="GET")
      */
     public function startAction(Request $request, int $id, SerializerInterface $serializer)
     {
@@ -352,7 +350,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
+     * @Route("/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
      */
     public function stopAction(Request $request, int $id, SerializerInterface $serializer)
     {
@@ -417,7 +415,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/device/{deviceId<\d+>}/start", name="start_lab_device", methods="GET")
+     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/start", name="start_lab_device", methods="GET")
      */
     public function deviceStartAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
     {
@@ -508,7 +506,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/device/{deviceId<\d+>}/stop", name="stop_lab_device", methods="GET")
+     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/stop", name="stop_lab_device", methods="GET")
      */
     public function deviceStopAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
     {
@@ -703,7 +701,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/device/{deviceId<\d+>}/view", name="view_lab_device")
+     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/view", name="view_lab_device")
      */
     public function viewLabDeviceAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
     {

@@ -8,27 +8,27 @@
   .input-group-text{
     background: transparent;
     border-color: $border-color;
-    border-width: 2px;
+    border-width: 1px;
   }
 }
 .form-control {
-  border: 2px solid $border-color;
+  border: 1px solid $border-color;
   font-size: $input-font-size;
-  padding: $input-btn-padding-y .75rem;
-  line-height: 14px;
+  padding: $input-btn-padding-y $input-btn-padding-x;
+  line-height: 1.5;
   font-family: $TYPE-2;
-  font-weight: 500;
+  font-weight: 400;
   @include border-radius(4px);
   &.form-control-lg {
-    padding: $input-btn-padding-y-lg .75rem;
+    padding: $input-btn-padding-y $input-btn-padding-x;
   }
   &.form-control-sm {
-    padding: $input-btn-padding-y-sm .75rem;
+    padding: $input-btn-padding-y $input-btn-padding-x;
   }
   @include input-placeholder{
     font-family: $TYPE-2;
-    font-weight: 500;
-    color: theme-color(dark);
+    font-weight: 400;
+    color: #919191;
   }
 }
 

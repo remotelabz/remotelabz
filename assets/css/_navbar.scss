@@ -14,6 +14,7 @@
       font-size: 1rem;
       margin-right: 0;
       font-family: $TYPE-2;
+      padding: 0;
 
       &:active,
       &:focus,
@@ -63,10 +64,32 @@
       align-items: center;
 
       .nav-item {
+        transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function, fill $action-transition-duration $action-transition-timing-function;
+        padding: 4px;
+        border-radius: 4px;
+        fill: #bec6d6;
+
+        &:hover,
+        &:focus {
+          background-color: rgba(209,209,240,0.2);
+          fill: $white;
+        }
+
+        &:active,
+        &.show {
+          background-color: $white;
+          color: lighten($color: theme-color(primary), $amount: 10%);
+          fill: #292961;
+        }
+
         .nav-link {
+          fill: inherit;
+          svg {
+            fill: inherit;
+          }
           font-size: 0.875rem;
           margin-left: 5px;
-          margin-right: 15px;
+          // margin-right: 15px;
           padding: 0;
 
           i {
