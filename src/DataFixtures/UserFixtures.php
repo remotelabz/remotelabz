@@ -55,22 +55,22 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
         $manager->persist($user);
 
         /* Other data, test purpose */
-        $faker = RandomDataFactory::create('fr_FR');
+        // $faker = RandomDataFactory::create('fr_FR');
  
-        for ($i = 0; $i < 10; $i++) {
-            $user = new User();
+        // for ($i = 0; $i < 10; $i++) {
+        //     $user = new User();
 
-            $user->setFirstName($faker->firstName)
-                ->setLastName($faker->lastName)
-                ->setEmail($faker->safeEmail)
-                ->setPassword($this->passwordEncoder->encodePassword(
-                    $user,
-                    'userdemo'
-                ))
-            ;
+        //     $user->setFirstName($faker->firstName)
+        //         ->setLastName($faker->lastName)
+        //         ->setEmail($faker->safeEmail)
+        //         ->setPassword($this->passwordEncoder->encodePassword(
+        //             $user,
+        //             'userdemo'
+        //         ))
+        //     ;
 
-            $manager->persist($user);
-        }
+        //     $manager->persist($user);
+        // }
  
         $manager->flush();
     }

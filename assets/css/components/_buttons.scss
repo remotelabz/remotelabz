@@ -1,11 +1,31 @@
 /* Buttons */
 .btn {
+  transition: background-color $action-transition-duration $action-transition-timing-function, color $action-transition-duration $action-transition-timing-function, border-color $action-transition-duration $action-transition-timing-function, box-shadow $action-transition-duration $action-transition-timing-function;
   font-size: $input-btn-font-size;
-  line-height: 1;
-  font-size: 0.8rem;
+  line-height: 20px;
   padding: $input-btn-padding-y $input-btn-padding-x;
-  font-family: $TYPE-2;
-  font-weight: 500;
+  // border-radius: 3px;
+  // font-size: 14px;
+  font-weight: 400;
+  padding: 6px 10px;
+  background-color: $white;
+  border-color: #e5e5e5;
+  color: #2e2e2e;
+  white-space: nowrap;
+  // font-family: $TYPE-2;
+  // font-weight: 500;
+
+  &:hover, &:focus {
+    background-color: #f0f0f0;
+    border-color: #e3e3e3;
+    color: #2e2e2e;
+  }
+
+  &:active {
+    background-color: #eaeaea;
+    border-color: #e3e3e3;
+    color: #2e2e2e;
+  }
 
   i {
     margin-right: 0.3125rem;
@@ -67,8 +87,10 @@
   &.btn-info,
   &.btn-primary,
   &.btn-secondary,
-  &.btn-warning {
+  &.btn-warning,
+  &.btn-success {
     color: $white;
+    fill: $white;
   }
 
   &.btn-light {
@@ -101,6 +123,78 @@
       color: rgba($black, 0.5);
       border-color: lighten($black, 85%);
     }
+  }
+
+  &.btn-outline-primary {
+    border-color: darken(theme-color(primary),5%);
+  }
+
+  &.btn-outline-secondary {
+    border-color: darken(theme-color(secondary),5%);
+  }
+
+  &.btn-outline-info {
+    border-color: darken(theme-color(info),5%);
+  }
+
+  &.btn-outline-warning {
+    border-color: darken(theme-color(warning),5%);
+  }
+
+  &.btn-outline-success {
+    border-color: darken(theme-color(success),5%);
+  }
+
+  &.btn-outline-danger {
+    border-color: darken(theme-color(danger),5%);
+  }
+
+  &.btn-outline-dark {
+    border-color: darken(theme-color(dark),5%);
+  }
+
+  &.btn-outline-light {
+    border-color: darken(theme-color(light),5%);
+  }
+
+  &.btn-primary {
+    background-color: theme-color(primary);
+    border-color: theme-color(primary-alt);
+  }
+
+  &.btn-secondary {
+    background-color: theme-color(secondary);
+    border-color: darken(theme-color(secondary),5%);
+  }
+
+  &.btn-info {
+    background-color: theme-color(info);
+    border-color: darken(theme-color(info),5%);
+  }
+
+  &.btn-warning {
+    background-color: theme-color(warning);
+    border-color: theme-color(warning-alt);
+  }
+
+  &.btn-success {
+    background-color: theme-color(success);
+    border-color: theme-color(success-alt);
+  }
+
+  &.btn-danger {
+    background-color: theme-color(danger);
+    border-color: theme-color(danger-alt);
+  }
+
+  &.btn-dark {
+    background-color: theme-color(dark);
+    border-color: darken(theme-color(dark),5%);
+  }
+
+  &.btn-light {
+    background-color: theme-color(light);
+    border-color: darken(theme-color(light),5%);
   }
 }
 

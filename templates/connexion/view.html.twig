@@ -14,7 +14,7 @@
                     {{ connexion.name }}
                     <div class="float-right">
                         <a href="{{ path('edit_connexion', {'id': connexion.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
                 </h4>
                 {{ dump(connexion|cast_to_array)}}

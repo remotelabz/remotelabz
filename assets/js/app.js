@@ -17,6 +17,7 @@ require('noty/src/themes/mint.scss')
 require('simplemde/dist/simplemde.min.css')
 require('font-awesome/scss/font-awesome.scss')
 
+require('popper.js');
 require('bootstrap');
 require('datatables.net-bs4');
 require('datatables.net-buttons-bs4');
@@ -247,4 +248,9 @@ export default class API {
             $(this).parent().find('.form-control').val($(this).val().replace(/C:\\fakepath\\/i, ''));
         });
     });
+
+    /* Enable tooltips */
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 })(jQuery);

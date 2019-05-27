@@ -55,6 +55,10 @@ services:
             - public-assets:/var/www/html/public/build
         ports:
             - "8000:8000"
+        expose:
+            - "9000"
+        environment:
+            PHP_EXTENSION_XDEBUG: 1
         # user: www-data
         restart: on-failure
 

@@ -23,30 +23,35 @@ class NetworkInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $name;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", cascade={"persist", "remove"})
      * @Serializer\XmlList(entry="network_settings")
+     * @Serializer\Groups({"lab"})
      */
     private $settings;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="CASCADE")
+     * @Serializer\Groups({"lab"})
      */
     private $device;
 
     /**
      * @ORM\Column(type="string", length=17)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $macAddress;
 

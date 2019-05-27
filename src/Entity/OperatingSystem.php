@@ -22,12 +22,14 @@ class OperatingSystem
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $image;
 
