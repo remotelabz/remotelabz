@@ -4,9 +4,14 @@
   font-family: $TYPE-1;
   min-height: 100%;
   padding: 0;
-  position: absolute;
+  position: fixed;
+  top: $navbar-height;
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
   width: $sidebar-width-lg;
   z-index: 11;
+  box-shadow: inset -1px 0 0 #e5e5e5;
   transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
   -webkit-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
   -moz-transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function;
@@ -22,8 +27,8 @@
     @include transition-delay(0s);
 
     .nav-item {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-weight: 500;
+      // border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-weight: 400;
 
       &:last-child {
         border-bottom: none;
@@ -40,29 +45,40 @@
         padding: $sidebar-menu-padding;
         white-space: nowrap;
         color: $sidebar-dark-menu-color;
+        fill:  $sidebar-dark-menu-color;
         font-size: $sidebar-menu-font-size;
         font-family: $TYPE-2;
+        line-height: 21px;
 
         .menu-title {
           display: inline-block;
+          flex: 1;
         }
 
         &:hover {
-          color: $white;
+          background-color: $sidebar-dark-menu-hover-bg;
+          color: $sidebar-dark-menu-hover-color;
+          fill : $sidebar-dark-menu-hover-color;
         }
 
-        i {
+        i, svg, .menu-icon {
+          margin-right: 8px;
           font-size: inherit;
-          float: right;
           color: inherit;
+          fill: inherit;
         }
       }
 
       &.active {
+        box-shadow: inset 4px 0 0 theme-color(primary);
+        background: $sidebar-dark-menu-active-bg;
         > .nav-link {
           .menu-title,
-          i {
-            color: $white;
+          i,
+          svg {
+            font-weight: 600;
+            color: $sidebar-dark-menu-active-color;
+            fill: $sidebar-dark-menu-active-color;
           }
         }
       }

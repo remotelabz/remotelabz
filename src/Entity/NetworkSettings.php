@@ -3,8 +3,8 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkSettingsRepository")
@@ -22,7 +22,7 @@ class NetworkSettings
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"details"})
+     * @Serializer\Groups({"lab", "details"})
      */
     private $name;
 
@@ -31,6 +31,7 @@ class NetworkSettings
      *
      * @Assert\Ip(version="4")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $ip;
 
@@ -39,6 +40,7 @@ class NetworkSettings
      *
      * @Assert\Ip(version="6")
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $ipv6;
 
@@ -47,6 +49,7 @@ class NetworkSettings
      *
      * @Assert\Range(min=0, max=64)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $prefix4;
 
@@ -55,6 +58,7 @@ class NetworkSettings
      *
      * @Assert\Range(min=0, max=128)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $prefix6;
 
@@ -63,12 +67,14 @@ class NetworkSettings
      *
      * @Assert\Ip
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $gateway;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $protocol;
 
@@ -77,6 +83,7 @@ class NetworkSettings
      *
      * @Assert\Range(min=0, max=65536)
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $port;
 

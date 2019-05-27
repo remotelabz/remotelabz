@@ -2,17 +2,14 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\UserInterface;
-
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * 
- * @Serializer\ExclusionPolicy("all")
  */
 class User implements UserInterface
 {
@@ -20,71 +17,78 @@ class User implements UserInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * 
-     * @Serializer\Expose
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * 
-     * @Serializer\Expose
-     * @Serializer\Groups({"lab"})
      * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
-     * 
-     * @Serializer\Expose
      * @Serializer\Accessor(getter="getRoles")
+     * @Serializer\XmlList(inline=false, entry="role")
+     * @Serializer\Groups({"details"})
      */
     private $roles = [];
 
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
+     * @Serializer\Exclude
      */
     private $password;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * 
-     * @Serializer\Expose
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * 
-     * @Serializer\Expose
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
     private $firstName;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
-     * 
-     * @Serializer\Expose
+     * @Serializer\XmlList(inline=true, entry="course")
+     * @Serializer\Groups({"courses"})
      */
     private $courses;
 
     /**
      * @ORM\Column(type="boolean")
-     * 
-     * @Serializer\Expose
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab", "details"})
      */
     private $enabled = true;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="user")
+     * @Serializer\XmlList(inline=true, entry="lab")
      */
     private $labs;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="user")
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"instances"})
+     */
+    private $instances;
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
         $this->labs = new ArrayCollection();
+        $this->instances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -196,6 +200,8 @@ class User implements UserInterface
 
     /**
      * @Serializer\VirtualProperty()
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab", "details"})
      */
     public function getName(): ?string
     {
@@ -270,6 +276,37 @@ class User implements UserInterface
             // set the owning side to null (unless already changed)
             if ($lab->getUser() === $this) {
                 $lab->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Instance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function addInstance(Instance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(Instance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            // set the owning side to null (unless already changed)
+            if ($instance->getUser() === $this) {
+                $instance->setUser(null);
             }
         }
 

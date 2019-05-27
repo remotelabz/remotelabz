@@ -2,7 +2,11 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\InstanceRepository")
@@ -13,46 +17,87 @@ class Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\User", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
+     * @Serializer\Groups({"lab"})
+     */
+    private $lab;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
+     * @Serializer\Groups({"lab"})
+     */
+    private $device;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="instances")
+     * @Serializer\Groups({"user"})
      */
     private $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Activity")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\Column(type="boolean")
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      */
-    private $activity;
+    private $isStarted = false;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $processName;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $storagePath;
-
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Network", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $network;
-
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Network", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $userNetwork;
+    public function __construct()
+    {
+        $this->uuid = (string) new Uuid();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getLab(): ?Lab
+    {
+        return $this->lab;
+    }
+
+    public function setLab(?Lab $lab): self
+    {
+        $this->lab = $lab;
+
+        return $this;
+    }
+
+    public function getDevice(): ?Device
+    {
+        return $this->device;
+    }
+
+    public function setDevice(?Device $device): self
+    {
+        $this->device = $device;
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
     }
 
     public function getUser(): ?User
@@ -60,77 +105,32 @@ class Instance
         return $this->user;
     }
 
-    public function setUser(User $user): self
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 
         return $this;
     }
 
-    public function getActivity(): ?Activity
+    public function belongsToCurrentUser($object, $context): bool
     {
-        return $this->activity;
+        return $context->getAttribute('user') == $this->user;
     }
 
-    public function setActivity(?Activity $activity): self
+    public function isStarted(): ?bool
     {
-        $this->activity = $activity;
+        return $this->isStarted;
+    }
+
+    public function setStarted(bool $isStarted): self
+    {
+        $this->isStarted = $isStarted;
 
         return $this;
     }
 
-    public function getProcessName(): ?string
+    public static function belongsTo($user): bool
     {
-        return $this->processName;
-    }
-
-    public function setProcessName(string $processName): self
-    {
-        $this->processName = $processName;
-
-        return $this;
-    }
-
-    public function getStoragePath(): ?string
-    {
-        return $this->storagePath;
-    }
-
-    public function setStoragePath(string $storagePath): self
-    {
-        $this->storagePath = $storagePath;
-
-        return $this;
-    }
-
-    public function getNetwork(): ?Network
-    {
-        return $this->network;
-    }
-
-    public function setNetwork(Network $network): self
-    {
-        $this->network = $network;
-
-        return $this;
-    }
-
-    public function getUserNetwork(): ?Network
-    {
-        return $this->userNetwork;
-    }
-
-    public function setUserNetwork(Network $userNetwork): self
-    {
-        $this->userNetwork = $userNetwork;
-
-        return $this;
-    }
-
-    public static function create(): self
-    {
-        $instance = new Instance();
-
-        return $instance;
+        return $this->user == $user;
     }
 }

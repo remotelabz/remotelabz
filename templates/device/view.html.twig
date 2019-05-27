@@ -14,7 +14,7 @@
                     {{ device.name }}
                     <div class="float-right">
                         <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
                 </h4>
                 <p>Brand : {{ device.brand }}</p>
@@ -27,7 +27,16 @@
                     {# </a> #}
                 </p>
                 <hr>
-                <p>Launch script : {{ device.launchScript }}</p>
+                <p>Network interfaces :</p>
+                <ul>
+                    {% for networkInterface in device.networkInterfaces %}
+                        <li>{{ networkInterface.name }} ({{ networkInterface.type }}, {{ networkInterface.settings.protocol }} port {{ networkInterface.settings.port }})</li>
+                    {% else %}
+                        None
+                    {% endfor %}
+                </ul>
+                <hr>
+                <p>Operating system : {{ device.operatingSystem.name }}</p>
             </div>
         </div>
     </div>

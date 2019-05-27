@@ -61,6 +61,13 @@ Encore
         // only copy files matching this pattern
         //pattern: /\.(png|jpg|jpeg)$/
     })
+    .copyFiles({
+        from: './assets/svg',
+        // optional target path, relative to the output dir
+        to: 'svg/[path][name].[ext]',
+        // only copy files matching this pattern
+        //pattern: /\.(png|jpg|jpeg)$/
+    })
 ;
 
 module.exports = Encore.getWebpackConfig();

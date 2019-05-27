@@ -43,6 +43,7 @@ RUN mkdir -p /var/www/cache && \
 ADD ./000-default.conf /etc/apache2/sites-enabled/
 ADD ./shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD ./shib2.conf /etc/apache2/conf-available/
+ADD ./xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
 RUN a2enconf shib2 && \
     a2enmod shib

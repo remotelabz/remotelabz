@@ -49,13 +49,27 @@ $social-colors: (
   dribbble: #ea4c89,
   reddit: #ff4500
 );
+// $theme-colors: (
+//   primary: #24d5d8,
+//   secondary: #aab2bd,
+//   success: #33c92e,
+//   info: #6569df,
+//   warning: #fed961,
+//   danger: #fd3258,
+//   light: #f5f7fa,
+//   dark: #32323d
+// );
 $theme-colors: (
-  primary: #24d5d8,
-  secondary: #aab2bd,
-  success: #33c92e,
+  primary: #382b71,
+  primary-alt: #0f004e,
+  secondary: #FF6700,
+  success: #1aaa55,
+  success-alt: #168f48,
   info: #6569df,
-  warning: #fed961,
-  danger: #fd3258,
+  warning: #fc9403,
+  warning-alt: #de7e00,
+  danger: #db3b21,
+  danger-alt: #c0341d,
   light: #f5f7fa,
   dark: #32323d
 );
@@ -66,10 +80,12 @@ $theme-colors: (
 
 ////////// TEMPLATE VARIABLES //////////
 
-$content-bg: #f3f5f7;
+// $content-bg: #f3f5f7;
+$content-bg: $white;
 $footer-bg: $content-bg;
 $footer-color: color(dark);
-$border-color: #f2f2f2;
+// $border-color: #f2f2f2;
+$border-color: #e1e1e1;
 
 ////////// TEMPLATE VARIABLES //////////
 
@@ -77,12 +93,18 @@ $border-color: #f2f2f2;
 
 ////////// FONT VARIABLES //////////
 
-$TYPE-1: 'Open Sans', sans-serif;
-$TYPE-2: 'Roboto', sans-serif;
-$TYPE-3: 'Lobster', cursive;
-$default-font-size: 0.875rem;
+$default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+// $TYPE-1: 'Open Sans', sans-serif;
+// $TYPE-2: 'Roboto', sans-serif;
+// $TYPE-3: 'Lobster', cursive;
+$TYPE-1: $default-font-family;
+$TYPE-2: $default-font-family;
+$TYPE-3: $default-font-family;
+// $default-font-size: 0.875rem;
+$default-font-size: 14px;
 $text-muted: #8d9498;
-$body-color: #12131a;
+// $body-color: #12131a;
+$body-color: #2e2e2e;
 
 ////////// FONT VARIABLES //////////
 
@@ -90,14 +112,19 @@ $body-color: #12131a;
 
 ////////// SIDEBAR VARIABLES ////////
 
-$sidebar-width-lg: 240px;
+$sidebar-width-lg: 220px;
 $sidebar-width-icon: 70px;
-$sidebar-dark-bg: theme-color(dark);
-$sidebar-dark-menu-color: #aeaeae;
-$sidebar-dark-menu-active-bg: initial;
-$sidebar-dark-menu-active-color: #c0bbbb;
-$sidebar-dark-menu-hover-bg: #39363f;
-$sidebar-dark-menu-hover-color: color(white);
+// $sidebar-dark-bg: theme-color(dark);
+$sidebar-dark-bg: #fafafa;
+// $sidebar-dark-menu-color: #aeaeae;
+$sidebar-dark-menu-color: #707070;
+$sidebar-dark-menu-active-bg: rgba(0,0,0,0.04);
+// $sidebar-dark-menu-active-color: #c0bbbb;
+$sidebar-dark-menu-active-color: theme-color(primary);
+// $sidebar-dark-menu-hover-bg: #39363f;
+$sidebar-dark-menu-hover-bg: rgba(0,0,0,0.06);
+// $sidebar-dark-menu-hover-color: color(white);
+$sidebar-dark-menu-hover-color: #2e2e2e;
 $sidebar-dark-submenu-color: $sidebar-dark-menu-color;
 $sidebar-dark-submenu-hover-bg: initial;
 $sidebar-dark-submenu-hover-color: #9a94a7;
@@ -105,8 +132,10 @@ $sidebar-category-font-size: 0.6875rem;
 $sidebar-category-color: $green;
 $sidebar-category-padding: 2.625rem 1.4rem 0.625rem;
 $sidebar-submenu-item-padding: 0.4rem 1.4rem;
-$sidebar-menu-font-size: 0.8rem;
-$sidebar-menu-padding: 0.6rem 1.4rem;
+// $sidebar-menu-font-size: 0.8rem;
+$sidebar-menu-font-size: 14px;
+// $sidebar-menu-padding: 0.6rem 1.4rem;
+$sidebar-menu-padding: 12px 15px;
 $nav-link-height: 52px;
 $sidebar-submenu-padding: 0 0 0 4.25rem;
 $sidebar-submenu-font-size: 0.75rem;
@@ -122,8 +151,10 @@ $sidebar-profile-padding: 0 1.625rem;
 
 ///////// NAVBAR VARIABLES ////////
 
-$navbar-height: 58px;
-$navbar-light-color: #202339;
+// $navbar-height: 58px;
+$navbar-height: 40px;
+// $navbar-light-color: #202339;
+$navbar-light-color: theme-color(primary);
 $navbar-font-size: 0.9375rem;
 $navbar-icon-font-size: 1.25rem;
 
@@ -134,8 +165,8 @@ $navbar-icon-font-size: 1.25rem;
 ///////// BUTTONS VARIABLES ////////
 
 $button-fixed-width: 100px;
-$input-btn-padding-y: 0.65rem;
-$input-btn-padding-x: 0.875rem;
+$input-btn-padding-y: 6px;
+$input-btn-padding-x: 10px;
 $input-btn-line-height: 1;
 $input-btn-padding-y-xs: 0.5rem;
 $input-btn-padding-x-xs: 0.75rem;
@@ -143,7 +174,7 @@ $input-btn-padding-y-sm: 0.50rem;
 $input-btn-padding-x-sm: 0.81rem;
 $input-btn-padding-y-lg: 0.94rem;
 $input-btn-padding-x-lg: 1.94rem;
-$input-btn-font-size: 0.875rem;
+$input-btn-font-size: 14px;
 $input-btn-font-size-xs: 0.625rem;
 $input-btn-font-size-sm: 0.875rem;
 $input-btn-font-size-lg: 0.875rem;
@@ -161,9 +192,10 @@ $social-btn-icon-size: 1rem;
 /////////  FORMS VARIABLES /////////
 
 $input-bg: color(white);
-$input-border-radius: 2px;
+// $input-border-radius: 2px;
+$input-border-radius: 4px;
 $input-placeholder-color: #c9c8c8;
-$input-font-size: 0.75rem;
+$input-font-size: $default-font-size;
 
 /////////  FORMS VARIABLES /////////
 
@@ -182,6 +214,19 @@ $table-inverse-color: color(white);
 
 
 
+////////// BREADCRUMBS VARIABLES ///////////
+
+$breadcrumb-font-size: 12px;
+$breadcrumb-custom-padding-x: 0px;
+$breadcrumb-custom-padding-y: 8px;
+$breadcrumb-custom-item-padding-x: 5px;
+$breadcrumb-custom-item-padding-y: 5px;
+$breadcrumb-item-bg: gray;
+$breadcrumb-custom-item-color: black;
+
+////////// BREADCRUMBS VARIABLES ///////////
+
+
 ////////// MEASUREMENT AND PROPERTY VARIABLES //////////
 
 $border-property: 1px solid $border-color;
@@ -189,7 +234,8 @@ $card-spacing-y: 1.5rem;
 $card-padding-y: 1.5rem;
 $card-padding-x: 0.9375rem;
 $grid-gutter-width: 20px;
-$action-transition-duration: 0.25s;
+// $action-transition-duration: 0.25s;
+$action-transition-duration: 100ms;
 $action-transition-timing-function: ease;
 
 ////////// MEASUREMENT AND PROPERTY VARIABLES //////////

@@ -25,7 +25,7 @@ use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 class ActivityController extends AppController
 {
     /**
-     * @Route("/admin/activities", name="activities")
+     * @Route("/activities", name="activities")
      */
     public function indexAction(Request $request)
     {
@@ -50,7 +50,7 @@ class ActivityController extends AppController
     }
 
     /**
-     * @Route("/admin/activities/{id<\d+>}.{_format}",
+     * @Route("/activities/{id<\d+>}.{_format}",
      *  defaults={"_format": "html"},
      *  requirements={"_format": "html|json"},
      *  name="show_activity",
@@ -76,7 +76,7 @@ class ActivityController extends AppController
     }
 
     /**
-     * @Route("/admin/activities/new", name="new_activity")
+     * @Route("/activities/new", name="new_activity")
      */
     public function newAction(Request $request, FileUploader $fileUploader)
     {
@@ -102,7 +102,7 @@ class ActivityController extends AppController
     }
 
     /**
-     * @Route("/admin/activities/{id<\d+>}/edit", name="edit_activity", methods={"GET", "POST"})
+     * @Route("/activities/{id<\d+>}/edit", name="edit_activity", methods={"GET", "POST"})
      */
     public function editAction(Request $request, $id, FileUploader $fileUploader)
     {
@@ -139,7 +139,7 @@ class ActivityController extends AppController
     }
 
     /**
-     * @Route("/admin/activities/{id<\d+>}/start", name="start_activity", methods="GET")
+     * @Route("/activities/{id<\d+>}/start", name="start_activity", methods="GET")
      */
     public function startAction(Request $request, int $id)
     {
@@ -219,7 +219,7 @@ class ActivityController extends AppController
     }
 
     /**
-     * @Route("/admin/activities/{id<\d+>}", name="delete_activity", methods="DELETE")
+     * @Route("/activities/{id<\d+>}", name="delete_activity", methods="DELETE")
      */
     public function deleteAction(Request $request, $id)
     {

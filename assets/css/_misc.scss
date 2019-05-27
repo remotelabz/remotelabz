@@ -18,11 +18,12 @@ html {
 
 .content-wrapper {
   background: $content-bg;
-  margin-left: $sidebar-width-lg;
-  min-height: 100vh;
-  padding: 1.5rem 1.7rem;
-  transition: width $action-transition-duration $action-transition-timing-function, margin $action-transition-duration $action-transition-timing-function;
-  width: calc(100% - #{$sidebar-width-lg});
+  // margin-left: $sidebar-width-lg;
+  // min-height: 100vh;
+  padding-left: $sidebar-width-lg;
+  // padding: 1.5rem 1.7rem;
+  transition: width $action-transition-duration $action-transition-timing-function, padding $action-transition-duration $action-transition-timing-function;
+  width: 100%;
   @media (max-width: 991px) {
     margin-left: 0;
     width: 100%;
@@ -32,6 +33,11 @@ html {
     margin-left: 0;
     width: 100%;
   }
+}
+
+.container-fluid {
+  padding-right: 15px;
+  padding-left: 15px;
 }
 
 .container-scroller {
