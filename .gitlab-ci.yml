@@ -51,7 +51,7 @@ tests:
     - docker exec remotelabz php bin/console doctrine:fixtures:load -n
     - docker exec remotelabz php bin/phpunit
   dependencies:
-    - Docker
+    - build
   tags:
     - test
 
