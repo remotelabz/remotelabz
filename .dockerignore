@@ -1,0 +1,6 @@
+.git/*
+.gitignore
+.gitlab-ci.yml
+CONTRIBUTING.md
+LICENSE
+README.md
