@@ -49,7 +49,7 @@ tests:
     # - docker run -d --name mysql -p 3306:3306 -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql
     # - sleep 30
     # - docker logs mysql
-    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz --link mysql $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker exec remotelabz cat /var/www/html/remotelabz/.env
     - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz php bin/console doctrine:fixtures:load -n
