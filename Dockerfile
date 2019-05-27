@@ -79,4 +79,5 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 WORKDIR ${REMOTELABZ_PATH}
 EXPOSE 8000/tcp
 EXPOSE 8888/tcp
+EXPOSE 9000/tcp
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]
