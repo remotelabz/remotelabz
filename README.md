@@ -11,9 +11,14 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 
 - Vagrant (>=2)
 
+## Recommendation
+
+- Ubuntu 18.04 LTS
+
 ## Steps
 
 ```bash
+sudo apt-get install libvirt-bin
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
 cd remotelabzv2
 vagrant up
