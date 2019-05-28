@@ -20,6 +20,8 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 
 ```bash
 sudo apt-get install libvirt-bin
+mkdir /var/www/html/remotelabz
+sudo chown www-data: /var/www/html/remotelabz
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
 cd remotelabzv2
 vagrant up
