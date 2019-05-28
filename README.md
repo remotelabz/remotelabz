@@ -14,6 +14,7 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 ## Recommendation
 
 - Ubuntu 18.04 LTS
+- At least 2GB of memory
 
 ## Steps
 
