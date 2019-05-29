@@ -1,4 +1,5 @@
 .git/*
+ci/*
 .gitignore
 .gitlab-ci.yml
 CONTRIBUTING.md
