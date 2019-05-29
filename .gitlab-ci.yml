@@ -65,10 +65,13 @@ deploy_review:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker network create remotelabz_$CI_COMMIT_REF_SLUG
+    - docker stop mysql_$CI_COMMIT_REF_SLUG || true
     - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
     - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
@@ -78,7 +81,7 @@ deploy_review:
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
   environment:
     name: review/$CI_COMMIT_REF_NAME
-    url: https://review.remotelabz.com/$CI_COMMIT_REF_SLUG/
+    url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
     on_stop: stop_review
   tags:
     - review
