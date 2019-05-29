@@ -72,7 +72,7 @@ deploy_review:
     - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
     - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-    - sudo sed -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+    - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
     - sudo service nginx reload
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
