@@ -50,7 +50,7 @@ tests:
     - docker exec remotelabz cat /var/www/html/remotelabz/.env
     - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz php bin/console doctrine:fixtures:load -n
-    - docker exec remotelabz php bin/phpunit
+    - docker exec remotelabz php bin/phpunit 
   dependencies:
     - build
   tags:
