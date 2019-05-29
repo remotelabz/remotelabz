@@ -72,13 +72,13 @@ deploy_review:
     - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d/ -f1`
     - curl -X DELETE http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG
-    - curl -X POST http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG -d "{"target":"http://localhost:${WEB_PORT}"}"
+    - curl -X POST http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG -d "{\"target\":\"http://localhost:${WEB_PORT}\"}"
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: https://review.remotelabz.com/$CI_COMMIT_REF_SLUG/
-    # on_stop: stop_review
+    on_stop: stop_review
   tags:
     - review
   only:
@@ -119,6 +119,7 @@ stop_review:
   script:
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG
     - docker stop mysql_$CI_COMMIT_REF_SLUG
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
     - curl -X DELETE http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG
   when: manual
   environment:
