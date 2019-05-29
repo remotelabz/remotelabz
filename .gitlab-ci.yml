@@ -71,8 +71,8 @@ deploy_review:
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d/ -f1`
-    - curl -X DELETE http://localhost:8282/api/routes/$CI_COMMIT_REF_SLUG
-    - curl -X POST http://localhost:8282/api/routes/$CI_COMMIT_REF_SLUG -d "{"target":"http://localhost:${WEB_PORT}"}"
+    - curl -X DELETE http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG
+    - curl -X POST http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG -d "{"target":"http://localhost:${WEB_PORT}"}"
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
   environment:
@@ -112,21 +112,24 @@ deploy_staging:
   only: 
     - master
 
-# stop_review:
-#   stage: deploy
-#   except: 
-#     - master
-#   variables:
-#     GIT_STRATEGY: none
-#   script:
-#     - docker stop remotelabz
-#     - docker stop mysql
-#   when: manual
-#   environment:
-#     name: Review
-#     action: stop
-#   tags:
-#     - deploy
+stop_review:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
+    - docker stop mysql_$CI_COMMIT_REF_SLUG
+    - curl -X DELETE http://localhost:8283/api/routes/$CI_COMMIT_REF_SLUG
+  when: manual
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    action: stop
+  tags:
+    - review
+  only:
+    - branches
+  except: 
+    - master
 
 # Stop staging:
 #   stage: deploy
