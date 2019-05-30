@@ -24,12 +24,12 @@ VirtualBox 6 supports nested virtualization on hosts systems that run **only AMD
 
 ```bash
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
-sudo apt-get install libvirt-bin
-mkdir /var/www/html/remotelabz
+sudo apt-get install libvirt-bin php-mysql libapache2-mod-php apache2 mysql-server mysql-client vagrant
+sudo mkdir /var/www/html/remotelabz
 sudo chown www-data: /var/www/html/remotelabz
 cd remotelabzv2
-vagrant up
-vagrant ssh
+sudo vagrant up
+sudo vagrant ssh
 ```
 
 You can now access the website via http://localhost:8000/login.
