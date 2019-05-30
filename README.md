@@ -33,6 +33,8 @@ sudo vagrant ssh
 ```
 
 You can now access the website via http://localhost:8000/login.
+Username : root@localhost
+Password : admin
 
 ## Troubleshooting
 
