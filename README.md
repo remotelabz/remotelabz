@@ -16,6 +16,10 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 - Ubuntu 18.04 LTS
 - At least 2GB of memory
 
+## Oracle VirtualBox 6
+
+VirtualBox 6 supports nested virtualization on hosts systems that run **only AMD CPUs** ! If you deploy **AIO** on nativ linux with VT-x, we have to modify the Vagrantfile to use the kvm provider and not the qemu
+
 ## Steps
 
 ```bash
