@@ -20,7 +20,7 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 
 ```bash
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
-sudo apt-get install libvirt-bin php-mysql libapache2-mod-php apache2 mysql-server mysql-client
+sudo apt-get install libvirt-bin php-mysql libapache2-mod-php apache2 mysql-server mysql-client vagrant
 sudo mkdir /var/www/html/remotelabz
 sudo chown www-data: /var/www/html/remotelabz
 cd remotelabzv2
