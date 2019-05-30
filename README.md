@@ -24,8 +24,8 @@ sudo apt-get install libvirt-bin php-mysql libapache2-mod-php apache2 mysql-serv
 sudo mkdir /var/www/html/remotelabz
 sudo chown www-data: /var/www/html/remotelabz
 cd remotelabzv2
-vagrant up
-vagrant ssh
+sudo vagrant up
+sudo vagrant ssh
 ```
 
 You can now access the website via http://localhost:8000/login.
