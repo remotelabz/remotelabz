@@ -9,7 +9,7 @@ If you want to deploy to VM with Oracle VirtualBox 6, it supports nested virtual
 
 - Ubuntu 18.04 LTS
 - At least 2GB of memory
-- At least 20GB of memory
+- At least 20GB of free disk space
  
 ## Steps
 
