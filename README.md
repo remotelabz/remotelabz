@@ -1,7 +1,7 @@
 RemoteLabz v2
 =============
 
-This project is the 2nd version of [RemoteLabz](remotelabz.univ-reims.fr), and was originally written in Symfony 2.8. Its being updated to Symfony 4 in branch **symfony4**.
+This project is the 2nd version of [RemoteLabz](remotelabz.univ-reims.fr), and was originally written in Symfony 2.8. Its being updated to Symfony 4 in branch **master**.
 
 If you want to deploy to VM with Oracle VirtualBox 6, it supports nested virtualization on hosts systems that run **only AMD CPUs** ! If you deploy **AIO** on nativ linux with VT-x, we have to modify the Vagrantfile to use the kvm provider and not the qemu
 
