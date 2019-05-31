@@ -61,8 +61,8 @@ fi
 # Yarn
 # On Windows 10, you need to enable symlink creation rights :
 # https://github.com/yarnpkg/yarn/issues/4908#issuecomment-462285339
-(cd "${REMOTELABZ_PATH}" && yarn install)
-(cd "${REMOTELABZ_PATH}" && yarn encore dev)
+(cd "${REMOTELABZ_PATH}" && yarn install --no-bin-links)
+(cd "${REMOTELABZ_PATH}" && yarn add encore dev --no-bin-links)
 # Console
 php "${REMOTELABZ_PATH}"/bin/console doctrine:migrations:migrate -n
 php "${REMOTELABZ_PATH}"/bin/console doctrine:fixtures:load -n
