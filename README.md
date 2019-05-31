@@ -43,6 +43,13 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 ```bash
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
 cd remotelabzv2
+```
+In the Vagrantfile, modify the IP in the following line in ordre you can access to your VirtualBox VM from your host. This IP must be in the same network than your host-only network interface.
+
+config.vm.network "private_network", ip: "192.168.50.4",virtualbox__intnet: true
+
+
+```
 sudo vagrant up
 sudo vagrant ssh
 ```

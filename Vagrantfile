@@ -17,9 +17,6 @@ Vagrant.configure("2") do |config|
     domain.gui = true
     domain.memory = 2048
     domain.cpus = 1
-    domain.graphics_port = 0
-    domain.graphics_ip = '0.0.0.0'
-    domain.keymap = "fr"
   end
   config.vm.network "private_network", ip: "192.168.50.4",virtualbox__intnet: true
   config.vm.hostname = "remotelabz"
