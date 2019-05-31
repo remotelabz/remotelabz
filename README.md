@@ -21,10 +21,9 @@ sudo chown www-data: /var/www/html/remotelabz
 sudo vagrant/provision.sh
 ```
 
-You can now access the website via http://localhost:8000/login.
-Username : root@localhost
-Password : admin
-
+You can now access the website via http://localhost:8000/login.  
+Username : root@localhost  
+Password : admin  
 
 # Install (Vagrant on Windows 10 with Oracle VirtualBox or on MAC OS)
 
@@ -44,19 +43,21 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
 cd remotelabzv2
 ```
-In the Vagrantfile, modify the IP in the following line in ordre you can access to your VirtualBox VM from your host. This IP must be in the same network than your host-only network interface.
+In the `Vagrantfile`, modify the IP in the following line in ordre you can access to your VirtualBox VM from your host. This IP must be in the same network than your host-only network interface.
 
-config.vm.network "private_network", ip: "192.168.50.4",virtualbox__intnet: true
-
+`config.vm.network "private_network", ip: "192.168.50.4",virtualbox__intnet: true`
 
 ```
 sudo vagrant up
-sudo vagrant ssh
 ```
 
-You can now access the website via http://localhost:8000/login.
-Username : root@localhost
-Password : admin
+You can now access the website via http://localhost:8000/login.  
+Username : root@localhost  
+Password : admin  
+
+You can also access to the created VM via ssh  
+Username : vagrant  
+Password : vagrant  
 
 ## Troubleshooting
 
