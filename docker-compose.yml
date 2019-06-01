@@ -45,7 +45,7 @@ services:
             args:
                 userid: ${UID-1000}
         image: registry.remotelabz.com/crestic/remotelabzv2/apache
-#        user: ${CURRENT_UID-0:0}
+        user: ${CURRENT_UID-0:0}
         volumes:
             - ${CI_PROJECT_DIR-.}:/var/www/html
             - symfony-cache:/var/www/cache
@@ -68,13 +68,14 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
-        user: ${CURRENT_UID-0:0}
+#        user: ${CURRENT_UID-0:0}
+        user: root
         volumes:
             - ${CI_PROJECT_DIR-.}/assets:/app/assets
             - ${CI_PROJECT_DIR-.}/public:/app/public
             - ${CI_PROJECT_DIR-.}/package.json:/app/package.json
             - ${CI_PROJECT_DIR-.}/yarn.lock:/app/yarn.lock
-            - ~/yarn-error.log:/app/yarn-error.log
+#            - ~/yarn-error.log:/app/yarn-error.log
             - ${CI_PROJECT_DIR-.}/webpack.config.js:/app/webpack.config.js
             - /vendor:/app/vendor
             - /node-modules:/app/node_modules
