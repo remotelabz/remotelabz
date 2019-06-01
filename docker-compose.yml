@@ -74,9 +74,10 @@ services:
             - ${CI_PROJECT_DIR-.}/public:/app/public
             - ${CI_PROJECT_DIR-.}/package.json:/app/package.json
             - ${CI_PROJECT_DIR-.}/yarn.lock:/app/yarn.lock
+            - ${CI_PROJECT_DIR-.}/yarn-error.log:/app/yarn-error.log
             - ${CI_PROJECT_DIR-.}/webpack.config.js:/app/webpack.config.js
-            - ${CI_PROJECT_DIR-.}/vendor:/app/vendor
-            - ${CI_PROJECT_DIR-.}/node-modules:/app/node_modules
+            - /vendor:/app/vendor
+            - /node-modules:/app/node_modules
             - public-assets:/app/public/build
 
     composer:
