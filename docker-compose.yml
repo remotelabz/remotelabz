@@ -86,6 +86,7 @@ services:
             context: ./docker/composer
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/composer
+        env_file: .env
         image: registry.remotelabz.com/crestic/remotelabzv2/composer
         volumes:
             - ${CI_PROJECT_DIR-.}/composer.json:/app/composer.json
