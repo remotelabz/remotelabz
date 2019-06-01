@@ -68,8 +68,8 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
-#        user: ${CURRENT_UID-0:0}
-        user: root
+        user: ${CURRENT_UID-0:0}
+#        user: root
         volumes:
             - ${CI_PROJECT_DIR-.}/assets:/app/assets
             - ${CI_PROJECT_DIR-.}/public:/app/public
