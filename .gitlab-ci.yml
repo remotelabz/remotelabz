@@ -9,7 +9,6 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
-  CI_DEBUG_TRACE: "true"
 
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -97,21 +96,20 @@ deploy_staging:
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose stop
+    - docker-compose down -v --rmi all
     - docker-compose pull
     - docker-compose up --no-start
     - docker-compose start apache mysql
     - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
-    - echo $MYSQL_PASSWORD
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
   environment:
     name: staging
-    url: https://staging.remotelabz.com/
-    # on_stop: stop_staging
+    url: http://staging.remotelabz.com/
+    on_stop: stop_staging
   dependencies:
     - tests
   tags:
@@ -140,17 +138,17 @@ stop_review:
   except: 
     - master
 
-# Stop staging:
-#   stage: deploy
-#   only:
-#     - master
-#   variables:
-#     GIT_STRATEGY: none
-#   script:
-#     - docker-compose stop
-#   when: manual
-#   environment:
-#     name: Staging
-#     action: stop
-#   tags:
-#     - staging
+Stop staging:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker-compose down -v --rmi all
+  when: manual
+  environment:
+    name: staging
+    action: stop
+  tags:
+    - staging
+  only:
+    - master
