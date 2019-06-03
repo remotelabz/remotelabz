@@ -12,11 +12,11 @@ variables:
   CI_DEBUG_TRACE: "true"
 
 before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
-Docker:
+build:
   stage: build
-  image: tiangolo/docker-with-compose
+  image: docker:stable
   services:
     - docker:dind
   variables:
@@ -25,97 +25,83 @@ Docker:
     # improved performance.
     DOCKER_DRIVER: overlay2
   script:
-    - alias 'dockerize=git whatchanged HEAD^! | grep Dockerfile >/dev/null'
-    - apk add --no-cache git
-    - dockerize || (echo "No need to build new docker image" && exit 0)
-    - dockerize && docker-compose pull --ignore-pull-failures
-    - dockerize && docker-compose build
-    - dockerize && docker-compose push
-    - echo "Build done"
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   tags:
     - build
 
-PHPUnit:
+tests:
   stage: test
-  image: tiangolo/docker-with-compose
-  variables:
-    CURRENT_UID: 'root:root'
+  image: docker:stable
   services: 
     - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
   script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose pull
-    - docker-compose up --no-start
-    - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
-    - docker-compose run -T yarn install
-    - docker-compose run -T yarn encore dev 
-    - docker-compose run -T console doctrine:migrations:migrate -n
-    - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public --relative
-    - docker-compose run -T console phpunit --configuration /app/phpunit.xml.dist
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+    - docker network create remotelabz
+    - docker run -d --rm --name mysql --network remotelabz -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
+    # Wait for mysql
+    - docker run --rm --network remotelabz -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
+    - docker run -d --rm --name remotelabz --network remotelabz -v $(pwd)/.env:/var/www/html/remotelabz/.env $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
+    - docker exec remotelabz php bin/console doctrine:fixtures:load -n
+    - docker exec remotelabz php bin/phpunit 
   dependencies:
-    - Docker
+    - build
   tags:
     - test
 
 # TODO stage with apache to upload on public server
-Deploy to review:
+deploy_review:
   stage: deploy
-  except: 
-    - master
   script:
-    - export CURRENT_UID=$(id -u):$(id -g)
+    - cp -rf .env.dist .env
+    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker stop mysql_$CI_COMMIT_REF_SLUG || true
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker network create remotelabz_$CI_COMMIT_REF_SLUG
+    - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
+    # Wait for mysql
+    - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
+    - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+    - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+    - sudo service nginx reload
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
+    on_stop: stop_review
+  tags:
+    - review
+  only:
+    - branches
+  except:
+    - master
+
+deploy_staging:
+  stage: deploy
+  script:
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose stop
     - docker-compose pull
     - docker-compose up --no-start
     - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
-    - docker-compose run -T yarn install
-    - docker-compose run -T yarn encore dev
-    - docker-compose run -T console doctrine:migrations:migrate -n
-    - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public --relative
-  environment:
-    name: Review
-    url: http://10.22.9.136/
-    on_stop: Stop review
-  dependencies:
-    - PHPUnit
-  tags:
-    - deploy
-
-Stop review:
-  stage: deploy
-  except: 
-    - master
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - docker-compose stop
-  when: manual
-  environment:
-    name: Review
-    action: stop
-  tags:
-    - deploy
-
-Deploy to staging:
-  stage: deploy
-  only: 
-    - master
-  script:
-    - export CURRENT_UID=$(id -u):$(id -g)
-    - cp -rf .env.dist .env
-    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose stop
-    - docker-compose pull
-    - docker-compose up --no-start
-    - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-scripts
+    - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
     - echo $MYSQL_PASSWORD
@@ -123,23 +109,48 @@ Deploy to staging:
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
   environment:
-    name: Staging
-    url: http://staging.remotelabz.com/
-    on_stop: Stop staging
+    name: staging
+    url: https://staging.remotelabz.com/
+    # on_stop: stop_staging
+  dependencies:
+    - tests
   tags:
     - staging
-
-Stop staging:
-  stage: deploy
-  only:
+  only: 
     - master
+
+stop_review:
+  stage: deploy
   variables:
     GIT_STRATEGY: none
   script:
-    - docker-compose stop
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
+    - docker stop mysql_$CI_COMMIT_REF_SLUG
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
+    - sudo rm /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+    - sudo service nginx reload
   when: manual
   environment:
-    name: Staging
+    name: review/$CI_COMMIT_REF_NAME
     action: stop
   tags:
-    - staging
+    - review
+  only:
+    - branches
+  except: 
+    - master
+
+# Stop staging:
+#   stage: deploy
+#   only:
+#     - master
+#   variables:
+#     GIT_STRATEGY: none
+#   script:
+#     - docker-compose stop
+#   when: manual
+#   environment:
+#     name: Staging
+#     action: stop
+#   tags:
+#     - staging
