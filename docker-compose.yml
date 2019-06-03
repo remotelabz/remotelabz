@@ -43,7 +43,7 @@ services:
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/apache
             args:
-                userid: ${UID-0}
+                userid: ${UID-1000}
         image: registry.remotelabz.com/crestic/remotelabzv2/apache
         user: ${CURRENT_UID-0:0}
         volumes:
@@ -69,14 +69,16 @@ services:
                 - registry.remotelabz.com/crestic/remotelabzv2/node
         image: registry.remotelabz.com/crestic/remotelabzv2/node
         user: ${CURRENT_UID-0:0}
+#        user: root
         volumes:
             - ${CI_PROJECT_DIR-.}/assets:/app/assets
             - ${CI_PROJECT_DIR-.}/public:/app/public
             - ${CI_PROJECT_DIR-.}/package.json:/app/package.json
             - ${CI_PROJECT_DIR-.}/yarn.lock:/app/yarn.lock
+#            - ~/yarn-error.log:/app/yarn-error.log
             - ${CI_PROJECT_DIR-.}/webpack.config.js:/app/webpack.config.js
-            - vendor:/app/vendor
-            - node-modules:/app/node_modules
+            - /vendor:/app/vendor
+            - /node-modules:/app/node_modules
             - public-assets:/app/public/build
 
     composer:
@@ -84,6 +86,7 @@ services:
             context: ./docker/composer
             cache_from:
                 - registry.remotelabz.com/crestic/remotelabzv2/composer
+        env_file: .env
         image: registry.remotelabz.com/crestic/remotelabzv2/composer
         volumes:
             - ${CI_PROJECT_DIR-.}/composer.json:/app/composer.json

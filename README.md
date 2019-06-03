@@ -1,9 +1,31 @@
 RemoteLabz v2
 =============
 
-This project is the 2nd version of [RemoteLabz](remotelabz.univ-reims.fr), and was originally written in Symfony 2.8. Its being updated to Symfony 4 in branch **symfony4**.
+This project is the 2nd version of [RemoteLabz](remotelabz.univ-reims.fr), and was originally written in Symfony 2.8. Its being updated to Symfony 4 in branch **master**.
+
+If you want to deploy to VM with Oracle VirtualBox 6, it supports nested virtualization on hosts systems that run **only AMD CPUs** ! If you deploy **AIO** on nativ linux with VT-x, we have to modify the Vagrantfile to use the kvm provider and not the qemu
+
+# Install (Linux)
+
+- Ubuntu 18.04 LTS
+- At least 2GB of memory
+- At least 20GB of free disk space
  
-# Install (Vagrant)
+## Steps
+
+```bash
+git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
+cd remotelabzv2
+sudo ln -s $HOME/remotelabzv2 /var/www/html/remotelabz
+sudo chown www-data: /var/www/html/remotelabz
+sudo vagrant/provision.sh
+```
+
+You can now access the website via http://localhost:8000/login.  
+Username : root@localhost  
+Password : admin  
+
+# Install (Vagrant on Windows 10 with Oracle VirtualBox or on MAC OS)
 
 This is the recommended **AIO** method. It was tested on **Windows 10** and **macOS mojave**.
 
@@ -11,16 +33,31 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 
 - Vagrant (>=2)
 
+## Recommendation
+
+- At least 2GB of memory
+
 ## Steps
 
 ```bash
 git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
 cd remotelabzv2
-vagrant up
-vagrant ssh
+```
+In the `Vagrantfile`, modify the IP in the following line in ordre you can access to your VirtualBox VM from your host. This IP must be in the same network than your host-only network interface.
+
+`config.vm.network "private_network", ip: "192.168.50.4",virtualbox__intnet: true`
+
+```
+sudo vagrant up
 ```
 
-You can now access the website via http://localhost:8000/login.
+You can now access the website via http://localhost:8000/login.  
+Username : root@localhost  
+Password : admin  
+
+You can also access to the created VM via ssh  
+Username : vagrant  
+Password : vagrant  
 
 ## Troubleshooting
 

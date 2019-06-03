@@ -9,6 +9,7 @@ variables:
   MYSQL_RANDOM_ROOT_PASSWORD: "yes"
   MYSQL_USER: symfony
   MYSQL_PASSWORD: $MYSQL_PASSWORD
+  CI_DEBUG_TRACE: "true"
 
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -103,6 +104,7 @@ deploy_staging:
     - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
     - docker-compose run -T yarn install
     - docker-compose run -T yarn encore dev
+    - echo $MYSQL_PASSWORD
     - docker-compose run -T console doctrine:migrations:migrate -n
     - docker-compose run -T console doctrine:fixtures:load -n
     - docker-compose run -T console assets:install --symlink public --relative
