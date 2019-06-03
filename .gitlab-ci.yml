@@ -138,7 +138,7 @@ stop_review:
   except: 
     - master
 
-Stop staging:
+stop_staging:
   stage: deploy
   variables:
     GIT_STRATEGY: none
