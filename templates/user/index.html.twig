@@ -1,50 +1,51 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Users': path('users') }) -%}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
-<div class="row">
-    {% embed 'modal.html.twig' with {'title': 'Create user'|trans, 'class': 'create-user-modal'} %}
-        {% block body %}
-            {{ form(addUserForm, {'id': 'addUserForm'}) }}
-        {% endblock %}
-    {% endembed %}
-
-    {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
-        {% block body %}
-            {{ form(addUserFromFileForm, {'id': 'addUserFromFileForm'}) }}
-        {% endblock %}
-    {% endembed %}
-
-    <div class="col-lg-12 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-
-                <h4 class="card-title">{{ 'Users'|trans }}</h4>
-                <p>
-                    <button class="btn btn-success" data-target=".create-user-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-plus"></i> {{ 'New'|trans }}</button>
-                    <button class="btn btn-info" data-target=".import-user-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-upload"></i> {{ 'Import'|trans }}</button>
-                </p>
-                <table id="userTable" class="table table-hover" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>{{ 'Status'|trans }}</th>
-                            <th class="sorting">{{ 'Last name'|trans }}</th>
-                            <th>{{ 'First name'|trans }}</th>
-                            <th>{{ 'Email'|trans }}</th>
-                            <th>{{ 'Courses'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+    <div class="top-panel">
+            <div class="quick-actions">
+                {% if is_granted('ROLE_ADMINISTRATOR') %}
+                    <a class="btn btn-success" role="button" href="{{ path('new_lab') }}">{{ 'New user'|trans }}</a>
+                    <a class="btn btn-info" role="button" href="{{ path('new_lab') }}">{{ 'Import users'|trans }}</a>
+                {% endif %}
             </div>
-        </div>
+        <ul class="nav-links nav nav-tabs">
+            <li class="active"><a href="#"><span>Active</span> <span class="badge badge-pill">0</span></a></li>
+            <li><a href="#"><span>Inactive</span> <span class="badge badge-pill">0</span></a></li>
+            <li><a href="#"><span>All</span> <span class="badge badge-pill">0</span></a></li>
+        </ul>
     </div>
-</div>
+    <div class="search-panel">
+        <form action="{{ path('users') }}" method="GET">
+            <input type="search" class="form-control input-sm" name="search"
+            placeholder="Search by name or email"
+            spellcheck="false" value="{{ search|default('') }}" type="search">
+        </form>
+    </div>
+    <table class="table users-panel">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>
+                        {{- user.name -}} <br> <a href="mailto:{{- user.email -}}">{{- user.email -}}</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {{ encore_entry_script_tags('user') }}
+    {# {{ encore_entry_script_tags('lab') }} #}
 {% endblock %}

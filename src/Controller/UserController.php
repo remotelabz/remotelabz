@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Form\UserType;
 
 use App\Controller\AppController;
+use App\Repository\UserRepository;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -22,10 +23,12 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class UserController extends AppController
 {
     public $passwordEncoder;
+    public $userRepository;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder)
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository)
     {
         $this->passwordEncoder = $passwordEncoder;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -33,6 +36,23 @@ class UserController extends AppController
      */
     public function indexAction(Request $request)
     {
+        $search = $request->query->get('search', '');
+        
+        if ($search !== '') {
+            $data = $this->userRepository->findByNameLike($search);
+        } else {
+            $data = $this->userRepository->findAll();
+        }
+
+        if ($this->getRequestedFormat($request) === JsonRequest::class) {
+            return $this->json($data);
+        }
+
+        return $this->render('user/index.html.twig', [
+            'users' => $data,
+            'search' => $search
+        ]);
+
         $user = new User();
 
         $addUserForm = $this->createForm(UserType::class, $user);

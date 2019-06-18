@@ -39,7 +39,7 @@ class AppExtension extends AbstractExtension
     public function renderSvg($svg)
     {
         $package = new Package(new EmptyVersionStrategy());
-        $url = $package->getUrl(__DIR__.'../../../public/build/svg/'.$svg.'.svg');
+        $url = $package->getUrl(__DIR__.'/../../public/build/svg/'.$svg.'.svg');
 
         readfile($url);
     }
