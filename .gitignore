@@ -36,3 +36,4 @@ remotelabz
 *.log
 /.vagrant/
 /worker/
+.DS_Store
