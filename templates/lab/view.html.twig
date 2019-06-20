@@ -31,13 +31,13 @@
 <br>
                 <h3>Devices :</h3>
                 <hr>
-                {% set isVNC = false %}
 
                 {% for device in lab.devices %}
                 <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
                     <a href="{{ path('show_device', {'id': device.id}) }}">
                         {{ device.name }}
                     </a>
+                    {% set isVNC = false %}
                     {% for networkInterface in device.networkInterfaces %}
                         {% if networkInterface.settings is defined %}
                             {% if networkInterface.settings.protocol == "VNC" %}

@@ -77,6 +77,12 @@ class LabController extends AppController
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
+
+        // Remove all instances not belongs to current user (changes are not stored in database)
+        foreach ($data->getDevices() as $device) {
+            $userDeviceInstance = $device->getUserInstance($this->getUser());
+            $device->setInstances($userDeviceInstance != null ? [ $userDeviceInstance ] : []);
+        }
         
         return $this->render('lab/view.html.twig', [
             'lab' => $data,
