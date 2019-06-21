@@ -195,10 +195,14 @@ class LabController extends AppController
         $user = $this->getUser();
         $lab = $this->labRepository->find($id);
         $lab->setUser($user);
+        $client = new Client();
+        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerPort = (string) getenv('WORKER_PORT');
 
         $labInstance = $lab->getUserInstance($user);
 
-        if ($labInstance != null && $labInstance->isStarted()) {            throw new AlreadyInstancedException($labInstance);
+        if ($labInstance != null && $labInstance->isStarted()) {
+            throw new AlreadyInstancedException($labInstance);
         } elseif ($labInstance == null) {
             $labInstance = new Instance();
             $labInstance
@@ -220,7 +224,7 @@ class LabController extends AppController
                 $deviceInstance
                     ->setDevice($device)
                     ->setUser($user)
-                    ->setUuid((string) new Uuid());
+                    ->setUuid((string) new Uuid())
                 ;
                 $device->addInstance($deviceInstance);
                 $deviceInstances->add($deviceInstance);
@@ -228,6 +232,35 @@ class LabController extends AppController
             } elseif (! $deviceInstance->isStarted()) {
                 $deviceInstances->add($deviceInstance);
             }
+
+            // create nic instances as well
+            foreach ($device->getNetworkInterfaces() as $networkInterface) {
+                $networkInterfaceInstance = $networkInterface->getUserInstance($user);
+
+                // if vnc access is requested, ask for a free port and register it
+                if ($networkInterface->getSettings()->getProtocol() == "VNC") {
+                    $url = "http://{$workerUrl}:{$workerPort}/worker/port/free";
+                    try {
+                        $response = $client->get($url);
+                    } catch (RequestException $exception) {
+                        dd($exception->getResponse()->getBody()->getContents());
+                    }
+
+                    $networkInterface->getSettings()->setPort($response->getBody()->getContents());
+                    $entityManager->persist($networkInterface);
+                }
+
+                if ($networkInterfaceInstance == null) {
+                    $networkInterfaceInstance = new Instance();
+                    $networkInterfaceInstance
+                        ->setNetworkInterface($networkInterface)
+                        ->setUser($user)
+                        ->setUuid((string) new Uuid())
+                    ;
+                    $networkInterface->addInstance($networkInterfaceInstance);
+                    $entityManager->persist($networkInterfaceInstance);
+                }
+            } 
         }
 
         $entityManager->flush();
@@ -235,9 +268,6 @@ class LabController extends AppController
         $context = SerializationContext::create()->setGroups("lab");
         $labXml = $serializer->serialize($lab, 'xml', $context);
 
-        $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
-        $workerPort = (string) getenv('WORKER_PORT');
         $url = "http://{$workerUrl}:{$workerPort}/lab/start";
         $headers = [ 'Content-Type' => 'application/xml' ];
         try {
@@ -273,24 +303,6 @@ class LabController extends AppController
         ]);
 
         /* Old VPN code (just in case :) )
-            return $this->render('lab/vm_view.html.twig', [
-            'host' => 'ws://' . getenv('WORKER_SERVER'),
-            'port' => getenv('WORKER_PORT'),
-            'path' => 'websockify'
-            ]);
-
-            $entityManager = $this->getDoctrine()->getManager();
-            $repository = $this->getDoctrine()->getRepository('App:Lab');
-
-            $lab = $repository->find($id);
-
-            $instance = Instance::create()
-                ->setActivity($lab)
-                ->setProcessName($lab->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
-                ->setUser($this->getUser())
-                ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
-            ;
-
             if ($lab->getAccessType() === Activity::VPN_ACCESS) {
                 // VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
                 // We use IPTools library to handle IP management
@@ -346,12 +358,6 @@ class LabController extends AppController
                     }
                 }
             }
-
-            $entityManager->persist($instance);
-            $entityManager->flush();
-
-            // TODO: Replace this function with a object and a serializer
-            $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
         */
     }
 
@@ -718,7 +724,7 @@ class LabController extends AppController
             'lab' => $lab,
             'device' => $device,
             'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),
-            'port' => 80,
+            'port' => getenv('WEBSOCKET_PROXY_PORT'),
             'path' => 'device/' . $device->getUserInstance($this->getUser())->getUuid()
         ]);
     }

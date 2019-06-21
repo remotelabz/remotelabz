@@ -35,6 +35,12 @@ class Instance
     private $device;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface", inversedBy="instances")
+     * @Serializer\Groups({"lab"})
+     */
+    private $networkInterface;
+
+    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
@@ -84,6 +90,18 @@ class Instance
     public function setDevice(?Device $device): self
     {
         $this->device = $device;
+
+        return $this;
+    }
+
+    public function getNetworkInterface(): ?NetworkInterface
+    {
+        return $this->networkInterface;
+    }
+
+    public function setNetworkInterface(?NetworkInterface $networkInterface): self
+    {
+        $this->networkInterface = $networkInterface;
 
         return $this;
     }

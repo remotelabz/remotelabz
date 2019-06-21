@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
@@ -55,8 +57,20 @@ class NetworkInterface
      */
     private $macAddress;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="networkInterface", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"lab"})
+     */
+    private $instances;
+
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
+
+    public function __construct()
+    {
+        $this->instances = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -119,6 +133,60 @@ class NetworkInterface
     public function setMacAddress(string $macAddress): self
     {
         $this->macAddress = $macAddress;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Instance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function getUserInstance(User $user): ?Instance
+    {
+        $instance = $this->instances->filter(function ($value) use ($user) {
+            return $value->getUser() == $user;
+        });
+        
+        if (is_null($instance)) {
+            return null;
+        }
+        
+        return $instance[0];
+    }
+
+    public function addInstance(Instance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->setNetworkInterface($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(Instance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            // set the owning side to null (unless already changed)
+            if ($instance->getNetworkInterface() === $this) {
+                $instance->setNetworkInterface(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function setInstances(array $instances): self
+    {
+        $this->getInstances()->clear();
+        foreach ($instances as $instance) {
+            $this->addInstance($instance);
+        }
 
         return $this;
     }

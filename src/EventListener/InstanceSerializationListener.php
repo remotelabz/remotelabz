@@ -5,6 +5,7 @@ namespace App\EventListener;
 use App\Entity\Lab;
 use App\Entity\User;
 use App\Entity\Device;
+use App\Entity\NetworkInterface;
 use App\Repository\DeviceRepository;
 use App\Repository\InstanceRepository;
 use JMS\Serializer\EventDispatcher\PreSerializeEvent;
@@ -43,6 +44,11 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
                 'event' => 'serializer.pre_serialize',
                 'class' => Device::class,
                 'method' => 'onDevicePreSerialize'
+            ],
+            [
+                'event' => 'serializer.pre_serialize',
+                'class' => NetworkInterface::class,
+                'method' => 'onNetworkInterfacePreSerialize'
             ]
         ];
     }
@@ -59,11 +65,21 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
 
     public function onDevicePreSerialize(PreSerializeEvent $event)
     {
-        /** @var Lab $device */
+        /** @var Device $device */
         $device = $event->getObject();
         if ($this->user instanceof User) {
             $deviceInstances = $this->instanceRepository->findBy(['user' => $this->user, 'device' => $device]);
             $device->setInstances($deviceInstances);
+        }
+    }
+
+    public function onNetworkInterfacePreSerialize(PreSerializeEvent $event)
+    {
+        /** @var NetworkInterface $networkInterface */
+        $networkInterface = $event->getObject();
+        if ($this->user instanceof User) {
+            $networkInterfaceInstances = $this->instanceRepository->findBy(['user' => $this->user, 'networkInterface' => $networkInterface]);
+            $networkInterface->setInstances($networkInterfaceInstances);
         }
     }
 }
