@@ -1,16 +1,17 @@
 #!/bin/sh
 
-export REMOTELABZ_PATH=/var/www/html/remotelabz
-
 # Environment variables
+export REMOTELABZ_PATH=/var/www/html/remotelabz
 export DEBIAN_FRONTEND=noninteractive
+# Install packages
+apt-get update
+apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server
+# Move files
+mv /home/vagrant/remotelabz /var/www/html
 cp "${REMOTELABZ_PATH}"/.env.dist "${REMOTELABZ_PATH}"/.env
 . "${REMOTELABZ_PATH}"/.env
 # Redirections
 echo "127.0.0.1       ${MYSQL_SERVER}" >> /etc/hosts
-# Install packages
-apt-get update
-apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server
 # MySQL
 mysql -u root -e "CREATE USER '${MYSQL_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}'"
 mysql -u root -e "CREATE DATABASE ${MYSQL_DATABASE}"
