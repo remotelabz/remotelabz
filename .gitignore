@@ -19,6 +19,7 @@
 
 # Visual Studio config
 /.vscode/
+*.code-workspace
 
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
