@@ -2,14 +2,18 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
  * @Serializer\XmlRoot("network_interface")
  */
-class NetworkInterface
+class NetworkInterface implements InstanciableInterface
 {
     /**
      * @ORM\Id()
@@ -55,8 +59,28 @@ class NetworkInterface
      */
     private $macAddress;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"lab"})
+     */
+    private $instances;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
+
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
+
+    public function __construct()
+    {
+        $this->instances = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
+    }
 
     public function getId(): ?int
     {
@@ -119,6 +143,72 @@ class NetworkInterface
     public function setMacAddress(string $macAddress): self
     {
         $this->macAddress = $macAddress;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Instance[]
+     */
+    public function getInstances(): Collection
+    {
+        return $this->instances;
+    }
+
+    public function getUserInstance(User $user): ?Instance
+    {
+        $instance = $this->instances->filter(function ($value) use ($user) {
+            return $value->getUser() == $user;
+        });
+        
+        if (is_null($instance)) {
+            return null;
+        }
+        
+        return $instance[0];
+    }
+
+    public function addInstance(Instance $instance): self
+    {
+        if (!$this->instances->contains($instance)) {
+            $this->instances[] = $instance;
+            $instance->setNetworkInterface($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstance(Instance $instance): self
+    {
+        if ($this->instances->contains($instance)) {
+            $this->instances->removeElement($instance);
+            // set the owning side to null (unless already changed)
+            if ($instance->getNetworkInterface() === $this) {
+                $instance->setNetworkInterface(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function setInstances(array $instances): self
+    {
+        $this->getInstances()->clear();
+        foreach ($instances as $instance) {
+            $this->addInstance($instance);
+        }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

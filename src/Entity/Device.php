@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Filesystem\Filesystem;
@@ -13,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
  */
-class Device
+class Device implements InstanciableInterface
 {
     /**
      * @ORM\Id()
@@ -115,7 +117,7 @@ class Device
     private $flavor;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="device", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="device", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab"})
      */
@@ -341,15 +343,14 @@ class Device
 
     public function getUserInstance(User $user): ?Instance
     {
-        $instance = $this->instances->filter(function ($value) use ($user) {
-            return $value->getUser() == $user;
-        });
-        
-        if (is_null($instance)) {
+        $criteria = Criteria::create()->where(Criteria::expr()->eq("user", $user));
+
+        $instance = $this->getInstances()->matching($criteria)->first();
+
+        if (!$instance) {
             return null;
         }
-        
-        return $instance[0];
+        return $instance;
     }
 
     public function addInstance(Instance $instance): self
