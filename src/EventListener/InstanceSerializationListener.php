@@ -7,8 +7,10 @@ use App\Entity\User;
 use App\Entity\Device;
 use App\Entity\NetworkInterface;
 use App\Repository\DeviceRepository;
-use App\Repository\InstanceRepository;
+use App\Repository\LabInstanceRepository;
+use App\Repository\DeviceInstanceRepository;
 use JMS\Serializer\EventDispatcher\PreSerializeEvent;
+use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use JMS\Serializer\EventDispatcher\EventSubscriberInterface as JMSEventSubscriberInterface;
 
@@ -18,13 +20,25 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
 
     private $user;
 
-    private $instanceRepository;
+    private $labInstanceRepository;
+    
+    private $deviceInstanceRepository;
+
+    private $networkInterfaceInstanceRepository;
 
     private $deviceRepository;
 
-    public function __construct(TokenStorageInterface $tokenStorage, InstanceRepository $instanceRepository, DeviceRepository $deviceRepository) {
+    public function __construct(
+        TokenStorageInterface $tokenStorage,
+        LabInstanceRepository $labInstanceRepository,
+        DeviceInstanceRepository $deviceInstanceRepository,
+        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        DeviceRepository $deviceRepository
+        ) {
         $this->tokenStorage = $tokenStorage;
-        $this->instanceRepository = $instanceRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
+        $this->deviceInstanceRepository = $deviceInstanceRepository;
+        $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->deviceRepository = $deviceRepository;
         $this->user = $tokenStorage->getToken()->getUser();
     }
@@ -38,7 +52,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
             [
                 'event' => 'serializer.pre_serialize',
                 'class' => Lab::class,
-                'method' => 'onPreSerialize'
+                'method' => 'onLabPreSerialize'
             ],
             [
                 'event' => 'serializer.pre_serialize',
@@ -53,12 +67,12 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         ];
     }
 
-    public function onPreSerialize(PreSerializeEvent $event)
+    public function onLabPreSerialize(PreSerializeEvent $event)
     {
         /** @var Lab $lab */
         $lab = $event->getObject();
         if ($this->user instanceof User) {
-            $labInstances = $this->instanceRepository->findBy(['user' => $this->user, 'lab' => $lab]);
+            $labInstances = $this->labInstanceRepository->findBy(['user' => $this->user, 'lab' => $lab]);
             $lab->setInstances($labInstances);
         }
     }
@@ -68,7 +82,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         /** @var Device $device */
         $device = $event->getObject();
         if ($this->user instanceof User) {
-            $deviceInstances = $this->instanceRepository->findBy(['user' => $this->user, 'device' => $device]);
+            $deviceInstances = $this->deviceInstanceRepository->findBy(['user' => $this->user, 'device' => $device]);
             $device->setInstances($deviceInstances);
         }
     }
@@ -78,7 +92,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         /** @var NetworkInterface $networkInterface */
         $networkInterface = $event->getObject();
         if ($this->user instanceof User) {
-            $networkInterfaceInstances = $this->instanceRepository->findBy(['user' => $this->user, 'networkInterface' => $networkInterface]);
+            $networkInterfaceInstances = $this->networkInterfaceInstanceRepository->findBy(['user' => $this->user, 'networkInterface' => $networkInterface]);
             $networkInterface->setInstances($networkInterfaceInstances);
         }
     }

@@ -28,7 +28,7 @@
                     </div>
                 </h4>
                 <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>
-<br>
+                <br>
                 <h3>Devices :</h3>
                 <hr>
 
@@ -47,7 +47,7 @@
                     {% endfor %}
                     <div class="float-right">
                         {%- set startDeviceButton -%}
-                            <a href="{{ path('start_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                            <a href="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
                                 {{ svg('play') }}
                             </a>
                         {%- endset -%}
@@ -71,7 +71,7 @@
                         {% endif %}
 
                         {% set stopDeviceButton -%}
-                            <a href="{{ path('stop_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                            <a href="{{ path('stop_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
                                     {{ svg('stop') }}
                             </a>
                         {%- endset -%}

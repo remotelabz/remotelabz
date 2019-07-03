@@ -78,17 +78,39 @@ class User implements UserInterface
     private $labs;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="user")
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"instances"})
      */
-    private $instances;
+    private $labInstances;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="user")
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"instances"})
+     */
+    private $deviceInstances;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="user")
+     * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"instances"})
+     */
+    private $networkInterfaceInstances;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
+     */
+    private $createdLabs;
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
         $this->labs = new ArrayCollection();
-        $this->instances = new ArrayCollection();
+        $this->labInstances = new ArrayCollection();
+        $this->deviceInstances = new ArrayCollection();
+        $this->networkInterfaceInstances = new ArrayCollection();
+        $this->createdLabs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -283,30 +305,139 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection|Instance[]
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"lab", "instances", "details"})
+     * @Serializer\XmlList(inline=false, entry="instances")
      */
     public function getInstances(): Collection
     {
-        return $this->instances;
+        return new ArrayCollection(
+            array_merge(
+                $this->labInstances->toArray(),
+                $this->deviceInstances->toArray(),
+                $this->networkInterfaceInstances->toArray()
+            )
+        );
     }
 
-    public function addInstance(Instance $instance): self
+    /**
+     * @return Collection|LabInstance[]
+     */
+    public function getLabInstances(): Collection
     {
-        if (!$this->instances->contains($instance)) {
-            $this->instances[] = $instance;
-            $instance->setUser($this);
+        return $this->labInstances;
+    }
+
+    public function addLabInstance(LabInstance $labInstance): self
+    {
+        if (!$this->labInstances->contains($labInstance)) {
+            $this->labInstances[] = $labInstance;
+            $labInstance->setUser($this);
         }
 
         return $this;
     }
 
-    public function removeInstance(Instance $instance): self
+    public function removeLabInstance(LabInstance $labInstance): self
     {
-        if ($this->instances->contains($instance)) {
-            $this->instances->removeElement($instance);
+        if ($this->labInstances->contains($labInstance)) {
+            $this->labInstances->removeElement($labInstance);
             // set the owning side to null (unless already changed)
-            if ($instance->getUser() === $this) {
-                $instance->setUser(null);
+            if ($labInstance->getUser() === $this) {
+                $labInstance->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DeviceInstance[]
+     */
+    public function getDeviceInstances(): Collection
+    {
+        return $this->deviceInstances;
+    }
+
+    public function addDeviceInstance(DeviceInstance $deviceInstance): self
+    {
+        if (!$this->deviceInstances->contains($deviceInstance)) {
+            $this->deviceInstances[] = $deviceInstance;
+            $deviceInstance->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDeviceInstance(DeviceInstance $deviceInstance): self
+    {
+        if ($this->deviceInstances->contains($deviceInstance)) {
+            $this->deviceInstances->removeElement($deviceInstance);
+            // set the owning side to null (unless already changed)
+            if ($deviceInstance->getUser() === $this) {
+                $deviceInstance->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|NetworkInterfaceInstance[]
+     */
+    public function getNetworkInterfaceInstances(): Collection
+    {
+        return $this->networkInterfaceInstances;
+    }
+
+    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
+            $networkInterfaceInstance->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
+            // set the owning side to null (unless already changed)
+            if ($networkInterfaceInstance->getUser() === $this) {
+                $networkInterfaceInstance->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getCreatedLabs(): Collection
+    {
+        return $this->createdLabs;
+    }
+
+    public function addCreatedLab(Lab $createdLab): self
+    {
+        if (!$this->createdLabs->contains($createdLab)) {
+            $this->createdLabs[] = $createdLab;
+            $createdLab->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatedLab(Lab $createdLab): self
+    {
+        if ($this->createdLabs->contains($createdLab)) {
+            $this->createdLabs->removeElement($createdLab);
+            // set the owning side to null (unless already changed)
+            if ($createdLab->getAuthor() === $this) {
+                $createdLab->setAuthor(null);
             }
         }
 

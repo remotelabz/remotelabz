@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -11,7 +13,7 @@ use Doctrine\Common\Collections\ArrayCollection;
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
  * @Serializer\XmlRoot("network_interface")
  */
-class NetworkInterface
+class NetworkInterface implements InstanciableInterface
 {
     /**
      * @ORM\Id()
@@ -58,11 +60,18 @@ class NetworkInterface
     private $macAddress;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="networkInterface", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab"})
      */
     private $instances;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
+     */
+    private $uuid;
 
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
@@ -70,6 +79,7 @@ class NetworkInterface
     public function __construct()
     {
         $this->instances = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -187,6 +197,18 @@ class NetworkInterface
         foreach ($instances as $instance) {
             $this->addInstance($instance);
         }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

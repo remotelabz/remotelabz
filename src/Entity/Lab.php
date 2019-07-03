@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -13,7 +15,7 @@ use Doctrine\Common\Collections\ArrayCollection;
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
  * @Serializer\XmlRoot("lab")
  */
-class Lab
+class Lab implements InstanciableInterface
 {
     /**
      * @ORM\Id()
@@ -66,7 +68,7 @@ class Lab
     private $isStarted = false;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Instance", mappedBy="lab", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="lab", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab"})
      */
@@ -229,15 +231,14 @@ class Lab
 
     public function getUserInstance(User $user): ?Instance
     {
-        $instance = $this->instances->filter(function ($value) use ($user) {
-            return $value->getUser() == $user;
-        });
-        
-        if (is_null($instance)) {
+        $criteria = Criteria::create()->where(Criteria::expr()->eq("user", $user));
+
+        $instance = $this->getInstances()->matching($criteria)->first();
+
+        if (!$instance) {
             return null;
         }
-        
-        return $instance[0];
+        return $instance;
     }
 
     public function addInstance(Instance $instance): self
