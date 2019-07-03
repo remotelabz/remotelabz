@@ -28,16 +28,16 @@
                     </div>
                 </h4>
                 <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>
-<br>
+                <br>
                 <h3>Devices :</h3>
                 <hr>
-                {% set isVNC = false %}
 
                 {% for device in lab.devices %}
                 <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
                     <a href="{{ path('show_device', {'id': device.id}) }}">
                         {{ device.name }}
                     </a>
+                    {% set isVNC = false %}
                     {% for networkInterface in device.networkInterfaces %}
                         {% if networkInterface.settings is defined %}
                             {% if networkInterface.settings.protocol == "VNC" %}
@@ -47,7 +47,7 @@
                     {% endfor %}
                     <div class="float-right">
                         {%- set startDeviceButton -%}
-                            <a href="{{ path('start_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                            <a href="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
                                 {{ svg('play') }}
                             </a>
                         {%- endset -%}
@@ -71,7 +71,7 @@
                         {% endif %}
 
                         {% set stopDeviceButton -%}
-                            <a href="{{ path('stop_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                            <a href="{{ path('stop_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
                                     {{ svg('stop') }}
                             </a>
                         {%- endset -%}

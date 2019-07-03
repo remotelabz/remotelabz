@@ -8,11 +8,15 @@ use App\Form\LabType;
 use App\Entity\Device;
 use GuzzleHttp\Client;
 use App\Entity\Instance;
+use App\Entity\LabInstance;
 use App\Service\FileUploader;
+use App\Entity\DeviceInstance;
+use App\Entity\NetworkSettings;
 use App\Repository\LabRepository;
 use App\Exception\InstanceException;
 use App\Repository\DeviceRepository;
 use JMS\Serializer\SerializerInterface;
+use App\Entity\NetworkInterfaceInstance;
 use App\Exception\NotInstancedException;
 use JMS\Serializer\SerializationContext;
 use GuzzleHttp\Exception\RequestException;
@@ -30,10 +34,12 @@ class LabController extends AppController
 {
     private $labRepository;
     private $deviceRepository;
+    private $serializer;
 
-    public function __construct(LabRepository $labRepository, DeviceRepository $deviceRepository) {
+    public function __construct(LabRepository $labRepository, DeviceRepository $deviceRepository, SerializerInterface $serializer) {
         $this->labRepository = $labRepository;
         $this->deviceRepository = $deviceRepository;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -77,10 +83,20 @@ class LabController extends AppController
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->json($data);
         }
+
+        // Remove all instances not belongs to current user (changes are not stored in database)
+        $userLabInstance = $data->getUserInstance($this->getUser());
+        $data->setInstances($userLabInstance != null ? [ $userLabInstance ] : []);
+
+        foreach ($data->getDevices() as $device) {
+            $userDeviceInstance = $device->getUserInstance($this->getUser());
+            $device->setInstances($userDeviceInstance != null ? [ $userDeviceInstance ] : []);
+        }
         
         return $this->render('lab/view.html.twig', [
             'lab' => $data,
-            'labInstance' => $data->getUserInstance($this->getUser())
+            'labInstance' => $data->getUserInstance($this->getUser()),
+            'user' => $this->getUser()
         ]);
     }
 
@@ -183,290 +199,153 @@ class LabController extends AppController
     /**
      * @Route("/labs/{id<\d+>}/start", name="start_lab", methods="GET")
      */
-    public function startAction(Request $request, int $id, SerializerInterface $serializer)
+    public function startLabAction(int $id)
     {
-        $entityManager = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
         $lab = $this->labRepository->find($id);
-        $lab->setUser($user);
-
-        $labInstance = $lab->getUserInstance($user);
-
-        if ($labInstance != null && $labInstance->isStarted()) {            throw new AlreadyInstancedException($labInstance);
-        } elseif ($labInstance == null) {
-            $labInstance = new Instance();
-            $labInstance
-                ->setLab($lab)
-                ->setUser($user)
-                ->setUuid((string) new Uuid())
-            ;
-            $lab->addInstance($labInstance);
-            $entityManager->persist($lab);
-        }
-
-        $deviceInstances = new ArrayCollection();
 
         foreach ($lab->getDevices() as $device) {
-            $deviceInstance = $device->getUserInstance($user);
-
-            if ($deviceInstance == null) {
-                $deviceInstance = new Instance();
-                $deviceInstance
-                    ->setDevice($device)
-                    ->setUser($user)
-                    ->setUuid((string) new Uuid());
-                ;
-                $device->addInstance($deviceInstance);
-                $deviceInstances->add($deviceInstance);
-                $entityManager->persist($deviceInstance);
-            } elseif (! $deviceInstance->isStarted()) {
-                $deviceInstances->add($deviceInstance);
-            }
-        }
-
-        $entityManager->flush();
-
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $serializer->serialize($lab, 'xml', $context);
-
-        $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
-        $workerPort = (string) getenv('WORKER_PORT');
-        $url = "http://{$workerUrl}:{$workerPort}/lab/start";
-        $headers = [ 'Content-Type' => 'application/xml' ];
-        try {
-            $response = $client->post($url, [
-                'body' => $labXml,
-                'headers' => $headers
-            ]);
-        } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances(), $deviceInstances);
-        }
-
-        foreach ($deviceInstances as $deviceInstance) {
             try {
-                $this->createDeviceProxyRoute($deviceInstance->getDevice());
-            } catch (RequestException $exception) {
-                dd($exception);
+                $this->startDevice($lab, $device);
+            } catch (AlreadyInstancedException $exception) {
+                
             }
-
-            $deviceInstance->setStarted(true);
-            $entityManager->persist($deviceInstance);
         }
 
-        $labInstance->setStarted(true);
-        $entityManager->persist($labInstance);
-
-        $entityManager->flush();
-        
         $this->addFlash('success', $lab->getName().' has been started.');
 
         return $this->redirectToRoute('show_lab', [
-            'id' => $id,
-            'output' => $response
+            'id' => $id
         ]);
-
-        /* Old VPN code (just in case :) )
-            return $this->render('lab/vm_view.html.twig', [
-            'host' => 'ws://' . getenv('WORKER_SERVER'),
-            'port' => getenv('WORKER_PORT'),
-            'path' => 'websockify'
-            ]);
-
-            $entityManager = $this->getDoctrine()->getManager();
-            $repository = $this->getDoctrine()->getRepository('App:Lab');
-
-            $lab = $repository->find($id);
-
-            $instance = Instance::create()
-                ->setActivity($lab)
-                ->setProcessName($lab->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
-                ->setUser($this->getUser())
-                ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
-            ;
-
-            if ($lab->getAccessType() === Activity::VPN_ACCESS) {
-                // VPN access to the laboratory. We need to reserve IP Network for the user and for the devices
-                // We use IPTools library to handle IP management
-                // See : https://github.com/S1lentium/IPTools
-                $network = new Network(getAvailableNetwork($_ENV['LAB_NETWORK'], $_ENV['LAB_SUBNETS_POOL_SIZE']));
-
-                $entityManager->persist($network);
-                $instance->setNetwork($network);
-
-                $userNetwork = new Network(getAvailableNetwork($_ENV['USER_NETWORK'], $_ENV['USER_SUBNETS_POOL_SIZE']));
-
-                $entityManager->persist($userNetwork);
-                $instance->setUserNetwork($userNetwork);
-
-                // For user network with the VPN
-                $fileSystem = new Filesystem();
-
-                $createVpnUserFile = $instance->getStoragePath() . '/' . "create_vpn_user.sh";
-                $deleteVpnUserFile = $instance->getStoragePath() . '/' . "delete_vpn_user.sh";
-
-                try {
-                    $fileSystem->appendToFile(
-                        $createVpnUserFile,
-                        "#!/bin/bash\n" .
-                        "source " . $_ENV['VPN_SCRIPTS_PATH'] . "easy-rsa/vars"
-                    );
-                    $fileSystem->appendToFile(
-                        $deleteVpnUserFile,
-                        "#!/bin/bash\n" .
-                        "source " . $_ENV['VPN_SCRIPTS_PATH'] . "easy-rsa/vars"
-                    );
-                } catch (IOExceptionInterface $exception) {
-                    throw new ServiceUnavailableHttpException('Oops, there was a problem. Please try again.');
-                }
-
-                foreach ($this->getUser()->getCourses() as $course) {
-                    foreach ($course->getUsers() as $user) {
-                        try {
-                            $fileSystem->appendToFile(
-                                $createVpnUserFile,
-                                'KEY_CN="' . $user->getLastName() . '_' . $user->getFirstName() . '"' .
-                                $_ENV['VPN_SCRIPTS_PATH'] . 'easy-rsa/pkitool ' . $user->getLastName() . "\n" .
-                            $_ENV['VPN_SCRIPTS_PATH'] . 'client-config/make_config.sh ' . $user->getLastName() . "\n"
-                            );
-                            $fileSystem->appendToFile(
-                                $deleteVpnUserFile,
-                                $_ENV['VPN_SCRIPTS_PATH'] . 'easy-rsa/revoke-full ' . $user->getLastName() . "\n" .
-                                '/etc/init.d/openvpn restart' . "\n"
-                            );
-                        } catch (IOExceptionInterface $exception) {
-                            throw new ServiceUnavailableHttpException('Oops, there was a problem. Please try again.');
-                        }
-                    }
-                }
-            }
-
-            $entityManager->persist($instance);
-            $entityManager->flush();
-
-            // TODO: Replace this function with a object and a serializer
-            $labFile = $this->generateXMLLabFile($id, $network, $userNetwork);
-        */
     }
 
     /**
      * @Route("/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
      */
-    public function stopAction(Request $request, int $id, SerializerInterface $serializer)
+    public function stopLabAction(int $id)
     {
-        $entityManager = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
         $lab = $this->labRepository->find($id);
-        $lab->setUser($user);
-
-        $labInstance = $lab->getUserInstance($user);
-
-        if ($labInstance == null) {
-            throw new NotInstancedException();
-        }
-        
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $serializer->serialize($lab, 'xml', $context);
-
-        $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
-        $workerPort = (string) getenv('WORKER_PORT');
-        $url = "http://{$workerUrl}:{$workerPort}/lab/stop";
-        $headers = [ 'Content-Type' => 'application/xml' ];
-        try {
-            $response = $client->post($url, [
-                'body' => $labXml,
-                'headers' => $headers
-            ]);
-        } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-        }
 
         foreach ($lab->getDevices() as $device) {
-            $deviceInstance = $device->getUserInstance($user);
-            
-            if ($deviceInstance != null) {
-                try {
-                    $this->deleteDeviceProxyRoute($device);
-                } catch (RequestException $exception) {
-                    if ($exception->getCode() != 404) {
-                        dd($exception);
-                    }
-                }
-
-                $device->removeInstance($deviceInstance);
-                $entityManager->remove($deviceInstance);
-                $entityManager->persist($device);
+            try {
+                $this->stopDevice($lab, $device);
+            } catch (NotInstancedException $exception) {
+                
             }
         }
-        
-        $lab->removeInstance($labInstance);
-        $entityManager->remove($labInstance);
 
-        $entityManager->persist($lab);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Lab has been stopped.');
+        $this->addFlash('success', $lab->getName().' has been stopped.');
 
         return $this->redirectToRoute('show_lab', [
-            'id' => $id,
-            'output' => $response
+            'id' => $id
         ]);
     }
 
     /**
-     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/start", name="start_lab_device", methods="GET")
+     * @Route("/labs/{labId<\d+>}/device/{deviceId<\d+>}/start", name="start_lab_device", methods="GET")
      */
-    public function deviceStartAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
+    public function startDeviceAction(int $labId, int $deviceId)
+    {
+        $lab = $this->labRepository->find($labId);
+        $device = $this->deviceRepository->find($deviceId);
+
+        $this->startDevice($lab, $device);
+        
+        $this->addFlash('success', $device->getName() . ' has been started.');
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $labId,
+        ]);
+    }
+
+    /**
+     * @Route("/labs/{labId<\d+>}/device/{deviceId<\d+>}/stop", name="stop_lab_device", methods="GET")
+     */
+    public function stopDeviceAction(int $labId, int $deviceId)
+    {
+        $lab = $this->labRepository->find($labId);
+        $device = $this->deviceRepository->find($deviceId);
+
+        $this->stopDevice($lab, $device);
+
+        $this->addFlash('success', $device->getName() . ' has been stopped.');
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $labId
+        ]);
+    }
+
+    private function startDevice(Lab $lab, Device $device)
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab = $this->labRepository->find($id);
         $lab->setUser($user);
-
-        $device = $this->deviceRepository->find($deviceId);
+        $client = new Client();
+        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerPort = (string) getenv('WORKER_PORT');
 
         $labInstance = $lab->getUserInstance($user);
 
         if ($labInstance != null && $labInstance->isStarted()) {
             throw new AlreadyInstancedException($labInstance);
-        } else {
-            $labInstance = new Instance();
+        } elseif ($labInstance == null) {
+            $labInstance = new LabInstance();
             $labInstance
                 ->setLab($lab)
                 ->setUser($user)
-                ->setUuid((string) new Uuid())
             ;
-
             $lab->addInstance($labInstance);
+            $entityManager->persist($lab);
         }
 
-        $instance = $device->getUserInstance($user);
+        $deviceInstance = $device->getUserInstance($user);
 
-        if ($instance != null && $instance->isStarted()) {
-            throw new AlreadyInstancedException($instance);
-        } else {
-            $instance = new Instance();
-            $instance
+        if ($deviceInstance != null && $deviceInstance->isStarted()) {
+            throw new AlreadyInstancedException($deviceInstance);
+        } elseif ($deviceInstance == null) {
+            $deviceInstance = new DeviceInstance();
+            $deviceInstance
                 ->setDevice($device)
                 ->setUser($user)
-                ->setUuid((string) new Uuid());
             ;
-
-            $device->addInstance($instance);
+            $device->addInstance($deviceInstance);
+            $entityManager->persist($deviceInstance);
         }
-        
-        $entityManager->persist($lab);
-        $entityManager->persist($device);
-        $entityManager->flush();
-    
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $serializer->serialize($lab, 'xml', $context);
 
-        $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
-        $workerPort = (string) getenv('WORKER_PORT');
-        $url = 'http://' . getenv('WORKER_SERVER') . ':' . getenv('WORKER_PORT') . '/lab/device/' . $device->getUuid() . '/start';
+        // create nic instances as well
+        foreach ($device->getNetworkInterfaces() as $networkInterface) {
+            $networkInterfaceInstance = $networkInterface->getUserInstance($user);
+
+            if ($networkInterfaceInstance == null) {
+                $networkInterfaceInstance = new NetworkInterfaceInstance();
+                $networkInterfaceInstance
+                    ->setNetworkInterface($networkInterface)
+                    ->setUser($user)
+                ;
+
+                // if vnc access is requested, ask for a free port and register it
+                if ($networkInterface->getSettings()->getProtocol() == "VNC") {
+                    $remotePort = $this->getRemoteAvailablePort();
+                    $networkInterfaceInstance->setRemotePort($remotePort);
+                    try {
+                        $this->createDeviceProxyRoute($deviceInstance->getDevice(), $remotePort);
+                    } catch (RequestException $exception) {
+                        dd($exception);
+                    }
+                }
+
+                $networkInterface->addInstance($networkInterfaceInstance);
+                $entityManager->persist($networkInterfaceInstance);
+            }
+        }
+
+        $entityManager->flush();
+
+        $context = SerializationContext::create()->setGroups("lab");
+        $labXml = $this->serializer->serialize($lab, 'xml', $context);
+
+        $deviceUuid = $device->getUuid();
+
+        $url = "http://{$workerUrl}:{$workerPort}/lab/device/{$deviceUuid}/start";
         $headers = [ 'Content-Type' => 'application/xml' ];
         try {
             $response = $client->post($url, [
@@ -476,105 +355,120 @@ class LabController extends AppController
         } catch (RequestException $exception) {
             dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
         }
-            
-        $instance->setStarted(true);
-        $entityManager->persist($instance);
 
+
+        foreach ($device->getNetworkInterfaces() as $networkInterface) {
+            $networkInterfaceInstance = $networkInterface->getUserInstance($user);
+
+            $networkInterfaceInstance->setStarted(true);
+            $entityManager->persist($networkInterfaceInstance);
+        }
+
+        $deviceInstance->setStarted(true);
+        $entityManager->persist($deviceInstance);
+
+        // check if the whole lab is started
         $isStarted = $lab->getDevices()->forAll(function ($index, $value) use ($user) {
             $instance = $value->getUserInstance($user);
             return $instance != null ? $instance->isStarted() : false;
         });
         $labInstance->setStarted($isStarted);
         $entityManager->persist($labInstance);
-    
+
         $entityManager->flush();
-        
-
-        // Create device proxy route
-        try {
-            $this->createDeviceProxyRoute($device);
-        } catch (RequestException $exception) {
-            dd($exception);
-        }
-        
-        $this->addFlash('success', $device->getName() . ' has been started.');
-
-        return $this->redirectToRoute('show_lab', [
-            'id' => $id,
-            'output' => $response
-        ]);
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/stop", name="stop_lab_device", methods="GET")
-     */
-    public function deviceStopAction(Request $request, int $id, int $deviceId, SerializerInterface $serializer)
+    private function stopDevice(Lab $lab, Device $device)
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab = $this->labRepository->find($id);
         $lab->setUser($user);
-        
-        $device = $this->getDoctrine()->getRepository('App:Device')->find($deviceId);
-
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $serializer->serialize($lab, 'xml', $context);
+        $client = new Client();
+        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerPort = (string) getenv('WORKER_PORT');
 
         $labInstance = $lab->getUserInstance($user);
+
+        if ($labInstance == null) {
+            throw new NotInstancedException($lab);
+        }
+
         $deviceInstance = $device->getUserInstance($user);
 
-        if (is_null($labInstance)) {
-            throw new NotInstancedException();
+        if ($deviceInstance == null) {
+            throw new NotInstancedException($device);
         }
+        
+        $context = SerializationContext::create()->setGroups("lab");
+        $labXml = $this->serializer->serialize($lab, 'xml', $context);
 
-        if (is_null($deviceInstance)) {
-            throw new NotInstancedException();
-        }
+        $deviceUuid = $device->getUuid();
 
-        $client = new Client();
-        $url = 'http://' . getenv('WORKER_SERVER') . ':' . getenv('WORKER_PORT') . '/lab/device/' . $device->getUuid() . '/stop';
-        $headers = [
-            'Content-Type' => 'application/xml'
-        ];
+        $url = "http://{$workerUrl}:{$workerPort}/lab/device/{$deviceUuid}/stop";
+        $headers = [ 'Content-Type' => 'application/xml' ];
         try {
             $response = $client->post($url, [
                 'body' => $labXml,
                 'headers' => $headers
             ]);
         } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents());
+            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
         }
 
-        // Delete device proxy route
+        // delete the proxy route if device had one
         try {
             $this->deleteDeviceProxyRoute($device);
         } catch (RequestException $exception) {
-            dd($exception);
+            // if we have a 404 error, it means the device's route has already been deleted for some reasons
+            if ($exception->getCode() != 404) {
+                dd($exception);
+            }
         }
 
+        foreach ($device->getNetworkInterfaces() as $networkInterface) {
+            $networkInterfaceInstance = $networkInterface->getUserInstance($user);
+
+            if ($networkInterfaceInstance != null) {
+                $networkInterface->removeInstance($networkInterfaceInstance);
+                $entityManager->remove($networkInterfaceInstance);
+                $entityManager->persist($networkInterface);
+            }
+        }
+        
+        // first, remove device instance
         $device->removeInstance($deviceInstance);
         $entityManager->remove($deviceInstance);
-        
+
+        // then, if there is no device instance left for current user, delete lab instance
         if (! $lab->hasDeviceUserInstance($user)) {
             $lab->removeInstance($labInstance);
             $entityManager->remove($labInstance);
-        } else {
+        } else { // otherwise, just tell the system the lab is not fully started
             $labInstance->setStarted(false);
         }
-
+        
         $entityManager->persist($device);
         $entityManager->persist($lab);
         $entityManager->flush();
-
-        $this->addFlash('success', $device->getName() . ' has been started.');
-
-        return $this->redirectToRoute('show_lab', [
-            'id' => $id,
-            'output' => $response
-        ]);
     }
 
-    private function createDeviceProxyRoute(Device $device)
+    private function getRemoteAvailablePort(): int
+    {
+        $client = new Client();
+        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerPort = (string) getenv('WORKER_PORT');
+
+        $url = "http://{$workerUrl}:{$workerPort}/worker/port/free";
+        try {
+            $response = $client->get($url);
+        } catch (RequestException $exception) {
+            throw $exception;
+        }
+
+        return (int) $response->getBody()->getContents();
+    }
+
+    private function createDeviceProxyRoute(Device $device, int $remotePort)
     {
         $client = new Client();
         
@@ -587,8 +481,7 @@ class LabController extends AppController
             try {
                 $client->post($url, [
                     'body' => '{
-                        "target": "ws://' . getenv('WORKER_SERVER') . ':'
-                        . ((int)$device->getNetworkInterfaces()->toArray()[0]->getSettings()->getPort() + 1000) . '"
+                        "target": "ws://' . getenv('WORKER_SERVER') . ':' . ($remotePort + 1000) . '"
                     }',
                     'headers' => [
                         'Content-Type' => 'application/json'
@@ -712,7 +605,7 @@ class LabController extends AppController
             'lab' => $lab,
             'device' => $device,
             'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),
-            'port' => 80,
+            'port' => getenv('WEBSOCKET_PROXY_PORT'),
             'path' => 'device/' . $device->getUserInstance($this->getUser())->getUuid()
         ]);
     }

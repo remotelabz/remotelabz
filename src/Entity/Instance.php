@@ -9,83 +9,27 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\InstanceRepository")
+ * @ORM\MappedSuperclass
  */
 class Instance
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
-     */
-    private $id;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
-     * @Serializer\Groups({"lab"})
-     */
-    private $lab;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
-     * @Serializer\Groups({"lab"})
-     */
-    private $device;
-
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
      */
-    private $uuid;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="instances")
-     * @Serializer\Groups({"user"})
-     */
-    private $user;
+    protected $uuid;
 
     /**
      * @ORM\Column(type="boolean")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
      */
-    private $isStarted = false;
+    protected $isStarted = false;
 
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getLab(): ?Lab
-    {
-        return $this->lab;
-    }
-
-    public function setLab(?Lab $lab): self
-    {
-        $this->lab = $lab;
-
-        return $this;
-    }
-
-    public function getDevice(): ?Device
-    {
-        return $this->device;
-    }
-
-    public function setDevice(?Device $device): self
-    {
-        $this->device = $device;
-
-        return $this;
     }
 
     public function getUuid(): ?string
@@ -96,18 +40,6 @@ class Instance
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
-
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
 
         return $this;
     }
