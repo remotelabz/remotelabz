@@ -103,6 +103,12 @@ class User implements UserInterface
      */
     private $createdLabs;
 
+    /**
+     * @ORM\Column(type="string")
+     * @Serializer\Exclude
+     */
+    private $profilePictureFilename;
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
@@ -440,6 +446,18 @@ class User implements UserInterface
                 $createdLab->setAuthor(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getProfilePictureFilename(): ?string
+    {
+        return $this->profilePictureFilename;
+    }
+
+    public function setProfilePictureFilename($profilePictureFilename): self
+    {
+        $this->profilePictureFilename = $profilePictureFilename;
 
         return $this;
     }

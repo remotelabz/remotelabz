@@ -5,15 +5,16 @@ namespace App\Form;
 use App\Entity\User;
 use App\Entity\Course;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 
 class UserType extends AbstractType
 {
@@ -22,6 +23,9 @@ class UserType extends AbstractType
         $builder
             ->add('email', EmailType::class)
             ->add('password', PasswordType::class)
+            ->add('confirmPassword', PasswordType::class, [
+                'mapped' => false
+            ])
             ->add('lastName', TextType::class)
             ->add('firstName', TextType::class)
             ->add('roles', ChoiceType::class, [
@@ -37,6 +41,7 @@ class UserType extends AbstractType
                 'choice_label' => "name",
                 'multiple' => true,
             ])
+            ->add('profilePictureFilename', FileType::class)
             ->add('enabled', CheckboxType::class)
             ->add('submit', SubmitType::class)
         ;

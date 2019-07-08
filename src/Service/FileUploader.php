@@ -7,7 +7,8 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class FileUploader
 {
-    private $targetDirectory;
+    protected $targetDirectory;
+    protected $fileName;
 
     public function __construct($targetDirectory)
     {
@@ -16,15 +17,28 @@ class FileUploader
 
     public function upload(UploadedFile $file)
     {
-        $fileName = md5(uniqid()).'.'.$file->getClientOriginalExtension();
-
+        $this->setFileName($file);
+        
         try {
-            $file->move($this->getTargetDirectory(), $fileName);
+            $file->move($this->getTargetDirectory(), $this->getFileName());
         } catch (FileException $e) {
             // ... handle exception if something happens during file upload
+            throw $e;
         }
 
-        return $fileName;
+        return $this->getFileName();
+    }
+
+    public function getFileName()
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(?UploadedFile $file)
+    {
+        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        // $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
+        $this->fileName = $originalFilename.'-'.uniqid().'.'.$file->guessExtension();
     }
 
     public function getTargetDirectory()
