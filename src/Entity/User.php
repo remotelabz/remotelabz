@@ -104,7 +104,7 @@ class User implements UserInterface
     private $createdLabs;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", nullable=true)
      * @Serializer\Exclude
      */
     private $profilePictureFilename;
