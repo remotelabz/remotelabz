@@ -41,7 +41,6 @@ class UserType extends AbstractType
                 'choice_label' => "name",
                 'multiple' => true,
             ])
-            ->add('profilePictureFilename', FileType::class)
             ->add('enabled', CheckboxType::class)
             ->add('submit', SubmitType::class)
         ;

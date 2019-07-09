@@ -4,10 +4,10 @@ namespace App\Controller;
 
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\HtmlRequest;
 use Symfony\Component\HttpFoundation\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 /**
@@ -17,7 +17,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
  */
 class AppController extends AbstractController
 {
-    final protected function json($data, int $status = 200, array $headers = [], array $context = []): JsonResponse
+    protected function renderJson($data, int $status = 200, array $headers = [], array $context = []): JsonResponse
     {
         $serializer = SerializerBuilder::create()->build();
 

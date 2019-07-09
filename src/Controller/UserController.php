@@ -101,7 +101,7 @@ class UserController extends AppController
 
         $data = $repository->findAll();
 
-        return $this->json($data);
+        return $this->renderJson($data);
     }
 
     /**
@@ -117,7 +117,7 @@ class UserController extends AppController
             throw new NotFoundHttpException('This user does not exist.');
         }
 
-        return $this->json($user);
+        return $this->renderJson($user);
     }
 
     /**
@@ -143,7 +143,7 @@ class UserController extends AppController
             $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        return $this->json($data);
+        return $this->renderJson($data);
     }
 
     /**
@@ -171,7 +171,7 @@ class UserController extends AppController
             $data['message'] = 'User has been deleted.';
         }
 
-        return $this->json($data, $status);
+        return $this->renderJson($data, $status);
     }
 
     /**
@@ -181,7 +181,7 @@ class UserController extends AppController
     {
         $user = $this->getUser();
 
-        return $this->json($user);
+        return $this->renderJson($user);
     }
 
     /**

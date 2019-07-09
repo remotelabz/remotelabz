@@ -31,7 +31,7 @@ class DeviceController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('device/index.html.twig', [
@@ -64,7 +64,7 @@ class DeviceController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('device/view.html.twig', [
@@ -178,7 +178,7 @@ class DeviceController extends AppController
         }
             
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('devices');

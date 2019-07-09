@@ -56,7 +56,7 @@ class LabController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('lab/index.html.twig', [
@@ -81,7 +81,7 @@ class LabController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
 
         // Remove all instances not belongs to current user (changes are not stored in database)
@@ -190,7 +190,7 @@ class LabController extends AppController
         }
             
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('labs');

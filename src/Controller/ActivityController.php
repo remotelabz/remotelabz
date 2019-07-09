@@ -40,7 +40,7 @@ class ActivityController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('activity/index.html.twig', [
@@ -67,7 +67,7 @@ class ActivityController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('activity/view.html.twig', [
@@ -243,7 +243,7 @@ class ActivityController extends AppController
         }
             
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('activities');

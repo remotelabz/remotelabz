@@ -69,7 +69,7 @@ class OperatingSystemController extends AppController
             
         $data = $repository->findAll();
             
-        return $this->json($data);
+        return $this->renderJson($data);
     }
         
     /**
@@ -94,6 +94,6 @@ class OperatingSystemController extends AppController
             $data['message'] = 'Operating system has been deleted.';
         }
             
-        return $this->json($data, $status);
+        return $this->renderJson($data, $status);
     }
 }

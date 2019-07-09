@@ -31,7 +31,7 @@ class ConnexionController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('connexion/index.html.twig', [
@@ -58,7 +58,7 @@ class ConnexionController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('connexion/view.html.twig', [
@@ -154,7 +154,7 @@ class ConnexionController extends AppController
         }
             
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('connexions');

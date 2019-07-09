@@ -47,7 +47,7 @@ class InstanceController extends AppController
         $data['network_interface'] = $this->networkInterfaceInstanceRepository->findAll();
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('instance/index.html.twig', [
@@ -99,7 +99,7 @@ class InstanceController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('instances');
