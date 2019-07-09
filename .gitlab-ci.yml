@@ -98,7 +98,7 @@ deploy_staging:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker-compose down -v --rmi all
     - docker-compose pull
-    - docker-compose up --no-start
+    - docker-compose up --build --no-start
     - docker-compose start apache mysql
     - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
     - docker-compose run -T yarn install
