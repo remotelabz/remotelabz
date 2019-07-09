@@ -69,7 +69,7 @@ class NetworkSettingsController extends AppController
             
         $data = $repository->findAll();
             
-        return $this->json($data);
+        return $this->renderJson($data);
     }
         
     /**
@@ -94,6 +94,6 @@ class NetworkSettingsController extends AppController
             $data['message'] = 'Settings has been deleted.';
         }
             
-        return $this->json($data, $status);
+        return $this->renderJson($data, $status);
     }
 }

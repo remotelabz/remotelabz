@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Asset\Package;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
@@ -102,6 +105,12 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
      */
     private $createdLabs;
+
+    /**
+     * @ORM\Column(type="string", nullable=true)
+     * @Serializer\Exclude
+     */
+    private $profilePictureFilename;
 
     public function __construct()
     {
@@ -442,5 +451,28 @@ class User implements UserInterface
         }
 
         return $this;
+    }
+
+    public function getProfilePictureFilename(): ?string
+    {
+        return $this->profilePictureFilename;
+    }
+
+    public function setProfilePictureFilename($profilePictureFilename): self
+    {
+        $this->profilePictureFilename = $profilePictureFilename;
+
+        return $this;
+    }
+
+    public function getProfilePicture(): string
+    {
+        if ($this->getProfilePictureFilename() == null || $this->getProfilePictureFilename() === "") {
+            $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
+            
+            return $package->getUrl('build/images/faces/default-user-image.png');
+        }
+        
+        return 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
     }
 }

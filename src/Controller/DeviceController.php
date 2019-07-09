@@ -31,7 +31,7 @@ class DeviceController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('device/index.html.twig', [
@@ -46,6 +46,12 @@ class DeviceController extends AppController
      *  requirements={"_format": "html|json"},
      *  name="show_device",
      *  methods="GET")
+     * @Route("/devices/{id<\d+>}.{_format}",
+     *  defaults={"_format": "html"},
+     *  requirements={"_format": "html|json"},
+     *  name="show_device_public",
+     *  methods="GET")
+     * )
      */
     public function showAction(Request $request, $id)
     {
@@ -58,7 +64,7 @@ class DeviceController extends AppController
         }
 
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data);
+            return $this->renderJson($data);
         }
         
         return $this->render('device/view.html.twig', [
@@ -172,7 +178,7 @@ class DeviceController extends AppController
         }
             
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->json($data, $status);
+            return $this->renderJson($data, $status);
         }
 
         return $this->redirectToRoute('devices');

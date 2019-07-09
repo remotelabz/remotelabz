@@ -6,6 +6,7 @@
 parameters:
     locale: 'en'
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
+    profile_picture_directory: '%kernel.project_dir%/public/uploads/user/avatar'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
 
@@ -41,6 +42,11 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%launch_scripts_directory%'
+
+    App\Service\ProfilePictureFileUploader:
+        arguments:
+           - '%profile_picture_directory%'
+           - '@security.token_storage'
 
     App\Security\ShibbolethAuthenticator:
         arguments:
