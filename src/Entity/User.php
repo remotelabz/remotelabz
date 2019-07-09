@@ -467,7 +467,7 @@ class User implements UserInterface
 
     public function getProfilePicture(): string
     {
-        if ($this->getProfilePictureFilename() === "") {
+        if ($this->getProfilePictureFilename() == null || $this->getProfilePictureFilename() === "") {
             $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
             
             return $package->getUrl('build/images/faces/default-user-image.png');
