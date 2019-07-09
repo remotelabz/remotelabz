@@ -152,7 +152,6 @@ class ActivityController extends AppController
             ->setActivity($activity)
             ->setProcessName($activity->getLab()->getName() . '_' . 'aaa') // TODO: change 'aaa' to a parameter (UUID ?)
             ->setUser($this->getUser())
-            ->setStoragePath($_ENV['INSTANCE_STORAGE_PATH'] . $instance->getId())
         ;
 
         if ($activity->getAccessType() === Activity::VPN_ACCESS) {

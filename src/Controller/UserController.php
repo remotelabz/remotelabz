@@ -290,7 +290,9 @@ class UserController extends AppController
             $user->setProfilePictureFilename($pictureFileName);
         }
 
-        $this->getDoctrine()->getManager()->persist($user);
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($user);
+        $entityManager->flush();
 
         return $this->redirectToRoute('user_profile');
     }

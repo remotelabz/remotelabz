@@ -455,11 +455,6 @@ class User implements UserInterface
 
     public function getProfilePictureFilename(): ?string
     {
-        if ($this->profilePictureFilename == null) {
-            $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
-            
-            return $package->getUrl('build/images/faces/default-user-image.png');
-        }
         return $this->profilePictureFilename;
     }
 
@@ -468,5 +463,16 @@ class User implements UserInterface
         $this->profilePictureFilename = $profilePictureFilename;
 
         return $this;
+    }
+
+    public function getProfilePicture(): string
+    {
+        if ($this->getProfilePictureFilename() === "") {
+            $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
+            
+            return $package->getUrl('build/images/faces/default-user-image.png');
+        }
+        
+        return 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
     }
 }
