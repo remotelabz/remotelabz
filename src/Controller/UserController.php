@@ -5,20 +5,21 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\UserType;
 
+use App\Form\UserProfileType;
+use App\Form\UserPasswordType;
 use App\Controller\AppController;
 use JMS\Serializer\SerializerBuilder;
+use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-/**
- * @IsGranted("ROLE_ADMINISTRATOR")
- */
 class UserController extends AppController
 {
     public $passwordEncoder;
@@ -100,7 +101,7 @@ class UserController extends AppController
 
         $data = $repository->findAll();
 
-        return $this->json($data);
+        return $this->renderJson($data);
     }
 
     /**
@@ -116,7 +117,7 @@ class UserController extends AppController
             throw new NotFoundHttpException('This user does not exist.');
         }
 
-        return $this->json($user);
+        return $this->renderJson($user);
     }
 
     /**
@@ -142,7 +143,7 @@ class UserController extends AppController
             $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        return $this->json($data);
+        return $this->renderJson($data);
     }
 
     /**
@@ -170,7 +171,7 @@ class UserController extends AppController
             $data['message'] = 'User has been deleted.';
         }
 
-        return $this->json($data, $status);
+        return $this->renderJson($data, $status);
     }
 
     /**
@@ -180,7 +181,7 @@ class UserController extends AppController
     {
         $user = $this->getUser();
 
-        return $this->json($user);
+        return $this->renderJson($user);
     }
 
     /**
@@ -222,5 +223,77 @@ class UserController extends AppController
         $entityManager->flush();
 
         return $addedUsers;
+    }
+
+    /**
+     * @Route("/profile", name="user_profile")
+     */
+    public function profileAction(Request $request)
+    {
+        $user = $this->getUser();
+        $userForm = $this->createForm(UserProfileType::class, $user);
+        $passwordForm = $this->createForm(UserPasswordType::class, new User());
+        $userForm->handleRequest($request);
+        $passwordForm->handleRequest($request);
+
+        if ($userForm->isSubmitted() && $userForm->isValid()) {
+            $user = $userForm->getData();
+            
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($user);
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Your profile has been updated.');
+        }
+
+        if ($passwordForm->isSubmitted() && $passwordForm->isValid()) {
+            $password = $passwordForm->get('password')->getData();
+            $newPassword = $passwordForm->get('newPassword')->getData();
+            $confirmPassword = $passwordForm->get('confirmPassword')->getData();
+
+            if ($this->passwordEncoder->isPasswordValid($user, $password)) {
+                if ($newPassword == $confirmPassword) {
+                    $user->setPassword($this->passwordEncoder->encodePassword($user, $newPassword));
+
+                    $entityManager = $this->getDoctrine()->getManager();
+                    $entityManager->persist($user);
+                    $entityManager->flush();
+
+                    $this->addFlash('success', 'Your password has been changed.');
+                    
+                    return $this->redirectToRoute('user_profile');
+                } else {
+                    $this->addFlash('danger', "Passwords doesn't match.");
+                }
+            } else {
+                $this->addFlash('danger', 'Your password is incorrect.');
+            }
+        }
+
+        return $this->render('user/profile.html.twig', [
+            'user' => $this->getUser(),
+            'userForm' => $userForm->createView(),
+            'passwordForm' => $passwordForm->createView()
+        ]);
+    }
+
+     /**
+     * @Route("/profile/picture", name="post_user_profile_picture", methods="POST")
+     */
+    public function profilePictureAction(Request $request, ProfilePictureFileUploader $fileUploader)
+    {
+        $user = $this->getUser();
+
+        $pictureFile = $request->files->get('picture');
+        if ($pictureFile) {
+            $pictureFileName = $fileUploader->upload($pictureFile);
+            $user->setProfilePictureFilename($pictureFileName);
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('user_profile');
     }
 }

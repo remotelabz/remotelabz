@@ -19,6 +19,7 @@ Encore
      */
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
+    .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('course', './assets/js/course.js')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('hypervisor', './assets/js/hypervisor.js')
@@ -39,7 +40,7 @@ Encore
      * list of features, see:
      * https://symfony.com/doc/current/frontend.html#adding-more-features
      */
-    .cleanupOutputBeforeBuild()
+    // .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
     .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
@@ -49,10 +50,12 @@ Encore
     .enableSassLoader()
 
     // uncomment if you use TypeScript
-    .enableTypeScriptLoader()
+    // .enableTypeScriptLoader()
 
     // uncomment if you're having problems with a jQuery plugin
     .autoProvidejQuery()
+
+    .enableReactPreset()
 
     .copyFiles({
         from: './assets/images',

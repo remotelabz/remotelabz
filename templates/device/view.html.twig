@@ -1,7 +1,9 @@
 {% extends 'device/index.html.twig' %}
 
+{% set publicPath = is_granted("ROLE_ADMINISTRATOR") ?: "_public" %}
+
 {% block breadcrumbs %}
-{%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device', {'id': device.id}) }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device' ~ publicPath, {'id': device.id}) }) -%}
     {{ parent() }}
 {% endblock %}
 
@@ -12,10 +14,12 @@
             <div class="card-body">
                 <h4 class="card-title">
                     {{ device.name }}
+                    {% if is_granted("ROLE_ADMINISTRATOR") %}
                     <div class="float-right">
                         <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i
                         class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                     </div>
+                    {% endif %}
                 </h4>
                 <p>Brand : {{ device.brand }}</p>
                 <hr>

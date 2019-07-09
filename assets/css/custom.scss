@@ -1,9 +1,9 @@
 /////////// GENERAL ///////////
 
-html
-{
-  //font-size: $default-font-size;
-}
+// html
+// {
+//   //font-size: $default-font-size;
+// }
 
 body
 {
@@ -43,8 +43,16 @@ a {
   }
 }
 
+img {
+  max-width: 100%;
+}
+
 .fixed-top {
   z-index: 3;
+}
+
+.prepend-top-default {
+  margin-top: 16px !important;
 }
 
 /////////// FORMS ///////////

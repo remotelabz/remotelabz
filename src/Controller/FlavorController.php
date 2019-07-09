@@ -42,7 +42,7 @@ class FlavorController extends AppController
             
         $data = $repository->findAll();
             
-        return $this->json($data);
+        return $this->renderJson($data);
     }
         
     /**
@@ -67,6 +67,6 @@ class FlavorController extends AppController
             $data['message'] = 'Flavor has been deleted.';
         }
             
-        return $this->json($data, $status);
+        return $this->renderJson($data, $status);
     }
 }

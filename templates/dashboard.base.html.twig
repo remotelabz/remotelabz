@@ -17,14 +17,16 @@
       <li class="nav-item d-none d-sm-block profile-img dropdown">
         {# <div class="dropdown"> #}
           <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <img src="{{ asset('build/images/faces/face1.jpg') }}" alt="profile-img">
+            <img src="{{ asset(app.user.profilePicture) }}" alt="profile-img">
             {# <span class="online-status online bg-success"></span> #}
             {{ svg('arrow-down') }}
           </a>
           <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink" style="position: absolute;transform: translate3d(0px, 34px, 0px);top: 0px;right: 0px;will-change: transform;">
             <h6 class="dropdown-header">{{ app.user.name }}</h6>
             <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="{{ path('logout') }}">Logout</a>
+            <a class="dropdown-item" href="{{ path('user_profile') }}">Settings</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="{{ path('logout') }}">Sign out</a>
           </div>
         {# </div> #}
       </li>
@@ -137,11 +139,17 @@
         {% block breadcrumbs %}
         <div class="container-fluid container-limited">
           <div class="breadcrumb">
-            {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('users') }) %}
+            {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
             {% for breadcrumb, link in breadcrumbs|reverse(true) %}
               <div class="breadcrumb-item">
                 {%- if loop.last -%}<strong>{%- endif -%}
-                <a href="{{ link }}">{{ breadcrumb }}</a>
+                {% if link is not null %}
+                  <a href="{{ link }}">{{ breadcrumb }}</a>
+                {% else %}
+                  <span>{{ breadcrumb }}</span>
+                {% endif %}
+                
+                
                 {%- if loop.last -%}</strong>{%- endif -%}
               </div>
             {% endfor %}

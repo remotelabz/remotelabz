@@ -16,6 +16,7 @@ require('noty/src/noty.scss')
 require('noty/src/themes/mint.scss')
 require('simplemde/dist/simplemde.min.css')
 require('font-awesome/scss/font-awesome.scss')
+require('cropperjs/dist/cropper.min.css')
 
 require('popper.js');
 require('bootstrap');
@@ -27,7 +28,6 @@ require('selectize');
 require('select2');
 require('@novnc/novnc/core/rfb');
 
-import RFB from '@novnc/novnc/core/rfb'
 import Noty from 'noty';
 
 Noty.overrideDefaults({
