@@ -34,7 +34,12 @@
 
                 {% for device in lab.devices %}
                 <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
-                    <a href="{{ path('show_device', {'id': device.id}) }}">
+                    {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        {% set path = 'show_device' %}
+                    {% else %}
+                        {% set path = 'show_device_public' %}
+                    {% endif %}
+                    <a href="{{ path(path, {'id': device.id}) }}">
                         {{ device.name }}
                     </a>
                     {% set isVNC = false %}

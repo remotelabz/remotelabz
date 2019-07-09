@@ -20,9 +20,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-/**
- * @IsGranted("ROLE_ADMINISTRATOR")
- */
 class UserController extends AppController
 {
     public $passwordEncoder;

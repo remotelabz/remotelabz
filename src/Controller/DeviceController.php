@@ -46,6 +46,12 @@ class DeviceController extends AppController
      *  requirements={"_format": "html|json"},
      *  name="show_device",
      *  methods="GET")
+     * @Route("/devices/{id<\d+>}.{_format}",
+     *  defaults={"_format": "html"},
+     *  requirements={"_format": "html|json"},
+     *  name="show_device_public",
+     *  methods="GET")
+     * )
      */
     public function showAction(Request $request, $id)
     {

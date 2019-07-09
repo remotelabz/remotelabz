@@ -13,12 +13,7 @@
                 <p class="text-muted">You can change your public avatar here</p>
             </div>
             <div class="col-lg-8">
-                {% if app.user.profilePictureFilename is defined %}
-                    {% set profilePicturePath = asset('uploads/user/avatar/' ~ app.user.id ~ '/avatar.png') %}
-                {% else %}
-                    {% set profilePicturePath = asset('build/images/faces/face1.jpg') %}
-                {% endif %}
-                <img src="{{ profilePicturePath }}" class="img-xl rounded-circle mr-4 float-left" />
+                <img src="{{ asset(app.user.profilePictureFilename) }}" class="img-xl rounded-circle mr-4 float-left" />
                 <h6>Upload new avatar</h6>
                 <p class="text-muted">The maximum file size allowed is 200KB.</p>
                 <div id="root"></div>

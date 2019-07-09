@@ -1,7 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ 'Devices': path('devices') }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Devices': is_granted("ROLE_ADMINISTRATOR") ? path('devices') : null }) -%}
     {{ parent() }}
 {% endblock %}
 

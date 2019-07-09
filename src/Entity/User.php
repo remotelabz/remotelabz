@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Asset\Package;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
@@ -452,6 +455,11 @@ class User implements UserInterface
 
     public function getProfilePictureFilename(): ?string
     {
+        if ($this->profilePictureFilename == null) {
+            $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
+            
+            return $package->getUrl('build/images/faces/default-user-image.png');
+        }
         return $this->profilePictureFilename;
     }
 
