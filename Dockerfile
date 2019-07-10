@@ -5,7 +5,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && \
-    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https 
+    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
+
+# Exim
+RUN sed -i "s/dc_eximconfig_configtype=''/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
+    sed -i "s/dc_readhost=''/dc_readhost='staging.remotelabz.univ-reims.fr'/g" /etc/exim4/update-exim4.conf.conf && \
+    sed -i "s/dc_smarthost=''/dc_smarthost='smtp.univ-reims.fr'/g" /etc/exim4/update-exim4.conf.conf
 
 # Yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
