@@ -38,7 +38,9 @@ class UserController extends AppController
 
         $addUserForm = $this->createForm(UserType::class, $user);
         $addUserFromFileForm = $this->createFormBuilder([])
-            ->add('file', FileType::class)
+            ->add('file', FileType::class, [
+                "help" => "Accepted formats: csv"
+            ])
             ->add('submit', SubmitType::class)
             ->getForm();
 
