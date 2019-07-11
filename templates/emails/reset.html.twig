@@ -3,17 +3,17 @@
         <p>
             Hello {{ name }},<br><br>
 
-            You requested a password reset. If you did not asked for it, please ignore this message. Otherwise, please click on <a href="{{ link }}">this link</a> to reset your password, or copy/paste the following link in your web browser if that doesn't work :<br><br>
+            You requested a password reset. If you did not asked for it, please ignore this message. Otherwise, please click on <a href="{{ link }}">this link</a> to reset your password, or copy the following link in your web browser if that doesn't work :<br><br>
 
             <pre>
-                {{ link }}
+            {{- link -}}
             </pre>
             <br>
 
             This link is only valid for 24 hours.
             <br><br>
             Regards,
-            <br>
+            <br><br>
             The RemoteLabz team.
         </p>
     </body>
