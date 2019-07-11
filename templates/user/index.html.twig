@@ -10,6 +10,11 @@
 
     {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
         {% block body %}
+            <p>The CSV file must contains user informations in the following format:
+                <br>
+                <br>
+                <kbd>lastName,firstName,email</kbd>
+            </p>
             {{ form(addUserFromFileForm, {'id': 'addUserFromFileForm'}) }}
         {% endblock %}
     {% endembed %}
