@@ -3,8 +3,9 @@
 {% block title %}Log in!{% endblock %}
 
 {% block body %}
-    <div class="content-wrapper full-page-width d-flex align-items-center" style="margin-left:0; width:100vw;">
-        <div class="row w-100">
+<div>
+    <div class="align-items-center mt-5 container-fluid container-limited">
+        <div class="row">
             <div class="col-lg-4 mx-auto">
                 <div class="flashbag-container col-lg-12">
                     {% for label, messages in app.flashes %}
@@ -27,7 +28,7 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text">@</span>
+                                    <span class="input-group-text">{{ svg('mail') }}</span>
                                 </div>
                                 <input class="form-control" placeholder="user@domain.com" name="email" type="email" required autofocus>
                             </div>
@@ -35,7 +36,7 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text">@</span>
+                                    <span class="input-group-text">{{ svg('key') }}</span>
                                 </div>
                                 <input type="password" class="form-control" placeholder="*********" name="password" value="" required>
                             </div>
@@ -72,7 +73,7 @@
                         <a href="#">Terms</a>
                     </li> #}
                 </ul>
-                <p class="footer-text text-center">Design by Bootstrapdash. Made by F. Nolot, J. Hubert & O. Flauzac.</p>
+                <p class="footer-text text-center">Design by Bootstrapdash. Made by F. Nolot, J. Hubert & O. Flauzac. <a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
             </div>
         </div>
     </div>
