@@ -94,18 +94,34 @@ deploy_review:
 deploy_staging:
   stage: deploy
   script:
+    # - cp -rf .env.dist .env
+    # - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
+    # - docker-compose down -v --rmi all
+    # - docker-compose pull
+    # - docker-compose up --build --no-start
+    # - docker-compose start apache mysql
+    # - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
+    # - docker-compose run -T yarn install
+    # - docker-compose run -T yarn encore dev
+    # - docker-compose run -T console doctrine:migrations:migrate -n
+    # - docker-compose run -T console doctrine:fixtures:load -n
+    # - docker-compose run -T console assets:install --symlink public --relative
     - cp -rf .env.dist .env
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - docker-compose down -v --rmi all
-    - docker-compose pull
-    - docker-compose up --build --no-start
-    - docker-compose start apache mysql
-    - docker-compose run -T composer install --no-progress --no-scripts --no-suggest
-    - docker-compose run -T yarn install
-    - docker-compose run -T yarn encore dev
-    - docker-compose run -T console doctrine:migrations:migrate -n
-    - docker-compose run -T console doctrine:fixtures:load -n
-    - docker-compose run -T console assets:install --symlink public --relative
+    - echo WORKER_SERVER=$WORKER_SERVER >> .env
+    - echo WORKER_PORT=$WORKER_PORT >> .env
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker stop mysql_$CI_COMMIT_REF_SLUG || true
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker network create remotelabz_$CI_COMMIT_REF_SLUG
+    - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
+    # Wait for mysql
+    - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
   environment:
     name: staging
     url: http://staging.remotelabz.com/
@@ -143,7 +159,10 @@ stop_staging:
   variables:
     GIT_STRATEGY: none
   script:
-    - docker-compose down -v --rmi all
+    # - docker-compose down -v --rmi all
+    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
+    - docker stop mysql_$CI_COMMIT_REF_SLUG
+    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
   when: manual
   environment:
     name: staging
