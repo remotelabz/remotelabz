@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1d05b326ee6d3364ab493a23ea4a5078",
+    "content-hash": "f5c290e76ce105be6207da160d1f5e7a",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -6411,16 +6411,16 @@
         },
         {
             "name": "symfony/swiftmailer-bundle",
-            "version": "v3.2.5",
+            "version": "v3.2.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/swiftmailer-bundle.git",
-                "reference": "ac4f38c2ec7957f2dec8b6c2f24a060b10a254f2"
+                "reference": "7a83160b50a2479d37eb74ba71577380b9afe4f5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/swiftmailer-bundle/zipball/ac4f38c2ec7957f2dec8b6c2f24a060b10a254f2",
-                "reference": "ac4f38c2ec7957f2dec8b6c2f24a060b10a254f2",
+                "url": "https://api.github.com/repos/symfony/swiftmailer-bundle/zipball/7a83160b50a2479d37eb74ba71577380b9afe4f5",
+                "reference": "7a83160b50a2479d37eb74ba71577380b9afe4f5",
                 "shasum": ""
             },
             "require": {
@@ -6469,7 +6469,7 @@
             ],
             "description": "Symfony SwiftmailerBundle",
             "homepage": "http://symfony.com",
-            "time": "2019-01-05T11:51:59+00:00"
+            "time": "2019-04-18T15:52:54+00:00"
         },
         {
             "name": "symfony/templating",
