@@ -21,6 +21,7 @@ class User implements UserInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"primary_key"})
+     * @var int
      */
     private $id;
 
@@ -28,6 +29,7 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=180, unique=true)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @var string
      */
     private $email;
 
@@ -36,13 +38,14 @@ class User implements UserInterface
      * @Serializer\Accessor(getter="getRoles")
      * @Serializer\XmlList(inline=false, entry="role")
      * @Serializer\Groups({"details"})
+     * @var array|string[]
      */
     private $roles = [];
 
     /**
-     * @var string The hashed password
      * @ORM\Column(type="string")
      * @Serializer\Exclude
+     * @var string The hashed password
      */
     private $password;
 
@@ -50,6 +53,7 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @var string
      */
     private $lastName;
 
@@ -57,6 +61,7 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @var string
      */
     private $firstName;
 
@@ -64,6 +69,7 @@ class User implements UserInterface
      * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
      * @Serializer\XmlList(inline=true, entry="course")
      * @Serializer\Groups({"courses"})
+     * @var Collection|Course[]
      */
     private $courses;
 
@@ -71,12 +77,14 @@ class User implements UserInterface
      * @ORM\Column(type="boolean")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "details"})
+     * @var bool
      */
     private $enabled = true;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="lab")
+     * @var Collection|Lab[]
      */
     private $labs;
 
@@ -84,6 +92,7 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"instances"})
+     * @var Collection|LabInstance[]
      */
     private $labInstances;
 
@@ -91,6 +100,7 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"instances"})
+     * @var Collection|DeviceInstance[]
      */
     private $deviceInstances;
 
@@ -98,17 +108,20 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"instances"})
+     * @var Collection|NetworkInterfaceInstance[]
      */
     private $networkInterfaceInstances;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
+     * @var Collection|Lab[]
      */
     private $createdLabs;
 
     /**
      * @ORM\Column(type="string", nullable=true)
      * @Serializer\Exclude
+     * @var string
      */
     private $profilePictureFilename;
 

@@ -6,7 +6,7 @@ RUN echo 'deb http://deb.debian.org/debian stretch-backports main' | tee /etc/ap
 
 RUN apt-get update > /dev/null && \
     apt-get install -yqq gnupg curl > /dev/null && \
-    apt-get -t stretch-backports install -yqq init-system-helpers libxerces-c3.2 > /dev/null
+    apt-get -t stretch-backports install -yqq init-system-helpers libxerces-c3.2 exim4 > /dev/null
 
 RUN curl --output /etc/apt/trusted.gpg.d/SWITCHaai-swdistrib.asc http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
     # curl -O http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
@@ -49,6 +49,10 @@ RUN a2enconf shib2 && \
     a2enmod shib
 RUN sed -i '/exec apache2 -DFOREGROUND "$@"/iservice shibd start' /usr/local/bin/apache2-foreground
 RUN sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
+
+RUN sed -i "s/dc_eximconfig_configtype=''/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
+    sed -i "s/dc_readhost=''/dc_readhost='staging.remotelabz.univ-reims.fr'/g" /etc/exim4/update-exim4.conf.conf && \
+    sed -i "s/dc_smarthost=''/dc_smarthost='smtp.univ-reims.fr'/g" /etc/exim4/update-exim4.conf.conf
 
 # FIXME: Is the use of www-data is necessary when running apache? There is a conflict with the use of the 80 port
 # ARG userid=1000
