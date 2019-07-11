@@ -5,17 +5,35 @@ namespace App\Service;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
+/**
+ * Base class for file upload. Every type of file uploaders should extend it.
+ * 
+ * @author Julien Hubert <julien.hubert@outlook.com>
+ */
 class FileUploader
 {
+    /**
+     * @var string The directory in which files will be moved
+     */
     protected $targetDirectory;
+
+    /**
+     * @var string The file name
+     */
     protected $fileName;
 
-    public function __construct($targetDirectory)
+    public function __construct(string $targetDirectory)
     {
         $this->targetDirectory = $targetDirectory;
     }
 
-    public function upload(UploadedFile $file)
+    /**
+     * Upload the file
+     *
+     * @param UploadedFile $file File descriptor
+     * @return string The file name
+     */
+    public function upload(UploadedFile $file): string
     {
         $this->setFileName($file);
         
@@ -29,19 +47,25 @@ class FileUploader
         return $this->getFileName();
     }
 
-    public function getFileName()
+    public function getFileName(): string
     {
         return $this->fileName;
     }
 
+    /**
+     * @param UploadedFile|null $file
+     * @return self
+     */
     public function setFileName(?UploadedFile $file)
     {
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        // $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
-        $this->fileName = $originalFilename.'-'.uniqid().'.'.$file->guessExtension();
+        $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
+        $this->fileName = $safeFilename.'_'.uniqid().'.'.$file->guessExtension();
+
+        return $this;
     }
 
-    public function getTargetDirectory()
+    public function getTargetDirectory(): string
     {
         return $this->targetDirectory;
     }

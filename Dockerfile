@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && \
-    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
+    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
 
 # Exim
 RUN sed -i "s/dc_eximconfig_configtype=''/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
@@ -53,6 +53,10 @@ ADD ./vagrant/shib2.conf /etc/apache2/conf-available/
 RUN sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
 RUN a2enconf shib2 && \
     a2enmod shib
+
+RUN echo "upload_max_filesize=3000M" >> /etc/php/7.2/apache2/conf.d/20-fileinfo.ini && \
+    echo "post_max_size=4000M" >> /etc/php/7.2/apache2/conf.d/20-fileinfo.ini
+
 # Folders
 RUN mkdir -p /opt/remotelabz/images && \
     chmod -R g+rwx /opt/remotelabz && \
