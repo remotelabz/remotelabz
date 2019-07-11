@@ -7,6 +7,7 @@ parameters:
     locale: 'en'
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
     profile_picture_directory: '%kernel.project_dir%/public/uploads/user/avatar'
+    image_directory: '%kernel.project_dir%/public/uploads/images'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
 
@@ -42,6 +43,10 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%launch_scripts_directory%'
+
+    App\Service\ImageFileUploader:
+        arguments:
+            $targetDirectory: '%image_directory%'
 
     App\Service\ProfilePictureFileUploader:
         arguments:

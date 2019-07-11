@@ -1,18 +1,19 @@
-{% extends 'lab/index.html.twig' %}
+{% extends 'operating_system/index.html.twig' %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_lab') }) %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_operating_system') }) %}
     {{ parent() }}
 {% endblock %}
 
 {%- set edit = app.request.uri ends with 'edit' -%}
 
 {% block wrapper %}
+
 <div class="row">
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                {{ form(labForm) }}
+                {{ form(operatingSystemForm) }}
             </div>
         </div>
     </div>
@@ -21,5 +22,4 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('lab') }} #}
 {% endblock %}

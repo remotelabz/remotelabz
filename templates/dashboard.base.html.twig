@@ -122,20 +122,7 @@
       </nav>
 
       <div class="content-wrapper">
-        <!-- <div class="row"> -->
-          <div class="flashbag-container col-lg-12">
-            {% for label, messages in app.flashes %}
-              {% for message in messages %}
-              <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                {{ message }}
-              </div>
-              {% endfor %}
-            {% endfor %}
-          </div>
-        <!-- </div> -->
+        
         {% block breadcrumbs %}
         <div class="container-fluid container-limited">
           <div class="breadcrumb">
@@ -157,8 +144,20 @@
         </div>
       {% endblock %}
         <div class="container-fluid container-limited">
-         
-
+          <div class="row">
+            <div class="flashbag-container col-lg-12 mt-2">
+                {% for label, messages in app.flashes %}
+                  {% for message in messages %}
+                  <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
+                    <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message }}
+                  </div>
+                  {% endfor %}
+                {% endfor %}
+            </div>
+          </div>
           {% block wrapper %}
             
           {% endblock %}
