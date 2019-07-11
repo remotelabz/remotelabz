@@ -2,13 +2,15 @@
 
 namespace App\Service;
 
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ProfilePictureFileUploader extends FileUploader
 {
-    protected $targetDirectory;
-    protected $fileName;
+    /**
+     * @var User
+     */
     protected $user;
 
     public function __construct(string $targetDirectory, TokenStorageInterface $user)
@@ -17,12 +19,14 @@ class ProfilePictureFileUploader extends FileUploader
         $this->user = $user->getToken()->getUser();
     }
 
-    public function setFileName(?UploadedFile $file)
+    public function setFileName(?UploadedFile $file): self
     {
         $this->fileName = "avatar." . $file->guessExtension();
+
+        return $this;
     }
 
-    public function getTargetDirectory()
+    public function getTargetDirectory(): string
     {
         return $this->targetDirectory . '/' . $this->user->getId();
     }

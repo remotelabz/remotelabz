@@ -1,0 +1,35 @@
+{% extends 'operating_system/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ (operatingSystem.name): path('show_operating_system', {'id': operatingSystem.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ operatingSystem.name }}
+                    <div class="float-right">
+                        <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-default" role="button">Edit</a>
+                        <a href="{{ path('delete_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-danger" role="button">Delete</a>
+                    </div>
+                </h4>
+                <p>Image : 
+                {% if operatingSystem.imageUrl is not null %}
+                    <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
+                {% else %}
+                    <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}">{{ operatingSystem.imageFilename }}</a>
+                {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
