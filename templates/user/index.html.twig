@@ -7,12 +7,6 @@
 
 {% block wrapper %}
 <div class="row">
-    {% embed 'modal.html.twig' with {'title': 'Create user'|trans, 'class': 'create-user-modal'} %}
-        {% block body %}
-            {{ form(addUserForm, {'id': 'addUserForm'}) }}
-        {% endblock %}
-    {% endembed %}
-
     {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
         {% block body %}
             <p>The CSV file must contains user informations in the following format:

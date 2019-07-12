@@ -1,12 +1,17 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Flavors': path('flavors') }) %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="row">
-    {% embed 'modal.html.twig' with {'title': 'New flavor'|trans, 'class': 'create-flavor-modal'} %}
+    {# {% embed 'modal.html.twig' with {'title': 'New flavor'|trans, 'class': 'create-flavor-modal'} %}
         {% block body %}
             {{ form(flavorForm, {'id': 'flavorForm'}) }}
         {% endblock %}
-    {% endembed %}
+    {% endembed %} #}
 
     <div class="col grid-margin stretch-card">
         <div class="card">
@@ -14,8 +19,7 @@
 
                 <h4 class="card-title">{{ 'Flavors'|trans }}</h4>
                 <p>
-                    <button class="btn btn-success" data-target=".create-flavor-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-plus"></i> {{ 'New'|trans }}</button>
+                        <a href="{{ path('new_flavor') }}" class="btn btn-success">{{ 'New flavor'|trans }}</a>
                 </p>
                 <table id="flavorTable" class="table table-hover" style="width:100%">
                     <thead>
