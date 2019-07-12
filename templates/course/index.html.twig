@@ -1,21 +1,19 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Courses': path('courses') }) %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="row">
-    {% embed 'modal.html.twig' with {'title': 'New course'|trans, 'class': 'create-course-modal'} %}
-        {% block body %}
-            {{ form(courseForm, {'id': 'courseForm'}) }}
-        {% endblock %}
-    {% endembed %}
-
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
 
                 <h4 class="card-title">{{ 'Courses'|trans }}</h4>
                 <p>
-                    <button class="btn btn-success" data-target=".create-course-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-plus"></i> {{ 'New'|trans }}</button>
+                    <a href="{{ path('new_course') }}" class="btn btn-success">{{ 'New course'|trans }}</a>
                 </p>
                 <table id="courseTable" class="table table-hover" style="width:100%">
                     <thead>

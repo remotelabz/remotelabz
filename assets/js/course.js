@@ -20,7 +20,10 @@ $(function () {
             dataSrc: ''
         },
         buttons: [{
-            extend: 'edit'
+            extend: 'edit',
+            action: function() {
+                api.edit($('table tr.selected').data('id'));
+            }
         }, {
             extend: 'delete',
             action: function() {
