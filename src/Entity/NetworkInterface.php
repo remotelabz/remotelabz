@@ -8,6 +8,7 @@ use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
@@ -47,7 +48,7 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(onDelete="CASCADE")
+     * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
      * @Serializer\Groups({"lab"})
      */
     private $device;
@@ -56,6 +57,7 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\Column(type="string", length=17)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
     private $macAddress;
 

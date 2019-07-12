@@ -4,59 +4,84 @@ namespace App\Controller;
 
 use App\Entity\NetworkSettings;
 use App\Form\NetworkSettingsType;
+use App\Repository\NetworkSettingsRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class NetworkSettingsController extends AppController
 {
+    public $networkSettingsRepository;
+
+    public function __construct(NetworkSettingsRepository $networkSettingsRepository)
+    {
+        $this->networkSettingsRepository = $networkSettingsRepository;
+    }
+    
     /**
      * @Route("/admin/network-settings", name="network_settings")
      */
     public function indexAction(Request $request)
     {
+        return $this->render('network_settings/index.html.twig');
+    }
+
+    /**
+     * @Route("/admin/network-settings/new", name="new_network_settings", methods={"GET", "POST"})
+     */
+    public function newAction(Request $request)
+    {
         $networkSettings = new NetworkSettings();
         $networkSettingsForm = $this->createForm(NetworkSettingsType::class, $networkSettings);
         $networkSettingsForm->handleRequest($request);
-        
+
         if ($networkSettingsForm->isSubmitted() && $networkSettingsForm->isValid()) {
+            /** @var NetworkSettings $networkSettings */
             $networkSettings = $networkSettingsForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($networkSettings);
             $entityManager->flush();
-            
-            $this->addFlash('success', 'Settings has been created.');
+
+            $this->addFlash('success', 'Network settings has been created.');
+
+            return $this->redirectToRoute('network_settings');
         }
-        
-        return $this->render('network_settings/index.html.twig', [
-            'networkSettingsForm' => $networkSettingsForm->createView(),
+
+        return $this->render('network_settings/new.html.twig', [
+            'networkSettingsForm' => $networkSettingsForm->createView()
         ]);
     }
 
     /**
-     * @Route("/admin/network-settings/{id<\d+>}",
-     * name="edit_network_settings", methods={"GET", "POST"})
+     * @Route("/admin/network-settings/{id<\d+>}/edit", name="edit_network_settings", methods={"GET", "POST"})
      */
-    public function editAction(Request $request, $id)
+    public function editAction(Request $request, int $id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:NetworkSettings');
+        $networkSettings = $this->networkSettingsRepository->find($id);
+
+        if (null === $networkSettings) {
+            throw new NotFoundHttpException();
+        }
         
-        $networkSettings = $repository->find($id);
         $networkSettingsForm = $this->createForm(NetworkSettingsType::class, $networkSettings);
         $networkSettingsForm->handleRequest($request);
-        
+
         if ($networkSettingsForm->isSubmitted() && $networkSettingsForm->isValid()) {
+            /** @var NetworkSettings $networkSettings */
             $networkSettings = $networkSettingsForm->getData();
             
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($networkSettings);
             $entityManager->flush();
-            
-            $this->addFlash('success', 'Settings has been created.');
+
+            $this->addFlash('success', 'Network settings has been edited.');
+
+            return $this->redirectToRoute('network_settings');
         }
-        
-        return $this->render('network_settings/index.html.twig', [
+
+        return $this->render('network_settings/new.html.twig', [
             'networkSettingsForm' => $networkSettingsForm->createView(),
+            'networkSettings' => $networkSettings
         ]);
     }
         
@@ -65,24 +90,18 @@ class NetworkSettingsController extends AppController
      */
     public function cgetAction()
     {
-        $repository = $this->getDoctrine()->getRepository('App:NetworkSettings');
-            
-        $data = $repository->findAll();
-            
-        return $this->renderJson($data);
+        return $this->renderJson($this->networkSettingsRepository->findAll());
     }
         
     /**
-     * @Route("/network-settings/{id<\d+>}", name="delete_network_settings", methods="DELETE")
+     * @Route("/admin/network-settings/{id<\d+>}", name="delete_network_settings", methods="DELETE")
      */
     public function deleteAction($id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:NetworkSettings');
-            
         $status = 200;
         $data = [];
             
-        $networkSettings = $repository->find($id);
+        $networkSettings = $this->networkSettingsRepository->find($id);
             
         if ($networkSettings == null) {
             $status = 404;

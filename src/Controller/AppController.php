@@ -57,7 +57,7 @@ class AppController extends AbstractController
     /**
      * @Route("/", name="index")
      */
-    public function indexAction(Request $request)
+    public function dashboardAction()
     {
         return $this->render('dashboard.base.html.twig');
     }
