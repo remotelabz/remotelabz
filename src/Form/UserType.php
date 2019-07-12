@@ -22,26 +22,29 @@ class UserType extends AbstractType
     {
         $builder
             ->add('email', EmailType::class)
-            ->add('password', PasswordType::class)
+            ->add('password', PasswordType::class, [
+                'mapped' => false,
+                'required' => false
+            ])
             ->add('confirmPassword', PasswordType::class, [
-                'mapped' => false
+                'mapped' => false,
+                'required' => false
             ])
             ->add('lastName', TextType::class)
             ->add('firstName', TextType::class)
             ->add('roles', ChoiceType::class, [
+                'label' => 'Role',
                 'choices' => [
                     'Student' => 'ROLE_USER',
                     'Teacher' => 'ROLE_TEACHER',
                     'Administrator' => 'ROLE_ADMINISTRATOR'
                 ],
                 'multiple' => true,
+                'help' => 'Only the highest rights level is important.'
             ])
-            ->add('courses', EntityType::class, [
-                'class' => Course::class,
-                'choice_label' => "name",
-                'multiple' => true,
+            ->add('enabled', CheckboxType::class, [
+                'help' => 'If the user is disabled, he can\'t log in.'
             ])
-            ->add('enabled', CheckboxType::class)
             ->add('submit', SubmitType::class)
         ;
     }

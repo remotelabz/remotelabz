@@ -15,7 +15,10 @@ $(function () {
             dataSrc: ''
         },
         buttons: [{
-            extend: 'edit'
+            extend: 'edit',
+            action: function() {
+                api.edit($('table tr.selected').data('id'));
+            }
         }, {
             extend: 'toggle',
             action: function() {

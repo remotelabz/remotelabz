@@ -1,5 +1,10 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Users': path('users') }) %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="row">
     {% embed 'modal.html.twig' with {'title': 'Create user'|trans, 'class': 'create-user-modal'} %}
@@ -13,7 +18,10 @@
             <p>The CSV file must contains user informations in the following format:
                 <br>
                 <br>
-                <kbd>lastName,firstName,email</kbd>
+                <kbd>lastName,firstName,email,password</kbd>
+                <br>
+                <br>
+                <span class="text-danger">Warning:</span> Lines with an already used e-mail will be silently ignored.
             </p>
             {{ form(addUserFromFileForm, {'id': 'addUserFromFileForm'}) }}
         {% endblock %}
@@ -25,10 +33,9 @@
 
                 <h4 class="card-title">{{ 'Users'|trans }}</h4>
                 <p>
-                    <button class="btn btn-success" data-target=".create-user-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-plus"></i> {{ 'New'|trans }}</button>
+                    <a href="{{ path('new_user') }}" class="btn btn-success">{{ 'New user'|trans }}</a>
                     <button class="btn btn-info" data-target=".import-user-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-upload"></i> {{ 'Import'|trans }}</button>
+                            class="fa fa-upload"></i> {{ 'Import from file'|trans }}</button>
                 </p>
                 <table id="userTable" class="table table-hover" style="width:100%">
                     <thead>

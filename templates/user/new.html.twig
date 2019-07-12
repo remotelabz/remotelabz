@@ -1,0 +1,30 @@
+{% extends 'user/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_user') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {% if app.request.uri ends with 'edit' %}
+                        {{ 'Edit user'|trans }}: {{ user.email }}
+                    {% else %}
+                        {{ 'New user'|trans }}
+                    {% endif %}
+                </h4>
+                {{ form(userForm) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
