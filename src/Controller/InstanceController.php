@@ -33,6 +33,7 @@ class InstanceController extends AppController
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
+        $filter = $request->query->get('filter', '');
         
         // if ($search !== '') {
         //     $data = $this->labRepository->findByNameLike($search);
@@ -46,6 +47,13 @@ class InstanceController extends AppController
         $data['device'] = $this->deviceInstanceRepository->findAll();
         $data['network_interface'] = $this->networkInterfaceInstanceRepository->findAll();
 
+        // $countAll = 0;
+
+        // /** @var array $value */
+        // foreach ($data as $value) {
+        //     $countAll += $value->count();
+        // }
+
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->renderJson($data);
         }
@@ -54,7 +62,8 @@ class InstanceController extends AppController
             'labInstances' => $data['lab'],
             'deviceInstances' => $data['device'],
             'networkInterfaceInstances' => $data['network_interface'],
-            'search' => $search
+            'search' => $search,
+            'filter' => $filter
         ]);
     }
 

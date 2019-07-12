@@ -29,63 +29,79 @@
                 </h4>
                 <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>
                 <br>
-                <h3>Devices :</h3>
-                <hr>
-
-                {% for device in lab.devices %}
-                <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
-                    {% if is_granted("ROLE_ADMINISTRATOR") %}
-                        {% set path = 'show_device' %}
-                    {% else %}
-                        {% set path = 'show_device_public' %}
-                    {% endif %}
-                    <a href="{{ path(path, {'id': device.id}) }}">
-                        {{ device.name }}
-                    </a>
-                    {% set isVNC = false %}
-                    {% for networkInterface in device.networkInterfaces %}
-                        {% if networkInterface.settings is defined %}
-                            {% if networkInterface.settings.protocol == "VNC" %}
-                                {% set isVNC = true %}
+                <div class="row">
+                    <div class="col">
+                        <h3>Devices</h3>
+                        <hr>
+        
+                        {% for device in lab.devices %}
+                        <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
+                            {% if is_granted("ROLE_ADMINISTRATOR") %}
+                                {% set path = 'show_device' %}
+                            {% else %}
+                                {% set path = 'show_device_public' %}
                             {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                    <div class="float-right">
-                        {%- set startDeviceButton -%}
-                            <a href="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
-                                {{ svg('play') }}
+                            <a href="{{ path(path, {'id': device.id}) }}">
+                                {{ device.name }}
                             </a>
-                        {%- endset -%}
-                        {%- if device.instances[0] is defined -%}
-                            {%- if not device.instances[0].isStarted -%}
-                                {{ startDeviceButton }}
-                            {%- endif -%}
-                        {%- elseif device.instances[0] is not defined -%}
-                            {{ startDeviceButton }}
-                        {%- endif -%}
+                            {% set isVNC = false %}
+                            {% for networkInterface in device.networkInterfaces %}
+                                {% if networkInterface.settings is defined %}
+                                    {% if networkInterface.settings.protocol == "VNC" %}
+                                        {% set isVNC = true %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            <div class="float-right">
+                                {%- set startDeviceButton -%}
+                                    <a href="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                                        {{ svg('play') }}
+                                    </a>
+                                {%- endset -%}
+                                {%- if device.instances[0] is defined -%}
+                                    {%- if not device.instances[0].isStarted -%}
+                                        {{ startDeviceButton }}
+                                    {%- endif -%}
+                                {%- elseif device.instances[0] is not defined -%}
+                                    {{ startDeviceButton }}
+                                {%- endif -%}
+        
+                                {% if isVNC %}
+                                    {% set viewDeviceButton -%}
+                                        <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-primary" role="button" title="View console" data-toggle="tooltip" data-placement="top">
+                                            {{ svg('eye') }}
+                                        </a>
+                                    {%- endset -%}
+                                    {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
+                                        {{ viewDeviceButton }}
+                                    {%- endif %}
+                                {% endif %}
+        
+                                {% set stopDeviceButton -%}
+                                    <a href="{{ path('stop_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                                            {{ svg('stop') }}
+                                    </a>
+                                {%- endset -%}
+                                {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
+                                    {{ stopDeviceButton }}
+                                {%- endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col">
+                        <h3>Related activities</h3>
+                        <hr>
 
-                        {% if isVNC %}
-                            {% set viewDeviceButton -%}
-                                <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-primary" role="button" title="View console" data-toggle="tooltip" data-placement="top">
-                                    {{ svg('eye') }}
-                                </a>
-                            {%- endset -%}
-                            {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
-                                {{ viewDeviceButton }}
-                            {%- endif %}
-                        {% endif %}
-
-                        {% set stopDeviceButton -%}
-                            <a href="{{ path('stop_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
-                                    {{ svg('stop') }}
+                        {% for activity in lab.activities %}
+                        <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
+                            <a href="{{ path('show_activity', {'id': activity.id}) }}">
+                                {{ activity.name }}
                             </a>
-                        {%- endset -%}
-                        {%- if device.instances[0] is defined and device.instances[0].isStarted -%}
-                            {{ stopDeviceButton }}
-                        {%- endif %}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
 
                 {% if output is defined %}
                 {{ dump(output|cast_to_array)}}
