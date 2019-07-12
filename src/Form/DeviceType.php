@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Device;
 use App\Entity\Flavor;
+use App\Entity\OperatingSystem;
 use App\Entity\NetworkInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -11,9 +12,10 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use App\Entity\OperatingSystem;
 
 class DeviceType extends AbstractType
 {
@@ -27,29 +29,34 @@ class DeviceType extends AbstractType
             ])
             ->add('brand')
             ->add('model')
-            ->add('launchOrder', IntegerType::class, [
-                'attr' => [
-                    'min' => 0
-                ]
+            ->add('launchOrder', HiddenType::class, [
+                'data' => 0
+                // 'attr' => [
+                //     'min' => 0,
+                // ]
+            ])
+            ->add('type', ChoiceType::class, [
+                'choices' => ['Virtual Machine' => 'vm'],
+                'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
+                'empty_data' => 'vm'
+            ])
+            ->add('hypervisor', ChoiceType::class, [
+                'choices' => ['QEMU' => 'qemu'],
+                'help' => 'Hypervisor used. Only QEMU is supported for now.',
+                'empty_data' => 'qemu'
+            ])
+            ->add('virtuality', HiddenType::class, [
+                'data' => 1
             ])
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'choice_label' => 'name',
-                'required' => false
-            ])
-            ->add('launchScript', FileType::class, [
-                'required' => false
-            ])
-            ->add('networkInterfaces', EntityType::class, [
-                'class' => NetworkInterface::class,
-                'choice_label' => 'name',
-                'multiple' => true,
-                'required' => false
+                'help' => 'Image disk used for this device.',
             ])
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
                 'choice_label' => 'name',
-                'required' => false
+                'required' => true
             ])
             ->add('submit', SubmitType::class)
         ;

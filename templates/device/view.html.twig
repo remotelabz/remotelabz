@@ -16,8 +16,8 @@
                     {{ device.name }}
                     {% if is_granted("ROLE_ADMINISTRATOR") %}
                     <div class="float-right">
-                        <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        <a href="{{ path('delete_device', {'id': device.id}) }}" class="btn btn-danger" role="button">Delete</a>
                     </div>
                     {% endif %}
                 </h4>

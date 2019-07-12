@@ -6,6 +6,7 @@ use App\Entity\Device;
 use App\Form\DeviceType;
 
 use App\Service\FileUploader;
+use App\Repository\DeviceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,6 +16,13 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class DeviceController extends AppController
 {
+    private $deviceRepository;
+
+    public function __construct(DeviceRepository $deviceRepository)
+    {
+        $this->deviceRepository = $deviceRepository;
+    }
+
     /**
      * @Route("/admin/devices", name="devices")
      */
@@ -124,6 +132,7 @@ class DeviceController extends AppController
         $deviceForm->handleRequest($request);
         
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
+            /** @var Device $device */
             $device = $deviceForm->getData();
 
             if ($device->getLaunchScript() != null && $device->getLaunchScript() != $launchScript) {
@@ -134,12 +143,16 @@ class DeviceController extends AppController
             } else {
                 $device->setLaunchScript($launchScript);
             }
-            
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($device);
-            $entityManager->flush();
-            
-            $this->addFlash('success', 'Device has been edited.');
+
+            if ($device->getInstances()->count() > 0) {
+                $this->addFlash('danger', "You cannot edit a device which still has instances.");
+            } else {
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($device);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'Device has been edited.');
+            }
 
             return $this->redirectToRoute('show_device', [
                 'id' => $id
@@ -154,31 +167,28 @@ class DeviceController extends AppController
     }
         
     /**
-     * @Route("/admin/devices/{id<\d+>}", name="delete_device", methods="DELETE")
+     * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
      */
-    public function deleteAction(Request $request, $id)
+    public function deleteAction(int $id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Device');
-            
-        $data = null;
-        $status = 200;
-            
-        $device = $repository->find($id);
-            
-        if ($device == null) {
-            $status = 404;
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($device);
-            $em->flush();
-                
-            $data = [
-                'message' => 'Device has been deleted.'
-            ];
+        $device = $this->deviceRepository->find($id);
+
+        if (null === $device) {
+            throw new NotFoundHttpException();
         }
-            
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data, $status);
+
+        $deviceInstances = $device->getInstances();
+
+        if ($deviceInstances->count() > 0) {
+            $this->addFlash('danger', "You cannot delete a device which still has instances.");
+
+            return $this->redirectToRoute('show_device', [ 'id' => $id ]);
+        } else {
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->remove($device);
+            $entityManager->flush();
+
+            $this->addFlash('success', $device->getName() . ' has been deleted.');
         }
 
         return $this->redirectToRoute('devices');
