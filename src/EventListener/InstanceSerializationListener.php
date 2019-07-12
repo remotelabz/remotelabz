@@ -11,6 +11,7 @@ use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use JMS\Serializer\EventDispatcher\PreSerializeEvent;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use JMS\Serializer\EventDispatcher\EventSubscriberInterface as JMSEventSubscriberInterface;
 
@@ -28,12 +29,16 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
 
     private $deviceRepository;
 
+    /** @var UrlGeneratorInterface */
+    private $router;
+    
     public function __construct(
         TokenStorageInterface $tokenStorage,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
-        DeviceRepository $deviceRepository
+        DeviceRepository $deviceRepository,
+        UrlGeneratorInterface $router
         ) {
         $this->tokenStorage = $tokenStorage;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -41,6 +46,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->deviceRepository = $deviceRepository;
         $this->user = $tokenStorage->getToken()->getUser();
+        $this->router = $router;
     }
 
     /**
@@ -63,6 +69,11 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
                 'event' => 'serializer.pre_serialize',
                 'class' => NetworkInterface::class,
                 'method' => 'onNetworkInterfacePreSerialize'
+            ],
+            [
+                'event' => 'serializer.pre_serialize',
+                'class' => OperatingSystem::class,
+                'method' => 'onOperatingSystemPreSerialize'
             ]
         ];
     }
@@ -94,6 +105,25 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         if ($this->user instanceof User) {
             $networkInterfaceInstances = $this->networkInterfaceInstanceRepository->findBy(['user' => $this->user, 'networkInterface' => $networkInterface]);
             $networkInterface->setInstances($networkInterfaceInstances);
+        }
+    }
+
+    public function onOperatingSystemPreSerialize(PreSerializeEvent $event)
+    {
+        /** @var OperatingSystem $operatingSystem */
+        $operatingSystem = $event->getObject();
+        if ($operatingSystem->getImageUrl()) {
+            $operatingSystem->setImage($operatingSystem->getImageUrl());
+        } elseif ($operatingSystem->getImageFilename()) {
+            $operatingSystem->setImage(
+                $this->router->getContext()->getScheme() .
+                '://' .
+                $this->router->getContext()->getHost() .
+                '/uploads/images/' .
+                $operatingSystem->getImageFilename()
+            );
+        } else {
+            $operatingSystem->setImage("");
         }
     }
 }
