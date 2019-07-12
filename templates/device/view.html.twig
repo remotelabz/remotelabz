@@ -1,6 +1,6 @@
 {% extends 'device/index.html.twig' %}
 
-{% set publicPath = is_granted("ROLE_ADMINISTRATOR") ?: "_public" %}
+{% set publicPath = is_granted("ROLE_ADMINISTRATOR") ? "" : "_public" %}
 
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device' ~ publicPath, {'id': device.id}) }) -%}
