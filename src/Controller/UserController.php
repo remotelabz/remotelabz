@@ -8,6 +8,7 @@ use App\Form\UserType;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
 use App\Controller\AppController;
+use App\Repository\UserRepository;
 use JMS\Serializer\SerializerBuilder;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,9 +25,12 @@ class UserController extends AppController
 {
     public $passwordEncoder;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder)
+    public $userRepository;
+
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository)
     {
         $this->passwordEncoder = $passwordEncoder;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -48,14 +52,21 @@ class UserController extends AppController
         $addUserFromFileForm->handleRequest($request);
 
         if ($addUserForm->isSubmitted() && $addUserForm->isValid()) {
+            /** @var User $user */
             $user = $addUserForm->getData();
-            $user->setPassword($this->passwordEncoder->encodePassword($user, $user->getPassword()));
+            $confirmPassword = $addUserForm->get('confirmPassword')->getData();
 
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($user);
-            $entityManager->flush();
+            if ($user->getPassword() === $confirmPassword) {
+                $user->setPassword($this->passwordEncoder->encodePassword($user, $user->getPassword()));
 
-            $this->addFlash('success', 'User has been created.');
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($user);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'User has been created.');
+            } else {
+                $this->addFlash('danger', "Passwords doesn't match.");
+            }
         } elseif ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
             $file = $addUserFromFileForm->getData()['file'];
 
@@ -95,46 +106,114 @@ class UserController extends AppController
     }
 
     /**
+     * @Route("/admin/users/new", name="new_user", methods={"GET", "POST"})
+     */
+    public function newAction(Request $request)
+    {
+        $user = new User();
+        $userForm = $this->createForm(UserType::class, $user);
+        $userForm->handleRequest($request);
+
+        if ($userForm->isSubmitted() && $userForm->isValid()) {
+            /** @var User $user */
+            $user = $userForm->getData();
+            $password = $userForm->get('password')->getData();
+            $confirmPassword = $userForm->get('confirmPassword')->getData();
+
+            if (!$password) {
+                $this->addFlash('danger', "You must provide a password.");
+            } elseif ($password === $confirmPassword) {
+                $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
+
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($user);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'User has been created.');
+
+                return $this->redirectToRoute('users');
+            } else {
+                $this->addFlash('danger', "Passwords doesn't match.");
+            }
+        }
+
+        return $this->render('user/new.html.twig', [
+            'userForm' => $userForm->createView()
+        ]);
+    }
+
+    /**
+     * @Route("/admin/users/{id<\d+>}/edit", name="edit_user", methods={"GET", "POST"})
+     */
+    public function editAction(Request $request, int $id)
+    {
+        $user = $this->userRepository->find($id);
+
+        if (null === $user) {
+            throw new NotFoundHttpException();
+        }
+        
+        $userForm = $this->createForm(UserType::class, $user);
+        $userForm->handleRequest($request);
+
+        if ($userForm->isSubmitted() && $userForm->isValid()) {
+            /** @var User $user */
+            $user = $userForm->getData();
+            $password = $userForm->get('password')->getData();
+            $confirmPassword = $userForm->get('confirmPassword')->getData();
+
+            if ($password) {
+                if ($password === $confirmPassword) {
+                    $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
+                } else {
+                    $this->addFlash('danger', "Passwords doesn't match. If you don't want to change user's password, please leave password field empty.");
+
+                    return $this->redirectToRoute('edit_user', [ 'id' => $id ]);
+                }
+            }
+            
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'User has been edited.');
+
+            return $this->redirectToRoute('users');
+        }
+
+        return $this->render('user/new.html.twig', [
+            'userForm' => $userForm->createView(),
+            'user' => $user
+        ]);
+    }
+
+    /**
      * @Route("/users", name="get_users", methods="GET")
      */
     public function cgetAction()
     {
-        $repository = $this->getDoctrine()->getRepository('App:User');
-
-        $data = $repository->findAll();
-
-        return $this->renderJson($data);
+        return $this->renderJson($this->userRepository->findAll());
     }
 
     /**
-     * @Route("/users/{id<\d+>}", name="get_user", methods="GET")
-     */
-    public function getAction($id)
-    {
-        $repository = $this->getDoctrine()->getRepository('App:User');
-
-        $user = $repository->find($id);
-
-        if ($user == null) {
-            throw new NotFoundHttpException('This user does not exist.');
-        }
-
-        return $this->renderJson($user);
-    }
-
-    /**
-     * @Route("/users/{id<\d+>}/toggle", name="toggle_user", methods="PATCH")
+     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="PATCH")
      */
     public function toggleAction($id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:User');
-
+        $status = 200;
         $data = [];
 
-        $user = $repository->find($id);
+        $user = $this->userRepository->find($id);
 
         if ($user == null) {
             throw new NotFoundHttpException('This user does not exist.');
+        } elseif ($user == $this->getUser()) {
+            $status = 403;
+            $data['message'] = 'You cannot lock your own account.';
+        } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+            // Prevent super admin deletion
+            $status = 403;
+            $data['message'] = 'You cannot lock root account.';
         } else {
             $user->setEnabled(!$user->isEnabled());
 
@@ -145,26 +224,31 @@ class UserController extends AppController
             $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        return $this->renderJson($data);
+        return $this->renderJson($data, $status);
     }
 
     /**
-     * @Route("/users/{id<\d+>}", name="delete_user", methods="DELETE")
+     * @Route("/admin/users/{id<\d+>}", name="delete_user", methods="DELETE")
      */
     public function deleteAction($id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:User');
-        
         $status = 200;
         $data = [];
         
-        $user = $repository->find($id);
+        $user = $this->userRepository->find($id);
 
         if ($user == null) {
             $status = 404;
+        } elseif ($user == $this->getUser()) {
+            $status = 403;
+            $data['message'] = 'You cannot delete your own account.';
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
             // Prevent super admin deletion
             $status = 403;
+            $data['message'] = 'You cannot delete root account.';
+        } elseif ($user->getInstances()->count() > 0) {
+            $status = 403;
+            $data['message'] = 'You cannot delete an user who still has instances. Please stop them and try again.';
         } else {
             $em = $this->getDoctrine()->getManager();
             $em->remove($user);
@@ -177,18 +261,8 @@ class UserController extends AppController
     }
 
     /**
-     * @Route("/users/me", name="get_user_current", methods="GET")
-     */
-    public function meAction()
-    {
-        $user = $this->getUser();
-
-        return $this->renderJson($user);
-    }
-
-    /**
      * Format du tableau :
-     * Nom,Prénom,Mail
+     * Nom,Prénom,Mail,Pass
      * @return The number of elements added
      */
     public function createUserFromCSV($file)
@@ -210,10 +284,10 @@ class UserController extends AppController
 
             $user->setLastName($data[0]);
             $user->setFirstName($data[1]);
-            $user->setEmail(trim($data[2])); // trim newline because this is the last field
+            $user->setEmail($data[2]);
+            $user->setPassword($this->passwordEncoder->encodePassword($user, trim($data[3]))); // trim newline because this is the last field
 
-            if ($repository->findByEmail(trim($data[2])) == null) {
-                $user->setPassword($this->passwordEncoder->encodePassword($user, \random_bytes(10)));
+            if ($repository->findByEmail(data[2]) == null) {
                 $entityManager->persist($user);
 
                 $addedUsers[$i] = $user;

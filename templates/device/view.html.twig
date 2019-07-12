@@ -1,6 +1,6 @@
 {% extends 'device/index.html.twig' %}
 
-{% set publicPath = is_granted("ROLE_ADMINISTRATOR") ?: "_public" %}
+{% set publicPath = is_granted("ROLE_ADMINISTRATOR") ? "" : "_public" %}
 
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device' ~ publicPath, {'id': device.id}) }) -%}
@@ -16,8 +16,8 @@
                     {{ device.name }}
                     {% if is_granted("ROLE_ADMINISTRATOR") %}
                     <div class="float-right">
-                        <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        <a href="{{ path('delete_device', {'id': device.id}) }}" class="btn btn-danger" role="button">Delete</a>
                     </div>
                     {% endif %}
                 </h4>

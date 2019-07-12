@@ -6,7 +6,7 @@ jms_serializer:
     default_context:
         serialization:
             enable_max_depth_checks: true
-            serialize_null: false
+            serialize_null: true
         deserialization:
             enable_max_depth_checks: false
 #    metadata:

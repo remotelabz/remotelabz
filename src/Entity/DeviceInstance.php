@@ -33,6 +33,12 @@ class DeviceInstance extends Instance
      */
     protected $user;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="deviceInstances")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $lab;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -58,6 +64,18 @@ class DeviceInstance extends Instance
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getLab(): ?Lab
+    {
+        return $this->lab;
+    }
+
+    public function setLab(?Lab $lab): self
+    {
+        $this->lab = $lab;
 
         return $this;
     }

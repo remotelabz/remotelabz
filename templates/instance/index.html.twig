@@ -5,6 +5,10 @@
     {{ parent() }}
 {% endblock %}
 
+{% set filter = filter|default('all') %}
+{% if filter not in ['all', 'labs', 'devices', 'networkInterfaces'] %}{% set filter = 'all' %}{% endif %}
+
+
 {% block wrapper %}
     <div class="top-panel">
             <div class="quick-actions">
@@ -12,20 +16,40 @@
                 {% endif %}
             </div>
         <ul class="nav-links nav nav-tabs">
-            <li class="active"><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
-            <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li>
-            <li><a href="#"><span>All</span> <span class="badge badge-pill">0</span></a></li>
+            {# <li class="active"><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
+            <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
+            <li {% if filter == "all" %}class="active"{% endif %}>
+                <a href="?filter=all">
+                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>
+                </a>
+            </li>
+            <li {% if filter == "labs" %}class="active"{% endif %}>
+                <a href="?filter=labs">
+                    <span>Labs</span> <span class="badge badge-pill">{{ labInstances|length }}</span>
+                </a>
+            </li>
+            <li {% if filter == "devices" %}class="active"{% endif %}>
+                <a href="?filter=devices">
+                    <span>Devices</span> <span class="badge badge-pill">{{ deviceInstances|length }}</span>
+                </a>
+            </li>
+            <li {% if filter == "networkInterfaces" %}class="active"{% endif %}>
+                <a href="?filter=networkInterfaces">
+                    <span>Network Interfaces</span> <span class="badge badge-pill">{{ networkInterfaceInstances|length }}</span>
+                </a>
+            </li>
         </ul>
     </div>
-    <div class="search-panel">
+    {# <div class="search-panel">
         <form action="{{ path('instances') }}" method="GET">
             <input type="search" class="form-control input-sm" name="search"
             placeholder="Search by name"
             spellcheck="false" value="{{ search|default('') }}" type="search">
         </form>
-    </div>
+    </div> #}
     <div class="labs-panel">
 
+    {% if filter == "all" or filter == "labs" %}
         {#- Lab instances -#}
 
         <h4 class="p-3 border-bottom">Lab instances</h4>
@@ -39,14 +63,23 @@
         {% for instance in labInstances %}
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             <div class="float-right">
+                {% if not instance.isStarted %}
+                <a href="{{ path('start_lab', {'id': instance.lab.id}) }}" class="btn btn-success" role="button" title="Start lab" data-toggle="tooltip" data-placement="top">
+                        {{ svg('play') }}
+                </a>
                 <a href="{{ path('delete_instance', {'id': instance.id, 'type': 'lab'}) }}" class="btn btn-danger" role="button" title="Delete instance" data-toggle="tooltip" data-placement="top">
                         {{ svg('close') }}
                 </a>
+                {% else %}
+                <a href="{{ path('stop_lab', {'id': instance.lab.id}) }}" class="btn btn-danger" role="button" title="Stop lab" data-toggle="tooltip" data-placement="top">
+                    {{ svg('stop') }}
+                </a>
+                {% endif %} 
             </div>
 
             <div>
                 <div>
-                    <a href="{{- path('show_lab', {'id': instance.lab.id}) -}}" class="lab-item-name">
+                    <a href="{{- path('show_lab', {'id': instance.lab.id}) -}}" class="lab-item-name" title="{{ instance.lab.name }}" data-toggle="tooltip" data-placement="top">
                         {{- instance.uuid -}}
                     </a>
                 </div>
@@ -57,14 +90,16 @@
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
                 </span>
-                <p style="display:inline;">
+                <p class="text-muted d-inline">
                     ·
                     Owned by {{ instance.user.name }}
                 </p>
             </div>
         </div>
         {% endfor %}
+    {% endif %}
 
+    {% if filter == "all" or filter == "devices" %}
         {#- Devices instances -#}
 
         <h4 class="p-3 border-bottom">Device instances</h4>
@@ -78,9 +113,18 @@
         {% for instance in deviceInstances %}
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             <div class="float-right">
+                {% if not instance.isStarted %}
+                <a href="{{ path('start_lab_device', {'labId': instance.lab.id, 'deviceId': instance.device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                        {{ svg('play') }}
+                </a>
                 <a href="{{ path('delete_instance', {'id': instance.id, 'type': 'device'}) }}" class="btn btn-danger" role="button" title="Delete instance" data-toggle="tooltip" data-placement="top">
                         {{ svg('close') }}
                 </a>
+                {% else %}
+                <a href="{{ path('stop_lab_device', {'labId': instance.lab.id, 'deviceId': instance.device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
+                    {{ svg('stop') }}
+                </a>
+                {% endif %} 
             </div>
 
             <div>
@@ -96,15 +140,16 @@
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
                 </span>
-                <p style="display:inline;">
+                <p class="text-muted d-inline">
                     ·
                     Owned by {{ instance.user.name }}
                 </p>
             </div>
         </div>
         {% endfor %}
+    {% endif %}
 
-        
+    {% if filter == "all" or filter == "networkInterfaces" %}
         {#- Network interface instances -#}
 
         <h4 class="p-3 border-bottom">Network interface instances</h4>
@@ -118,9 +163,11 @@
         {% for instance in networkInterfaceInstances %}
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             <div class="float-right">
+                {% if not instance.isStarted %}
                 <a href="{{ path('delete_instance', {'id': instance.id, 'type': 'network-interface'}) }}" class="btn btn-danger" role="button" title="Delete instance" data-toggle="tooltip" data-placement="top">
                         {{ svg('close') }}
                 </a>
+                {% endif %}
             </div>
 
             <div>
@@ -136,15 +183,16 @@
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
                 </span>
-                <p style="display:inline;">
+                <p class="text-muted d-inline">
                     ·
                     Owned by {{ instance.user.name }}
                     ·
-                    Port : {{ instance.remotePort }}
+                    Port : <kbd>{{ instance.remotePort }}</kbd>
                 </p>
             </div>
         </div>
         {% endfor %}
+    {% endif %}
     </div>
     
 {% endblock %}

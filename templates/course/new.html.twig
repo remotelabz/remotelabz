@@ -1,0 +1,30 @@
+{% extends 'course/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_course') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+
+<div class="row">
+    <div class="col grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {% if app.request.uri ends with 'edit' %}
+                        {{ 'Edit course'|trans }}: {{ course.name }}
+                    {% else %}
+                        {{ 'New course'|trans }}
+                    {% endif %}
+                </h4>
+                {{ form(courseForm) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

@@ -9,7 +9,9 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 class NetworkInterfaceType extends AbstractType
@@ -18,20 +20,35 @@ class NetworkInterfaceType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('type', ChoiceType::class, [
-                'label' => 'Driver',
-                'choices' => [
-                    'Linux Bridge' => 'INTERFACE_TYPE_TAP',
-                    'OpenVSwitch' => 'INTERFACE_TYPE_OVS'
-                ]
+            // ->add('type', ChoiceType::class, [
+            //     'label' => 'Driver',
+            //     'choices' => [
+            //         'Linux Bridge' => 'tap',
+            //         'OpenVSwitch' => 'ovs'
+            //     ]
+            // ])
+            ->add('type', HiddenType::class, [
+                'data' => 'tap'
             ])
-            ->add('settings', EntityType::class, [
-                'class' => NetworkSettings::class,
-                'choice_label' => 'name',
+            // ->add('settings', EntityType::class, [
+            //     'class' => NetworkSettings::class,
+            //     'choice_label' => 'name',
+            // ])
+            ->add('accessType', ChoiceType::class, [
+                'choices' => [
+                    'VNC' => 'VNC'
+                ],
+                'mapped' => false,
+                'required' => false
             ])
             ->add('device', EntityType::class, [
                 'class' => Device::class,
                 'choice_label' => 'name',
+                'required' => false
+            ])
+            ->add('macAddress', TextType::class, [
+                'label' => 'MAC address',
+                'help' => 'MAC address must be in shape like 00:11:22:33:44:55'
             ])
             ->add('submit', SubmitType::class)
         ;

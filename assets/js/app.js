@@ -44,6 +44,13 @@ export default class API {
     constructor(object) {
         this.collection = object;
     }
+
+    edit(id) {
+        const url = Routing.generate('edit_' + this.collection, {
+            id: id
+        })
+        window.location.href = url;
+    }
     
     toggle(id) {
         $.ajax({
@@ -64,7 +71,7 @@ export default class API {
         .fail(function (data, status) {
             new Noty({
                 type: 'error',
-                text: data.message
+                text: data.responseJSON.message
             }).show();
         });
     }
@@ -88,7 +95,7 @@ export default class API {
         .fail(function (data, status) {
             new Noty({
                 type: 'error',
-                text: data.message
+                text: data.responseJSON.message
             }).show();
         });
     }

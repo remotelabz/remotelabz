@@ -30,7 +30,7 @@ class Activity
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="activities")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true)
      */
     private $lab;
 

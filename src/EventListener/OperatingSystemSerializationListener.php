@@ -22,6 +22,7 @@ use JMS\Serializer\EventDispatcher\EventSubscriberInterface as JMSEventSubscribe
 
 class OperatingSystemSerializationListener implements JMSEventSubscriberInterface
 {
+    # TODO: This class is useless because it should be merged in one listener file
     /** @var UrlGeneratorInterface */
     private $router;
 
@@ -41,16 +42,6 @@ class OperatingSystemSerializationListener implements JMSEventSubscriberInterfac
                 'event' => 'serializer.pre_serialize',
                 'class' => OperatingSystem::class,
                 'method' => 'onOperatingSystemPreSerialize'
-            ],
-            [
-                'event' => 'serializer.pre_serialize',
-                'class' => Device::class,
-                'method' => 'onDevicePreSerialize'
-            ],
-            [
-                'event' => 'serializer.pre_serialize',
-                'class' => NetworkInterface::class,
-                'method' => 'onNetworkInterfacePreSerialize'
             ]
         ];
     }

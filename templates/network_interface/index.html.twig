@@ -1,28 +1,26 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Network interfaces': path('network_interfaces') }) %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="row">
-    {% embed 'modal.html.twig' with {'title': 'New Network Interface'|trans, 'class': 'create-network-interface-modal'} %}
-        {% block body %}
-            {{ form(networkInterfaceForm, {'id': 'networkInterfaceForm'}) }}
-        {% endblock %}
-    {% endembed %}
-
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-
                 <h4 class="card-title">{{ 'Network Interfaces'|trans }}</h4>
                 <p>
-                    <button class="btn btn-success" data-target=".create-network-interface-modal" data-toggle="modal" type="button"><i
-                            class="fa fa-plus"></i> {{ 'New'|trans }}</button>
+                    <a href="{{ path('new_network_interface') }}" class="btn btn-success">{{ 'New network interface'|trans }}</a>
                 </p>
                 <table id="networkInterfaceTable" class="table table-hover" style="width:100%">
                     <thead>
                         <tr>
                             <th>{{ 'Name'|trans }}</th>
                             <th>{{ 'Type'|trans }}</th>
-                            <th>{{ 'Settings'|trans }}</th>
+                            <th>{{ 'Protocol'|trans }}</th>
+                            <th>{{ 'MAC address'|trans }}</th>
                             <th>{{ 'Device'|trans }}</th>
                         </tr>
                     </thead>

@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\FlavorRepository")
@@ -30,6 +31,9 @@ class Flavor
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @Assert\GreaterThan(
+     *     value = 0
+     * )
      */
     private $memory;
 
@@ -37,6 +41,9 @@ class Flavor
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @Assert\GreaterThan(
+     *     value = 0
+     * )
      */
     private $disk;
 

@@ -13,7 +13,10 @@ $(function () {
             dataSrc: ''
         },
         buttons: [{
-            extend: 'edit'
+            extend: 'edit',
+            action: function() {
+                api.edit($('table tr.selected').data('id'));
+            }
         }, {
             extend: 'delete',
             action: function() {
@@ -32,18 +35,40 @@ $(function () {
                 //             return 'OpenVSwitch';
                 //     }
                 // }
+            // }, {
+            //     data: 'settings',
+            //     defaultContent: 'None',
+            //     render: (data, type) => {
+            //         if (type !== 'None' && data !== undefined) {
+            //             var render = '<a href="' + 
+            //             Routing.generate('edit_network_settings', {
+            //                 id: data.id
+            //             }) +
+            //             '">' +
+            //             data.name + 
+            //             '</a>';
+
+            //             return render;
+            //         }
+            //     }
             }, {
                 data: 'settings',
+                defaultContent: 'Local only',
+                render: (data, type) => {
+                    if (type !== 'None' && data !== undefined) {
+                        console.log(data);
+                        var render = data.protocol;
+
+                        return render;
+                    }
+                }
+            }, {
+                data: 'mac_address',
                 defaultContent: 'None',
                 render: (data, type) => {
-                    if (type !== 'None') {
-                        var render = '<a href="' + 
-                        Routing.generate('edit_network_settings', {
-                            id: data.id
-                        }) +
-                        '">' +
-                        data.name + 
-                        '</a>';
+                    if (type !== 'None' && data !== undefined) {
+                        console.log(data);
+                        var render = data;
 
                         return render;
                     }
@@ -52,7 +77,7 @@ $(function () {
                 data: 'device',
                 defaultContent: 'None',
                 render: (data, type) => {
-                    if (type !== 'None') {
+                    if (type !== 'None' && data !== undefined) {
                         var render = '<a href="' + 
                         Routing.generate('edit_device', {
                             id: data.id

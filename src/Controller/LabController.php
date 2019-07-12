@@ -306,6 +306,7 @@ class LabController extends AppController
             $deviceInstance
                 ->setDevice($device)
                 ->setUser($user)
+                ->setLab($lab)
             ;
             $device->addInstance($deviceInstance);
             $entityManager->persist($deviceInstance);

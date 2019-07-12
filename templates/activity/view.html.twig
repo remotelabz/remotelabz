@@ -10,24 +10,19 @@
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">
+                <h1 class="card-title">
                     {{ activity.name }}
                     <div class="float-right">
-                        <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i
-                        class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
-                    </div>
-                </h4>
-                <h1>{{ 'Available devices'|trans }}</h1>
-                {% for device in activity.lab.devices %}
-                    <p>
-                        {{ device.name }}
+                    {% if activity.lab is not null %}
+                        <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+                    {% endif %}
+                    {% if is_granted("ROLE_ADMINISTRATOR") %}
+                        <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                        <a href="{{ path('delete_activity', {'id': activity.id}) }}" class="btn btn-danger" role="button">Delete</a>
+                    {% endif %}
 
-                        <a href="{{ path('start_device', {'id': device.id}) }}" class="btn btn-success" role="button"><i class="fa fa-play"></i> {{ 'Start'|trans }}</a>
-                    </p> 
-                {% endfor %}
-                <hr>
-                <h1>{{ activity.name }}</h1>
-                <hr>
+                    </div>
+                </h1>
                 {{ activity.description|markdown }}
             </div>
         </div>

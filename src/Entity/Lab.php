@@ -88,6 +88,12 @@ class Lab implements InstanciableInterface
      */
     private $uuid;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="lab")
+     * @Serializer\Exclude  
+     */
+    private $deviceInstances;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -95,6 +101,7 @@ class Lab implements InstanciableInterface
         $this->activities = new ArrayCollection();
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->deviceInstances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -301,6 +308,37 @@ class Lab implements InstanciableInterface
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DeviceInstance[]
+     */
+    public function getDeviceInstances(): Collection
+    {
+        return $this->deviceInstances;
+    }
+
+    public function addDeviceInstance(DeviceInstance $deviceInstance): self
+    {
+        if (!$this->deviceInstances->contains($deviceInstance)) {
+            $this->deviceInstances[] = $deviceInstance;
+            $deviceInstance->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDeviceInstance(DeviceInstance $deviceInstance): self
+    {
+        if ($this->deviceInstances->contains($deviceInstance)) {
+            $this->deviceInstances->removeElement($deviceInstance);
+            // set the owning side to null (unless already changed)
+            if ($deviceInstance->getLab() === $this) {
+                $deviceInstance->setLab(null);
+            }
+        }
 
         return $this;
     }
