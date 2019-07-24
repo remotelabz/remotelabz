@@ -42,6 +42,19 @@ $(function () {
         }, {
             data: 'email'
         }, {
+            data: 'roles',
+            render: function(data) {
+                if (data.indexOf('ROLE_SUPER_ADMINISTRATOR') >= 0) {
+                    return 'Root administrator';
+                } else if (data.indexOf('ROLE_ADMINISTRATOR') >= 0) {
+                    return 'Administrator';
+                } else if (data.indexOf('ROLE_TEACHER') >= 0) {
+                    return 'Teacher';
+                } else if (data.indexOf('ROLE_USER') >= 0) {
+                    return 'User';
+                }
+            }
+        }, {
             data: 'courses[, ].name',
             defaultContent: ''
         }]
