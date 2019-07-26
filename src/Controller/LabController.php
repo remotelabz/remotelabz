@@ -321,6 +321,7 @@ class LabController extends AppController
                 $networkInterfaceInstance
                     ->setNetworkInterface($networkInterface)
                     ->setUser($user)
+                    ->setLab($lab)
                 ;
 
                 // if vnc access is requested, ask for a free port and register it
