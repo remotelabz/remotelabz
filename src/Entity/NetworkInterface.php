@@ -9,10 +9,16 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
  * @Serializer\XmlRoot("network_interface")
+ * @UniqueEntity(
+ *     fields="macAddress",
+ *     errorPath="macAddress",
+ *     message="This MAC address is already used by another interface."
+ * )
  */
 class NetworkInterface implements InstanciableInterface
 {

@@ -90,9 +90,15 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="lab")
-     * @Serializer\Exclude  
+     * @Serializer\Exclude
      */
     private $deviceInstances;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="lab")
+     * @Serializer\Exclude
+     */
+    private $networkInterfaceInstances;
 
     public function __construct()
     {
@@ -102,6 +108,7 @@ class Lab implements InstanciableInterface
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->deviceInstances = new ArrayCollection();
+        $this->networkInterfaceInstances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -337,6 +344,37 @@ class Lab implements InstanciableInterface
             // set the owning side to null (unless already changed)
             if ($deviceInstance->getLab() === $this) {
                 $deviceInstance->setLab(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|NetworkInterfaceInstance[]
+     */
+    public function getNetworkInterfaceInstances(): Collection
+    {
+        return $this->networkInterfaceInstances;
+    }
+
+    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
+            $networkInterfaceInstance->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
+            // set the owning side to null (unless already changed)
+            if ($networkInterfaceInstance->getLab() === $this) {
+                $networkInterfaceInstance->setLab(null);
             }
         }
 

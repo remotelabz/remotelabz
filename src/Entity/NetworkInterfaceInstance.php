@@ -40,6 +40,12 @@ class NetworkInterfaceInstance extends Instance
      */
     private $remotePort;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="networkInterfaceInstances")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $lab;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -77,6 +83,18 @@ class NetworkInterfaceInstance extends Instance
     public function setRemotePort(int $remotePort): self
     {
         $this->remotePort = $remotePort;
+
+        return $this;
+    }
+
+    public function getLab(): ?Lab
+    {
+        return $this->lab;
+    }
+
+    public function setLab(?Lab $lab): self
+    {
+        $this->lab = $lab;
 
         return $this;
     }

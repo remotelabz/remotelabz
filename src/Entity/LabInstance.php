@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Entity\Instance;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -60,5 +62,45 @@ class LabInstance extends Instance
         $this->user = $user;
 
         return $this;
+    }
+
+    /**
+     * Get device instances associated to this lab
+     *
+     * @return Collection|DeviceInstance[]
+     */
+    public function getDeviceInstances(): Collection
+    {
+        // $deviceInstances = $this->lab->getDeviceInstances()->filter(function(DeviceInstance $deviceInstance) {
+        //     return $deviceInstance->getUser() == $this->user;
+        // });
+
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->eq("user", $this->user))
+        ;
+
+        $deviceInstances = $this->lab->getDeviceInstances()->matching($criteria);
+
+        return $deviceInstances;
+    }
+
+    /**
+     * Get network interface instances associated to this lab
+     *
+     * @return Collection|NetworkInterfaceInstance[]
+     */
+    public function getNetworkInterfaceInstances(): Collection
+    {
+        // $deviceInstances = $this->lab->getDeviceInstances()->filter(function(DeviceInstance $deviceInstance) {
+        //     return $deviceInstance->getUser() == $this->user;
+        // });
+
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->eq("user", $this->user))
+        ;
+
+        $networkInterfaceInstances = $this->lab->getNetworkInterfaceInstances()->matching($criteria);
+
+        return $networkInterfaceInstances;
     }
 }

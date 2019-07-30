@@ -8,13 +8,6 @@ class SecurityControllerTest extends WebTestCase
 {
     use ControllerTestTrait;
 
-    public function testLoginGetAction()
-    {
-        $this->client->request('GET', '/login');
-
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
-    }
-
     public function testPasswordResetGetAction()
     {
         $this->client->request('GET', '/password/reset');
