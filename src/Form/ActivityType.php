@@ -23,7 +23,8 @@ class ActivityType extends AbstractType
             ->add('description', TextareaType::class, [
                 'attr' => [
                     'class' => 'mde'
-                ]
+                ],
+                'required' => false
             ])
             ->add('lab', EntityType::class, [
                 'class' => Lab::class,

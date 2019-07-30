@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="en" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="awzJBNC" resname="Users">
+        <source>Users</source>
+        <target>Users</target>
+      </trans-unit>
+      <trans-unit id="GP3VSbL" resname="New">
+        <source>New</source>
+        <target>New</target>
+      </trans-unit>
+      <trans-unit id="LP_bqr9" resname="Import">
+        <source>Import</source>
+        <target>Import</target>
+      </trans-unit>
+      <trans-unit id="ksHN.fT" resname="Enabled">
+        <source>Enabled</source>
+        <target>Enabled</target>
+      </trans-unit>
+      <trans-unit id="e0iIBJR" resname="Last name">
+        <source>Last name</source>
+        <target>Last name</target>
+      </trans-unit>
+      <trans-unit id="cC75Ie0" resname="First name">
+        <source>First name</source>
+        <target>First name</target>
+      </trans-unit>
+      <trans-unit id="lpzL089" resname="Email">
+        <source>Email</source>
+        <target>Email</target>
+      </trans-unit>
+      <trans-unit id="qq2dkua" resname="Courses">
+        <source>Courses</source>
+        <target>Courses</target>
+      </trans-unit>
+      <trans-unit id="j46TjZy" resname="Flavors">
+        <source>Flavors</source>
+        <target>Flavors</target>
+      </trans-unit>
+      <trans-unit id="FUBfiFA" resname="Import from file">
+        <source>Import from file</source>
+        <target>Import from file</target>
+      </trans-unit>
+      <trans-unit id="8G2hKMN" resname="Create user">
+        <source>Create user</source>
+        <target>Create user</target>
+      </trans-unit>
+      <trans-unit id="Gn5imVd" resname="Start all">
+        <source>Start all</source>
+        <target>Start all</target>
+      </trans-unit>
+      <trans-unit id="RkxP.QG" resname="Edit">
+        <source>Edit</source>
+        <target>Edit</target>
+      </trans-unit>
+      <trans-unit id="6tT3Cm." resname="Stop all">
+        <source>Stop all</source>
+        <target>Stop all</target>
+      </trans-unit>
+      <trans-unit id="qEhCjIp" resname="New Lab">
+        <source>New Lab</source>
+        <target>New Lab</target>
+      </trans-unit>
+      <trans-unit id="n0OyQnD" resname="Network Interfaces">
+        <source>Network Interfaces</source>
+        <target>Network Interfaces</target>
+      </trans-unit>
+      <trans-unit id="G4ZBf1Q" resname="New network interface">
+        <source>New network interface</source>
+        <target>New network interface</target>
+      </trans-unit>
+      <trans-unit id="3NHVIj9" resname="Name">
+        <source>Name</source>
+        <target>Name</target>
+      </trans-unit>
+      <trans-unit id="uq3fcPt" resname="Type">
+        <source>Type</source>
+        <target>Type</target>
+      </trans-unit>
+      <trans-unit id="zwiDND9" resname="Protocol">
+        <source>Protocol</source>
+        <target>Protocol</target>
+      </trans-unit>
+      <trans-unit id="AAps5gq" resname="MAC address">
+        <source>MAC address</source>
+        <target>MAC address</target>
+      </trans-unit>
+      <trans-unit id="a6C97Mt" resname="Device">
+        <source>Device</source>
+        <target>Device</target>
+      </trans-unit>
+      <trans-unit id="0eYIygQ" resname="Edit network interface">
+        <source>Edit network interface</source>
+        <target>Edit network interface</target>
+      </trans-unit>
+      <trans-unit id="S6USHU0" resname="Devices">
+        <source>Devices</source>
+        <target>Devices</target>
+      </trans-unit>
+      <trans-unit id="MNAaZPm" resname="New device">
+        <source>New device</source>
+        <target>New device</target>
+      </trans-unit>
+      <trans-unit id="vI6Dsw_" resname="Edit device">
+        <source>Edit device</source>
+        <target>Edit device</target>
+      </trans-unit>
+      <trans-unit id="P1kIS35" resname="New Activity">
+        <source>New Activity</source>
+        <target>New Activity</target>
+      </trans-unit>
+      <trans-unit id="pH1VdNG" resname="Network Settings">
+        <source>Network Settings</source>
+        <target>Network Settings</target>
+      </trans-unit>
+      <trans-unit id="HSljslu" resname="New network settings">
+        <source>New network settings</source>
+        <target>New network settings</target>
+      </trans-unit>
+      <trans-unit id="sStRC9C" resname="IPv4">
+        <source>IPv4</source>
+        <target>IPv4</target>
+      </trans-unit>
+      <trans-unit id="Cw8KJn5" resname="IPv6">
+        <source>IPv6</source>
+        <target>IPv6</target>
+      </trans-unit>
+      <trans-unit id="Qe1SkhZ" resname="Gateway">
+        <source>Gateway</source>
+        <target>Gateway</target>
+      </trans-unit>
+      <trans-unit id="cumln1o" resname="Port">
+        <source>Port</source>
+        <target>Port</target>
+      </trans-unit>
+      <trans-unit id="Zaasgpo" resname="Edit network settings">
+        <source>Edit network settings</source>
+        <target>Edit network settings</target>
+      </trans-unit>
+      <trans-unit id="ZJQL3Ba" resname="New hypervisor">
+        <source>New hypervisor</source>
+        <target>New hypervisor</target>
+      </trans-unit>
+      <trans-unit id="UrK7TB8" resname="Hypervisors">
+        <source>Hypervisors</source>
+        <target>Hypervisors</target>
+      </trans-unit>
+      <trans-unit id="cTFmlx1" resname="Command">
+        <source>Command</source>
+        <target>Command</target>
+      </trans-unit>
+      <trans-unit id="f4FgcsH" resname="Arguments">
+        <source>Arguments</source>
+        <target>Arguments</target>
+      </trans-unit>
+      <trans-unit id="Y4T.p3E" resname="New user">
+        <source>New user</source>
+        <target>New user</target>
+      </trans-unit>
+      <trans-unit id="kg5BPH1" resname="Status">
+        <source>Status</source>
+        <target>Status</target>
+      </trans-unit>
+      <trans-unit id="FHNqLrn" resname="Role">
+        <source>Role</source>
+        <target>Role</target>
+      </trans-unit>
+      <trans-unit id="BbiNGPw" resname="Edit user">
+        <source>Edit user</source>
+        <target>Edit user</target>
+      </trans-unit>
+      <trans-unit id="8z3xfEF" resname="New flavor">
+        <source>New flavor</source>
+        <target>New flavor</target>
+      </trans-unit>
+      <trans-unit id="w5Y67ar" resname="Memory">
+        <source>Memory</source>
+        <target>Memory</target>
+      </trans-unit>
+      <trans-unit id="NA4M87_" resname="Disk">
+        <source>Disk</source>
+        <target>Disk</target>
+      </trans-unit>
+      <trans-unit id="1VMaAK7" resname="Edit flavor">
+        <source>Edit flavor</source>
+        <target>Edit flavor</target>
+      </trans-unit>
+      <trans-unit id="P8cn2J." resname="New course">
+        <source>New course</source>
+        <target>New course</target>
+      </trans-unit>
+      <trans-unit id="erqX4vH" resname="Edit course">
+        <source>Edit course</source>
+        <target>Edit course</target>
+      </trans-unit>
+      <trans-unit id="usiUg_n" resname="New Connexion">
+        <source>New Connexion</source>
+        <target>New Connexion</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

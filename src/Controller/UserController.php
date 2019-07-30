@@ -10,13 +10,17 @@ use App\Form\UserPasswordType;
 use App\Controller\AppController;
 use App\Repository\UserRepository;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
+use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -27,10 +31,13 @@ class UserController extends AppController
 
     public $userRepository;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository)
+    public $mailer;
+
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
+        $this->mailer = $mailer;
     }
 
     /**
@@ -89,7 +96,7 @@ class UserController extends AppController
                     $this->addFlash(
                         'warning',
                         'Aucun utilisateur créé. Veuillez vérifier que les
-                        utilisateurs spécifiés dans le fichier n\'existent pas déjà.'
+                        utilisateurs spécifiés dans le fichier n\'existent pas déjà ou que le format du fichier est correct.'
                     );
                 }
                 
@@ -128,6 +135,8 @@ class UserController extends AppController
                 $entityManager = $this->getDoctrine()->getManager();
                 $entityManager->persist($user);
                 $entityManager->flush();
+
+                $this->sendNewAccountEmail($user, $password);
 
                 $this->addFlash('success', 'User has been created.');
 
@@ -263,42 +272,78 @@ class UserController extends AppController
     /**
      * Format du tableau :
      * Nom,Prénom,Mail,Pass
-     * @return The number of elements added
+     * @return array The number of elements added
      */
     public function createUserFromCSV($file)
     {
-        $line = array();
         $i = 0;
+        $line = array();
         $addedUsers = array();
-
-        $repository = $this->getDoctrine()->getRepository('App:User');
+        $validator = Validation::createValidator();
         $entityManager = $this->getDoctrine()->getManager();
-        
+
         while ($line[$i] = fgets($file, 4096)) {
             $line[$i] = str_replace('"', '', $line[$i]);
 
-            $data = array();
             $data = explode(",", $line[$i]);
 
-            $user = new User();
+            if (count($data) === 4) {
+                $lastName = $data[0];
+                $firstName = $data[1];
+                $email = $data[2];
+                $password = trim($data[3]); // trim newline because this is the last field
 
-            $user->setLastName($data[0]);
-            $user->setFirstName($data[1]);
-            $user->setEmail($data[2]);
-            $user->setPassword($this->passwordEncoder->encodePassword($user, trim($data[3]))); // trim newline because this is the last field
+                $user = new User();
 
-            if ($repository->findByEmail(data[2]) == null) {
-                $entityManager->persist($user);
+                $user
+                    ->setLastName($firstName)
+                    ->setFirstName($lastName)
+                    ->setEmail($email)
+                    ->setPassword($this->passwordEncoder->encodePassword($user, $password))
+                ;
 
-                $addedUsers[$i] = $user;
+                $validEmail = count($validator->validate($email, [ new Email() ])) === 0;
+    
+                if ($validEmail && $this->userRepository->findByEmail($email) == null) {
+                    $entityManager->persist($user);
+                    $this->sendNewAccountEmail($user, $password);
+                    $addedUsers[$i] = $user;
+                }
             }
-            
+
             $i++;
         }
 
         $entityManager->flush();
 
         return $addedUsers;
+    }
+
+    /**
+     * Send an email to a user with his password.
+     *
+     * @param User $user
+     * @return void
+     */
+    private function sendNewAccountEmail($user, $password)
+    {
+        $message = (new \Swift_Message('Your RemoteLabz account'))
+            ->setFrom('remotelabz@remotelabz.univ-reims.fr')
+            ->setTo($user->getEmail())
+            ->setBody(
+                $this->renderView(
+                    'emails/new_user.html.twig',
+                    [
+                        'name' => $user->getName(),
+                        'link' => $this->generateUrl('login', [],  UrlGeneratorInterface::ABSOLUTE_URL),
+                        'password' => $password
+                    ]
+                ),
+                'text/html'
+            )
+        ;
+
+        $this->mailer->send($message);
     }
 
     /**

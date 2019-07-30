@@ -62,3 +62,7 @@ services:
     App\EventListener\InstanceSerializationListener:
         tags:
             - { name: jms_serializer.event_subscriber }
+
+    App\EventListener\InstanceDeleteListener:
+        tags:
+            - { name: doctrine.event_listener, event: preRemove }
