@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Error;
 use App\Entity\Lab;
 use App\Utils\Uuid;
 use App\Form\LabType;
@@ -230,6 +231,8 @@ class LabController extends AppController
                 $this->stopDevice($lab, $device);
             } catch (NotInstancedException $exception) {
                 
+            } catch (Error $error) {
+                
             }
         }
 
@@ -443,8 +446,8 @@ class LabController extends AppController
 
         // then, if there is no device instance left for current user, delete lab instance
         if (! $lab->hasDeviceUserInstance($user)) {
-            $lab->removeInstance($labInstance);
             $entityManager->remove($labInstance);
+            $lab->removeInstance($labInstance);
         } else { // otherwise, just tell the system the lab is not fully started
             $labInstance->setStarted(false);
         }
