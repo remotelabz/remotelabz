@@ -606,7 +606,13 @@ class LabController extends AppController
         $lab = $this->labRepository->find($id);
         $device = $this->deviceRepository->find($deviceId);
 
-        return $this->render('lab/vm_view.html.twig', [
+        if ($request->get('size') == "fullscreen") {
+            $fullscreen = true;
+        } else {
+            $fullscreen = false;
+        }
+
+        return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
             'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),

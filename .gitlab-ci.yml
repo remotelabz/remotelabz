@@ -110,6 +110,8 @@ deploy_staging:
     - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - echo WORKER_SERVER=$WORKER_SERVER >> .env
     - echo WORKER_PORT=$WORKER_PORT >> .env
+    - echo WEBSOCKET_PROXY_SERVER=$WEBSOCKET_PROXY_SERVER >> .env
+    - echo WEBSOCKET_PROXY_PORT=$WEBSOCKET_PROXY_PORT >> .env
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker stop mysql_$CI_COMMIT_REF_SLUG || true

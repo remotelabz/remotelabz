@@ -13,8 +13,13 @@
             <div class="card-body">
                 <h4 class="card-title">
                     {{ device.name }}
+                    <div class="float-right">
+                        <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen" onclick="openFullscreen(); return false;">
+                            {{ svg('external-link') }}
+                        </a>
+                    </div>
                 </h4>
-                <div id="noVNC_screen">
+                <div id="noVNC_screen" style="height:1000px;">
         
                 </div>
                 <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}">
@@ -29,4 +34,27 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('vnc') }}
+
+    <script type="text/javascript">
+        var WindowObjectReference = null; // variable globale
+        
+        function openFullscreen() {
+          if (WindowObjectReference == null || WindowObjectReference.closed) {
+            /* si le pointeur vers l'objet window n'existe pas, ou s'il existe
+               mais que la fenêtre a été fermée */
+            WindowObjectReference = window.open("{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id, 'size': 'fullscreen'}) }}",
+                   "OpenVNCFullscreen", "resizable=yes,scrollbars=yes,status=no,location=no,menubar=no,toolbar=no");
+            /* alors, création du pointeur. La nouvelle fenêtre sera créée par dessus
+               toute autre fenêtre existante. */
+          }
+          else {
+            WindowObjectReference.focus();
+            /* sinon, la référence à la fenêtre existe et la fenêtre n'a pas été 
+               fermée: la fenêtre est peut-être minimisée ou derrière la fenêtre 
+               principale. Par conséquent, on peut l'amener par dessus les autres à
+               l'aide de la méthode focus(). Il n'est pas nécessaire de recréer la fenêtre
+               ou de recharger la ressource référencée. */
+          };
+        }
+        </script>
 {% endblock %}
