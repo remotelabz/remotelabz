@@ -112,6 +112,9 @@ deploy_staging:
     - echo WORKER_PORT=$WORKER_PORT >> .env
     - echo WEBSOCKET_PROXY_SERVER=$WEBSOCKET_PROXY_SERVER >> .env
     - echo WEBSOCKET_PROXY_PORT=$WEBSOCKET_PROXY_PORT >> .env
+    - echo APP_ENV=$APP_ENV >> .env
+    - echo SSL_CERT=$SSL_CERT >> remotelabz.com.crt
+    - echo SSL_CERT_KEY=$SSL_CERT_KEY >> remotelabz.com.key
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker stop mysql_$CI_COMMIT_REF_SLUG || true
@@ -121,7 +124,7 @@ deploy_staging:
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker run -d --rm -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
   environment:
