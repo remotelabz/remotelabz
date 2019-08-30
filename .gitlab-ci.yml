@@ -179,7 +179,6 @@ reload_staging:
   when: manual
   environment:
     name: staging
-    action: reload
   tags:
     - staging
   only:
