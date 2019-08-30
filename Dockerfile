@@ -86,6 +86,7 @@ RUN php ${REMOTELABZ_PATH}/bin/console assets:install --symlink public --relativ
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN chmod +x /usr/local/bin/docker-entrypoint
+RUN chown -R www-data /var/www
 WORKDIR ${REMOTELABZ_PATH}
 EXPOSE 8000/tcp
 EXPOSE 8888/tcp
