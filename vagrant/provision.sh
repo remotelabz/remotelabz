@@ -5,7 +5,7 @@ export REMOTELABZ_PATH=/var/www/html/remotelabz
 export DEBIAN_FRONTEND=noninteractive
 # Install packages
 apt-get update
-apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server
+apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server exim4
 # Move files
 mv /home/vagrant/remotelabz /var/www/html
 cp "${REMOTELABZ_PATH}"/.env.dist "${REMOTELABZ_PATH}"/.env
@@ -49,11 +49,9 @@ apt-get install --no-install-recommends yarn
 groupadd -f remotelabz
 usermod -aG remotelabz vagrant
 usermod -aG remotelabz www-data
-echo "www-data     ALL=(ALL) NOPASSWD: /bin/ip" | tee /etc/sudoers.d/www-data
 # Composer
 if ! [ "$(command -v composer)" ]; then 
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-    php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
     php composer-setup.php
     php -r "unlink('composer-setup.php');"
     mv composer.phar /usr/local/bin/composer
