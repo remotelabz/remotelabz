@@ -17,12 +17,12 @@ class Kernel extends BaseKernel
 
     public function getCacheDir()
     {
-        return '/var/www/cache/'.$this->environment;
+        return $this->getProjectDir().'/var/cache/'.$this->environment;
     }
 
     public function getLogDir()
     {
-        return '/var/www/log';
+        return $this->getProjectDir().'/var/log';
     }
 
     public function registerBundles()
