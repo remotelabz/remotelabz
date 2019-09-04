@@ -27,11 +27,17 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Common\Collections\ArrayCollection;
+use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Swagger\Annotations as SWG;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 
-class LabController extends AppController
+class LabController extends FOSRestController
 {
     private $labRepository;
     private $deviceRepository;
@@ -45,8 +51,31 @@ class LabController extends AppController
 
     /**
      * @Route("/labs", name="labs")
+     * @Rest\Get("/api/labs.{_format}",
+     *      defaults={"_format": "json"},
+     *      requirements={"_format": "json|xml"}
+     * )
+     * 
+     * @SWG\Parameter(
+     *     name="search",
+     *     in="query",
+     *     type="string",
+     *     description="Filter labs by name. All labs containing this value will be shown."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all existing labs",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=Lab::class))
+     *     )
+     * )
+     * 
+     * @SWG\Tag(name="Labs")
+     * @Security(name="Bearer")
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, $_format = 'html')
     {
         $search = $request->query->get('search', '');
         
@@ -56,33 +85,43 @@ class LabController extends AppController
             $data = $this->labRepository->findAll();
         }
 
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data);
-        }
-        
-        return $this->render('lab/index.html.twig', [
-            'labs' => $data,
-            'search' => $search
-        ]);
+        $view = $this->view($data, 200)
+            ->setTemplate("lab/index.html.twig")
+            ->setTemplateData([
+                'labs' => $data,
+                'search' => $search
+            ])
+            ->setFormat($_format)
+        ;
+
+        return $this->handleView($view);
     }
 
     /**
-     * @Route("/labs/{id<\d+>}.{_format}",
-     *  defaults={"_format": "html"},
-     *  requirements={"_format": "html|json"},
+     * @Route("/labs/{id<\d+>}",
      *  name="show_lab",
      *  methods="GET")
+     * 
+     * @Rest\Get("/api/labs/{id<\d+>}.{_format}",
+     *      defaults={"_format": "json"},
+     *      requirements={"_format": "json|xml"}
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns requested lab",
+     *     @SWG\Model(type=Lab::class)
+     * )
+     * 
+     * @SWG\Tag(name="Labs")
+     * @Security(name="Bearer")
      */
-    public function showAction(Request $request, $id)
+    public function showAction(Request $request, $id, $_format = 'html')
     {
         $data = $this->labRepository->find($id);
 
         if (null === $data) {
             throw new NotFoundHttpException();
-        }
-
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data);
         }
 
         // Remove all instances not belongs to current user (changes are not stored in database)
@@ -93,6 +132,18 @@ class LabController extends AppController
             $userDeviceInstance = $device->getUserInstance($this->getUser());
             $device->setInstances($userDeviceInstance != null ? [ $userDeviceInstance ] : []);
         }
+
+        $view = $this->view($data, 200)
+            ->setTemplate("lab/view.html.twig")
+            ->setTemplateData([
+                'lab' => $data,
+                'labInstance' => $data->getUserInstance($this->getUser()),
+                'user' => $this->getUser()
+            ])
+            ->setFormat($_format)
+        ;
+
+        return $this->handleView($view);
         
         return $this->render('lab/view.html.twig', [
             'lab' => $data,

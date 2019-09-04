@@ -9,6 +9,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 
 /**

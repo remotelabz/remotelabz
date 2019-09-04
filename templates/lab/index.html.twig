@@ -23,13 +23,13 @@
             </li>
         </ul>
     </div>
-    {# <div class="search-panel">
+    <div class="search-panel">
         <form action="{{ path('labs') }}" method="GET">
             <input type="search" class="form-control input-sm" name="search"
             placeholder="Search by name"
             spellcheck="false" value="{{ search|default('') }}" type="search">
         </form>
-    </div> #}
+    </div>
     <div class="labs-panel">
     {% for lab in labs %}
         <div class="wrapper d-flex align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
