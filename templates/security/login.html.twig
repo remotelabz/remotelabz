@@ -46,6 +46,7 @@
 
                         <div class="form-group">
                             <button class="btn btn-success submit-btn btn-block" name="submit">Sign in (Local authentification)</button>
+                            <p class="footer-text text-right"><a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
                         </div>
                         {# Add remember_me and forgot_password #}
                         {# <div class="form-group d-flex justify-content-between">
@@ -59,8 +60,8 @@
                     </form>
 
                     <hr>
-
                     <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">Shibboleth authentification</a>
+                   
                 </div>
                 <ul class="auth-footer">
                     {# <li>
@@ -73,7 +74,8 @@
                         <a href="#">Terms</a>
                     </li> #}
                 </ul>
-                <p class="footer-text text-center">Design by Bootstrapdash. Made by F. Nolot, J. Hubert & O. Flauzac. <a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
+                <hr>
+                <p class="footer-text text-left">Design by Bootstrapdash. Made by F. Nolot, J. Hubert & O. Flauzac.</p>
             </div>
         </div>
     </div>
