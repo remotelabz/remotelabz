@@ -70,7 +70,7 @@
             helpLocation="/about.html"
             styleSheet="/shibboleth-sp/main.css"/>
 
-        <MetadataProvider type="XML" uri="https://metadata.federation.renater.fr/test/preview/preview-all-renater-test-metadata.xml" backingFilePath="preview-all-renater-test-metadata.xml" reloadInterval="7200">
+        <MetadataProvider type="XML" url="https://metadata.federation.renater.fr/test/preview/preview-all-renater-test-metadata.xml" backingFilePath="preview-all-renater-test-metadata.xml" reloadInterval="7200">
             <MetadataFilter type="Signature" certificate="renater-metadata-signing-cert-2016.pem"/>
         </MetadataProvider>
         <!-- Example of remotely supplied batch of signed metadata. -->
