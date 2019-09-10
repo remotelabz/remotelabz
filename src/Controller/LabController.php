@@ -281,7 +281,8 @@ class LabController extends AppController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab->setUser($user);
+        //Old function, before instance
+        //$lab->setUser($user);
         $client = new Client();
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
@@ -387,7 +388,7 @@ class LabController extends AppController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab->setUser($user);
+        //$lab->setUser($user);
         $client = new Client();
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
