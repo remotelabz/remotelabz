@@ -1,0 +1,166 @@
+#!/bin/bash
+
+set -e
+
+export INSTALL_LOG="/var/log/remotelabz/install.log"
+
+function debug() {
+    echo "[$(date -u)] $1" >> "${INSTALL_LOG}" 2>&1
+}
+
+function warning() {
+    echo -ne "\e[33m" >> "${INSTALL_LOG}" 2>&1
+    echo -n "[$(date -u)] WARN: $1" >> "${INSTALL_LOG}" 2>&1
+    echo -e "\e[39m" >> "${INSTALL_LOG}" 2>&1
+}
+
+function error() {
+    echo -ne "\e[31m" >> "${INSTALL_LOG}" 2>&1
+    echo -n "[$(date -u)] ERROR: $1" >> "${INSTALL_LOG}" 2>&1
+    echo -e "\e[39m" >> "${INSTALL_LOG}" 2>&1
+}
+
+function quit_on_error() {
+  echo "Error ❌"
+  echo "Please check logs in ${INSTALL_LOG} to see what went wrong. Exiting..."
+  exit 1
+}
+
+trap 'quit_on_error' ERR
+
+debug "Starting RemoteLabz installation"
+
+# Check for root
+if [ "$(whoami)" != "root" ]; then
+    error "Installation aborted, root is required!"
+    echo "ERROR: This script must be executed as root! We need to hack some things on your computer. 😎"
+    exit 1
+fi
+
+while getopts "p:" opt; do
+  case $opt in
+    p)
+      export REMOTELABZ_WORKER_PORT="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Environment variables
+if [ -z "$REMOTELABZ_WORKER_PATH" ]; then
+    export REMOTELABZ_WORKER_PATH=/opt/remotelabz-worker
+fi
+if [ -z "$REMOTELABZ_WORKER_PORT" ]; then
+    export REMOTELABZ_WORKER_PORT=8080
+fi
+# ----------------------------------
+export DEBIAN_FRONTEND=noninteractive
+export COMPOSER_ALLOW_SUPERUSER=1
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+HAS_MOVED=0
+
+mkdir -p /var/log/remotelabz
+# Install packages
+echo -n "📦 Installing required packages... "
+debug "Running apt-get to grab required packages..."
+apt-get update >> "${INSTALL_LOG}" 2>&1
+apt-get install -y apache2 php zip unzip php-curl php-xdebug php-xml qemu libxml2-utils openvswitch-switch git python3 python3-pip >> "${INSTALL_LOG}" 2>&1
+echo "OK ✔️"
+
+# Copy self-directory into destination
+echo -n "📁 Copying files to ${REMOTELABZ_WORKER_PATH}... "
+if [ "${SCRIPT_DIR}" != "${REMOTELABZ_WORKER_PATH}" ]; then
+  cp -Rf "${SCRIPT_DIR}" "${REMOTELABZ_WORKER_PATH}"
+  cd "${REMOTELABZ_WORKER_PATH}"
+  HAS_MOVED=1
+  echo "OK ✔️"
+else
+  echo "Files are already in the right location. Skipping... ✔️"
+fi
+chgrp -R www-data "${REMOTELABZ_WORKER_PATH}"
+
+# Handle users permissions
+if [ $(getent group remotelabz > /dev/null) ]; then
+    groupadd remotelabz
+fi
+if [ $(getent passwd vagrant > /dev/null) ]; then
+    usermod -aG remotelabz vagrant
+fi
+usermod -aG remotelabz www-data
+if ! [ $(grep -Fxq "www-data     ALL=(ALL) NOPASSWD: /bin/ip" /etc/sudoers.d/www-data) ]; then
+    echo "www-data     ALL=(ALL) NOPASSWD: /bin/ip" | tee /etc/sudoers.d/www-data >> "${INSTALL_LOG}" 2>&1
+fi
+# Composer
+echo -n "🤵 Installing Composer... "
+if ! [ $(command -v composer) ]; then
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" >> "${INSTALL_LOG}" 2>&1
+    php composer-setup.php >> "${INSTALL_LOG}" 2>&1
+    php -r "unlink('composer-setup.php');" >> "${INSTALL_LOG}" 2>&1
+    mv composer.phar /usr/local/bin/composer >> "${INSTALL_LOG}" 2>&1
+    echo "OK ✔️"
+else
+  echo "Composer is already installed! Skipping... ✔️"
+  warning "Not installing Composer because it is done already."
+fi
+
+echo -n "🎶 Downloading Composer packages... "
+(cd "${REMOTELABZ_WORKER_PATH}" && composer install --no-progress --no-suggest) >> "${INSTALL_LOG}" 2>&1
+echo "OK ✔️"
+chown -R nobody:nogroup "${REMOTELABZ_WORKER_PATH}"/vendor
+
+echo -n "🔥 Warming cache... "
+php "${REMOTELABZ_WORKER_PATH}"/bin/console cache:warm >> "${INSTALL_LOG}" 2>&1
+echo "OK ✔️"
+chown -R www-data:www-data "${REMOTELABZ_WORKER_PATH}"/var
+
+# Folders
+debug "Creating images folder if it does not exists already..."
+mkdir -p /opt/remotelabz/images
+
+# Websockify
+echo -n "📡 Installing WebSockify... "
+if ! [ $(command -v websockify) ]; then
+    debug "Installing WebSockify..."
+    pip3 install setuptools >> "${INSTALL_LOG}" 2>&1
+    git clone https://github.com/novnc/websockify.git /opt/remotelabz/websockify >> "${INSTALL_LOG}" 2>&1
+    (cd /opt/remotelabz/websockify/ && python3 setup.py install) >> "${INSTALL_LOG}" 2>&1
+    echo "OK ✔️"
+else
+  echo "WebSockify is already installed! Skipping... ✔️"
+  warning "Not installing WebSockify because it is done already."
+fi
+chown -R www-data:www-data /opt/remotelabz
+
+# Grant OVS permissions to remotelabz group
+chmod g+rwx /var/run/openvswitch/db.sock
+chgrp remotelabz /var/run/openvswitch/db.sock
+
+# Configure apache
+echo -n "🌎 Configuring Apache with port ${REMOTELABZ_WORKER_PORT}... "
+if grep -Fxq "Listen ${REMOTELABZ_WORKER_PORT}" /etc/apache2/ports.conf; then
+  echo "Port ${REMOTELABZ_WORKER_PORT} is already configured in apache2." >> "${INSTALL_LOG}" 2>&1
+else
+  echo "Listen ${REMOTELABZ_WORKER_PORT}" >> /etc/apache2/ports.conf
+fi
+cp -f "${REMOTELABZ_WORKER_PATH}"/config/apache/100-remotelabz-worker.conf /etc/apache2/sites-available/100-remotelabz-worker.conf
+sed -i "s/Listen 8080/Listen ${REMOTELABZ_WORKER_PORT}/g" /etc/apache2/sites-available/100-remotelabz-worker.conf
+sed -i 's,/var/www/html/remotelabz-worker,'"${REMOTELABZ_WORKER_PATH}"',' /etc/apache2/sites-available/100-remotelabz-worker.conf
+ln -fs /etc/apache2/sites-available/100-remotelabz-worker.conf /etc/apache2/sites-enabled/100-remotelabz-worker.conf
+apache2ctl restart >> "${INSTALL_LOG}" 2>&1
+echo "OK ✔️"
+
+echo "Done!"
+echo "RemoteLabz-worker is installed and ready to serve neat VMs! 🔥"
+if [ $HAS_MOVED -eq 1 ]; then
+  echo "You may now remove this folder. ♻️"
+fi
+echo "Thank you for using our software. ❤️"
+exit 0
