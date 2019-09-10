@@ -45,7 +45,7 @@
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
                         <div class="form-group">
-                            <button class="btn btn-success submit-btn btn-block" name="submit">Sign in (Local authentification)</button>
+                            <button class="btn btn-success submit-btn btn-block" name="submit">Local sign in</button>
                             <p class="footer-text text-right"><a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
                         </div>
                         {# Add remember_me and forgot_password #}
@@ -60,7 +60,7 @@
                     </form>
 
                     <hr>
-                    <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">Shibboleth authentification</a>
+                    <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
                    
                 </div>
                 <ul class="auth-footer">
