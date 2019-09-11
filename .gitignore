@@ -40,3 +40,4 @@ remotelabz
 *.crt
 *.key
 .env.prod
+/images/
