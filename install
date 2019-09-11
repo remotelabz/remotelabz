@@ -37,10 +37,13 @@ if [ "$(whoami)" != "root" ]; then
     exit 1
 fi
 
-while getopts "p:" opt; do
+while getopts "p:s:" opt; do
   case $opt in
     p)
-      export REMOTELABZ_WORKER_PORT="$OPTARG"
+      export REMOTELABZ_PORT="$OPTARG"
+      ;;
+    s)
+      export SERVER_NAME="$OPTARG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -54,11 +57,14 @@ while getopts "p:" opt; do
 done
 
 # Environment variables
-if [ -z "$REMOTELABZ_WORKER_PATH" ]; then
-    export REMOTELABZ_WORKER_PATH=/opt/remotelabz-worker
+if [ -z "$REMOTELABZ_PATH" ]; then
+    export REMOTELABZ_PATH=/opt/remotelabz
 fi
-if [ -z "$REMOTELABZ_WORKER_PORT" ]; then
-    export REMOTELABZ_WORKER_PORT=8080
+if [ -z "$REMOTELABZ_PORT" ]; then
+    export REMOTELABZ_PORT=8080
+fi
+if [ -z "$SERVER_NAME" ]; then
+    export SERVER_NAME=remotelabz.com
 fi
 # ----------------------------------
 export DEBIAN_FRONTEND=noninteractive
@@ -72,32 +78,20 @@ mkdir -p /var/log/remotelabz
 echo -n "📦 Installing required packages... "
 debug "Running apt-get to grab required packages..."
 apt-get update >> "${INSTALL_LOG}" 2>&1
-apt-get install -y apache2 php zip unzip php-curl php-xdebug php-xml qemu libxml2-utils openvswitch-switch git python3 python3-pip >> "${INSTALL_LOG}" 2>&1
+apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server exim4 >> "${INSTALL_LOG}" 2>&1
 echo "OK ✔️"
 
 # Copy self-directory into destination
-echo -n "📁 Copying files to ${REMOTELABZ_WORKER_PATH}... "
-if [ "${SCRIPT_DIR}" != "${REMOTELABZ_WORKER_PATH}" ]; then
-  cp -Rf "${SCRIPT_DIR}" "${REMOTELABZ_WORKER_PATH}"
-  cd "${REMOTELABZ_WORKER_PATH}"
+echo -n "📁 Copying files to ${REMOTELABZ_PATH}... "
+if [ "${SCRIPT_DIR}" != "${REMOTELABZ_PATH}" ]; then
+  cp -Rf "${SCRIPT_DIR}" "${REMOTELABZ_PATH}"
+  cd "${REMOTELABZ_PATH}"
   HAS_MOVED=1
   echo "OK ✔️"
 else
   echo "Files are already in the right location. Skipping... ✔️"
 fi
-chgrp -R www-data "${REMOTELABZ_WORKER_PATH}"
 
-# Handle users permissions
-if [ $(getent group remotelabz > /dev/null) ]; then
-    groupadd remotelabz
-fi
-if [ $(getent passwd vagrant > /dev/null) ]; then
-    usermod -aG remotelabz vagrant
-fi
-usermod -aG remotelabz www-data
-if ! [ $(grep -Fxq "www-data     ALL=(ALL) NOPASSWD: /bin/ip" /etc/sudoers.d/www-data) ]; then
-    echo "www-data     ALL=(ALL) NOPASSWD: /bin/ip" | tee /etc/sudoers.d/www-data >> "${INSTALL_LOG}" 2>&1
-fi
 # Composer
 echo -n "🤵 Installing Composer... "
 if ! [ $(command -v composer) ]; then
@@ -112,55 +106,34 @@ else
 fi
 
 echo -n "🎶 Downloading Composer packages... "
-(cd "${REMOTELABZ_WORKER_PATH}" && composer install --no-progress --no-suggest) >> "${INSTALL_LOG}" 2>&1
+(cd "${REMOTELABZ_PATH}" && composer install --no-progress --no-suggest) >> "${INSTALL_LOG}" 2>&1
 echo "OK ✔️"
-chown -R nobody:nogroup "${REMOTELABZ_WORKER_PATH}"/vendor
 
 echo -n "🔥 Warming cache... "
-php "${REMOTELABZ_WORKER_PATH}"/bin/console cache:warm >> "${INSTALL_LOG}" 2>&1
+php "${REMOTELABZ_PATH}"/bin/console cache:warm >> "${INSTALL_LOG}" 2>&1
 echo "OK ✔️"
-chown -R www-data:www-data "${REMOTELABZ_WORKER_PATH}"/var
 
-# Folders
-debug "Creating images folder if it does not exists already..."
-mkdir -p /opt/remotelabz/images
-
-# Websockify
-echo -n "📡 Installing WebSockify... "
-if ! [ $(command -v websockify) ]; then
-    debug "Installing WebSockify..."
-    pip3 install setuptools >> "${INSTALL_LOG}" 2>&1
-    git clone https://github.com/novnc/websockify.git /opt/remotelabz/websockify >> "${INSTALL_LOG}" 2>&1
-    (cd /opt/remotelabz/websockify/ && python3 setup.py install) >> "${INSTALL_LOG}" 2>&1
-    echo "OK ✔️"
-else
-  echo "WebSockify is already installed! Skipping... ✔️"
-  warning "Not installing WebSockify because it is done already."
-fi
 chown -R www-data:www-data /opt/remotelabz
 
-# Grant OVS permissions to remotelabz group
-chmod g+rwx /var/run/openvswitch/db.sock
-chgrp remotelabz /var/run/openvswitch/db.sock
-
 # Configure apache
-echo -n "🌎 Configuring Apache with port ${REMOTELABZ_WORKER_PORT}... "
-if grep -Fxq "Listen ${REMOTELABZ_WORKER_PORT}" /etc/apache2/ports.conf; then
-  echo "Port ${REMOTELABZ_WORKER_PORT} is already configured in apache2." >> "${INSTALL_LOG}" 2>&1
+echo -n "🌎 Configuring Apache with port ${REMOTELABZ_PORT}... "
+if grep -Fxq "Listen ${REMOTELABZ_PORT}" /etc/apache2/ports.conf; then
+  echo "Port ${REMOTELABZ_PORT} is already configured in apache2." >> "${INSTALL_LOG}" 2>&1
 else
-  echo "Listen ${REMOTELABZ_WORKER_PORT}" >> /etc/apache2/ports.conf
+  echo "Listen ${REMOTELABZ_PORT}" >> /etc/apache2/ports.conf
 fi
-cp -f "${REMOTELABZ_WORKER_PATH}"/config/apache/100-remotelabz-worker.conf /etc/apache2/sites-available/100-remotelabz-worker.conf
-sed -i "s/Listen 8080/Listen ${REMOTELABZ_WORKER_PORT}/g" /etc/apache2/sites-available/100-remotelabz-worker.conf
-sed -i 's,/var/www/html/remotelabz-worker,'"${REMOTELABZ_WORKER_PATH}"',' /etc/apache2/sites-available/100-remotelabz-worker.conf
-ln -fs /etc/apache2/sites-available/100-remotelabz-worker.conf /etc/apache2/sites-enabled/100-remotelabz-worker.conf
+cp -f "${REMOTELABZ_PATH}"/config/apache/100-remotelabz.conf /etc/apache2/sites-available/100-remotelabz-worker.conf
+sed -i "s/<VirtualHost *:80>$/<VirtualHost *:${REMOTELABZ_PORT}>/g" /etc/apache2/sites-available/100-remotelabz.conf
+sed -i "s/ServerName remotelabz.com/ServerName ${SERVER_NAME}/g" /etc/apache2/sites-available/100-remotelabz.conf
+ln -fs /etc/apache2/sites-available/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
 apache2ctl restart >> "${INSTALL_LOG}" 2>&1
 echo "OK ✔️"
 
 echo "Done!"
-echo "RemoteLabz-worker is installed and ready to serve neat VMs! 🔥"
+echo "RemoteLabz is installed! 🔥"
 if [ $HAS_MOVED -eq 1 ]; then
   echo "You may now remove this folder. ♻️"
 fi
 echo "Thank you for using our software. ❤️"
+debug "Success"
 exit 0

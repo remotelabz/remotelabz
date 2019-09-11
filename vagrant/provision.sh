@@ -77,6 +77,6 @@ chmod -R g+rwx /opt/remotelabz
 chgrp -R remotelabz /opt/remotelabz
 # Configure apache
 sed -i 's/Listen 80$/Listen 8000/g' /etc/apache2/ports.conf
-ln -fs "${REMOTELABZ_PATH}"/vagrant/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
+cp "${REMOTELABZ_PATH}"/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
 service apache2 reload
 ln -fs "${REMOTELABZ_PATH}" ./remotelabz
