@@ -1,139 +1,77 @@
-#!/bin/bash
+#!/usr/bin/env php
+<?php
 
-set -e
+// Variables
+$install_log_path = "/var/log/remotelabz/install.log";
 
-export INSTALL_LOG="/var/log/remotelabz/install.log"
-
-function debug() {
-    echo "[$(date -u)] $1" >> "${INSTALL_LOG}" 2>&1
+// Debug functions
+function debug($string, $handle = null) {
+    echo $string;
+    if ($handle !== null) {
+        fprintf($handle, "[%s] %s\n", date(DATE_RFC2822), $string);
+    }
 }
 
-function warning() {
-    echo -ne "\e[33m" >> "${INSTALL_LOG}" 2>&1
-    echo -n "[$(date -u)] WARN: $1" >> "${INSTALL_LOG}" 2>&1
-    echo -e "\e[39m" >> "${INSTALL_LOG}" 2>&1
+function warning($string, $handle = null) {
+    echo "\e[33mW: $string\e[39m";
+    if ($handle !== null) {
+        fprintf($handle, "\e[33m[%s] %s\n\e[39m", date(DATE_RFC2822), $string);
+    }
 }
 
-function error() {
-    echo -ne "\e[31m" >> "${INSTALL_LOG}" 2>&1
-    echo -n "[$(date -u)] ERROR: $1" >> "${INSTALL_LOG}" 2>&1
-    echo -e "\e[39m" >> "${INSTALL_LOG}" 2>&1
+function error($string, $handle = null) {
+    echo "\e[31mE: $string\e[39m";
+    if ($handle !== null) {
+        fprintf($handle, "\e[31m[%s] %s\n\e[39m", date(DATE_RFC2822), $string);
+    }
 }
 
-function quit_on_error() {
-  echo "Error ❌"
-  echo "Please check logs in ${INSTALL_LOG} to see what went wrong. Exiting..."
-  exit 1
+function check_root() {
+    $username = posix_getpwuid(posix_geteuid())['name'];
+    if ($username != "root") {
+        throw new Exception("Installation aborted, root is required! Please launch this script as root or with sudo.\n");
+    }
 }
 
-trap 'quit_on_error' ERR
+function command_exist($cmd) {
+    $return = shell_exec(sprintf("which %s", escapeshellarg($cmd)));
+    return !empty($return);
+}
 
-debug "Starting RemoteLabz installation"
+function check_requirements() {
+    if (!command_exist("composer")) {
+        throw new Exception("Composer has not been found on your system. Please install Composer to continue.");
+    }
+}
 
-# Check for root
-if [ "$(whoami)" != "root" ]; then
-    error "Installation aborted, root is required!"
-    echo "ERROR: This script must be executed as root! We need to hack some things on your computer. 😎"
-    exit 1
-fi
+function do_install($handle) {
 
-while getopts "p:s:" opt; do
-  case $opt in
-    p)
-      export REMOTELABZ_PORT="$OPTARG"
-      ;;
-    s)
-      export SERVER_NAME="$OPTARG"
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-    :)
-      echo "Option -$OPTARG requires an argument." >&2
-      exit 1
-      ;;
-  esac
-done
+}
 
-# Environment variables
-if [ -z "$REMOTELABZ_PATH" ]; then
-    export REMOTELABZ_PATH=/opt/remotelabz
-fi
-if [ -z "$REMOTELABZ_PORT" ]; then
-    export REMOTELABZ_PORT=8080
-fi
-if [ -z "$SERVER_NAME" ]; then
-    export SERVER_NAME=remotelabz.com
-fi
-# ----------------------------------
-export DEBIAN_FRONTEND=noninteractive
-export COMPOSER_ALLOW_SUPERUSER=1
-SCRIPT=$(readlink -f "$0")
-SCRIPT_DIR=$(dirname "$SCRIPT")
-HAS_MOVED=0
+try {
+    check_root();
+} catch (Exception $e) {
+    error($e->getMessage());
+    echo "Exiting...\n";
+    exit(1);
+}
 
-mkdir -p /var/log/remotelabz
-# Install packages
-echo -n "📦 Installing required packages... "
-debug "Running apt-get to grab required packages..."
-apt-get update >> "${INSTALL_LOG}" 2>&1
-apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server exim4 >> "${INSTALL_LOG}" 2>&1
-echo "OK ✔️"
+// Create log folder
+if ( !is_dir("/var/log/remotelabz") ) {
+    mkdir("/var/log/remotelabz");
+}
 
-# Copy self-directory into destination
-echo -n "📁 Copying files to ${REMOTELABZ_PATH}... "
-if [ "${SCRIPT_DIR}" != "${REMOTELABZ_PATH}" ]; then
-  cp -Rf "${SCRIPT_DIR}" "${REMOTELABZ_PATH}"
-  cd "${REMOTELABZ_PATH}"
-  HAS_MOVED=1
-  echo "OK ✔️"
-else
-  echo "Files are already in the right location. Skipping... ✔️"
-fi
+$handle = fopen($install_log_path, "a");
 
-# Composer
-echo -n "🤵 Installing Composer... "
-if ! [ $(command -v composer) ]; then
-    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" >> "${INSTALL_LOG}" 2>&1
-    php composer-setup.php >> "${INSTALL_LOG}" 2>&1
-    php -r "unlink('composer-setup.php');" >> "${INSTALL_LOG}" 2>&1
-    mv composer.phar /usr/local/bin/composer >> "${INSTALL_LOG}" 2>&1
-    echo "OK ✔️"
-else
-  echo "Composer is already installed! Skipping... ✔️"
-  warning "Not installing Composer because it is done already."
-fi
+try {
+    check_requirements();
+    do_install($handle);
+} catch (Exception $e) {
+    echo "Error ❌\n";
+    error($e->getMessage(), $handle);
+    echo "\nExiting...\n";
+    fclose($handle);
+    exit(1);
+}
 
-echo -n "🎶 Downloading Composer packages... "
-(cd "${REMOTELABZ_PATH}" && composer install --no-progress --no-suggest) >> "${INSTALL_LOG}" 2>&1
-echo "OK ✔️"
-
-echo -n "🔥 Warming cache... "
-php "${REMOTELABZ_PATH}"/bin/console cache:warm >> "${INSTALL_LOG}" 2>&1
-echo "OK ✔️"
-
-chown -R www-data:www-data /opt/remotelabz
-
-# Configure apache
-echo -n "🌎 Configuring Apache with port ${REMOTELABZ_PORT}... "
-if grep -Fxq "Listen ${REMOTELABZ_PORT}" /etc/apache2/ports.conf; then
-  echo "Port ${REMOTELABZ_PORT} is already configured in apache2." >> "${INSTALL_LOG}" 2>&1
-else
-  echo "Listen ${REMOTELABZ_PORT}" >> /etc/apache2/ports.conf
-fi
-cp -f "${REMOTELABZ_PATH}"/config/apache/100-remotelabz.conf /etc/apache2/sites-available/100-remotelabz-worker.conf
-sed -i "s/<VirtualHost *:80>$/<VirtualHost *:${REMOTELABZ_PORT}>/g" /etc/apache2/sites-available/100-remotelabz.conf
-sed -i "s/ServerName remotelabz.com/ServerName ${SERVER_NAME}/g" /etc/apache2/sites-available/100-remotelabz.conf
-ln -fs /etc/apache2/sites-available/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
-apache2ctl restart >> "${INSTALL_LOG}" 2>&1
-echo "OK ✔️"
-
-echo "Done!"
-echo "RemoteLabz is installed! 🔥"
-if [ $HAS_MOVED -eq 1 ]; then
-  echo "You may now remove this folder. ♻️"
-fi
-echo "Thank you for using our software. ❤️"
-debug "Success"
-exit 0
+fclose($handle);
