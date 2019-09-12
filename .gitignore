@@ -39,3 +39,5 @@ remotelabz
 /worker/
 *.crt
 *.key
+.env.prod
+/images/

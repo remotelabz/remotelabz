@@ -135,6 +135,7 @@ class Device implements InstanciableInterface
         $this->networkInterfaces = new ArrayCollection();
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->labs = new ArrayCollection();
     }
 
     public function getId(): ?int

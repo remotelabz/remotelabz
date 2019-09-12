@@ -81,12 +81,6 @@ class User implements UserInterface
      */
     private $enabled = true;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="lab")
-     * @var Collection|Lab[]
-     */
-    private $labs;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")

@@ -65,6 +65,16 @@ class LabInstance extends Instance
     }
 
     /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"lab"})
+     * @Serializer\XmlAttribute
+     */
+    public function getUserId(): ?string
+    {
+        return $this->user->getId();
+    }
+
+    /**
      * Get device instances associated to this lab
      *
      * @return Collection|DeviceInstance[]

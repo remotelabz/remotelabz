@@ -27,13 +27,6 @@ class Lab implements InstanciableInterface
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labs")
-     * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Groups({"lab", "details"})
-     */
-    private $user;
-
-    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
@@ -211,7 +204,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function getUser(): ?User
+    /*public function getUser(): ?User
     {
         return $this->user;
     }
@@ -222,7 +215,7 @@ class Lab implements InstanciableInterface
 
         return $this;
     }
-
+*/
     public function getIsStarted(): ?bool
     {
         return $this->isStarted;

@@ -14,9 +14,9 @@ If you want to deploy to VM with Oracle VirtualBox 6, it supports nested virtual
 ## Steps
 
 ```bash
-git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
-cd remotelabzv2
-sudo ln -s $HOME/remotelabzv2 /var/www/html/remotelabz
+git clone https://gitlab.remotelabz.com/crestic/remotelabz.git
+cd remotelabz
+sudo ln -s $HOME/remotelabz /var/www/html/remotelabz
 sudo chown www-data: /var/www/html/remotelabz
 sudo vagrant/provision.sh
 ```
@@ -40,8 +40,8 @@ This is the recommended **AIO** method. It was tested on **Windows 10** and **ma
 ## Steps
 
 ```bash
-git clone https://gitlab.remotelabz.com/crestic/remotelabzv2.git
-cd remotelabzv2
+git clone https://gitlab.remotelabz.com/crestic/remotelabz.git
+cd remotelabz
 ```
 In the `Vagrantfile`, modify the IP in the following line in ordre you can access to your VirtualBox VM from your host. This IP must be in the same network than your host-only network interface.
 
