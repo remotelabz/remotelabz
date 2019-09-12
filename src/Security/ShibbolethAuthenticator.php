@@ -63,8 +63,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        $credentials = ['eppn' => $request->server->get($this->remoteUserVar)];
-
+        $credentials = ['eppn' => $request->server->get($this->remoteUserVar),
+        'FirstName' => $request->server->get('givenName'),
+        'LastName' => $request->server->get('sn')];
+    
         return $credentials;
     }
 
@@ -88,8 +90,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                     $user,
                     random_bytes(32)
                 ))
-                ->setFirstName('Firstname')
-                ->setLastName('Lastname')
+                ->setFirstName(ucfirst(strtolower($credentials['FirstName'])))
+                ->setLastName($credentials['LastName'])
             ;
 
             # TODO: Add user's firstname and lastname fetching

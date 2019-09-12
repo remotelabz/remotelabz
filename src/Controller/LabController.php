@@ -281,7 +281,6 @@ class LabController extends AppController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab->setUser($user);
         $client = new Client();
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
@@ -387,7 +386,6 @@ class LabController extends AppController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
-        $lab->setUser($user);
         $client = new Client();
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
@@ -555,7 +553,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/lab/{id<\d+>}/xml", name="test_lab_xml")
+     * @Route("/labs/{id<\d+>}/xml", name="test_lab_xml")
      */
     public function testLabXml(int $id, SerializerInterface $serializer)
     {
@@ -572,7 +570,7 @@ class LabController extends AppController
     }
 
     /**
-     * @Route("/lab/{id<\d+>}/device/{deviceId<\d+>}/xml", name="test_lab_device8xml")
+     * @Route("/labs/{id<\d+>}/device/{deviceId<\d+>}/xml", name="test_lab_device8xml")
      */
     public function testLabDeviceXml(int $id, int $deviceId, SerializerInterface $serializer)
     {
@@ -615,9 +613,9 @@ class LabController extends AppController
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
-            'host' => 'ws://' . getenv('WEBSOCKET_PROXY_SERVER'),
-            'port' => getenv('WEBSOCKET_PROXY_PORT'),
-            'path' => 'device/' . $device->getUserInstance($this->getUser())->getUuid()
+            'host' => 'ws://' . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
+            'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
+            'path' => $request->get('path') ?: 'device/' . $device->getUserInstance($this->getUser())->getUuid()
         ]);
     }
 }

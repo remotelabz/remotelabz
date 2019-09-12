@@ -90,6 +90,7 @@ deploy_review:
     - branches
   except:
     - master
+    - stable
 
 deploy_staging:
   stage: deploy
@@ -148,6 +149,7 @@ stop_review:
     - branches
   except: 
     - master
+    - stable
 
 stop_staging:
   stage: deploy
