@@ -1,0 +1,3 @@
+[submodule "remotelabz.wiki"]
+	path = remotelabz.wiki
+	url = https://gitlab.remotelabz.com/crestic/remotelabz.wiki.git
