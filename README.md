@@ -20,6 +20,7 @@ sudo ln -s $HOME/remotelabz /var/www/html/remotelabz
 sudo chown www-data: /var/www/html/remotelabz
 sudo vagrant/provision.sh
 ```
+You have to create SSL certificate to secure communication.
 
 You can now access the website via http://localhost:8000/login.  
 Username : root@localhost  
