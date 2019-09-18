@@ -15,6 +15,7 @@ You will need the following software installed in order to run RemoteLabz.
 - [Node.js](https://nodejs.org/en/download/package-manager/)
 - [Yarn](https://yarnpkg.com/en/docs/install#debian-stable)
 - [configurable-http-proxy](https://github.com/jupyterhub/configurable-http-proxy#install)
+- An SQL database (not necessarily on the same server)
 
 Walkthrough for some OS explains the steps to follow to install those software.
 
@@ -32,7 +33,7 @@ Ubuntu
 
 - PHP
 ```bash
-# default php version from 18.04 is 7.2
+# default php packages version from 18.04 is 7.2, therefore this command will work
 sudo apt install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xml php-zip
 ```
 - Composer
@@ -59,3 +60,31 @@ sudo npm install -g configurable-http-proxy
 ```
 
 ### Install RemoteLabz
+
+While you're in RemoteLabz root directory :
+
+```bash
+sudo bin/install
+```
+
+Then, you should modify the `.env` file according to your environment, including SQL database variables with `MYSQL_SERVER`, `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_DATABASE`.
+
+```bash
+sudo cp .env.dist .env
+# you may now append variables or directly edit sample values
+echo "MYSQL_PASSWORD=mysqlpassword" | sudo tee -a .env
+# or
+sudo nano .env
+```
+
+Finally, run the `remotelabz-ctl` configuration utility to setup your database :
+
+```bash
+sudo remotelabz-ctl reconfigure database
+```
+
+With the loaded fixtures, default credentials are :
+- Username : `root@localhost`
+- Password : `admin`
+
+You may change those values by using the web interface.

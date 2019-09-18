@@ -1,0 +1,116 @@
+#!/usr/bin/env php
+<?php
+
+use GetOpt\GetOpt;
+use GetOpt\Option;
+use GetOpt\Argument;
+use RemoteLabz\Logger;
+use RemoteLabz\Installer;
+use GetOpt\ArgumentException;
+use GetOpt\ArgumentException\Invalid;
+use GetOpt\ArgumentException\Missing;
+use GetOpt\ArgumentException\Unexpected;
+
+require dirname(__DIR__).'/lib/autoload.php';
+
+// Default values
+const REMOTELABZ_PATH           = "/opt/remotelabz";
+const REMOTELABZ_PORT           = 80;
+const REMOTELABZ_SERVER_NAME    = "remotelabz.com";
+const REMOTELABZ_ENV            = "prod";
+const REMOTELABZ_MAX_FILESIZE   = "3000M";
+const INSTALL_LOG_PATH          = "/var/log/remotelabz/install.log";
+
+$getopt = new GetOpt([
+    Option::create('h', 'help', GetOpt::NO_ARGUMENT)
+        ->setDescription("Show this help text."),
+
+    Option::create('e', 'environment', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the environment of the application. Must be \"prod\" or \"dev\". Default : prod")
+        ->setArgument(new Argument(REMOTELABZ_ENV, null, 'environment'))
+        ->setValidation(function ($value) {
+            return in_array($value, ["dev", "prod"]);
+        }),
+
+    Option::create('p', 'port', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the port used by RemoteLabz. Default : 80")
+        ->setArgument(new Argument(REMOTELABZ_PORT, 'is_numeric', 'port')),
+
+    Option::create(null, 'server-name', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : remotelabz.com")
+        ->setArgument(new Argument(REMOTELABZ_SERVER_NAME, 'is_string', 'server-name')),
+
+    Option::create('s', 'max-filesize', GetOpt::REQUIRED_ARGUMENT)
+        ->setDescription("Set PHP max_upload_filesize environment variable while configuring Apache. Must be followed by K, M or G prefix (case-insensitive). Default : 3000M")
+        ->setArgument(new Argument(REMOTELABZ_MAX_FILESIZE, null, 'size'))
+        ->setValidation(function ($value) {
+            $number = substr($value, 0, -1);
+            $multiplier = strtoupper(substr($value, -1));
+            return is_numeric($number) && in_array($multiplier, ['K', 'M', 'G']);
+        }),
+
+
+]);
+try {
+    $getopt->process();
+} catch (ArgumentException $e) {
+    Logger::print("Error: ", Logger::PRINT_RED);
+    if ($e instanceof Invalid) {
+        Logger::print("Invalid argument: ", Logger::PRINT_RED);
+    } elseif ($e instanceof Missing) {
+        Logger::print("Missing value: ", Logger::PRINT_RED);
+    } elseif ($e instanceof Unexpected) {
+        Logger::print("Unexpected value: ", Logger::PRINT_RED);
+    }
+    Logger::print($e->getMessage() ."\n", Logger::PRINT_RED);
+    exit(1);
+}
+
+// Help
+if ($getopt->getOption('help')) {
+    echo $getopt->getHelpText();
+    exit(0);
+}
+
+$installer = Installer::create()
+    ->setPort($getopt->getOption('p'))
+    ->setServerName($getopt->getOption('server-name'))
+    ->setUploadMaxFilesize($getopt->getOption('s'))
+    ->setEnvironment($getopt->getOption('e'))
+    ->setInstallPath(REMOTELABZ_PATH)
+;
+
+try {
+    $installer->checkRoot();
+} catch (Exception $e) {
+    Logger::print($e->getMessage()."\n", Logger::PRINT_RED);
+    exit(1);
+}
+
+$logger = new Logger(INSTALL_LOG_PATH);
+$installer->setLogger($logger);
+
+try {
+    $installer->checkRequirements();
+} catch (Exception $e) {
+    Logger::print($e->getMessage()."\n", Logger::PRINT_RED);
+    $logger->error($e->getMessage());
+    exit(1);
+}
+
+try {
+    $installer->install();
+} catch (Exception $e) {
+    echo "Error ❌\n";
+    $count = 0;
+    while ($e !== null) {
+        $logger->error($e->getMessage());
+        Logger::print("#$count ".$e->getFile()."(".$e->getLine()."): ".$e->getMessage()."\n", Logger::PRINT_RED);
+        $e = $e->getPrevious();
+        $count++;
+    }
+    Logger::print("Please check the install logs in ".INSTALL_LOG_PATH." to get more information.\n", Logger::PRINT_RED);
+    exit(1);
+}
+
+exit(0);

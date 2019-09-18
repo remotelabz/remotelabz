@@ -5,25 +5,9 @@ This project is the 2nd version of [RemoteLabz](remotelabz.univ-reims.fr), and w
 
 If you want to deploy to VM with Oracle VirtualBox 6, it supports nested virtualization on hosts systems that run **only AMD CPUs** ! If you deploy **AIO** on nativ linux with VT-x, we have to modify the Vagrantfile to use the kvm provider and not the qemu
 
-# Install (Linux)
+# Install
 
-- Ubuntu 18.04 LTS
-- At least 2GB of memory
-- At least 20GB of free disk space
- 
-## Steps
-
-```bash
-git clone https://gitlab.remotelabz.com/crestic/remotelabz.git
-cd remotelabz
-sudo ln -s $HOME/remotelabz /var/www/html/remotelabz
-sudo chown www-data: /var/www/html/remotelabz
-sudo vagrant/provision.sh
-```
-
-You can now access the website via http://localhost:8000/login.  
-Username : root@localhost  
-Password : admin  
+See [doc/INSTALL.md](doc/INSTALL.md).
 
 # Install (Vagrant on Windows 10 with Oracle VirtualBox or on MAC OS)
 
