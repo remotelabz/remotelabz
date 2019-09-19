@@ -1,18 +1,18 @@
 FROM ubuntu:bionic
 
-ARG environment=dev
-ARG port=80
-ARG worker-server=localhost
-ARG worker-port=8080
-ARG proxy-server=localhost
-ARG proxy-port=8888
-ARG proxy-api-port=8889
-ARG database-server=localhost
-ARG database-user=symfony
-ARG database-password=symfony
-ARG database-name=symfony
-ARG mailer-url="smtp://localhost:25?encryption=&auth_mode="
-ARG server-name=remotelabz.com
+ARG ENVIRONMENT=dev
+ARG PORT=80
+ARG WORKER_SERVER=localhost
+ARG WORKER_PORT=8080
+ARG PROXY_SERVER=localhost
+ARG PROXY_PORT=8888
+ARG PROXY_API_PORT=8889
+ARG DATABASE_SERVER=localhost
+ARG DATABASE_USER=symfony
+ARG DATABASE_PASSWORD=symfony
+ARG DATABASE_NAME=symfony
+ARG MAILER_URL="smtp://localhost:25?encryption=&auth_mode="
+ARG SERVER_NAME=remotelabz.com
 
 ENV REMOTELABZ_PATH=/opt/remotelabz
 ENV DEBIAN_FRONTEND=noninteractive
@@ -67,8 +67,7 @@ RUN npm install -g configurable-http-proxy
 
 ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 
-RUN echo ${worker-port}
-RUN php ${REMOTELABZ_PATH}/bin/install -e ${environment} -p ${port} --worker-server ${worker-server} --worker-port ${worker-port} --proxy-server ${proxy-server} --proxy-port ${proxy-port} --proxy-api-port ${proxy-api-port} --database-server ${database-server} --database-uer ${database-user} --database-password ${database-password} --database-name ${database-name} --mailer-url ${mailer-url} --server-name ${server-name}
+RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT}--database-server ${DATABASE_SERVER} --database-uer ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME}
 
 # Folders
 RUN chmod -R g+rwx /opt/remotelabz
@@ -79,7 +78,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 
 WORKDIR ${REMOTELABZ_PATH}
 
-EXPOSE ${port}/tcp
-EXPOSE ${proxy-port}/tcp
+EXPOSE ${PORT}/tcp
+EXPOSE ${PROXY_PORT}/tcp
 
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]
