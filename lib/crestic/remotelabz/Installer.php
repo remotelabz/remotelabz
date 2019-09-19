@@ -23,59 +23,31 @@ class Installer {
     private $installPath;
 
     /**
-     * Port used by RemoteLabz.
+     * Options from CLI.
      *
-     * @var int $port
+     * @var array $options
      */
-    private $port;
+    private $options;
 
-    /**
-     * Server name used by RemoteLabz.
-     *
-     * @var string $serverName
-     */
-    private $serverName;
-
-    /**
-     * Max filesize increased for sending images to RemoteLabz
-     *
-     * @var string $uploadMaxFilesize
-     */
-    private $uploadMaxFilesize;
-
-    /**
-     * Environment type.
-     *
-     * @var string $environment
-     */
-    private $environment;
-
-    public function __construct($logger = null, $port = 80, $serverName = "remotelabz.com", $uploadMaxFilesize = "3000M", $environment = "prod")
+    public function __construct(string $installPath = "", array $options = [], Logger $log = null)
     {
-        $this->logger = $logger;
-        if ($logger == null) {
+        $this->installPath = $installPath;
+        $this->options = $options;
+        $this->logger = $log;
+        if ($log == null) {
             $this->logger = new Logger();
         }
-        $this->port = $port;
-        $this->serverName = $serverName;
-        $this->uploadMaxFilesize = $uploadMaxFilesize;
-        $this->environment = $environment;
     }
 
     /**
      * Fluent interface for constructor so options can be added during construction
      *
      * @see Installer::__construct()
-     * @param Logger $logger
-     * @param integer $port
-     * @param string $serverName
-     * @param string $uploadMaxFilesize
-     * @param string $environment
      * @return static
      */
-    public static function create($logger = null, $port = 80, $serverName = "remotelabz.com", $uploadMaxFilesize = "3000M", $environment = "prod")
+    public static function create(string $installPath = "", array $options, Logger $log = null)
     {
-        return new static($logger, $port, $serverName, $uploadMaxFilesize, $environment);
+        return new static($installPath, $options, $log);
     }
 
     /**
@@ -113,7 +85,6 @@ class Installer {
      * @return void
      */
     function install() {
-        // TODO: Link remotelabz bin
         $this->logger->debug("Starting RemoteLabz installation");
         echo "Welcome to RemoteLabz!\n";
     
@@ -124,7 +95,7 @@ class Installer {
             $this->copyFiles();
         } catch (AlreadyExistException $e) {
             $this->logger->warning("Install directory already exists. Not copying files.");
-            print_c("Warning: Target directory exists. Files will not be copied. ", Logger::PRINT_YELLOW);
+            Logger::print("Warning: Target directory exists. Files will not be copied. ", Logger::PRINT_YELLOW);
         }
         $this->logger->debug("Files has been moved to ".$this->installPath);
         echo "OK ✔️\n";
@@ -137,6 +108,17 @@ class Installer {
         // Check new dir
         if (getcwd() !== $this->installPath) {
             throw new Exception($directoryError);
+        }
+
+        // Configure environment
+        $this->logger->debug("Setting environment variables");
+        echo "📜 Setting environment variables... ";
+        try {
+            $this->configureEnvironment($this->options);
+            $this->logger->debug("Finished setting environment variables");
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error setting environment variables.", 0, $e);
         }
 
         // Install composer packages
@@ -159,10 +141,9 @@ class Installer {
             throw new Exception("There was an error downloading Yarn packages.");
         }
         
-        // TODO: Warm cache
         $this->logger->debug("Warming cache");
         echo "🔥 Warming cache... ";
-        if ($this->configureCache($this->environment)) {
+        if ($this->configureCache($this->options['environment'])) {
             $this->logger->debug("Finished warming cache");
             echo "OK ✔️\n";
         } else {
@@ -171,7 +152,7 @@ class Installer {
 
         // Handle file permissions
         $this->logger->debug("Handling file permissions");
-        echo "👮‍ Setting file permissions... ";
+        echo "👮 Setting file permissions... ";
         $returnCode = 0;
         $output = [];
         exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
@@ -188,14 +169,13 @@ class Installer {
         } catch (Exception $e) {
             throw new Exception("Error setting file permissions.", 0, $e);
         }
-
-        // TODO: Configure apache
+        
         $this->logger->debug("Configuring Apache");
-        $this->logger->debug("Port: " . $this->port);
-        $this->logger->debug("Server name: " . $this->serverName);
+        $this->logger->debug("Port: " . $this->options['port']);
+        $this->logger->debug("Server name: " . $this->options['server-name']);
         echo "🌎 Configuring Apache... ";
         try {
-            $this->configureApache($this->port, $this->serverName, $this->uploadMaxFilesize);
+            $this->configureApache($this->options['port'], $this->options['server-name'], $this->options['max-filesize']);
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring Apache.", 0, $e);
@@ -213,27 +193,51 @@ class Installer {
      * @return boolean Returns `true` if everything went well, returns `false` otherwise.
      */
     private function copyFiles() : void {
+        $isCopied = true;
         // Check if directory is already to the right place
         if (dirname(__FILE__) != $this->installPath) {
             // Check if there is already a directory
             if (is_dir($this->installPath)) {
-                throw new AlreadyExistException("Folder already exists.");
-            }
-            // Copy files
+                $isCopied = false;
+            } else {
+                // Copy files
             $this->rcopy(dirname(__FILE__), $this->installPath);
+            }
+            
         } else {
-            throw new AlreadyExistException("Folder already exists.");
+            $isCopied = false;
         }
 
-        symlink($this->installPath."/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
+        if (!is_file("/usr/bin/remotelabz-ctl")) {
+            symlink($this->installPath."/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
+        }
         chmod("/usr/bin/remotelabz-ctl", 0777);
 
         copy($this->installPath."/.env.dist", $this->installPath."/.env");
 
+        if (!$isCopied) {
+            throw new AlreadyExistException("Folder already exists.");
+        }
+    }
+
+    private function configureEnvironment($options)
+    {
         // Modify environment
-        $envFileContent = file_get_contents($this->installPath."/.env");
-        preg_replace("/^(APP_ENV=)(.*)$/m", "${1}".$this->environment, $envFileContent);
-        file_put_contents($this->installPath."/.env", $envFileContent);
+        Dotenv::create($this->installPath."/.env")
+            ->parse()
+            ->set("WORKER_SERVER", $options['worker-server'])
+            ->set("WORKER_PORT", $options['worker-port'])
+            ->set("WEBSOCKET_PROXY_SERVER", $options['proxy-server'])
+            ->set("WEBSOCKET_PROXY_PORT", $options['proxy-port'])
+            ->set("WEBSOCKET_PROXY_API_PORT", $options['proxy-api-port'])
+            ->set("APP_ENV", $options['environment'])
+            ->set("MYSQL_SERVER", $options['database-server'])
+            ->set("MYSQL_USER", $options['database-user'])
+            ->set("MYSQL_PASSWORD", $options['database-password'])
+            ->set("MYSQL_DATABASE", $options['database-name'])
+            ->set("MAILER_URL", $options['mailer-url'])
+            ->save()
+        ;
     }
 
     /**
@@ -296,14 +300,14 @@ class Installer {
         // If keys already exists
         if (array_key_exists("upload_max_filesize", $ini)) {
             $content = file_get_contents($phpPath);
-            preg_replace("/^(upload_max_filesize=)([[:alnum:]]+)$/m", "${1}".$uploadMaxFilesize, $content);
+            preg_replace("/^(upload_max_filesize=)(.*)$/m", "$1".$uploadMaxFilesize, $content);
             file_put_contents($phpPath, $content);
         } else {
             file_put_contents($phpPath, "\nupload_max_filesize=".$uploadMaxFilesize."\n", FILE_APPEND);
         }
         if (array_key_exists("post_max_size", $ini)) {
             $content = file_get_contents($phpPath);
-            preg_replace("/^(post_max_size=)([[:alnum:]]+)$/m", "${1}".$postMaxSize, $content);
+            preg_replace("/^(post_max_size=)(.*)$/m", "$1".$postMaxSize, $content);
             file_put_contents($phpPath, $content);
         } else {
             file_put_contents($phpPath, "post_max_size=".$postMaxSize.substr($uploadMaxFilesize, -1), FILE_APPEND);
@@ -443,102 +447,6 @@ class Installer {
     public function setInstallPath(string $installPath)
     {
         $this->installPath = $installPath;
-
-        return $this;
-    }
-
-    /**
-     * Get $port
-     *
-     * @return  int
-     */ 
-    public function getPort()
-    {
-        return $this->port;
-    }
-
-    /**
-     * Set $port
-     *
-     * @param  int  $port  $port
-     *
-     * @return  self
-     */ 
-    public function setPort(int $port)
-    {
-        $this->port = $port;
-
-        return $this;
-    }
-
-    /**
-     * Get $serverName
-     *
-     * @return  string
-     */ 
-    public function getServerName()
-    {
-        return $this->serverName;
-    }
-
-    /**
-     * Set $serverName
-     *
-     * @param  string  $serverName  $serverName
-     *
-     * @return  self
-     */ 
-    public function setServerName(string $serverName)
-    {
-        $this->serverName = $serverName;
-
-        return $this;
-    }
-
-    /**
-     * Get $uploadMaxFilesize
-     *
-     * @return  string
-     */ 
-    public function getUploadMaxFilesize()
-    {
-        return $this->uploadMaxFilesize;
-    }
-
-    /**
-     * Set $uploadMaxFilesize
-     *
-     * @param  string  $uploadMaxFilesize  $uploadMaxFilesize
-     *
-     * @return  self
-     */ 
-    public function setUploadMaxFilesize(string $uploadMaxFilesize)
-    {
-        $this->uploadMaxFilesize = $uploadMaxFilesize;
-
-        return $this;
-    }
-
-    /**
-     * Get $environment
-     *
-     * @return  string
-     */ 
-    public function getEnvironment()
-    {
-        return $this->environment;
-    }
-
-    /**
-     * Set $environment
-     *
-     * @param  string  $environment  $environment
-     *
-     * @return  self
-     */ 
-    public function setEnvironment(string $environment)
-    {
-        $this->environment = $environment;
 
         return $this;
     }

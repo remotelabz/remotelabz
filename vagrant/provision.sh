@@ -26,11 +26,7 @@ php -r "unlink('composer-setup.php');"
 mv composer.phar /usr/local/bin/composer
 # configurable-http-proxy
 npm install -g configurable-http-proxy
-# Folders
-mkdir -p /opt/remotelabz/images
-chmod -R g+rwx /opt/remotelabz
-chgrp -R remotelabz /opt/remotelabz
 
-"${REMOTELABZ_PATH}"/bin/install --environment dev
-remotelabz-ctl reconfigure database
-remotelabz-ctl service start
+"${REMOTELABZ_PATH}"/bin/install --environment dev --database-server localhost --database-user "${MYSQL_USER}" --database-password "${MYSQL_PASSWORD}" --database-name "${MYSQL_DATABASE}"
+"${REMOTELABZ_PATH}"/bin/remotelabz-ctl reconfigure database
+"${REMOTELABZ_PATH}"/bin/remotelabz-ctl service start
