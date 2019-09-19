@@ -67,11 +67,8 @@ RUN npm install -g configurable-http-proxy
 
 ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 
-RUN php ${REMOTELABZ_PATH}/bin/install -e ${environment} -p ${port} --worker-server ${worker-server} \
-    --worker-port ${worker-port} --proxy-server ${proxy-server} --proxy-port ${proxy-port} \
-    --proxy-api-port ${proxy-api-port} --database-server ${database-server} --database-uer ${database-user} \
-    --database-password ${database-password} --database-name ${database-name} --mailer-url ${mailer-url} \
-    --server-name ${server-name}
+RUN echo ${worker-port}
+RUN php ${REMOTELABZ_PATH}/bin/install -e ${environment} -p ${port} --worker-server ${worker-server} --worker-port ${worker-port} --proxy-server ${proxy-server} --proxy-port ${proxy-port} --proxy-api-port ${proxy-api-port} --database-server ${database-server} --database-uer ${database-user} --database-password ${database-password} --database-name ${database-name} --mailer-url ${mailer-url} --server-name ${server-name}
 
 # Folders
 RUN chmod -R g+rwx /opt/remotelabz
