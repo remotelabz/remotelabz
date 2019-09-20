@@ -21,7 +21,7 @@ class Shibboleth implements ServiceInterface
             $log->debug($output);
             if ($return) {
                 $log->error("Failed to start Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.");
-                Logger::print("Failed to start Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+                Logger::print("Failed to start Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
             }
         }
 
@@ -42,7 +42,7 @@ class Shibboleth implements ServiceInterface
             $log->debug($output);
             if ($return) {
                 $log->error("Failed to stop Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.");
-                Logger::print("Failed to stop Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+                Logger::print("Failed to stop Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
             }
             $log->debug("configurable-http-proxy is started.");
         }
@@ -64,7 +64,7 @@ class Shibboleth implements ServiceInterface
             $log->debug($output);
             if ($return) {
                 $log->error("Failed to restart Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.");
-                Logger::print("Failed to restart Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+                Logger::print("Failed to restart Shibboleth daemon ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
             }
         }
 

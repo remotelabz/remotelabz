@@ -11,14 +11,19 @@ class Logger
      * @var string $dateFormat Date format for the log.
      */
     private $dateFormat;
-    
-    public const PRINT_DEFAULT  = "\e[39m";
-    public const PRINT_YELLOW   = "\e[33m";
-    public const PRINT_RED      = "\e[31m";
 
-    function __construct($file = null, $dateFormat = DATE_RFC2822) {
+    /** @var int $verbosity Define the verbosity level. */
+    protected static $verbosity;
+    
+    public const COLOR_DEFAULT  = "";
+    public const COLOR_NONE     = "\e[39m";
+    public const COLOR_YELLOW   = "\e[33m";
+    public const COLOR_RED      = "\e[31m";
+
+    function __construct($file = null, $dateFormat = DATE_RFC2822, $verbosity = 0) {
         $this->file = $file;
         $this->dateFormat = $dateFormat;
+        self::$verbosity = $verbosity;
     }
 
     static public function open($file = null, $mode = "a") {
@@ -63,21 +68,41 @@ class Logger
      *
      * @param string $string
      * @param string $color
+     * @param int $verbosity
      * @return void
      */
-    static public function print($string, $color = Logger::PRINT_DEFAULT) {
-        printf($color . "%s" . Logger::PRINT_DEFAULT, $string);
+    static public function print($string, $color = Logger::COLOR_DEFAULT, $verbosity = 0) {
+        if ($verbosity <= self::$verbosity) {
+            if (is_array($string)) {
+                foreach ($string as $line) {
+                    printf($color . "%s" . Logger::COLOR_DEFAULT, $line);
+                }
+                
+            } elseif (is_string($string)) {
+                printf($color . "%s" . Logger::COLOR_NONE, $string);
+            }
+        }
     }
 
     /**
      * Print a string in console. Adds PHP_EOL at the end.
      *
-     * @param string $string
+     * @param string|array $string
      * @param string $color
+     * @param int $verbosity
      * @return void
      */
-    static public function println($string, $color = Logger::PRINT_DEFAULT) {
-        printf($color . "%s" . Logger::PRINT_DEFAULT . PHP_EOL, $string);
+    static public function println($string, $color = Logger::COLOR_NONE, $verbosity = 0) {
+        if ($verbosity <= static::$verbosity) {
+            if (is_array($string)) {
+                foreach ($string as $line) {
+                    printf($color . "%s" . Logger::COLOR_NONE . PHP_EOL, $line);
+                }
+                
+            } elseif (is_string($string)) {
+                printf($color . "%s" . Logger::COLOR_NONE . PHP_EOL, $string);
+            }
+        }
     }
 
     /**

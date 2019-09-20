@@ -48,7 +48,7 @@ tests:
     # Wait for mysql
     - docker run --rm --network remotelabz -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker run -d --rm --name remotelabz --network remotelabz $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz remotelabz-ctl reconfigure database
+    - docker exec remotelabz remotelabz-ctl reconfigure database -v
     - docker exec remotelabz php bin/phpunit
   dependencies:
     - build

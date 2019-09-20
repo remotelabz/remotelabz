@@ -30,7 +30,7 @@ class Service
         try {
             System::checkRoot();
         } catch (NotRootException $e) {
-            Logger::println("You must be root to execute this command.", Logger::PRINT_RED);
+            Logger::println("You must be root to execute this command.", Logger::COLOR_RED);
             return;
         }
         $log->debug("Command ".$action." invoked");
@@ -45,7 +45,7 @@ class Service
 
         if ($hasError) {
             $log->error("Command terminated with errors!");
-            Logger::print("Command terminated with errors!", Logger::PRINT_RED);
+            Logger::print("Command terminated with errors!", Logger::COLOR_RED);
         } else {
             $log->debug("Command ended without error.");
             Logger::print("Command \"".$action."\" terminated succesfully." . PHP_EOL);

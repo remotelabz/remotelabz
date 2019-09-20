@@ -18,7 +18,8 @@ const CONFIGURABLE_HTTP_PROXY_PORT      = 8888;
 
 $getopt = new GetOpt([
     Option::create('h', 'help', GetOpt::NO_ARGUMENT)
-        ->setDescription("Show this help text.")
+        ->setDescription("Show this help text."),
+    
 ], [GetOpt::SETTING_STRICT_OPERANDS => true]);
 
 $getopt->addCommands([
@@ -29,6 +30,9 @@ $getopt->addCommands([
         Option::create(null, 'skip-fixtures', GetOpt::NO_ARGUMENT)
             ->setDescription("Skip database fixtures loading step.")
             ->setDefaultValue(false),
+        Option::create('v', 'verbose')
+        ->setDescription('Set the verbosity level.')
+        ->setDefaultValue(0)
     ])
         ->setDescription("Reconfigure various parts of the app.")
         ->addOperand(Operand::create("action", Operand::REQUIRED)
@@ -75,7 +79,7 @@ if (!$command) {
     exit(0);
 } else {
     list ($class, $method) = explode('::', $command->getHandler());
-    $logger = new Logger(REMOTELABZ_LOG);
+    $logger = new Logger(REMOTELABZ_LOG, DATE_RFC2822, $getopt->getOption('v'));
     call_user_func([$class, $method], $getopt->getOptions(), $getopt->getOperands(), $logger);
 }
 

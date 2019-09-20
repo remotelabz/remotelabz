@@ -23,7 +23,7 @@ class ConfigurableHttpProxy implements ServiceInterface
                 // $log->debug($output);
                 if ($return) {
                     $log->error("Failed to start configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.");
-                    Logger::print("Failed to start configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+                    Logger::print("Failed to start configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
                 }
                 $log->debug("configurable-http-proxy is started.");
             } else {
@@ -51,7 +51,7 @@ class ConfigurableHttpProxy implements ServiceInterface
                 $log->debug($output);
                 if ($return) {
                     $log->error("Failed to stop configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.");
-                    Logger::print("Failed to stop configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+                    Logger::print("Failed to stop configurable-http-proxy! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
                 }
                 $log->debug('configurable-http-proxy is stopped.');
             } else {

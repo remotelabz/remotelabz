@@ -95,7 +95,7 @@ class Installer {
             $this->copyFiles();
         } catch (AlreadyExistException $e) {
             $this->logger->warning("Install directory already exists. Not copying files.");
-            Logger::print("Warning: Target directory exists. Files will not be copied. ", Logger::PRINT_YELLOW);
+            Logger::print("Warning: Target directory exists. Files will not be copied. ", Logger::COLOR_YELLOW);
         }
         $this->logger->debug("Files has been moved to ".$this->installPath);
         echo "OK ✔️\n";

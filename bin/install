@@ -102,15 +102,15 @@ $getopt = new GetOpt([
 try {
     $getopt->process();
 } catch (ArgumentException $e) {
-    Logger::print("Error: ", Logger::PRINT_RED);
+    Logger::print("Error: ", Logger::COLOR_RED);
     if ($e instanceof Invalid) {
-        Logger::print("Invalid argument: ", Logger::PRINT_RED);
+        Logger::print("Invalid argument: ", Logger::COLOR_RED);
     } elseif ($e instanceof Missing) {
-        Logger::print("Missing value: ", Logger::PRINT_RED);
+        Logger::print("Missing value: ", Logger::COLOR_RED);
     } elseif ($e instanceof Unexpected) {
-        Logger::print("Unexpected value: ", Logger::PRINT_RED);
+        Logger::print("Unexpected value: ", Logger::COLOR_RED);
     }
-    Logger::print($e->getMessage() ."\n", Logger::PRINT_RED);
+    Logger::print($e->getMessage() ."\n", Logger::COLOR_RED);
     exit(1);
 }
 
@@ -125,7 +125,7 @@ $installer = Installer::create(REMOTELABZ_PATH, $getopt->getOptions());
 try {
     $installer->checkRoot();
 } catch (Exception $e) {
-    Logger::print($e->getMessage()."\n", Logger::PRINT_RED);
+    Logger::print($e->getMessage()."\n", Logger::COLOR_RED);
     exit(1);
 }
 
@@ -135,7 +135,7 @@ $installer->setLogger($logger);
 try {
     $installer->checkRequirements();
 } catch (Exception $e) {
-    Logger::print($e->getMessage()."\n", Logger::PRINT_RED);
+    Logger::print($e->getMessage()."\n", Logger::COLOR_RED);
     $logger->error($e->getMessage());
     exit(1);
 }
@@ -147,11 +147,11 @@ try {
     $count = 0;
     while ($e !== null) {
         $logger->error($e->getMessage());
-        Logger::print("#$count ".$e->getFile()."(".$e->getLine()."): ".$e->getMessage()."\n", Logger::PRINT_RED);
+        Logger::print("#$count ".$e->getFile()."(".$e->getLine()."): ".$e->getMessage()."\n", Logger::COLOR_RED);
         $e = $e->getPrevious();
         $count++;
     }
-    Logger::print("Please check the install logs in ".INSTALL_LOG_PATH." to get more information.\n", Logger::PRINT_RED);
+    Logger::print("Please check the install logs in ".INSTALL_LOG_PATH." to get more information.\n", Logger::COLOR_RED);
     exit(1);
 }
 

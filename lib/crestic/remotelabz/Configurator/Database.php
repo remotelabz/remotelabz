@@ -71,24 +71,26 @@ class Database
 
         if ($doMigration) {
             $log->debug("Starting database migration");
-            $output = array();
-            $return = 0;
+            Logger::println('Starting database migration', Logger::COLOR_NONE, 1);
             exec("php " . dirname(__FILE__) . "/../../../../bin/console doctrine:migrations:migrate -n 2>&1", $output, $return);
+            Logger::println($output, null, 1);
             $log->debug($output);
             if ($return !== 0) {
                 throw new ConfigurationException("Error while migrating database.");
             }
+            Logger::println('Ended database migration', Logger::COLOR_NONE, 1);
         }
 
         if ($doFixtures) {
-            $log->debug("Starting database fixtures load");
-            $output = array();
-            $return = 0;
+            $log->debug("Starting database fixtures loading");
+            Logger::println('Starting database fixtures loading', Logger::COLOR_NONE, 1);
             exec("php " . dirname(__FILE__) . "/../../../../bin/console doctrine:fixtures:load -n 2>&1", $output, $return);
+            Logger::println($output, null, 1);
             $log->debug($output);
             if ($return !== 0) {
                 throw new ConfigurationException("Error while loading databases fixtures.");
             }
+            Logger::println('Ended database fixtures loading', Logger::COLOR_NONE, 1);
         }
     }
 }

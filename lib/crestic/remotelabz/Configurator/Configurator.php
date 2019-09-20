@@ -22,7 +22,7 @@ class Configurator
         try {
             System::checkRoot();
         } catch (NotRootException $e) {
-            Logger::println("You must be root to execute this command.", Logger::PRINT_RED);
+            Logger::println("You must be root to execute this command.", Logger::COLOR_RED);
             return;
         }
 
@@ -40,14 +40,14 @@ class Configurator
             try {
                 call_user_func([self::getRegisteredServices()[$action], 'configure'], $options, $operands, $log);
             } catch(ConfigurationException $e) {
-                Logger::println($e->getMessage(), Logger::PRINT_RED);
+                Logger::println($e->getMessage(), Logger::COLOR_RED);
                 $hasError = true;
             }
         }
 
         if ($hasError) {
             $log->error("Command terminated with errors!");
-            Logger::println("Command terminated with errors! See logs at ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+            Logger::println("Command terminated with errors! See logs at ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
         } else {
             $log->debug("Command ended without error.");
             Logger::println("Command \"".$action."\" terminated succesfully.");

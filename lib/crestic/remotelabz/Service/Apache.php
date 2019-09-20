@@ -13,7 +13,7 @@ class Apache implements ServiceInterface
         $log->debug($output);
         if ($return) {
             $log->error("Failed to start Apache ! See the logs in ".$log->getLogPath()." to get more information.");
-            Logger::print("Failed to start Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+            Logger::print("Failed to start Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
         }
         $log->debug("configurable-http-proxy is started.");
 
@@ -27,7 +27,7 @@ class Apache implements ServiceInterface
         $log->debug($output);
         if ($return) {
             $log->error("Failed to stop Apache ! See the logs in ".$log->getLogPath()." to get more information.");
-            Logger::print("Failed to stop Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+            Logger::print("Failed to stop Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
         }
 
         return $return;
@@ -40,7 +40,7 @@ class Apache implements ServiceInterface
         $log->debug($output);
         if ($return) {
             $log->error("Failed to restart Apache ! See the logs in ".$log->getLogPath()." to get more information.");
-            Logger::print("Failed to restart Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::PRINT_RED);
+            Logger::print("Failed to restart Apache ! See the logs in ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
         }
 
         return $return;
