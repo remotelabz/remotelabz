@@ -25,7 +25,7 @@ build:
     DOCKER_DRIVER: overlay2
   script:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG .
+    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg PORT=8000 .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   tags:
@@ -42,17 +42,14 @@ tests:
     # improved performance.
     DOCKER_DRIVER: overlay2
   script:
-    - cp -rf .env.dist .env
-    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
     - docker network create remotelabz
     - docker run -d --rm --name mysql --network remotelabz -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
     # Wait for mysql
     - docker run --rm --network remotelabz -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
-    - docker run -d --rm --name remotelabz --network remotelabz -v $(pwd)/.env:/var/www/html/remotelabz/.env $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz php bin/console doctrine:migrations:migrate -n
-    - docker exec remotelabz php bin/console doctrine:fixtures:load -n
-    - docker exec remotelabz php bin/phpunit 
+    - docker run -d --rm --name remotelabz --network remotelabz $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker exec remotelabz remotelabz-ctl reconfigure database -v
+    - docker exec remotelabz php bin/phpunit
   dependencies:
     - build
   tags:
@@ -62,8 +59,6 @@ tests:
 deploy_review:
   stage: deploy
   script:
-    - cp -rf .env.dist .env
-    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker stop mysql_$CI_COMMIT_REF_SLUG || true
@@ -73,13 +68,12 @@ deploy_review:
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d --rm -p 8000 -p 8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker run -d --rm -p 8000 -p 8888 --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
     - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
     - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
     - sudo service nginx reload
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
+    - docker exec remotelabz remotelabz-ctl reconfigure database -v
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
@@ -95,15 +89,8 @@ deploy_review:
 deploy_staging:
   stage: deploy
   script:
-    - cp -rf .env.dist .env
-    - echo MYSQL_PASSWORD=$MYSQL_PASSWORD >> .env
-    - echo WORKER_SERVER=$WORKER_SERVER >> .env
-    - echo WORKER_PORT=$WORKER_PORT >> .env
-    - echo WEBSOCKET_PROXY_SERVER=$WEBSOCKET_PROXY_SERVER >> .env
-    - echo WEBSOCKET_PROXY_PORT=$WEBSOCKET_PROXY_PORT >> .env
-    - echo APP_ENV=$APP_ENV >> .env
-    - echo SSL_CERT=$SSL_CERT >> remotelabz.com.crt
-    - echo SSL_CERT_KEY=$SSL_CERT_KEY >> remotelabz.com.key
+    - echo $SSL_CERT >> remotelabz.com.crt
+    - echo $SSL_CERT_KEY >> remotelabz.com.key
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker stop mysql_$CI_COMMIT_REF_SLUG || true
@@ -115,9 +102,8 @@ deploy_staging:
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d -p 8000:8000 -p 8888:8888 -v $(pwd)/.env:/var/www/html/remotelabz/.env -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:migrations:migrate -n
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG php bin/console doctrine:fixtures:load -n
+    - docker run -d -p 8000:8000 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker exec remotelabz remotelabz-ctl reconfigure database -v
   environment:
     name: staging
     url: https://staging.remotelabz.com/

@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-ENV REMOTELABZ_PATH=/var/www/html/remotelabz
+ENV REMOTELABZ_PATH=/opt/remotelabz
 ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
@@ -32,7 +32,7 @@ RUN curl -O http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
     echo 'deb http://pkg.switch.ch/switchaai/ubuntu bionic main' | tee /etc/apt/sources.list.d/SWITCHaai-swdistrib.list
 RUN apt-get update && \
     apt-get install -y --install-recommends shibboleth
-    
+
 RUN shib-keygen -f -u _shibd -h staging.remotelabz.com -y 3 -e https://staging.remotelabz.com/shibboleth -o /etc/shibboleth/
 
 RUN cd /tmp && \
@@ -44,51 +44,41 @@ RUN cd /tmp && \
     cp /tmp/conf_sp2/attribute-policy.xml /etc/shibboleth/attribute-policy.xml && \
     curl https://metadata.federation.renater.fr/certs/renater-metadata-signing-cert-2016.pem -o /etc/shibboleth/renater-metadata-signing-cert-2016.pem
 
-RUN npm install -g configurable-http-proxy
-
-RUN mkdir -p ${REMOTELABZ_PATH}
-
-ADD ./vagrant/100-remotelabz.conf /etc/apache2/sites-enabled/
-ADD ./vagrant/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
-ADD ./vagrant/shib2.conf /etc/apache2/conf-available/
-RUN sed -i 's/Listen 80/Listen 8000/g' /etc/apache2/ports.conf
+ADD ./config/shibboleth/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
+ADD ./config/shibboleth/shib2.conf /etc/apache2/conf-available/
 RUN a2enconf shib2 && \
     a2enmod shib
 
-RUN echo "upload_max_filesize=3000M" >> /etc/php/7.2/apache2/conf.d/20-fileinfo.ini && \
-    echo "post_max_size=4000M" >> /etc/php/7.2/apache2/conf.d/20-fileinfo.ini
+RUN npm install -g configurable-http-proxy
+
+ARG ENVIRONMENT=dev
+ARG PORT=80
+ARG WORKER_SERVER=localhost
+ARG WORKER_PORT=8080
+ARG PROXY_SERVER=localhost
+ARG PROXY_PORT=8888
+ARG PROXY_API_PORT=8889
+ARG DATABASE_SERVER=localhost
+ARG DATABASE_USER=symfony
+ARG DATABASE_PASSWORD=symfony
+ARG DATABASE_NAME=symfony
+ARG MAILER_URL="smtp://localhost:25?encryption=&auth_mode="
+ARG SERVER_NAME=remotelabz.com
+
+ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
+
+RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT} --database-server ${DATABASE_SERVER} --database-user ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME}
 
 # Folders
-RUN mkdir -p /opt/remotelabz/images && \
-    chmod -R g+rwx /opt/remotelabz && \
-    groupadd -f remotelabz && \
-    usermod -aG remotelabz www-data && \
-    chgrp -R remotelabz /opt/remotelabz
-
-ADD composer.* ${REMOTELABZ_PATH}/
-ADD symfony.lock ${REMOTELABZ_PATH}/
-RUN cd ${REMOTELABZ_PATH} && composer install --no-progress --no-scripts --no-suggest
-
-ADD package.json ${REMOTELABZ_PATH}/
-ADD yarn.lock ${REMOTELABZ_PATH}/
-RUN cd ${REMOTELABZ_PATH} && yarn install
-
-ADD assets/ ${REMOTELABZ_PATH}/assets
-ADD webpack.config.js ${REMOTELABZ_PATH}/
-RUN mkdir -p ${REMOTELABZ_PATH}/public && \
-    cd ${REMOTELABZ_PATH} &&  ls -la && \
-    yarn encore dev
-
-ADD . ${REMOTELABZ_PATH}
-
-# Console
-RUN php ${REMOTELABZ_PATH}/bin/console assets:install --symlink public --relative
+RUN chmod -R g+rwx /opt/remotelabz
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+
 RUN chmod +x /usr/local/bin/docker-entrypoint
-RUN chown -R www-data /var/www
+
 WORKDIR ${REMOTELABZ_PATH}
-EXPOSE 8000/tcp
-EXPOSE 8888/tcp
-EXPOSE 9000/tcp
+
+EXPOSE ${PORT}/tcp
+EXPOSE ${PROXY_PORT}/tcp
+
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]
