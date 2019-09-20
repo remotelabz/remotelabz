@@ -1,19 +1,5 @@
 FROM ubuntu:bionic
 
-ARG ENVIRONMENT=dev
-ARG PORT=80
-ARG WORKER_SERVER=localhost
-ARG WORKER_PORT=8080
-ARG PROXY_SERVER=localhost
-ARG PROXY_PORT=8888
-ARG PROXY_API_PORT=8889
-ARG DATABASE_SERVER=localhost
-ARG DATABASE_USER=symfony
-ARG DATABASE_PASSWORD=symfony
-ARG DATABASE_NAME=symfony
-ARG MAILER_URL="smtp://localhost:25?encryption=&auth_mode="
-ARG SERVER_NAME=remotelabz.com
-
 ENV REMOTELABZ_PATH=/opt/remotelabz
 ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -64,6 +50,20 @@ RUN a2enconf shib2 && \
     a2enmod shib
 
 RUN npm install -g configurable-http-proxy
+
+ARG ENVIRONMENT=dev
+ARG PORT=80
+ARG WORKER_SERVER=localhost
+ARG WORKER_PORT=8080
+ARG PROXY_SERVER=localhost
+ARG PROXY_PORT=8888
+ARG PROXY_API_PORT=8889
+ARG DATABASE_SERVER=localhost
+ARG DATABASE_USER=symfony
+ARG DATABASE_PASSWORD=symfony
+ARG DATABASE_NAME=symfony
+ARG MAILER_URL="smtp://localhost:25?encryption=&auth_mode="
+ARG SERVER_NAME=remotelabz.com
 
 ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 
