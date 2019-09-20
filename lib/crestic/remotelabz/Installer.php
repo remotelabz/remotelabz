@@ -72,7 +72,7 @@ class Installer {
             throw new Exception("You need PHP 7.2 or higher to use RemoteLabz. Please upgrade your PHP version to continue.");
         }
         if (!System::commandExists("apache2ctl")) {
-            throw new Exception("Apache 2 has not been found on your system. Please install Composer to continue.");
+            throw new Exception("Apache 2 has not been found on your system. Please install Apache 2 to continue.");
         }
         if (!System::commandExists("composer")) {
             throw new Exception("Composer has not been found on your system. Please install Composer to continue.");
@@ -157,8 +157,15 @@ class Installer {
         $output = [];
         exec("getent passwd remotelabz > /dev/null", $output, $returnCode);
         if ($returnCode) {
-            exec("useradd remotelabz");
+            try {
+                exec("useradd remotelabz"); //This command also create remotelabz groups
+            }
+            catch (Exception $e) {
+                throw new Exception("Error creating remotelabz user", 0, $e);
+                echo "Error";
+            }
         }
+/* The useradd command created remotelabz group
         exec("getent group remotelabz > /dev/null", $output, $returnCode);
         if ($returnCode) {
             exec("groupadd remotelabz");
@@ -169,7 +176,7 @@ class Installer {
         } catch (Exception $e) {
             throw new Exception("Error setting file permissions.", 0, $e);
         }
-        
+  */      
         $this->logger->debug("Configuring Apache");
         $this->logger->debug("Port: " . $this->options['port']);
         $this->logger->debug("Server name: " . $this->options['server-name']);
@@ -195,13 +202,13 @@ class Installer {
     private function copyFiles() : void {
         $isCopied = true;
         // Check if directory is already to the right place
-        if (dirname(__FILE__) != $this->installPath) {
+        if (getcwd() != $this->installPath) { //directore(__FILE)) return the current path of the executed file. In this case, it's 'pwd'/lib/crestic/remotelabz 
             // Check if there is already a directory
             if (is_dir($this->installPath)) {
                 $isCopied = false;
             } else {
                 // Copy files
-            $this->rcopy(dirname(__FILE__), $this->installPath);
+            $this->rcopy(getcwd(), $this->installPath);
             }
             
         } else {
@@ -211,7 +218,7 @@ class Installer {
         if (!is_file("/usr/bin/remotelabz-ctl")) {
             symlink($this->installPath."/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
         }
-        chmod("/usr/bin/remotelabz-ctl", 0777);
+        chmod("/usr/bin/remotelabz-ctl", 0755);
 
         copy($this->installPath."/.env.dist", $this->installPath."/.env");
 
