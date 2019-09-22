@@ -165,7 +165,7 @@ class Installer {
                 echo "Error";
             }
         }
-/* The useradd command created remotelabz group
+    /* The useradd command created remotelabz group
         exec("getent group remotelabz > /dev/null", $output, $returnCode);
         if ($returnCode) {
             exec("groupadd remotelabz");
@@ -176,7 +176,7 @@ class Installer {
         } catch (Exception $e) {
             throw new Exception("Error setting file permissions.", 0, $e);
         }
-  */      
+    */      
         $this->logger->debug("Configuring Apache");
         $this->logger->debug("Port: " . $this->options['port']);
         $this->logger->debug("Server name: " . $this->options['server-name']);
@@ -192,6 +192,104 @@ class Installer {
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
         echo "Thank you for using our software. ❤️\n";
+    }
+
+    /**
+     * Change recursively file permissions
+     *
+     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     */
+    private function chmodr($path,$filemode)
+    {
+        if (!is_dir($path))
+            return chmod($path, $filemode);
+    
+        $dh = opendir($path);
+        while (($file = readdir($dh)) !== false)
+        {
+            if($file != '.' && $file != '..')
+            {
+                $fullpath = $path.'/'.$file;
+                if(is_link($fullpath))
+                    return FALSE;
+                elseif(!is_dir($fullpath) && !chmod($fullpath, $filemode))
+                        return FALSE;
+                elseif(!$this->chmodr($fullpath, $filemode))
+                    return FALSE;
+            }
+        }
+    
+        closedir($dh);
+    
+        if(chmod($path, $filemode))
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    /**
+     * Change recursively owner permissions
+     *
+     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     */
+    private function chownr($path, $owner)
+    {
+    if (!is_dir($path))
+        return chown($path, $owner);
+
+    $dh = opendir($path);
+    while (($file = readdir($dh)) !== false)
+	{
+        if($file != '.' && $file != '..')
+		{
+            $fullpath = $path.'/'.$file;
+            if(is_link($fullpath))
+                return FALSE;
+            elseif(!is_dir($fullpath) && !chown($fullpath, $owner))
+                    return FALSE;
+            elseif(!$this->chownr($fullpath, $owner))
+                return FALSE;
+        }
+    }
+
+    closedir($dh);
+
+    if(chown($path, $owner))
+        return TRUE;
+    else
+        return FALSE;
+    }
+
+    /**
+     * Change recursively group owner
+     *
+     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     */
+    private function chgrpr($path, $group) {
+    if (!is_dir($path))
+        return chgrp($path, $group);
+
+    $dh = opendir($path);
+    while (($file = readdir($dh)) !== false)
+	{
+        if($file != '.' && $file != '..')
+		{
+            $fullpath = $path.'/'.$file;
+            if(is_link($fullpath))
+                return FALSE;
+            elseif(!is_dir($fullpath) && !chgrp($fullpath, $group))
+                    return FALSE;
+            elseif(!$this->chgrpr($fullpath, $group))
+                return FALSE;
+        }
+    }
+
+    closedir($dh);
+
+    if(chgrp($path, $group))
+        return TRUE;
+    else
+        return FALSE;
     }
 
     /**
@@ -219,6 +317,8 @@ class Installer {
             symlink($this->installPath."/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
         }
         chmod("/usr/bin/remotelabz-ctl", 0755);
+        $this->chgrpr($this->installPath."/var","www-data");
+        $this->chmodr($this->installPath."/var", 0775);
 
         copy($this->installPath."/.env.dist", $this->installPath."/.env");
 
