@@ -78,6 +78,7 @@ deploy_review:
     name: review/$CI_COMMIT_REF_NAME
     url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
     on_stop: stop_review
+  when: manual
   tags:
     - review
   only:

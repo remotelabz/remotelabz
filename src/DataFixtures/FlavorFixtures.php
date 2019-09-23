@@ -31,16 +31,24 @@ class FlavorFixtures extends Fixture
 
         // Basic flavor
         $flavor = new Flavor();
-
         $flavor
             ->setName("x-small")
             ->setMemory(512)
             ->setDisk(8)
         ;
-
         $manager->persist($flavor);
-
         $this->addReference('flavor-x-small', $flavor);
+
+        $flavor = new Flavor();
+        $flavor
+            ->setName("x-large")
+            ->setMemory(4096)
+            ->setDisk(30)
+        ;
+        $manager->persist($flavor);
+        $this->addReference('flavor-x-large', $flavor);
+
+  
 
         $manager->flush();
     }
