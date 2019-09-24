@@ -49,7 +49,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
         $networkInterface = new NetworkInterface();
 
         $networkInterface
-            ->setName('eth'.$faker->numberBetween(0, 100))
+            ->setName('eth0')
             ->setType("tap")
             ->setSettings(
                 $this->getReference(
@@ -58,14 +58,18 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
             )
             ->setDevice(
                 $this->getReference(
-                    'device1'
+                    'device-alpine'
                 )
             )
-            ->setMacAddress('00:22:33:44:55:66')
+            ->setMacAddress('52:54:00:00:00:01')
         ;
 
+        $manager->persist($networkInterface);
+
+        $networkInterface = new NetworkInterface();
+
         $networkInterface
-            ->setName('eth'.$faker->numberBetween(0, 100))
+            ->setName('eth1')
             ->setType("tap")
             ->setSettings(
                 $this->getReference(
@@ -74,10 +78,10 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
             )
             ->setDevice(
                 $this->getReference(
-                    'device2'
+                    'device-debian'
                 )
             )
-            ->setMacAddress('00:22:33:44:55:67')
+            ->setMacAddress('52:54:00:00:00:02')
         ;
 
         $manager->persist($networkInterface);
