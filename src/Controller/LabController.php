@@ -613,7 +613,7 @@ class LabController extends AppController
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
-            'host' => 'ws://' . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
+            'host' => 'wss://' . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
             'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
             'path' => $request->get('path') ?: 'device/' . $device->getUserInstance($this->getUser())->getUuid()
         ]);

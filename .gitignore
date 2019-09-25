@@ -41,3 +41,4 @@ yarn-error.log
 *.key
 .env.prod
 /images/
+vagrant/provision_prod.sh
