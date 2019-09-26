@@ -294,6 +294,7 @@ class LabController extends AppController
             $labInstance
                 ->setLab($lab)
                 ->setUser($user)
+                ->setIsInternetConnected(false)
             ;
             $lab->addInstance($labInstance);
             $entityManager->persist($lab);
@@ -609,13 +610,63 @@ class LabController extends AppController
         } else {
             $fullscreen = false;
         }
+        $protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'wss://' : 'ws://';
 
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
-            'host' => 'ws://' . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
+            'host' => $protocol."".($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
             'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
             'path' => $request->get('path') ?: 'device/' . $device->getUserInstance($this->getUser())->getUuid()
         ]);
     }
+
+    /**
+     * @Route("/labs/{id<\d+>}/connect", name="connect_internet")
+     */
+    public function connectLabAction(Request $request, int $id, SerializerInterface $serializer)
+    {
+        $lab = $this->labRepository->find($id);
+
+        $this->connectLab($lab);
+        $this->addFlash('success', 'The lab '.$lab->getName().' is connected.');
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id
+        ]);
+    }
+
+    private function connectLab(Lab $lab)
+    {
+        $entityManager = $this->getDoctrine()->getManager();
+        $user = $this->getUser();
+        $client = new Client();
+        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerPort = (string) getenv('WORKER_PORT');
+
+        $labInstance = $lab->getUserInstance($user);
+
+        if ($labInstance == null ) {
+            throw new NotInstancedException($labInstance);
+        } else {
+
+
+        }
+
+        $context = SerializationContext::create()->setGroups("lab");
+        $labXml = $this->serializer->serialize($lab, 'xml', $context);
+
+        $url = "http://{$workerUrl}:{$workerPort}/lab/connectnet";
+        $headers = [ 'Content-Type' => 'application/xml' ];
+        try {
+            $response = $client->post($url, [
+                'body' => $labXml,
+                'headers' => $headers
+            ]);
+        } catch (RequestException $exception) {
+            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+        }
+
+    }
+
 }

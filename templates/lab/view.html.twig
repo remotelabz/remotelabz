@@ -11,9 +11,14 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">
-                    {{ lab.name }}
+                    Laboratory {{ lab.name }}
                     <div class="float-right">
                         {% if labInstance is null or (labInstance is not null and not labInstance.isStarted) %}
+                            {% if labInstance is not null and not labInstance.IsInternetConnected %}
+                                <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Connect'|trans }}
+                                </a>
+                            {% endif %}
                             <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                 {{ 'Start all'|trans }}
                             </a>

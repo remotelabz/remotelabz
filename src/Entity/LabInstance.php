@@ -35,6 +35,11 @@ class LabInstance extends Instance
      */
     protected $user;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsInternetConnected;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -113,4 +118,18 @@ class LabInstance extends Instance
 
         return $networkInterfaceInstances;
     }
+
+    public function getIsInternetConnected(): ?bool
+    {
+        return $this->IsInternetConnected;
+    }
+
+    public function setIsInternetConnected(bool $IsInternetConnected): self
+    {
+        $this->IsInternetConnected = $IsInternetConnected;
+
+        return $this;
+    }
+
+    
 }
