@@ -18,6 +18,10 @@
                                 <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Connect'|trans }}
                                 </a>
+                            {% elseif labInstance is not null %}
+                                <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Disconnect'|trans }}
+                                </a>
                             {% endif %}
                             <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                 {{ 'Start all'|trans }}
