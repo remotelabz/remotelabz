@@ -1,0 +1,250 @@
+@startuml RemoteLabz Class Diagram
+
+note "Every class implements standards getters\nand setters, except for a few cases." as N1
+
+interface InstanciableInterface {
+    + getUuid() : string
+    + getUserInstance(User user) : ?Instance
+}
+class Lab {
+    .. Properties ..
+    - int id
+    - string name
+    - bool isStarted
+    - User author
+    - string uuid
+    .. Relations ..
+    - Device[] devices
+    - Connexion[] connexions
+    - Activity[] activities
+    - LabInstance[] instances
+    - DeviceInstance[] deviceInstances
+    - NetworkInterfaceInstance[] networkInterfaceInstances
+    --
+    + getUserInstance(User user) : ?LabInstance
+    + setInstances(LabInstance[] instances) : void
+}
+InstanciableInterface <|-- Lab
+Lab "n" o-- "n" Device : uses >
+Lab "n" o-- "n" Connexion
+Lab "1" *-- "n" Activity
+Lab "1" *-- "n" LabInstance
+Lab "1" *-- "n" DeviceInstance
+Lab "1" *-- "n" NetworkInterfaceInstance
+
+class Device {
+    .. Properties ..
+    - int id
+    - string name
+    - string brand
+    - string model
+    - int launchOrder
+    - File launchScript
+    - string type
+    - int virtuality
+    - string hypervisor
+    - string uuid
+    .. Relations ..
+    - Lab[] labs
+    - NetworkInterface[] networkInterfaces
+    - OperatingSystem operatingSystem
+    - NetworkInterface controlInterface
+    - Flavor flavor
+    - DeviceInstance[] instances
+    --
+    + getUserInstance(User user) : ?DeviceInstance
+    + setInstances(DeviceInstance[] instances) : void
+}
+InstanciableInterface <|-- Device
+Device "1" o-- "n" NetworkInterface
+Device "n" o-- "1" OperatingSystem
+Device "n" o-- "1" Flavor
+Device "1" *-- "n" DeviceInstance
+
+class NetworkInterface {
+    .. Properties ..
+    - int id
+    - string type
+    - string name
+    - string macAddress
+    - string uuid
+    .. Relations ..
+    - NetworkSettings settings
+    - Device device
+    - NetworkInterfaceInstance instances
+    .. Constants ..
+    - TYPE_TAP
+    - TYPE_OVS
+    --
+    + getUserInstance(User user) : ?NetworkInterfaceInstance
+    + 
+}
+InstanciableInterface <|-- NetworkInterface
+NetworkInterface "1" o-- "1" NetworkSettings
+NetworkInterface "1" *-- "n" NetworkInterfaceInstance
+
+package Symfony\Component\Security\Core\User {
+    interface UserInterface {
+        + getSalt()
+        + eraseCredentials()
+    }
+}
+class User {
+    .. Properties ..
+    - int id
+    - string email
+    - string[] roles
+    - string password
+    - string lastName
+    - string firstName
+    - bool enabled
+    - string profilePictureFilename
+    .. Relations ..
+    - Course[] courses
+    - LabInstance[] labInstances
+    - DeviceInstance[] deviceInstances
+    - NetworkInterfaceInstance[] networkInterfaceInstances
+    - Lab[] createdLabs
+    --
+    + getUsername() : string
+    + getName() : string
+    + getInstances() : Instance[]
+    + getProfilePicture() : string
+    + hasRole(string role) : bool
+}
+User <|-- UserInterface
+User "n" o-- "n" Course
+User "1" *-- "n" LabInstance
+User "1" *-- "n" DeviceInstance
+User "1" *-- "n" NetworkInterfaceInstance
+User "1" *-- "n" Lab
+
+class PasswordResetRequest {
+    - int id
+    - string token
+    - DateTimeInterface createdAt
+    - User user
+}
+PasswordResetRequest "n" -- "1" User
+
+class NetworkSettings {
+    - int id
+    - string name
+    - string ip
+    - string ipv6
+    - int prefix4
+    - int prefix6
+    - string gateway
+    - string protocol
+    - int port
+}
+
+class OperatingSystem {
+    - int id
+    - string name
+    - string imageUrl
+    - string imageFilename
+    - string image
+}
+
+class Hypervisor {
+    -int id
+    - string name
+    - string command
+    - string arguments
+}
+
+class Flavor {
+    - int id
+    - string name
+    - int memory
+    - int disk
+}
+
+class Activity {
+    .. Properties ..
+    - int id
+    - string name
+    - string description
+    - bool shared
+    - bool supervised
+    - string accessType
+    .. Relations ..
+    - Lab lab
+    - Course[] courses
+    - Network network
+}
+Activity "n" -- "n" Course
+Activity "1" *-- "1" Network
+
+class Course {
+    - int id
+    - string name
+    - User[] users
+    - Activity[] activities
+    + getUsersId() : int[]
+}
+
+
+class Network {
+    - int id
+    - string cidr
+    - IP[] ips
+}
+Network "1" *-- "n" IP
+
+class IP {
+    - int id
+    - Network network
+}
+
+' Instances
+
+class Instance {
+    # string uuid
+    # bool isStarted
+    + belongsToCurrentUser() : bool
+    + belongsTo(User user) : bool
+}
+
+Instance <|-- LabInstance
+Instance <|-- DeviceInstance
+Instance <|-- NetworkInterfaceInstance
+
+class LabInstance {
+    - int id
+    # Lab lab
+    # User user
+    # DeviceInstance[] deviceInstances
+    + getUserId()
+    + getDeviceInstance(Device device) : ?DeviceInstance
+    + getDeviceInstances() : DeviceInstance[]
+    + getUserDeviceInstance(Device device) : ?DeviceInstance
+    + getUserDeviceInstances() : DeviceInstance[]
+    + getNetwordInterfacesInstances() : NetworkInterfaceInstance[]
+    + hasDeviceInstance() : bool
+}
+LabInstance "1" *-- "n" DeviceInstance
+
+class DeviceInstance {
+    - int id
+    # Device device
+    # User user
+    - Lab lab
+    - LabInstance labInstance
+    # NetworkInterfaceInstance[] networkInterfaceInstances
+    + getNetwordInterfacesInstance(NetworkInterface networkInterface) : ?NetworkInterfaceInstance
+    + getNetwordInterfacesInstances() : NetworkInterfaceInstance[]
+}
+DeviceInstance "1" *-- "n" NetworkInterfaceInstance
+
+class NetworkInterfaceInstance {
+    - int id
+    - int remotePort
+    # NetworkInterface networkInterface
+    # User user
+    - Lab lab
+    - DeviceInstance deviceInstance
+}
+
+@enduml

@@ -4,11 +4,13 @@ namespace App\Entity;
 
 use App\Entity\Instance;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Criteria;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceInstanceRepository")
- * @Serializer\XmlRoot("instance")
+ * @Serializer\XmlRoot("device_instance")
  */
 class DeviceInstance extends Instance
 {
@@ -23,7 +25,7 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $device;
 
@@ -36,8 +38,29 @@ class DeviceInstance extends Instance
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="deviceInstances")
      * @ORM\JoinColumn(nullable=false)
+     * @Serializer\Groups({"lab"})
      */
     private $lab;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances")
+     * @Serializer\XmlElement(cdata=false)
+     * @Serializer\Groups({"lab"})
+     */
+    private $labInstance;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance")
+     * @Serializer\XmlList(inline=true, entry="network_interface_instance")
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     */
+    protected $networkInterfaceInstances;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->networkInterfaceInstances = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -68,6 +91,16 @@ class DeviceInstance extends Instance
         return $this;
     }
 
+    /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"lab"})
+     * @Serializer\XmlAttribute
+     */
+    public function getUserId(): ?int
+    {
+        return $this->user->getId();
+    }
+
     public function getLab(): ?Lab
     {
         return $this->lab;
@@ -79,4 +112,65 @@ class DeviceInstance extends Instance
 
         return $this;
     }
+
+    public function getLabInstance(): ?LabInstance
+    {
+        return $this->labInstance;
+    }
+
+    public function setLabInstance(?LabInstance $labInstance): self
+    {
+        $this->labInstance = $labInstance;
+
+        return $this;
+    }
+
+    /**
+     * Get network interface instance associated to this lab instance
+     *
+     * @return NetworkInterfaceInstance
+     */
+    public function getNetworkInterfaceInstance($networkInterface): ?NetworkInterfaceInstance
+    {
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->eq("networkInterface", $networkInterface));
+
+        $networkInterfaceInstance = ($this->networkInterfaceInstances !== null) ? $this->networkInterfaceInstances->matching($criteria)->first() : null;
+        
+        return $networkInterfaceInstance ?: null;
+    }
+
+    /**
+     * Get network interface instances associated to this lab instance
+     *
+     * @return Collection|NetworkInterfaceInstance[]
+     */
+    public function getNetworkInterfaceInstances(): ArrayCollection
+    {
+        return $this->networkInterfaceInstances;
+    }
+
+    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
+            $networkInterfaceInstance->setDeviceInstance($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
+    {
+        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
+            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
+            // set the owning side to null (unless already changed)
+            if ($networkInterfaceInstance->getDeviceInstance() === $this) {
+                $networkInterfaceInstance->setDeviceInstance(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

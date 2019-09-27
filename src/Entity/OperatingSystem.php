@@ -29,7 +29,7 @@ class OperatingSystem
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @var string
      */
     private $name;
@@ -51,7 +51,7 @@ class OperatingSystem
 
     /**
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @var string
      */
     private $image;

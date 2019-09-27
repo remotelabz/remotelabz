@@ -5,3 +5,6 @@ jms_serializer:
                 - JSON_PRETTY_PRINT
                 - JSON_UNESCAPED_SLASHES
                 - JSON_PRESERVE_ZERO_FRACTION
+
+    property_naming: 
+        id: 'jms_serializer.identical_property_naming_strategy'
