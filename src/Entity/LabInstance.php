@@ -188,7 +188,7 @@ class LabInstance extends Instance
     {
         $this->isInternetConnected = $isInternetConnected;
 
-        return $this
+        return $this;
     }
     
     public function addDeviceInstance(DeviceInstance $deviceInstance): self
