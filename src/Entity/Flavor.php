@@ -23,14 +23,14 @@ class Flavor
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Assert\GreaterThan(
      *     value = 0
      * )
@@ -40,7 +40,7 @@ class Flavor
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Assert\GreaterThan(
      *     value = 0
      * )

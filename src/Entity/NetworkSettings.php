@@ -22,7 +22,7 @@ class NetworkSettings
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -31,7 +31,7 @@ class NetworkSettings
      *
      * @Assert\Ip(version="4")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $ip;
 
@@ -40,7 +40,7 @@ class NetworkSettings
      *
      * @Assert\Ip(version="6")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $ipv6;
 
@@ -49,7 +49,7 @@ class NetworkSettings
      *
      * @Assert\Range(min=0, max=64)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $prefix4;
 
@@ -58,7 +58,7 @@ class NetworkSettings
      *
      * @Assert\Range(min=0, max=128)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $prefix6;
 
@@ -67,14 +67,14 @@ class NetworkSettings
      *
      * @Assert\Ip
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $gateway;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $protocol;
 

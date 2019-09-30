@@ -34,21 +34,21 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $name;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", cascade={"persist", "remove"})
      * @Serializer\XmlList(entry="network_settings")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $settings;
 
@@ -62,7 +62,7 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=17)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
     private $macAddress;
@@ -77,7 +77,7 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $uuid;
 

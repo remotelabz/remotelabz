@@ -23,7 +23,7 @@ class NetworkInterfaceInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface", inversedBy="instances")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $networkInterface;
 
@@ -36,7 +36,7 @@ class NetworkInterfaceInstance extends Instance
     /**
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $remotePort;
 
@@ -45,6 +45,11 @@ class NetworkInterfaceInstance extends Instance
      * @ORM\JoinColumn(nullable=false)
      */
     private $lab;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\DeviceInstance", inversedBy="networkInterfaceInstances")
+     */
+    private $deviceInstance;
 
     public function getId(): ?int
     {
@@ -95,6 +100,18 @@ class NetworkInterfaceInstance extends Instance
     public function setLab(?Lab $lab): self
     {
         $this->lab = $lab;
+
+        return $this;
+    }
+
+    public function getDeviceInstance(): ?DeviceInstance
+    {
+        return $this->deviceInstance;
+    }
+
+    public function setDeviceInstance(?DeviceInstance $deviceInstance): self
+    {
+        $this->deviceInstance = $deviceInstance;
 
         return $this;
     }

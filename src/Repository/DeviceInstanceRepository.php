@@ -2,21 +2,36 @@
 
 namespace App\Repository;
 
+use App\Entity\User;
+use App\Entity\Device;
 use App\Entity\DeviceInstance;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method DeviceInstance|null find($id, $lockMode = null, $lockVersion = null)
  * @method DeviceInstance|null findOneBy(array $criteria, array $orderBy = null)
  * @method DeviceInstance[]    findAll()
  * @method DeviceInstance[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method DeviceInstance[]    findByUserAndDevice(User $user, Device $device)
  */
 class DeviceInstanceRepository extends ServiceEntityRepository
 {
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, DeviceInstance::class);
+    }
+
+    public function findByUserAndDevice(User $user, Device $device)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.user = :user')
+            ->andWhere('l.device = :device')
+            ->setParameter('user', $user)
+            ->setParameter('device', $device)
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     // /**

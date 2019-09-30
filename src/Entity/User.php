@@ -28,7 +28,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @var string
      */
     private $email;
@@ -52,7 +52,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @var string
      */
     private $lastName;
@@ -60,7 +60,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @var string
      */
     private $firstName;
@@ -239,7 +239,7 @@ class User implements UserInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
      */
     public function getName(): ?string
     {
