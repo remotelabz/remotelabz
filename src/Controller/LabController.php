@@ -93,11 +93,15 @@ class LabController extends AppController
             $userDeviceInstance = $device->getUserInstance($this->getUser());
             $device->setInstances($userDeviceInstance != null ? [ $userDeviceInstance ] : []);
         }
-        
+        // TODO : read authorization from instance. Create instance before and test if instance create before here
+
+        //$authorization=getAuthFromInstance();
+        $authorization="";
         return $this->render('lab/view.html.twig', [
             'lab' => $data,
             'labInstance' => $data->getUserInstance($this->getUser()),
-            'user' => $this->getUser()
+            'user' => $this->getUser(),
+            'authorization' => $authorization
         ]);
     }
 
@@ -219,6 +223,38 @@ class LabController extends AppController
         ]);
     }
 
+
+    /**
+     * @Route("/labs/{id<\d+>}/start/{activity_id<\d+>}", name="start_lab_activity", methods="GET")
+     */
+    public function startLabFromActivity(int $id,int $activity_id)
+    {
+        $lab = $this->labRepository->find($id);
+        $activityRepository = $this->getDoctrine()->getRepository('App:Activity');
+
+        $activity = $this->getDoctrine()->getRepository('App:Activity')->find($activity_id);
+
+        foreach ($lab->getDevices() as $device) {
+            try {
+                $this->startDevice($lab, $device);
+            } catch (AlreadyInstancedException $exception) {
+            }
+        }
+        $authorization = array(
+            'InternetAllowed' => $activity->getInternetAllowed(),
+            'Interconnected' => $activity->getInterconnected(),
+            'UsedAlone' => $activity->getUsedAlone(),
+            'UsedInGroup' => $activity->getUsedInGroup(),
+            'UsedTogetherInCourse' => $activity->getUsedTogetherInCourse()
+        );
+
+        $this->addFlash('success', $lab->getName().' has been started.');
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id
+        ]);
+    }
+
     /**
      * @Route("/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
      */
@@ -295,6 +331,10 @@ class LabController extends AppController
                 ->setLab($lab)
                 ->setUser($user)
                 ->setIsInternetConnected(false)
+                ->setIsInterconnected(false)
+                ->setIsUsedAlone(true)
+                ->setIsUsedInGroup(false)
+                ->setIsUsedTogetherInCourse(false)
             ;
             $lab->addInstance($labInstance);
             $entityManager->persist($lab);

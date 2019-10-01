@@ -164,4 +164,20 @@ class ActivityController extends AppController
 
         return $this->redirectToRoute('activities');
     }
+
+    /**
+     * @Route("/activities/{id<\d+>}/start", name="start_activity", methods="GET")
+     */
+    public function startActivityAction(int $id)
+    {
+        $lab = $this->activityRepository->find($id)->getLab();
+
+        return $this->redirectToRoute('start_lab_activity', [
+            'id' => $lab->getId(),
+            'activity_id' => $id
+        ]);
+
+    }
+
+
 }

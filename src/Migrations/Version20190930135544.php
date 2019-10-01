@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20190712123807 extends AbstractMigration
+final class Version20190930135544 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -22,9 +22,7 @@ final class Version20190712123807 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE device_instance ADD lab_id INT NOT NULL');
-        $this->addSql('ALTER TABLE device_instance ADD CONSTRAINT FK_CC04E8FE628913D5 FOREIGN KEY (lab_id) REFERENCES lab (id)');
-        $this->addSql('CREATE INDEX IDX_CC04E8FE628913D5 ON device_instance (lab_id)');
+        $this->addSql('ALTER TABLE lab_instance ADD is_interconnected TINYINT(1) NOT NULL, ADD is_used_alone TINYINT(1) NOT NULL, ADD is_used_in_group TINYINT(1) NOT NULL, ADD is_used_together_in_course TINYINT(1) NOT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -32,8 +30,6 @@ final class Version20190712123807 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE device_instance DROP FOREIGN KEY FK_CC04E8FE628913D5');
-        $this->addSql('DROP INDEX IDX_CC04E8FE628913D5 ON device_instance');
-        $this->addSql('ALTER TABLE device_instance DROP lab_id');
+        $this->addSql('ALTER TABLE lab_instance DROP is_interconnected, DROP is_used_alone, DROP is_used_in_group, DROP is_used_together_in_course');
     }
 }

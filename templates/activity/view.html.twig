@@ -14,13 +14,15 @@
                     {{ activity.name }}
                     <div class="float-right">
                     {% if activity.lab is not null %}
-                        <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+                        <a href="{{ path('start_activity', {'id': activity.id}) }}" class="btn btn-primary">Start activity</a>
+                        {% if  is_granted("ROLE_TEACHER") %}
+                            <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>                      
+                        {% endif %}
                     {% endif %}
                     {% if is_granted("ROLE_ADMINISTRATOR") %}
                         <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                         <a href="{{ path('delete_activity', {'id': activity.id}) }}" class="btn btn-danger" role="button">Delete</a>
                     {% endif %}
-
                     </div>
                 </h1>
                 {{ activity.description|markdown }}

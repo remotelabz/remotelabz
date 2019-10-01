@@ -13,26 +13,36 @@
                 <h4 class="card-title">
                     Laboratory {{ lab.name }}
                     <div class="float-right">
-                        {% if labInstance is null or (labInstance is not null and not labInstance.isStarted) %}
-                            {% if labInstance is not null and not labInstance.IsInternetConnected %}
+                    {#{{dump(labInstance)}}#}
+                        {% if labInstance is null %} 
+                                <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Start all'|trans }}
+                                </a>
+                        {% elseif not labInstance.isStarted %}
+                                <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Stop all'|trans }}
+                                </a>
+                            
+                        {% else %}
+                            {% if not labInstance.IsInternetConnected %}
                                 <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Connect'|trans }}
                                 </a>
-                            {% elseif labInstance is not null %}
-                                <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                            {% else %}
+                                <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Disconnect'|trans }}
                                 </a>
                             {% endif %}
-                            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                {{ 'Start all'|trans }}
+                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Stop all'|trans }}
                             </a>
+                            
+                        
+                            {% if is_granted("ROLE_TEACHER") %}
                             <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn" role="button">
                                 {{ 'Edit'|trans }}
                             </a>
-                        {% endif %}
-                        {% if labInstance is not null %}
-                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Stop all'|trans }}
-                            </a>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </h4>

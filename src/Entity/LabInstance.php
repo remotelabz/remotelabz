@@ -40,6 +40,26 @@ class LabInstance extends Instance
      */
     private $IsInternetConnected;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsInterconnected;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedAlone;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedInGroup;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedTogetherInCourse;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -127,6 +147,54 @@ class LabInstance extends Instance
     public function setIsInternetConnected(bool $IsInternetConnected): self
     {
         $this->IsInternetConnected = $IsInternetConnected;
+
+        return $this;
+    }
+
+    public function getIsInterconnected(): ?bool
+    {
+        return $this->IsInterconnected;
+    }
+
+    public function setIsInterconnected(bool $IsInterconnected): self
+    {
+        $this->IsInterconnected = $IsInterconnected;
+
+        return $this;
+    }
+
+    public function getIsUsedAlone(): ?bool
+    {
+        return $this->IsUsedAlone;
+    }
+
+    public function setIsUsedAlone(bool $IsUsedAlone): self
+    {
+        $this->IsUsedAlone = $IsUsedAlone;
+
+        return $this;
+    }
+
+    public function getIsUsedInGroup(): ?bool
+    {
+        return $this->IsUsedInGroup;
+    }
+
+    public function setIsUsedInGroup(bool $IsUsedInGroup): self
+    {
+        $this->IsUsedInGroup = $IsUsedInGroup;
+
+        return $this;
+    }
+
+    public function getIsUsedTogetherInCourse(): ?bool
+    {
+        return $this->IsUsedTogetherInCourse;
+    }
+
+    public function setIsUsedTogetherInCourse(bool $IsUsedTogetherInCourse): self
+    {
+        $this->IsUsedTogetherInCourse = $IsUsedTogetherInCourse;
 
         return $this;
     }
