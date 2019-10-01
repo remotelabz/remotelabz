@@ -16,20 +16,25 @@ class Instance
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $uuid;
 
     /**
      * @ORM\Column(type="boolean")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $isStarted = false;
 
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
+    }
+
+    public static function create()
+    {
+        return new static;
     }
 
     public function getUuid(): ?string

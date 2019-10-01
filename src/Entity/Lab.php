@@ -29,7 +29,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -43,7 +43,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Connexion", inversedBy="labs")
      * @Serializer\XmlList(inline=true, entry="connexion")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $connexions;
 
@@ -63,21 +63,21 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="lab", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $instances;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
      * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"author"})
      */
     private $author;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $uuid;
 
@@ -236,6 +236,12 @@ class Lab implements InstanciableInterface
         return $this->instances;
     }
 
+    /**
+     * Returns the instance corresponding to user.
+     *
+     * @param User $user
+     * @return LabInstance|null
+     */
     public function getUserInstance(User $user): ?Instance
     {
         $criteria = Criteria::create()->where(Criteria::expr()->eq("user", $user));
