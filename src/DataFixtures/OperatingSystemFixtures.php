@@ -36,8 +36,35 @@ class OperatingSystemFixtures extends Fixture
 
         $manager->persist($operatingSystem);
 
-        $this->setReference('operating-system-debian', $operatingSystem);
-        
+        $this->setReference('operating-system-CirrOS', $operatingSystem);
+
+        $operatingSystem = new OperatingSystem();
+
+        $operatingSystem
+            ->setName('Alpine')
+            ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.img')
+        ;
+
+        $manager->persist($operatingSystem);
+
+        $this->setReference('operating-system-Alpine', $operatingSystem);
+
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Debian 10')
+            ->setImageUrl('http://194.57.105.124/~fnolot/debian10-20190905.img')
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('operating-system-Debian', $operatingSystem);
+
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Ubuntu with X')
+            ->setImageUrl('http://194.57.105.124/~fnolot/Ubuntu-server-14-X.img')
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('operating-system-Ubuntu', $operatingSystem);
+
         $manager->flush();
     }
 }

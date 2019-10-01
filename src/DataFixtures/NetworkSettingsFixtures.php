@@ -52,7 +52,6 @@ class NetworkSettingsFixtures extends Fixture
         ;
 
         $manager->persist($networkSettings);
-
         $this->addReference('network_settings1', $networkSettings);
 
         $networkSettings = new NetworkSettings();

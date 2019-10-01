@@ -86,6 +86,8 @@
                 <span>
                     {% if instance.isStarted %}
                         <label class="badge badge-success">Started</label>
+                    {% elseif instance.deviceInstances|length > 0 %}
+                        <label class="badge badge-warning">Partially started</label>
                     {% else %}
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}

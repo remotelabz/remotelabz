@@ -32,10 +32,13 @@ npm-debug.log
 yarn-error.log
 ###< symfony/webpack-encore-bundle ###
 
-remotelabz
+/remotelabz
 *.out
 *.log
 /.vagrant/
 /worker/
 *.crt
 *.key
+.env.prod
+/images/
+vagrant/provision_prod.sh

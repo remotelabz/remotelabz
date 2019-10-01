@@ -29,7 +29,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -77,28 +77,28 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $virtuality;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
      * @Serializer\XmlList(entry="operating_system")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $operatingSystem;
 
@@ -112,7 +112,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
      * @Serializer\XmlList(entry="flavor")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $flavor;
 
@@ -126,7 +126,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $uuid;
 
@@ -135,6 +135,7 @@ class Device implements InstanciableInterface
         $this->networkInterfaces = new ArrayCollection();
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->labs = new ArrayCollection();
     }
 
     public function getId(): ?int

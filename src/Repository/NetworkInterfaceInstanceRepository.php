@@ -3,20 +3,33 @@
 namespace App\Repository;
 
 use App\Entity\NetworkInterfaceInstance;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method NetworkInterfaceInstance|null find($id, $lockMode = null, $lockVersion = null)
  * @method NetworkInterfaceInstance|null findOneBy(array $criteria, array $orderBy = null)
  * @method NetworkInterfaceInstance[]    findAll()
  * @method NetworkInterfaceInstance[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method NetworkInterfaceInstance[]    findByUserAndNetworkInterface(User $user, NetworkInterface $nerworkInterface)
  */
 class NetworkInterfaceInstanceRepository extends ServiceEntityRepository
 {
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, NetworkInterfaceInstance::class);
+    }
+
+    public function findByUserAndNetworkInterface(User $user, NetworkInterface $nerworkInterface)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.user = :user')
+            ->andWhere('l.networkInterface = :networkInterface')
+            ->setParameter('user', $user)
+            ->setParameter('networkInterface', $nerworkInterface)
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     // /**
