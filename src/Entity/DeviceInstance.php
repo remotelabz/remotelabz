@@ -47,7 +47,7 @@ class DeviceInstance extends Instance
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Groups({"lab"})
      */
-    private $labInstance;
+    protected $labInstance;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance")

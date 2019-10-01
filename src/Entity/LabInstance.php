@@ -36,17 +36,17 @@ class LabInstance extends Instance
      */
     protected $user;
 
-    /*
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance")
-     * @Serializer\XmlList(inline=true, entry="device_instance")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
-    protected $deviceInstances;
-
     /**
      * @ORM\Column(type="boolean")
      */
     protected $isInternetConnected;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance")
+     * @Serializer\XmlList(inline=true, entry="device_instance")
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     */
+    private $deviceInstances;
 
     public function __construct()
     {
