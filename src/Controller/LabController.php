@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class LabController extends AppController
@@ -540,6 +541,7 @@ class LabController extends AppController
 
         // then, if there is no device instance left for current user, delete lab instance
         if (! $labInstance->hasDeviceInstance()) {
+            $this->disconnectLabInstance($labInstance);
             $this->entityManager->remove($labInstance);
             $lab->removeInstance($labInstance);
         } else { // otherwise, just tell the system the lab is not fully started
@@ -717,11 +719,20 @@ class LabController extends AppController
     /**
      * @Route("/labs/{id<\d+>}/connect", name="connect_internet")
      */
-    public function connectLabAction(Request $request, int $id, SerializerInterface $serializer)
+    public function connectLabAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
 
-        $this->connectLab($lab);
+        try {
+            $this->connectLabInstance($labInstance);
+        } catch (ProcessFailedException $e) {
+            $this->addFlash('danger', "Lab " . $lab->getName() . " failed to connect to internet. Please verify your parameters or contact an administrator.");
+        }
+        
+        $labInstance->setIsInternetConnected(true);
+        $this->entityManager->persist($labInstance);
+        $this->entityManager->flush();
         $this->addFlash('success', 'The lab '.$lab->getName().' is connected.');
 
         return $this->redirectToRoute('show_lab', [
@@ -729,37 +740,70 @@ class LabController extends AppController
         ]);
     }
 
-    private function connectLab(Lab $lab)
+    private function connectLabInstance(LabInstance $labInstance)
     {
-        $entityManager = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
         $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
-        $workerPort = (string) getenv('WORKER_PORT');
 
-        $labInstance = $lab->getUserInstance($user);
-
-        if ($labInstance == null ) {
-            throw new NotInstancedException($labInstance);
-        } else {
-
-
+        if ($labInstance == null) {
+            throw new NotInstancedException($labInstance->getLab());
         }
 
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $this->serializer->serialize($lab, 'json', $context);
+        $context = SerializationContext::create()->setGroups("start_lab");
+        $serialized = $this->serializer->serialize($labInstance, 'json', $context);
 
-        $url = "http://{$workerUrl}:{$workerPort}/lab/connectnet";
+        $url = "http://" . $this->workerAddress . "/lab/connect/internet";
         $headers = [ 'Content-Type' => 'application/json' ];
         try {
             $response = $client->post($url, [
-                'body' => $labXml,
+                'body' => $serialized,
                 'headers' => $headers
             ]);
         } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            dd($exception->getResponse()->getBody()->getContents(), $serialized, $labInstance->getInstances());
         }
-
     }
 
+    /**
+     * @Route("/labs/{id<\d+>}/disconnect", name="disconnect_internet")
+     */
+    public function disconnectLabAction(int $id, UserInterface $user)
+    {
+        $lab = $this->labRepository->find($id);
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+
+        try {
+            $this->disconnectLabInstance($labInstance);
+        } catch (ProcessFailedException $e) {
+            $this->addFlash('danger', "Lab " . $lab->getName() . " failed to disconnect to internet. Please verify your parameters or contact an administrator.");
+        }
+        
+        $labInstance->setIsInternetConnected(false);
+        $this->entityManager->persist($labInstance);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'The lab '.$lab->getName().' is disconnected.');
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id
+        ]);
+    }
+
+    private function disconnectLabInstance(LabInstance $labInstance)
+    {
+        $client = new Client();
+
+        if ($labInstance == null) {
+            throw new NotInstancedException($labInstance->getLab());
+        }
+
+        $context = SerializationContext::create()->setGroups("stop_lab");
+        $serialized = $this->serializer->serialize($labInstance, 'json', $context);
+
+        $url = "http://" . $this->workerAddress . "/lab/disconnect/internet";
+        $headers = [ 'Content-Type' => 'application/json' ];
+        
+        $response = $client->post($url, [
+            'body' => $serialized,
+            'headers' => $headers
+        ]);
+    }
 }
