@@ -240,6 +240,7 @@ class LabController extends AppController
             } catch (AlreadyInstancedException $exception) {
             }
         }
+        
         $authorization = array(
             'InternetAllowed' => $activity->getInternetAllowed(),
             'Interconnected' => $activity->getInterconnected(),
