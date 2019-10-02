@@ -55,12 +55,6 @@ class Lab implements InstanciableInterface
     private $activities;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab"})
-     */
-    private $isStarted = false;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="lab", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
@@ -216,18 +210,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 */
-    public function getIsStarted(): ?bool
-    {
-        return $this->isStarted;
-    }
-
-    public function setIsStarted(bool $isStarted): self
-    {
-        $this->isStarted = $isStarted;
-
-        return $this;
-    }
-
+ 
     /**
      * @return Collection|Instance[]
      */

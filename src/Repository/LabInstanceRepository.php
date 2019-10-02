@@ -30,7 +30,9 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('lab', $lab)
             ->getQuery()
-            ->getOneOrNullResult()
+            //->getOneOrNullResult() 
+            // If a lab doesn't start because we have an error, an instance is created and if the user clicks again on a start lab, we have 2 answers to this query and generate and error
+            ->getResult()
         ;
     }
 

@@ -69,6 +69,11 @@ class Activity
      * @ORM\Column(type="boolean")
      */
     private $UsedTogetherInCourse = false;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="Activity")
+     */
+    private $labInstances;
   
 
     const VPN_ACCESS = "vpn";
@@ -77,6 +82,7 @@ class Activity
     public function __construct()
     {
         $this->courses = new ArrayCollection();
+        $this->labInstances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -226,6 +232,37 @@ class Activity
     public function setUsedTogetherInCourse(bool $UsedTogetherInCourse): self
     {
         $this->UsedTogetherInCourse = $UsedTogetherInCourse;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|LabInstance[]
+     */
+    public function getLabInstances(): Collection
+    {
+        return $this->labInstances;
+    }
+
+    public function addLabInstance(LabInstance $labInstance): self
+    {
+        if (!$this->labInstances->contains($labInstance)) {
+            $this->labInstances[] = $labInstance;
+            $labInstance->setActivity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLabInstance(LabInstance $labInstance): self
+    {
+        if ($this->labInstances->contains($labInstance)) {
+            $this->labInstances->removeElement($labInstance);
+            // set the owning side to null (unless already changed)
+            if ($labInstance->getActivity() === $this) {
+                $labInstance->setActivity(null);
+            }
+        }
 
         return $this;
     }

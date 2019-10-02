@@ -14,8 +14,15 @@
                     {{ activity.name }}
                     <div class="float-right">
                     {% if activity.lab is not null %}
-                        <a href="{{ path('start_activity', {'id': activity.id}) }}" class="btn btn-primary">Start activity</a>
-                        {% if  is_granted("ROLE_TEACHER") %}
+                            {% set lab_on=false %}  
+                            {% if labInstance is null %}
+                                <a href="{{ path('start_activity', {'id': activity.id}) }}" class="btn btn-primary">Start activity</a>
+                            {% else %}
+                                Activity already started - 
+                                <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+                                {% set lab_on=true %}                      
+                            {% endif %}
+                        {% if  is_granted("ROLE_TEACHER") and not lab_on %}
                             <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>                      
                         {% endif %}
                     {% endif %}
@@ -30,6 +37,8 @@
         </div>
     </div>
 </div>
+                {{dump(activity,labInstance)}}
+
 {% endblock %}
 
 {% block javascripts %}

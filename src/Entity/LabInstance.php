@@ -74,6 +74,12 @@ class LabInstance extends Instance
      */
     private $IsUsedTogetherInCourse;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
+     * @Serializer\Groups({"activity", "start_lab", "stop_lab"})
+     */
+    private $Activity;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -287,4 +293,17 @@ class LabInstance extends Instance
     {
         return $this->deviceInstances->count() > 0;
     }
+
+    public function getActivity(): ?Activity
+    {
+        return $this->Activity;
+    }
+
+    public function setActivity(?Activity $Activity): self
+    {
+        $this->Activity = $Activity;
+
+        return $this;
+    }
+
 }

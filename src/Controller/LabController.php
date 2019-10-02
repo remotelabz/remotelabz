@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Lab;
+use App\Entity\Activity;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use App\Entity\Device;
@@ -143,9 +144,8 @@ class LabController extends AppController
             }
         }
         // TODO : read authorization from instance. Create instance before and test if instance create before here
-
         //$authorization=getAuthFromInstance();
-        $authorization="";
+        
         return $this->render('lab/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $lab->getUserInstance($this->getUser()),
@@ -256,11 +256,66 @@ class LabController extends AppController
     public function startLabAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
-        $hasError = false;
 
+        $hasError=$this->startAllDevices($lab,$user);
+
+        if ($hasError) {
+            $this->addFlash('warning', 'Some devices failed to start. Please verify your parameters or contact an administrator.');
+        } else {
+            $this->addFlash('success', $lab->getName().' has been started.');
+        }
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id
+        ]);
+    }
+
+    private function startLab(int $id, UserInterface $user,Activity $activity)
+    {
+        $lab = $this->labRepository->find($id);
+
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+
+        if (count($labInstance) == 0) {
+            $this->logger->debug("Create Instance in Start Lab from Activity ". $activity->getName()." by ".$user->getEmail());
+            $labInstance = LabInstance::create()
+            ->setLab($lab)
+            ->setUser($user)
+            ->setActivity($activity)
+            ->setIsInternetConnected(false)
+            ->setIsInterconnected(false)
+            ->setIsUsedAlone(true)
+            ->setIsUsedInGroup(false)
+            ->setIsUsedTogetherInCourse(false);
+
+            $this->entityManager->persist($labInstance);
+
+            $this->entityManager->flush();
+    
+            $hasError=$this->startAllDevices($lab,$user);
+
+            if ($hasError) {
+                $this->addFlash('warning', 'Some devices failed to start. Please verify your parameters or contact an administrator.');
+            } else {
+                $this->addFlash('success', $lab->getName().' has been started.');
+            }
+        }
+
+        return $this->redirectToRoute('show_lab', [
+            'id' => $id
+        ]);
+    }
+
+
+    private function startAllDevices(Lab $lab,UserInterface $user)
+    {
+        //$lab = $this->labRepository->find($id);
+
+        $hasError=false;
         /** @var Device $device */
         foreach ($lab->getDevices() as $device) {
             try {
+                $this->logger->info("Start Device " . $device->getName() . " (" . $device->getUuid() . ")");
                 $this->startDevice($lab, $device, $user);
             } catch (AlreadyInstancedException $exception) {
                 $this->logger->debug("There is already an instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
@@ -279,45 +334,20 @@ class LabController extends AppController
                 $this->stopDevice($lab, $device, $user);
             }
         }
-
-        if ($hasError) {
-            $this->addFlash('warning', 'Some devices failed to start. Please verify your parameters or contact an administrator.');
-        } else {
-            $this->addFlash('success', $lab->getName().' has been started.');
-        }
-
-        return $this->redirectToRoute('show_lab', [
-            'id' => $id
-        ]);
+        return $hasError;
     }
-
 
     /**
      * @Route("/labs/{id<\d+>}/start/{activity_id<\d+>}", name="start_lab_activity", methods="GET")
      */
-    public function startLabFromActivity(int $id,int $activity_id)
+    public function startLabFromActivity(int $id,UserInterface $user,int $activity_id)
     {
         $lab = $this->labRepository->find($id);
         $activityRepository = $this->getDoctrine()->getRepository('App:Activity');
 
         $activity = $this->getDoctrine()->getRepository('App:Activity')->find($activity_id);
 
-        foreach ($lab->getDevices() as $device) {
-            try {
-                $this->startDevice($lab, $device);
-            } catch (AlreadyInstancedException $exception) {
-            }
-        }
-        
-        $authorization = array(
-            'InternetAllowed' => $activity->getInternetAllowed(),
-            'Interconnected' => $activity->getInterconnected(),
-            'UsedAlone' => $activity->getUsedAlone(),
-            'UsedInGroup' => $activity->getUsedInGroup(),
-            'UsedTogetherInCourse' => $activity->getUsedTogetherInCourse()
-        );
-
-        $this->addFlash('success', $lab->getName().' has been started.');
+        $this->startLab($id,$user,$activity);
 
         return $this->redirectToRoute('show_lab', [
             'id' => $id
@@ -341,7 +371,7 @@ class LabController extends AppController
             }
         }
 
-        $this->addFlash('success', $lab->getName().' has been stopped.');
+        $this->addFlash('success', 'Laboratory '.$lab->getName().' has been stopped.');
 
         return $this->redirectToRoute('show_lab', [
             'id' => $id
@@ -415,11 +445,21 @@ class LabController extends AppController
     {
         $client = new Client();
 
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $this->logger->debug("Enter in startDevice for device ".$device->getName());
+
+        if (count($labInstance_tmp) > 0)
+            $labInstance=$labInstance_tmp[0];
+        else {
+            $labInstance=$labInstance_tmp;
+        }
 
         if ($labInstance && $labInstance->isStarted()) {
             throw new AlreadyInstancedException($labInstance);
+            $this->logger->debug("Instance exist for lab " . $lab->getName() . " started by" . $user->getEmail());
         } elseif (!$labInstance) {
+            $this->logger->info("Instance create for lab " . $lab->getName() . " by " . $user->getEmail());
+
             $labInstance = LabInstance::create()
                 ->setLab($lab)
                 ->setUser($user)
@@ -434,6 +474,7 @@ class LabController extends AppController
         }
 
         $deviceInstance = $labInstance->getDeviceInstance($device);
+        $this->logger->debug("Device Instance for device " . $device->getName());
 
         if ($deviceInstance != null && $deviceInstance->isStarted()) {
             throw new AlreadyInstancedException($deviceInstance);
@@ -441,8 +482,7 @@ class LabController extends AppController
             $deviceInstance = DeviceInstance::create()
                 ->setDevice($device)
                 ->setUser($user)
-                ->setLab($lab)
-            ;
+                ->setLab($lab);
             $device->addInstance($deviceInstance);
             $labInstance->addDeviceInstance($deviceInstance);
             $this->entityManager->persist($deviceInstance);
@@ -476,7 +516,7 @@ class LabController extends AppController
                 $this->entityManager->persist($networkInterfaceInstance);
             }
         }
-
+        $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -496,7 +536,8 @@ class LabController extends AppController
             throw $exception;
             // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
         }
-
+        //If the post return an error and in case the LabInstance was created by startlabfromactivity,
+        //the activity in the labinstance is not save in the entity !
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             $networkInterfaceInstance = $deviceInstance->getNetworkInterfaceInstance($networkInterface);
@@ -531,10 +572,14 @@ class LabController extends AppController
      */
     private function stopDevice(Lab $lab, Device $device, UserInterface $user)
     {
+
         $client = new Client();
 
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
-
+        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        if (count($labInstance_tmp) > 0) { //If exist many instance due to an error, we select only the first instance
+            $labInstance=$labInstance_tmp[0];           
+        }
+        
         if ($labInstance == null) {
             throw new NotInstancedException($lab);
         }
@@ -544,7 +589,7 @@ class LabController extends AppController
         if ($deviceInstance == null) {
             throw new NotInstancedException($device);
         }
-        
+
         $context = SerializationContext::create()->setGroups("stop_lab");
         $labXml = $this->serializer->serialize($labInstance, 'json', $context);
 
@@ -559,7 +604,7 @@ class LabController extends AppController
         ]);
 
         $this->deleteDeviceInstanceProxyRoute($deviceUuid);
-
+       
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             $networkInterfaceInstance = $deviceInstance->getNetworkInterfaceInstance($networkInterface);
 
@@ -585,7 +630,12 @@ class LabController extends AppController
         } else { // otherwise, just tell the system the lab is not fully started
             $labInstance->setStarted(false);
         }
-        
+
+        if ( $labInstance->getActivity()) {
+            $labInstance->setActivity(null);
+            $this->entityManager->persist($labInstance);
+        }
+     
         $this->entityManager->persist($device);
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
@@ -698,7 +748,10 @@ class LabController extends AppController
     public function testLabSerializer(int $id, SerializerInterface $serializer, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        if (count($labInstance_tmp) > 0)
+            $labInstance=$labInstance_tmp[0];
+
         
         $context = SerializationContext::create();
         $context->setGroups(
@@ -735,7 +788,12 @@ class LabController extends AppController
     {
         $lab = $this->labRepository->find($id);
         $device = $this->deviceRepository->find($deviceId);
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        if (count($labInstance_tmp) > 0)
+            $labInstance=$labInstance_tmp[0];
+            else
+            $labInstance=null;
+
         $deviceInstance = $labInstance->getUserDeviceInstance($device);
 
         if ($request->get('size') == "fullscreen") {
