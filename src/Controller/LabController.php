@@ -99,16 +99,17 @@ class LabController extends FOSRestController
 
     /**
      * @Route("/labs", name="labs")
+     * 
      * @Rest\Get("/api/labs.{_format}",
      *      defaults={"_format": "json"},
-     *      requirements={"_format": "json|xml"}
+     *      requirements={"_format": "json"}
      * )
      * 
      * @SWG\Parameter(
      *     name="search",
      *     in="query",
      *     type="string",
-     *     description="Filter labs by name. All labs containing this value will be shown."
+     *     description="Filter labs by name. All labs with a name containing this value will be shown."
      * )
      * 
      * @SWG\Response(
@@ -120,23 +121,22 @@ class LabController extends FOSRestController
      *     )
      * )
      * 
-     * @SWG\Tag(name="Labs")
-     * @Security(name="Bearer")
+     * @SWG\Tag(name="Lab")
      */
-    public function indexAction(Request $request, $_format = 'html')
+    public function indexAction(Request $request, string $_format = 'html')
     {
         $search = $request->query->get('search', '');
         
         if ($search !== '') {
-            $data = $this->labRepository->findByNameLike($search);
+            $labs = $this->labRepository->findByNameLike($search);
         } else {
-            $data = $this->labRepository->findAll();
+            $labs = $this->labRepository->findAll();
         }
 
-        $view = $this->view($data, 200)
+        $view = $this->view($labs, 200)
             ->setTemplate("lab/index.html.twig")
             ->setTemplateData([
-                'labs' => $data,
+                'labs' => $labs,
                 'search' => $search
             ])
             ->setFormat($_format)
@@ -152,19 +152,25 @@ class LabController extends FOSRestController
      * 
      * @Rest\Get("/api/labs/{id<\d+>}.{_format}",
      *      defaults={"_format": "json"},
-     *      requirements={"_format": "json|xml"}
+     *      requirements={"_format": "json"}
+     * )
+     * 
+     * @SWG\Parameter(
+     *     name="id",
+     *     in="path",
+     *     type="integer",
+     *     description="ID of the lab."
      * )
      * 
      * @SWG\Response(
      *     response=200,
      *     description="Returns requested lab",
-     *     @SWG\Model(type=Lab::class)
+     *     @Model(type=Lab::class)
      * )
      * 
-     * @SWG\Tag(name="Labs")
-     * @Security(name="Bearer")
+     * @SWG\Tag(name="Lab")
      */
-    public function showAction(Request $request, $id, $_format = 'html', UserInterface $user)
+    public function showAction(int $id, string $_format = 'html', UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
 
@@ -191,6 +197,7 @@ class LabController extends FOSRestController
             ->setTemplateData([
                 'lab' => $lab,
                 'labInstance' => $userLabInstance,
+                'deviceStarted' => $deviceStarted,
                 'user' => $user
             ])
             ->setFormat($_format)

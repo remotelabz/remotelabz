@@ -4,9 +4,11 @@ namespace App\Controller;
 
 use DateTime;
 use App\Form\NewPasswordType;
+use Swagger\Annotations as SWG;
 use App\Repository\UserRepository;
 use App\Entity\PasswordResetRequest;
 use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -67,6 +69,41 @@ class SecurityController extends AbstractController
     public function shibboleth(UrlGeneratorInterface $urlGenerator): Response
     {
         return new RedirectResponse('/');
+    }
+
+    /**
+     * @Route("/api/auth", name="api_login_check", methods={"POST"})
+     * 
+     * 
+     * 
+     * @SWG\Parameter(
+     *     name="credentials",
+     *     in="body",
+     *     required=true,
+     *     @SWG\Schema(@SWG\Property(property="username", type="string", format="email", default="user@example.com"), @SWG\Property(property="password", type="string", format="password", example="aSuperPassword")),
+     *     description="Credentials used to connect to RemoteLabz."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns an API token.",
+     *     @SWG\Schema(@SWG\Property(property="token", type="string", format="token", example="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXUyJ9.eyJleHAiOjE0MzQ3Mjc1MzYsInVzZXJuYW1lIjoia29ybGVvbiIsImlhdCI6IjE0MzQ2NDExMzYifQ.nh0L_wuJy6ZKIQWh6OrW5hdLkviTs1_bau2GqYdDCB0Yqy_RplkFghsuqMpsFls8zKEErdX5TYCOR7muX0aQvQxGQ4mpBkvMDhJ4-pE4ct2obeMTr_s4X8nC00rBYPofrOONUOR4utbzvbd4d2xT_tj4TdR_0tsr91Y7VskCRFnoXAnNT-qQb7ci7HIBTbutb9zVStOFejrb4aLbr7Fl4byeIEYgp2Gd7gY"))
+     * )
+     * 
+     * @SWG\Response(
+     *     response=401,
+     *     description="Generic unauthorized response. Credentials may be wrong.",
+     *      @SWG\Schema(
+     *          @SWG\Property(property="code", type="integer", example=401),
+     *          @SWG\Property(property="message", type="string", example="Bad credentials")
+     *      ),
+     * )
+     * 
+     * @SWG\Tag(name="Security")
+     */
+    public function jsonLogin(Request $request)
+    {
+        // logic is managed by JWT
     }
 
     /**
