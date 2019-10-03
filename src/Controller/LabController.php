@@ -852,7 +852,7 @@ class LabController extends AppController
         $context = SerializationContext::create()->setGroups("lab");
         $labXml = $this->serializer->serialize($lab, 'json', $context);
 
-        $url = "http://{$workerUrl}:{$workerPort}/lab/connectnet";
+        $url = "http://{$workerUrl}:{$workerPort}/lab/connect/internet";
         $headers = [ 'Content-Type' => 'application/json' ];
         try {
             $response = $client->post($url, [
@@ -860,7 +860,8 @@ class LabController extends AppController
                 'headers' => $headers
             ]);
         } catch (RequestException $exception) {
-            dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            dd($exception->getResponse()->getBody()->getContents());
         }
 
     }
