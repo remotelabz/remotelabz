@@ -320,17 +320,19 @@ class LabController extends AppController
             } catch (AlreadyInstancedException $exception) {
                 $this->logger->debug("There is already an instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
             } catch (ClientException $exception) {
-                $this->logger->error(Psr7\str($exception->getRequest()));
+                $this->logger->error("Server error; Request send:".Psr7\str($exception->getRequest()));
                 if ($exception->hasResponse()) {
-                    $this->logger->error(Psr7\str($exception->getResponse()));
+                    $this->logger->error("Server error; Response received:".Psr7\str($exception->getResponse()));
                 }
                 $hasError = true;
             } catch (ServerException $exception) {
-                $this->logger->error(Psr7\str($exception->getRequest()));
+                $this->logger->error("Server error; Request send:".Psr7\str($exception->getRequest()));
                 if ($exception->hasResponse()) {
-                    $this->logger->error(Psr7\str($exception->getResponse()));
+                    $this->logger->error("Server error; Response received:".Psr7\str($exception->getResponse()));
                 }
                 $hasError = true;
+                $this->logger->error("We stop the device ".$device->getUuid());
+                $this->logger->debug("startAllDevices exception - We stop the device ".$device->getUuid());
                 $this->stopDevice($lab, $device, $user);
             }
         }
@@ -363,11 +365,12 @@ class LabController extends AppController
 
         foreach ($lab->getDevices() as $device) {
             try {
+                $this->logger->debug("Device " . $device->getName() . " stop");
                 $this->stopDevice($lab, $device, $user);
             } catch (NotInstancedException $exception) {
                 $this->logger->debug("Device " . $device->getName() . " was not instanced in lab " . $lab->getName());
             } catch (\Exception $exception) {
-                $this->logger->error($exception->getMessage());
+                $this->logger->error("Stop device ".$device->getName()." exception: ".$exception->getMessage());
             }
         }
 
@@ -533,8 +536,11 @@ class LabController extends AppController
             ]);
         } catch (RequestException $exception) {
             $this->logger->error($exception->getResponse()->getBody()->getContents());
+            $this->logger->error($labXml);
+            //$this->logger->error($lab->getInstances());
             throw $exception;
-            // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            
         }
         //If the post return an error and in case the LabInstance was created by startlabfromactivity,
         //the activity in the labinstance is not save in the entity !
@@ -583,8 +589,8 @@ class LabController extends AppController
         if ($labInstance == null) {
             throw new NotInstancedException($lab);
         }
-
-        $deviceInstance = $labInstance->getDeviceInstance($device);
+        
+            $deviceInstance = $labInstance->getDeviceInstance($device);
 
         if ($deviceInstance == null) {
             throw new NotInstancedException($device);
@@ -667,11 +673,10 @@ class LabController extends AppController
     {
         $client = new Client();
         
-        $url = 'http://localhost:' .
-            getenv('WEBSOCKET_PROXY_API_PORT') .
-            '/api/routes/device/' .
-            $uuid
-        ;
+        $url = 'http://'.getenv('WEBSOCKET_PROXY_SERVER').':'.getenv('WEBSOCKET_PROXY_API_PORT').'/api/routes/device/'.$uuid;
+        //$url = 'http://localhost:'.getenv('WEBSOCKET_PROXY_API_PORT').'/api/routes/device/'.$uuid;
+        $this->logger->debug("Create route in proxy ".$url);
+
         try {
             $client->post($url, [
                 'body' => '{
