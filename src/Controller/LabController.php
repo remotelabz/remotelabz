@@ -29,6 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class LabController extends AppController
@@ -632,6 +633,7 @@ class LabController extends AppController
 
         // then, if there is no device instance left for current user, delete lab instance
         if (! $labInstance->hasDeviceInstance()) {
+            $this->disconnectLabInstance($labInstance);
             $this->entityManager->remove($labInstance);
             $lab->removeInstance($labInstance);
         } else { // otherwise, just tell the system the lab is not fully started
@@ -821,9 +823,10 @@ class LabController extends AppController
     /**
      * @Route("/labs/{id<\d+>}/connect", name="connect_internet")
      */
-    public function connectLabAction(Request $request, int $id, SerializerInterface $serializer)
+    public function connectLabAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
 
         $this->connectLab($lab);
         $this->addFlash('success', 'The lab '.$lab->getName().' is connected to Internet.');
@@ -878,10 +881,8 @@ class LabController extends AppController
         ]);
     }
 
-    private function connectLab(Lab $lab)
+    private function connectLabInstance(LabInstance $labInstance)
     {
-        $entityManager = $this->getDoctrine()->getManager();
-        $user = $this->getUser();
         $client = new Client();
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
@@ -928,28 +929,32 @@ class LabController extends AppController
             throw new NotInstancedException($labInstance);
         } else {
 
-        }
+            if ($labInstance == null) {
+                throw new NotInstancedException($labInstance->getLab());
+            }
 
-        $context = SerializationContext::create()->setGroups("lab");
-        $labXml = $this->serializer->serialize($lab, 'json', $context);
+            $context = SerializationContext::create()->setGroups("start_lab");
+            $serialized = $this->serializer->serialize($labInstance, 'json', $context);
 
-        $url = "http://{$workerUrl}:{$workerPort}/lab/disconnect/internet";
-        $headers = [ 'Content-Type' => 'application/json' ];
-        try {
-            $response = $client->post($url, [
-                'body' => $labXml,
-                'headers' => $headers
-            ]);
-            $labInstance->setIsInternetConnected(false);
-            $this->entityManager->persist($labInstance);
-            $this->entityManager->flush();
-        } catch (RequestException $exception) {
-            //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-            //dd($exception->getResponse()->getBody()->getContents());
+            $url = "http://{$workerUrl}:{$workerPort}/lab/disconnect/internet";
+            $headers = [ 'Content-Type' => 'application/json' ];
+            try {
+                $response = $client->post($url, [
+                    'body' => $serialized,
+                    'headers' => $headers
+                ]);
+                $labInstance->setIsInternetConnected(false);
+                $this->entityManager->persist($labInstance);
+                $this->entityManager->flush();
+            } catch (RequestException $exception) {
+                //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+                //dd($exception->getResponse()->getBody()->getContents());
+            }
         }
+    }
        
 
-    }
+    
 
 
     private function interconnectLab(Lab $lab)
