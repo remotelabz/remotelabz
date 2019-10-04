@@ -37,13 +37,22 @@
                 <div class="row float-right">
                         {% if labInstance %}
                             {% if (is_granted("ROLE_STUDENT") and labInstance.Activity and labInstance.Activity.InternetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
-                                {% if (labInstance.Activity and not labInstance.IsInternetConnected) or (not labInstance.Activity) %}
+                                {% if (not labInstance.IsInternetConnected) %}
                                     <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                         {{ 'Connect'|trans }}
                                     </a>
                                 {% else %}
                                     <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                         {{ 'Disconnect'|trans }}
+                                    </a>
+                                {% endif %}
+                                {% if (not labInstance.IsInterconnected) %}
+                                    <a href="{{ path('interconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Interconnect'|trans }}
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('disinterconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Disinterconnect'|trans }}
                                     </a>
                                 {% endif %}
                             {% endif %}

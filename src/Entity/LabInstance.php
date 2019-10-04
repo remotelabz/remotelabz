@@ -37,11 +37,6 @@ class LabInstance extends Instance
     protected $user;
 
     /**
-     * @ORM\Column(type="boolean")
-     */
-    protected $isInternetConnected;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance")
      * @Serializer\XmlList(inline=true, entry="device_instance")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
@@ -75,10 +70,17 @@ class LabInstance extends Instance
     private $IsUsedTogetherInCourse;
 
     /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsInternetConnected;
+
+    /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
      * @Serializer\Groups({"activity", "start_lab", "stop_lab"})
      */
     private $Activity;
+
+    
 
     public function getId(): ?int
     {
@@ -207,12 +209,12 @@ class LabInstance extends Instance
 
     public function getIsInternetConnected(): ?bool
     {
-        return $this->isInternetConnected;
+        return $this->IsInternetConnected;
     }
 
-    public function setIsInternetConnected(bool $isInternetConnected): self
+    public function setIsInternetConnected(bool $IsInternetConnected): self
     {
-        $this->isInternetConnected = $isInternetConnected;
+        $this->IsInternetConnected = $IsInternetConnected;
 
         return $this;
     }
