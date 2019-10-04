@@ -820,8 +820,9 @@ class LabController extends AppController
         } else {
             $fullscreen = false;
         }
-        $protocol = stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'wss://' : 'ws://';
-
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "wss://" : "ws://");
+        $this->logger->debug("viewLabDevice -" . $_SERVER['HTTPS']. " ".$protocol);
+        
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
