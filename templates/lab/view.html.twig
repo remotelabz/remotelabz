@@ -52,7 +52,7 @@
                                     </a>
                                 {% else %}
                                     <a href="{{ path('disinterconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                        {{ 'Disinterconnect'|trans }}
+                                        {{ 'Dis-interconnect'|trans }}
                                     </a>
                                 {% endif %}
                             {% endif %}
@@ -126,7 +126,7 @@
                 {% if output is defined %}
                 {{ dump(output|cast_to_array)}}
                 {% endif %}
-                {{dump(labInstance)}}
+                {# {{dump(labInstance)}}#}
                 {# {{ dump(lab|cast_to_array)}} #}
                 {# {% for key, value in lab|cast_to_array %}
                     <p>{{ key }} : {{ value }}</p>
