@@ -222,9 +222,9 @@ class LabController extends AppController
     }
         
     /**
-     * @Route("/labs/{id<\d+>}", name="delete_lab", methods="DELETE")
+     * @Route("/labs/{id<\d+>}/delete", name="delete_lab", methods={"GET", "POST"})
      */
-    public function deleteAction(Request $request, $id)
+    public function deleteAction(Request $request, $id,UserInterface $user)
     {
         $repository = $this->getDoctrine()->getRepository('App:Lab');
             
@@ -232,7 +232,8 @@ class LabController extends AppController
         $status = 200;
             
         $lab = $repository->find($id);
-            
+        $this->logger->info($user->getEmail()." delete lab ". $lab->getName());
+   
         if ($lab == null) {
             $status = 404;
         } else {
@@ -820,8 +821,12 @@ class LabController extends AppController
         } else {
             $fullscreen = false;
         }
-        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "wss://" : "ws://");
-        $this->logger->debug("viewLabDevice -" . $_SERVER['HTTPS']. " ".$protocol);
+        if (array_key_exists('https',$_SERVER))
+                $protocol = "wss://";
+            else
+                $protocol = "ws://";
+        
+        $this->logger->debug("viewLabDevice -" . implode(' ',$_SERVER). " ".$protocol);
         
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
@@ -944,7 +949,7 @@ class LabController extends AppController
             $this->entityManager->flush();
         } catch (RequestException $exception) {
             //dd($exception->getResponse()->getBody()->getContents(), $labXml, $labInstance);
-            //dd($exception->getResponse()->getBody()->getContents());
+            dd($exception->getResponse()->getBody()->getContents());
         }
 
         }

@@ -17,6 +17,14 @@
                                 <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Start all'|trans }}
                                 </a>
+                                {% if is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER") %}
+                                    <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn" role="button">
+                                        {{ 'Edit'|trans }}
+                                    </a>
+                                    <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn" role="button">
+                                        {{ 'Delete'|trans }}
+                                    </a>
+                            {% endif %}
                         {% elseif not labInstance.isStarted %}
                                 <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Stop all'|trans }}
@@ -26,11 +34,7 @@
                             <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                     {{ 'Stop all'|trans }}
                             </a>
-                            {% if is_granted("ROLE_TEACHER") %}
-                            <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn" role="button">
-                                {{ 'Edit'|trans }}
-                            </a>
-                            {% endif %}
+                            
                         {% endif %}
                     </div>
                     </h4>
@@ -126,7 +130,7 @@
                 {% if output is defined %}
                 {{ dump(output|cast_to_array)}}
                 {% endif %}
-                {# {{dump(labInstance)}}#}
+                {{dump(labInstance)}}
                 {# {{ dump(lab|cast_to_array)}} #}
                 {# {% for key, value in lab|cast_to_array %}
                     <p>{{ key }} : {{ value }}</p>
