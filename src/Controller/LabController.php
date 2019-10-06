@@ -821,14 +821,21 @@ class LabController extends AppController
         } else {
             $fullscreen = false;
         }
-        if (array_key_exists('https',$_SERVER))
+        if (array_key_exists('REQUEST_SCHEME',$_SERVER))
+            if ( (strpos(strtolower($_SERVER['REQUEST_SCHEME']),'https')) >= 0)
                 $protocol = "wss://";
             else
                 $protocol = "ws://";
+        else if (array_key_exists('HTTPS',$_SERVER))
+                if ( $_SERVER['HTTPS'] == 'on')      
+                    $protocol = "wss://";
+                else
+                    $protocol = "ws://";
+
+        //$this->logger->debug("viewLabDevice -" . implode(' ',$_SERVER). " ".$protocol);
         
-        $this->logger->debug("viewLabDevice -" . implode(' ',$_SERVER). " ".$protocol);
         
-        return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
+           return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
             'host' => $protocol."".($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
