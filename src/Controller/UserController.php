@@ -124,14 +124,18 @@ class UserController extends AppController
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             /** @var User $user */
             $user = $userForm->getData();
+            
+            foreach ($userForm->get('roles')  as $role)
+                    $user->setRoles($role);
+
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
+
 
             if (!$password) {
                 $this->addFlash('danger', "You must provide a password.");
             } elseif ($password === $confirmPassword) {
                 $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
-
                 $entityManager = $this->getDoctrine()->getManager();
                 $entityManager->persist($user);
                 $entityManager->flush();

@@ -40,7 +40,7 @@
                     </h4>
                 <div class="row float-right">
                         {% if labInstance %}
-                            {% if (is_granted("ROLE_STUDENT") and labInstance.Activity and labInstance.Activity.InternetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
+                            {% if (is_granted("ROLE_USER") and labInstance.Activity and labInstance.Activity.InternetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
                                 {% if (not labInstance.IsInternetConnected) %}
                                     <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                                         {{ 'Connect'|trans }}

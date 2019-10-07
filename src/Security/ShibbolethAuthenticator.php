@@ -92,6 +92,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 ))
                 ->setFirstName(ucfirst(strtolower($credentials['FirstName'])))
                 ->setLastName($credentials['LastName'])
+                ->setRoles("ROLE_USER")
             ;
 
             # TODO: Add user's firstname and lastname fetching
@@ -196,4 +197,18 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
         return false;
     }
+
+    /**
+     * @param Request $request
+     *
+     * @return Response never null
+     */
+    public function onLogoutSuccess(Request $request)
+    {
+        $redirectTo = $this->urlGenerator->generate('shib_logout', array(
+            'return'  => $this->idpUrl . '/profile/Logout'
+        ));
+        return new RedirectResponse($redirectTo);
+    }
+    
 }

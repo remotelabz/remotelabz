@@ -831,9 +831,7 @@ class LabController extends AppController
                     $protocol = "wss://";
                 else
                     $protocol = "ws://";
-
-        
-        
+             
            return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,

@@ -56,66 +56,66 @@
             </a>
           </li>
           {% if is_granted('ROLE_ADMINISTRATOR') %}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('users') }}">
-              {{ svg('users') }}
-              <span class="menu-title">Users</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('flavors') }}">
-              {{ svg('disk') }}
-              <span class="menu-title">Flavors</span>
-            </a>
-          </li>
-          {# <li class="nav-item">
-            <a class="nav-link" href="{{ path('hypervisors') }}">
-              <i class="menu-icon fa fa-building"></i>
-              <span class="menu-title">Hypervisors</span>
-            </a>
-          </li> #}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('courses') }}">
-                {{ svg('group') }}
-              <span class="menu-title">Courses</span>
-            </a>
-          </li>
-          {# <li class="nav-item">
-            <a class="nav-link" href="{{ path('network_settings') }}">
-                {{ svg('preferences') }}
-              <span class="menu-title">Network settings</span>
-            </a>
-          </li> #}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('network_interfaces') }}">
-                {{ svg('issue-parent') }}
-              <span class="menu-title">Network interfaces</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('operating_systems') }}">
-                {{ svg('package') }}
-              <span class="menu-title">Operating systems</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('devices') }}">
-                {{ svg('monitor-o') }}
-              <span class="menu-title">Devices</span>
-            </a>
-          </li>
-          {# <li class="nav-item">
-            <a class="nav-link" href="{{ path('connexions') }}">
-                {{ svg('podcast') }}
-              <span class="menu-title">Connexions</span>
-            </a>
-          </li> #}
-          <li class="nav-item">
-            <a class="nav-link" href="{{ path('instances') }}">
-                {{ svg('terminal') }}
-              <span class="menu-title">Instances</span>
-            </a>
-          </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('users') }}">
+                {{ svg('users') }}
+                <span class="menu-title">Users</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('flavors') }}">
+                {{ svg('disk') }}
+                <span class="menu-title">Flavors</span>
+              </a>
+            </li>
+            {# <li class="nav-item">
+              <a class="nav-link" href="{{ path('hypervisors') }}">
+                <i class="menu-icon fa fa-building"></i>
+                <span class="menu-title">Hypervisors</span>
+              </a>
+            </li> #}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('courses') }}">
+                  {{ svg('group') }}
+                <span class="menu-title">Courses</span>
+              </a>
+            </li>
+            {# <li class="nav-item">
+              <a class="nav-link" href="{{ path('network_settings') }}">
+                  {{ svg('preferences') }}
+                <span class="menu-title">Network settings</span>
+              </a>
+            </li> #}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('network_interfaces') }}">
+                  {{ svg('issue-parent') }}
+                <span class="menu-title">Network interfaces</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('operating_systems') }}">
+                  {{ svg('package') }}
+                <span class="menu-title">Operating systems</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('devices') }}">
+                  {{ svg('monitor-o') }}
+                <span class="menu-title">Devices</span>
+              </a>
+            </li>
+            {# <li class="nav-item">
+              <a class="nav-link" href="{{ path('connexions') }}">
+                  {{ svg('podcast') }}
+                <span class="menu-title">Connexions</span>
+              </a>
+            </li> #}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ path('instances') }}">
+                  {{ svg('terminal') }}
+                <span class="menu-title">Instances</span>
+              </a>
+            </li>
           {% endif %}
           
         </ul>
