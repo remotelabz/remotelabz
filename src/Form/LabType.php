@@ -24,13 +24,13 @@ class LabType extends AbstractType
                 'by_reference' => false,
                 'multiple' => true
             ])
-            ->add('connexions', EntityType::class, [
+         /*   ->add('connexions', EntityType::class, [
                 'class' => Connexion::class,
                 'choice_label' => 'name',
                 'by_reference' => false,
                 'multiple' => true,
                 'required' => false
-            ])
+            ])*/
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)
         ;
