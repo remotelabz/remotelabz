@@ -60,6 +60,7 @@ class SecurityController extends AbstractController
         $lastUsername = $authenticationUtils->getLastUsername();    
         
         $stringfromfile = file('../.git/HEAD', FILE_USE_INCLUDE_PATH);
+        //$stringfromfile = file('../HEAD_test', FILE_USE_INCLUDE_PATH);
         $findtagversion = file('../.git/FETCH_HEAD', FILE_USE_INCLUDE_PATH);
 
         $firstLine = $stringfromfile[0]; //get the string from the array
@@ -70,13 +71,14 @@ class SecurityController extends AbstractController
             $branchname = $explodedstring[2]; //get the one that is always the branch name
             else
             $branchname = $firstLine;
-
-        $version=explode("tag",array_search($branchname,$findtagversion));
+            
+        
+            $version=explode("tag",array_search($branchname,$findtagversion));
             if ($version[0]=="")
                 $tag="Master";
             else $tag=explode(" ",array_search($branchname,$findtagversion))[3];
 
-        return $this->render('security/login.html.twig', 
+            return $this->render('security/login.html.twig', 
             [
                 'last_username' => $lastUsername,
                 'error' => $error,
