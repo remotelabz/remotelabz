@@ -63,11 +63,12 @@ class SecurityController extends AbstractController
 
         $firstLine = $stringfromfile[0]; //get the string from the array
 
-        $explodedstring = explode("/", $firstLine, 3); //seperate out by the "/" in the string
+        $explodedstring = explode("/", $firstLine); //seperate out by the "/" in the string
 
-        $branchname = $explodedstring[2]; //get the one that is always the branch name
-
-
+        if (is_array($explodedstring) && count($explodedstring)>1)
+            $branchname = $explodedstring[2]; //get the one that is always the branch name
+            else
+            $branchname = $firstLine;
         
         return $this->render('security/login.html.twig', 
             [
