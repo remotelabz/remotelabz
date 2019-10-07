@@ -822,10 +822,10 @@ class LabController extends AppController
             $fullscreen = false;
         }
         if (array_key_exists('REQUEST_SCHEME',$_SERVER))
-            if ( (strpos(strtolower($_SERVER['REQUEST_SCHEME']),'https://') === false )) //False = 0 en php et strpos retourne 0 pour la 1ère place
-                $protocol = "ws://";
-            else
+            if (explode('://',strtolower($_SERVER['REQUEST_SCHEME']))[0] == 'https' ) //False = 0 en php et strpos retourne 0 pour la 1ère place
                 $protocol = "wss://";
+            else
+                $protocol = "ws://";
         else if (array_key_exists('HTTPS',$_SERVER))
                 if ( $_SERVER['HTTPS'] == 'on')      
                     $protocol = "wss://";
