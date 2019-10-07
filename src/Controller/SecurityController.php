@@ -58,7 +58,24 @@ class SecurityController extends AbstractController
         $error = $authenticationUtils->getLastAuthenticationError();
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();    
-        return $this->render('security/login.html.twig', ['last_username' => $lastUsername, 'error' => $error]);
+        
+        $stringfromfile = file('../.git/HEAD', FILE_USE_INCLUDE_PATH);
+
+        $firstLine = $stringfromfile[0]; //get the string from the array
+
+        $explodedstring = explode("/", $firstLine, 3); //seperate out by the "/" in the string
+
+        $branchname = $explodedstring[2]; //get the one that is always the branch name
+
+
+        
+        return $this->render('security/login.html.twig', 
+            [
+                'last_username' => $lastUsername,
+                'error' => $error,
+                'version' => $branchname
+                
+            ]);
     }
 
     /**
