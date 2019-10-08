@@ -59,30 +59,14 @@ class SecurityController extends AbstractController
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();    
         
-        $stringfromfile = file('../.git/HEAD', FILE_USE_INCLUDE_PATH);
-        //$stringfromfile = file('../HEAD_test', FILE_USE_INCLUDE_PATH);
-        $findtagversion = file('../.git/FETCH_HEAD', FILE_USE_INCLUDE_PATH);
-
-        $firstLine = $stringfromfile[0]; //get the string from the array
-
-        $explodedstring = explode("/", $firstLine); //seperate out by the "/" in the string
-
-        if (is_array($explodedstring) && count($explodedstring)>1)
-            $branchname = $explodedstring[2]; //get the one that is always the branch name
-            else
-            $branchname = $firstLine;
-            
-        
-            $version=explode("tag",array_search($branchname,$findtagversion));
-            if ($version[0]=="")
-                $tag="Master";
-            else $tag=explode(" ",array_search($branchname,$findtagversion))[3];
+        $version = file('../version', FILE_USE_INCLUDE_PATH);
+ 
 
             return $this->render('security/login.html.twig', 
             [
                 'last_username' => $lastUsername,
                 'error' => $error,
-                'version' => $tag
+                'version' => $version[0]
                 
             ]);
     }
