@@ -85,6 +85,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         
         if (!$user) {
             $user = new User();
+            $role=array("ROLE_USER");
             $user->setEmail($credentials['eppn'])
                 ->setPassword($this->passwordEncoder->encodePassword(
                     $user,

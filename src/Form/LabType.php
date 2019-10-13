@@ -5,9 +5,11 @@ namespace App\Form;
 use App\Entity\Lab;
 use App\Entity\Device;
 use App\Entity\Connexion;
+use App\Entity\NetworkSettings;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Bridge\Doctrine\Form\Type\NetworkSettingsType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ResetType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -23,6 +25,12 @@ class LabType extends AbstractType
                 'choice_label' => 'name',
                 'by_reference' => false,
                 'multiple' => true
+            ])
+            ->add('NetworkSettings', EntityType::class, [
+                'class' => NetworkSettings::class,
+                'choice_label' => 'name',
+                'by_reference' => false,
+                'multiple' => false
             ])
          /*   ->add('connexions', EntityType::class, [
                 'class' => Connexion::class,

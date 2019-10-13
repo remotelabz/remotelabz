@@ -262,6 +262,9 @@ class LabController extends AppController
 
         $hasError=$this->startAllDevices($lab,$user);
 
+        $this->logger->info("Lab ". $lab->getName()." started by ".$user->getEmail());
+
+
         if ($hasError) {
             $this->addFlash('warning', 'Some devices failed to start. Please verify your parameters or contact an administrator.');
         } else {
@@ -379,7 +382,7 @@ class LabController extends AppController
 
         foreach ($labInstance->getLab()->getDevices() as $device) {
             try {
-                $this->logger->debug("Device " . $device->getName() . " stop");
+                $this->logger->info("Device ". $device->getName()." stoped by ".$user->getEmail());
                 $this->stopDevice($lab, $device, $user);
             } catch (NotInstancedException $exception) {
                 $this->logger->debug("Device " . $device->getName() . " was not instanced in lab " . $lab->getName());
@@ -406,7 +409,7 @@ class LabController extends AppController
 
         try {
             $this->startDevice($lab, $device, $user);
-
+            $this->logger->info("Device ". $device->getName()." started by ".$user->getEmail());
             $this->addFlash('success', $device->getName() . ' has been started.');
         } catch (AlreadyInstancedException $exception) {
             $this->logger->debug("There is already an instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
@@ -424,6 +427,7 @@ class LabController extends AppController
                 $this->logger->error(Psr7\str($exception->getResponse()));
             }
             $this->stopDevice($lab, $device, $user);
+
         } finally {
             return $this->redirectToRoute('show_lab', [
                 'id' => $labId,
@@ -476,7 +480,7 @@ class LabController extends AppController
             throw new AlreadyInstancedException($labInstance);
             $this->logger->debug("Instance exist for lab " . $lab->getName() . " started by" . $user->getEmail());
         } elseif (!$labInstance) {
-            $this->logger->info("Instance create for lab " . $lab->getName() . " by " . $user->getEmail());
+            $this->logger->info("Instance creation for lab " . $lab->getName() . " by " . $user->getEmail());
 
             $labInstance = LabInstance::create()
                 ->setLab($lab)
@@ -490,6 +494,7 @@ class LabController extends AppController
             $lab->addInstance($labInstance);
             $this->entityManager->persist($lab);
             $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
         }
 
         $deviceInstance = $labInstance->getDeviceInstance($device);
@@ -505,21 +510,40 @@ class LabController extends AppController
             $device->addInstance($deviceInstance);
             $labInstance->addDeviceInstance($deviceInstance);
             $this->entityManager->persist($deviceInstance);
+            $this->entityManager->persist($device);
+            $this->entityManager->persist($labInstance);
+            $this->logger->debug("Device Instance for device " . $device->getName()." created");
+            $this->entityManager->flush(); // $deviceInstance don't exist outside of this block. We have to save it before to quit this block
         }
+        
+        $this->logger->debug("Device instance in lab ".$lab->getName()." created for device ".$labInstance->getDeviceInstance($device)->getDevice()->getName());
+        
+        
+       /* foreach ($device->getNetworkInterfaces() as $networkInterface) {
+            $this->logger->debug("--- Looking for Network interface ".$networkInterface->getName()." of device ".$device->getName()." in device instance ".$labInstance->getDeviceInstance($device)->getUuid());
+            $this->logger->debug("--- Setting defined for this Network interface ".$networkInterface->getName()." is ".$networkInterface->getSettings()->getProtocol());
+        }*/
 
-        // create nic instances as well
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
-            $networkInterfaceInstance = $deviceInstance->getNetworkInterfaceInstance($networkInterface);
+            $this->logger->debug("Looking for Network interface ".$networkInterface->getName()." of device ".$device->getName()." in device instance ".$labInstance->getDeviceInstance($device)->getUuid());
 
-            if ($networkInterfaceInstance == null) {
+/*            try {
+                $networkInterfaceInstance = ;
+            } catch (Exception $e) { 
+                dd($e);
+            }
+*/
+            if ($deviceInstance->getNetworkInterfaceInstance($networkInterface) == null) {
                 $networkInterfaceInstance = NetworkInterfaceInstance::create()
                     ->setNetworkInterface($networkInterface)
                     ->setUser($user)
                     ->setLab($lab)
                 ;
+                $this->logger->debug("Network interface instance created by ".$user->getEmail()." for lab ".$lab->getName(). " and for ".$networkInterface->getName());
 
                 // if vnc access is requested, ask for a free port and register it
                 if ($networkInterface->getSettings()->getProtocol() == "VNC") {
+                    $this->logger->debug("Network interface ".$networkInterface->getName()." of device ". $device->getName()." for lab ".$lab->getName(). " uses for VNC");
                     $remotePort = $this->getRemoteAvailablePort();
                     $networkInterfaceInstance->setRemotePort($remotePort);
                     try {
@@ -529,12 +553,20 @@ class LabController extends AppController
                         throw $exception;
                     }
                 }
+                else 
+                    $this->logger->debug("Network interface ".$networkInterface->getName()." of device ". $device->getName()." for lab ".$lab->getName(). " no control protocol defined");
 
                 $networkInterface->addInstance($networkInterfaceInstance);
                 $deviceInstance->addNetworkInterfaceInstance($networkInterfaceInstance);
                 $this->entityManager->persist($networkInterfaceInstance);
+                $this->entityManager->persist($deviceInstance);
+                $this->entityManager->persist($networkInterface);
             }
+            else 
+                $this->logger->debug("Network interface instance existed in lab ".$lab->getName());
         }
+
+        $this->entityManager->flush(); // $networkInterfaceInstance don't exist outside of this block. We have to save it before to quit this block
 
         $context = SerializationContext::create()->setGroups("start_lab");
         $labXml = $this->serializer->serialize($labInstance, 'json', $context);
@@ -554,16 +586,13 @@ class LabController extends AppController
             //$this->logger->error($lab->getInstances());
             throw $exception;
             //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-            
         }
-        //If the post return an error and in case the LabInstance was created by startlabfromactivity,
-        //the activity in the labinstance is not save in the entity !
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             $networkInterfaceInstance = $deviceInstance->getNetworkInterfaceInstance($networkInterface);
-
             $networkInterfaceInstance->setStarted(true);
             $this->entityManager->persist($networkInterfaceInstance);
+            $this->logger->debug("Network interface instance ".$networkInterfaceInstance->getNetworkInterface()->getName()." is set to start by ".$user->getEmail());
         }
 
         $deviceInstance->setStarted(true);

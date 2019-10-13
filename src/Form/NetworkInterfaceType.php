@@ -30,10 +30,6 @@ class NetworkInterfaceType extends AbstractType
             ->add('type', HiddenType::class, [
                 'data' => 'tap'
             ])
-            // ->add('settings', EntityType::class, [
-            //     'class' => NetworkSettings::class,
-            //     'choice_label' => 'name',
-            // ])
             ->add('accessType', ChoiceType::class, [
                 'choices' => [
                     'VNC' => 'VNC'

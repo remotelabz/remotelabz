@@ -34,7 +34,7 @@ class NetworkInterfaceInstance extends Instance
     protected $user;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer",nullable=true)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
