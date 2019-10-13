@@ -87,6 +87,11 @@ class Lab implements InstanciableInterface
      */
     private $networkInterfaceInstances;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="lab", cascade={"persist", "remove"})
+     */
+    private $NetworkSettings;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -359,6 +364,18 @@ class Lab implements InstanciableInterface
                 $networkInterfaceInstance->setLab(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->NetworkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    {
+        $this->NetworkSettings = $NetworkSettings;
 
         return $this;
     }

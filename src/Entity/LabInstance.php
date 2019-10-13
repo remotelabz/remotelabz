@@ -80,6 +80,11 @@ class LabInstance extends Instance
      */
     private $Activity;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
+     */
+    private $NetworkSettings;
+
     
 
     public function getId(): ?int
@@ -304,6 +309,18 @@ class LabInstance extends Instance
     public function setActivity(?Activity $Activity): self
     {
         $this->Activity = $Activity;
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->NetworkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    {
+        $this->NetworkSettings = $NetworkSettings;
 
         return $this;
     }
