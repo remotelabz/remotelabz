@@ -5,7 +5,6 @@
 * 
 * @author Julien Hubert <julien.hubert@outlook.com>
 */
-import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
 
 require('jquery');
 
@@ -32,9 +31,6 @@ require('selectize');
 require('select2');
 require('@novnc/novnc/core/rfb');
 require("jsplumb");
-
-const routes = require('../../public/bundles/fosjsrouting/fos_js_routes.json');
-Routing.setRoutingData(routes);
 
 /**
 * Functions using jQuery goes here
