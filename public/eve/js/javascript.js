@@ -35,21 +35,21 @@ var FOLLOW_WRAPPER_IMG_STATE = 'resized'
 var EVE_VERSION = "2.0.3-86";
 
 $(document).ready(function() {
-		// getUserInfo();
-		printPageLabOpen("/test.unl")
+    // getUserInfo();
+    // printPageLabOpen("1")
+    newLab();
+    var timer;
 
-       var timer;
+    $(document).on('click', '#alert_container', function(e) {
+        if(timer) {
+            clearTimeout(timer);
+        }
+    
+        var container = $(this).next().first();
+        container.slideToggle(300);
+        setTimeout(function() {
+            container.slideUp(300);
+        }, 2700);
 
-       $(document).on('click', '#alert_container', function(e){
-           if(timer){
-	       clearTimeout(timer);
-           }
-	   
-	   var container = $(this).next().first();
-           container.slideToggle(300);
-	   setTimeout(function(){
-		container.slideUp(300);
-           }, 2700);
-
-       });
+    });
 });

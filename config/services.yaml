@@ -53,6 +53,10 @@ services:
            - '%profile_picture_directory%'
            - '@security.token_storage'
 
+    App\Security\LoginFormAuthenticator:
+        arguments:
+            $refreshTokenManager: '@gesdinet.jwtrefreshtoken.refresh_token_manager'
+
     App\Security\ShibbolethAuthenticator:
         arguments:
             - "@router"

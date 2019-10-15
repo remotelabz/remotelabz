@@ -27,8 +27,9 @@
                         </div>
                     </div>
                 </div> #}
+                <div id="labEditor" class="editor-wrapper"></div>
                 {# TODO: Uncomment form editor when graphical will be over #}
-                {{ form(labForm) }}
+                {# {{ form(labForm) }} #}
             </div>
         </div>
     </div>
@@ -58,5 +59,5 @@
     <script src="../../eve/js/actions.js" defer></script>
     <script src="../../eve/js/javascript.js" defer></script> #}
    
-    {# {{ encore_entry_script_tags('lab') }} #}
+    {{ encore_entry_script_tags('editor-react') }}
 {% endblock %}

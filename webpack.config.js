@@ -28,6 +28,8 @@ Encore
     .addEntry('operating-system', './assets/js/operating-system.js')
     .addEntry('activity', './assets/js/activity.js')
     .addEntry('vnc', './assets/js/vnc.js')
+    // .addEntry('editor', './assets/js/editor.ts')
+    .addEntry('editor-react', './assets/js/editor.jsx')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
@@ -41,7 +43,7 @@ Encore
      * https://symfony.com/doc/current/frontend.html#adding-more-features
      */
     // .cleanupOutputBeforeBuild()
-    .enableBuildNotifications()
+    // .enableBuildNotifications()
     .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
@@ -54,6 +56,10 @@ Encore
 
     // uncomment if you're having problems with a jQuery plugin
     .autoProvidejQuery()
+
+    .configureBabel(function (babelConfig) {
+        babelConfig.plugins.push('@babel/plugin-proposal-class-properties');
+    })
 
     .enableReactPreset()
 

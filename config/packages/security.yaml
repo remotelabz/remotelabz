@@ -1,7 +1,7 @@
 security:
     encoders:
         App\Entity\User:
-            algorithm: auto
+            algorithm: 'sodium'
 
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
@@ -25,6 +25,11 @@ security:
                 check_path:               /api/auth
                 success_handler:          lexik_jwt_authentication.handler.authentication_success
                 failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
+        refresh:
+            pattern:  ^/api/auth/refresh
+            stateless: true
+            anonymous: true
 
         api_doc:
             pattern:   ^/api/doc

@@ -116,6 +116,9 @@
     "fzaninotto/faker": {
         "version": "v1.8.0"
     },
+    "gesdinet/jwt-refresh-token-bundle": {
+        "version": "v0.8.2"
+    },
     "guzzlehttp/guzzle": {
         "version": "6.3.3"
     },
@@ -496,7 +499,7 @@
         }
     },
     "symfony/templating": {
-        "version": "v4.1.7"
+        "version": "v4.3.5"
     },
     "symfony/test-pack": {
         "version": "v1.0.4"

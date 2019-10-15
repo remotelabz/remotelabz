@@ -2,14 +2,14 @@
  * This file implements JavaScript for flavors/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('flavor')
   
 $(function () {
     var flavorTable = $('#flavorTable').DataTable({
         ajax: {
-            url: Routing.generate('get_flavors'),
+            url: Routing.generate('api_flavors'),
             dataSrc: ''
         },
         buttons: [{

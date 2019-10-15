@@ -13,7 +13,7 @@
  */
 
 
-
+var host = 'http://10.22.9.229';
 var contextMenuOpen = false;
 
 // Basename: given /a/b/c return c
@@ -124,7 +124,7 @@ function cfg_export(node_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: config exported.');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -133,7 +133,7 @@ function cfg_export(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -178,7 +178,7 @@ function recursive_cfg_export(nodes, i) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             addMessage('danger', nodes[Object.keys(nodes)[i]]['name'] + ': ' + message);
@@ -216,7 +216,7 @@ function cloneLab(form_data) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -258,7 +258,7 @@ function closeLab() {
                 },
                 error: function (data) {
                     // Server error
-                    var message = getJsonMessage(data['responseText']);
+                    var message = getJsonMessage(data['message']);
                     logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
                     logger(1, 'DEBUG: ' + message);
                     deferred.reject(message);
@@ -290,7 +290,7 @@ function closeLab() {
             },
             error: function (data) {
                 // Server error
-                var message = getJsonMessage(data['responseText']);
+                var message = getJsonMessage(data['message']);
                 logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
                 logger(1, 'DEBUG: ' + message);
                 deferred.reject(message);
@@ -323,7 +323,7 @@ function deleteFolder(path) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -355,7 +355,7 @@ function deleteLab(path) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -388,7 +388,7 @@ function deleteNetwork(id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -421,7 +421,7 @@ function deleteNode(id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -453,7 +453,7 @@ function deleteUser(path) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -477,7 +477,7 @@ function exportObjects(form_data) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: objects exported into "' + data['data'] + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -486,7 +486,7 @@ function exportObjects(form_data) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -539,9 +539,9 @@ function getJsonMessage(response) {
 }
 
 // Get lab info
-function getLabInfo(lab_filename) {
+function getLabInfo(labId) {
     var deferred = $.Deferred();
-    var url = 'api.php/labs' + lab_filename;
+    var url = host + '/api/labs/' + labId;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -550,19 +550,13 @@ function getLabInfo(lab_filename) {
         url: encodeURI(url),
         dataType: 'json',
         success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + lab_filename + '" found.');
-                deferred.resolve(data['data']);
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                deferred.reject(data['message']);
-            }
+            logger(1, 'DEBUG: lab "' + labId + '" found.');
+            deferred.resolve(data);
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            var message = data['message'];
+            logger(1, 'DEBUG: server error (' + data['code'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
@@ -573,8 +567,8 @@ function getLabInfo(lab_filename) {
 // Get lab body
 function getLabBody() {
     var deferred = $.Deferred();
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = 'api.php/labs' + lab_filename + '/html';
+    var labId = $('#lab-viewport').attr('data-path');
+    var url = host + '/api/labs/' + labId;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -583,19 +577,13 @@ function getLabBody() {
         url: encodeURI(url),
         dataType: 'json',
         success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + lab_filename + '" body found.');
-                deferred.resolve(data['data']);
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                deferred.reject(data['message']);
-            }
+            logger(1, 'DEBUG: lab "' + labId + '" body found.');
+            deferred.resolve(data);
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            var message = getJsonMessage(data['message']);
+            logger(1, 'DEBUG: server error (' + data['code'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
@@ -618,7 +606,7 @@ function getLabLinks() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got available links(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -627,7 +615,7 @@ function getLabLinks() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -657,7 +645,7 @@ function getNetworks(network_id) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got network(s) from lab "' + lab_filename + '".');
 
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -666,7 +654,7 @@ function getNetworks(network_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -718,7 +706,7 @@ function getNetworkTypes() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got network types.');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -727,7 +715,7 @@ function getNetworkTypes() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -755,7 +743,7 @@ function getNodes(node_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 // logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -764,7 +752,7 @@ function getNodes(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -792,7 +780,7 @@ function getNodeConfigs(node_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got sartup-config(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -801,7 +789,7 @@ function getNodeConfigs(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -825,7 +813,7 @@ function getNodeInterfaces(node_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 // logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -834,7 +822,7 @@ function getNodeInterfaces(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -862,7 +850,7 @@ function getPictures(picture_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got pictures(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -871,7 +859,7 @@ function getPictures(picture_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -899,7 +887,7 @@ function getPicturesMapped(picture_id) {
                 success: function(data) {
                         if (data['status'] == 'success') {
                                 logger(1, 'DEBUG: got pictures(s) from lab "' + lab_filename + '".');
-                                deferred.resolve(data['data']);
+                                deferred.resolve(data);
                         } else {
                                 // Application error
                                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -908,7 +896,7 @@ function getPicturesMapped(picture_id) {
                 },
                 error: function(data) {
                         // Server error
-                        var message = getJsonMessage(data['responseText']);
+                        var message = getJsonMessage(data['message']);
                         logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
                         logger(1, 'DEBUG: ' + message);
                         deferred.reject(message);
@@ -933,7 +921,7 @@ function getTopology() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got topology from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -942,7 +930,7 @@ function getTopology() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -967,7 +955,7 @@ function getRoles() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got roles.');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -976,7 +964,7 @@ function getRoles() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1004,7 +992,7 @@ function getSystemStats() {
                 data['data']['mem'] = data['data']['mem'] / 100;
                 data['data']['cached'] = data['data']['cached'] / 100;
                 data['data']['swap'] = data['data']['swap'] / 100;
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1013,7 +1001,7 @@ function getSystemStats() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1036,7 +1024,7 @@ function getTemplates(template) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got template(s).');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1045,7 +1033,7 @@ function getTemplates(template) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1081,7 +1069,7 @@ function getUserInfo() {
                 ROLE = data['data']['role'];
                 TENANT = data['data']['tenant'];
                 USERNAME = data['data']['username'];
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1090,7 +1078,7 @@ function getUserInfo() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1117,7 +1105,7 @@ function getUsers(user) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got user(s).');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1126,7 +1114,7 @@ function getUsers(user) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1170,7 +1158,7 @@ function logoutUser() {
         },
         error: function (data) {
             // Authentication error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: Ajax error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1205,7 +1193,7 @@ function moveFolder(folder, path) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1240,7 +1228,7 @@ function moveLab(lab, path) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1276,7 +1264,7 @@ function deletePicture(lab_file, picture_id, cb) {
             }
         },
         error: function (data) {
-            addMessage('DANGER', getJsonMessage(data['responseText']));
+            addMessage('DANGER', getJsonMessage(data['message']));
             deferred.reject();
         }
     });
@@ -1358,7 +1346,7 @@ function setNetwork(nodeName,left, top) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1397,7 +1385,7 @@ function setCpuLimit(bool) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1436,7 +1424,7 @@ function setUksm(bool) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1475,7 +1463,7 @@ function setKsm(bool) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1513,7 +1501,7 @@ function setNetworkiVisibility(networkId,visibility) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1552,7 +1540,7 @@ function setNetworkPosition(network_id, left, top) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1591,7 +1579,7 @@ function setNetworksPosition(networks) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1627,7 +1615,7 @@ function setNodeBoot(node_id, config) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1664,7 +1652,7 @@ function setNodePosition(node_id, left, top) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1701,7 +1689,7 @@ function setNodesPosition(nodes) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1746,7 +1734,7 @@ function setNodeData(id){
             },
             error: function (data) {
                 // Server error
-                var message = getJsonMessage(data['responseText']);
+                var message = getJsonMessage(data['message']);
                 logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
                 logger(1, 'DEBUG: ' + message);
                 addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-flat" data-dismiss="modal">Close</button>');
@@ -1790,7 +1778,7 @@ function setNodeInterface(node_id,network_id,interface_id){
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1816,7 +1804,7 @@ function start(node_id) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) started.');
                 //$('#node' + node_id + ' img').removeClass('grayscale')
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1825,7 +1813,7 @@ function start(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1871,7 +1859,7 @@ function recursive_start(nodes, i) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             addMessage('danger', message);
@@ -1902,7 +1890,7 @@ function stop(node_id) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) stopped.');
                 $('#node' + node_id).removeClass('jsplumb-connected');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
 
             } else {
                 // Application error
@@ -1912,7 +1900,7 @@ function stop(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1945,7 +1933,7 @@ function stopAll() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -1978,7 +1966,7 @@ function update(path) {
         /*
          error: function(data) {
          // Server error
-         var message = getJsonMessage(data['responseText']);
+         var message = getJsonMessage(data['message']);
          logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
          logger(1, 'DEBUG: ' + message);
          deferred.reject(message);
@@ -2003,7 +1991,7 @@ function wipe(node_id) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) wiped.');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -2012,7 +2000,7 @@ function wipe(node_id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -2614,7 +2602,7 @@ function saveLab(form) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-flat" data-dismiss="modal">Close</button>');
@@ -4232,7 +4220,7 @@ function getTextObjects() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -4241,7 +4229,7 @@ function getTextObjects() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4277,7 +4265,7 @@ function getTextObject(id) {
                     console.warn("Compatibility issue", e);
                 }
 
-                deferred.resolve(data['data']);
+                deferred.resolve(data);
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -4286,7 +4274,7 @@ function getTextObject(id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4325,7 +4313,7 @@ function createTextObject(newData) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4365,7 +4353,7 @@ function editTextObject(id, newData) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4401,7 +4389,7 @@ function editTextObjects(newData) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4433,7 +4421,7 @@ function deleteTextObject(id) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4795,7 +4783,7 @@ function getLogs(file, per_page, search) {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4879,7 +4867,7 @@ function lockLab() {
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -4926,7 +4914,7 @@ function unlockLab(){
         },
         error: function (data) {
             // Server error
-            var message = getJsonMessage(data['responseText']);
+            var message = getJsonMessage(data['message']);
             logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
@@ -5291,4 +5279,48 @@ function printFormUploadNodeConfig(path) {
     logger(1, 'DEBUG: popping up the upload form.');
     addModal(MESSAGES[201], html, '', 'upload-modal');
     validateImport();
+}
+
+function newLab() {
+    var html = '<div id="lab-sidebar"><ul></ul></div><div id="lab-viewport"></div>';
+    $('.card-body').html(html);
+    // Print topology
+    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+        $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
+    }
+    $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
+    $('#lab-sidebar ul').append('<li><a class="action-networksget" href="javascript:void(0)" title="' + MESSAGES[61] + '"><i class="glyphicon glyphicon-transfer"></i></a></li>');
+    //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
+    $('#lab-sidebar ul').append('<li class="action-picturesget-li"><a class="action-picturesget" href="javascript:void(0)" title="' + MESSAGES[59] + '"><i class="glyphicon glyphicon-picture"></i></a></li>');
+    if ( Object.keys(pic)  < 1 ) {
+    $('.action-picturesget-li').addClass('hidden');
+    }
+
+    $('#lab-sidebar ul').append('<li><a class="action-textobjectsget" href="javascript:void(0)" title="' + MESSAGES[150] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');
+    //$('#lab-sidebar ul').append('<li><a class="action-moreactions" href="javascript:void(0)" title="' + MESSAGES[125] + '"><i class="glyphicon glyphicon-th"></i></a></li>');
+    $('#lab-sidebar ul').append('<li><a class="action-labedit" href="javascript:void(0)" title="' + MESSAGES[87] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');
+            
+//		         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
+
+
+
+    $('#lab-sidebar ul').append('<li><a class="action-labtopologyrefresh" href="javascript:void(0)" title="' + MESSAGES[57] + '"><i class="glyphicon glyphicon-refresh"></i></a></li>');
+    $('#lab-sidebar ul').append('<li class="plus-minus-slider"><i class="fa fa-minus"></i><div class="col-md-2 glyphicon glyphicon-zoom-in sidemenu-zoom"></div><div id="zoomslide" class="col-md-5"></div><div class="col-md-5"></div><i class="fa fa-plus"></i><br></li>');
+    $('#zoomslide').slider({value:100,min:10,max:200,step:10,slide:zoomlab});
+    //$('#lab-sidebar ul').append('<li><a class="action-freeselect" href="javascript:void(0)" title="' + MESSAGES[151] + '"><i class="glyphicon glyphicon-check"></i></a></li>');
+    //$('#lab-sidebar ul').append('<li><a class="action-status" href="javascript:void(0)" title="' + MESSAGES[13] + '"><i class="glyphicon glyphicon-info-sign"></i></a></li>');
+    //$('#lab-sidebar ul').append('<li><a class="action-labbodyget" href="javascript:void(0)" title="' + MESSAGES[64] + '"><i class="glyphicon glyphicon-list-alt"></i></a></li>');
+    //$('#lab-sidebar ul').append('<div id="action-labclose"><li><a class="action-labclose" href="javascript:void(0)" title="' + MESSAGES[60] + '"><i class="glyphicon glyphicon-off"></i></a></li></div>');
+    //$('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
+    //$('#lab-sidebar ul').append('<li><a class="action-logout" href="javascript:void(0)" title="' + MESSAGES[14] + '"><i class="glyphicon glyphicon-log-out"></i></a></li>');
+    $('#lab-sidebar ul a').each(function () {
+        var t = $(this).attr("title");
+        $(this).append(t);
+
+
+        })
+if ( LOCK == 1 ) {
+    lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), false);
+    $('.customShape').resizable('disable');
+}
 }

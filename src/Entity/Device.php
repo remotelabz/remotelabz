@@ -22,28 +22,28 @@ class Device implements InstanciableInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"device", "lab"})
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"device", "lab"})
      */
     private $model;
 
@@ -64,7 +64,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="network_interface")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"device", "lab"})
      */
     private $networkInterfaces;
 
@@ -77,28 +77,28 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $virtuality;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
      * @Serializer\XmlList(entry="operating_system")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $operatingSystem;
 
@@ -112,7 +112,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
      * @Serializer\XmlList(entry="flavor")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $flavor;
 

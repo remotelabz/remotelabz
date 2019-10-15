@@ -2,7 +2,7 @@
  * This file implements JavaScript for networkSettingss/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('network_settings')
   

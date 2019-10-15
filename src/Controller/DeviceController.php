@@ -6,15 +6,20 @@ use App\Entity\Device;
 use App\Form\DeviceType;
 
 use App\Service\FileUploader;
+use Swagger\Annotations as SWG;
+use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
+use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
-class DeviceController extends AppController
+class DeviceController extends FOSRestController
 {
     private $deviceRepository;
 
@@ -24,28 +29,58 @@ class DeviceController extends AppController
     }
 
     /**
-     * @Route("/admin/devices", name="devices")
+     * @Route("/devices", name="devices")
+     * 
+     * @Rest\Get("/api/devices.{_format}",
+     *      name="api_devices",
+     *      defaults={"_format": "json"},
+     *      requirements={"_format": "json"}
+     * )
+     * 
+     * @SWG\Parameter(
+     *     name="search",
+     *     in="query",
+     *     type="string",
+     *     description="Filter devices by name. All devices with a name containing this value will be shown."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all existing devices",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=Lab::class))
+     *     )
+     * )
+     * 
+     * @SWG\Tag(name="Device")
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, DeviceRepository $deviceRepository, string $_format = 'html')
     {
-        $repository = $this->getDoctrine()->getRepository('App:Device');
-
         $search = $request->query->get('search', '');
         
         if ($search !== '') {
-            $data = $repository->findByName($search);
+            $devices = $deviceRepository->findByNameLike($search);
         } else {
-            $data = $repository->findAll();
+            $devices = $deviceRepository->findAll();
         }
 
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data);
-        }
-        
-        return $this->render('device/index.html.twig', [
-            'devices' => $data,
-            'search' => $search
-        ]);
+        $context = new Context();
+        $context
+            ->addGroup("device")
+        ;
+
+        $view = $this->view($devices, 200)
+            ->setTemplate("device/index.html.twig")
+            ->setTemplateData([
+                'devices' => $devices,
+                'search' => $search
+            ])
+            ->setContext($context)
+            ->setFormat($_format)
+        ;
+
+        return $this->handleView($view);
     }
 
     /**
@@ -69,10 +104,6 @@ class DeviceController extends AppController
 
         if (null === $data) {
             throw new NotFoundHttpException();
-        }
-
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data);
         }
         
         return $this->render('device/view.html.twig', [

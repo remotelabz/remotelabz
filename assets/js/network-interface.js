@@ -2,7 +2,8 @@
  * This file implements JavaScript for network-interfaces/
  */
 
-import API from './app';
+import API from './api';
+import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
 
 const api = new API('network_interface')
   
@@ -63,7 +64,7 @@ $(function () {
                     }
                 }
             }, {
-                data: 'mac_address',
+                data: 'macAddress',
                 defaultContent: 'None',
                 render: (data, type) => {
                     if (type !== 'None' && data !== undefined) {
