@@ -1,14 +1,8 @@
 import React, { Component } from 'react';
-import { ListGroup, ButtonToolbar } from 'react-bootstrap';
-import PropTypes from 'prop-types';
+import { ListGroup } from 'react-bootstrap';
 
 export default class EditorContextualMenu extends Component
 {
-    propTypes = {
-        x: PropTypes.number.isRequired,
-        y: PropTypes.number.isRequired,
-    }
-
     constructor(props)
     {
         super(props);
@@ -19,7 +13,7 @@ export default class EditorContextualMenu extends Component
         }
     }
 
-    handleDeleteItem = e => {
+    handleDeleteItem = () => {
         console.log("User clicked on delete.");
     }
 

@@ -3,7 +3,6 @@
  */
 
 import API from './api';
-import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
 
 const api = new API('network_interface')
   

@@ -1,17 +1,9 @@
 import React from 'react';
 import { Modal, Button, Form, Row, Col, Container } from 'react-bootstrap';
 import AsyncSelect from 'react-select/async';
-import Routing from '../../../../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
-import PropTypes from 'prop-types';
 
 export default class DeviceModal extends React.Component
 {
-    propTypes = {
-        onHide: PropTypes.func,
-        onSave: PropTypes.func,
-        show: PropTypes.bool.isRequired
-    }
-
     state = {
         createDevice: false,
         select: {

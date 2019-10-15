@@ -1,19 +1,11 @@
 import * as React from 'react';
 import Device from '../Elements/Device';
 import { jsPlumb } from 'jsplumb';
-import PropTypes from 'prop-types';
 
 export default class EditorCanvas extends React.Component {
     zoomMin = 0.5;
     zoomMax = 2;
     jsPlumb = null;
-
-    propTypes = {
-        onScale: PropTypes.func,
-        style: PropTypes.object,
-        devices: PropTypes.arrayOf(Device),
-        onContextMenu: PropTypes.func,
-    }
 
     constructor(props) {
         super(props);
