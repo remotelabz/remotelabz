@@ -70,7 +70,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
      * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Groups({"author"})
+     * @Serializer\Groups({"lab", "lab_author"})
      */
     private $author;
 
@@ -93,6 +93,18 @@ class Lab implements InstanciableInterface
      */
     private $networkInterfaceInstances;
 
+    /**
+     * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"lab"})
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"lab"})
+     */
+    private $lastUpdated;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -102,6 +114,7 @@ class Lab implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->deviceInstances = new ArrayCollection();
         $this->networkInterfaceInstances = new ArrayCollection();
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -376,6 +389,30 @@ class Lab implements InstanciableInterface
                 $networkInterfaceInstance->setLab(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getLastUpdated(): ?\DateTimeInterface
+    {
+        return $this->lastUpdated;
+    }
+
+    public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
+    {
+        $this->lastUpdated = $lastUpdated;
 
         return $this;
     }

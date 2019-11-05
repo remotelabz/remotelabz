@@ -30,6 +30,8 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Assert\NotBlank
+     * @Assert\Type(type="string")
      */
     private $name;
 
@@ -37,6 +39,7 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"device", "lab"})
+     * @Assert\Type(type="string")
      */
     private $brand;
 
@@ -44,6 +47,7 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"device", "lab"})
+     * @Assert\Type(type="string")
      */
     private $model;
 
@@ -51,6 +55,7 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab"})
+     * @Assert\Type(type="integer")
      */
     private $launchOrder;
 
@@ -78,6 +83,8 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Assert\NotNull
+     * @Assert\Choice({"vm"})
      */
     private $type;
 
@@ -99,6 +106,8 @@ class Device implements InstanciableInterface
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
      * @Serializer\XmlList(entry="operating_system")
      * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
     private $operatingSystem;
 
@@ -113,6 +122,8 @@ class Device implements InstanciableInterface
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
      * @Serializer\XmlList(entry="flavor")
      * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
     private $flavor;
 
@@ -130,12 +141,46 @@ class Device implements InstanciableInterface
      */
     private $uuid;
 
+    /**
+     * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"lab"})
+     * @Assert\Type(type="\DateTime")
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"lab"})
+     */
+    private $lastUpdated;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
+     * @Serializer\Groups({"device", "editor"})
+     */
+    private $editorData;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab"})
+     * @Assert\NotNull
+     * @Assert\Type(type="boolean")
+     */
+    private $isTemplate;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
+        $this->editorData = new EditorData();
+        $this->editorData->setDevice($this);
+        $this->type = "vm";
+        $this->hypervisor = "qemu";
+        $this->launchOrder = 0;
+        $this->virtuality = 1;
     }
 
     public function getId(): ?int
@@ -395,6 +440,54 @@ class Device implements InstanciableInterface
     public function setUuid(?string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getLastUpdated(): ?\DateTimeInterface
+    {
+        return $this->lastUpdated;
+    }
+
+    public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
+    {
+        $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getEditorData(): ?EditorData
+    {
+        return $this->editorData;
+    }
+
+    public function setEditorData(?EditorData $editorData): self
+    {
+        $this->editorData = $editorData;
+
+        return $this;
+    }
+
+    public function getIsTemplate(): ?bool
+    {
+        return $this->isTemplate;
+    }
+
+    public function setIsTemplate(bool $isTemplate): self
+    {
+        $this->isTemplate = $isTemplate;
 
         return $this;
     }

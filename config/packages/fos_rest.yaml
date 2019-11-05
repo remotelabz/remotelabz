@@ -21,16 +21,18 @@ fos_rest:
         messages:
            # 'Symfony\Component\Security\Core\Exception\AccessDeniedException': false
            # 'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
-#    param_fetcher_listener:  true
+    service:
+        templating: twig
+    param_fetcher_listener:  true
 #    allowed_methods_listener:  true
-#    routing_loader: true
-#    view:
-#        view_response_listener:  true
+    # view:
+    #     force_redirects:
+    #         html: true
+    #         json: false
+    #     templating_formats:
+    #         html: true
 #    exception:
 #        codes:
 #            App\Exception\MyException: 403
 #        messages:
 #            App\Exception\MyException: Forbidden area.
-#    format_listener:
-#        rules:
-#            - { path: ^/api, prefer_extension: true, fallback_format: json, priorities: [ json, html ] }

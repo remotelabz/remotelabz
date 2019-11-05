@@ -8,19 +8,23 @@ use App\Form\LabType;
 use App\Entity\Device;
 use GuzzleHttp\Client;
 use App\Entity\Network;
+use App\Form\DeviceType;
 use App\Entity\LabInstance;
 use Psr\Log\LoggerInterface;
 use App\Service\FileUploader;
 use App\Entity\DeviceInstance;
 use Swagger\Annotations as SWG;
 use App\Repository\LabRepository;
+use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
 use App\Exception\NotInstancedException;
 use Doctrine\ORM\EntityManagerInterface;
+use FOS\RestBundle\Request\ParamFetcher;
 use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
+use Doctrine\Common\Collections\Criteria;
 use GuzzleHttp\Exception\ServerException;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use GuzzleHttp\Exception\RequestException;
@@ -32,6 +36,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Common\Collections\ArrayCollection;
 use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\Request\ParamFetcherInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -41,44 +46,47 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
-class LabController extends FOSRestController
+class LabController extends AbstractFOSRestController
 {
     /**
      * IP or FQDN of worker.
      *
      * @var string
      */
-    protected $workerServer;
+    private $workerServer;
     /**
      * Port of worker.
      *
      * @var int
      */
-    protected $workerPort;
+    private $workerPort;
     /**
      * Workers full URL (IP and port).
      *
      * @var string
      */
-    protected $workerAddress;
+    private $workerAddress;
 
-    protected $logger;
+    /** @var LoggerInterface $logger */
+    private $logger;
 
-    public function __construct(LoggerInterface $logger)
+    /** @var LabRepository $labRepository */
+    private $labRepository;
+
+    public function __construct(LoggerInterface $logger, LabRepository $labRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
+        $this->labRepository = $labRepository;
     }
 
     /**
      * @Route("/labs", name="labs")
      * 
-     * @Rest\Get("/api/labs.{_format}",
-     *      defaults={"_format": "json"},
-     *      requirements={"_format": "json"}
-     * )
+     * @Rest\Get("/api/labs", name="api_get_labs")
+     * @Rest\QueryParam(name="limit", requirements="\d+", default="10")
      * 
      * @SWG\Parameter(
      *     name="search",
@@ -98,23 +106,34 @@ class LabController extends FOSRestController
      * 
      * @SWG\Tag(name="Lab")
      */
-    public function indexAction(Request $request, LabRepository $labRepository, string $_format = 'html')
+    public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
+        $limit = $request->query->get('limit', 10);
+        $offset = $request->query->get('offset', 0);
         
-        if ($search !== '') {
-            $labs = $labRepository->findByNameLike($search);
-        } else {
-            $labs = $labRepository->findAll();
-        }
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search))
+            ->orderBy([
+                'id' => Criteria::DESC
+            ])
+            ->setMaxResults($limit)
+        ;
 
-        $view = $this->view($labs, 200)
+        $labs = $this->labRepository->matching($criteria);
+
+        $context = new Context();
+        $context
+            ->addGroup("lab")
+        ;
+
+        $view = $this->view($labs->getValues())
             ->setTemplate("lab/index.html.twig")
             ->setTemplateData([
                 'labs' => $labs,
                 'search' => $search
             ])
-            ->setFormat($_format)
+            ->setContext($context)
         ;
 
         return $this->handleView($view);
@@ -125,10 +144,7 @@ class LabController extends FOSRestController
      *  name="show_lab",
      *  methods="GET")
      * 
-     * @Rest\Get("/api/labs/{id<\d+>}.{_format}",
-     *      defaults={"_format": "json"},
-     *      requirements={"_format": "json"}
-     * )
+     * @Rest\Get("/api/labs/{id<\d+>}", name="api_get_lab")
      * 
      * @SWG\Parameter(
      *     name="id",
@@ -145,12 +161,12 @@ class LabController extends FOSRestController
      * 
      * @SWG\Tag(name="Lab")
      */
-    public function showAction(int $id, string $_format = 'html', UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository)
+    public function showAction(int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository)
     {
         $lab = $labRepository->find($id);
 
-        if (null === $lab) {
-            throw new NotFoundHttpException();
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
         // Remove all instances not belongs to current user (changes are not stored in database)
@@ -167,6 +183,15 @@ class LabController extends FOSRestController
             }
         }
 
+        $context = new Context();
+        $context->setGroups([
+            "primary_key",
+            "lab",
+            "author" => [
+                "primary_key"
+            ],
+            "editor"
+        ]);
         $view = $this->view($lab, 200)
             ->setTemplate("lab/view.html.twig")
             ->setTemplateData([
@@ -175,7 +200,7 @@ class LabController extends FOSRestController
                 'deviceStarted' => $deviceStarted,
                 'user' => $user
             ])
-            ->setFormat($_format)
+            ->setContext($context)
         ;
 
         return $this->handleView($view);
@@ -183,73 +208,262 @@ class LabController extends FOSRestController
 
     /**
      * @Route("/labs/new", name="new_lab")
+     * 
+     * @Rest\Post("/api/labs", name="api_new_lab")
      */
     public function newAction()
     {
-        return $this->render('lab/new.html.twig');
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->startsWith('name', 'Untitled Lab'))
+        ;
+
+        $untitledLabsCount = count($this->labRepository->matching($criteria));
+        $name = 'Untitled Lab';
+
+        if ($untitledLabsCount != 0) {
+            $name .= ' (' . $untitledLabsCount . ')';
+        }
+
+        $lab = new Lab();
+        $lab->setName($name)
+            ->setAuthor($this->getUser())
+        ;
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+        $view = $this->view($lab, 201)
+            ->setTemplate("lab/editor.html.twig")
+            ->setLocation($this->generateUrl('edit_lab', ['id' => $lab->getId()]))
+        ;
+
+        $context = new Context();
+        $context
+            ->setGroups([
+                "primary_key",
+                "lab",
+                "author" => [
+                    "primary_key"
+                ]
+            ])
+        ;
+        $view->setContext($context);
+
+        return $this->handleView($view);
     }
 
     /**
-     * @Route("/labs/{id<\d+>}/edit", name="edit_lab", methods={"GET", "POST"})
+     * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
      */
-    public function editAction(Request $request, int $id, LabRepository $labRepository, EntityManagerInterface $entityManager)
+    public function addDeviceAction(Request $request, int $id)
     {
-        $lab = $labRepository->find($id);
+        $device = new Device();
+        $deviceForm = $this->createForm(DeviceType::class, $device);
+        $deviceForm->handleRequest($request);
 
-        if (null === $lab) {
-            throw new NotFoundHttpException();
+        if ($request->getContentType() === 'json') {
+            $device = json_decode($request->getContent(), true);
+            $deviceForm->submit($device);
+        } 
+
+        $view = $this->view($deviceForm);
+
+        if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
+            /** @var Device $device */
+            $device = $deviceForm->getData();
+            $lab = $this->labRepository->find($id);
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($device);
+            $lab->addDevice($device);
+            $entityManager->persist($lab);
+            $entityManager->flush();
+
+            $view->setLocation($this->generateUrl('devices'));
+            $view->setStatusCode(201);
+            $view->setData($device);
+            $context = new Context();
+            $context
+                ->addGroup("lab")
+                ->addGroup("primary_key")
+                ->addGroup("editor")
+            ;
+            $view->setContext($context);
+        }
+
+        return $this->handleView($view);
+
+        // $criteria = Criteria::create()
+        //     ->where(Criteria::expr()->startsWith('name', 'Untitled Lab'))
+        // ;
+
+        // $untitledLabsCount = count($this->labRepository->matching($criteria));
+        // $name = 'Untitled Lab';
+
+        // if ($untitledLabsCount != 0) {
+        //     $name .= ' (' . $untitledLabsCount . ')';
+        // }
+
+        // $lab = new Lab();
+        // $lab->setName($name)
+        //     ->setAuthor($this->getUser())
+        // ;
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $entityManager->persist($lab);
+        // $entityManager->flush();
+
+        // $view = $this->view($lab, 201)
+        //     ->setTemplate("lab/editor.html.twig")
+        //     ->setLocation($this->generateUrl('edit_lab', ['id' => $lab->getId()]))
+        // ;
+
+        // $context = new Context();
+        // $context
+        //     ->setGroups([
+        //         "primary_key",
+        //         "lab",
+        //         "author" => [
+        //             "primary_key"
+        //         ]
+        //     ])
+        // ;
+        // $view->setContext($context);
+
+        // return $this->handleView($view);
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
+     * 
+     * @Rest\Put("/api/labs/{id<\d+>}", name="api_edit_lab")
+     * 
+     * @SWG\Parameter(
+     *     name="lab",
+     *     in="body",
+     *     @SWG\Schema(ref=@Model(type=Lab::class, groups={"api"})),
+     *     description="Lab data."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns the newly edited lab.",
+     *     @SWG\Schema(ref=@Model(type=Lab::class))
+     * )
+     * 
+     * @SWG\Tag(name="Lab")
+     */
+    public function updateAction(Request $request, int $id)
+    {
+        $lab = $this->labRepository->find($id);
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
         $labForm = $this->createForm(LabType::class, $lab);
         $labForm->handleRequest($request);
-        
-        if ($labForm->isSubmitted() && $labForm->isValid()) {
-            $lab = $labForm->getData();
 
-            
+        if ($request->getContentType() === 'json') {
+            $lab = json_decode($request->getContent(), true);
+            $labForm->submit($lab, false);
+        } 
+
+        $view = $this->view($labForm)
+            ->setTemplate("lab/editor.html.twig")
+        ;
+
+        if ($labForm->isSubmitted() && $labForm->isValid()) {
+            /** @var Lab $lab */
+            $lab = $labForm->getData();
+            $lab->setLastUpdated(new \DateTime());
+
+            $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($lab);
             $entityManager->flush();
-            
-            $this->addFlash('success', 'Lab has been edited.');
 
-            return $this->redirectToRoute('show_lab', [
-                'id' => $id
-            ]);
+            if ($request->getRequestFormat() === 'html') {
+                $this->addFlash('info', 'Lab has been edited.');
+            }
+
+            $view->setStatusCode(200);
+            $view->setData($lab);
+            $context = new Context();
+            $context
+                ->setGroups([
+                    "primary_key",
+                    "lab",
+                    "author" => [
+                        "primary_key"
+                    ]
+                ])
+            ;
+            $view->setContext($context);
         }
-        
-        return $this->render('lab/new.html.twig', [
-            'labForm' => $labForm->createView(),
-            'id' => $id,
-            'name' => $lab->getName()
-        ]);
+
+        return $this->handleView($view);
     }
+
+    // /**
+    //  * @Route("/labs/{id<\d+>}/edit", name="edit_lab", methods={"GET", "POST"})
+    //  */
+    // public function editAction(Request $request, int $id, LabRepository $labRepository, EntityManagerInterface $entityManager)
+    // {
+    //     $lab = $labRepository->find($id);
+
+    //     if (null === $lab) {
+    //         throw new NotFoundHttpException();
+    //     }
+
+    //     $labForm = $this->createForm(LabType::class, $lab);
+    //     $labForm->handleRequest($request);
         
+    //     if ($labForm->isSubmitted() && $labForm->isValid()) {
+    //         $lab = $labForm->getData();
+
+            
+    //         $entityManager->persist($lab);
+    //         $entityManager->flush();
+            
+    //         $this->addFlash('success', 'Lab has been edited.');
+
+    //         return $this->redirectToRoute('show_lab', [
+    //             'id' => $id
+    //         ]);
+    //     }
+        
+    //     return $this->render('lab/new.html.twig', [
+    //         'labForm' => $labForm->createView(),
+    //         'id' => $id,
+    //         'name' => $lab->getName()
+    //     ]);
+    // }
+
     /**
-     * @Route("/labs/{id<\d+>}", name="delete_lab", methods="DELETE")
+     * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
+     * 
+     * @Rest\Delete("/api/labs/{id<\d+>}", name="api_delete_lab")
      */
-    public function deleteAction(Request $request, int $id, LabRepository $labRepository, EntityManagerInterface $entityManager)
+    public function deleteAction(int $id)
     {
-        $data = null;
-        $status = 200;
-            
-        $lab = $labRepository->find($id);
-            
-        if ($lab == null) {
-            $status = 404;
-        } else {
-            $entityManager->remove($lab);
-            $entityManager->flush();
-                
-            $data = [
-                'message' => 'Lab has been deleted.'
-            ];
-        }
-            
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data, $status);
+        $lab = $this->labRepository->find($id);
+
+        if (null === $lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
-        return $this->redirectToRoute('labs');
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($lab);
+        $entityManager->flush();
+
+        $this->addFlash('success', $lab->getName() . ' has been deleted.');
+
+        $view = $this->view()
+            ->setLocation($this->generateUrl('labs'));
+        ;
+
+        return $this->handleView($view);
     }
 
     /**

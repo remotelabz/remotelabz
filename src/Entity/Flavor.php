@@ -16,7 +16,7 @@ class Flavor
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "device"})
      */
     private $id;
 

@@ -49,7 +49,13 @@ Encore
     .enableVersioning(Encore.isProduction())
 
     // enables Sass/SCSS support
-    .enableSassLoader()
+    .enableSassLoader((options) => {
+        options.sourceMap = true;
+        options.sassOptions = {
+            outputStyle: 'compressed',
+            sourceComments: !Encore.isProduction(),
+        };
+    }, {})
 
     // uncomment if you use TypeScript
     // .enableTypeScriptLoader()

@@ -48,6 +48,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setOperatingSystem($this->getReference('operating-system-Alpine'))
             ->setType($faker->randomElement(['vm']))
             ->setHypervisor('qemu')
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
         ;
 
         $manager->persist($device);
@@ -64,6 +66,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setOperatingSystem($this->getReference('operating-system-Debian'))
             ->setType($faker->randomElement(['vm']))
             ->setHypervisor('qemu')
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
         ;
         $manager->persist($device);
         $this->addReference('device-debian', $device);
@@ -79,6 +83,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setOperatingSystem($this->getReference('operating-system-Ubuntu'))
             ->setType($faker->randomElement(['vm']))
             ->setHypervisor('qemu')
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
         ;
         $manager->persist($device);
         $this->addReference('device-ubuntu', $device);

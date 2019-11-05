@@ -1,0 +1,60 @@
+import React, { Component } from 'react';
+import { Button, ButtonToolbar, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import SVG from '../../Display/SVG';
+
+export default class Menu extends Component
+{
+    constructor(props)
+    {
+        super(props);
+
+        this.state = {
+            fullscreen: false,
+        }
+    }
+
+    handleCreateDevice = () => {
+        this.props.onCreateDeviceRequest();
+    }
+
+    handleToggleFullscreen = (e) => {
+        this.setState({fullscreen: !this.state.fullscreen});
+        this.props.onToggleFullscreen(e);
+    }
+
+    handleZoomIn = () => this.props.onZoomIn();
+
+    handleZoomOut = () => this.props.onZoomOut();
+
+    render()
+    {
+        return (
+            <div className="d-flex">
+                <ButtonToolbar className="d-flex">
+                    <Button variant="success" onClick={this.handleCreateDevice}>
+                        <span><SVG name="plus-square" className="image-sm v-sub"></SVG> Add device</span>
+                    </Button>
+
+                    <ButtonGroup className="ml-3">
+                        <Button variant="default" onClick={this.handleZoomOut}>
+                            <span><i className="fa fa-search-minus" aria-hidden="true"></i></span>
+                        </Button>
+
+                        <Button variant="default" onClick={this.handleZoomIn}>
+                            <span><i className="fa fa-search-plus" aria-hidden="true"></i></span>
+                        </Button>
+                    </ButtonGroup>
+                    
+                </ButtonToolbar>
+                <div className="separator flex-grow-1"> </div>
+                <ButtonToolbar className="d-flex">
+                    <Button variant="default" onClick={this.handleToggleFullscreen}>
+                        <OverlayTrigger overlay={<Tooltip>Toggle fullscreen</Tooltip>}>
+                            <SVG name={this.state.fullscreen ? "screen-normal" : "screen-full"} className="image-sm v-sub"></SVG>
+                        </OverlayTrigger>
+                    </Button>
+                </ButtonToolbar>
+            </div>
+        );
+    }
+}

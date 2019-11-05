@@ -6453,6 +6453,11 @@ react-dom@^16.8.6:
     prop-types "^15.6.2"
     scheduler "^0.16.2"
 
+react-editext@^3.9.1:
+  version "3.9.1"
+  resolved "https://registry.yarnpkg.com/react-editext/-/react-editext-3.9.1.tgz#038dac725e30be19937930b334809143db477ab9"
+  integrity sha512-hRCaJUSHmn69HenkjZCCLjkPkTM7SbjnwC14c40oWvyPhx9Hom8+DP9vBmAgW2gu/UIiG+b9TfRE2UY3hmn6jw==
+
 react-input-autosize@^2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-2.2.2.tgz#fcaa7020568ec206bc04be36f4eb68e647c4d8c2"

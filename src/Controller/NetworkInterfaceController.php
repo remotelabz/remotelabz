@@ -9,9 +9,9 @@ use FOS\RestBundle\Context\Context;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 
-class NetworkInterfaceController extends FOSRestController
+class NetworkInterfaceController extends AbstractFOSRestController
 {
     public $networkInterfaceRepository;
 

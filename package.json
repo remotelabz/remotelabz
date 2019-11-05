@@ -23,6 +23,7 @@
     "license": "UNLICENSED",
     "private": true,
     "scripts": {
+        "start": "symfony server:start",
         "dev-server": "encore dev-server",
         "dev": "encore dev",
         "watch": "encore dev --watch",
@@ -50,6 +51,7 @@
         "react": "^16.8.6",
         "react-bootstrap": "^1.0.0-beta.14",
         "react-dom": "^16.8.6",
+        "react-editext": "^3.9.1",
         "react-select": "^3.0.8",
         "sass-loader": "^8.0.0",
         "select2": "^4.0.6-rc.1",

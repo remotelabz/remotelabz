@@ -351,8 +351,6 @@
     flex-direction: row;
 
     .navbar-brand-wrapper {
-      width: $sidebar-width-icon;
-
       .brand-logo {
         display: none;
       }
@@ -360,10 +358,6 @@
       .brand-logo-mini {
         display: inline-block;
       }
-    }
-
-    .navbar-menu-wrapper {
-      width: calc(100% - #{$sidebar-width-icon});
     }
   }
 

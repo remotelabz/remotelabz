@@ -35,6 +35,10 @@
                             <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Stop all'|trans }}
                             </a>
                         {% endif %}
+                        {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) and labInstance is null %}
+                            <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Delete'|trans }}
+                            </a>
+                        {% endif %}
                     </div>
                 </h4>
                 <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>

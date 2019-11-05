@@ -25,10 +25,12 @@
     "env" : {
         "browser": true,
         "node" : true,
-        "jquery": true
+        "jquery": true,
+        "es6": true
     },
     "globals": {
-        "Routing": "readonly"
+        "Routing": "readonly",
+        "axios": "writable"
     },
     "settings": {
         "react": {

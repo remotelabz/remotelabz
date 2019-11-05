@@ -1601,12 +1601,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfSymfony/FOSRestBundle.git",
-                "reference": "e1f91266ca37e423dfae9ec4e641b247fdb2915d"
+                "reference": "54758949bff9fc520997415341323eebf3f54892"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfSymfony/FOSRestBundle/zipball/e1f91266ca37e423dfae9ec4e641b247fdb2915d",
-                "reference": "e1f91266ca37e423dfae9ec4e641b247fdb2915d",
+                "url": "https://api.github.com/repos/FriendsOfSymfony/FOSRestBundle/zipball/54758949bff9fc520997415341323eebf3f54892",
+                "reference": "54758949bff9fc520997415341323eebf3f54892",
                 "shasum": ""
             },
             "require": {
@@ -1695,7 +1695,7 @@
             "keywords": [
                 "rest"
             ],
-            "time": "2019-08-02T02:07:20+00:00"
+            "time": "2019-10-21T08:22:30+00:00"
         },
         {
             "name": "gesdinet/jwt-refresh-token-bundle",

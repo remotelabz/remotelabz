@@ -8,13 +8,14 @@
     <div class="navbar-brand-wrapper">
       <a class="navbar-brand" href="/"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a>
     </div>
+    <div class="separator flex-grow-1"></div>
     <ul class="navbar-nav ml-lg-auto">
       {# <li class="nav-item lang-dropdown d-none d-sm-block">
         <a class="nav-link" href="#">
           <p class="mb-0">English <i class="flag-icon flag-icon-gb"></i></p>
         </a>
       </li> #}
-      <li class="nav-item d-none d-sm-block profile-img dropdown">
+      <li class="nav-item d-sm-block profile-img dropdown">
         {# <div class="dropdown"> #}
           <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <img src="{{ asset(app.user.profilePicture) }}" alt="profile-img">
@@ -31,9 +32,6 @@
         {# </div> #}
       </li>
     </ul>
-    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center ml-auto" type="button" data-toggle="offcanvas">
-      <span class="icon-menu icons"></span>
-    </button>
   </div>
 </nav>
 {% endblock %}
@@ -123,26 +121,30 @@
 
       <div class="content-wrapper">
         
-        {% block breadcrumbs %}
+        
         <div class="container-fluid container-limited">
-          <div class="breadcrumb">
-            {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
-            {% for breadcrumb, link in breadcrumbs|reverse(true) %}
-              <div class="breadcrumb-item">
-                {%- if loop.last -%}<strong>{%- endif -%}
-                {% if link is not null %}
-                  <a href="{{ link }}">{{ breadcrumb }}</a>
-                {% else %}
-                  <span>{{ breadcrumb }}</span>
-                {% endif %}
-                
-                
-                {%- if loop.last -%}</strong>{%- endif -%}
-              </div>
-            {% endfor %}
+          <div class="container-header-wrapper d-flex">
+            <div class="show-sidebar">{{ svg('hamburger') }}</div>
+            {% block breadcrumbs %}
+            <div class="breadcrumb">
+              {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
+              {% for breadcrumb, link in breadcrumbs|reverse(true) %}
+                <div class="breadcrumb-item">
+                  {%- if loop.last -%}<strong>{%- endif -%}
+                  {% if link is not null %}
+                    <a href="{{ link }}">{{ breadcrumb }}</a>
+                  {% else %}
+                    <span>{{ breadcrumb }}</span>
+                  {% endif %}
+                  
+                  
+                  {%- if loop.last -%}</strong>{%- endif -%}
+                </div>
+              {% endfor %}
+            </div>
+            {% endblock %}
           </div>
         </div>
-      {% endblock %}
         <div class="container-fluid container-limited">
           <div class="row">
             <div class="flashbag-container col-lg-12 mt-2">

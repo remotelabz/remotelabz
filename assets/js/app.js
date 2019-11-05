@@ -1,5 +1,5 @@
 /**
-* La Valise's main JS file.
+* Remotelabz main JS file.
 * 
 * Mainly used to customize plugins and loading them.
 * 
@@ -168,7 +168,7 @@ require("jsplumb");
         }
         
         //checkbox and radios
-        $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
+        // $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
         
         
         $(".purchace-popup .popup-dismiss").on("click",function(){

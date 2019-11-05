@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Noty from 'noty';
 import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
 
@@ -70,4 +71,41 @@ export default class API {
             }).show();
         });
     }
-};
+}
+
+API.getInstance = (options) => {
+    const axios = require('axios').default;
+
+    axios.interceptors.request.use(
+        config => {
+            options.beforeSend && options.beforeSend();
+            return config;
+        }, error => {
+            return Promise.reject(error);
+        }
+    );
+
+    // Add a response interceptor
+    axios.interceptors.response.use(
+        response => {
+            options.responseCallback && options.responseCallback();
+            options.successCallback && options.successCallback();
+            return response;
+        }, error => {
+            options.responseCallback && options.responseCallback();
+            options.errorCallback && options.errorCallback();
+            // Unauthentified
+            console.error(error.config.url + " (" + error.response.status + ") " + error.response.statusText);
+            if (error.response.status === 401) {
+                new Noty({
+                    type: 'error',
+                    text: 'Your session has expired. Please log in again.'
+                }).show();
+            }
+            
+            return Promise.reject(error);
+        }
+    );
+    
+    return axios;
+}

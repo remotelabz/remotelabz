@@ -9,10 +9,10 @@ use App\Repository\FlavorRepository;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 
-class FlavorController extends FOSRestController
+class FlavorController extends AbstractFOSRestController
 {
     public $flavorRepository;
 
