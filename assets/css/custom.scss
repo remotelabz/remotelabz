@@ -67,13 +67,19 @@ legend
   margin-bottom: 20px;
 }
 
-.form-group label
+.form-group
 {
-  text-align: right;
-  margin: auto;
+  label {
+    text-align: right;
+    margin: auto;
 
-  &.form-check-label {
-    text-align: left;
+    &.form-check-label {
+      text-align: left;
+    }
+  }
+  
+  div {
+    font-size: 14px;
   }
 }
 
