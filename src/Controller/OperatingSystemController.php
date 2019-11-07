@@ -3,19 +3,25 @@
 namespace App\Controller;
 
 use App\Entity\OperatingSystem;
+use Swagger\Annotations as SWG;
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
+use FOS\RestBundle\Context\Context;
 use JMS\Serializer\SerializerInterface;
+use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
-class OperatingSystemController extends AppController
+class OperatingSystemController extends AbstractFOSRestController
 {
     /**
      * @var OperatingSystemRepository
@@ -27,28 +33,81 @@ class OperatingSystemController extends AppController
         $this->operatingSystemRepository = $operatingSystemRepository;
     }
 
+    // /**
+    //  * @Route("/admin/operating-systems", name="operating_systems")
+    //  */
+    // public function indexAction(Request $request)
+    // {
+    //     $search = $request->query->get('search', '');
+    //     $data = [];
+        
+    //     if ($search !== '') {
+    //         $data = $this->operatingSystemRepository->findByNameLike($search);
+    //     } else {
+    //         $data = $this->operatingSystemRepository->findAll();
+    //     }
+
+    //     if ($this->getRequestedFormat($request) === JsonRequest::class) {
+    //         return $this->renderJson($data);
+    //     }
+        
+    //     return $this->render('operating_system/index.html.twig', [
+    //         'operatingSystems' => $data,
+    //         'search' => $search
+    //     ]);
+    // }
+
     /**
      * @Route("/admin/operating-systems", name="operating_systems")
+     * 
+     * @Rest\Get("/api/operating-systems", name="api_operating_systems")
+     * 
+     * @SWG\Parameter(
+     *     name="search",
+     *     in="query",
+     *     type="string",
+     *     description="Filter operating systems by name. All operating systems with a name containing this value will be shown."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all existing operating-systems",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=Lab::class))
+     *     )
+     * )
+     * 
+     * @SWG\Tag(name="Operating system")
      */
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
-        $data = [];
-        
-        if ($search !== '') {
-            $data = $this->operatingSystemRepository->findByNameLike($search);
-        } else {
-            $data = $this->operatingSystemRepository->findAll();
-        }
 
-        if ($this->getRequestedFormat($request) === JsonRequest::class) {
-            return $this->renderJson($data);
-        }
-        
-        return $this->render('operating_system/index.html.twig', [
-            'operatingSystems' => $data,
-            'search' => $search
-        ]);
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search))
+            ->orderBy([
+                'id' => Criteria::DESC
+            ])
+        ;
+
+        $operatingSystems = $this->operatingSystemRepository->matching($criteria);
+
+        // $context = new Context();
+        // $context
+        //     ->addGroup("operating-system")
+        // ;
+
+        $view = $this->view($operatingSystems->getValues())
+            ->setTemplate("operating_system/index.html.twig")
+            ->setTemplateData([
+                'operatingSystems' => $operatingSystems,
+                'search' => $search
+            ])
+            // ->setContext($context)
+        ;
+
+        return $this->handleView($view);
     }
 
     /**

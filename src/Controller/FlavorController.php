@@ -5,7 +5,9 @@ namespace App\Controller;
 use App\Entity\Flavor;
 use App\Form\FlavorType;
 use Swagger\Annotations as SWG;
+use FOS\RestBundle\Context\Context;
 use App\Repository\FlavorRepository;
+use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -39,13 +41,29 @@ class FlavorController extends AbstractFOSRestController
      */
     public function indexAction(Request $request)
     {
-        $flavors = $this->flavorRepository->findAll();
+        $search = $request->query->get('search', '');
 
-        $view = $this->view($flavors, 200)
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search))
+            ->orderBy([
+                'id' => Criteria::DESC
+            ])
+        ;
+
+        $flavors = $this->flavorRepository->matching($criteria);
+
+        // $context = new Context();
+        // $context
+        //     ->addGroup("flavor")
+        // ;
+
+        $view = $this->view($flavors->getValues())
             ->setTemplate("flavor/index.html.twig")
             ->setTemplateData([
-                'flavors' => $flavors
+                'flavors' => $flavors,
+                'search' => $search
             ])
+            // ->setContext($context)
         ;
 
         return $this->handleView($view);

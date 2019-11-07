@@ -75,6 +75,7 @@ export default class API {
 
 API.getInstance = (options) => {
     const axios = require('axios').default;
+    if (!options) options = {};
 
     axios.interceptors.request.use(
         config => {

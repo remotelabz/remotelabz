@@ -28,6 +28,7 @@ export default class Editor extends React.Component {
         this.jsPlumb = jsPlumb.getInstance({
             Endpoint: "Blank",
         });
+        this.deviceForm = React.createRef();
 
         this.state = {
             fullscreen: false,
@@ -235,8 +236,6 @@ export default class Editor extends React.Component {
                 .then(() => this.setState({lab: {...this.state.lab, name: val}}))
             ;
         }
-        
-        // console.log('Edited Value -> ', val);
     }
 
     getEditorClassNames = () => { return "editor" + (this.state.fullscreen ? " fullscreen" : ""); };
@@ -294,11 +293,8 @@ export default class Editor extends React.Component {
                             <Modal.Title>Edit device</Modal.Title>
                         </Modal.Header>
                         <Modal.Body>
-                            <DeviceForm device={this.state.deviceModal.device} />
+                            <DeviceForm device={this.state.deviceModal.device} ref={this.deviceForm} />
                         </Modal.Body>
-                        <Modal.Footer>
-                            <Button variant="success" onClick={this.onValidateDeviceModal}>Save</Button>
-                        </Modal.Footer>
                     </Modal>
                     <Menu
                         onCreateDeviceRequest={this.handleCreateDevice}
