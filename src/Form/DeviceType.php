@@ -30,8 +30,14 @@ class DeviceType extends AbstractType
                     'placeholder' => 'Identifies this device'
                 ]
             ])
-            ->add('brand')
-            ->add('model')
+            ->add('brand', TextType::class, [
+                'required' => false,
+                'empty_data' => ''
+            ])
+            ->add('model', TextType::class, [
+                'required' => false,
+                'empty_data' => ''
+            ])
             // ->add('type', ChoiceType::class, [
             //     'choices' => ['Virtual Machine' => 'vm'],
             //     'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
@@ -57,7 +63,6 @@ class DeviceType extends AbstractType
                 'label' => 'Template',
                 'help' => "Check this if this device is a template meant to be re-used in the Lab editor."
             ])
-            ->add('editorData', EditorDataType::class)
             ->add('submit', SubmitType::class)
         ;
     }

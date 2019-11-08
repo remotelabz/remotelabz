@@ -42,7 +42,7 @@ export class Item extends React.Component
     render()
     {
         const className = "editor-contextual-menu-option" + (this.props.className ? (" " + this.props.className) : "");
-        
+
         return (
             <ListGroup.Item as="li" action onClick={this.props.onClick} className={className}>
                 {this.props.children}

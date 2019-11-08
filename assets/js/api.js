@@ -23,7 +23,7 @@ export default class API {
         })
         window.location.href = url;
     }
-    
+
     toggle(id) {
         $.ajax({
             url: Routing.generate('toggle_' + this.collection, {
@@ -32,22 +32,22 @@ export default class API {
             method: 'PATCH',
             contentType: 'application/json'
         })
-        .done(function (data, status) {
+        .done(function (data) {
             $('table.dataTable').DataTable().ajax.reload();
-            
+
             new Noty({
                 type: 'success',
                 text: data.message
             }).show();
         })
-        .fail(function (data, status) {
+        .fail(function (data) {
             new Noty({
                 type: 'error',
                 text: data.responseJSON.message
             }).show();
         });
     }
-    
+
     delete(id) {
         $.ajax({
             url: Routing.generate('delete_' + this.collection, {
@@ -56,15 +56,15 @@ export default class API {
             method: 'DELETE',
             contentType: 'application/json'
         })
-        .done(function (data, status) {
+        .done(function (data) {
             $('table.dataTable').DataTable().ajax.reload();
-            
+
             new Noty({
                 type: 'success',
                 text: data.message
             }).show();
         })
-        .fail(function (data, status) {
+        .fail(function (data) {
             new Noty({
                 type: 'error',
                 text: data.responseJSON.message
@@ -102,11 +102,16 @@ API.getInstance = (options) => {
                     type: 'error',
                     text: 'Your session has expired. Please log in again.'
                 }).show();
+            } else if (error.response.status >= 500) {
+                new Noty({
+                    type: 'error',
+                    text: 'Oops, an error happened. Please reload your window.'
+                }).show();
             }
-            
+
             return Promise.reject(error);
         }
     );
-    
+
     return axios;
 }

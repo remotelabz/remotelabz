@@ -20,7 +20,14 @@
         "react/prop-types": 0,
         "no-unused-vars": "warn",
         "no-console": "warn",
-        "no-unexpected-multiline": "warn"
+        "no-unexpected-multiline": "warn",
+        "no-trailing-spaces": [
+            "warn",
+            {
+                "skipBlankLines": false,
+                "ignoreComments": true
+            }
+        ]
     },
     "env" : {
         "browser": true,

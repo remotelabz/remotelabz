@@ -225,11 +225,13 @@ class DeviceController extends AbstractFOSRestController
             $entityManager->persist($device);
             $entityManager->flush();
 
-            $this->addFlash('info', 'Device has been edited.');
+            if ($request->getRequestFormat() === 'html') {
+                $this->addFlash('info', 'Device has been edited.');
+                $view->setLocation($this->generateUrl('show_device', ['id' => $id]));
+            }
 
-            $view->setLocation($this->generateUrl('show_device', ['id' => $id]));
             $view->setStatusCode(200);
-            $view->setData(null);
+            $view->setData($this->deviceRepository->find($device->getId()));
             // $context = new Context();
             // $context
             //     ->addGroup("device")

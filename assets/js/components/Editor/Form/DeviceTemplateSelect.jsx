@@ -18,10 +18,10 @@ export default class DeviceTemplateSelect extends React.Component
 
     loadOptions = (inputValue) => {
         return axios.get('/api/devices', {
-            params : {
+            params: {
                 search: inputValue,
                 template: true
-            } 
+            }
         })
         .then(response => {
             let options = [];

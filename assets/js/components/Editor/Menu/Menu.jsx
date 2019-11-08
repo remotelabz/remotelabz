@@ -36,23 +36,26 @@ export default class Menu extends Component
                     </Button>
 
                     <ButtonGroup className="ml-3">
-                        <Button variant="default" onClick={this.handleZoomOut}>
-                            <span><i className="fa fa-search-minus" aria-hidden="true"></i></span>
-                        </Button>
+                        <OverlayTrigger placement="bottom" overlay={<Tooltip>Zoom out</Tooltip>}>
+                            <Button variant="default" onClick={this.handleZoomOut}>
+                                <span><i className="fa fa-search-minus" aria-hidden="true"></i></span>
+                            </Button>
+                        </OverlayTrigger>
 
-                        <Button variant="default" onClick={this.handleZoomIn}>
-                            <span><i className="fa fa-search-plus" aria-hidden="true"></i></span>
-                        </Button>
+                        <OverlayTrigger placement="bottom" overlay={<Tooltip>Zoom in</Tooltip>}>
+                            <Button variant="default" onClick={this.handleZoomIn}>
+                                <span><i className="fa fa-search-plus" aria-hidden="true"></i></span>
+                            </Button>
+                        </OverlayTrigger>
                     </ButtonGroup>
-                    
                 </ButtonToolbar>
                 <div className="separator flex-grow-1"> </div>
                 <ButtonToolbar className="d-flex">
-                    <Button variant="default" onClick={this.handleToggleFullscreen}>
-                        <OverlayTrigger overlay={<Tooltip>Toggle fullscreen</Tooltip>}>
+                    <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle fullscreen</Tooltip>}>
+                        <Button variant="default" onClick={this.handleToggleFullscreen}>
                             <SVG name={this.state.fullscreen ? "screen-normal" : "screen-full"} className="image-sm v-sub"></SVG>
-                        </OverlayTrigger>
-                    </Button>
+                        </Button>
+                    </OverlayTrigger>
                 </ButtonToolbar>
             </div>
         );

@@ -3,7 +3,6 @@ import { Form, Button } from 'react-bootstrap';
 import AsyncSelect from 'react-select/async';
 import API from '../../../api';
 import { Formik } from 'formik';
-import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
 export default class DeviceForm extends React.Component
@@ -20,17 +19,18 @@ export default class DeviceForm extends React.Component
             model: Yup.string(),
             operatingSystem: Yup.object().shape({
                 label: Yup.string().required(),
-                value: Yup.string().required()
+                value: Yup.number().required()
             }),
             flavor: Yup.object().shape({
                 label: Yup.string().required(),
-                value: Yup.string().required()
+                value: Yup.number().required()
             })
         });
 
         this.state = {
-          operatingSystemOptions: null,
-          flavorOptions: null,
+            operatingSystemOptions: null,
+            flavorOptions: null,
+            device: this.props.device,
         };
     }
 
@@ -38,40 +38,45 @@ export default class DeviceForm extends React.Component
     {
         this.api.get('/api/operating-systems')
             .then(response => {
-                let options = [];
+                let operatingSystemOptions = [];
                 response.data.forEach(operatingSystem => {
-                    options.push({
+                    operatingSystemOptions.push({
                         ...operatingSystem,
                         value: operatingSystem.id,
                         label: operatingSystem.name,
                     })
                 });
-                this.setState({operatingSystemOptions: options});
+                this.setState({operatingSystemOptions});
+                return null;
             })
-        .then(
-            this.api.get('/api/flavors')
+            .then(() => { return this.api.get('/api/flavors') })
             .then(response => {
-                let options = [];
+                let flavorOptions = [];
                 response.data.forEach(flavor => {
-                    options.push({
+                    flavorOptions.push({
                         ...flavor,
                         value: flavor.id,
                         label: flavor.name,
                     })
                 });
-                this.setState({flavorOptions: options});
-            })
-        )
+                this.setState({flavorOptions});
+                return null;
+            });
+    }
 
-        
-        ;
+    componentDidUpdate(prevProps) {
+        if(prevProps.device.id != this.props.device.id) {
+            this.setState({
+                device: this.props.device
+            });
+        }
     }
 
     loadFlavorOptions = (inputValue) => {
         return this.api.get('/api/flavors', {
             params: {
                 search: inputValue
-            } 
+            }
         })
         .then(response => {
             let options = [];
@@ -90,7 +95,7 @@ export default class DeviceForm extends React.Component
         return this.api.get('/api/operating-systems', {
             params: {
                 search: inputValue
-            } 
+            }
         })
         .then(response => {
             let options = [];
@@ -110,9 +115,21 @@ export default class DeviceForm extends React.Component
             <Formik
                 validationSchema={this.schema}
                 onSubmit={values => {
-                    console.log(values);
+                    // let device = values;
+                    // device.operatingSystem = device.operatingSystem.value;
+                    // device.flavor = device.flavor.value;
+                    this.props.onSubmit({
+                        id: values.id,
+                        name: values.name,
+                        brand: values.brand || '',
+                        model: values.model || '',
+                        operatingSystem: values.operatingSystem.value,
+                        flavor: values.flavor.value
+                    });
                 }}
+                enableReinitialize
                 initialValues={{
+                    id: this.props.device.id,
                     name: this.props.device.name,
                     brand: this.props.device.brand,
                     model: this.props.device.model,
@@ -129,15 +146,14 @@ export default class DeviceForm extends React.Component
                 {({
                     handleSubmit,
                     handleChange,
-                    handleBlur,
                     values,
-                    touched,
-                    isValid,
                     errors,
+                    dirty,
                     setFieldValue,
                     setFieldTouched,
                 }) => (
                     <Form noValidate onSubmit={handleSubmit}>
+                        <Form.Control type="hidden" name="id" value={values.id} onChange={handleChange} />
                         <Form.Group>
                             <Form.Label>Name</Form.Label>
                             <Form.Control
@@ -145,7 +161,7 @@ export default class DeviceForm extends React.Component
                                 type="text"
                                 name="name"
                                 placeholder="Device name"
-                                defaultValue={values.name}
+                                value={values.name}
                                 onChange={handleChange}
                                 isInvalid={!!errors.name}
                             />
@@ -157,7 +173,7 @@ export default class DeviceForm extends React.Component
                                 type="text"
                                 name="brand"
                                 placeholder="Brand of the device"
-                                defaultValue={values.brand}
+                                value={values.brand}
                                 onChange={handleChange}
                                 isInvalid={!!errors.brand}
                             />
@@ -169,7 +185,7 @@ export default class DeviceForm extends React.Component
                                 type="text"
                                 name="model"
                                 placeholder="Model of the device"
-                                defaultValue={values.model}
+                                value={values.model}
                                 onChange={handleChange}
                                 isInvalid={!!errors.model}
                             />
@@ -201,7 +217,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
                         </Form.Group>
-                        <Button variant="success" type="submit">
+                        <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>
                             Submit
                         </Button>
                     </Form>

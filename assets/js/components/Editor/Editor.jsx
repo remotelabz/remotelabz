@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import Menu from './Menu/Menu';
 import ContextualMenu from './Menu/ContextualMenu';
 import Canvas from './Display/Canvas';
@@ -9,7 +9,9 @@ import SVG from '../Display/SVG';
 import API from '../../api';
 import DeviceTemplateSelect from './Form/DeviceTemplateSelect';
 import DeviceForm from './Form/DeviceForm';
-import EdiText from 'react-editext'
+import EdiText from 'react-editext';
+import Skeleton from 'react-loading-skeleton';
+import update from 'immutability-helper';
 
 export default class Editor extends React.Component {
     jsPlumb = null;
@@ -31,9 +33,10 @@ export default class Editor extends React.Component {
         this.deviceForm = React.createRef();
 
         this.state = {
+            ready: false,
             fullscreen: false,
             canvasZoom: 1,
-            deviceModal: {
+            editDeviceForm: {
                 show: false,
                 device: null,
             },
@@ -48,8 +51,12 @@ export default class Editor extends React.Component {
                 y: 0,
                 target: null,
             },
+            asideMenu: {
+                show: false,
+                action: null
+            },
             lab: {
-                name: ''
+                name: null
             },
             /** @type {array} */
             devices: [],
@@ -59,20 +66,19 @@ export default class Editor extends React.Component {
         document.addEventListener("DOMContentLoaded", () => {
             this.labId = document.getElementById("labEditor").dataset.id;
 
-            this.getLabDevicesRequest();
-        });
-    }
-
-    getLabDevicesRequest = () => {
-        this.api.get('/api/labs/' + this.labId)
-            .then(response => this.setState({
+            this.getLabDevicesRequest().then(response => this.setState({
                 devices: response.data.devices,
                 lab: {
                     ...this.state.lab,
                     name: response.data.name
                 }
             }))
-        ;
+            .then(() => this.setState({ready: true}));
+        });
+    }
+
+    getLabDevicesRequest = () => {
+        return this.api.get('/api/labs/' + this.labId);
     }
 
     getLabDeviceRequest = id => {
@@ -87,6 +93,10 @@ export default class Editor extends React.Component {
         this.api.post('/api/labs/' + this.labId + '/devices', device)
             .then(response => this.addDevice(response.data))
         ;
+    }
+
+    updateDeviceRequest = device => {
+        return this.api.put('/api/devices/' + device.id, device);
     }
 
     updateDevicePositionRequest = device => {
@@ -116,19 +126,38 @@ export default class Editor extends React.Component {
 
     handleCreateDevice = () => this.setState({ addDeviceModal: { ...this.state.addDeviceModal, show: true }});
     handleEditDevice = () => {
+        // this.hideAsideMenu();
         let device = this.state.devices.find(device => {
             return device.id == this.state.contextualMenu.target.id;
         });
-        console.log(device);
         this.setState({
-            deviceModal: {
-                ...this.state.deviceModal,
+            editDeviceForm: {
+                ...this.state.editDeviceForm,
                 device,
                 show: true,
+            },
+            asideMenu: {
+                show: true,
+                action: 'edit'
             }
         });
     }
-    handleDeleteDevice = () => this.deleteDeviceRequest();
+
+    onSubmitEditDevice = device => {
+        this.updateDeviceRequest(device)
+            .then(response => {
+                this.hideAsideMenu();
+                const updatedDeviceIndex = this.state.devices.findIndex(value => {return device.id == value.id});
+                this.setState({
+                    devices: update(this.state.devices, {[updatedDeviceIndex]: {$set: response.data}})
+                });
+            });
+    }
+
+    handleDeleteDevice = () => {
+        this.hideAsideMenu();
+        this.deleteDeviceRequest();
+    }
 
     onHideAddDeviceModal = () => this.setState({ addDeviceModal: { ...this.state.addDeviceModal, show: false }});
 
@@ -192,7 +221,7 @@ export default class Editor extends React.Component {
                 contextualMenu: { ...this.state.contextualMenu, show: false },
             });
         }
-        
+
         if (document.onmousedown) {
             document.onmousedown = null;
         }
@@ -260,23 +289,42 @@ export default class Editor extends React.Component {
         }
     }
 
+    getAsideMenuChildren = () => {
+        if (this.state.asideMenu.action === 'edit') {
+            return (<>
+                <h2>Edit device</h2>
+                <DeviceForm onSubmit={this.onSubmitEditDevice} device={this.state.editDeviceForm.device} />
+            </>);
+        }
+
+        return null;
+    }
+
+    hideAsideMenu = () => this.setState({asideMenu: {show: false, action: null}});
+
     render() {
         return (<>
             <div className="editor-lab-name mb-3">
-                <EdiText
-                    type='text'
-                    value={this.state.lab.name}
-                    onSave={this.onNameSave}
-                    showButtonsOnHover={true}
-                    editOnViewClick={true}
-                    mainContainerClassName="editor-title p-2"
-                    editButtonContent="✎"
-                    editButtonClassName="editor-title-edit-button"
-                    submitOnEnter
-                />
+                <div className="p-2">
+                {this.state.lab.name ?
+                    <EdiText
+                        type='text'
+                        value={this.state.lab.name}
+                        onSave={this.onNameSave}
+                        showButtonsOnHover={true}
+                        editOnViewClick={true}
+                        mainContainerClassName="editor-title"
+                        editButtonContent="✎"
+                        editButtonClassName="editor-title-edit-button"
+                        submitOnEnter
+                    />
+                    :
+                    <Skeleton height={24} />}</div>
             </div>
+            {this.state.ready ?
             <div className="editor-wrapper">
                 <div id="editor" className={this.getEditorClassNames()}>
+                    {/* ADD DEVICE MODAL */}
                     <Modal size="lg" show={this.state.addDeviceModal.show} onHide={this.onHideAddDeviceModal}>
                         <Modal.Header closeButton>
                             <Modal.Title>Add a new device</Modal.Title>
@@ -288,36 +336,8 @@ export default class Editor extends React.Component {
                             <Button variant="success" onClick={this.onValidateAddDeviceModal} disabled={!this.state.addDeviceModal.selectedOption ? true : false}>Add</Button>
                         </Modal.Footer>
                     </Modal>
-                    <Modal size="lg" show={this.state.deviceModal.show} onHide={this.onHideDeviceModal}>
-                        <Modal.Header closeButton>
-                            <Modal.Title>Edit device</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <DeviceForm device={this.state.deviceModal.device} ref={this.deviceForm} />
-                        </Modal.Body>
-                    </Modal>
-                    <Menu
-                        onCreateDeviceRequest={this.handleCreateDevice}
-                        onToggleFullscreen={this.toggleFullscreen}
-                        onZoomIn={this.onZoomIn}
-                        onZoomOut={this.onZoomOut}
-                        className="editor-menu"
-                    />
-                    <Canvas onContextMenu={this.onContextMenu} onZoomIn={this.onZoomIn} onZoomOut={this.onZoomOut} zoom={this.state.canvasZoom}>
-                        {this.state.devices.map((device) => (
-                            <Device
-                                key={device.id}
-                                name={device.name}
-                                id={device.id}
-                                x={device.editorData.x}
-                                y={device.editorData.y}
-                                scale={this.state.canvasZoom}
-                                onMoved={this.onDeviceMoved}
-                                onDrag={this.onDeviceDrag}
-                                onContextMenu={this.onContextMenu}
-                            />
-                        ))}
-                    </Canvas>
+
+                    {/* CONTEXTUAL MENU */}
                     <ContextualMenu
                         id="editorContextualMenu"
                         x={this.state.contextualMenu.x}
@@ -326,6 +346,46 @@ export default class Editor extends React.Component {
                     >
                         {this.getContextualMenuItems()}
                     </ContextualMenu>
+
+                    {/* TOP MENU */}
+                    <Menu
+                        onCreateDeviceRequest={this.handleCreateDevice}
+                        onToggleFullscreen={this.toggleFullscreen}
+                        onZoomIn={this.onZoomIn}
+                        onZoomOut={this.onZoomOut}
+                        className="editor-menu"
+                    />
+
+                    {/* CANVAS */}
+                    <div className="editor-canvas-wrapper">
+                        <Canvas onContextMenu={this.onContextMenu} onZoomIn={this.onZoomIn} onZoomOut={this.onZoomOut} zoom={this.state.canvasZoom}>
+                            {this.state.devices.map((device) => (
+                                <Device
+                                    key={device.id}
+                                    name={device.name}
+                                    id={device.id}
+                                    x={device.editorData.x}
+                                    y={device.editorData.y}
+                                    scale={this.state.canvasZoom}
+                                    onMoved={this.onDeviceMoved}
+                                    onDrag={this.onDeviceDrag}
+                                    onContextMenu={this.onContextMenu}
+                                />
+                            ))}
+                        </Canvas>
+
+                        {/* SIDE MENU */}
+                        { this.state.asideMenu.show && (
+                            <aside className="editor-aside-toolbar">
+                                <OverlayTrigger placement="top" overlay={<Tooltip>Close side menu</Tooltip>}>
+                                    <Button variant="default" onClick={this.hideAsideMenu} className="float-right"><SVG name="angle-double-right" className="image-sm v-sub"></SVG></Button>
+                                </OverlayTrigger>
+                                {this.getAsideMenuChildren()}
+                            </aside>
+                        )}
+                    </div>
+
+                    {/* TOOLBAR */}
                     <div className="editor-toolbar-wrapper">
                         <div className="text-muted">Zoom : {Math.round(this.state.canvasZoom * 100)}%</div>
                         <div className="flex-separator"></div>
@@ -339,7 +399,7 @@ export default class Editor extends React.Component {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> : <Skeleton height={800} />}
         </>)
     }
 }

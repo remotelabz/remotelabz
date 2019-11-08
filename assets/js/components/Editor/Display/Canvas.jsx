@@ -17,12 +17,14 @@ export default class Canvas extends React.Component {
     render() {
         const style = this.props.style || {};
         style.transform = `scale(${this.props.zoom}, ${this.props.zoom})`;
+        style.width = "100%";
+        style.height = "100%";
         style.height = (1 / this.props.zoom * 100) + '%';
         style.width = (1 / this.props.zoom * 100) + '%';
 
         return (
-            <div className="editor-canvas-wrapper" onContextMenu={this.props.onContextMenu}>
-                <div style={style} id="editorCanvas" className="editor-canvas" onWheel={this.onWheel}>
+            <div style={{flexGrow:2}}>
+                <div style={style} id="editorCanvas" className="editor-canvas" onContextMenu={this.props.onContextMenu} onWheel={this.onWheel}>
                     {this.props.children}
                 </div>
             </div>
