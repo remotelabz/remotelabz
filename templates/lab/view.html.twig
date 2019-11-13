@@ -12,35 +12,64 @@
             <div class="card-body">
                 <h4 class="card-title">
                     Laboratory {{ lab.name }}
-                    <div class="float-right">
-                        {% if labInstance is not null and not labInstance.isInternetConnected %}
-                            <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                {{ 'Connect'|trans }}
+                    <div class="float-right">                
+                        {% if labInstance is null %} 
+                                <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Start all'|trans }}
+                                </a>
+                                {% if is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER") %}
+                                    <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn" role="button">
+                                        {{ 'Edit'|trans }}
+                                    </a>
+                                    <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn" role="button">
+                                        {{ 'Delete'|trans }}
+                                    </a>
+                            {% endif %}
+                        {% elseif not labInstance.isStarted %}
+                                <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Stop all'|trans }}
+                                </a>
+                            
+                        {% else %}
+                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                    {{ 'Stop all'|trans }}
                             </a>
-                        {% endif %}
-                        {% if labInstance is not null and labInstance.isInternetConnected %}
-                            <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                {{ 'Disconnect'|trans }}
-                            </a>
-                        {% endif %}
-                        {% if labInstance is null or (labInstance is not null and not labInstance.isStarted) %}
-                            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                                {{ 'Start all'|trans }}
-                            </a>
-                            <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn" role="button">
-                                {{ 'Edit'|trans }}
-                            </a>
-                        {% endif %}
-                        {% if labInstance is not null %}
-                            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Stop all'|trans }}
-                            </a>
+                            
                         {% endif %}
                         {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) and labInstance is null %}
                             <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Delete'|trans }}
                             </a>
                         {% endif %}
                     </div>
-                </h4>
+                    </h4>
+                <div class="row float-right">
+                        {% if labInstance %}
+                            {% if (is_granted("ROLE_USER") and labInstance.Activity and labInstance.Activity.InternetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
+                                {% if (not labInstance.IsInternetConnected) %}
+                                    <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Connect'|trans }}
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Disconnect'|trans }}
+                                    </a>
+                                {% endif %}
+                                {% if (not labInstance.IsInterconnected) %}
+                                    <a href="{{ path('interconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Interconnect'|trans }}
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('disinterconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
+                                        {{ 'Dis-interconnect'|trans }}
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+
+
+
+
+                </div>
                 <p>Created by {{ lab.author.firstName }} {{ lab.author.lastName }}</p>
                 <br>
                 <div class="row">
@@ -105,7 +134,7 @@
                 {% if output is defined %}
                 {{ dump(output|cast_to_array)}}
                 {% endif %}
-                
+                {{dump(labInstance)}}
                 {# {{ dump(lab|cast_to_array)}} #}
                 {# {% for key, value in lab|cast_to_array %}
                     <p>{{ key }} : {{ value }}</p>

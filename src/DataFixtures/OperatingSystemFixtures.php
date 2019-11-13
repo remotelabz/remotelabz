@@ -65,6 +65,14 @@ class OperatingSystemFixtures extends Fixture
         $manager->persist($operatingSystem);
         $this->setReference('operating-system-Ubuntu', $operatingSystem);
 
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Ubuntu LXDE')
+            ->setImageUrl('http://194.57.105.124/~fnolot/ubuntu-18-SrvLxde.img')
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('operating-system-UbuntuLXDE', $operatingSystem);
+
         $manager->flush();
     }
 }

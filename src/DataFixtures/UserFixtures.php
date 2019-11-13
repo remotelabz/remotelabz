@@ -23,7 +23,7 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
         /* Static data, for super-admin */
         $user = new User();
 
-        $user->setLastName("Nolot")
+        $user->setLastName("Administrator")
             ->setFirstName("Florent")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
@@ -41,9 +41,10 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
 
         /* Traditional user */
         $user = new User();
-        $user->setLastName("Hubert")
+        $user->setLastName("LastName User")
             ->setFirstName("Julien")
             ->setEmail("user@localhost")
+            ->setRoles(['ROLE_USER'])
             ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
             ->setPassword(
                 $this->passwordEncoder->encodePassword(

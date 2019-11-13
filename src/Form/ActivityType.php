@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Lab;
 use App\Entity\Activity;
+use App\Entity\ActivityAuthorization;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -31,14 +32,26 @@ class ActivityType extends AbstractType
                 'choice_label' => 'name',
                 'required' => false
             ])
-            ->add('shared', HiddenType::class, [
-                'data' => "false"
+            ->add('InternetAllowed', CheckboxType::class, [
+                'help' => 'If the laboratory is allowed to be conntected to Internet.',
+                'required' => false,
+//                'block_prefix' => 'checkbox_test'
             ])
-            ->add('supervised', HiddenType::class, [
-                'data' => "false"
+            ->add('Interconnected', CheckboxType::class, [
+                'help' => 'If all laboratory of the same activity of the same course is together interconnected.',
+                'required' => false
             ])
-            ->add('accessType', HiddenType::class, [
-                'data' => 'non'
+            ->add('UsedAlone', CheckboxType::class, [
+                'help' => 'If this activity must be alone.',
+                'required' => false
+            ])
+            ->add('UsedInGroup', CheckboxType::class, [
+                'help' => 'If this activity must be done in group.',
+                'required' => false
+            ])
+            ->add('UsedTogetherInCourse', CheckboxType::class, [
+                'help' => 'If all users of this course do this activity together.',
+                'required' => false
             ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)

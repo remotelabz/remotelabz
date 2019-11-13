@@ -39,37 +39,75 @@ class NetworkSettingsFixtures extends Fixture
         // }
 
         $networkSettings = new NetworkSettings();
-
         $networkSettings
-            ->setName("settings1")
-            ->setIp("")
-            ->setIpv6("")
-            ->setPrefix4(24)
-            ->setPrefix6(0)
-            ->setGateway("")
-            ->setProtocol('VNC')
-            ->setPort($randomData->numberBetween(8192, 65536))
+            ->setName("172.16.0.0/21")
+            ->setIp("172.16.0.0")
+            ->setIpv6(NULL)
+            ->setPrefix4(21)
+            ->setPrefix6(NULL)
+            ->setGateway(NULL)
+            ->setProtocol(NULL)
+            ->setPort(NULL)
         ;
-
         $manager->persist($networkSettings);
         $this->addReference('network_settings1', $networkSettings);
 
         $networkSettings = new NetworkSettings();
-
         $networkSettings
-            ->setName("settings2")
-            ->setIp("")
-            ->setIpv6("")
-            ->setPrefix4(24)
-            ->setPrefix6(0)
-            ->setGateway("")
-            ->setProtocol('VNC')
-            ->setPort($randomData->numberBetween(8192, 65536))
+            ->setName("172.16.8.0/21")
+            ->setIp("172.16.8.0")
+            ->setIpv6(NULL)
+            ->setPrefix4(21)
+            ->setPrefix6(NULL)
+            ->setGateway(NULL)
+            ->setProtocol(NULL)
+            ->setPort(NULL)
         ;
-
         $manager->persist($networkSettings);
-
         $this->addReference('network_settings2', $networkSettings);
+
+        $networkSettings = new NetworkSettings();
+        $networkSettings
+            ->setName('ToAlpineDevice')
+            ->setIp(NULL)
+            ->setIpv6(NULL)
+            ->setPrefix4(NULL)
+            ->setPrefix6(NULL)
+            ->setGateway(NULL)
+            ->setProtocol("VNC")
+            ->setPort(NULL)
+        ;
+        $manager->persist($networkSettings);
+        $this->addReference('network_settings3', $networkSettings);
+
+        $networkSettings = new NetworkSettings();
+        $networkSettings
+            ->setName('ToDebianDevice')
+            ->setIp(NULL)
+            ->setIpv6(NULL)
+            ->setPrefix4(NULL)
+            ->setPrefix6(NULL)
+            ->setGateway(NULL)
+            ->setProtocol("VNC")
+            ->setPort(NULL)
+        ;
+        $manager->persist($networkSettings);
+        $this->addReference('network_settings4', $networkSettings);
+
+        $networkSettings = new NetworkSettings();
+        $networkSettings
+            ->setName('ToUbuntuDevice')
+            ->setIp(NULL)
+            ->setIpv6(NULL)
+            ->setPrefix4(NULL)
+            ->setPrefix6(NULL)
+            ->setGateway(NULL)
+            ->setProtocol("VNC")
+            ->setPort(NULL)
+        ;
+        $manager->persist($networkSettings);
+        $this->addReference('network_settings5', $networkSettings);
+
 
         $manager->flush();
     }

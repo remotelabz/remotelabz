@@ -37,11 +37,6 @@ class LabInstance extends Instance
     protected $user;
 
     /**
-     * @ORM\Column(type="boolean")
-     */
-    protected $isInternetConnected;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance")
      * @Serializer\XmlList(inline=true, entry="device_instance")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
@@ -53,6 +48,44 @@ class LabInstance extends Instance
         parent::__construct();
         $this->deviceInstances = new ArrayCollection();
     }
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsInterconnected;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedAlone;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedInGroup;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsUsedTogetherInCourse;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $IsInternetConnected;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
+     * @Serializer\Groups({"activity", "start_lab", "stop_lab"})
+     */
+    private $Activity;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
+     */
+    private $NetworkSettings;
+
+    
 
     public function getId(): ?int
     {
@@ -181,15 +214,64 @@ class LabInstance extends Instance
 
     public function getIsInternetConnected(): ?bool
     {
-        return $this->isInternetConnected;
+        return $this->IsInternetConnected;
     }
 
-    public function setIsInternetConnected(bool $isInternetConnected): self
+    public function setIsInternetConnected(bool $IsInternetConnected): self
     {
-        $this->isInternetConnected = $isInternetConnected;
+        $this->IsInternetConnected = $IsInternetConnected;
 
         return $this;
     }
+
+    public function getIsInterconnected(): ?bool
+    {
+        return $this->IsInterconnected;
+    }
+
+    public function setIsInterconnected(bool $IsInterconnected): self
+    {
+        $this->IsInterconnected = $IsInterconnected;
+
+        return $this;
+    }
+
+    public function getIsUsedAlone(): ?bool
+    {
+        return $this->IsUsedAlone;
+    }
+
+    public function setIsUsedAlone(bool $IsUsedAlone): self
+    {
+        $this->IsUsedAlone = $IsUsedAlone;
+
+        return $this;
+    }
+
+    public function getIsUsedInGroup(): ?bool
+    {
+        return $this->IsUsedInGroup;
+    }
+
+    public function setIsUsedInGroup(bool $IsUsedInGroup): self
+    {
+        $this->IsUsedInGroup = $IsUsedInGroup;
+
+        return $this;
+    }
+
+    public function getIsUsedTogetherInCourse(): ?bool
+    {
+        return $this->IsUsedTogetherInCourse;
+    }
+
+    public function setIsUsedTogetherInCourse(bool $IsUsedTogetherInCourse): self
+    {
+        $this->IsUsedTogetherInCourse = $IsUsedTogetherInCourse;
+
+        return $this;
+    }
+
     
     public function addDeviceInstance(DeviceInstance $deviceInstance): self
     {
@@ -218,4 +300,29 @@ class LabInstance extends Instance
     {
         return $this->deviceInstances->count() > 0;
     }
+
+    public function getActivity(): ?Activity
+    {
+        return $this->Activity;
+    }
+
+    public function setActivity(?Activity $Activity): self
+    {
+        $this->Activity = $Activity;
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->NetworkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    {
+        $this->NetworkSettings = $NetworkSettings;
+
+        return $this;
+    }
+
 }

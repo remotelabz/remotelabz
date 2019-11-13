@@ -35,21 +35,6 @@ class Activity
     private $lab;
 
     /**
-     * @ORM\Column(type="boolean")
-     */
-    private $shared;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $supervised;
-
-    /**
-     * @ORM\Column(type="string", length=3)
-     */
-    private $accessType;
-
-    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="activities")
      */
     private $courses;
@@ -59,12 +44,45 @@ class Activity
      */
     private $network;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $InternetAllowed = false;
+    
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $Interconnected = false;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $UsedAlone = true;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $UsedInGroup = false;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $UsedTogetherInCourse = false;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="Activity")
+     */
+    private $labInstances;
+  
+
     const VPN_ACCESS = "vpn";
     const HTTP_ACCESS = "http";
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
+        $this->labInstances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -104,30 +122,6 @@ class Activity
     public function setLab(?Lab $lab): self
     {
         $this->lab = $lab;
-
-        return $this;
-    }
-
-    public function getShared(): ?bool
-    {
-        return $this->shared;
-    }
-
-    public function setShared(bool $shared): self
-    {
-        $this->shared = $shared;
-
-        return $this;
-    }
-
-    public function getSupervised(): ?bool
-    {
-        return $this->supervised;
-    }
-
-    public function setSupervised(bool $supervised): self
-    {
-        $this->supervised = $supervised;
 
         return $this;
     }
@@ -181,4 +175,97 @@ class Activity
 
         return $this;
     }
+
+    public function getInternetAllowed(): ?bool
+    {
+        return $this->InternetAllowed;
+    }
+
+    public function setInternetAllowed(bool $InternetAllowed): self
+    {
+        $this->InternetAllowed = $InternetAllowed;
+
+        return $this;
+    }
+
+    public function getInterconnected(): ?bool
+    {
+        return $this->Interconnected;
+    }
+
+    public function setInterconnected(bool $Interconnected): self
+    {
+        $this->Interconnected = $Interconnected;
+
+        return $this;
+    }
+
+    public function getUsedAlone(): ?bool
+    {
+        return $this->UsedAlone;
+    }
+
+    public function setUsedAlone(bool $UsedAlone): self
+    {
+        $this->UsedAlone = $UsedAlone;
+
+        return $this;
+    }
+
+    public function getUsedInGroup(): ?bool
+    {
+        return $this->UsedInGroup;
+    }
+
+    public function setUsedInGroup(bool $UsedInGroup): self
+    {
+        $this->UsedInGroup = $UsedInGroup;
+
+        return $this;
+    }
+
+    public function getUsedTogetherInCourse(): ?bool
+    {
+        return $this->UsedTogetherInCourse;
+    }
+
+    public function setUsedTogetherInCourse(bool $UsedTogetherInCourse): self
+    {
+        $this->UsedTogetherInCourse = $UsedTogetherInCourse;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|LabInstance[]
+     */
+    public function getLabInstances(): Collection
+    {
+        return $this->labInstances;
+    }
+
+    public function addLabInstance(LabInstance $labInstance): self
+    {
+        if (!$this->labInstances->contains($labInstance)) {
+            $this->labInstances[] = $labInstance;
+            $labInstance->setActivity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLabInstance(LabInstance $labInstance): self
+    {
+        if ($this->labInstances->contains($labInstance)) {
+            $this->labInstances->removeElement($labInstance);
+            // set the owning side to null (unless already changed)
+            if ($labInstance->getActivity() === $this) {
+                $labInstance->setActivity(null);
+            }
+        }
+
+        return $this;
+    }
+
+    
 }

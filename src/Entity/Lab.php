@@ -55,12 +55,6 @@ class Lab implements InstanciableInterface
     private $activities;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab"})
-     */
-    private $isStarted = false;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="lab", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
@@ -104,6 +98,11 @@ class Lab implements InstanciableInterface
      * @Serializer\Groups({"lab"})
      */
     private $lastUpdated;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="lab", cascade={"persist", "remove"})
+     */
+    private $NetworkSettings;
 
     public function __construct()
     {
@@ -229,18 +228,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 */
-    public function getIsStarted(): ?bool
-    {
-        return $this->isStarted;
-    }
-
-    public function setIsStarted(bool $isStarted): self
-    {
-        $this->isStarted = $isStarted;
-
-        return $this;
-    }
-
+ 
     /**
      * @return Collection|Instance[]
      */
@@ -413,6 +401,18 @@ class Lab implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->NetworkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    {
+        $this->NetworkSettings = $NetworkSettings;
 
         return $this;
     }

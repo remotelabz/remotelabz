@@ -87,6 +87,16 @@ class NetworkSettings
      */
     private $port;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\Lab", mappedBy="NetworkSettings", cascade={"persist", "remove"})
+     */
+    private $lab;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\LabInstance", mappedBy="NetworkSettings", cascade={"persist", "remove"})
+     */
+    private $labInstance;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -184,6 +194,42 @@ class NetworkSettings
     public function setPort(?int $port): self
     {
         $this->port = $port;
+
+        return $this;
+    }
+
+    public function getLab(): ?Lab
+    {
+        return $this->lab;
+    }
+
+    public function setLab(?Lab $lab): self
+    {
+        $this->lab = $lab;
+
+        // set (or unset) the owning side of the relation if necessary
+        $newNetworkSettings = $lab === null ? null : $this;
+        if ($newNetworkSettings !== $lab->getNetworkSettings()) {
+            $lab->setNetworkSettings($newNetworkSettings);
+        }
+
+        return $this;
+    }
+
+    public function getLabInstance(): ?LabInstance
+    {
+        return $this->labInstance;
+    }
+
+    public function setLabInstance(?LabInstance $labInstance): self
+    {
+        $this->labInstance = $labInstance;
+
+        // set (or unset) the owning side of the relation if necessary
+        $newNetworkSettings = $labInstance === null ? null : $this;
+        if ($newNetworkSettings !== $labInstance->getNetworkSettings()) {
+            $labInstance->setNetworkSettings($newNetworkSettings);
+        }
 
         return $this;
     }

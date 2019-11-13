@@ -23,14 +23,18 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use App\Repository\LabInstanceRepository;
+
 
 class ActivityController extends AppController
 {
     private $activityRepository;
 
-    public function __construct(ActivityRepository $activityRepository)
+    public function __construct(ActivityRepository $activityRepository, LabInstanceRepository $labInstanceRepository)
     {
         $this->activityRepository = $activityRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
     }
 
     /**
@@ -61,11 +65,17 @@ class ActivityController extends AppController
      *  name="show_activity",
      *  methods="GET")
      */
-    public function showAction(Request $request, $id)
+    public function showAction(Request $request, $id,UserInterface $user)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Activity');
+        $repository = $this->getDoctrine()->getRepository('App:Activity');     
 
         $data = $repository->find($id);
+
+        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $data->getLab() );
+        if (count($labInstance_tmp) > 0)
+            $labInstance=$labInstance_tmp[0];
+        else
+            $labInstance=null;
 
         if (null === $data) {
             throw new NotFoundHttpException();
@@ -76,7 +86,8 @@ class ActivityController extends AppController
         }
         
         return $this->render('activity/view.html.twig', [
-            'activity' => $data
+            'activity' => $data,
+            'labInstance' => $labInstance
         ]);
     }
 
@@ -164,4 +175,20 @@ class ActivityController extends AppController
 
         return $this->redirectToRoute('activities');
     }
+
+    /**
+     * @Route("/activities/{id<\d+>}/start", name="start_activity", methods="GET")
+     */
+    public function startActivityAction(int $id)
+    {
+        $lab = $this->activityRepository->find($id)->getLab();
+
+        return $this->redirectToRoute('start_lab_activity', [
+            'id' => $lab->getId(),
+            'activity_id' => $id
+        ]);
+
+    }
+
+
 }

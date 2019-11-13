@@ -93,8 +93,8 @@
                     {% endif %}
                 </span>
                 <p class="text-muted d-inline">
-                    ·
-                    Owned by {{ instance.user.name }}
+                    {% if not instance is null %} {# In some cases, one instance can stay up but it is empty. It's an issue to solve #}
+                        Owned by {{ instance.user.name }} {% endif %}
                 </p>
             </div>
         </div>

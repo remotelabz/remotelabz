@@ -49,11 +49,11 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
         $networkInterface = new NetworkInterface();
 
         $networkInterface
-            ->setName('eth0')
-            ->setType("tap")
+            ->setName('ToAlpine')
+            ->setType("tap")           
             ->setSettings(
                 $this->getReference(
-                    'network_settings1'
+                    'network_settings3'
                 )
             )
             ->setDevice(
@@ -67,15 +67,14 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
         $manager->persist($networkInterface);
 
         $networkInterface = new NetworkInterface();
-
         $networkInterface
-            ->setName('eth1')
+            ->setName('ToDebian')
             ->setType("tap")
-            ->setSettings(
-                $this->getReference(
-                    'network_settings2'
-                )
+           ->setSettings(
+            $this->getReference(
+                'network_settings4'
             )
+           )
             ->setDevice(
                 $this->getReference(
                     'device-debian'
@@ -83,8 +82,31 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
             )
             ->setMacAddress('52:54:00:00:00:02')
         ;
-
         $manager->persist($networkInterface);
+
+        $networkInterface = new NetworkInterface();
+        $networkInterface
+            ->setName('ToUbuntuX')
+            ->setType("tap")
+           ->setSettings(
+            $this->getReference(
+                'network_settings5'
+            )
+           )
+            ->setDevice(
+                $this->getReference(
+                    'device-ubuntu'
+                )
+            )
+            ->setMacAddress('52:54:00:00:00:03')
+        ;
+        $manager->persist($networkInterface);
+
+
+
+
+
+
 
         $manager->flush();
     }
