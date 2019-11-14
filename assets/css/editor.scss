@@ -23,6 +23,22 @@
     }
 }
 
+.accordion.lab-description {
+    .card {
+        border-radius: 0.25rem;
+
+        &:last-of-type {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    }
+}
+
 .editor-title {
     font-size: 22px;
     font-weight: bold;

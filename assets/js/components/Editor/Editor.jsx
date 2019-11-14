@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Modal, Button, OverlayTrigger, Tooltip, Accordion, Card } from 'react-bootstrap';
 import Menu from './Menu/Menu';
 import ContextualMenu from './Menu/ContextualMenu';
 import Canvas from './Display/Canvas';
@@ -12,6 +12,8 @@ import DeviceForm from './Form/DeviceForm';
 import EdiText from 'react-editext';
 import Skeleton from 'react-loading-skeleton';
 import update from 'immutability-helper';
+import SimpleMDE from "react-simplemde-editor";
+import ReactMarkdown from 'react-markdown';
 
 export default class Editor extends React.Component {
     jsPlumb = null;
@@ -36,6 +38,8 @@ export default class Editor extends React.Component {
             ready: false,
             fullscreen: false,
             canvasZoom: 1,
+            editDescription: false,
+            mdeValue: null,
             editDeviceForm: {
                 show: false,
                 device: null,
@@ -70,7 +74,8 @@ export default class Editor extends React.Component {
                 devices: response.data.devices,
                 lab: {
                     ...this.state.lab,
-                    name: response.data.name
+                    name: response.data.name,
+                    description: response.data.description
                 }
             }))
             .then(() => this.setState({ready: true}));
@@ -141,6 +146,20 @@ export default class Editor extends React.Component {
                 action: 'edit'
             }
         });
+    }
+
+    handleEditDescription = () => this.setState({editDescription: true});
+    handleCancelEditDescription = () => this.setState({editDescription: false});
+    handleSaveEditDescription = () => {
+        this.updateLabRequest(this.labId, {
+            description: this.state.mdeValue,
+        })
+        .then(response => {
+            this.setState({lab: { ...this.state.lab, description: this.state.mdeValue}, editDescription: false});
+        })
+    }
+    handleChangeDescription = mdeValue => {
+        this.setState({ mdeValue });
     }
 
     onSubmitEditDevice = device => {
@@ -304,8 +323,8 @@ export default class Editor extends React.Component {
 
     render() {
         return (<>
-            <div className="editor-lab-name mb-3">
-                <div className="p-2">
+            <div className="editor-lab-name mb-3 mt-3">
+                <div>
                 {this.state.lab.name ?
                     <EdiText
                         type='text'
@@ -321,6 +340,43 @@ export default class Editor extends React.Component {
                     :
                     <Skeleton height={24} />}</div>
             </div>
+            { this.state.ready ?
+            <div className="mb-3">
+                { this.state.editDescription ?
+                    <div>
+                        <SimpleMDE value={this.state.lab.description} onChange={this.handleChangeDescription} />
+                        <div className="d-flex">
+                            <Button variant="success" onClick={this.handleSaveEditDescription}>Save</Button>
+                            <div className="flex-grow-1" />
+                            <Button variant="default" onClick={this.handleCancelEditDescription}>Cancel</Button>
+                        </div>
+                    </div>
+                    :
+                    <Accordion className="lab-description">
+                        <Card>
+                            <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
+                                <div>
+                                    <SVG name="text-description"/> Description
+                                </div>
+                                <div>
+                                    <Button variant="default" onClick={(e) => {e.stopPropagation(); this.handleEditDescription();}}><SVG name="pencil" /></Button>
+                                </div>
+                            </Accordion.Toggle>
+                            <Accordion.Collapse eventKey="0">
+                                <Card.Body>
+                                    <div className="text-muted" onClick={this.handleEditDescription}>
+                                        <ReactMarkdown source={this.state.lab.description || "No description"} />
+                                    </div>
+                                </Card.Body>
+                            </Accordion.Collapse>
+                        </Card>
+                    </Accordion>
+                    
+                }
+            </div>
+            :
+            <Skeleton count={6} />
+            }
             {this.state.ready ?
             <div className="editor-wrapper">
                 <div id="editor" className={this.getEditorClassNames()}>
