@@ -34,6 +34,12 @@ class Lab implements InstanciableInterface
     private $name;
 
     /**
+     * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"lab"})
+     */
+    private $description;
+
+    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
      * @Serializer\XmlList(inline=true, entry="device")
      * @Serializer\Groups({"lab"})
@@ -102,7 +108,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="lab", cascade={"persist", "remove"})
      */
-    private $NetworkSettings;
+    private $networkSettings;
 
     public function __construct()
     {
@@ -114,6 +120,12 @@ class Lab implements InstanciableInterface
         $this->deviceInstances = new ArrayCollection();
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdAt = new \DateTime();
+        $this->lastUpdated = new \DateTime();
+    }
+
+    public static function create(): self
+    {
+        return new static();
     }
 
     public function getId(): ?int
@@ -129,6 +141,18 @@ class Lab implements InstanciableInterface
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }
@@ -407,12 +431,12 @@ class Lab implements InstanciableInterface
 
     public function getNetworkSettings(): ?NetworkSettings
     {
-        return $this->NetworkSettings;
+        return $this->networkSettings;
     }
 
-    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    public function setNetworkSettings(?NetworkSettings $networkSettings): self
     {
-        $this->NetworkSettings = $NetworkSettings;
+        $this->networkSettings = $networkSettings;
 
         return $this;
     }

@@ -156,6 +156,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="SET NULL")
      * @Serializer\Groups({"device", "editor"})
      */
     private $editorData;

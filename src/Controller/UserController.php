@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Utils\Uuid;
 use App\Entity\User;
-use App\Form\UserType;
 
+use App\Form\UserType;
+use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
 use App\Controller\AppController;
@@ -14,6 +16,7 @@ use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\Email;
@@ -402,7 +405,7 @@ class UserController extends AppController
         ]);
     }
 
-     /**
+    /**
      * @Route("/profile/picture", name="post_user_profile_picture", methods="POST")
      */
     public function profilePictureAction(Request $request, ProfilePictureFileUploader $fileUploader)
@@ -420,5 +423,114 @@ class UserController extends AppController
         $entityManager->flush();
 
         return $this->redirectToRoute('user_profile');
+    }
+
+    /**
+     * @Route("/profile/picture", name="get_current_user_profile_picture", methods="GET")
+     */
+    public function getProfilePictureAction(Request $request)
+    {
+        $user = $this->getUser();
+        $size = $request->query->get('size', 128);
+
+        $profilePicture = $user->getProfilePicture();
+
+        if ($profilePicture && is_file($profilePicture)) {
+            $image = file_get_contents($profilePicture);
+            $image = imagecreatefrompng($profilePicture);
+            $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
+            $imageTmp = "/tmp/" . new Uuid();
+            $image = imagepng($image, $imageTmp, 9);
+
+            $response = new Response(file_get_contents($imageTmp), 200);
+            $response->headers->set('Content-Type', 'image/png');
+            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+
+            return $response;
+        } else {
+            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+
+            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+        }
+        // $pictureFile = $request->files->get('picture');
+        // if ($pictureFile) {
+        //     $pictureFileName = $fileUploader->upload($pictureFile);
+        //     $user->setProfilePictureFilename($pictureFileName);
+        // }
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $entityManager->persist($user);
+        // $entityManager->flush();
+
+        // return $this->redirectToRoute('user_profile');
+    }
+
+    /**
+     * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
+     */
+    public function getUserProfilePictureAction(Request $request, int $id)
+    {
+        $user = $this->userRepository->find($id);
+        $size = $request->query->get('size', 128);
+
+        $profilePicture = $user->getProfilePicture();
+
+        if ($profilePicture && is_file($profilePicture)) {
+            $image = file_get_contents($profilePicture);
+            $image = imagecreatefrompng($profilePicture);
+            $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
+            $imageTmp = "/tmp/" . new Uuid();
+            $image = imagepng($image, $imageTmp, 9);
+
+            $response = new Response(file_get_contents($imageTmp), 200);
+            $response->headers->set('Content-Type', 'image/png');
+            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+
+            return $response;
+        } else {
+            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+
+            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+        }
+    }
+
+    /**
+     * @Route("/profile/picture", name="delete_user_profile_picture", methods="DELETE")
+     */
+    public function deleteProfilePictureAction(Request $request)
+    {
+        $user = $this->getUser();
+        $size = $request->query->get('size', 128);
+
+        $profilePicture = $user->getProfilePicture();
+
+        if ($profilePicture && is_file($profilePicture)) {
+            $image = file_get_contents($profilePicture);
+            $image = imagecreatefrompng($profilePicture);
+            $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
+            $imageTmp = "/tmp/" . new Uuid();
+            $image = imagepng($image, $imageTmp, 9);
+
+            $response = new Response(file_get_contents($imageTmp), 200);
+            $response->headers->set('Content-Type', 'image/png');
+            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+
+            return $response;
+        } else {
+            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+
+            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+        }
+        // $pictureFile = $request->files->get('picture');
+        // if ($pictureFile) {
+        //     $pictureFileName = $fileUploader->upload($pictureFile);
+        //     $user->setProfilePictureFilename($pictureFileName);
+        // }
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $entityManager->persist($user);
+        // $entityManager->flush();
+
+        // return $this->redirectToRoute('user_profile');
     }
 }
