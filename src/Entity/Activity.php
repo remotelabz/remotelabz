@@ -71,7 +71,7 @@ class Activity
     private $UsedTogetherInCourse = false;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="Activity")
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="activity")
      */
     private $labInstances;
   

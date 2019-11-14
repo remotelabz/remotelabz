@@ -78,14 +78,12 @@ class LabInstance extends Instance
      * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
      * @Serializer\Groups({"activity", "start_lab", "stop_lab"})
      */
-    private $Activity;
+    private $activity;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
      */
-    private $NetworkSettings;
-
-    
+    private $networkSettings;
 
     public function getId(): ?int
     {
@@ -303,24 +301,24 @@ class LabInstance extends Instance
 
     public function getActivity(): ?Activity
     {
-        return $this->Activity;
+        return $this->activity;
     }
 
-    public function setActivity(?Activity $Activity): self
+    public function setActivity(?Activity $activity): self
     {
-        $this->Activity = $Activity;
+        $this->activity = $activity;
 
         return $this;
     }
 
     public function getNetworkSettings(): ?NetworkSettings
     {
-        return $this->NetworkSettings;
+        return $this->networkSettings;
     }
 
-    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    public function setNetworkSettings(?NetworkSettings $networkSettings): self
     {
-        $this->NetworkSettings = $NetworkSettings;
+        $this->networkSettings = $networkSettings;
 
         return $this;
     }
