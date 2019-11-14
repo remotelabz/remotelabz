@@ -199,13 +199,13 @@
 }
 
 .btn-group {
-  border: $border-width solid $border-color;
+  // border: $border-width solid $border-color;
   @include border-radius($btn-border-radius);
 
   .btn {
-    border-top: none;
-    border-bottom: none;
-    border-left: none;
+    // border-top: none;
+    // border-bottom: none;
+    // border-left: none;
 
     &:last-child {
       border-right: none;

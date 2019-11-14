@@ -10,7 +10,7 @@
   }
 
   &.breadcrumb-custom {
-    padding: $breadcrumb-custom-padding-y $breadcrumb-custom-padding-x;
+    // padding: $breadcrumb-custom-padding-y $breadcrumb-custom-padding-x;
     border-color: $breadcrumb-item-bg;
     .breadcrumb-item {
       font-size: $breadcrumb-font-size;
@@ -79,8 +79,8 @@
 
 
 /* inverse breadcrumb */
-@each $color, $value in $theme-colors {
-  .bg-inverse-#{$color} {
-    @include breadcrumb-inverse-variant($value);
-  }
-}
+// @each $color, $value in $theme-colors {
+//   .bg-inverse-#{$color} {
+//     @include breadcrumb-inverse-variant($value);
+//   }
+// }

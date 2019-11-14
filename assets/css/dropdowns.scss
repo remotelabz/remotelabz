@@ -1,0 +1,24 @@
+.dropdown-menu {
+    position: absolute;
+    color: #2e2e2e;
+    min-width: 240px;
+    max-width: 500px;
+
+    .dropdown-header {
+        padding: 8px 12px;
+        font-size: 1rem;
+        color: inherit;
+
+        .user-name {
+            font-weight: 600;
+        }
+    }
+
+    .dropdown-item {
+        padding: 8px 12px;
+
+        &:hover {
+            background-color: #eee;
+        }
+    }
+}
