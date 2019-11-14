@@ -364,7 +364,7 @@ export default class Editor extends React.Component {
                             </Accordion.Toggle>
                             <Accordion.Collapse eventKey="0">
                                 <Card.Body>
-                                    <div className="text-muted" onClick={this.handleEditDescription}>
+                                    <div className="text-muted">
                                         <ReactMarkdown source={this.state.lab.description || "No description"} />
                                     </div>
                                 </Card.Body>
