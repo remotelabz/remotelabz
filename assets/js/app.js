@@ -1,8 +1,8 @@
 /**
 * Remotelabz main JS file.
-* 
+*
 * Mainly used to customize plugins and loading them.
-* 
+*
 * @author Julien Hubert <julien.hubert@outlook.com>
 */
 
@@ -17,7 +17,7 @@ require('flag-icon-css/sass/flag-icon.scss');
 require('noty/src/noty.scss')
 require('noty/src/themes/mint.scss')
 require('simplemde/dist/simplemde.min.css')
-require('font-awesome/scss/font-awesome.scss')
+require('@fortawesome/fontawesome-free/css/all.css')
 require('cropperjs/dist/cropper.min.css')
 require('vis-network/dist/vis-network.min.css')
 
@@ -32,14 +32,16 @@ require('select2');
 require('@novnc/novnc/core/rfb');
 require("jsplumb");
 
+const Cookies = require('js-cookie');
+
 /**
 * Functions using jQuery goes here
 */
 (function($) {
     'use strict';
-    
+
     window.addEventListener("onwheel", { passive: false });
-    
+
     /**
     * Customize dataTables
     */
@@ -49,7 +51,7 @@ require("jsplumb");
             var table = api.table();
             var id = table.node().id
             var $input = $(`<div id="`+id+`_filter" class="dataTables_filter"><div class="input-group"><div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-search"></i></span></div><input type="search" class="form-control input-sm" placeholder="Search all columns" aria-controls="`+id+`" style="margin-left: 0;"></div></div>`)
-            
+
             $input.on('keyup change','input',function(){
                 if(table.search() !== this.value)
                 table.search(this.value).draw()
@@ -58,7 +60,7 @@ require("jsplumb");
         },
         cFeature: 'F'
     } );
-    
+
     $.extend( true, $.fn.dataTable.Buttons.defaults, {
         dom: {
             button: {
@@ -66,25 +68,25 @@ require("jsplumb");
             }
         }
     } );
-    
+
     $.fn.dataTable.ext.buttons.edit = {
         extend: 'selectedSingle',
         text: '<i class="fa fa-edit"></i> Edit',
         className: 'btn-secondary'
     };
-    
+
     $.fn.dataTable.ext.buttons.toggle = {
         extend: 'selected',
         text: '<i class="fa fa-lock"></i> (Un)lock',
         className: 'btn-warning'
     };
-    
+
     $.fn.dataTable.ext.buttons.delete = {
         extend: 'selected',
         text: '<i class="fa fa-times"></i> Delete',
         className: 'btn-danger'
     };
-    
+
     $.extend( true, $.fn.dataTable.defaults, {
         dom: "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'F>>" +
         "<'row'<'col-sm-12'tr>>" +
@@ -116,66 +118,42 @@ require("jsplumb");
     /**
     * End customize dataTables
     */
-    
-    
+
     /**
     * Dynamically attrubutes the active link in sidebar
     */
     $(function() {
         var sidebar = $('.sidebar');
-        
-        //Add active class to nav-link based on url dynamically
-        //Active class can be hard coded directly in html file also as required
-        var current = location.pathname.split("/").slice(-1)[0].replace(/^\/|\/$/g, '');
-        $('.nav li a', sidebar).each(function() {
-            var $this = $(this);
-            if (current === "") {
-                //for root url
-                if ($this.attr('href').indexOf("index.html") !== -1) {
-                    $(this).parents('.nav-item').last().addClass('active');
-                    if ($(this).parents('.sub-menu').length) {
-                        $(this).closest('.collapse').addClass('show');
-                        $(this).addClass('active');
-                    }
-                }
-            } else {
-                //for other url
-                if ($this.attr('href').indexOf(current) !== -1) {
-                    $(this).parents('.nav-item').last().addClass('active');
-                    if ($(this).parents('.sub-menu').length) {
-                        $(this).closest('.collapse').addClass('show');
-                        $(this).addClass('active');
-                    }
-                }
-            }
-        })
-        
+        let sidebarElement = sidebar[0];
+        let sidebarCollapseButton = document.getElementsByClassName('toggle-sidebar');
+
         //Close other submenu in sidebar on opening any
-        
+
         sidebar.on('show.bs.collapse', '.collapse', function() {
             sidebar.find('.collapse.show').collapse('hide');
         });
-        
-        
-        //Change sidebar and content-wrapper height
-        applyStyles();
-        
-        function applyStyles() {
-            //Applying perfect scrollbar
-            // if ($('.scroll-container').length) {
-            //     const ScrollContainer = new PerfectScrollbar('.scroll-container');
-            // }
+
+        let sidebarCollapsed = Cookies.get('sidebar_collapsed');
+
+        if (sidebarCollapsed === undefined) {
+            Cookies.set('sidebar_collapsed', false, { expires: 3650 });
         }
-        
-        //checkbox and radios
-        // $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
-        
-        
-        $(".purchace-popup .popup-dismiss").on("click",function(){
-            $(".purchace-popup").slideToggle();
-        });
+
+        // if (sidebarCollapsed == "true") {
+        //     sidebarElement.classList.add('sidebar-collapsed');
+        // }
+
+        for (let index = 0; index < sidebarCollapseButton.length; index++) {
+            const element = sidebarCollapseButton[index];
+
+            element.addEventListener("click", () => {
+                sidebarElement.classList.toggle('sidebar-collapsed');
+                let isCollapsed = sidebarElement.classList.contains('sidebar-collapsed');
+                Cookies.set('sidebar_collapsed', isCollapsed, { expires: 3650 });
+            });
+        }
     });
-    
+
     /**
     * File upload label displaying
     */

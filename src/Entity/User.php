@@ -140,7 +140,6 @@ class User implements UserInterface
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
         $this->createdAt = new \DateTime();
-        $this->lastActivity = new \DateTime();
     }
 
     public function getId(): ?int

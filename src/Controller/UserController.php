@@ -12,6 +12,7 @@ use App\Form\UserPasswordType;
 use App\Controller\AppController;
 use App\Repository\UserRepository;
 use JMS\Serializer\SerializerBuilder;
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
@@ -48,9 +49,23 @@ class UserController extends AppController
      */
     public function indexAction(Request $request)
     {
+        $search = $request->query->get('search', '');
+        $limit = $request->query->get('limit', 10);
+
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('firstName', $search))
+            ->orWhere(Criteria::expr()->contains('lastName', $search))
+            ->orWhere(Criteria::expr()->contains('email', $search))
+            ->orderBy([
+                'lastName' => Criteria::ASC
+            ])
+            ->setMaxResults($limit)
+        ;
+
+        $users = $this->userRepository->matching($criteria);
+
         $user = new User();
 
-        $addUserForm = $this->createForm(UserType::class, $user);
         $addUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
                 "help" => "Accepted formats: csv"
@@ -58,26 +73,9 @@ class UserController extends AppController
             ->add('submit', SubmitType::class)
             ->getForm();
 
-        $addUserForm->handleRequest($request);
         $addUserFromFileForm->handleRequest($request);
 
-        if ($addUserForm->isSubmitted() && $addUserForm->isValid()) {
-            /** @var User $user */
-            $user = $addUserForm->getData();
-            $confirmPassword = $addUserForm->get('confirmPassword')->getData();
-
-            if ($user->getPassword() === $confirmPassword) {
-                $user->setPassword($this->passwordEncoder->encodePassword($user, $user->getPassword()));
-
-                $entityManager = $this->getDoctrine()->getManager();
-                $entityManager->persist($user);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'User has been created.');
-            } else {
-                $this->addFlash('danger', "Passwords doesn't match.");
-            }
-        } elseif ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
+        if ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
             $file = $addUserFromFileForm->getData()['file'];
 
             $fileExtension = strtolower($file->getClientOriginalExtension());
@@ -110,7 +108,7 @@ class UserController extends AppController
         }
 
         return $this->render('user/index.html.twig', [
-            'addUserForm' => $addUserForm->createView(),
+            'users' => $users,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
         ]);
     }
@@ -212,9 +210,9 @@ class UserController extends AppController
     }
 
     /**
-     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="PATCH")
+     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods={"GET", "PATCH"})
      */
-    public function toggleAction($id)
+    public function toggleAction(Request $request, $id)
     {
         $status = 200;
         $data = [];
@@ -240,13 +238,19 @@ class UserController extends AppController
             $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        return $this->renderJson($data, $status);
+        if ($request->getRequestFormat() === 'json') {
+            return $this->renderJson($data, $status);
+        } else {
+            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
+
+            return $this->redirectToRoute('users');
+        }
     }
 
     /**
-     * @Route("/admin/users/{id<\d+>}", name="delete_user", methods="DELETE")
+     * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
      */
-    public function deleteAction($id)
+    public function deleteAction(Request $request, $id)
     {
         $status = 200;
         $data = [];
@@ -273,7 +277,13 @@ class UserController extends AppController
             $data['message'] = 'User has been deleted.';
         }
 
-        return $this->renderJson($data, $status);
+        if ($request->getRequestFormat() === 'json') {
+            return $this->renderJson($data, $status);
+        } else {
+            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
+
+            return $this->redirectToRoute('users');
+        }
     }
 
     /**
@@ -438,7 +448,7 @@ class UserController extends AppController
         if ($profilePicture && is_file($profilePicture)) {
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
-            $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
+            $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
             $imageTmp = "/tmp/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
@@ -478,9 +488,9 @@ class UserController extends AppController
         if ($profilePicture && is_file($profilePicture)) {
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
-            $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
+            $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
             $imageTmp = "/tmp/" . new Uuid();
-            $image = imagepng($image, $imageTmp, 9);
+            imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');

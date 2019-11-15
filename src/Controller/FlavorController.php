@@ -102,6 +102,9 @@ class FlavorController extends AbstractFOSRestController
 
         $view = $this->view($flavorForm)
             ->setTemplate("flavor/new.html.twig")
+            ->setTemplateData([
+                'form' => $flavorForm->createView()
+            ])
         ;
 
         if ($flavorForm->isSubmitted() && $flavorForm->isValid()) {
@@ -150,7 +153,7 @@ class FlavorController extends AbstractFOSRestController
         }
 
         return $this->render('flavor/new.html.twig', [
-            'flavorForm' => $flavorForm->createView(),
+            'form' => $flavorForm->createView(),
             'flavor' => $flavor
         ]);
     }

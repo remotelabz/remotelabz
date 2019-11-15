@@ -30,6 +30,7 @@ Encore
     .addEntry('vnc', './assets/js/vnc.js')
     // .addEntry('editor', './assets/js/editor.ts')
     .addEntry('editor-react', './assets/js/editor.jsx')
+    .addEntry('timeago', './assets/js/timeago.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
@@ -44,17 +45,17 @@ Encore
      */
     // .cleanupOutputBeforeBuild()
     // .enableBuildNotifications()
-    .enableSourceMaps(!Encore.isProduction())
+    // .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
 
     // enables Sass/SCSS support
     .enableSassLoader((options) => {
-        options.sourceMap = true;
-        options.sassOptions = {
-            outputStyle: 'compressed',
-            sourceComments: !Encore.isProduction(),
-        };
+        // options.sourceMap = true;
+        // options.sassOptions = {
+        //     outputStyle: 'compressed',
+        //     sourceComments: !Encore.isProduction(),
+        // };
     }, {})
 
     // uncomment if you use TypeScript

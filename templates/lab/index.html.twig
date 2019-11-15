@@ -5,6 +5,11 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'labs' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
     <div class="top-panel">
             <div class="quick-actions">
@@ -32,17 +37,39 @@
     </div>
     <div class="labs-panel">
     {% for lab in labs %}
-        <div class="wrapper d-flex align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
-            <a href="{{ path('show_lab', {'id': lab.id}) }}" class="lab-item-name">
-                {{- lab.name -}}
-            </a>
+        <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
+            <div class="lab-item-left d-flex flex-column">
+                <div>
+                    <a href="{{ path('show_lab', {'id': lab.id}) }}" class="lab-item-name">
+                        {{- lab.name -}}
+                    </a>
+                </div>
+                <div class="lab-item-infos text-muted">!{{ lab.id }} · created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" /> {{ lab.author.name }}</div>
+            </div>
+            <div class="separator flex-grow-1"></div>
+            <div class="lab-item-right d-flex flex-column text-right">
+                <div>
+                    <div class="d-inline" data-toggle="tooltip" data-placement="top" title="Related activities">
+                        <span {% if lab.activities|length == 0 %}class="lab-item-counter-empty"{% endif -%}>
+                            <span>{{ svg('review-list', 'image-sm v-sub') }}</span> {{ lab.activities|length }}
+                        </span>
+                    </div>
+
+                    <div class="d-inline ml-2" data-toggle="tooltip" data-placement="top" title="Devices">
+                        <span {% if lab.devices|length == 0 %}class="lab-item-counter-empty"{% endif -%}>
+                            <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ lab.devices|length }}
+                        </span>
+                    </div>
+                </div>
+                <div class="lab-item-infos text-muted">updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></div>
+            </div>
         </div>
-    {% endfor %} 
+    {% endfor %}
     </div>
     
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('lab') }} #}
+    {{ encore_entry_script_tags('timeago') }}
 {% endblock %}

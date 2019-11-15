@@ -1,7 +1,7 @@
 {% extends 'activity/index.html.twig' %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ (activity.name): path('show_activity', {'id': activity.id}) }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ ("#" ~ activity.id): path('show_activity', {'id': activity.id}) }) -%}
     {{ parent() }}
 {% endblock %}
 
@@ -10,9 +10,11 @@
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <h1 class="card-title">
-                    {{ activity.name }}
-                    <div class="float-right">
+                <div class="card-title">
+                    <div class="card-title-infos">
+                        <h1>{{ activity.name }}</h1>
+                    </div>
+                    <div class="card-title-actions">
                     {% if activity.lab is not null %}
                             {% set lab_on=false %}  
                             {% if labInstance is null %}
@@ -31,7 +33,7 @@
                         <a href="{{ path('delete_activity', {'id': activity.id}) }}" class="btn btn-danger" role="button">Delete</a>
                     {% endif %}
                     </div>
-                </h1>
+                </div>
                 {{ activity.description|markdown }}
             </div>
         </div>

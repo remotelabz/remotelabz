@@ -17,18 +17,15 @@ export default class API {
         this.collection = object;
     }
 
-    edit(id) {
-        const url = Routing.generate('edit_' + this.collection, {
-            id: id
-        })
+    edit(url) {
         window.location.href = url;
     }
 
-    toggle(id) {
+    toggle(url) {
+        const api = API.getInstance();
+
         $.ajax({
-            url: Routing.generate('toggle_' + this.collection, {
-                id: id
-            }),
+            url,
             method: 'PATCH',
             contentType: 'application/json'
         })
@@ -48,28 +45,35 @@ export default class API {
         });
     }
 
-    delete(id) {
-        $.ajax({
-            url: Routing.generate('delete_' + this.collection, {
-                id: id
-            }),
-            method: 'DELETE',
-            contentType: 'application/json'
-        })
-        .done(function (data) {
+    delete(url) {
+        API.getInstance().delete(url)
+        .then(() => {
             $('table.dataTable').DataTable().ajax.reload();
 
             new Noty({
                 type: 'success',
-                text: data.message
+                text: "Item has been deleted."
             }).show();
         })
-        .fail(function (data) {
-            new Noty({
-                type: 'error',
-                text: data.responseJSON.message
-            }).show();
-        });
+        // $.ajax({
+        //     url,
+        //     method: 'DELETE',
+        //     dataType: 'text'
+        // })
+        // .done(function (data) {
+        //     $('table.dataTable').DataTable().ajax.reload();
+
+        //     new Noty({
+        //         type: 'success',
+        //         text: "Item has been deleted."
+        //     }).show();
+        // })
+        // .fail(function (data) {
+        //     new Noty({
+        //         type: 'error',
+        //         text: "Error while deleting this item."
+        //     }).show();
+        // });
     }
 }
 

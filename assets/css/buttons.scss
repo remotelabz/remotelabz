@@ -11,6 +11,10 @@ border-color:
         color: #2e2e2e;
     }
 
+    &:focus {
+        box-shadow: none;
+    }
+
     &:active {
         background-color: #eaeaea;
         border-color: #e3e3e3;

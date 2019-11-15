@@ -48,6 +48,7 @@ use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 
 class LabController extends AbstractFOSRestController
 {
@@ -279,6 +280,7 @@ class LabController extends AbstractFOSRestController
             /** @var Device $device */
             $device = $deviceForm->getData();
             $lab = $this->labRepository->find($id);
+            $lab->setLastUpdated(new \DateTime());
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -459,16 +461,21 @@ class LabController extends AbstractFOSRestController
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->remove($lab);
-        $entityManager->flush();
-
-        $this->addFlash('success', $lab->getName() . ' has been deleted.');
-        $this->logger->info($user->getEmail()." deleted lab ". $lab->getName());
-
         $view = $this->view()
             ->setLocation($this->generateUrl('labs'));
         ;
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($lab);
+        try {
+            $entityManager->flush();
+
+            $this->addFlash('success', $lab->getName() . ' has been deleted.');
+            $this->logger->info($user->getEmail()." deleted lab ". $lab->getName());
+        } catch(ForeignKeyConstraintViolationException $exception) {
+            $this->addFlash('danger', 'You cannot delete this lab: one or more activities are linked to this lab. Please unlink them first.');
+            $view->setLocation($this->generateUrl('show_lab', ['id' => $id]));
+        }
 
         return $this->handleView($view);
     }

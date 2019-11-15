@@ -250,6 +250,7 @@ class OperatingSystemController extends AbstractFOSRestController
         }
         
         return $this->render('operating_system/new.html.twig', [
+            'operatingSystem' => $operatingSystem,
             'operatingSystemForm' => $operatingSystemForm->createView()
         ]);
     }

@@ -287,8 +287,12 @@ class DeviceController extends AbstractFOSRestController
             $deviceEditorData->setY($editorData['y']);
         }
 
+        $lab = $deviceEditorData->getDevice()->getLabs()[0];
+        $lab->setLastUpdated(new \DateTime());
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($deviceEditorData);
+        $entityManager->persist($lab);
         $entityManager->flush();
 
         return new JsonResponse();

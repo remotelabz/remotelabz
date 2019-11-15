@@ -30,7 +30,7 @@
         "build": "encore production --progress"
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.5.0",
+        "@fortawesome/fontawesome-free": "^5.11.2",
         "@mdi/font": "^3.2.89",
         "@novnc/novnc": "^1.0.0",
         "axios": "^0.19.0",
@@ -46,6 +46,7 @@
         "icheck": "^1.0.2",
         "immutability-helper": "^3.0.1",
         "jquery": "^3.3.1",
+        "js-cookie": "^2.2.1",
         "jsplumb": "^2.12.0",
         "node-sass": "^4.12.0",
         "noty": "^3.2.0-beta",
@@ -55,11 +56,14 @@
         "react-dom": "^16.8.6",
         "react-editext": "^3.9.1",
         "react-loading-skeleton": "^1.2.0",
+        "react-markdown": "^4.2.2",
         "react-select": "^3.0.8",
-        "sass-loader": "^8.0.0",
+        "react-simplemde-editor": "^4.1.0",
+        "sass-loader": "^7.0.1",
         "select2": "^4.0.6-rc.1",
         "selectize": "^0.12.6",
         "simplemde": "^1.11.2",
+        "timeago.js": "^4.0.1",
         "ts-loader": "^5.3.1",
         "vis-network": "^6.1.1",
         "yup": "^0.27.0"

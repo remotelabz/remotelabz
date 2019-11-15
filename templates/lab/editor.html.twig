@@ -1,5 +1,10 @@
 {% extends 'lab/index.html.twig' %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+{% endblock %}
+
 {% block breadcrumbs %}
     {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_lab') }) %}
     {{ parent() }}
@@ -8,15 +13,7 @@
 {%- set edit = app.request.uri ends with 'edit' -%}
 
 {% block wrapper %}
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="">
-                <div id="labEditor" data-id="{{ data.id }}"></div>
-            </div>
-        </div>
-    </div>
-</div>
+    <div id="labEditor" data-id="{{ data.id }}"></div>
 {% endblock %}
 
 {% block javascripts %}
