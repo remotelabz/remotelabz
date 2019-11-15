@@ -1,12 +1,14 @@
 /**
-* La Valise's main JS file.
-* 
+* Remotelabz main JS file.
+*
 * Mainly used to customize plugins and loading them.
-* 
+*
 * @author Julien Hubert <julien.hubert@outlook.com>
 */
 
-require('../css/style.scss')
+require('jquery');
+
+require('../css/style.scss');
 
 require('datatables.net-bs4/css/dataTables.bootstrap4.css');
 require('datatables.net-buttons-bs4/css/buttons.bootstrap4.css');
@@ -15,8 +17,9 @@ require('flag-icon-css/sass/flag-icon.scss');
 require('noty/src/noty.scss')
 require('noty/src/themes/mint.scss')
 require('simplemde/dist/simplemde.min.css')
-require('font-awesome/scss/font-awesome.scss')
+require('@fortawesome/fontawesome-free/css/all.css')
 require('cropperjs/dist/cropper.min.css')
+require('vis-network/dist/vis-network.min.css')
 
 require('popper.js');
 require('bootstrap');
@@ -27,86 +30,18 @@ require('icheck');
 require('selectize');
 require('select2');
 require('@novnc/novnc/core/rfb');
+require("jsplumb");
 
-import Noty from 'noty';
-
-Noty.overrideDefaults({
-    timeout: 5000
-});
-
-/**
-* Represents a default collection of request for common actions through the app.
-* 
-* @param object A string representing the concerned collection. Typically the
-* common suffix of concerned routes name.
-*/
-export default class API {
-    constructor(object) {
-        this.collection = object;
-    }
-
-    edit(id) {
-        const url = Routing.generate('edit_' + this.collection, {
-            id: id
-        })
-        window.location.href = url;
-    }
-    
-    toggle(id) {
-        $.ajax({
-            url: Routing.generate('toggle_' + this.collection, {
-                id: id
-            }),
-            method: 'PATCH',
-            contentType: 'application/json'
-        })
-        .done(function (data, status) {
-            $('table.dataTable').DataTable().ajax.reload();
-            
-            new Noty({
-                type: 'success',
-                text: data.message
-            }).show();
-        })
-        .fail(function (data, status) {
-            new Noty({
-                type: 'error',
-                text: data.responseJSON.message
-            }).show();
-        });
-    }
-    
-    delete(id) {
-        $.ajax({
-            url: Routing.generate('delete_' + this.collection, {
-                id: id
-            }),
-            method: 'DELETE',
-            contentType: 'application/json'
-        })
-        .done(function (data, status) {
-            $('table.dataTable').DataTable().ajax.reload();
-            
-            new Noty({
-                type: 'success',
-                text: data.message
-            }).show();
-        })
-        .fail(function (data, status) {
-            new Noty({
-                type: 'error',
-                text: data.responseJSON.message
-            }).show();
-        });
-    }
-};
+const Cookies = require('js-cookie');
 
 /**
 * Functions using jQuery goes here
 */
 (function($) {
     'use strict';
-    
+
+    window.addEventListener("onwheel", { passive: false });
+
     /**
     * Customize dataTables
     */
@@ -116,7 +51,7 @@ export default class API {
             var table = api.table();
             var id = table.node().id
             var $input = $(`<div id="`+id+`_filter" class="dataTables_filter"><div class="input-group"><div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-search"></i></span></div><input type="search" class="form-control input-sm" placeholder="Search all columns" aria-controls="`+id+`" style="margin-left: 0;"></div></div>`)
-            
+
             $input.on('keyup change','input',function(){
                 if(table.search() !== this.value)
                 table.search(this.value).draw()
@@ -125,7 +60,7 @@ export default class API {
         },
         cFeature: 'F'
     } );
-    
+
     $.extend( true, $.fn.dataTable.Buttons.defaults, {
         dom: {
             button: {
@@ -133,25 +68,25 @@ export default class API {
             }
         }
     } );
-    
+
     $.fn.dataTable.ext.buttons.edit = {
         extend: 'selectedSingle',
         text: '<i class="fa fa-edit"></i> Edit',
         className: 'btn-secondary'
     };
-    
+
     $.fn.dataTable.ext.buttons.toggle = {
         extend: 'selected',
         text: '<i class="fa fa-lock"></i> (Un)lock',
         className: 'btn-warning'
     };
-    
+
     $.fn.dataTable.ext.buttons.delete = {
         extend: 'selected',
         text: '<i class="fa fa-times"></i> Delete',
         className: 'btn-danger'
     };
-    
+
     $.extend( true, $.fn.dataTable.defaults, {
         dom: "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'F>>" +
         "<'row'<'col-sm-12'tr>>" +
@@ -183,66 +118,42 @@ export default class API {
     /**
     * End customize dataTables
     */
-    
-    
+
     /**
     * Dynamically attrubutes the active link in sidebar
     */
     $(function() {
         var sidebar = $('.sidebar');
-        
-        //Add active class to nav-link based on url dynamically
-        //Active class can be hard coded directly in html file also as required
-        var current = location.pathname.split("/").slice(-1)[0].replace(/^\/|\/$/g, '');
-        $('.nav li a', sidebar).each(function() {
-            var $this = $(this);
-            if (current === "") {
-                //for root url
-                if ($this.attr('href').indexOf("index.html") !== -1) {
-                    $(this).parents('.nav-item').last().addClass('active');
-                    if ($(this).parents('.sub-menu').length) {
-                        $(this).closest('.collapse').addClass('show');
-                        $(this).addClass('active');
-                    }
-                }
-            } else {
-                //for other url
-                if ($this.attr('href').indexOf(current) !== -1) {
-                    $(this).parents('.nav-item').last().addClass('active');
-                    if ($(this).parents('.sub-menu').length) {
-                        $(this).closest('.collapse').addClass('show');
-                        $(this).addClass('active');
-                    }
-                }
-            }
-        })
-        
+        let sidebarElement = sidebar[0];
+        let sidebarCollapseButton = document.getElementsByClassName('toggle-sidebar');
+
         //Close other submenu in sidebar on opening any
-        
+
         sidebar.on('show.bs.collapse', '.collapse', function() {
             sidebar.find('.collapse.show').collapse('hide');
         });
-        
-        
-        //Change sidebar and content-wrapper height
-        applyStyles();
-        
-        function applyStyles() {
-            //Applying perfect scrollbar
-            if ($('.scroll-container').length) {
-                const ScrollContainer = new PerfectScrollbar('.scroll-container');
-            }
+
+        let sidebarCollapsed = Cookies.get('sidebar_collapsed');
+
+        if (sidebarCollapsed === undefined) {
+            Cookies.set('sidebar_collapsed', false, { expires: 3650 });
         }
-        
-        //checkbox and radios
-        $(".form-check label,.form-radio label").append('<i class="input-helper"></i>');
-        
-        
-        $(".purchace-popup .popup-dismiss").on("click",function(){
-            $(".purchace-popup").slideToggle();
-        });
+
+        // if (sidebarCollapsed == "true") {
+        //     sidebarElement.classList.add('sidebar-collapsed');
+        // }
+
+        for (let index = 0; index < sidebarCollapseButton.length; index++) {
+            const element = sidebarCollapseButton[index];
+
+            element.addEventListener("click", () => {
+                sidebarElement.classList.toggle('sidebar-collapsed');
+                let isCollapsed = sidebarElement.classList.contains('sidebar-collapsed');
+                Cookies.set('sidebar_collapsed', isCollapsed, { expires: 3650 });
+            });
+        }
     });
-    
+
     /**
     * File upload label displaying
     */

@@ -2,25 +2,27 @@
  * This file implements JavaScript for network-interfaces/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('network_interface')
-  
+
 $(function () {
     var networkInterfaceTable = $('#networkInterfaceTable').DataTable({
         ajax: {
-            url: Routing.generate('get_network_interfaces'),
+            url: '/network-interfaces',
             dataSrc: ''
         },
         buttons: [{
             extend: 'edit',
             action: function() {
-                api.edit($('table tr.selected').data('id'));
+                let id = $('table tr.selected').data('id');
+                api.edit('/admin/network-interfaces/' + id + '/edit');
             }
         }, {
             extend: 'delete',
             action: function() {
-                api.delete($('table tr.selected').data('id'));
+                let id = $('table tr.selected').data('id');
+                api.delete('/api/network-interfaces/' + id);
             }
         }],
         columns: [{
@@ -63,7 +65,7 @@ $(function () {
                     }
                 }
             }, {
-                data: 'mac_address',
+                data: 'macAddress',
                 defaultContent: 'None',
                 render: (data, type) => {
                     if (type !== 'None' && data !== undefined) {
@@ -78,12 +80,10 @@ $(function () {
                 defaultContent: 'None',
                 render: (data, type) => {
                     if (type !== 'None' && data !== undefined) {
-                        var render = '<a href="' + 
-                        Routing.generate('edit_device', {
-                            id: data.id
-                        }) +
-                        '">' +
-                        data.name + 
+                        var render = '<a href="/admin/devices/' + 
+                        data.id +
+                        '/edit">' +
+                        data.name +
                         '</a>';
 
                         return render;

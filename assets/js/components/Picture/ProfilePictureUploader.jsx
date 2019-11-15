@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PictureEditor from './PictureEditor';
-import Modal from '../Display/Modal';
-import Button from '../Display/Button';
+import { Modal, Button, ModalBody } from 'react-bootstrap';
 import Noty from 'noty';
 
 export default class ProfilePictureUploader extends Component {
@@ -9,64 +8,69 @@ export default class ProfilePictureUploader extends Component {
         super(props);
 
         this.state = {
-            requestedChange: false
+            showModal: false,
+            uploading: false,
+            //guid: Date.now(),
         }
     }
 
-    onChangeFile(event) {
+    onChangeFile = (event) => {
         event.stopPropagation();
         event.preventDefault();
         this.file = event.target.files[0];
         if (this.file) {
             this.setState({
-                requestedChange: true
-            })
+                showModal: true
+            });
         }
     }
 
-    uploadCallback() {
-        $('#profilePictureModal').modal('toggle');
+    uploadCallback = () => {
+        this.setState({
+            showModal: false,
+            guid: new Date(),
+        });
         this.upload.files = null;
         
         new Noty({
             type: 'success',
-            text: 'Profile picture has been updated.'
+            text: 'Profile picture has been updated.',
+            timeout: 5000
         }).show();
     }
 
-    onModalClose() {
-        this.setState({
-            requestedChange: false
-        });
+    onModalClose = () => {
         this.upload.value = null;
     }
 
     render() {
-        let modal;
-
-        if (this.state.requestedChange) {
-            modal = (
-                <Modal id="profilePictureModal" title="Upload an image" onClose={this.onModalClose.bind(this)}>
-                    <PictureEditor file={this.file} uploadCallback={this.uploadCallback.bind(this)}></PictureEditor>
-                </Modal>
-            )
-        } else {
-            modal = null;
-        }
 
         return (
             <div>
+                <img src={"/profile/picture?size=160&hash=" + Date.now()} className="img-xl rounded-circle mr-4 float-left"></img>
+                <h5>Upload new avatar</h5>
+                <p className="text-muted">The maximum file size allowed is 200KB.</p>
                 <div className="file-upload">
-                    <button className="btn btn-default" onClick={ ()=>{ this.upload.click() } }>Choose file</button>
+                    <Button className="btn btn-default" onClick={ () => {this.upload.click()} }>Choose file</Button>
                     <input
                         type="file"
                         id="file"
                         ref={ (ref) => this.upload = ref }
                         style={{display: "none"}}
-                        onChange={this.onChangeFile.bind(this)}
+                        onChange={this.onChangeFile}
                     />
                 </div>
-                { modal }
+                <Modal id="profilePictureModal" title="Upload an image" size="lg" show={this.state.showModal} onHide={this.onModalClose}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Upload a profile picture</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <PictureEditor setUpload={click => this.onModalValid = click} file={this.file} uploadCallback={this.uploadCallback} />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="info" onClick={() => this.onModalValid()}>Set new profile picture</Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         )
     }

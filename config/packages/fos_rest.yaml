@@ -1,14 +1,17 @@
 # Read the documentation: https://symfony.com/doc/master/bundles/FOSRestBundle/index.html
 fos_rest:
-    disable_csrf_role: ROLE_API_USER
+    disable_csrf_role: ROLE_USER
     zone:
         - { path: ^/api/* }
     routing_loader:
         default_format: json
+        prefix_methods: api
     format_listener:
         enabled: true
         rules:
-        - { path: '^/api', priorities: ['json', 'xml'], fallback_format: json, prefer_extension: false }
+        - { path: '^/api/doc', priorities: ['html'], fallback_format: html, prefer_extension: false }
+        - { path: '^/api', priorities: ['json'], fallback_format: json, prefer_extension: true }
+        - { path: '^/', priorities: ['html', 'json'], fallback_format: html, prefer_extension: true }
     exception:
         exception_controller: 'fos_rest.exception.controller::showAction'
         # Set exceptions status code, may be useful for custom exceptions
@@ -18,16 +21,18 @@ fos_rest:
         messages:
            # 'Symfony\Component\Security\Core\Exception\AccessDeniedException': false
            # 'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
-#    param_fetcher_listener:  true
+    service:
+        templating: twig
+    param_fetcher_listener:  true
 #    allowed_methods_listener:  true
-#    routing_loader: true
-#    view:
-#        view_response_listener:  true
+    # view:
+    #     force_redirects:
+    #         html: true
+    #         json: false
+    #     templating_formats:
+    #         html: true
 #    exception:
 #        codes:
 #            App\Exception\MyException: 403
 #        messages:
 #            App\Exception\MyException: Forbidden area.
-#    format_listener:
-#        rules:
-#            - { path: ^/api, prefer_extension: true, fallback_format: json, priorities: [ json, html ] }

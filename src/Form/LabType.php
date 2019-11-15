@@ -9,10 +9,11 @@ use App\Entity\NetworkSettings;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Bridge\Doctrine\Form\Type\NetworkSettingsType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ResetType;
+use Symfony\Bridge\Doctrine\Form\Type\NetworkSettingsType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 class LabType extends AbstractType
 {
@@ -20,6 +21,12 @@ class LabType extends AbstractType
     {
         $builder
             ->add('name')
+            ->add('description', TextareaType::class, [
+                'attr' => [
+                    'class' => 'mde'
+                ],
+                'required' => false
+            ])
             ->add('devices', EntityType::class, [
                 'class' => Device::class,
                 'choice_label' => 'name',
@@ -48,6 +55,7 @@ class LabType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Lab::class,
+            "allow_extra_fields" => true
         ]);
     }
 }

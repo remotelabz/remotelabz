@@ -7,6 +7,7 @@ use App\Form\CourseType;
 use App\Repository\CourseRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use FOS\RestBundle\Controller\Annotations as Rest;
 
 class CourseController extends AppController
 {

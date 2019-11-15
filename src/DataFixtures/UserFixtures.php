@@ -6,11 +6,21 @@ use App\Entity\User;
 use Faker\Factory as RandomDataFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserFixtures extends Fixture implements DependentFixtureInterface
+class UserFixtures extends Fixture implements DependentFixtureInterface, ContainerAwareInterface
 {
+    /**
+     * The dependency injection container.
+     *
+     * @var ContainerInterface
+     */
+    protected $container;
+
     private $passwordEncoder;
  
     public function __construct(UserPasswordEncoderInterface $passwordEncoder)
@@ -39,41 +49,41 @@ class UserFixtures extends Fixture implements DependentFixtureInterface
         // Flush once before to ensure admin has ID == 1
         $manager->flush();
 
-        /* Traditional user */
-        $user = new User();
-        $user->setLastName("LastName User")
-            ->setFirstName("Julien")
-            ->setEmail("user@localhost")
-            ->setRoles(['ROLE_USER'])
-            ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
-            ->setPassword(
-                $this->passwordEncoder->encodePassword(
-                    $user,
-                    'user'
-                )
-            )
-        ;
-        $manager->persist($user);
-
         /* Other data, test purpose */
-        // $faker = RandomDataFactory::create('fr_FR');
+        /** @var KernelInterface $kernel */
+        $kernel = $this->container->get('kernel');
+
+        if (in_array($kernel->getEnvironment(), ["dev", "test"])) {
+            $faker = RandomDataFactory::create('fr_FR');
  
-        // for ($i = 0; $i < 10; $i++) {
-        //     $user = new User();
+            for ($i = 0; $i < 10; $i++) {
+                $user = new User();
 
-        //     $user->setFirstName($faker->firstName)
-        //         ->setLastName($faker->lastName)
-        //         ->setEmail($faker->safeEmail)
-        //         ->setPassword($this->passwordEncoder->encodePassword(
-        //             $user,
-        //             'userdemo'
-        //         ))
-        //     ;
+                $user->setFirstName($faker->firstName)
+                    ->setLastName($faker->lastName)
+                    ->setEmail($faker->safeEmail)
+                    ->setRoles(['ROLE_USER'])
+                    ->setPassword($this->passwordEncoder->encodePassword(
+                        $user,
+                        'user'
+                    ))
+                ;
 
-        //     $manager->persist($user);
-        // }
+                $manager->persist($user);
+
+                $this->addReference('user' . $i, $user);
+            }
+        }
  
         $manager->flush();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
     }
 
     public function getDependencies()

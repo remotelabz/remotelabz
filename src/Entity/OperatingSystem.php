@@ -21,7 +21,7 @@ class OperatingSystem
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "device"})
      * @var int
      */
     private $id;

@@ -3,12 +3,14 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use emberlabs\GravatarLib\Gravatar;
 use Symfony\Component\Asset\Package;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 
 /**
@@ -119,6 +121,16 @@ class User implements UserInterface
      */
     private $profilePictureFilename;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $lastActivity;
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
@@ -127,6 +139,7 @@ class User implements UserInterface
         $this->deviceInstances = new ArrayCollection();
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -472,14 +485,42 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getProfilePicture(): string
+    public function getProfilePicture(): ?string
     {
         if ($this->getProfilePictureFilename() == null || $this->getProfilePictureFilename() === "") {
-            $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
+            return null;
+
+            // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
             
-            return $package->getUrl('build/images/faces/default-user-image.png');
+            // return $package->getUrl('build/images/faces/default-user-image.png');
         }
+
+        $imagePath = 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
         
-        return 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
+        return $imagePath;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getLastActivity(): ?\DateTimeInterface
+    {
+        return $this->lastActivity;
+    }
+
+    public function setLastActivity(?\DateTimeInterface $lastActivity): self
+    {
+        $this->lastActivity = $lastActivity;
+
+        return $this;
     }
 }

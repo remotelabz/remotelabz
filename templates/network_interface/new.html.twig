@@ -6,23 +6,20 @@
 {% endblock %}
 
 {% block wrapper %}
-
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {% if app.request.uri ends with 'edit' %}
-                        {{ 'Edit network interface'|trans }}: {{ networkInterface.name }}
-                    {% else %}
-                        {{ 'New network interface'|trans }}
-                    {% endif %}
-                </h4>
-                {{ form(networkInterfaceForm) }}
-            </div>
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit network interface'|trans }}: {{ networkInterface.name }}
+                {% else %}
+                    {{ 'New network interface'|trans }}
+                {% endif %}
+            </h1>
         </div>
     </div>
-</div>
+    <div class="content-body">
+        {{ form(networkInterfaceForm) }}
+    </div>
 {% endblock %}
 
 {% block javascripts %}

@@ -16,21 +16,23 @@ class Flavor
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Assert\NotBlank
      */
     private $name;
 
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Assert\NotBlank
      * @Assert\GreaterThan(
      *     value = 0
      * )
@@ -40,7 +42,8 @@ class Flavor
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Assert\NotBlank
      * @Assert\GreaterThan(
      *     value = 0
      * )

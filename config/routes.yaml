@@ -5,9 +5,6 @@
 logout:
     path: /logout
 
-api_login_check:
-    path: /api/auth
-
 # home:
 #     path: /
 #     controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
@@ -19,3 +16,7 @@ shib_login:
 
 shib_logout:
     path: /Shibboleth.sso/Logout
+
+gesdinet_jwt_refresh_token:
+    path:       /api/auth/refresh
+    controller: gesdinet.jwtrefreshtoken::refresh

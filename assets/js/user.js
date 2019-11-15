@@ -3,15 +3,14 @@
 */
 
 import Noty from 'noty';
-import API from './app';
-import { id } from 'postcss-selector-parser';
+import API from './api';
 
 const api = new API('user')
 
 $(function () {
     var userTable = $('#userTable').DataTable({
         ajax: {
-            url: Routing.generate('get_users'),
+            url: "/users",
             dataSrc: ''
         },
         buttons: [{

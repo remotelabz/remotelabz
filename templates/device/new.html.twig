@@ -6,23 +6,18 @@
 {% endblock %}
 
 {% block wrapper %}
-
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {% if app.request.uri ends with 'edit' %}
-                        {{ 'Edit device'|trans }}: {{ name }}
-                    {% else %}
-                        {{ 'New device'|trans }}
-                    {% endif %}
-                </h4>
-                {{ form(deviceForm) }}
-            </div>
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit device'|trans }}: {{ data.name }}
+                {% else %}
+                    {{ 'New device'|trans }}
+                {% endif %}
+            </h1>
         </div>
     </div>
-</div>
+    <div class="content-body">{{ form(form) }}</div>
 {% endblock %}
 
 {% block javascripts %}

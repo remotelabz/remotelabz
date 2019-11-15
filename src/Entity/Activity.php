@@ -2,9 +2,11 @@
 
 namespace App\Entity;
 
+use UnexpectedValueException;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ActivityRepository")
@@ -47,42 +49,36 @@ class Activity
     /**
      * @ORM\Column(type="boolean")
      */
-    private $InternetAllowed = false;
+    private $internetAllowed = false;
     
 
     /**
      * @ORM\Column(type="boolean")
      */
-    private $Interconnected = false;
+    private $interconnected = false;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="string", length=255)
+     * @Assert\Choice({"alone", "group", "course"})
      */
-    private $UsedAlone = true;
+    private $scope;
 
     /**
-     * @ORM\Column(type="boolean")
-     */
-    private $UsedInGroup = false;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $UsedTogetherInCourse = false;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="Activity")
+     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="activity")
      */
     private $labInstances;
-  
 
     const VPN_ACCESS = "vpn";
     const HTTP_ACCESS = "http";
+    const SCOPE_SINGLE_USER = 'alone';
+    const SCOPE_GROUP = 'group';
+    const SCOPE_COURSE = 'course';
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
+        $this->scope = 'alone';
     }
 
     public function getId(): ?int
@@ -178,60 +174,40 @@ class Activity
 
     public function getInternetAllowed(): ?bool
     {
-        return $this->InternetAllowed;
+        return $this->internetAllowed;
     }
 
-    public function setInternetAllowed(bool $InternetAllowed): self
+    public function setInternetAllowed(bool $internetAllowed): self
     {
-        $this->InternetAllowed = $InternetAllowed;
+        $this->internetAllowed = $internetAllowed;
 
         return $this;
     }
 
-    public function getInterconnected(): ?bool
+    public function getinterconnected(): ?bool
     {
-        return $this->Interconnected;
+        return $this->interconnected;
     }
 
-    public function setInterconnected(bool $Interconnected): self
+    public function setInterconnected(bool $interconnected): self
     {
-        $this->Interconnected = $Interconnected;
+        $this->interconnected = $interconnected;
 
         return $this;
     }
 
-    public function getUsedAlone(): ?bool
+    public function getScope(): string
     {
-        return $this->UsedAlone;
+        return $this->scope;
     }
 
-    public function setUsedAlone(bool $UsedAlone): self
+    public function setScope(string $scope): self
     {
-        $this->UsedAlone = $UsedAlone;
-
-        return $this;
-    }
-
-    public function getUsedInGroup(): ?bool
-    {
-        return $this->UsedInGroup;
-    }
-
-    public function setUsedInGroup(bool $UsedInGroup): self
-    {
-        $this->UsedInGroup = $UsedInGroup;
-
-        return $this;
-    }
-
-    public function getUsedTogetherInCourse(): ?bool
-    {
-        return $this->UsedTogetherInCourse;
-    }
-
-    public function setUsedTogetherInCourse(bool $UsedTogetherInCourse): self
-    {
-        $this->UsedTogetherInCourse = $UsedTogetherInCourse;
+        if (in_array($scope, ['alone', 'group', 'course'])) {
+            $this->scope = $scope;
+        } else {
+            throw new UnexpectedValueException("'" . $scope . "' is not a correct value for Activity::scope. Must be one of 'alone', 'group' or 'course'.");
+        }
 
         return $this;
     }

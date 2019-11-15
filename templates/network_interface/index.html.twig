@@ -5,32 +5,35 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'network_interfaces' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">{{ 'Network Interfaces'|trans }}</h4>
-                <p>
-                    <a href="{{ path('new_network_interface') }}" class="btn btn-success">{{ 'New network interface'|trans }}</a>
-                </p>
-                <table id="networkInterfaceTable" class="table table-hover" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>{{ 'Name'|trans }}</th>
-                            <th>{{ 'Type'|trans }}</th>
-                            <th>{{ 'Protocol'|trans }}</th>
-                            <th>{{ 'MAC address'|trans }}</th>
-                            <th>{{ 'Device'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ 'Network Interfaces'|trans }}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('new_network_interface') }}" class="btn btn-success">{{ 'New network interface'|trans }}</a>
         </div>
     </div>
-</div>
+    <div class="content-body">
+        <table id="networkInterfaceTable" class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|trans }}</th>
+                    <th>{{ 'Type'|trans }}</th>
+                    <th>{{ 'Protocol'|trans }}</th>
+                    <th>{{ 'MAC address'|trans }}</th>
+                    <th>{{ 'Device'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 {% endblock %}
 
 {% block javascripts %}

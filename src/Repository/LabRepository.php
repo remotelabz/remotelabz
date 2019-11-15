@@ -19,6 +19,17 @@ class LabRepository extends ServiceEntityRepository
         parent::__construct($registry, Lab::class);
     }
 
+    public function findByNameLike($value)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.name LIKE :val')
+            ->setParameter('val', '%'.$value.'%')
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     // /**
     //  * @return Lab[] Returns an array of Lab objects
     //  */
