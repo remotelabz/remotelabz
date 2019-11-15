@@ -100,8 +100,8 @@ $default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxy
 $TYPE-1: $default-font-family;
 $TYPE-2: $default-font-family;
 $TYPE-3: $default-font-family;
-// $default-font-size: 0.875rem;
-$default-font-size: 14px;
+$default-font-size: 0.875rem;
+//$default-font-size: 14px;
 $text-muted: #8d9498;
 // $body-color: #12131a;
 $body-color: #2e2e2e;
@@ -231,11 +231,11 @@ $breadcrumb-custom-item-color: black;
 
 $border-property: 1px solid $border-color;
 $card-spacing-y: 1.5rem;
-$card-padding-y: 1.5rem;
-$card-padding-x: 0.9375rem;
+$card-padding-y: 0;
+$card-padding-x: 0;
 $grid-gutter-width: 20px;
 // $action-transition-duration: 0.25s;
-$action-transition-duration: 100ms;
+$action-transition-duration: 0.3s;
 $action-transition-timing-function: ease;
 
 ////////// MEASUREMENT AND PROPERTY VARIABLES //////////

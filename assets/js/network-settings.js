@@ -2,14 +2,14 @@
  * This file implements JavaScript for networkSettingss/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('network_settings')
   
 $(function () {
     var networkSettingsTable = $('#networkSettingsTable').DataTable({
         ajax: {
-            url: Routing.generate('get_network_settings'),
+            url: '/network-settings',
             dataSrc: ''
         },
         buttons: [{
@@ -28,13 +28,19 @@ $(function () {
             }, {
                 data: 'ip',
                 render: (data, type, row) => {
-                    return row.ip + '<strong>/' + row.prefix4 + '</strong>';
+                    if (row.ip !== undefined || row.prefix4 !== undefined)
+                        return row.ip + '<strong>/' + row.prefix4 + '</strong>';
+                    else
+                        return '';
                 },
                 defaultContent: ''
             }, {
                 data: 'ipv6',
                 render: (data, type, row) => {
-                    return row.ipv6 + '<strong>/' + row.prefix6 + '</strong>';
+                    if (row.ipv6 !== undefined || row.prefix6 !== undefined)
+                        return row.ipv6 + '<strong>/' + row.prefix6 + '</strong>';
+                    else
+                        return '';
                 },
                 defaultContent: ''
             }, {

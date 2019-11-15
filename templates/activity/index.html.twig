@@ -5,6 +5,11 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'activities' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
     <div class="top-panel">
             <div class="quick-actions">

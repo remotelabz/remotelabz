@@ -5,9 +5,13 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'instances' %}
+    {{ parent() }}
+{% endblock %}
+
 {% set filter = filter|default('all') %}
 {% if filter not in ['all', 'labs', 'devices', 'networkInterfaces'] %}{% set filter = 'all' %}{% endif %}
-
 
 {% block wrapper %}
     <div class="top-panel">

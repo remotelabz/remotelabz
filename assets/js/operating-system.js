@@ -2,7 +2,7 @@
  * This file implements JavaScript for operating-systems/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('operating_system')
   

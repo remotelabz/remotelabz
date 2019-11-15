@@ -5,6 +5,11 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'operating_systems' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="top-panel">
     <div class="quick-actions">

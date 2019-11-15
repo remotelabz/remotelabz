@@ -22,7 +22,7 @@ class NetworkSettings
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "details", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -88,12 +88,12 @@ class NetworkSettings
     private $port;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Lab", mappedBy="NetworkSettings", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\Lab", mappedBy="networkSettings", cascade={"persist", "remove"})
      */
     private $lab;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\LabInstance", mappedBy="NetworkSettings", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\LabInstance", mappedBy="networkSettings", cascade={"persist", "remove"})
      */
     private $labInstance;
 

@@ -88,3 +88,25 @@ With the loaded fixtures, default credentials are :
 - Password : `admin`
 
 You may change those values by using the web interface.
+
+#### Generate API keys
+
+In order for the app to work correctly, you must create a key pair for JWT. You can find detailed configuration in [the LexikJWTAuthenticationBundle doc](https://github.com/lexik/LexikJWTAuthenticationBundle/blob/master/Resources/doc/index.md#generate-the-ssh-keys).
+
+At the root of your RemoteLabz folder:
+
+```bash
+mkdir -p config/jwt
+openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096
+openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+```
+
+Don't forget to edit your `.env` :
+
+```bash
+###> lexik/jwt-authentication-bundle ###
+JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+JWT_PASSPHRASE=yourpassphrase
+###< lexik/jwt-authentication-bundle ###
+```

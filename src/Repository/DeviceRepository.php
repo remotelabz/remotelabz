@@ -3,8 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Device;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method Device|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,6 +17,28 @@ class DeviceRepository extends ServiceEntityRepository
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Device::class);
+    }
+
+    public function findByNameLike($value)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.name LIKE :val')
+            ->setParameter('val', '%'.$value.'%')
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findByTemplate($template = true)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.is_template = :val')
+            ->setParameter('val', $template ? 1 : 0)
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     // /**

@@ -1,0 +1,107 @@
+/* Sidebar */
+.sidebar {
+    transition: width 0.3s, left 0.3s;
+    position: fixed;
+    z-index: 5;
+    width: 220px;
+    top: 40px;
+    bottom: 0;
+    left: 0;
+    background-color: #fafafa;
+    box-shadow: inset -1px 0 0 #e5e5e5;
+    transform: translate3d(0, 0, 0);
+
+    .nav {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        padding: 0;
+        
+        .nav-item {
+            font-weight: 400;
+            
+            .collapse {
+                z-index: 999;
+            }
+            
+            .nav-link {
+                padding: $sidebar-menu-padding;
+                white-space: nowrap;
+                color: $sidebar-dark-menu-color;
+                fill:  $sidebar-dark-menu-color;
+                font-size: $sidebar-menu-font-size;
+                font-family: $TYPE-2;
+                line-height: 21px;
+                
+                .menu-title {
+                    display: inline-block;
+                    flex: 1;
+                }
+                
+                &:hover {
+                    background-color: $sidebar-dark-menu-hover-bg;
+                    color: $sidebar-dark-menu-hover-color;
+                    fill : $sidebar-dark-menu-hover-color;
+                }
+                
+                i, svg, .menu-icon {
+                    margin-right: 8px;
+                    font-size: inherit;
+                    color: inherit;
+                    fill: inherit;
+                    transition: padding 0.3s;
+                }
+            }
+            
+            &.active {
+                box-shadow: inset 4px 0 0 theme-color(primary);
+                background: $sidebar-dark-menu-active-bg;
+                > .nav-link {
+                    .menu-title,
+                    i,
+                    svg {
+                        font-weight: 600;
+                        color: $sidebar-dark-menu-active-color;
+                        fill: $sidebar-dark-menu-active-color;
+                    }
+                }
+            }
+            
+            &.nav-category {
+                color: theme-color("dark");
+                font-family: 'source-sans-pro-semibold', sans-serif;
+                font-size: 0.8125rem;
+                line-height: 16px;
+                border-bottom: none;
+                font-family: $TYPE-1;
+                font-weight: 500;
+                
+                .nav-link {
+                    padding: $sidebar-category-padding;
+                    color: $sidebar-category-color;
+                }
+            }
+        }
+        
+        &.sub-menu {
+            padding-left: 0;
+            
+            .nav-item {
+                border-bottom: none;
+                
+                .nav-link {
+                    color: $sidebar-dark-submenu-color;
+                    font-size: $sidebar-submenu-font-size;
+                    padding: $sidebar-submenu-item-padding;
+                }
+                
+                &.active {
+                    .nav-link {
+                        border-left: 0;
+                        color: theme-color("primary");
+                        background: transparent;
+                    }
+                }
+            }
+        }
+    }
+}

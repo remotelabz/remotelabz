@@ -4,23 +4,25 @@ namespace App\Security;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
-use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Security\Core\Exception\DisabledException;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Http\Logout\LogoutSuccessHandlerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements LogoutSuccessHandlerInterface
 {
@@ -30,13 +32,20 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
     private $router;
     private $csrfTokenManager;
     private $passwordEncoder;
+    private $JWTManager;
+    /**
+     * @var RefreshTokenManagerInterface
+     */
+    protected $refreshTokenManager;
 
-    public function __construct(EntityManagerInterface $entityManager, RouterInterface $router, CsrfTokenManagerInterface $csrfTokenManager, UserPasswordEncoderInterface $passwordEncoder)
+    public function __construct(EntityManagerInterface $entityManager, RouterInterface $router, CsrfTokenManagerInterface $csrfTokenManager, UserPasswordEncoderInterface $passwordEncoder, JWTTokenManagerInterface $JWTManager, RefreshTokenManagerInterface $refreshTokenManager)
     {
         $this->entityManager = $entityManager;
         $this->router = $router;
         $this->csrfTokenManager = $csrfTokenManager;
         $this->passwordEncoder = $passwordEncoder;
+        $this->JWTManager = $JWTManager;
+        $this->refreshTokenManager = $refreshTokenManager;
     }
 
     public function supports(Request $request)
@@ -89,6 +98,13 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
         $response = new RedirectResponse('/');
+        /** @var User $user */
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+        $response->headers->setCookie(Cookie::create('bearer', $this->JWTManager->create($user)));
+        $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
+        $user->setLastActivity(new \DateTime());
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
         if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
             $response->setTargetUrl($targetPath);
@@ -116,5 +132,20 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
             return new RedirectResponse($this->router->generate('shib_logout'));
         else
             return new RedirectResponse($this->router->generate('login'));
+    }
+
+    protected function createRefreshToken($user)
+    {
+        $valid = new \DateTime('now');
+        $valid->add(new \DateInterval('P3D'));
+
+        $refreshToken = $this->refreshTokenManager->create();
+        $refreshToken->setUsername($user->getEmail());
+        $refreshToken->setRefreshToken();
+        $refreshToken->setValid($valid);
+
+        $this->refreshTokenManager->save($refreshToken);
+
+        return $refreshToken->getRefreshToken();
     }
 }

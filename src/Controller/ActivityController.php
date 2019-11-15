@@ -11,11 +11,13 @@ use App\Form\ActivityType;
 use App\Service\FileUploader;
 use App\Repository\ActivityRepository;
 use Symfony\Component\Process\Process;
+use App\Repository\LabInstanceRepository;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
@@ -23,8 +25,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
-use Symfony\Component\Security\Core\User\UserInterface;
-use App\Repository\LabInstanceRepository;
 
 
 class ActivityController extends AppController
@@ -42,14 +42,12 @@ class ActivityController extends AppController
      */
     public function indexAction(Request $request)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Activity');
-
         $search = $request->query->get('search', '');
-        
+    
         if ($search !== '') {
-            $data = $repository->findByNameLike($search);
+            $data = $this->activityRepository->findByNameLike($search);
         } else {
-            $data = $repository->findAll();
+            $data = $this->activityRepository->findAll();
         }
         
         return $this->render('activity/index.html.twig', [
@@ -65,17 +63,16 @@ class ActivityController extends AppController
      *  name="show_activity",
      *  methods="GET")
      */
-    public function showAction(Request $request, $id,UserInterface $user)
+    public function showAction(Request $request, $id, UserInterface $user)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Activity');     
+        $data = $this->activityRepository->find($id);
+        $labInstance = null;
 
-        $data = $repository->find($id);
-
-        $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $data->getLab() );
-        if (count($labInstance_tmp) > 0)
-            $labInstance=$labInstance_tmp[0];
-        else
-            $labInstance=null;
+        if ($data->getLab()) {
+            $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $data->getLab());
+            if (count($labInstance_tmp) > 0)
+                $labInstance=$labInstance_tmp[0];
+        }
 
         if (null === $data) {
             throw new NotFoundHttpException();
@@ -121,11 +118,9 @@ class ActivityController extends AppController
      * @Route("/activities/{id<\d+>}/edit", name="edit_activity", methods={"GET", "POST"})
      * @IsGranted("ROLE_ADMINISTRATOR")
      */
-    public function editAction(Request $request, $id, FileUploader $fileUploader)
+    public function editAction(Request $request, $id)
     {
-        $repository = $this->getDoctrine()->getRepository('App:Activity');
-
-        $activity = $repository->find($id);
+        $activity = $this->activityRepository->find($id);
 
         if (null === $activity) {
             throw new NotFoundHttpException();
@@ -150,6 +145,7 @@ class ActivityController extends AppController
         
         return $this->render('activity/new.html.twig', [
             'activityForm' => $activityForm->createView(),
+            'activity' => $activity,
             'id' => $id,
             'name' => $activity->getName()
         ]);
@@ -185,10 +181,7 @@ class ActivityController extends AppController
 
         return $this->redirectToRoute('start_lab_activity', [
             'id' => $lab->getId(),
-            'activity_id' => $id
+            'activityId' => $id
         ]);
-
     }
-
-
 }

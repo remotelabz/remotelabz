@@ -12,7 +12,24 @@
     <div class="col grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                {{ form(labForm) }}
+                {# <div class="hidden-md hidden-lg container" id="small">
+                    <div class="jumbotron">
+                        <div class="container">
+                            <h1>Display too small</h1>
+                            <p>This device is not large enough, you need 992px width at least.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden-xs hidden-sm container-fluid" id="body">
+                    <div style="background-color: #3ba9b9; bottom: 0px; left: 0px; position: absolute; right: 0px; top: 0px;">
+                        <div class="container">
+                            <img src="../../eve/images/wait.gif" style="width:410px;-ms-transform: translate(-50%, -50%); -webkit-transform: translate(-50%, -50%); border: 0px; left: 50%; max-height: 100%; max-width: 100%; position: absolute; top: 50%; transform: translate(-50%, -50%);"/>
+                        </div>
+                    </div>
+                </div> #}
+                <div id="labEditor" class="editor-wrapper"></div>
+                {# TODO: Uncomment form editor when graphical will be over #}
+                {# {{ form(labForm) }} #}
             </div>
         </div>
     </div>
@@ -21,5 +38,26 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('lab') }} #}
+    {# <script src="../../eve/bootstrap/js/jquery-3.2.1.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/tinytools.toggleswitch.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/jquery-ui-1.12.1.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/jquery-cookie-1.4.1.js" defer></script>
+	<script src="../../eve/bootstrap/js/jquery.validate-1.14.0.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/jquery.hotkey.js" defer></script>
+	<script src="../../eve/bootstrap/js/bootstrap.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/bootstrap-select.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/circle-progress-1.1.3.js" defer></script>
+	<script src="../../eve/bootstrap/js/jsPlumb-2.4.min.js" defer></script>
+	<script src="../../eve/bootstrap/js/imageMapResizer.min.js" defer></script>
+	<script src="../../eve/js/ejs.js" defer></script>
+    <script src="../../eve/js/b64encoder.js" defer></script>
+	<script src="../../eve/js/messages_en.js" defer></script>
+	<script src="../../eve/js/validate.js" defer></script>
+	<script src="../../eve/js/colorpicker.min.js" defer></script>
+    <script src="../../eve/js/browsers.js" defer></script>
+    <script src="../../eve/js/functions.js" defer></script>
+    <script src="../../eve/js/actions.js" defer></script>
+    <script src="../../eve/js/javascript.js" defer></script> #}
+   
+    {{ encore_entry_script_tags('editor-react') }}
 {% endblock %}

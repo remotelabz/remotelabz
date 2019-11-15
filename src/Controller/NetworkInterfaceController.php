@@ -5,11 +5,15 @@ namespace App\Controller;
 use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterface;
 use App\Form\NetworkInterfaceType;
+use FOS\RestBundle\Context\Context;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use Symfony\Component\Routing\Annotation\Route;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
-class NetworkInterfaceController extends AppController
+class NetworkInterfaceController extends AbstractFOSRestController
 {
     public $networkInterfaceRepository;
 
@@ -121,36 +125,72 @@ class NetworkInterfaceController extends AppController
      */
     public function cgetAction()
     {
-        $repository = $this->getDoctrine()->getRepository('App:NetworkInterface');
+        $data = $this->networkInterfaceRepository->findAll();
+
+        $context = new Context();
+        $context->addGroups(['network_interfaces', 'primary_key']);
+
+        $view = $this->view($data, 200)
+            ->setContext($context)
+            ->setFormat('json')
+        ;
             
-        $data = $repository->findAll();
-            
-        return $this->renderJson($data);
+        return $this->handleView($view);
+    }
+
+    /**
+     * @Route("/admin/network-interfaces/{id<\d+>}/delete", name="delete_network_interface", methods="GET")
+     * 
+     * @Rest\Delete("/api/network-interfaces/{id<\d+>}", name="api_delete_network_interface")
+     */
+    public function deleteAction(Request $request, int $id)
+    {
+        $networkInterface = $this->networkInterfaceRepository->find($id);
+
+        if (null === $networkInterface) {
+            throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
+        } elseif ($networkInterface->getDevice() !== null && $networkInterface->getDevice()->getInstances()->count() > 0) {
+            throw new UnauthorizedHttpException('This interface is attached to a running device. Please stop all devices instances before you delete it.');
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($networkInterface);
+        $entityManager->flush();
+
+        if ($request->getRequestFormat() === 'html') {
+            $this->addFlash('success', $networkInterface->getName() . ' has been deleted.');
+        }
+        
+        $view = $this->view()
+            ->setLocation($this->generateUrl('network_interfaces'));
+        ;
+
+        return $this->handleView($view);
     }
         
-    /**
-     * @Route("/admin/network-interface/{id<\d+>}", name="delete_network_interface", methods="DELETE")
-     */
-    public function deleteAction($id)
-    {
-        $status = 200;
-        $data = [];
+    // /**
+    //  * @Route("/admin/network-interface/{id<\d+>}", name="delete_network_interface", methods="DELETE")
+    //  */
+    // public function deleteAction($id)
+    // {
+    //     $status = 200;
+    //     $data = [];
             
-        $networkInterface = $this->networkInterfaceRepository->find($id);
+    //     $networkInterface = $this->networkInterfaceRepository->find($id);
             
-        if ($networkInterface == null) {
-            $status = 404;
-        } elseif ($networkInterface->getDevice() !== null && $networkInterface->getDevice()->getInstances()->count() > 0) {
-            $status = 403;
-            $data['message'] = "This interface is attached to a running device. Please stop all devices instances before you delete it.";
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($networkInterface);
-            $em->flush();
+    //     if ($networkInterface == null) {
+    //         $status = 404;
+    //     } elseif ($networkInterface->getDevice() !== null && $networkInterface->getDevice()->getInstances()->count() > 0) {
+    //         $status = 403;
+    //         $data['message'] = "This interface is attached to a running device. Please stop all devices instances before you delete it.";
+    //     } else {
+    //         $em = $this->getDoctrine()->getManager();
+    //         $em->remove($networkInterface);
+    //         $em->flush();
                 
-            $data['message'] = 'Interface has been deleted.';
-        }
+    //         $data['message'] = 'Interface has been deleted.';
+    //     }
             
-        return $this->renderJson($data, $status);
-    }
+    //     return $this->renderJson($data, $status);
+    // }
 }

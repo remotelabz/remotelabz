@@ -2,25 +2,25 @@
  * This file implements JavaScript for flavors/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('flavor')
   
 $(function () {
     var flavorTable = $('#flavorTable').DataTable({
         ajax: {
-            url: Routing.generate('get_flavors'),
+            url: "/api/flavors",
             dataSrc: ''
         },
         buttons: [{
             extend: 'edit',
             action: function() {
-                api.edit($('table tr.selected').data('id'));
+                api.edit('/admin/flavors/' + $('table tr.selected').data('id') + '/edit');
             }
         }, {
             extend: 'delete',
             action: function() {
-                api.delete($('table tr.selected').data('id'));
+                api.delete('/api/flavors/' + $('table tr.selected').data('id'));
             }
         }],
         columns: [{

@@ -27,42 +27,42 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key","device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $name;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", cascade={"persist", "remove"})
      * @Serializer\XmlList(entry="network_settings")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $settings;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"network_interfaces", "lab"})
      */
     private $device;
 
     /**
      * @ORM\Column(type="string", length=17)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
     private $macAddress;
@@ -77,7 +77,7 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $uuid;
 

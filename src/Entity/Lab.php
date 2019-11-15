@@ -34,6 +34,12 @@ class Lab implements InstanciableInterface
     private $name;
 
     /**
+     * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"lab"})
+     */
+    private $description;
+
+    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
      * @Serializer\XmlList(inline=true, entry="device")
      * @Serializer\Groups({"lab"})
@@ -64,7 +70,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
      * @Serializer\XmlElement(cdata=false)
-     * @Serializer\Groups({"author"})
+     * @Serializer\Groups({"lab", "lab_author"})
      */
     private $author;
 
@@ -88,9 +94,21 @@ class Lab implements InstanciableInterface
     private $networkInterfaceInstances;
 
     /**
+     * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"lab"})
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"lab"})
+     */
+    private $lastUpdated;
+
+    /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="lab", cascade={"persist", "remove"})
      */
-    private $NetworkSettings;
+    private $networkSettings;
 
     public function __construct()
     {
@@ -101,6 +119,13 @@ class Lab implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->deviceInstances = new ArrayCollection();
         $this->networkInterfaceInstances = new ArrayCollection();
+        $this->createdAt = new \DateTime();
+        $this->lastUpdated = new \DateTime();
+    }
+
+    public static function create(): self
+    {
+        return new static();
     }
 
     public function getId(): ?int
@@ -116,6 +141,18 @@ class Lab implements InstanciableInterface
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }
@@ -368,14 +405,38 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function getNetworkSettings(): ?NetworkSettings
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->NetworkSettings;
+        return $this->createdAt;
     }
 
-    public function setNetworkSettings(?NetworkSettings $NetworkSettings): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
-        $this->NetworkSettings = $NetworkSettings;
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getLastUpdated(): ?\DateTimeInterface
+    {
+        return $this->lastUpdated;
+    }
+
+    public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
+    {
+        $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->networkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $networkSettings): self
+    {
+        $this->networkSettings = $networkSettings;
 
         return $this;
     }

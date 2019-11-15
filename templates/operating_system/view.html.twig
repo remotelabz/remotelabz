@@ -6,28 +6,24 @@
 {% endblock %}
 
 {% block wrapper %}
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {{ operatingSystem.name }}
-                    <div class="float-right">
-                        <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-default" role="button">Edit</a>
-                        <a href="{{ path('delete_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-danger" role="button">Delete</a>
-                    </div>
-                </h4>
-                <p>Image : 
-                {% if operatingSystem.imageUrl is not null %}
-                    <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
-                {% else %}
-                    <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}">{{ operatingSystem.imageFilename }}</a>
-                {% endif %}
-                </p>
-            </div>
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ operatingSystem.name }}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> Edit</a>
+            <a href="{{ path('delete_operating_system', {'id': operatingSystem.id}) }}" class="btn btn-danger" role="button">Delete</a>
         </div>
     </div>
-</div>
+    <div class="content-body">
+        <p>Image : 
+        {% if operatingSystem.imageUrl is not null %}
+            <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
+        {% else %}
+            <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}">{{ operatingSystem.imageFilename }}</a>
+        {% endif %}
+        </p>
+    </div>
 {% endblock %}
 
 {% block javascripts %}

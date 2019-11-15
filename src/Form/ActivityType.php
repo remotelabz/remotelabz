@@ -9,7 +9,9 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\RadioType;
 use Symfony\Component\Form\Extension\Core\Type\ResetType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -32,26 +34,22 @@ class ActivityType extends AbstractType
                 'choice_label' => 'name',
                 'required' => false
             ])
-            ->add('InternetAllowed', CheckboxType::class, [
+            ->add('internetAllowed', CheckboxType::class, [
                 'help' => 'If the laboratory is allowed to be conntected to Internet.',
                 'required' => false,
-//                'block_prefix' => 'checkbox_test'
             ])
-            ->add('Interconnected', CheckboxType::class, [
+            ->add('interconnected', CheckboxType::class, [
                 'help' => 'If all laboratory of the same activity of the same course is together interconnected.',
                 'required' => false
             ])
-            ->add('UsedAlone', CheckboxType::class, [
-                'help' => 'If this activity must be alone.',
-                'required' => false
-            ])
-            ->add('UsedInGroup', CheckboxType::class, [
-                'help' => 'If this activity must be done in group.',
-                'required' => false
-            ])
-            ->add('UsedTogetherInCourse', CheckboxType::class, [
-                'help' => 'If all users of this course do this activity together.',
-                'required' => false
+            ->add('scope', ChoiceType::class, [
+                'choices' => [
+                    'Single user' => Activity::SCOPE_SINGLE_USER,
+                    'Group' => Activity::SCOPE_GROUP,
+                    'Course' => Activity::SCOPE_COURSE
+                ],
+                'expanded' => true,
+                'help' => "Choose how this activity must be achieved. An activity may be done either by a single user, a group of users or the whole course."
             ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)

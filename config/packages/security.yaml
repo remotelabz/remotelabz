@@ -1,7 +1,7 @@
 security:
     encoders:
         App\Entity\User:
-            algorithm: auto
+            algorithm: 'sodium'
 
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
@@ -26,6 +26,22 @@ security:
                 success_handler:          lexik_jwt_authentication.handler.authentication_success
                 failure_handler:          lexik_jwt_authentication.handler.authentication_failure
 
+        refresh:
+            pattern:  ^/api/auth/refresh
+            stateless: true
+            anonymous: true
+
+        api_doc:
+            pattern:   ^/api/doc
+            security: false
+
+        api:
+            pattern:   ^/api
+            stateless: true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -36,7 +52,6 @@ security:
                 authenticators:
                     - App\Security\LoginFormAuthenticator
                     - App\Security\ShibbolethAuthenticator
-                    - lexik_jwt_authentication.jwt_token_authenticator
                 entry_point: App\Security\LoginFormAuthenticator
 
             logout:
@@ -57,6 +72,7 @@ security:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/labs, roles: ['ROLE_USER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }

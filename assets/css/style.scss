@@ -65,8 +65,8 @@
 
 /*-------------------------------------------------------------------*/
 /* === SCSS Compass Functions === */
-@import "~compass-mixins/lib/compass";
-@import "~compass-mixins/lib/animate";
+// @import "~compass-mixins/lib/compass";
+// @import "~compass-mixins/lib/animate";
 
 /*-------------------------------------------------------------------*/
 /* === Boostrap Main SCSS === */
@@ -74,50 +74,53 @@
 
 /*-------------------------------------------------------------------*/
 /* === Template mixins === */
-@import "mixins/animation";
-@import "mixins/background";
-@import "mixins/badge";
-@import "mixins/breadcrumb";
-@import "mixins/buttons";
-@import "mixins/misc";
-@import "mixins/blockqoute";
-@import "mixins/pagination";
-@import "mixins/tooltips";
+// @import "mixins/animation";
+// @import "mixins/background";
+// @import "mixins/badge";
+// @import "mixins/breadcrumb";
+// @import "mixins/buttons";
+// @import "mixins/misc";
+// @import "mixins/blockqoute";
+// @import "mixins/pagination";
+// @import "mixins/tooltips";
 
 /*-------------------------------------------------------------------*/
 /* === Core Styles === */
-@import "reset";
-@import "fonts";
-@import "functions";
+// @import "reset";
+// @import "fonts";
+// @import "functions";
 @import "sidebar";
 @import "navbar";
-@import "typography";
-@import "misc";
-@import "footer";
-@import "utilities";
-@import "demo";
-@import "dashboard";
+// @import "typography";
+// @import "misc";
+// @import "footer";
+// @import "utilities";
+// @import "demo";
+// @import "dashboard";
 
 /*-------------------------------------------------------------------*/
 /* === Components === */
-@import "components/badges";
-@import "components/breadcrumbs";
-@import "components/bootstrap-progress";
-@import "components/buttons";
-@import "components/cards";
-@import "components/checkbox-radio";
-@import "components/forms";
-@import "components/icons";
-@import "components/lists";
-@import "components/pagination";
-@import "components/preview";
-@import "components/tables";
-@import "components/tooltips";
-@import "plugin-overrides/flot-chart";
+// @import "components/badges";
+// @import "components/breadcrumbs";
+// @import "components/bootstrap-progress";
+@import "buttons";
+@import "dropdowns";
+@import "forms";
+// @import "components/cards";
+// @import "components/checkbox-radio";
+// @import "components/forms";
+// @import "components/icons";
+// @import "components/lists";
+// @import "components/pagination";
+// @import "components/preview";
+// @import "components/tables";
+// @import "components/tooltips";
+// @import "plugin-overrides/flot-chart";
 
 /*-------------------------------------------------------------------*/
 /* === Landing screens === */
-@import "landing-screens/auth";
-@import "landing-screens/error";
+// @import "landing-screens/auth";
+// @import "landing-screens/error";
 
-@import "custom"
+@import "custom";
+@import "editor";

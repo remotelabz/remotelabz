@@ -2,7 +2,7 @@
  * This file implements JavaScript for courses/
  */
 
-import API from './app';
+import API from './api';
 
 const api = new API('course')
 
@@ -16,18 +16,18 @@ $(function () {
 
     var courseTable = $('#courseTable').DataTable({
         ajax: {
-            url: Routing.generate('get_courses'),
+            url: '/courses',
             dataSrc: ''
         },
         buttons: [{
             extend: 'edit',
             action: function() {
-                api.edit($('table tr.selected').data('id'));
+                api.edit('/admin/courses/' + $('table tr.selected').data('id') + '/edit');
             }
         }, {
             extend: 'delete',
             action: function() {
-                api.delete($('table tr.selected').data('id'));
+                api.delete('/admin/courses/' + $('table tr.selected').data('id'));
             }
         }],
         columns: [{

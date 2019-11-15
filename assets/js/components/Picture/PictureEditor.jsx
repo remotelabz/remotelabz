@@ -1,7 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
+import Noty from 'noty';
 import Cropper from 'cropperjs';
+import { ButtonToolbar, ButtonGroup, Button } from 'react-bootstrap';
 
-export default class PictureEditor extends Component {
+export default class PictureEditor extends React.Component {
     constructor(props) {
         super(props);
 
@@ -10,7 +12,9 @@ export default class PictureEditor extends Component {
         }
     }
 
-    componentDidMount() {
+    componentDidMount = () => {
+        this.props.setUpload(this.upload);
+
         var reader = new FileReader();
         const parent = this;
 
@@ -44,7 +48,7 @@ export default class PictureEditor extends Component {
         reader.readAsDataURL(this.props.file);
     }
 
-    upload() {
+    upload = () => {
         const parent = this;
 
         this.cropper.getCroppedCanvas({
@@ -53,13 +57,13 @@ export default class PictureEditor extends Component {
             maxWidth: 4096,
             maxHeight: 4096,
             fillColor: '#fff',
-            imageSmoothingEnabled: false,
+            imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
           }).toBlob((blob) => {
             const formData = new FormData();
-          
+
             formData.append('picture', blob);
-          
+
             // Use `jQuery.ajax` method
             $.ajax('/profile/picture', {
               method: "POST",
@@ -72,43 +76,41 @@ export default class PictureEditor extends Component {
               },
               error() {
                 console.log('Upload failed');
+
+                new Noty({
+                    type: 'error',
+                    text: 'Error uploading your new profile picture. Please try again.',
+                    timeout: 5000
+                }).show();
               },
             });
         });
     }
 
-    zoomIn() {
+    zoomIn = () => {
         this.cropper.zoom(0.1);
     }
 
-    zoomOut() {
+    zoomOut = () => {
         this.cropper.zoom(-0.1);
     }
 
     render() {
-        let zoomButtons; 
-
         if (!this.props.file) {
             return null;
         }
 
-        if (!this.state.isReady) {
-            return null;
-        } else {
-            zoomButtons = (
-                <div>
-                    <button className="btn btn-info" onClick={ this.zoomIn.bind(this) }></button>
-                    <button className="btn btn-info" onClick={ this.zoomOut.bind(this) }></button>
-                </div>
-            );
-        }
+        return (<>
+            <img ref={imageElement => this.imageElement = imageElement} src={this.picture} />
 
-        return (
-            <div>
-                <img ref={imageElement => this.imageElement = imageElement} src={this.picture} />
-                { zoomButtons }
-                <button className="btn btn-info" onClick={ this.upload.bind(this) }>Upload picture</button>
-            </div>
-        );
+            <ButtonToolbar className="mt-2 justify-content-center">
+                <ButtonGroup>
+                    <Button variant="info" onClick={this.zoomOut}><i className="fa fa-search-minus" aria-hidden="true"></i></Button>
+                    <Button variant="info" onClick={this.zoomIn}><i className="fa fa-search-plus" aria-hidden="true"></i></Button>
+                </ButtonGroup>
+            </ButtonToolbar>
+
+            {/* <Button variant="info" onClick={this.upload}>Set new profile picture</Button> */}
+        </>);
     }
 }
