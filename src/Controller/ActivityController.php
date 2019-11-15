@@ -145,6 +145,7 @@ class ActivityController extends AppController
         
         return $this->render('activity/new.html.twig', [
             'activityForm' => $activityForm->createView(),
+            'activity' => $activity,
             'id' => $id,
             'name' => $activity->getName()
         ]);
@@ -180,8 +181,7 @@ class ActivityController extends AppController
 
         return $this->redirectToRoute('start_lab_activity', [
             'id' => $lab->getId(),
-            'activity_id' => $id
+            'activityId' => $id
         ]);
-
     }
 }

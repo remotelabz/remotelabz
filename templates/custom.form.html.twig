@@ -60,6 +60,22 @@
     {%- endif -%}
 {%- endblock form_row %}
 
+{#{% block fieldset_form_row -%}
+    {%- set widget_attr = {} -%}
+    {%- if help is not empty -%}
+        {%- set widget_attr = {attr: {'aria-describedby': id ~"_help"}} -%}
+    {%- endif -%}
+        <div class="form-group row{% if (not compound or force_error|default(false)) and not valid %} is-invalid{% endif %}">
+            {{- form_label(form) -}}
+            <div class="{{ block('form_group_class') }}">
+                {{- form_widget(form, widget_attr) -}}
+                {{- form_errors(form) -}}
+                {{- form_help(form) -}}
+            </div>
+        </div>
+{%- endblock fieldset_form_row %}#}
+
+
 {% block file_widget -%}
     <{{ element|default('div') }}>
         {%- set type = type|default('file') -%}

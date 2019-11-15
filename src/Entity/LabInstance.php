@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabInstanceRepository")
@@ -43,36 +44,21 @@ class LabInstance extends Instance
      */
     private $deviceInstances;
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->deviceInstances = new ArrayCollection();
-    }
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $isInterconnected;
 
     /**
      * @ORM\Column(type="boolean")
      */
-    private $IsInterconnected;
+    private $isInternetConnected;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="string", length=255)
+     * @Assert\Choice({"standalone", "activity"})
      */
-    private $IsUsedAlone;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $IsUsedInGroup;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $IsUsedTogetherInCourse;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $IsInternetConnected;
+    private $scope;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
@@ -84,6 +70,16 @@ class LabInstance extends Instance
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
      */
     private $networkSettings;
+
+    const SCOPE_STANDALONE = 'standalone';
+    const SCOPE_ACTIVITY = 'activity';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->deviceInstances = new ArrayCollection();
+        $this->scope = self::SCOPE_STANDALONE;
+    }
 
     public function getId(): ?int
     {
@@ -212,65 +208,28 @@ class LabInstance extends Instance
 
     public function getIsInternetConnected(): ?bool
     {
-        return $this->IsInternetConnected;
+        return $this->isInternetConnected;
     }
 
-    public function setIsInternetConnected(bool $IsInternetConnected): self
+    public function setIsInternetConnected(bool $isInternetConnected): self
     {
-        $this->IsInternetConnected = $IsInternetConnected;
+        $this->isInternetConnected = $isInternetConnected;
 
         return $this;
     }
 
     public function getIsInterconnected(): ?bool
     {
-        return $this->IsInterconnected;
+        return $this->isInterconnected;
     }
 
-    public function setIsInterconnected(bool $IsInterconnected): self
+    public function setIsInterconnected(bool $isInterconnected): self
     {
-        $this->IsInterconnected = $IsInterconnected;
+        $this->isInterconnected = $isInterconnected;
 
         return $this;
     }
 
-    public function getIsUsedAlone(): ?bool
-    {
-        return $this->IsUsedAlone;
-    }
-
-    public function setIsUsedAlone(bool $IsUsedAlone): self
-    {
-        $this->IsUsedAlone = $IsUsedAlone;
-
-        return $this;
-    }
-
-    public function getIsUsedInGroup(): ?bool
-    {
-        return $this->IsUsedInGroup;
-    }
-
-    public function setIsUsedInGroup(bool $IsUsedInGroup): self
-    {
-        $this->IsUsedInGroup = $IsUsedInGroup;
-
-        return $this;
-    }
-
-    public function getIsUsedTogetherInCourse(): ?bool
-    {
-        return $this->IsUsedTogetherInCourse;
-    }
-
-    public function setIsUsedTogetherInCourse(bool $IsUsedTogetherInCourse): self
-    {
-        $this->IsUsedTogetherInCourse = $IsUsedTogetherInCourse;
-
-        return $this;
-    }
-
-    
     public function addDeviceInstance(DeviceInstance $deviceInstance): self
     {
         if (!$this->deviceInstances->contains($deviceInstance)) {
@@ -323,4 +282,19 @@ class LabInstance extends Instance
         return $this;
     }
 
+    public function getScope(): string
+    {
+        return $this->scope;
+    }
+
+    public function setScope(string $scope): self
+    {
+        if (in_array($scope, [self::SCOPE_STANDALONE, self::SCOPE_ACTIVITY])) {
+            $this->scope = $scope;
+        } else {
+            throw new UnexpectedValueException("'" . $scope . "' is not a correct value for Activity::scope. Must be one of '".self::SCOPE_STANDALONE."' or '".self::SCOPE_ACTIVITY."'.");
+        }
+
+        return $this;
+    }
 }

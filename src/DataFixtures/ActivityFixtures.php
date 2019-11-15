@@ -135,9 +135,6 @@ EOD;
             ->setNetwork(NULL)
             ->setInternetAllowed(false)
             ->setInterconnected(false)
-            ->setUsedAlone(true)
-            ->setUsedInGroup(false)
-            ->setUsedTogetherInCourse(false)
         ;
 
         $manager->persist($activity);

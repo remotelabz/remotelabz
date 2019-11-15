@@ -35,9 +35,9 @@ class UserType extends AbstractType
             ->add('roles', ChoiceType::class, [
                 'label' => 'Role',
                 'choices' => [
-                    'Student' => 'ROLE_USER',
+                    'Administrator' => 'ROLE_ADMINISTRATOR',
                     'Teacher' => 'ROLE_TEACHER',
-                    'Administrator' => 'ROLE_ADMINISTRATOR'
+                    'Student' => 'ROLE_USER',
                 ],
                 'multiple' => true,
                 'help' => 'Only the highest rights level is important.'

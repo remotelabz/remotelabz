@@ -8,16 +8,33 @@
 {%- set edit = app.request.uri ends with 'edit' -%}
 
 {% block wrapper %}
-
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                {{ form(activityForm) }}
-            </div>
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit activity'|trans }}: {{ activity.name }}
+                {% else %}
+                    {{ 'New activity'|trans }}
+                {% endif %}
+            </h1>
         </div>
     </div>
-</div>
+    <div class="content-body">
+        {{ form(activityForm) }}
+        {# {{ form_start(activityForm) }}
+            {{ form_errors(activityForm) }}
+
+            {{ form_row(activityForm.name) }}
+            {{ form_row(activityForm.description) }}
+            {{ form_row(activityForm.lab) }}
+            {{ form_row(activityForm.internetAllowed) }}
+            {{ form_row(activityForm.interconnected) }}
+            
+            {{ form_label(activityForm.scope) }}
+
+            {{ form_rest(activityForm) }}
+        {{ form_end(activityForm) }} #}
+    </div>
 {% endblock %}
 
 {% block javascripts %}

@@ -517,23 +517,29 @@ class LabController extends AbstractFOSRestController
         ]);
     }
 
-    private function startLab(int $id, UserInterface $user, Activity $activity)
+    private function startLab(int $id, UserInterface $user, Activity $activity = null)
     {
         $lab = $this->labRepository->find($id);
 
         $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
 
         if (count($labInstance) == 0) {
-            $this->logger->debug("Create Instance in Start Lab from Activity ". $activity->getName()." by ".$user->getEmail());
             $labInstance = LabInstance::create()
-            ->setLab($lab)
-            ->setUser($user)
-            ->setActivity($activity)
-            ->setIsInternetConnected(false)
-            ->setIsInterconnected(false)
-            ->setIsUsedAlone(true)
-            ->setIsUsedInGroup(false)
-            ->setIsUsedTogetherInCourse(false);
+                ->setLab($lab)
+                ->setUser($user)
+                ->setIsInternetConnected(false)
+                ->setIsInterconnected(false)
+            ;
+
+            if ($activity) {
+                $this->logger->debug("Create Instance in Start Lab from Activity ". $activity->getName()." by ".$user->getEmail());
+                $labInstance
+                    ->setActivity($activity)
+                    ->setScope('activity')
+                ;
+            } else {
+                $this->logger->debug("Create Instance in Start Lab as standalone by ".$user->getEmail());
+            }
 
             $this->entityManager->persist($labInstance);
 
@@ -753,9 +759,6 @@ class LabController extends AbstractFOSRestController
                 ->setUser($user)
                 ->setIsInternetConnected(false)
                 ->setIsInterconnected(false)
-                ->setIsUsedAlone(true)
-                ->setIsUsedInGroup(false)
-                ->setIsUsedTogetherInCourse(false)
             ;
             $lab->addInstance($labInstance);
 

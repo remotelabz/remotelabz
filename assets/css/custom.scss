@@ -138,17 +138,20 @@ img.rounded-circle {
 
 /////////// FORMS ///////////
 
-legend
-{
-  border-bottom: 1px solid $border-color;
-  margin-bottom: 20px;
-}
+// legend
+// {
+//   border-bottom: 1px solid $border-color;
+//   margin-bottom: 20px;
+// }
 
 .form-group
 {
-  label {
+  label.col-form-label, legend.col-form-label {
     text-align: right;
-    margin: auto;
+    font-weight: 600;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-bottom: 0.5rem;
 
     &.form-check-label {
       text-align: left;
