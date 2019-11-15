@@ -6,9 +6,10 @@ use Faker\Factory;
 use App\Entity\Lab;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class LabFixtures extends Fixture implements DependentFixtureInterface
+class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
     public const COUNT = 5;
 
@@ -58,5 +59,10 @@ EOF;
         return [
             UserFixtures::class,
         ];
+    }
+
+    public static function getGroups(): array
+    {
+        return ['labs'];
     }
 }

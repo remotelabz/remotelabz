@@ -22,8 +22,8 @@
             {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
             <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
             <li class="active">
-                <a href="#">
-                    <span>All</span> <span class="badge badge-pill">{{ labs|length }}</span>
+                <a href="{{ path('labs') }}">
+                    <span>All</span> <span class="badge badge-pill">{{ count }}</span>
                 </a>
             </li>
         </ul>
@@ -44,7 +44,15 @@
                         {{- lab.name -}}
                     </a>
                 </div>
-                <div class="lab-item-infos text-muted">!{{ lab.id }} · created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" /> {{ lab.author.name }}</div>
+                <div class="lab-item-infos text-muted">
+                    !{{ lab.id }} · created
+                    <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span>
+                    by
+                    <a href="{{ path('labs', app.request.query|merge({author: lab.author.id})) }}" data-toggle="tooltip" data-placement="top" title="See all labs by {{lab.author.name}}">
+                        <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" />
+                        <span class="lab-item-author" >{{ lab.author.name }}</span>
+                    </a>
+                </div>
             </div>
             <div class="separator flex-grow-1"></div>
             <div class="lab-item-right d-flex flex-column text-right">
@@ -67,6 +75,20 @@
     {% endfor %}
     </div>
     
+    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    <nav aria-label="Page navigation example">
+        <ul class="pagination mt-3 justify-content-center">
+            <li class="page-item {% if page <= 1 %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('labs', app.request.query|merge({page: page-1})) }}">Previous</a>
+            </li>
+            {% for i in 1.. pagesNumber %}
+                <li class="page-item {% if i == page %}active{%endif%}"><a class="page-link" href="{{ path('labs', app.request.query|merge({page: i})) }}">{{ i }}</a></li>
+            {% endfor %}
+            <li class="page-item {% if page >= pagesNumber %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('labs', app.request.query|merge({page: page+1})) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
 {% endblock %}
 
 {% block javascripts %}

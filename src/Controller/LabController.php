@@ -16,6 +16,7 @@ use App\Service\FileUploader;
 use App\Entity\DeviceInstance;
 use Swagger\Annotations as SWG;
 use App\Repository\LabRepository;
+use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use App\Repository\ActivityRepository;
@@ -110,21 +111,30 @@ class LabController extends AbstractFOSRestController
      * 
      * @SWG\Tag(name="Lab")
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, UserRepository $userRepository)
     {
         $search = $request->query->get('search', '');
+        $author = $request->query->get('author', 0);
         $limit = $request->query->get('limit', 10);
-        $offset = $request->query->get('offset', 0);
+        $page = $request->query->get('page', 1);
         
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->contains('name', $search))
+            ->where(Criteria::expr()->contains('name', $search));
+        
+        if ($author > 0) {
+            $criteria->andWhere(Criteria::expr()->eq('author', $userRepository->find($author)));
+        }
+
+        $criteria
             ->orderBy([
                 'id' => Criteria::DESC
             ])
-            ->setMaxResults($limit)
+            // ->setMaxResults($limit)
+            // ->setFirstResult($page * $limit - $limit)
         ;
 
         $labs = $this->labRepository->matching($criteria);
+        $count = $labs->count();
 
         $context = new Context();
         $context
@@ -134,8 +144,12 @@ class LabController extends AbstractFOSRestController
         $view = $this->view($labs->getValues())
             ->setTemplate("lab/index.html.twig")
             ->setTemplateData([
-                'labs' => $labs,
-                'search' => $search
+                'labs' => $labs->slice($page * $limit - $limit, $limit),
+                'count' => $count,
+                'search' => $search,
+                'limit' => $limit,
+                'page' => $page,
+                'author' => $author,
             ])
             ->setContext($context)
         ;
