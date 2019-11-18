@@ -69,7 +69,7 @@ ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT} --database-server ${DATABASE_SERVER} --database-user ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME}
 
 # Folders
-RUN chmod -R g+rwx /opt/remotelabz &&
+RUN chmod -R g+rwx /opt/remotelabz && \
     chown www-data:www-data /opt/remotelabz
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint

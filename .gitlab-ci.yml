@@ -25,8 +25,7 @@ build:
     DOCKER_DRIVER: overlay2
   script:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg PORT=8000 .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg PORT=8000 .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   tags:
     - build
