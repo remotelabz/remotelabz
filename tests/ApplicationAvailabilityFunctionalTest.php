@@ -35,11 +35,14 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/admin/users'];
         yield ['/admin/courses'];
         yield ['/admin/flavors'];
-        yield ['/admin/hypervisors'];
         yield ['/admin/network-settings'];
         yield ['/admin/network-interfaces'];
         yield ['/admin/operating-systems'];
-        yield ['/admin/devices'];
+        yield ['/admin/instances'];
+
+        yield ['/activities'];
+        yield ['/devices'];
+        yield ['/profile'];
     }
 
     private function logIn()
@@ -47,6 +50,7 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         $crawler = $this->client->request('GET', '/login');
 
         // Start by testing if login page sucessfully loaded
+        // echo $this->client->getResponse();
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
 
         $form = $crawler->selectButton('submit')->form();

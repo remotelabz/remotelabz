@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && \
-    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
+    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
 
 # Exim
 RUN sed -i "s/dc_eximconfig_configtype='local'/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
@@ -69,7 +69,8 @@ ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT} --database-server ${DATABASE_SERVER} --database-user ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME}
 
 # Folders
-RUN chmod -R g+rwx /opt/remotelabz
+RUN chmod -R g+rwx /opt/remotelabz &&
+    chown www-data:www-data /opt/remotelabz
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 

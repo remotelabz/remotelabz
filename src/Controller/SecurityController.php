@@ -12,6 +12,7 @@ use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\KernelInterface;
 use App\Repository\PasswordResetRequestRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
@@ -54,23 +55,21 @@ class SecurityController extends AbstractController
     /**
      * @Route("/login", name="login", methods={"GET", "POST"})
      */
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
     {
         // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();    
         
-        $version = file('../version', FILE_USE_INCLUDE_PATH);
+        $version = file_get_contents($kernel->getProjectDir() . '/version');
  
-
-            return $this->render('security/login.html.twig', 
-            [
-                'last_username' => $lastUsername,
-                'error' => $error,
-                'version' => $version[0]
-                
-            ]);
+        return $this->render('security/login.html.twig', 
+        [
+            'last_username' => $lastUsername,
+            'error' => $error,
+            'version' => $version
+        ]);
     }
 
     /**
