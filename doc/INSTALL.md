@@ -34,7 +34,7 @@ Ubuntu
 - PHP
 ```bash
 # default php packages version from 18.04 is 7.2, therefore this command will work
-sudo apt install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xml php-zip
+sudo apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip
 ```
 - Composer
 ```bash
