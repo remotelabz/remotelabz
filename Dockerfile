@@ -36,12 +36,11 @@ RUN apt-get update && \
 RUN shib-keygen -f -u _shibd -h staging.remotelabz.com -y 3 -e https://staging.remotelabz.com/shibboleth -o /etc/shibboleth/
 
 RUN cd /tmp && \
-    curl -O https://test.federation.renater.fr/exemples/conf_sp2_renater.tar.gz && \
-    tar -zxvf conf_sp2_renater.tar.gz && \
+    git clone https://git.renater.fr/anonscm/git/partage-fede/formation.git && \
     mv /etc/shibboleth/attribute-map.xml /etc/shibboleth/attribute-map.xml.dist && \
     mv /etc/shibboleth/attribute-policy.xml /etc/shibboleth/attribute-policy.xml.dist && \
-    cp /tmp/conf_sp2/attribute-map.xml /etc/shibboleth/attribute-map.xml && \
-    cp /tmp/conf_sp2/attribute-policy.xml /etc/shibboleth/attribute-policy.xml && \
+    cp /tmp/formation/sp/etc/shibboleth/attribute-map.xml /etc/shibboleth/attribute-map.xml && \
+    cp /tmp/formation/sp/etc/shibboleth/attribute-policy.xml /etc/shibboleth/attribute-policy.xml && \
     curl https://metadata.federation.renater.fr/certs/renater-metadata-signing-cert-2016.pem -o /etc/shibboleth/renater-metadata-signing-cert-2016.pem
 
 ADD ./config/shibboleth/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
