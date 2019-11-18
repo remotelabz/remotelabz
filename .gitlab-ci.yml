@@ -56,36 +56,36 @@ tests:
     - test
 
 # TODO stage with apache to upload on public server
-deploy_review:
-  stage: deploy
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker stop mysql_$CI_COMMIT_REF_SLUG || true
-    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker network create remotelabz_$CI_COMMIT_REF_SLUG
-    - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
-    # Wait for mysql
-    - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d --rm -p 8000 -p 8888 --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
-    - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-    - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-    - sudo service nginx reload
-    - docker exec remotelabz remotelabz-ctl reconfigure database -v
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
-    on_stop: stop_review
-  when: manual
-  tags:
-    - review
-  only:
-    - branches
-  except:
-    - master
-    - stable
+# deploy_review:
+#   stage: deploy
+#   script:
+#     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
+#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+#     - docker stop mysql_$CI_COMMIT_REF_SLUG || true
+#     - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
+#     - docker network create remotelabz_$CI_COMMIT_REF_SLUG
+#     - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
+#     # Wait for mysql
+#     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
+#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
+#     - docker run -d --rm -p 8000 -p 8888 --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
+#     - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+#     - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+#     - sudo service nginx reload
+#     - docker exec remotelabz remotelabz-ctl reconfigure database -v
+#   environment:
+#     name: review/$CI_COMMIT_REF_NAME
+#     url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
+#     on_stop: stop_review
+#   when: manual
+#   tags:
+#     - review
+#   only:
+#     - branches
+#   except:
+#     - master
+#     - stable
 
 deploy_staging:
   stage: deploy
@@ -116,27 +116,27 @@ deploy_staging:
   only: 
     - master
 
-stop_review:
-  stage: deploy
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
-    - docker stop mysql_$CI_COMMIT_REF_SLUG
-    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
-    - sudo rm /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-    - sudo service nginx reload
-  when: manual
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    action: stop
-  tags:
-    - review
-  only:
-    - branches
-  except: 
-    - master
-    - stable
+# stop_review:
+#   stage: deploy
+#   variables:
+#     GIT_STRATEGY: none
+#   script:
+#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG
+#     - docker stop mysql_$CI_COMMIT_REF_SLUG
+#     - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
+#     - sudo rm /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
+#     - sudo service nginx reload
+#   when: manual
+#   environment:
+#     name: review/$CI_COMMIT_REF_NAME
+#     action: stop
+#   tags:
+#     - review
+#   only:
+#     - branches
+#   except: 
+#     - master
+#     - stable
 
 stop_staging:
   stage: deploy
