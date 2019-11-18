@@ -25,7 +25,7 @@ build:
     DOCKER_DRIVER: overlay2
   script:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg PORT=8000 .
+    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg SERVER_NAME=staging.remotelabz.com .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   tags:
     - build
@@ -102,8 +102,8 @@ deploy_staging:
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d -p 8000:8000 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz remotelabz-ctl reconfigure database -v
+    - docker run -d -p 8000:80 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG remotelabz-ctl reconfigure database -v
   environment:
     name: staging
     url: https://staging.remotelabz.com/

@@ -286,8 +286,8 @@ class Installer {
         }
         copy($this->installPath."/config/apache/100-remotelabz.conf", "/etc/apache2/sites-available/100-remotelabz.conf");
         $configFileContent = file_get_contents("/etc/apache2/sites-available/100-remotelabz.conf");
-        preg_replace("/^<VirtualHost *:80>$/", "<VirtualHost *:${port}>", $configFileContent);
-        preg_replace("/ServerName remotelabz.com/", "ServerName ${serverName}", $configFileContent);
+        $configFileContent = preg_replace("/^<VirtualHost *:80>$/", "<VirtualHost *:${port}>", $configFileContent);
+        $configFileContent = preg_replace("/ServerName remotelabz.com/", "ServerName ${serverName}", $configFileContent);
         file_put_contents("/etc/apache2/sites-available/100-remotelabz.conf", $configFileContent);
         if (!is_file("/etc/apache2/sites-enabled/100-remotelabz.conf")) {
             symlink("/etc/apache2/sites-available/100-remotelabz.conf", "/etc/apache2/sites-enabled/100-remotelabz.conf");
@@ -300,14 +300,14 @@ class Installer {
         // If keys already exists
         if (array_key_exists("upload_max_filesize", $ini)) {
             $content = file_get_contents($phpPath);
-            preg_replace("/^(upload_max_filesize=)(.*)$/m", "$1".$uploadMaxFilesize, $content);
+            $content = preg_replace("/^(upload_max_filesize=)(.*)$/m", "$1".$uploadMaxFilesize, $content);
             file_put_contents($phpPath, $content);
         } else {
             file_put_contents($phpPath, "\nupload_max_filesize=".$uploadMaxFilesize."\n", FILE_APPEND);
         }
         if (array_key_exists("post_max_size", $ini)) {
             $content = file_get_contents($phpPath);
-            preg_replace("/^(post_max_size=)(.*)$/m", "$1".$postMaxSize, $content);
+            $content = preg_replace("/^(post_max_size=)(.*)$/m", "$1".$postMaxSize, $content);
             file_put_contents($phpPath, $content);
         } else {
             file_put_contents($phpPath, "post_max_size=".$postMaxSize.substr($uploadMaxFilesize, -1), FILE_APPEND);
