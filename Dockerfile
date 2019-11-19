@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && \
-    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4
+    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4 sudo
 
 # Exim
 RUN sed -i "s/dc_eximconfig_configtype='local'/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
