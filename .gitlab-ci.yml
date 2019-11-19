@@ -104,6 +104,9 @@ deploy_staging:
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
     - docker run -d -p 8000:80 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG remotelabz-ctl reconfigure database -v
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo JWT_PASSPHRASE=$JWT_PASSPHRASE >> .env"
   environment:
     name: staging
     url: https://staging.remotelabz.com/
