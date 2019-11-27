@@ -194,3 +194,52 @@
 .flex-separator {
     flex-grow: 999999;
 }
+
+[theme=dark] {
+    .editor-wrapper {
+        border-color: lighten(theme-color("dark-lighter"), 7.5%);
+
+        .editor {
+            &.fullscreen {
+                background-color: theme-color("dark");
+            }
+
+            .editor-canvas-wrapper {
+                border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+            }
+
+            .editor-aside-toolbar {
+                border-left-color: lighten(theme-color("dark-lighter"), 7.5%);
+            }
+
+            .editor-toolbar-wrapper {
+                border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+            }
+        }
+    }
+    
+    .accordion.lab-description {
+        .card {
+            border-radius: 0.25rem;
+    
+            &:last-of-type {
+                border-bottom: 1px solid lighten(theme-color("dark-lighter"), 7.5%);
+            }
+    
+            .card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+    }
+
+    .editor-contextual-menu-option {
+        color: theme-color("light");
+        fill: currentColor;
+
+        &:hover {
+            background-color: theme-color("dark-lighter");
+        }
+    }
+}

@@ -1,0 +1,73 @@
+{% extends 'group/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('admin_show_group', {'slug': group.slug}) }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h3>{{ group.name }}</h3>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('edit_group', {slug: group.slug}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+        </div>
+    </div>
+    <div class="content-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Group info
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                                {% if group.pictureFilename is defined and group.pictureFilename %}
+                                    image
+                                {% else %}
+                                    {{- group.name|firstLetter|upper -}}
+                                {% endif %}
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            Name: <strong>{{ group.name }}</strong>
+                        </li>
+                        <li class="list-group-item">
+                            Path: <strong>{{ group.slug }}</strong>
+                        </li>
+                        <li class="list-group-item">
+                            Description: <strong>{{ group.description }}</strong>
+                        </li>
+                        <li class="list-group-item">
+                            Visibility level: <strong>{{ group.visibility }}</strong>
+                        </li>
+                        <li class="list-group-item">
+                            Created on: <strong>{{ group.createdAt|date }}</strong>
+                        </li>
+                        <li class="list-group-item">
+                            ID: <strong>{{ group.id }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Add user(s) to the group
+                    </div>
+                    <div class="card-body">
+                        <div id="usersSelect"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('users-select') }}
+{% endblock %}

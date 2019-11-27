@@ -1,0 +1,21 @@
+{% import "dashboard.base.html.twig" as dashboard %}
+
+{% block sidebar %}
+    {% set category = category|default('dashboard') %}
+    <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
+        <ul class="nav">
+            {{ dashboard.navlink("Dashboard", 'index', 'home', 'dashboard', _context) }}
+            {{ dashboard.navlink("Activities", 'activities', 'review-list', 'activities', _context) }}
+            {{ dashboard.navlink("Labs", 'labs', 'applications', 'labs', _context) }}
+            {% if is_granted('ROLE_ADMINISTRATOR') %}
+            {% endif %}
+
+            <div class="nav-item">
+            <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
+                <span class="toggle-sidebar-hide">{{ svg('angle-double-left') }}Collapse sidebar</span>
+                <span class="toggle-sidebar-show">{{ svg('angle-double-right') }}</span>
+            </a>
+            </div>
+        </ul>
+    </nav>
+{% endblock %}

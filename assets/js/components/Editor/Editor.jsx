@@ -356,7 +356,7 @@ export default class Editor extends React.Component {
                         <Card>
                             <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
                                 <div>
-                                    <SVG name="text-description"/> Description
+                                    <SVG name="text-description" className="v-sub s18 mr-2" /> Description
                                 </div>
                                 <div>
                                     <Button variant="default" onClick={(e) => {e.stopPropagation(); this.handleEditDescription();}}><SVG name="pencil" /></Button>

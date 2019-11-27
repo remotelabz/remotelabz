@@ -34,6 +34,23 @@ require("jsplumb");
 
 const Cookies = require('js-cookie');
 
+let theme = Cookies.get('theme');
+
+if (theme !== undefined) {
+    document.documentElement.setAttribute('theme', theme);
+} else { // first visit
+    if (window.matchMedia('(prefers-color-scheme: dark)')) {
+        theme = 'dark';
+    } else {
+        theme = 'light';
+    }
+
+    document.documentElement.setAttribute('theme', theme);
+    Cookies.set('theme', theme, {
+        expires: 3650
+    });
+}
+
 /**
 * Functions using jQuery goes here
 */
@@ -41,6 +58,32 @@ const Cookies = require('js-cookie');
     'use strict';
 
     window.addEventListener("onwheel", { passive: false });
+
+    // Switch themes
+    document.getElementById("themeSwitcher").addEventListener('change', () => {
+        if (document.getElementById("themeSwitcher").checked) {
+            Cookies.set('theme', 'dark', {
+                expires: 3650
+            });
+        } else {
+            Cookies.set('theme', 'light', {
+                expires: 3650
+            });
+        }
+    })
+    document.getElementById("themeSwitcherDiv").addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById("themeSwitcher").checked = !document.getElementById("themeSwitcher").checked;
+
+        if (document.getElementById("themeSwitcher").checked) {
+            document.documentElement.setAttribute('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('theme', 'light');
+        }
+
+        document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
+    })
 
     /**
     * Customize dataTables

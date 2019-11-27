@@ -41,6 +41,8 @@ export default class DeviceTemplateSelect extends React.Component
             <AsyncSelect
                 value={this.state.selectedOption}
                 onChange={this.onChange}
+                className='react-select-container'
+                classNamePrefix="react-select"
                 loadOptions={this.loadOptions}
                 cacheOptions
                 defaultOptions

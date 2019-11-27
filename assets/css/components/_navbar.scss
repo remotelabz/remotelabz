@@ -46,7 +46,8 @@
                 justify-content: center;
 
             &:hover,
-            &:focus {
+            &:focus,
+            &.active {
                 background-color: rgba(209,209,240,0.2);
                 color: $white;
 
@@ -55,20 +56,28 @@
                 }
             }
 
+            &.active {
+                color: #292961;
+                background-color: #fff;
+            }
+
             img {
                 width: unset;
                 // max-width: 70%;
                 max-height: 24px;
             }
 
-            &.profile-image img {
-                border: 1px solid #d1d1f0;
+            &.profile-image {
+                img {
+                    border: 1px solid #d1d1f0;
+                }
+                svg {
+                    width: 11px;
+                    height: 11px;
+                }
             }
 
-            svg {
-                width: 11px;
-                height: 11px;
-            }
+            
         }
 
         // padding: 5px;

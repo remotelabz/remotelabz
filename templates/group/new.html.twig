@@ -1,0 +1,105 @@
+{% extends 'group/index.html.twig' %}
+
+{% form_theme form 'custom.form.vertical.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_group') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit group'|trans }}: {{ group.name }}
+                {% else %}
+                    {{ 'New group'|trans }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+    <div class="content-body">
+        <div class="row">
+            <div class="col-md-3">
+                Groups allow you to manage users and handle permissions across multiple activities. Members of a group have access to all of its activities.
+                <br><br>
+                Groups can also be nested by creating subgroups.
+                <br><br>
+                Activities that belong to a group are prefixed with the group namespace. Existing activities may be moved into a group.
+            </div>
+            <div class="col-md-9">
+                {{ form_start(form) }}
+                {{ form_row(form.name) }}
+                <div class="form-group">
+                    {{ form_label(form.slug) }}
+
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/</span></div>
+                        {{ form_widget(form.slug) }}
+                    </div>
+                </div>
+                {{ form_row(form.slug) }}
+                {{ form_row(form.description) }}
+                <div class="form-group">
+                        {# pattern="[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-]|[a-zA-Z0-9_]" #}
+                    {{- form_label(form.visibility) -}}
+                    <div class="mb-3">
+                        {{- form_help(form.visibility, {attr: {class: 'mb-3'}}) -}}
+                    </div>
+                    <div id="{{ form.visibility.vars.id }}" aria-describedby="{{ form.visibility.vars.id }}_help">
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ form.visibility.children[0].vars.id }}"
+                                name="{{ form.visibility.children[0].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ form.visibility.children[1].vars.value }}"
+                            >
+                            <label class="form-check-label required" for="{{ form.visibility.children[0].vars.id }}">
+                                <div><i class="fa fa-lock s20 text-center"></i> Private</div>
+                                <div class="text-muted visibility-help">The group and its activities can only be viewed by yourself.</div>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ form.visibility.children[1].vars.id }}"
+                                name="{{ form.visibility.children[1].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ form.visibility.children[1].vars.value }}"
+                            >
+                            <label class="form-check-label required" for="{{ form.visibility.children[1].vars.id }}">
+                                <div><i class="fa fa-shield-alt s20 text-center"></i> Internal</div>
+                                <div class="text-muted visibility-help">The group and any internal activities can be viewed by members.</div>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ form.visibility.children[2].vars.id }}"
+                                name="{{ form.visibility.children[2].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ form.visibility.children[2].vars.value }}"
+                            >
+                            <label class="form-check-label required" for="{{ form.visibility.children[2].vars.id }}">
+                                <div><i class="fa fa-globe s20 text-center"></i> Public</div>
+                                <div class="text-muted visibility-help">The group and any internal projects can be viewed by any logged in user.</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                {{ form_row(form.submit) }}
+                {{ form_end(form, {render_rest: false}) }}
+            </div>
+        </div>
+        
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

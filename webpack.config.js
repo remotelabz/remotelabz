@@ -31,6 +31,7 @@ Encore
     // .addEntry('editor', './assets/js/editor.ts')
     .addEntry('editor-react', './assets/js/editor.jsx')
     .addEntry('timeago', './assets/js/timeago.js')
+    .addEntry('users-select', './assets/js/SelectUser.jsx')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
@@ -51,11 +52,11 @@ Encore
 
     // enables Sass/SCSS support
     .enableSassLoader((options) => {
-        // options.sourceMap = true;
-        // options.sassOptions = {
-        //     outputStyle: 'compressed',
-        //     sourceComments: !Encore.isProduction(),
-        // };
+        options.sourceMap = true;
+        options.sassOptions = {
+            outputStyle: 'compressed',
+            sourceComments: !Encore.isProduction(),
+        };
     }, {})
 
     // uncomment if you use TypeScript

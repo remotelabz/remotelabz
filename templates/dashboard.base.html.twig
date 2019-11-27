@@ -18,6 +18,14 @@
     <div class="navbar-menu-wrapper">
       <div class="navbar-menu-element">
         <a class="nav-link" href="/"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a>
+        
+      </div>
+      <div class="navbar-menu-element ml-2">
+        {% if is_granted('ROLE_ADMINISTRATOR') %}
+          <a class="nav-link {% if '/admin' in app.request.uri %}active{% endif %}" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+            {{ svg('admin', 's18') }}
+          </a>
+        {% endif %}
       </div>
       <div class="separator flex-grow-1"></div>
       <div class="navbar-menu-element">
@@ -34,6 +42,10 @@
               </div>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ path('user_profile') }}">Settings</a>
+              <div class="dropdown-item d-flex justify-content-between align-items-center" id="themeSwitcherDiv">Dark theme
+                <input id="themeSwitcher" class="tgl tgl-ios" type="checkbox" {% if app.request.cookies.get('theme') == "dark" %}checked{% endif %} />
+                <label class="tgl-btn mb-0" for="themeSwitcher"></label>
+              </div>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ path('logout') }}">Sign out</a>
             </div>
@@ -47,39 +59,25 @@
 {% block body %}
   <div class="page-body-wrapper">
     {% block sidebar %}
-      {% set category = category|default('dashboard') %}
-      <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
-        <ul class="nav">
-          {{ dashboard.navlink("Dashboard", 'index', 'home', 'dashboard', _context) }}
-          {{ dashboard.navlink("Activities", 'activities', 'review-list', 'activities', _context) }}
-          {{ dashboard.navlink("Labs", 'labs', 'applications', 'labs', _context) }}
-          {% if is_granted('ROLE_ADMINISTRATOR') %}
-            {{ dashboard.navlink("Users", 'users', 'users', 'users', _context) }}
-            {{ dashboard.navlink("Flavors", 'flavors', 'disk', 'flavors', _context) }}
-            {{ dashboard.navlink("Courses", 'courses', 'group', 'courses', _context) }}
-            {{ dashboard.navlink("Network settings", 'network_settings', 'preferences', 'network_settings', _context) }}
-            {{ dashboard.navlink("Network interfaces", 'network_interfaces', 'issue-parent', 'network_interfaces', _context) }}
-            {{ dashboard.navlink("Operating systems", 'operating_systems', 'package', 'operating_systems', _context) }}
-            {{ dashboard.navlink("Devices", 'devices', 'monitor-o', 'devices', _context) }}
-            {{ dashboard.navlink("Instances", 'instances', 'terminal', 'instances', _context) }}
-          {% endif %}
-  
-          <div class="nav-item">
-            <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
-              <span class="toggle-sidebar-hide">{{ svg('angle-double-left') }}Collapse sidebar</span>
-              <span class="toggle-sidebar-show">{{ svg('angle-double-right') }}</span>
-            </a>
-          </div>
-        </ul>
-      </nav>
+      {% if '/admin' in app.request.uri %}
+        {# Admin zone #}
+        {% include "sidebar.admin.html.twig" %}
+      {% else %}
+        {% include "sidebar.html.twig" %}
+      {% endif %}
     {% endblock %}
+
     <div class="content-wrapper">
       <div class="container-fluid container-limited-xl">
         <div class="container-header-wrapper d-flex">
           <div class="show-sidebar">{{ svg('hamburger', 'image-sm') }}</div>
           {% block breadcrumbs %}
             <div class="breadcrumb">
-              {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
+              {% if '/admin' in app.request.uri %}
+                {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('users') }) %}
+              {% else %}
+                {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
+              {% endif %}
               {% for breadcrumb, link in breadcrumbs|reverse(true) %}
                 <div class="breadcrumb-item">
                   {% if link is not null %}
