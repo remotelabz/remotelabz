@@ -40,10 +40,16 @@ class Course
      */
     private $activities;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Group", mappedBy="course", orphanRemoval=true)
+     */
+    private $groups;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->activities = new ArrayCollection();
+        $this->groups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -130,6 +136,37 @@ class Course
         if ($this->activities->contains($activity)) {
             $this->activities->removeElement($activity);
             $activity->removeCourse($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Group[]
+     */
+    public function getGroups(): Collection
+    {
+        return $this->groups;
+    }
+
+    public function addGroup(Group $group): self
+    {
+        if (!$this->groups->contains($group)) {
+            $this->groups[] = $group;
+            $group->setCourse($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(Group $group): self
+    {
+        if ($this->groups->contains($group)) {
+            $this->groups->removeElement($group);
+            // set the owning side to null (unless already changed)
+            if ($group->getCourse() === $this) {
+                $group->setCourse(null);
+            }
         }
 
         return $this;

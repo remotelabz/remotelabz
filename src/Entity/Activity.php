@@ -37,11 +37,6 @@ class Activity
     private $lab;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="activities")
-     */
-    private $courses;
-
-    /**
      * @ORM\OneToOne(targetEntity="App\Entity\Network", cascade={"persist", "remove"})
      */
     private $network;
@@ -68,6 +63,31 @@ class Activity
      */
     private $labInstances;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdActivities")
+     */
+    private $author;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $lastUpdated;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\User")
+     */
+    private $authorizedUsers;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true, name="_group")
+     */
+    private $group;
+
     const VPN_ACCESS = "vpn";
     const HTTP_ACCESS = "http";
     const SCOPE_SINGLE_USER = 'alone';
@@ -76,8 +96,10 @@ class Activity
 
     public function __construct()
     {
-        $this->courses = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
+        $this->authorizedUsers = new ArrayCollection();
+        $this->createdAt = new \DateTime();
+        $this->lastUpdated = new \DateTime();
         $this->scope = 'alone';
     }
 
@@ -130,32 +152,6 @@ class Activity
     public function setAccessType(string $accessType): self
     {
         $this->accessType = $accessType;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Course[]
-     */
-    public function getCourses(): Collection
-    {
-        return $this->courses;
-    }
-
-    public function addCourse(Course $course): self
-    {
-        if (!$this->courses->contains($course)) {
-            $this->courses[] = $course;
-        }
-
-        return $this;
-    }
-
-    public function removeCourse(Course $course): self
-    {
-        if ($this->courses->contains($course)) {
-            $this->courses->removeElement($course);
-        }
 
         return $this;
     }
@@ -243,5 +239,84 @@ class Activity
         return $this;
     }
 
-    
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): self
+    {
+        $this->author = $author;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getLastUpdated(): ?\DateTimeInterface
+    {
+        return $this->lastUpdated;
+    }
+
+    public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
+    {
+        $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    /**
+     * Returns the UUID of the group which can view/execute the activity.
+     *
+     * @return string|null
+     */
+    public function getGroup(): ?string
+    {
+        return $this->group;
+    }
+
+    public function setGroup(?string $group): self
+    {
+        $this->group = $group;
+
+        return $this;
+    }
+
+    /**
+     * A collection of user-by-user authorizations.
+     * 
+     * @return Collection|User[]
+     */
+    public function getAuthorizedUsers(): Collection
+    {
+        return $this->authorizedUsers;
+    }
+
+    public function addAuthorizedUser(User $authorizedUser): self
+    {
+        if (!$this->authorizedUsers->contains($authorizedUser)) {
+            $this->authorizedUsers[] = $authorizedUser;
+        }
+
+        return $this;
+    }
+
+    public function removeAuthorizedUser(User $authorizedUser): self
+    {
+        if ($this->authorizedUsers->contains($authorizedUser)) {
+            $this->authorizedUsers->removeElement($authorizedUser);
+        }
+
+        return $this;
+    }
 }

@@ -497,26 +497,33 @@ img.rounded-circle {
   }
 }
 
+.search-field {
+  position: relative;
+  color: inherit;
+  margin-top: 2px;
+  padding-right: 10px;
+
+  svg, i {
+    position: absolute;
+    top: 11px;
+    left: 10px;
+    color: #c4c4c4;
+    font-size: 13px;
+  }
+
+  input {
+    padding-left: 31px;
+    padding-right: 31px;
+  }
+}
+
 .search-panel {
   background-color: #fafafa;
   padding: 16px;
 
   .search-field {
-    position: relative;
-    color: inherit;
-
-    svg, i {
-      position: absolute;
-      top: 11px;
-      left: 10px;
-      color: #c4c4c4;
-      font-size: 13px;
-    }
-
-    input {
-      padding-left: 31px;
-      padding-right: 31px;
-    }
+    margin-top: 0;
+    padding-right: 0;
   }
 }
 
@@ -646,6 +653,10 @@ $bg-number: 8;
   pre {
     background: lighten(theme-color("dark-lighter"), 5%);
     color: #52ceab;
+  }
+
+  hr {
+    border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
   }
 
   .container-header-wrapper {

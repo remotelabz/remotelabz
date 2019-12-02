@@ -32,6 +32,7 @@ Encore
     .addEntry('editor-react', './assets/js/editor.jsx')
     .addEntry('timeago', './assets/js/timeago.js')
     .addEntry('users-select', './assets/js/SelectUser.jsx')
+    .addEntry('groups', './assets/js/groups.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app

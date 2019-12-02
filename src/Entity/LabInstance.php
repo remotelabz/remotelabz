@@ -206,24 +206,24 @@ class LabInstance extends Instance
         return $networkInterfaceInstances;
     }
 
-    public function getIsInternetConnected(): ?bool
+    public function isInternetConnected(): ?bool
     {
         return $this->isInternetConnected;
     }
 
-    public function setIsInternetConnected(bool $isInternetConnected): self
+    public function setInternetConnected(bool $isInternetConnected): self
     {
         $this->isInternetConnected = $isInternetConnected;
 
         return $this;
     }
 
-    public function getIsInterconnected(): ?bool
+    public function isInterconnected(): ?bool
     {
         return $this->isInterconnected;
     }
 
-    public function setIsInterconnected(bool $isInterconnected): self
+    public function setInterconnected(bool $isInterconnected): self
     {
         $this->isInterconnected = $isInterconnected;
 

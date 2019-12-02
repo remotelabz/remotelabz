@@ -4,12 +4,15 @@ namespace App\Controller;
 
 use App\Entity\Course;
 use App\Form\CourseType;
+use FOS\RestBundle\Context\Context;
 use App\Repository\CourseRepository;
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 
-class CourseController extends AppController
+class CourseController extends AbstractFOSRestController
 {
     public $courseRepository;
 
@@ -22,7 +25,43 @@ class CourseController extends AppController
      */
     public function indexAction(Request $request)
     {
-        return $this->render('course/index.html.twig');
+        $search = $request->query->get('search', '');
+        $limit = $request->query->get('limit', 10);
+        $page = $request->query->get('page', 1);
+        
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search));
+
+        $criteria
+            ->orderBy([
+                'id' => Criteria::DESC
+            ])
+            // ->setMaxResults($limit)
+            // ->setFirstResult($page * $limit - $limit)
+        ;
+
+        $courses = $this->courseRepository->matching($criteria);
+        $count = $courses->count();
+
+        // $context = new Context();
+        // $context
+        //     ->addGroup("lab")
+        // ;
+
+        $view = $this->view($courses->getValues())
+            ->setTemplate("course/index.html.twig")
+            ->setTemplateData([
+                'courses' => $courses->slice($page * $limit - $limit, $limit),
+                'count' => $count,
+                'search' => $search,
+                'limit' => $limit,
+                'page' => $page,
+            ])
+            // ->setContext($context)
+        ;
+
+        return $this->handleView($view);
+        //return $this->render('course/index.html.twig');
     }
     
     /**

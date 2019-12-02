@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -11,7 +12,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 /**
  * @ORM\MappedSuperclass
  */
-class Instance
+class Instance implements InstanciableInterface
 {
     /**
      * @ORM\Column(type="string", length=255)

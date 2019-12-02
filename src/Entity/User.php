@@ -68,14 +68,6 @@ class User implements UserInterface
     private $firstName;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
-     * @Serializer\XmlList(inline=true, entry="course")
-     * @Serializer\Groups({"courses"})
-     * @var Collection|Course[]
-     */
-    private $courses;
-
-    /**
      * @ORM\Column(type="boolean")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "details"})
@@ -115,6 +107,12 @@ class User implements UserInterface
     private $createdLabs;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="author")
+     * @var Collection|Activity[]
+     */
+    private $createdActivities;
+
+    /**
      * @ORM\Column(type="string", nullable=true)
      * @Serializer\Exclude
      * @var string
@@ -129,7 +127,12 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    private $lastActivity;
+    private $lastActivity; 
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Group", mappedBy="users")
+     */
+    private $_groups;
 
     public function __construct()
     {
@@ -139,7 +142,10 @@ class User implements UserInterface
         $this->deviceInstances = new ArrayCollection();
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
+        $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
+        $this->ownedGroups = new ArrayCollection();
+        $this->_groups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -180,6 +186,14 @@ class User implements UserInterface
 
         return array_unique($roles);
     }
+
+    // public function getHighestRole(): string
+    // {
+    //     if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+    //     if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+    //     if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
+    //     return 'ROLE_USER';
+    // }
 
     public function setRoles(array $roles): self
     {
@@ -257,32 +271,6 @@ class User implements UserInterface
     public function getName(): ?string
     {
         return $this->firstName . " " . $this->lastName;
-    }
-
-    /**
-     * @return Collection|Course[]
-     */
-    public function getCourses(): Collection
-    {
-        return $this->courses;
-    }
-
-    public function addCourse(Course $course): self
-    {
-        if (!$this->courses->contains($course)) {
-            $this->courses[] = $course;
-        }
-
-        return $this;
-    }
-
-    public function removeCourse(Course $course): self
-    {
-        if ($this->courses->contains($course)) {
-            $this->courses->removeElement($course);
-        }
-
-        return $this;
     }
 
     public function getEnabled(): ?bool
@@ -473,6 +461,37 @@ class User implements UserInterface
         return $this;
     }
 
+    /**
+     * @return Collection|Activities[]
+     */
+    public function getCreatedActivities(): Collection
+    {
+        return $this->createdActivities;
+    }
+
+    public function addCreatedActivity(Activity $createdActivity): self
+    {
+        if (!$this->createdActivitiess->contains($createdActivity)) {
+            $this->createdActivitiess[] = $createdActivity;
+            $createdActivity->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatedActivity(Activity $createdActivity): self
+    {
+        if ($this->createdActivitiess->contains($createdActivity)) {
+            $this->createdActivitiess->removeElement($createdActivity);
+            // set the owning side to null (unless already changed)
+            if ($createdActivity->getAuthor() === $this) {
+                $createdActivity->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getProfilePictureFilename(): ?string
     {
         return $this->profilePictureFilename;
@@ -520,6 +539,34 @@ class User implements UserInterface
     public function setLastActivity(?\DateTimeInterface $lastActivity): self
     {
         $this->lastActivity = $lastActivity;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Group[]
+     */
+    public function getGroups(): Collection
+    {
+        return $this->_groups;
+    }
+
+    public function addGroup(Group $group): self
+    {
+        if (!$this->_groups->contains($group)) {
+            $this->_groups[] = $group;
+            $group->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(Group $group): self
+    {
+        if ($this->_groups->contains($group)) {
+            $this->_groups->removeElement($group);
+            $group->removeUser($this);
+        }
 
         return $this;
     }

@@ -53,33 +53,17 @@ export default class CustomControl extends Component {
     render() {
         return (
             <AsyncSelect
-                styles={{
-                    singleValue: base => ({ ...base }),
-                    valueContainer: base => ({
-                        ...base,
-                        width: '100%',
-                    }),
-                    option: base => ({
-                        ...base,
-                        border: `none`,
-                        height: '100%',
-                    }),
-                }}
                 isMulti
                 closeMenuOnSelect={false}
                 loadOptions={this.loadOptions}
+                className='react-select-container'
+                classNamePrefix="react-select"
                 cacheOptions
                 defaultOptions
                 placeholder="Search for a user"
                 components={{ ValueContainer, Option }}
                 isSearchable
-                name="color"
-                // options={
-                //     [
-                //         { value: 'orange', label: 'Orange', color: '#FF8B00' },
-                //         { value: 'yellow', label: 'Yellow', color: '#FFC400' },
-                //     ]
-                // }
+                name="users[]"
             />
         );
     }

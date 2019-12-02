@@ -15,7 +15,8 @@ class AppExtension extends AbstractExtension
     public function getFilters()
     {
         return [
-            new TwigFilter('cast_to_array', [$this, 'stdClassObject'])
+            new TwigFilter('cast_to_array', [$this, 'stdClassObject']),
+            new TwigFilter('firstLetter', [$this, 'firstLetterFilter']),
         ];
     }
 
@@ -23,7 +24,8 @@ class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('svg', [$this, 'renderSvg'], ['is_safe' => ['html']]),
-            new TwigFunction('category', [$this, 'setActiveCategory'], ['is_safe' => ['html'], 'needs_context' => true])
+            new TwigFunction('category', [$this, 'setActiveCategory'], ['is_safe' => ['html'], 'needs_context' => true]),
+            new TwigFunction('groupicon', [$this, 'getGroupIcon'], ['is_safe' => ['html']])
         ];
     }
 
@@ -36,6 +38,11 @@ class AppExtension extends AbstractExtension
         }
 
         return $properties;
+    }
+
+    public function firstLetterFilter(string $str)
+    {
+        return substr($str, 0, 1);
     }
 
     public function renderSvg($svg, $class = 'image-sm v-sub')
@@ -52,5 +59,10 @@ class AppExtension extends AbstractExtension
         if ($context['category'] == $context) {
             return "active";
         }
+    }
+
+    public function groupicon($value)
+    {
+        
     }
 }

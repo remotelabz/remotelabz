@@ -9,18 +9,22 @@ use App\Form\UserType;
 use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
+use Swagger\Annotations as SWG;
 use App\Controller\AppController;
 use App\Repository\UserRepository;
 use JMS\Serializer\SerializerBuilder;
 use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\Email;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -29,7 +33,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserController extends AppController
+class UserController extends AbstractFOSRestController
 {
     public $passwordEncoder;
 
@@ -47,6 +51,29 @@ class UserController extends AppController
     /**
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
      */
+    /**
+     * @Route("/admin/users", name="users", methods={"GET", "POST"})
+     * 
+     * @Rest\Get("/api/users", name="api_users")
+     * 
+     * @SWG\Parameter(
+     *     name="search",
+     *     in="query",
+     *     type="string",
+     *     description="Filter users by name. All users with a name containing this value will be shown."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns all existing users",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=Lab::class))
+     *     )
+     * )
+     * 
+     * @SWG\Tag(name="User")
+     */
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -63,8 +90,6 @@ class UserController extends AppController
         ;
 
         $users = $this->userRepository->matching($criteria);
-
-        $user = new User();
 
         $addUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
@@ -106,6 +131,17 @@ class UserController extends AppController
                 $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
             }
         }
+
+        $view = $this->view($users->getValues())
+            ->setTemplate("user/index.html.twig")
+            ->setTemplateData([
+                'users' => $users,
+                'addUserFromFileForm' => $addUserFromFileForm->createView(),
+                'search' => $search
+            ])
+        ;
+
+        return $this->handleView($view);
 
         return $this->render('user/index.html.twig', [
             'users' => $users,

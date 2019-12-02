@@ -10,6 +10,10 @@
     {{ parent() }}
 {% endblock %}
 
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
+{% endmacro %}
+
 {% block wrapper %}
     <div class="content-title">
         <div class="content-title-infos">
@@ -18,10 +22,6 @@
                     <i class="fa fa-search"></i>
                     <input type="search" class="form-control" name="search" placeholder="Search by name" spellcheck="false" value="{{ search|default('') }}" />
                 </div>
-
-                <select name="sort" id="">
-                    <option value="test">test</option>
-                </select>
             </form>
         </div>
         <div class="content-title-actions">
@@ -55,7 +55,7 @@
                             </div>
                             <div class="d-flex flex-column">
                                 <div class="item-title">
-                                    <a href="{{ path('admin_show_group', {slug: group.slug}) }}">{% if group.parent is not null %}{{ group.parent.name }} / {% endif %}{{ group.name }}</a>
+                                    <a href="{{ path('admin_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
                                 </div>
                                 <div>{{ group.description }}</div>
                             </div>
@@ -80,11 +80,16 @@
                                 {% endif %}
                             {% endif %}
                         </span>
-                        <a href="{{ path('edit_group', {slug: group.slug}) }}" class="btn btn-default">Edit</a>
-                        <a href="{{ path('delete_group', {slug: group.slug}) }}" class="btn btn-danger">Delete</a>
+                        <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
                     </div>
                 </li>
             {% endfor %}
         </ul>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('groups') }}
 {% endblock %}

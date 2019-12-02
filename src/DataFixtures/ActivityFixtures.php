@@ -135,6 +135,7 @@ EOD;
             ->setNetwork(NULL)
             ->setInternetAllowed(false)
             ->setInterconnected(false)
+            ->setAuthor($this->getReference('user1'))
         ;
 
         $manager->persist($activity);
@@ -145,6 +146,7 @@ EOD;
     {
         return [
             LabFixtures::class,
+            UserFixtures::class,
         ];
     }
 }

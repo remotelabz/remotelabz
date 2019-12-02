@@ -16,9 +16,11 @@ use App\Service\FileUploader;
 use App\Entity\DeviceInstance;
 use Swagger\Annotations as SWG;
 use App\Repository\LabRepository;
+use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
+use App\Exception\DisconnectException;
 use App\Repository\ActivityRepository;
 use App\Instance\InstanciableInterface;
 use JMS\Serializer\SerializerInterface;
@@ -50,6 +52,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class LabController extends AbstractFOSRestController
 {
@@ -78,13 +81,16 @@ class LabController extends AbstractFOSRestController
     /** @var LabRepository $labRepository */
     private $labRepository;
 
-    public function __construct(LoggerInterface $logger, LabRepository $labRepository)
+    private $serializer;
+
+    public function __construct(LoggerInterface $logger, LabRepository $labRepository, SerializerInterface $serializerInterface)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
+        $this->serializer = $serializerInterface;
     }
 
     /**
@@ -521,7 +527,8 @@ class LabController extends AbstractFOSRestController
     {
         $lab = $this->labRepository->find($id);
 
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
+        $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
 
         if (count($labInstance) == 0) {
             $labInstance = LabInstance::create()
@@ -574,21 +581,18 @@ class LabController extends AbstractFOSRestController
             } catch (AlreadyInstancedException $exception) {
                 $this->logger->debug("There is already an instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
             } catch (ClientException $exception) {
-                $this->logger->error("Server error; Request send:".Psr7\str($exception->getRequest()));
-                if ($exception->hasResponse()) {
-                    $this->logger->error("Server error; Response received:".Psr7\str($exception->getResponse()));
-                }
                 $hasError = true;
             } catch (ServerException $exception) {
-                $this->logger->error("Server error; Request send:".Psr7\str($exception->getRequest()));
-                if ($exception->hasResponse()) {
-                    $this->logger->error("Server error; Response received:".Psr7\str($exception->getResponse()));
-                }
                 $hasError = true;
-                $this->logger->error("We stop the device ".$device->getUuid());
                 $this->logger->debug("startAllDevices exception - We stop the device ".$device->getUuid());
-                $this->stopDevice($lab, $device, $user);
-            }
+                try {
+                    $this->stopDevice($lab, $device, $user);
+                } catch (WorkerException $exception) {
+                    $this->addFlash('danger', "Device " . $device->getName() . " failed to start. Please verify your parameters or contact an administrator.");
+                }
+            } catch (WorkerException $exception) {
+                $this->addFlash('danger', "Device " . $device->getName() . " failed to start. Please verify your parameters or contact an administrator.");
+            } 
         }
 
         return $hasError;
@@ -611,24 +615,21 @@ class LabController extends AbstractFOSRestController
     /**
      * @Route("/labs/{id<\d+>}/stop", name="stop_lab", methods="GET")
      */
-    public function stopLabAction(int $id, UserInterface $user)
+    public function stopLabAction(int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository)
     {
         $lab = $this->labRepository->find($id);
 
-        $labInstanceTemp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
-        
-        if (count($labInstanceTemp) > 0)
-            $labInstance = $labInstanceTemp[0];
-        else {
-            $labInstance = $labInstanceTemp;
+        $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
+
+        if ($labInstance->isInternetConnected()) {
+            $this->disconnectLabInstance($labInstance);
         }
 
-        $this->disconnectLabInstance($labInstance);
-
+        $error = true;
         foreach ($labInstance->getLab()->getDevices() as $device) {
             try {
-                $this->logger->info("Device ". $device->getName()." stoped by ".$user->getEmail());
                 $this->stopDevice($lab, $device, $user);
+                $error = false;
             } catch (NotInstancedException $exception) {
                 $this->logger->debug("Device " . $device->getName() . " was not instanced in lab " . $lab->getName());
             } catch (\Exception $exception) {
@@ -636,7 +637,9 @@ class LabController extends AbstractFOSRestController
             }
         }
 
-        $this->addFlash('success', 'Laboratory '.$lab->getName().' has been stopped.');
+        if (!$error) {
+            $this->addFlash('success', 'Laboratory '.$lab->getName().' has been stopped.');
+        }
 
         return $this->redirectToRoute('show_lab', [
             'id' => $id
@@ -671,7 +674,8 @@ class LabController extends AbstractFOSRestController
                 $this->logger->error(Psr7\str($exception->getResponse()));
             }
             $this->stopDevice($lab, $device, $user);
-
+        } catch (WorkerException $exception) {
+            $this->addFlash('danger', "Device " . $device->getName() . " failed to start. Please verify your parameters or contact an administrator.");
         } finally {
             return $this->redirectToRoute('show_lab', [
                 'id' => $labId,
@@ -681,43 +685,23 @@ class LabController extends AbstractFOSRestController
 
     /**
      * @Route("/labs/{labId<\d+>}/device/{deviceId<\d+>}/stop", name="stop_lab_device", methods="GET")
+     * @ParamConverter("lab", options={"id" = "labId"})
+     * @ParamConverter("device", options={"id" = "deviceId"})
      */
-    public function stopDeviceAction(int $labId, int $deviceId, UserInterface $user, DeviceRepository $deviceRepository)
+    public function stopDeviceAction(Lab $lab, Device $device, UserInterface $user)
     {
-        $lab = $this->labRepository->find($labId);
-        $device = $deviceRepository->find($deviceId);
-
         try {
             $this->stopDevice($lab, $device, $user);
 
             $this->addFlash('success', $device->getName() . ' has been stopped.');
         } catch (NotInstancedException $exception) {
-            $this->logger->debug("There is no instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
             $this->addFlash('warning', $device->getName() . ' is not instanced.');
         } catch (ClientException $exception) {
             $this->addFlash('danger', "Worker can't be reached. Please contact your administrator.");
-            $this->logger->error(Psr7\str($exception->getRequest()));
-            if ($exception->hasResponse()) {
-                $this->logger->error(Psr7\str($exception->getResponse()));
-            }
-        } catch (ServerException $exception) {
-            $this->addFlash('danger', "Device " . $device->getName() . " failed to stop. Please verify your parameters or contact an administrator.");
-            $this->logger->error(Psr7\str($exception->getRequest()));
-            if ($exception->hasResponse()) {
-                $this->logger->error(Psr7\str($exception->getResponse()));
-            }
-        } finally {
-            return $this->redirectToRoute('show_lab', [
-                'id' => $labId,
-            ]);
         }
 
-        $this->stopDevice($lab, $device, $user);
-
-        $this->addFlash('success', $device->getName() . ' has been stopped.');
-
         return $this->redirectToRoute('show_lab', [
-            'id' => $labId
+            'id' => $lab->getId(),
         ]);
     }
 
@@ -735,11 +719,11 @@ class LabController extends AbstractFOSRestController
     private function startDevice(Lab $lab, Device $device, UserInterface $user)
     {
         $client = new Client();
-        $serializer = $this->container->get('jms_serializer');
+        $serializer = $this->serializer;
         $entityManager = $this->getDoctrine()->getManager();
         $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
 
-        $labInstanceTemp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstanceTemp = $labInstanceRepository->findByUserAndLab($user, $lab);
         $this->logger->debug("Enter in startDevice for device ".$device->getName());
 
         if (count($labInstanceTemp) > 0)
@@ -895,26 +879,27 @@ class LabController extends AbstractFOSRestController
     private function stopDevice(Lab $lab, Device $device, UserInterface $user)
     {
         $client = new Client();
-        $serializer = $this->container->get('jms_serializer');
+        $serializer = $this->serializer;
         $entityManager = $this->getDoctrine()->getManager();
         $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
 
         $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
-
-        $labInstanceTemp = $this->labInstanceRepository->findByUserAndLab($user, $lab);
-        if (count($labInstanceTemp) > 0) { // If exist many instance due to an error, we select only the first instance
-            $labInstance = $labInstanceTemp[0];           
-        }
         
         if ($labInstance == null) {
             throw new NotInstancedException($lab);
         }
         
-            $deviceInstance = $labInstance->getDeviceInstance($device);
+        $deviceInstance = $labInstance->getDeviceInstance($device);
 
         if ($deviceInstance == null) {
             throw new NotInstancedException($device);
         }
+
+        $this->logger->debug("Device requested to stop by user.", [
+            "device" => $device->getUuid(),
+            "instance" => $deviceInstance->getUuid(),
+            "user" => $user->getEmail(),
+        ]);
 
         $context = SerializationContext::create()->setGroups("stop_lab");
         $labXml = $serializer->serialize($labInstance, 'json', $context);
@@ -966,6 +951,12 @@ class LabController extends AbstractFOSRestController
         $entityManager->persist($device);
         $entityManager->persist($lab);
         $entityManager->flush();
+
+        $this->logger->debug("Device stopped by user.", [
+            "device" => $device->getUuid(),
+            "instance" => $deviceInstance->getUuid(),
+            "user" => $user->getEmail(),
+        ]);
     }
 
     private function getRemoteAvailablePort(): int
@@ -1267,6 +1258,12 @@ class LabController extends AbstractFOSRestController
 
     private function disconnectLabInstance(InstanciableInterface $labInstance)
     {
+        $this->logger->debug("Lab requested to disconnect from the Internet by user.", [
+            "lab" => $labInstance->getLab()->getUuid(),
+            "instance" => $labInstance->getUuid(),
+            "user" => $this->getUser()->getEmail(),
+        ]);
+
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
@@ -1294,11 +1291,18 @@ class LabController extends AbstractFOSRestController
                 $labInstance->setIsInternetConnected(false);
                 $entityManager->persist($labInstance);
                 $entityManager->flush();
-            } catch (RequestException $exception) {
-                //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-                dd($exception->getResponse()->getBody()->getContents());
+            } catch (ServerException $exception) {
+                throw new WorkerException("Cannot disconnect lab instance from the Internet.", $labInstance, $exception->getResponse());
+                // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+                // dd($exception->getResponse()->getBody()->getContents());
             }
         }
+
+        $this->logger->debug("Lab disconnected from the Internet by user.", [
+            "lab" => $labInstance->getLab()->getUuid(),
+            "instance" => $labInstance->getUuid(),
+            "user" => $this->getUser()->getEmail(),
+        ]);
     }
        
     private function interconnectLabInstance(InstanciableInterface $labInstance)

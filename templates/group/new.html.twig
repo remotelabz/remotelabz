@@ -7,6 +7,10 @@
     {{ parent() }}
 {% endblock %}
 
+{% macro groupParent(group) %}
+    {%- if group.parent is not null %}{{ _self.groupParent(group.parent) }}{{ group.parent.slug }}/{% endif -%}
+{% endmacro %}
+
 {% block wrapper %}
     <div class="content-title">
         <div class="content-title-infos">
@@ -35,7 +39,7 @@
                     {{ form_label(form.slug) }}
 
                     <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/</span></div>
+                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/{{_self.groupParent(group)}}</span></div>
                         {{ form_widget(form.slug) }}
                     </div>
                 </div>
@@ -56,6 +60,11 @@
                                 required="required"
                                 class="form-check-input"
                                 value="{{ form.visibility.children[1].vars.value }}"
+                                {%- if app.request.uri ends with 'new' -%}
+                                 checked  
+                                {%- elseif group.visibility is not null and group.visibility == '0' -%}
+                                 checked
+                                {%- endif -%}
                             >
                             <label class="form-check-label required" for="{{ form.visibility.children[0].vars.id }}">
                                 <div><i class="fa fa-lock s20 text-center"></i> Private</div>
@@ -70,6 +79,9 @@
                                 required="required"
                                 class="form-check-input"
                                 value="{{ form.visibility.children[1].vars.value }}"
+                                {%- if group.visibility is not null and group.visibility == '1' -%}
+                                 checked
+                                {%- endif -%}
                             >
                             <label class="form-check-label required" for="{{ form.visibility.children[1].vars.id }}">
                                 <div><i class="fa fa-shield-alt s20 text-center"></i> Internal</div>
@@ -84,6 +96,9 @@
                                 required="required"
                                 class="form-check-input"
                                 value="{{ form.visibility.children[2].vars.value }}"
+                                {%- if group.visibility is not null and group.visibility == '2' -%}
+                                 checked
+                                {%- endif -%}
                             >
                             <label class="form-check-label required" for="{{ form.visibility.children[2].vars.id }}">
                                 <div><i class="fa fa-globe s20 text-center"></i> Public</div>
@@ -92,6 +107,7 @@
                         </div>
                     </div>
                 </div>
+                {{ form_row(form.parent) }}
                 {{ form_row(form.submit) }}
                 {{ form_end(form, {render_rest: false}) }}
             </div>

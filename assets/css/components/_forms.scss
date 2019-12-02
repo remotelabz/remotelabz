@@ -66,6 +66,10 @@ select {
         }
     }
 
+    .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.75);
+    }
+
     .input-group-text {
         background-color: darken(theme-color("dark-lighter"), 5%);
         border-color: lighten(theme-color("dark-lighter"), 7.5%);
@@ -88,6 +92,20 @@ select {
         }
 
         .react-select__single-value {
+            color: theme-color("light");
+        }
+
+        .react-select__multi-value {
+            color: theme-color("light");
+            background-color: theme-color("dark");
+            border-color: lighten(theme-color("dark"), 7.5%);
+
+            .react-select__multi-value__label {
+                color: theme-color("light");
+            }
+        }
+
+        .react-select__input {
             color: theme-color("light");
         }
 

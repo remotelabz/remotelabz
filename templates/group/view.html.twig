@@ -6,18 +6,21 @@
 {% endblock %}
 
 {% block wrapper %}
+    {% macro groupParent(group) %}
+       {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
+    {% endmacro %}
     <div class="content-title">
         <div class="content-title-infos">
-            <h3>{{ group.name }}</h3>
+            <h3>{{ _self.groupParent(group) }} {{ group.name }}</h3>
         </div>
         <div class="content-title-actions">
-            <a href="{{ path('edit_group', {slug: group.slug}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+            <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
         </div>
     </div>
     <div class="content-body">
         <div class="row">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-header">
                         Group info
                     </div>
@@ -54,13 +57,42 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-header">
                         Add user(s) to the group
                     </div>
                     <div class="card-body">
-                        <div id="usersSelect"></div>
+                        <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                            <div id="usersSelect"></div>
+                            <hr>
+                            <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                        </form>
                     </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        Group members <span class="badge badge-pill">{{ group.users|length }}</span>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for user in group.users %}
+                            <li class="list-group-item">
+                                <div class="d-flex">
+                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
+
+                                    <div class="d-flex flex-column">
+                                        <div class="fw600">
+                                            <span class="fw600">{{ user.name }}</span>
+                                            {% if user.id == app.user.id %}
+                                                <label class="badge badge-success ml-2 mb-0">It's you!</label>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>

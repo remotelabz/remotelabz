@@ -2,30 +2,16 @@
 
 namespace App\Controller;
 
-use IPTools;
-use App\Entity\Network;
-
 use App\Entity\Activity;
-use App\Entity\Instance;
 use App\Form\ActivityType;
 use App\Service\FileUploader;
 use App\Repository\ActivityRepository;
-use Symfony\Component\Process\Process;
 use App\Repository\LabInstanceRepository;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
-
 
 class ActivityController extends AppController
 {
@@ -99,6 +85,7 @@ class ActivityController extends AppController
         
         if ($activityForm->isSubmitted() && $activityForm->isValid()) {
             $activity = $activityForm->getData();
+            $activity->setAuthor($this->getUser());
             
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($activity);
