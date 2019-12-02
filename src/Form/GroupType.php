@@ -53,7 +53,9 @@ class GroupType extends AbstractType
             ])
             ->add('parent', EntityType::class, [
                 'class' => Group::class,
-                'choice_label' => 'name'
+                'choice_label' => 'name',
+                'required' => false,
+                'help' => "Leave empty for no parent group."
             ])
             ->add('submit', SubmitType::class)
         ;
