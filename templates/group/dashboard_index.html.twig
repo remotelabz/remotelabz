@@ -1,0 +1,96 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'dashboard_groups' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
+{% endmacro %}
+
+{% block sidebar %}{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title py-3">
+        <div class="content-title-infos">
+            <h1 class="page-title">Groups</h1>
+        </div>
+        <div class="content-title-actions">
+            {% if is_granted('ROLE_TEACHER') %}
+                <a href="{{ path('new_group') }}" class="btn btn-success">{{ 'New group'|trans }}</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="content-list">
+        <div class="top-panel">
+            <div class="quick-actions">
+                <form action="{{ path('dashboard_groups') }}" method="GET">
+                    <input type="search" class="form-control input-sm" name="search"
+                    placeholder="Search by name"
+                    spellcheck="false" value="{{ search|default('') }}" type="search" />
+                </form>
+            </div>
+            <ul class="nav-links nav nav-tabs">
+                {% set route = app.request.attributes.get('_route') %}
+                <li {%- if route == 'dashboard_groups' %} class="active"{% endif %}>
+                    <a href="{{ path('dashboard_groups') }}">
+                        <span>Your groups</span>
+                    </a>
+                </li>
+                <li {%- if route == 'dashboard_explore_groups' %} class="active"{% endif %}>
+                    <a href="{{ path('dashboard_explore_groups') }}">
+                        <span>Explore public groups</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <ul>
+            {% for group in groups %}
+                <li>
+                    <div class="item-left d-flex flex-column">
+                        <div class="d-flex">
+                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
+                                {% if group.pictureFilename is defined and group.pictureFilename %}
+                                    image
+                                {% else %}
+                                    {{- group.name|firstLetter|upper -}}
+                                {% endif %}
+                            </div>
+                            <div class="d-flex flex-column">
+                                <div class="item-title">
+                                    <a href="{{ path('admin_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
+                                </div>
+                                <div>{{ group.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-right item-margin text-muted">
+                        <span class="mr-3">{{ svg('group') }} {{ group.users|length }}</span>
+                        <span class="mr-3">
+                            {% if group.visibility is defined %}
+                                {% if group.visibility == '0' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                        {{ svg('lock') }}
+                                    </div>
+                                {% elseif group.visibility == '1' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                        {{ svg('shield') }}
+                                    </div>
+                                {% elseif group.visibility == '2' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
+                                        {{ svg('earth') }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                        <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

@@ -72,6 +72,57 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
+     * @Route("/groups", name="dashboard_groups")
+     * @Route("/explore/groups", name="dashboard_explore_groups")
+     */
+    public function dashboardIndexAction(Request $request)
+    {
+        $search = $request->query->get('search', '');
+        $limit = $request->query->get('limit', 10);
+        $page = $request->query->get('page', 1);
+        
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search))
+        ;
+
+        $criteria
+            ->orderBy([
+                'id' => Criteria::DESC
+            ])
+        ;
+
+        /** @param Group $value */
+        $groups = $this->groupRepository->matching($criteria);
+        
+        $matchedRoute = $request->get('_route');
+
+        if ($matchedRoute == 'dashboard_groups') {
+            /** @param Group $value */
+            $groups = $groups->filter(function ($value) {
+                return $value->getUsers()->contains($this->getUser());
+            });
+        } else if ($matchedRoute == 'dashboard_explore_groups') {
+            /** @param Group $value */
+            $groups = $groups->filter(function ($value) {
+                return $value->getVisibility() === Group::VISIBILITY_PUBLIC;
+            });
+        }
+
+        $view = $this->view($groups->getValues())
+            ->setTemplate("group/dashboard_index.html.twig")
+            ->setTemplateData([
+                'groups' => $groups->slice($page * $limit - $limit, $limit),
+                'search' => $search,
+                'limit' => $limit,
+                'page' => $page,
+            ])
+            // ->setContext($context)
+        ;
+
+        return $this->handleView($view);
+    }
+
+    /**
      * @Route("/admin/groups/new", name="new_group")
      * 
      * @Rest\Post("/api/groups", name="api_new_group")

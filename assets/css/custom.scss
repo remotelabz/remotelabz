@@ -15,6 +15,12 @@ h1 {
   font-weight: 600;
 }
 
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 .text-muted {
   color: #707070 !important;
   fill: currentColor;
@@ -35,9 +41,20 @@ h1 {
   background-color: theme-color(primary);
   color: $white;
   min-height: 40px;
+  list-style: none;
 
   .navbar-brand-wrapper .navbar-brand {
     color: $white;
+  }
+
+  .navbar-nav {
+    font-size: 0.875rem;
+
+    .nav-item {
+      .nav-link {
+        font-weight: 600;
+      }
+    }
   }
 
   .navbar-menu-wrapper .navbar-nav .nav-item.lang-dropdown .nav-link, .navbar-menu-wrapper .page-name {
@@ -243,9 +260,12 @@ img.rounded-circle {
 /////////// SIDEBAR ///////////////
 
 .page-body-wrapper {
+  .sidebar+.content-wrapper {
+    padding-left: 220px;
+  }
+
   .content-wrapper {
     margin-top: $navbar-height;
-    padding-left: 220px;
   }
 }
 
@@ -268,8 +288,8 @@ img.rounded-circle {
 
 .container-header-wrapper {
   align-items: center;
-  padding: 8px 0px;
-  border-bottom: 1px solid #e5e5e5;
+  // padding: 8px 0px;
+  // border-bottom: 1px solid #e5e5e5;
 
   .show-sidebar {
     display: none;
@@ -296,12 +316,15 @@ img.rounded-circle {
   border: initial;
   background: initial;
   // padding: $breadcrumb-custom-padding-y $breadcrumb-custom-padding-x;
-  padding: 8px 0;
+  padding: 16px 8px;
   // min-height: 48px;
   align-items: center;
   margin-bottom: 0;
   // padding-left: 16px;
+  width: 100%;
   height: auto;
+  border-bottom: 1px solid #e5e5e5;
+  border-radius: 0;
 
   .breadcrumb-item {
     font-size: 12px;
@@ -669,6 +692,8 @@ $bg-number: 8;
   }
 
   .breadcrumb {
+    border-color: lighten(theme-color("dark-lighter"), 7.5%);
+
     .breadcrumb-item {
       &:last-of-type {
         color: lighten(#2e2e2e, 30%);

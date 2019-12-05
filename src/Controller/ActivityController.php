@@ -52,13 +52,7 @@ class ActivityController extends AppController
     public function showAction(Request $request, $id, UserInterface $user)
     {
         $data = $this->activityRepository->find($id);
-        $labInstance = null;
-
-        if ($data->getLab()) {
-            $labInstance_tmp = $this->labInstanceRepository->findByUserAndLab($user, $data->getLab());
-            if (count($labInstance_tmp) > 0)
-                $labInstance=$labInstance_tmp[0];
-        }
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($user, $data->getLab());
 
         if (null === $data) {
             throw new NotFoundHttpException();

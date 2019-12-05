@@ -1,25 +1,23 @@
-{% import "dashboard.base.html.twig" as dashboard %}
+{% import "sidebar.html.twig" as sidebar %}
 
 {% block sidebar %}
     {% set category = category|default('dashboard') %}
     <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
-        <div class="context-header">
-            <a href="{{ path('users') }}" title="Admin Area">
-                <div class="s40 mr-2 d-flex">
-                    {{ svg('admin', 's24 m-auto') }}
-                </div>
-                <div class="sidebar-context-title">Admin Area</div>
-            </a>
-        </div>
+        {% block sidebar_header %}
+            <div class="context-header">
+                {{ sidebar.header('users', 'admin') }}
+            </div>
+        {% endblock %}
+
         <ul class="nav">
-            {{ dashboard.navlink("Users", 'users', 'users', 'users', _context) }}
-            {{ dashboard.navlink("Groups", 'groups', 'group', 'groups', _context) }}
-            {{ dashboard.navlink("Flavors", 'flavors', 'disk', 'flavors', _context) }}
-            {{ dashboard.navlink("Network settings", 'network_settings', 'preferences', 'network_settings', _context) }}
-            {{ dashboard.navlink("Network interfaces", 'network_interfaces', 'issue-parent', 'network_interfaces', _context) }}
-            {{ dashboard.navlink("Operating systems", 'operating_systems', 'package', 'operating_systems', _context) }}
-            {{ dashboard.navlink("Devices", 'devices', 'monitor-o', 'devices', _context) }}
-            {{ dashboard.navlink("Instances", 'instances', 'terminal', 'instances', _context) }}
+            {{ sidebar.link("Users", 'users', 'users', 'users', _context) }}
+            {{ sidebar.link("Groups", 'groups', 'group', 'groups', _context) }}
+            {{ sidebar.link("Flavors", 'flavors', 'disk', 'flavors', _context) }}
+            {{ sidebar.link("Network settings", 'network_settings', 'preferences', 'network_settings', _context) }}
+            {{ sidebar.link("Network interfaces", 'network_interfaces', 'issue-parent', 'network_interfaces', _context) }}
+            {{ sidebar.link("Operating systems", 'operating_systems', 'package', 'operating_systems', _context) }}
+            {{ sidebar.link("Devices", 'devices', 'monitor-o', 'devices', _context) }}
+            {{ sidebar.link("Instances", 'instances', 'terminal', 'instances', _context) }}
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">

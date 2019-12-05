@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use emberlabs\GravatarLib\Gravatar;
 use Symfony\Component\Asset\Package;
@@ -16,7 +17,7 @@ use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
-class User implements UserInterface
+class User implements UserInterface, InstancierInterface
 {
     /**
      * @ORM\Id()
@@ -134,6 +135,11 @@ class User implements UserInterface
      */
     private $_groups;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $uuid;
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
@@ -146,6 +152,7 @@ class User implements UserInterface
         $this->createdAt = new \DateTime();
         $this->ownedGroups = new ArrayCollection();
         $this->_groups = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -302,7 +309,6 @@ class User implements UserInterface
     {
         if (!$this->labs->contains($lab)) {
             $this->labs[] = $lab;
-            $lab->setUser($this);
         }
 
         return $this;
@@ -312,10 +318,6 @@ class User implements UserInterface
     {
         if ($this->labs->contains($lab)) {
             $this->labs->removeElement($lab);
-            // set the owning side to null (unless already changed)
-            if ($lab->getUser() === $this) {
-                $lab->setUser(null);
-            }
         }
 
         return $this;
@@ -567,6 +569,18 @@ class User implements UserInterface
             $this->_groups->removeElement($group);
             $group->removeUser($this);
         }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

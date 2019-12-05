@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -17,7 +18,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *      message="Group URL has already been taken."
  * )
  */
-class Group
+class Group implements InstancierInterface
 {
     /**
      * @ORM\Id()
@@ -76,6 +77,15 @@ class Group
      */
     private $children;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $uuid;
+
+    public const VISIBILITY_PRIVATE  = 0;
+    public const VISIBILITY_INTERNAL = 1;
+    public const VISIBILITY_PUBLIC   = 2;
+
     public function __construct()
     {
         $this->owner = new ArrayCollection();
@@ -83,6 +93,7 @@ class Group
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
         $this->children = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -279,6 +290,18 @@ class Group
                 $child->setParent(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
