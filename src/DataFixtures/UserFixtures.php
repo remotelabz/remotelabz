@@ -37,7 +37,6 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
             ->setFirstName("Florent")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
-            ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
             ->setPassword($this->passwordEncoder->encodePassword(
                 $user,
                 'admin'
