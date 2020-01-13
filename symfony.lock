@@ -32,9 +32,6 @@
             "ref": "453e89b78ded666f351617baca5ae40d20622351"
         }
     },
-    "doctrine/doctrine-cache-bundle": {
-        "version": "1.3.5"
-    },
     "doctrine/doctrine-fixtures-bundle": {
         "version": "3.0",
         "recipe": {
@@ -200,11 +197,23 @@
             "ref": "509b1542f3180a1cfe248ade8b7bf5092c2d4127"
         }
     },
+    "limenius/react-bundle": {
+        "version": "v4.0.0"
+    },
+    "limenius/react-renderer": {
+        "version": "v4.0.2"
+    },
     "michelf/php-markdown": {
         "version": "1.8.0"
     },
     "monolog/monolog": {
         "version": "1.24.0"
+    },
+    "myclabs/deep-copy": {
+        "version": "1.9.3"
+    },
+    "nacmartin/phpexecjs": {
+        "version": "v2.0.0"
     },
     "namshi/jose": {
         "version": "7.2.3"
@@ -228,6 +237,25 @@
     "ocramius/proxy-manager": {
         "version": "2.1.1"
     },
+    "php": {
+        "version": "7.3"
+    },
+    "php-amqplib/php-amqplib": {
+        "version": "v2.11.0"
+    },
+    "php-amqplib/rabbitmq-bundle": {
+        "version": "1.12",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "master",
+            "version": "1.12",
+            "ref": "ce3ca2e4577270c4f518539aa6b9e878998fcfef"
+        },
+        "files": [
+            "config/packages/old_sound_rabbit_mq.yaml",
+            "src/Consumer/.gitignore"
+        ]
+    },
     "phpdocumentor/reflection-common": {
         "version": "1.0.1"
     },
@@ -236,6 +264,9 @@
     },
     "phpdocumentor/type-resolver": {
         "version": "0.4.0"
+    },
+    "phpseclib/phpseclib": {
+        "version": "2.0.23"
     },
     "psr/cache": {
         "version": "1.0.1"

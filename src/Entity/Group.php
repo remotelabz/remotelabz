@@ -33,7 +33,7 @@ class Group implements InstancierInterface
     private $name;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\User", inversedBy="_groups")
+     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="group", cascade={"persist"})
      */
     private $users;
 
@@ -85,6 +85,9 @@ class Group implements InstancierInterface
     public const VISIBILITY_PRIVATE  = 0;
     public const VISIBILITY_INTERNAL = 1;
     public const VISIBILITY_PUBLIC   = 2;
+    public const ROLE_USER           = 'user';
+    public const ROLE_ADMIN          = 'admin';
+    public const ROLE_OWNER          = 'owner';
 
     public function __construct()
     {
@@ -230,13 +233,26 @@ class Group implements InstancierInterface
      */
     public function getUsers(): Collection
     {
-        return $this->users;
+        return $this->users->map(function ($value) { return $value->getUser(); });
     }
 
-    public function addUser(User $user): self
+    /**
+     * @return User
+     */
+    public function getUser(User $user): User
     {
-        if (!$this->users->contains($user)) {
-            $this->users[] = $user;
+        return $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+    }
+
+    public function hasUser(User $user): bool
+    {
+        return $this->users->exists(function ($key, $value) use ($user) { return $value->getUser() === $user; });
+    }
+
+    public function addUser(User $user, string $role = Group::ROLE_USER): self
+    {
+        if (!$this->hasUser($user)) {
+            $this->users[] = new UserGroup($user, $this, $role);
         }
 
         return $this;
@@ -244,11 +260,27 @@ class Group implements InstancierInterface
 
     public function removeUser(User $user): self
     {
-        if ($this->users->contains($user)) {
-            $this->users->removeElement($user);
+        if ($this->hasUser($user)) {
+            $this->users->removeElement($this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first());
         }
 
         return $this;
+    }
+
+    public function getUserPermissions(User $user): Collection
+    {
+        /** @var UserGroup $userGroup */
+        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+
+        return $userGroup->getPermissions();
+    }
+
+    public function getUserRole(User $user): string
+    {
+        /** @var UserGroup $userGroup */
+        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+
+        return $userGroup->getRole();
     }
 
     public function getParent(): ?self

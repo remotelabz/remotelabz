@@ -55,10 +55,10 @@ class AppController extends AbstractController
     }
 
     /**
-     * @Route("/", name="index")
+     * @Route("/", name="index", defaults={"reactRouting": null})
      */
     public function dashboardAction()
     {
-        return $this->render('dashboard.base.html.twig');
+        return $this->redirectToRoute('activities');
     }
 }

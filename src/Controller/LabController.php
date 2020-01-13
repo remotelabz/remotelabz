@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use IPTools;
 use App\Entity\Lab;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use App\Entity\Device;
+use DeepCopy\DeepCopy;
 use GuzzleHttp\Client;
 use App\Entity\Network;
 use App\Entity\Activity;
@@ -15,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use App\Service\FileUploader;
 use App\Entity\DeviceInstance;
 use Swagger\Annotations as SWG;
+use App\Entity\NetworkInterface;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
@@ -30,7 +33,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Request\ParamFetcher;
 use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
+use DeepCopy\Matcher\PropertyTypeMatcher;
 use Doctrine\Common\Collections\Criteria;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use GuzzleHttp\Exception\RequestException;
@@ -38,6 +43,7 @@ use App\Exception\AlreadyInstancedException;
 use App\Repository\DeviceInstanceRepository;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
+use App\Repository\NetworkInterfaceRepository;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -45,6 +51,7 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\Request\ParamFetcherInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use DeepCopy\Filter\Doctrine\DoctrineCollectionFilter;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Security\Core\User\UserInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
@@ -52,6 +59,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class LabController extends AbstractFOSRestController
@@ -185,7 +193,7 @@ class LabController extends AbstractFOSRestController
      * 
      * @SWG\Tag(name="Lab")
      */
-    public function showAction(int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository)
+    public function showAction(int $id, Request $request, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository)
     {
         $lab = $labRepository->find($id);
 
@@ -207,16 +215,6 @@ class LabController extends AbstractFOSRestController
             }
         }
 
-        $context = new Context();
-        $context->setGroups([
-            "primary_key",
-            "lab",
-            "author" => [
-                "primary_key"
-            ],
-            "editor"
-        ]);
-
         // TODO : read authorization from instance. Create instance before and test if instance create before here
         //$authorization=getAuthFromInstance();
         $view = $this->view($lab, 200)
@@ -227,8 +225,21 @@ class LabController extends AbstractFOSRestController
                 'deviceStarted' => $deviceStarted,
                 'user' => $user
             ])
-            ->setContext($context)
         ;
+
+        if ($request->getRequestFormat() === 'json') {
+            $context = new Context();
+            $context->setGroups([
+                "primary_key",
+                "lab",
+                "author" => [
+                    "primary_key"
+                ],
+                "editor"
+            ]);
+
+            $view->setContext($context);
+        }
 
         return $this->handleView($view);
     }
@@ -283,7 +294,7 @@ class LabController extends AbstractFOSRestController
     /**
      * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
      */
-    public function addDeviceAction(Request $request, int $id)
+    public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
         $device = new Device();
         $deviceForm = $this->createForm(DeviceType::class, $device);
@@ -291,6 +302,8 @@ class LabController extends AbstractFOSRestController
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
+            // fetch network interfaces to copy them later
+            $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
         } 
 
@@ -299,10 +312,16 @@ class LabController extends AbstractFOSRestController
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
+            $entityManager = $this->getDoctrine()->getManager();
+            // copy network interfaces
+            // foreach ($networkInterfaces as $networkInterface) {
+            //     $copy = $copier->copy($networkInterfaceRepository->find($networkInterface));
+            //     $device->addNetworkInterface($copy);
+            //     $entityManager->persist($copy);
+            // }
             $lab = $this->labRepository->find($id);
             $lab->setLastUpdated(new \DateTime());
 
-            $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $lab->addDevice($device);
             $entityManager->persist($lab);
@@ -491,7 +510,7 @@ class LabController extends AbstractFOSRestController
             $entityManager->flush();
 
             $this->addFlash('success', $lab->getName() . ' has been deleted.');
-            $this->logger->info($user->getEmail()." deleted lab ". $lab->getName());
+            $this->logger->info($user->getUsername()." deleted lab ". $lab->getName());
         } catch(ForeignKeyConstraintViolationException $exception) {
             $this->addFlash('danger', 'You cannot delete this lab: one or more activities are linked to this lab. Please unlink them first.');
             $view->setLocation($this->generateUrl('show_lab', ['id' => $id]));
@@ -509,7 +528,7 @@ class LabController extends AbstractFOSRestController
 
         $hasError = $this->startAllDevices($lab,$user);
 
-        $this->logger->info("Lab ". $lab->getName()." started by ".$user->getEmail());
+        $this->logger->info("Lab ". $lab->getName()." started by ".$user->getUsername());
 
 
         if ($hasError) {
@@ -528,24 +547,25 @@ class LabController extends AbstractFOSRestController
         $lab = $this->labRepository->find($id);
 
         $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
+        /** @var LabInstanceRepository $labInstanceRepository */
         $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
 
         if (count($labInstance) == 0) {
             $labInstance = LabInstance::create()
                 ->setLab($lab)
                 ->setUser($user)
-                ->setIsInternetConnected(false)
-                ->setIsInterconnected(false)
+                ->setInternetConnected(false)
+                ->setInterconnected(false)
             ;
 
             if ($activity) {
-                $this->logger->debug("Create Instance in Start Lab from Activity ". $activity->getName()." by ".$user->getEmail());
+                $this->logger->debug("Create Instance in Start Lab from Activity ". $activity->getName()." by ".$user->getUsername());
                 $labInstance
                     ->setActivity($activity)
                     ->setScope('activity')
                 ;
             } else {
-                $this->logger->debug("Create Instance in Start Lab as standalone by ".$user->getEmail());
+                $this->logger->debug("Create Instance in Start Lab as standalone by ".$user->getUsername());
             }
 
             $this->entityManager->persist($labInstance);
@@ -626,6 +646,7 @@ class LabController extends AbstractFOSRestController
         }
 
         $error = true;
+        /** @var Device $device */
         foreach ($labInstance->getLab()->getDevices() as $device) {
             try {
                 $this->stopDevice($lab, $device, $user);
@@ -656,7 +677,7 @@ class LabController extends AbstractFOSRestController
 
         try {
             $this->startDevice($lab, $device, $user);
-            $this->logger->info("Device ". $device->getName()." started by ".$user->getEmail());
+            $this->logger->info("Device ". $device->getName()." started by ".$user->getUsername());
             $this->addFlash('success', $device->getName() . ' has been started.');
         } catch (AlreadyInstancedException $exception) {
             $this->logger->debug("There is already an instance for device " . $device->getName() . " (" . $device->getUuid() . ") with UUID " . $exception->getInstance()->getUuid());
@@ -721,28 +742,23 @@ class LabController extends AbstractFOSRestController
         $client = new Client();
         $serializer = $this->serializer;
         $entityManager = $this->getDoctrine()->getManager();
+        /** @var LabInstanceRepository $labInstanceRepository */
         $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
 
-        $labInstanceTemp = $labInstanceRepository->findByUserAndLab($user, $lab);
+        $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         $this->logger->debug("Enter in startDevice for device ".$device->getName());
-
-        if (count($labInstanceTemp) > 0)
-            $labInstance = $labInstanceTemp[0];
-        else {
-            $labInstance = $labInstanceTemp;
-        }
 
         if ($labInstance && $labInstance->isStarted()) {
             throw new AlreadyInstancedException($labInstance);
-            $this->logger->debug("Instance exist for lab " . $lab->getName() . " started by" . $user->getEmail());
+            $this->logger->debug("Instance exist for lab " . $lab->getName() . " started by" . $user->getUsername());
         } elseif (!$labInstance) {
-            $this->logger->info("Instance creation for lab " . $lab->getName() . " by " . $user->getEmail());
+            $this->logger->info("Instance creation for lab " . $lab->getName() . " by " . $user->getUsername());
 
             $labInstance = LabInstance::create()
                 ->setLab($lab)
                 ->setUser($user)
-                ->setIsInternetConnected(false)
-                ->setIsInterconnected(false)
+                ->setInternetConnected(false)
+                ->setInterconnected(false)
             ;
             $lab->addInstance($labInstance);
 
@@ -794,7 +810,7 @@ class LabController extends AbstractFOSRestController
                     ->setUser($user)
                     ->setLab($lab)
                 ;
-                $this->logger->debug("Network interface instance created by ".$user->getEmail()." for lab ".$lab->getName(). " and for ".$networkInterface->getName());
+                $this->logger->debug("Network interface instance created by ".$user->getUsername()." for lab ".$lab->getName(). " and for ".$networkInterface->getName());
 
                 // if vnc access is requested, ask for a free port and register it
                 if ($networkInterface->getSettings()->getProtocol() == "VNC") {
@@ -825,20 +841,21 @@ class LabController extends AbstractFOSRestController
         $entityManager->flush(); // $networkInterfaceInstance don't exist outside of this block. We have to save it before to quit this block
 
         $context = SerializationContext::create()->setGroups("start_lab");
-        $labXml = $serializer->serialize($labInstance, 'json', $context);
+        $labJson = $serializer->serialize($labInstance, 'json', $context);
 
         $deviceUuid = $deviceInstance->getUuid();
 
+        $this->logger->info('Sending instance ' . $deviceUuid . ' starting request.', json_decode($labJson, true));
         $url = "http://" . $this->workerAddress . "/lab/device/{$deviceUuid}/start";
         $headers = [ 'Content-Type' => 'application/json' ];
         try {
             $response = $client->post($url, [
-                'body' => $labXml,
+                'body' => $labJson,
                 'headers' => $headers
             ]);
         } catch (RequestException $exception) {
             $this->logger->error($exception->getResponse()->getBody()->getContents());
-            $this->logger->error($labXml);
+            $this->logger->error($labJson);
             //$this->logger->error($lab->getInstances());
             throw $exception;
             //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
@@ -849,7 +866,7 @@ class LabController extends AbstractFOSRestController
             $networkInterfaceInstance->setStarted(true);
 
             $entityManager->persist($networkInterfaceInstance);
-            $this->logger->debug("Network interface instance ".$networkInterfaceInstance->getNetworkInterface()->getName()." is set to start by ".$user->getEmail());
+            $this->logger->debug("Network interface instance " . $networkInterfaceInstance->getNetworkInterface()->getName() . " is set to start by " . $user->getUsername());
         }
 
         $deviceInstance->setStarted(true);
@@ -881,6 +898,7 @@ class LabController extends AbstractFOSRestController
         $client = new Client();
         $serializer = $this->serializer;
         $entityManager = $this->getDoctrine()->getManager();
+        /** @var LabInstanceRepository $labInstanceRepository */
         $labInstanceRepository = $this->getDoctrine()->getRepository(LabInstance::class);
 
         $labInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
@@ -898,19 +916,21 @@ class LabController extends AbstractFOSRestController
         $this->logger->debug("Device requested to stop by user.", [
             "device" => $device->getUuid(),
             "instance" => $deviceInstance->getUuid(),
-            "user" => $user->getEmail(),
+            "user" => $user->getUsername(),
         ]);
 
         $context = SerializationContext::create()->setGroups("stop_lab");
-        $labXml = $serializer->serialize($labInstance, 'json', $context);
+        $labJson = $serializer->serialize($labInstance, 'json', $context);
 
         $deviceUuid = $deviceInstance->getUuid();
+
+        $this->logger->info('Sending instance ' . $deviceUuid . ' stopping request.', json_decode($labJson, true));
 
         $url = "http://" . $this->workerAddress . "/lab/device/" . $deviceUuid . "/stop";
         $headers = [ 'Content-Type' => 'application/json' ];
         
         $response = $client->post($url, [
-            'body' => $labXml,
+            'body' => $labJson,
             'headers' => $headers
         ]);
 
@@ -955,7 +975,7 @@ class LabController extends AbstractFOSRestController
         $this->logger->debug("Device stopped by user.", [
             "device" => $device->getUuid(),
             "instance" => $deviceInstance->getUuid(),
-            "user" => $user->getEmail(),
+            "user" => $user->getUsername(),
         ]);
     }
 
@@ -1038,7 +1058,7 @@ class LabController extends AbstractFOSRestController
         $subnets = $network->moveTo(32 - log((float) $maxSize, 2));
 
         // If $subnets is empty, it means that user's config has a problem
-        if (is_empty($subnets)) {
+        if (empty($subnets)) {
             throw new BadRequestHttpException('Your network configuration is wrong, please check the dotenv file.');
         }
         
@@ -1048,7 +1068,7 @@ class LabController extends AbstractFOSRestController
         }
 
         // If subnets list is empty now, it means that every subnet is already allocated
-        if (is_empty($subnets)) {
+        if (empty($subnets)) {
             // TODO: Create an new exception class
             throw new BadRequestHttpException(
                 'No available subnetwork.' .
@@ -1227,36 +1247,32 @@ class LabController extends AbstractFOSRestController
         ]);
     }
 
-    private function connectLabInstance(InstanciableInterface $labInstance)
+    private function connectLabInstance(LabInstance $labInstance)
     {
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
 
-        if ($labInstance == null ) {
-            throw new NotInstancedException($labInstance);
-        } else {
-            $context = SerializationContext::create()->setGroups("start_lab");
-            $serialized = $serializer->serialize($labInstance, 'json', $context);
+        $context = SerializationContext::create()->setGroups("start_lab");
+        $serialized = $serializer->serialize($labInstance, 'json', $context);
 
-            $url = "http://{$workerUrl}:{$workerPort}/lab/connect/internet";
-            $headers = [ 'Content-Type' => 'application/json' ];
-            try {
-                $response = $client->post($url, [
-                    'body' => $serialized,
-                    'headers' => $headers
-                ]);
-                $labInstance->setIsInternetConnected(true);
-                $this->entityManager->persist($labInstance);
-                $this->entityManager->flush();
-            } catch (RequestException $exception) {
-                dd($exception->getResponse()->getBody()->getContents());
-            }
+        $url = "http://{$workerUrl}:{$workerPort}/lab/connect/internet";
+        $headers = [ 'Content-Type' => 'application/json' ];
+        try {
+            $response = $client->post($url, [
+                'body' => $serialized,
+                'headers' => $headers
+            ]);
+            $labInstance->setInternetConnected(true);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
+        } catch (RequestException $exception) {
+            dd($exception->getResponse()->getBody()->getContents());
         }
     }
 
-    private function disconnectLabInstance(InstanciableInterface $labInstance)
+    private function disconnectLabInstance(LabInstance $labInstance)
     {
         $this->logger->debug("Lab requested to disconnect from the Internet by user.", [
             "lab" => $labInstance->getLab()->getUuid(),
@@ -1270,32 +1286,23 @@ class LabController extends AbstractFOSRestController
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
 
-        if ($labInstance == null ) {
-            throw new NotInstancedException($labInstance);
-        } else {
+        $context = SerializationContext::create()->setGroups("start_lab");
+        $serialized = $this->serializer->serialize($labInstance, 'json', $context);
 
-            if ($labInstance == null) {
-                throw new NotInstancedException($labInstance->getLab());
-            }
-
-            $context = SerializationContext::create()->setGroups("start_lab");
-            $serialized = $this->serializer->serialize($labInstance, 'json', $context);
-
-            $url = "http://{$workerUrl}:{$workerPort}/lab/disconnect/internet";
-            $headers = [ 'Content-Type' => 'application/json' ];
-            try {
-                $response = $client->post($url, [
-                    'body' => $serialized,
-                    'headers' => $headers
-                ]);
-                $labInstance->setIsInternetConnected(false);
-                $entityManager->persist($labInstance);
-                $entityManager->flush();
-            } catch (ServerException $exception) {
-                throw new WorkerException("Cannot disconnect lab instance from the Internet.", $labInstance, $exception->getResponse());
-                // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-                // dd($exception->getResponse()->getBody()->getContents());
-            }
+        $url = "http://{$workerUrl}:{$workerPort}/lab/disconnect/internet";
+        $headers = [ 'Content-Type' => 'application/json' ];
+        try {
+            $response = $client->post($url, [
+                'body' => $serialized,
+                'headers' => $headers
+            ]);
+            $labInstance->setInternetConnected(false);
+            $entityManager->persist($labInstance);
+            $entityManager->flush();
+        } catch (ServerException $exception) {
+            throw new WorkerException("Cannot disconnect lab instance from the Internet.", $labInstance, $exception->getResponse());
+            // dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            // dd($exception->getResponse()->getBody()->getContents());
         }
 
         $this->logger->debug("Lab disconnected from the Internet by user.", [
@@ -1305,7 +1312,7 @@ class LabController extends AbstractFOSRestController
         ]);
     }
        
-    private function interconnectLabInstance(InstanciableInterface $labInstance)
+    private function interconnectLabInstance(LabInstance $labInstance)
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
@@ -1313,30 +1320,26 @@ class LabController extends AbstractFOSRestController
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
 
-        if ($labInstance == null ) {
-            throw new NotInstancedException($labInstance);
-        } else {
-            $context = SerializationContext::create()->setGroups("lab");
-            $labXml = $this->serializer->serialize($labInstance, 'json', $context);
+        $context = SerializationContext::create()->setGroups("lab");
+        $labXml = $this->serializer->serialize($labInstance, 'json', $context);
 
-            $url = "http://{$workerUrl}:{$workerPort}/lab/interconnect";
-            $headers = [ 'Content-Type' => 'application/json' ];
-            try {
-                $response = $client->post($url, [
-                    'body' => $labXml,
-                    'headers' => $headers
-                ]);
-                $labInstance->setIsInterconnected(true);
-                $entityManager->persist($labInstance);
-                $entityManager->flush();
-            } catch (RequestException $exception) {
-                //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-                dd($exception->getResponse()->getBody()->getContents());
-            }
+        $url = "http://{$workerUrl}:{$workerPort}/lab/interconnect";
+        $headers = [ 'Content-Type' => 'application/json' ];
+        try {
+            $response = $client->post($url, [
+                'body' => $labXml,
+                'headers' => $headers
+            ]);
+            $labInstance->setInterconnected(true);
+            $entityManager->persist($labInstance);
+            $entityManager->flush();
+        } catch (RequestException $exception) {
+            //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            dd($exception->getResponse()->getBody()->getContents());
         }
     }
 
-    private function disinterconnectLabInstance(InstanciableInterface $labInstance)
+    private function disinterconnectLabInstance(LabInstance $labInstance)
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
@@ -1345,26 +1348,23 @@ class LabController extends AbstractFOSRestController
 
         $workerUrl = (string) getenv('WORKER_SERVER');
         $workerPort = (string) getenv('WORKER_PORT');
-        if ($labInstance == null ) {
-            throw new NotInstancedException($labInstance);
-        } else {
-            $context = SerializationContext::create()->setGroups("lab");
-            $labXml = $serializer->serialize($labInstance, 'json', $context);
+        
+        $context = SerializationContext::create()->setGroups("lab");
+        $labXml = $serializer->serialize($labInstance, 'json', $context);
 
-            $url = "http://{$workerUrl}:{$workerPort}/lab/disinterconnect";
-            $headers = [ 'Content-Type' => 'application/json' ];
-            try {
-                $response = $client->post($url, [
-                    'body' => $labXml,
-                    'headers' => $headers
-                ]);
-                $labInstance->setIsInterconnected(false);
-                $entityManager->persist($labInstance);
-                $entityManager->flush();
-            } catch (RequestException $exception) {
-                //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
-                dd($exception->getResponse()->getBody()->getContents());
-            }
+        $url = "http://{$workerUrl}:{$workerPort}/lab/disinterconnect";
+        $headers = [ 'Content-Type' => 'application/json' ];
+        try {
+            $response = $client->post($url, [
+                'body' => $labXml,
+                'headers' => $headers
+            ]);
+            $labInstance->setInterconnected(false);
+            $entityManager->persist($labInstance);
+            $entityManager->flush();
+        } catch (RequestException $exception) {
+            //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
+            dd($exception->getResponse()->getBody()->getContents());
         }
     }
 }

@@ -82,6 +82,22 @@ select {
     }
 
     .react-select-container {
+
+        &.inline {
+            .react-select__control {
+                min-height: 0;
+            }
+
+            .react-select__value-container {
+                padding: 1.5px 8px;
+                min-width: 100px;
+            }
+
+            .react-select__indicator {
+                padding: 0px 8px;
+            }
+        }
+
         .react-select__control {
             border-color: lighten(theme-color("dark-lighter"), 7.5%);
             background-color: theme-color("dark-lighter");

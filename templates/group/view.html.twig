@@ -9,6 +9,7 @@
     {% macro groupParent(group) %}
        {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
     {% endmacro %}
+
     <div class="content-title">
         <div class="content-title-infos">
             <h3>{{ _self.groupParent(group) }} {{ group.name }}</h3>
@@ -17,64 +18,67 @@
             <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
         </div>
     </div>
+
     <div class="content-body">
         <div class="row">
             <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        Group info
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
-                                {% if group.pictureFilename is defined and group.pictureFilename %}
-                                    image
-                                {% else %}
-                                    {{- group.name|firstLetter|upper -}}
-                                {% endif %}
-                            </div>
-                        </li>
-                        <li class="list-group-item">
-                            Name: <strong>{{ group.name }}</strong>
-                        </li>
-                        <li class="list-group-item">
-                            Path: <strong>{{ group.slug }}</strong>
-                        </li>
-                        <li class="list-group-item">
-                            Description: <strong>{{ group.description }}</strong>
-                        </li>
-                        <li class="list-group-item">
-                            Visibility level: <strong>{{ group.visibility }}</strong>
-                        </li>
-                        <li class="list-group-item">
-                            Created on: <strong>{{ group.createdAt|date }}</strong>
-                        </li>
-                        <li class="list-group-item">
-                            ID: <strong>{{ group.id }}</strong>
-                        </li>
-                    </ul>
+                <div class="mb-4">
+                    {% embed "@layouts/card.html.twig" %}
+                        {% block header %}Group info{% endblock %}
+                        {% block list %}
+                            <li class="list-group-item">
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                                    {% if group.pictureFilename is defined and group.pictureFilename %}
+                                        image
+                                    {% else %}
+                                        {{- group.name|firstLetter|upper -}}
+                                    {% endif %}
+                                </div>
+                            </li>
+                            <li class="list-group-item">
+                                Name: <strong>{{ group.name }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Path: <strong>{{ group.slug }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Description: <strong>{{ group.description }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Visibility level: <strong>{{ group.visibility }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Created on: <strong>{{ group.createdAt|date }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                ID: <strong>{{ group.id }}</strong>
+                            </li>
+                        {% endblock %}
+                    {% endembed %}
                 </div>
             </div>
 
             <div class="col-md-6">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        Add user(s) to the group
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
-                            <div id="usersSelect"></div>
-                            <hr>
-                            <button type="submit" class="btn btn-success">Add selected user(s)</button>
-                        </form>
-                    </div>
+                <div class="mb-4">
+                    {% embed "@layouts/card.html.twig" %}
+                        {% block header %}
+                            Add user(s) to the group 
+                        {% endblock %}
+                        {% block body %}
+                            <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                                {{ react_component('UserSelect') }}
+                                <hr>
+                                <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                            </form>
+                        {% endblock %}
+                    {% endembed %}
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
+                {% embed "@layouts/card.html.twig" %}
+                    {% block header %}
                         Group members <span class="badge badge-pill">{{ group.users|length }}</span>
-                    </div>
-                    <ul class="list-group list-group-flush">
+                    {% endblock %}
+                    {% block list %}
                         {% for user in group.users %}
                             <li class="list-group-item">
                                 <div class="d-flex">
@@ -88,12 +92,13 @@
                                             {% endif %}
                                         </div>
                                         <div class="text-muted">{{ user.email }}</div>
+                                        {{ group.getUserRole(user) }}
                                     </div>
                                 </div>
                             </li>
                         {% endfor %}
-                    </ul>
-                </div>
+                    {% endblock %}
+                {% endembed %}
             </div>
         </div>
     </div>

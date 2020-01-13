@@ -11,9 +11,9 @@
         {% set labInstanced = lab.getInstances()|length > 0 %}
         <label class="mr-1 badge badge-{% if labInstanced %}success{% else %}danger{% endif %}">
             {%- if labInstanced %}
-                Has instances
+                {{ 'Has instances'|trans }}
             {% else %}
-                No instance
+                {{ 'No instance'|trans }}
             {% endif -%}
         </label>
         Created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=24&hash=author" class="rounded-circle ml-1 mr-1 d-inline-block" /> <strong>{{lab.author.name}}</strong>
@@ -27,9 +27,9 @@
                 <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> 
                     {{ 'Edit'|trans }}
                 </a>
-                <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">
+                {# <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">
                     {{ 'Delete'|trans }}
-                </a>
+                </a> #}
             {% endif %}
         {% elseif not labInstance.isStarted %}
             <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
@@ -42,8 +42,8 @@
         {% endif %}
         <!-- Connect -->
         {% if labInstance %}
-            {% if (is_granted("ROLE_USER") and labInstance.activity and labInstance.activity.InternetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
-                {% if (not labInstance.IsInternetConnected) %}
+            {% if (is_granted("ROLE_USER") and labInstance.activity and labInstance.activity.internetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
+                {% if (not labInstance.internetConnected) %}
                     <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
                         {{ 'Connect'|trans }}
                     </a>
@@ -65,8 +65,7 @@
         {% endif %}
 
         {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) and labInstance is null %}
-            <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Delete'|trans }}
-            </a>
+            <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">{{ 'Delete'|trans }}</a>
         {% endif %}
     </div>
 </div>
@@ -85,7 +84,7 @@
         <hr>
 
         {% for device in lab.devices %}
-        <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
+        <div class="wrapper d-flex justify-content-between align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
             {% if is_granted("ROLE_ADMINISTRATOR") %}
                 {% set path = 'show_device' %}
             {% else %}
@@ -102,11 +101,29 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            <div class="float-right">
+            
+            <div>
                 {%- if not deviceStarted[device.id] -%}
-                    <a href="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-success" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
-                        {{ svg('play') }}
-                    </a>
+                    <form action="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" method="GET" class="d-flex justify-content-between">
+                        <!-- <div class="dropdown">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Start for
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <h6 class="dropdown-header">User</h6>
+                                <a class="dropdown-item" href="#">Me</a>
+                                <h6 class="dropdown-header">Groups</h6>
+                                <a class="dropdown-item" href="#">Action</a>
+                            </div>
+                        </div> -->
+                        {# <div data-toggle="tooltip" data-placement="top" title="Start for">
+                            {{ react_component('InstanceOwnerSelector') }}
+                        </div> #}
+                        <button type="submit" class="btn btn-success ml-3" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
+                            {{ svg('play') }}
+                        </button>
+                    </form>
+                    
                 {%- endif -%}
 
                 {% if isVNC and deviceStarted[device.id] %}

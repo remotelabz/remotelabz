@@ -18,6 +18,7 @@ Encore
      * and one CSS file (e.g. app.css) if you JavaScript imports CSS.
      */
     .addEntry('app', './assets/js/app.js')
+    .addEntry('react-app', './assets/js/ReactApp.js')
     .addEntry('user', './assets/js/user.js')
     .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('course', './assets/js/course.js')
@@ -33,6 +34,7 @@ Encore
     .addEntry('timeago', './assets/js/timeago.js')
     .addEntry('users-select', './assets/js/SelectUser.jsx')
     .addEntry('groups', './assets/js/groups.js')
+    .addEntry('server-bundle','./assets/js/components/registration.js')
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
@@ -46,7 +48,7 @@ Encore
      * https://symfony.com/doc/current/frontend.html#adding-more-features
      */
     // .cleanupOutputBeforeBuild()
-    // .enableBuildNotifications()
+    .enableBuildNotifications()
     // .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())

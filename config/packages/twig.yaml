@@ -4,3 +4,5 @@ twig:
     strict_variables: '%kernel.debug%'
     form_themes:
         - 'custom.form.html.twig'
+    paths:
+        'templates/layouts': 'layouts'

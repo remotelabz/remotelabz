@@ -14,12 +14,12 @@ require('datatables.net-bs4/css/dataTables.bootstrap4.css');
 require('datatables.net-buttons-bs4/css/buttons.bootstrap4.css');
 require('datatables.net-select-bs4/css/select.bootstrap4.css');
 require('flag-icon-css/sass/flag-icon.scss');
-require('noty/src/noty.scss')
-require('noty/src/themes/mint.scss')
-require('simplemde/dist/simplemde.min.css')
-require('@fortawesome/fontawesome-free/css/all.css')
-require('cropperjs/dist/cropper.min.css')
-require('vis-network/dist/vis-network.min.css')
+require('noty/src/noty.scss');
+require('noty/src/themes/mint.scss');
+require('simplemde/dist/simplemde.min.css');
+require('@fortawesome/fontawesome-free/css/all.css');
+require('cropperjs/dist/cropper.min.css');
+require('vis-network/dist/vis-network.min.css');
 
 require('popper.js');
 require('bootstrap');
@@ -31,6 +31,8 @@ require('selectize');
 require('select2');
 require('@novnc/novnc/core/rfb');
 require("jsplumb");
+
+import './components/registration';
 
 const Cookies = require('js-cookie');
 
@@ -70,7 +72,7 @@ if (theme !== undefined) {
                 expires: 3650
             });
         }
-    })
+    });
     document.getElementById("themeSwitcherDiv").addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -83,7 +85,7 @@ if (theme !== undefined) {
         }
 
         document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
-    })
+    });
 
     /**
     * Customize dataTables
@@ -166,7 +168,7 @@ if (theme !== undefined) {
     * Dynamically attrubutes the active link in sidebar
     */
     $(function() {
-        var sidebar = $('.sidebar');
+        let sidebar = $('.sidebar');
         let sidebarElement = sidebar[0];
         let sidebarCollapseButton = document.getElementsByClassName('toggle-sidebar');
 
@@ -202,7 +204,7 @@ if (theme !== undefined) {
     */
     $(function() {
         $('.file-upload-browse').on('click', function(){
-            var file = $(this).parent().parent().parent().find('.file-upload-default');
+            let file = $(this).parent().parent().parent().find('.file-upload-default');
             file.trigger('click');
         });
         $('.file-upload-default').on('change', function(){

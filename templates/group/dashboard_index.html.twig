@@ -26,26 +26,20 @@
     </div>
     <div class="content-list">
         <div class="top-panel">
-            <div class="quick-actions">
-                <form action="{{ path('dashboard_groups') }}" method="GET">
-                    <input type="search" class="form-control input-sm" name="search"
-                    placeholder="Search by name"
-                    spellcheck="false" value="{{ search|default('') }}" type="search" />
-                </form>
-            </div>
-            <ul class="nav-links nav nav-tabs">
-                {% set route = app.request.attributes.get('_route') %}
-                <li {%- if route == 'dashboard_groups' %} class="active"{% endif %}>
-                    <a href="{{ path('dashboard_groups') }}">
-                        <span>Your groups</span>
-                    </a>
-                </li>
-                <li {%- if route == 'dashboard_explore_groups' %} class="active"{% endif %}>
-                    <a href="{{ path('dashboard_explore_groups') }}">
-                        <span>Explore public groups</span>
-                    </a>
-                </li>
-            </ul>
+            {% embed "@layouts/topbar_tabbed.html.twig" %}
+                {% import "components.html.twig" as components %}
+                {% block quick_actions %}
+                    <form action="{{ path('dashboard_groups') }}" method="GET">
+                        <input type="search" class="form-control input-sm" name="search"
+                        placeholder="Search by name"
+                        spellcheck="false" value="{{ search|default('') }}" type="search" />
+                    </form>
+                {% endblock %}
+                {% block items %}
+                    {{ components.topbar_tab('Your groups', 'dashboard_groups') }}
+                    {{ components.topbar_tab('Explore public groups', 'dashboard_explore_groups') }}
+                {% endblock %}
+            {% endembed %}
         </div>
         <ul>
             {% for group in groups %}
@@ -61,7 +55,7 @@
                             </div>
                             <div class="d-flex flex-column">
                                 <div class="item-title">
-                                    <a href="{{ path('admin_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
+                                    <a href="{{ path('dashboard_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
                                 </div>
                                 <div>{{ group.description }}</div>
                             </div>
@@ -86,8 +80,8 @@
                                 {% endif %}
                             {% endif %}
                         </span>
-                        <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
-                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
+                        {# <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a> #}
                     </div>
                 </li>
             {% endfor %}

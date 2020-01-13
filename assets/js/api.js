@@ -106,6 +106,8 @@ API.getInstance = (options) => {
                     type: 'error',
                     text: 'Your session has expired. Please log in again.'
                 }).show();
+
+                window.location.href = '/login';
             } else if (error.response.status >= 500) {
                 new Noty({
                     type: 'error',

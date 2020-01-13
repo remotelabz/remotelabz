@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Group;
 use App\Form\GroupType;
+use App\Entity\UserGroup;
 use Swagger\Annotations as SWG;
+use App\Security\ACL\GroupVoter;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use FOS\RestBundle\Context\Context;
@@ -186,9 +188,9 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
-     * @Route("/admin/groups/{slug}/edit", name="edit_group", requirements={"slug"="[\w-\/]+"})
+     * @Route("/admin/groups/{slug}/edit", name="edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
-     * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w-\/]+"})
+     * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @SWG\Parameter(
      *     name="group",
@@ -256,9 +258,9 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
-     * @Route("/admin/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w-\/]+"})
+     * @Route("/admin/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
      * 
-     * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w-\/]+"})
+     * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function deleteAction(Request $request, string $slug)
     {
@@ -284,11 +286,13 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
-     * @Route("/admin/groups/{slug}/users", name="add_user_group", methods="POST", requirements={"slug"="[\w-\/]+"})
+     * @Route("/admin/groups/{slug}/users", name="add_user_group", methods="POST", requirements={"slug"="[\w\-\/]+"})
      * @Entity("group", expr="repository.findOneBySlug(slug)")
      */
     public function addUserAction(Request $request, Group $group, UserRepository $userRepository)
     {
+        $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
+
         $users = $request->request->get('users');
         // trim empty values
         $users = array_filter(array_map('trim', $users), 'strlen');
@@ -322,28 +326,33 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
+     * @Route("/groups/{slug}/members", name="dashboard_group_members")
+     */
+    public function dashboardMembersAction(string $slug)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
+
+        if (!$group) {
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
+        }
+
+        $view = $this->view($group, 200)
+            ->setTemplate("group/dashboard_members.html.twig")
+            ->setTemplateData([
+                'group' => $group,
+            ])
+            // ->setContext($context)
+        ;
+ 
+        return $this->handleView($view);
+    }
+
+    /**
      * @Route("/admin/groups/{slug}",
      *  name="admin_show_group",
      *  methods="GET",
-     *  requirements={"slug"="[\w-\/]+"}
+     *  requirements={"slug"="[\w\-\/]+"}
      * )
-     * 
-     * @Rest\Get("/api/groups/{slug}", name="api_get_group", requirements={"slug"="[\w-\/]+"})
-     * 
-     * @SWG\Parameter(
-     *     name="slug",
-     *     in="path",
-     *     type="string",
-     *     description="URL of the group."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns requested group",
-     *     @Model(type=Group::class)
-     * )
-     * 
-     * @SWG\Tag(name="Group")
      */
    public function showAction(string $slug)
    {
@@ -373,4 +382,57 @@ class GroupController extends AbstractFOSRestController
 
        return $this->handleView($view);
    }
+
+   /**
+     * @Route("/groups/{slug}",
+     *  name="dashboard_show_group",
+     *  methods="GET",
+     *  requirements={"slug"="[\w\-\/]+"}
+     * )
+     * 
+     * @Rest\Get("/api/groups/{slug}", name="api_get_group", requirements={"slug"="[\w\-\/]+"})
+     * 
+     * @SWG\Parameter(
+     *     name="slug",
+     *     in="path",
+     *     type="string",
+     *     description="URL of the group."
+     * )
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns requested group",
+     *     @Model(type=Group::class)
+     * )
+     * 
+     * @SWG\Tag(name="Group")
+     */
+    public function showDashboardAction(string $slug)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
+ 
+        if (!$group) {
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
+        }
+ 
+        // $context = new Context();
+        // $context->setGroups([
+        //     "primary_key",
+        //     "group",
+        //     "author" => [
+        //         "primary_key"
+        //     ],
+        //     "editor"
+        // ]);
+ 
+        $view = $this->view($group, 200)
+            ->setTemplate("group/dashboard_view.html.twig")
+            ->setTemplateData([
+                'group' => $group,
+            ])
+            // ->setContext($context)
+        ;
+ 
+        return $this->handleView($view);
+    }
 }

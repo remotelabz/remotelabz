@@ -131,7 +131,7 @@ class User implements UserInterface, InstancierInterface
     private $lastActivity; 
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Group", mappedBy="users")
+     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="user", cascade={"persist"})
      */
     private $_groups;
 

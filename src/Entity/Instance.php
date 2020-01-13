@@ -28,6 +28,15 @@ class Instance implements InstanciableInterface
      */
     protected $isStarted = false;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     */
+    protected $ownedBy = self::OWNED_BY_USER;
+
+    public const OWNED_BY_USER  = 'user';
+    public const OWNED_BY_GROUP = 'group';
+
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
@@ -70,5 +79,21 @@ class Instance implements InstanciableInterface
     public static function belongsTo($user): bool
     {
         return $this->user == $user;
+    }
+
+    public function getOwnedBy(): ?string
+    {
+        return $this->ownedBy;
+    }
+
+    public function setOwnedBy(InstancierInterface $ownedBy): self
+    {
+        if ($ownedBy instanceof User) {
+            $this->ownedBy = self::OWNED_BY_USER;
+        } else if ($ownedBy instanceof Group) {
+            $this->ownedBy = self::OWNED_BY_GROUP;
+        }
+
+        return $this;
     }
 }

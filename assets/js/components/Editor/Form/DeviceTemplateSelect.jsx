@@ -10,7 +10,7 @@ export default class DeviceTemplateSelect extends React.Component
 
     onChange = selectedOption => {
         this.setState({selectedOption});
-        // console.log(selectedOption);
+        console.log(selectedOption);
         if (this.props.onChange) {
             this.props.onChange(selectedOption);
         }

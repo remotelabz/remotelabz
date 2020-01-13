@@ -185,6 +185,7 @@ export default class Editor extends React.Component {
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
         device.isTemplate = false;
+        console.log(device);
 
         this.addDeviceRequest(device);
         this.onHideAddDeviceModal();

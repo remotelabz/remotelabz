@@ -21,6 +21,7 @@ use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\KernelInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\Email;
@@ -474,7 +475,7 @@ class UserController extends AbstractFOSRestController
     /**
      * @Route("/profile/picture", name="get_current_user_profile_picture", methods="GET")
      */
-    public function getProfilePictureAction(Request $request)
+    public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
         $size = $request->query->get('size', 128);
@@ -485,7 +486,7 @@ class UserController extends AbstractFOSRestController
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = "/tmp/" . new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
@@ -514,7 +515,7 @@ class UserController extends AbstractFOSRestController
     /**
      * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
-    public function getUserProfilePictureAction(Request $request, int $id)
+    public function getUserProfilePictureAction(Request $request, int $id, KernelInterface $kernel)
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
@@ -525,7 +526,7 @@ class UserController extends AbstractFOSRestController
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = "/tmp/" . new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
@@ -543,7 +544,7 @@ class UserController extends AbstractFOSRestController
     /**
      * @Route("/profile/picture", name="delete_user_profile_picture", methods="DELETE")
      */
-    public function deleteProfilePictureAction(Request $request)
+    public function deleteProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
         $size = $request->query->get('size', 128);
@@ -554,7 +555,7 @@ class UserController extends AbstractFOSRestController
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
             $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
-            $imageTmp = "/tmp/" . new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
@@ -578,5 +579,26 @@ class UserController extends AbstractFOSRestController
         // $entityManager->flush();
 
         // return $this->redirectToRoute('user_profile');
+    }
+
+    /**
+     * @Rest\Get("/api/users/me", name="api_users_me")
+     * 
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns current logged user",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=User::class))
+     *     )
+     * )
+     * 
+     * @SWG\Tag(name="User")
+     */
+    public function meAction()
+    {
+        $view = $this->view($this->getUser());
+
+        return $this->handleView($view);
     }
 }

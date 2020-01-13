@@ -9,9 +9,22 @@
     </a>
 {% endmacro %}
 
-{% macro link(name, link, icon, c, variables) %}
+{% macro contextual_header(title, link, image) %}
+    <a href="{{ path(link) }}" title="{{ title }}">
+        <div class="s40 mr-2 d-flex">
+            {% if image is defined %}
+                {{ image }}
+            {% endif %}
+        </div>
+        <div class="sidebar-context-title">{{ title }}</div>
+    </a>
+{% endmacro %}
+
+{% macro link(name, link, params, icon, c, variables) %}
+    {% if params == null %}{% set params = {} %}{% endif %}
+    
     <li class="nav-item {% if c == variables.category %}active{%endif%}">
-        <a class="nav-link d-flex align-items-center" href="{{ path(link) }}">
+        <a class="nav-link d-flex align-items-center" href="{{ path(link, params) }}">
             {%- if icon is not null -%}
                 {{- svg(icon, 'image-sm') -}}
             {%- endif -%}
@@ -24,9 +37,9 @@
     {% set category = category|default('dashboard') %}
     <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
         <ul class="nav">
-            {{ _self.link("Dashboard", 'index', 'home', 'dashboard', _context) }}
-            {{ _self.link("Activities", 'activities', 'review-list', 'activities', _context) }}
-            {{ _self.link("Labs", 'labs', 'applications', 'labs', _context) }}
+            {{ _self.link("Dashboard", 'index', null, 'home', 'dashboard', _context) }}
+            {{ _self.link("Activities", 'activities', null, 'review-list', 'activities', _context) }}
+            {{ _self.link("Labs", 'labs', null, 'applications', 'labs', _context) }}
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
