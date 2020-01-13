@@ -31,22 +31,17 @@
     <div class="content-body">
         <div class="row">
             <div class="col">
-                <p>
-                    Add new member(s) to <strong>{{group.name}}</strong>
-                </p>
-                <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
-                    {{ react_component('UserSelect') }}
-                    <hr>
-                    <button type="submit" class="btn btn-success">Add selected user(s)</button>
-                </form>
-
+                {% if is_granted('add_member', group) %}
+                    <p>
+                        Add new member(s) to <strong>{{group.name}}</strong>
+                    </p>
+                    <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                        {{ react_component('UserSelect') }}
+                        <hr>
+                        <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                    </form>
+                {% endif %}
                 <div class="top-panel">
-                    <div class="quick-actions">
-                        {% if is_granted('add_member', group) %}
-                            <a class="btn btn-success" role="button" href="{{
-                            path('new_lab') }}">{{ 'New Lab'|trans }}</a>
-                        {% endif %}
-                    </div>
                     <ul class="nav-links nav nav-tabs">
                         {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
                         <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
@@ -57,16 +52,16 @@
                         </li>
                     </ul>
                 </div>
-                <div class="search-panel">
+                <!-- <div class="search-panel">
                     <form action="{{ path('labs') }}" method="GET">
                         <input type="search" class="form-control input-sm" name="search"
                         placeholder="Search by name"
                         spellcheck="false" value="{{ search|default('') }}" type="search">
                     </form>
-                </div>
+                </div> -->
                 <div class="labs-panel">
                     {% for user in group.users %}
-                        <li class="list-group-item">
+                        <div class="lab-item">
                             <div class="d-flex">
                                 <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
 
@@ -81,7 +76,7 @@
                                     {{ group.getUserRole(user) }}
                                 </div>
                             </div>
-                        </li>
+                        </div>
                     {% endfor %}
                 </div>
                 <!-- <div class="card">

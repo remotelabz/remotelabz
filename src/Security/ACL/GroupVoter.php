@@ -54,12 +54,12 @@ class GroupVoter extends Voter
     private function canAddMember(Group $group, User $user)
     {
         // user is the group owner or an admin
-        return $user === $group->getOwner() || in_array($group->getUserRole($user), [Group::ROLE_ADMIN, Group::ROLE_OWNER]);
+        return $user->isMemberOf($group) && ($user === $group->getOwner() || in_array($group->getUserRole($user), [Group::ROLE_ADMIN, Group::ROLE_OWNER]));
     }
 
     private function canEdit(Group $group, User $user)
     {
         // user is the group owner or an admin
-        return $user === $group->getOwner() || in_array($group->getUserRole($user), [Group::ROLE_ADMIN, Group::ROLE_OWNER]);
+        return $user->isMemberOf($group) && ($user === $group->getOwner() || in_array($group->getUserRole($user), [Group::ROLE_ADMIN, Group::ROLE_OWNER]));
     }
 }

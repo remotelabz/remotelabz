@@ -91,7 +91,6 @@ class Group implements InstancierInterface
 
     public function __construct()
     {
-        $this->owner = new ArrayCollection();
         $this->users = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
@@ -141,29 +140,15 @@ class Group implements InstancierInterface
     }
 
     /**
-     * @return Collection|User[]
+     * @return User
      */
-    public function getOwner(): Collection
+    public function getOwner(): User
     {
-        return $this->owner;
-    }
+        $owner = $this->users->filter(function ($user) {
+            return $user->getRole() === self::ROLE_OWNER;
+        })->first();
 
-    public function addOwner(User $owner): self
-    {
-        if (!$this->owner->contains($owner)) {
-            $this->owner[] = $owner;
-        }
-
-        return $this;
-    }
-
-    public function removeOwner(User $owner): self
-    {
-        if ($this->owner->contains($owner)) {
-            $this->owner->removeElement($owner);
-        }
-
-        return $this;
+        return $owner->getUser();
     }
 
     public function getVisibility(): ?int

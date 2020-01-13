@@ -553,6 +553,11 @@ class User implements UserInterface, InstancierInterface
         return $this->_groups;
     }
 
+    public function isMemberOf(Group $group): bool
+    {
+        return $group->hasUser($this);
+    }
+
     public function addGroup(Group $group): self
     {
         if (!$this->_groups->contains($group)) {
