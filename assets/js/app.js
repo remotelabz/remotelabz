@@ -32,8 +32,6 @@ require('select2');
 require('@novnc/novnc/core/rfb');
 require("jsplumb");
 
-import './components/registration';
-
 const Cookies = require('js-cookie');
 
 let theme = Cookies.get('theme');

@@ -23,7 +23,6 @@ final class Version20191210123423 extends AbstractMigration
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE lab_instance ADD owned_by VARCHAR(255) NOT NULL');
-        $this->addSql('DROP INDEX Fname_Lname ON user');
         $this->addSql('ALTER TABLE device_instance ADD owned_by VARCHAR(255) NOT NULL');
         $this->addSql('ALTER TABLE network_interface_instance ADD owned_by VARCHAR(255) NOT NULL');
     }
@@ -36,6 +35,5 @@ final class Version20191210123423 extends AbstractMigration
         $this->addSql('ALTER TABLE device_instance DROP owned_by');
         $this->addSql('ALTER TABLE lab_instance DROP owned_by');
         $this->addSql('ALTER TABLE network_interface_instance DROP owned_by');
-        $this->addSql('CREATE INDEX Fname_Lname ON user (first_name, last_name)');
     }
 }
