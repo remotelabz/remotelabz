@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { components } from 'react-select';
 import AsyncSelect from 'react-select/async';
 

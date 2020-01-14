@@ -325,6 +325,38 @@ class GroupController extends AbstractFOSRestController
         return $this->handleView($view);
     }
 
+    // /**
+    //  * @Route("/admin/groups/{slug}/user/{id}/role", name="update_user_role_group", methods="PUT", requirements={"slug"="[\w\-\/]+"})
+    //  * @Entity("group", expr="repository.findOneBySlug(slug)")
+    //  */
+    // public function updateUserRoleAction(Request $request, Group $group, int $id, UserRepository $userRepository)
+    // {
+    //     $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
+    //     $user = $userRepository->find($id);
+
+    //     try {
+    //         $group->setUserRole($user, )
+    //     }
+
+    //         foreach ($users as $user) {
+    //             $group->addUser($user);
+    //         }
+
+    //         $entityManager = $this->getDoctrine()->getManager();
+    //         $entityManager->persist($group);
+    //         $entityManager->flush();
+
+    //         $this->addFlash('success', sizeof($users) . ' users has been added to the group ' . $group->getName() . '.');
+    //     }
+
+    //     $view = $this->view()
+    //         ->setLocation($this->generateUrl('admin_show_group', ["slug" => $group->getPath()]));
+    //     ;
+
+    //     return $this->handleView($view);
+    // }
+
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members")
      */

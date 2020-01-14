@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Exception;
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
@@ -151,6 +152,13 @@ class Group implements InstancierInterface
         return $owner->getUser();
     }
 
+    public function isOwner(User $user): bool
+    {
+        $owner = $this->getOwner();
+
+        return $owner === $user;
+    }
+
     public function getVisibility(): ?int
     {
         return $this->visibility;
@@ -266,6 +274,19 @@ class Group implements InstancierInterface
         $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
 
         return $userGroup->getRole();
+    }
+
+    public function setUserRole(User $user, string $role): self
+    {
+        if (!in_array($role, [self::ROLE_USER, self::ROLE_ADMIN])) {
+            throw new Exception('Incorrect role provided.');
+        }
+        /** @var UserGroup $userGroup */
+        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+
+        $userGroup->setRole($role);
+
+        return $this;
     }
 
     public function getParent(): ?self

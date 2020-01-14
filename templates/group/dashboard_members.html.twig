@@ -36,9 +36,13 @@
                         Add new member(s) to <strong>{{group.name}}</strong>
                     </p>
                     <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
-                        {{ react_component('UserSelect') }}
-                        <hr>
-                        <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                        <div class="d-flex">
+                            <div class="flex-grow-1 mr-2">
+                                {{ react_component('UserSelect') }}
+                            </div>
+                            <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                        </div>
+                        
                     </form>
                 {% endif %}
                 <div class="top-panel">
@@ -71,9 +75,17 @@
                                         {% if user.id == app.user.id %}
                                             <label class="badge badge-success ml-2 mb-0">It's you!</label>
                                         {% endif %}
+                                        {% if group.isOwner(user) %}
+                                            <label class="badge badge-info ml-2 mb-0">Owner</label>
+                                        {% endif %}
                                     </div>
                                     <div class="text-muted">{{ user.email }}</div>
-                                    {{ group.getUserRole(user) }}
+                                </div>
+                                <div class="flex-grow-1"></div>
+                                <div class="flex-grow-1">
+                                    {% if not (group.isOwner(user) or user is same as(app.user)) %}
+                                        {{ react_component('GroupRoleSelect', {'props': '[{"role": "' ~ group.getUserRole(user) ~ '"}]'}) }}
+                                    {% endif %} 
                                 </div>
                             </div>
                         </div>
