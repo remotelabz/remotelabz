@@ -25,12 +25,18 @@ export default class GroupRoleSelect extends Component {
                 return el.value === props[0].role;
             })
         }
+
+        //console.log(props);
     }
 
     handleChange = selectedOption => {
         this.setState(
             { selectedOption }
         );
+
+        console.log(this.props[0]);
+
+        axios.put(`/groups/${this.props[0].group}/user/${this.props[0].user}/role`, {role: selectedOption.value});
     };
 
     render() {

@@ -83,8 +83,9 @@
                                 </div>
                                 <div class="flex-grow-1"></div>
                                 <div class="flex-grow-1">
+                                    {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.slug}] %}
                                     {% if not (group.isOwner(user) or user is same as(app.user)) %}
-                                        {{ react_component('GroupRoleSelect', {'props': '[{"role": "' ~ group.getUserRole(user) ~ '"}]'}) }}
+                                        {{ react_component('GroupRoleSelect', {'props': props|json_encode()}) }}
                                     {% endif %} 
                                 </div>
                             </div>
