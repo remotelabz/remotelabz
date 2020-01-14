@@ -163,8 +163,8 @@ class UserController extends AbstractFOSRestController
             /** @var User $user */
             $user = $userForm->getData();
             
-            foreach ($userForm->get('roles') as $role)
-                    $user->setRoles($role);
+            // foreach ($userForm->get('roles') as $role)
+            //         $user->setRoles($role);
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
