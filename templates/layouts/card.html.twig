@@ -10,7 +10,7 @@
         </div>
     {% endif %}
     {% if block('list') is defined and block('list') is not empty %}
-        <ul class="list-group">
+        <ul class="list-group list-group-flush">
             {{ block('list') }}
         </ul>
     {% endif %}

@@ -638,6 +638,15 @@ img.rounded-circle {
   color: $white;
 }
 
+.group-user-role {
+  border: 1px solid #e5e5e5;
+  border-radius: 100px;
+  padding: 0 7px;
+  font-size: 12px;
+  line-height: 20px;
+  color: #707070;
+}
+
 $size-count: 64;
 
 @for $i from 1 through $size-count {

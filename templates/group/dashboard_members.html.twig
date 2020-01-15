@@ -65,8 +65,8 @@
                 </div> -->
                 <div class="labs-panel">
                     {% for user in group.users %}
-                        <div class="lab-item">
-                            <div class="d-flex">
+                        <div class="lab-item {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="d-flex align-items-center">
                                 <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
 
                                 <div class="d-flex flex-column">
@@ -82,12 +82,17 @@
                                     <div class="text-muted">{{ user.email }}</div>
                                 </div>
                                 <div class="flex-grow-1"></div>
-                                <div class="flex-grow-1">
-                                    {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.slug}] %}
-                                    {% if not (group.isOwner(user) or user is same as(app.user)) %}
-                                        {{ react_component('GroupRoleSelect', {'props': props|json_encode()}) }}
-                                    {% endif %} 
-                                </div>
+                                {% if not (group.isOwner(user) or user is same as(app.user)) %}
+                                    <div style="min-width: 150px">
+                                        {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.slug}] %}
+                                        
+                                            {{ react_component('GroupRoleSelect', {'props': props|json_encode()}) }}
+                                        
+                                    </div>
+                                    <div class="ml-2">
+                                        <a href="" class="btn btn-danger">{{ svg('remove') }}</a>
+                                    </div>
+                                {% endif %} 
                             </div>
                         </div>
                     {% endfor %}

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use DateTime;
 use Exception;
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
@@ -229,12 +230,17 @@ class Group implements InstancierInterface
         return $this->users->map(function ($value) { return $value->getUser(); });
     }
 
+    public function getUserGroupEntry(User $user): UserGroup
+    {
+        return $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+    }
+
     /**
      * @return User
      */
     public function getUser(User $user): User
     {
-        return $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+        return $this->getUserGroupEntry($user)->getUser();
     }
 
     public function hasUser(User $user): bool
@@ -262,18 +268,12 @@ class Group implements InstancierInterface
 
     public function getUserPermissions(User $user): Collection
     {
-        /** @var UserGroup $userGroup */
-        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
-
-        return $userGroup->getPermissions();
+        return $this->getUserGroupEntry($user)->getPermissions();
     }
 
     public function getUserRole(User $user): string
     {
-        /** @var UserGroup $userGroup */
-        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
-
-        return $userGroup->getRole();
+        return $this->getUserGroupEntry($user)->getRole();
     }
 
     public function setUserRole(User $user, string $role): self
@@ -281,12 +281,15 @@ class Group implements InstancierInterface
         if (!in_array($role, [self::ROLE_USER, self::ROLE_ADMIN])) {
             throw new Exception('Incorrect role provided.');
         }
-        /** @var UserGroup $userGroup */
-        $userGroup = $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
 
-        $userGroup->setRole($role);
+        $this->getUserGroupEntry($user)->setRole($role);
 
         return $this;
+    }
+
+    public function getUserRegistrationDate(User $user): DateTime
+    {
+        return $this->getUserGroupEntry($user)->getCreatedAt();
     }
 
     public function getParent(): ?self

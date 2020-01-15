@@ -43,11 +43,17 @@ class UserGroup
      */
     private $role;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $createdAt;
+
     public function __construct(User $user, Group $group, ?string $role = Group::ROLE_USER, ?array $permissions = []) {
         $this->user = $user;
         $this->group = $group;
         $this->permissions = new ArrayCollection($permissions);
         $this->role = $role;
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -104,6 +110,18 @@ class UserGroup
     public function setRole(string $role): self
     {
         $this->role = $role;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }
