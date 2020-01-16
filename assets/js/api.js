@@ -96,7 +96,9 @@ API.getInstance = (options) => {
             options.responseCallback && options.responseCallback();
             options.successCallback && options.successCallback();
             return response;
-        }, error => {
+        },
+        /** @param {import('axios').AxiosError} error */
+        error => {
             options.responseCallback && options.responseCallback();
             options.errorCallback && options.errorCallback();
             // Unauthentified
@@ -107,7 +109,7 @@ API.getInstance = (options) => {
                     text: 'Your session has expired. Please log in again.'
                 }).show();
 
-                window.location.href = '/login';
+                window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
             } else if (error.response.status >= 500) {
                 new Noty({
                     type: 'error',

@@ -106,7 +106,9 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
+        if ($request->query->has('ref_url')) {
+            $response->setTargetUrl(urldecode($request->query->get('ref_url')));
+        } else if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
             $response->setTargetUrl($targetPath);
         }
         else {
