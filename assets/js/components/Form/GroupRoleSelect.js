@@ -1,14 +1,7 @@
 import React, { Component } from 'react';
-import { components } from 'react-select';
 import Select from 'react-select';
 import Noty from 'noty';
 import API from '../../api';
-
-const axios = require('axios').default;
-
-const ValueContainer = ({ children, ...props }) => (
-  <components.ValueContainer {...props}>{children}</components.ValueContainer>
-);
 
 const options = [{
     value: 'admin',
@@ -38,7 +31,7 @@ export default class GroupRoleSelect extends Component {
         });
 
         API.getInstance().put(`/api/groups/${this.props[0].group}/user/${this.props[0].user}/role`, {role: selectedOption.value})
-        .then(response => {
+        .then(() => {
             this.setState({ selectedOption });
             new Noty({
                 text: "User's role has been changed.",
@@ -46,8 +39,8 @@ export default class GroupRoleSelect extends Component {
                 timeout: 2000
             }).show();
         })
-        .catch(error => {
-            console.log(error);
+        .catch(() => {
+            // console.log(error);
             new Noty({
                 text: "There was an error changing user's role. Please try again later.",
                 type: "error",
