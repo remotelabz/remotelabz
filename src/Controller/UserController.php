@@ -273,7 +273,7 @@ class UserController extends AbstractFOSRestController
 
     /**
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
-     * @Rest\Delete("/api/users/{id<\d+>}, name="api_delete_user")
+     * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
      */
     public function deleteAction(Request $request, $id)
     {
