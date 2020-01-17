@@ -35,7 +35,7 @@ class Group implements InstancierInterface
     private $name;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="group", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="group", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     private $users;
 
@@ -259,8 +259,10 @@ class Group implements InstancierInterface
 
     public function removeUser(User $user): self
     {
-        if ($this->hasUser($user)) {
-            $this->users->removeElement($this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first());
+        $result = $this->users->removeElement($this->getUserGroupEntry($user));
+
+        if (!$result) {
+            throw new Exception("User not found.");
         }
 
         return $this;

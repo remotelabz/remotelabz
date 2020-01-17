@@ -6,8 +6,8 @@
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = breadcrumbs|merge({ 'Details': path('dashboard_show_group', {'slug': group.slug}) }) %}
-    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('dashboard_show_group', {'slug': group.slug}) }) %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Members': path('dashboard_group_members', {'slug': group.path}) }) %}
+    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('dashboard_show_group', {'slug': group.path}) }) %}
     {{ parent() }}
 {% endblock %}
 
@@ -38,9 +38,21 @@
                     <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
                         <div class="d-flex">
                             <div class="flex-grow-1 mr-2">
-                                {{ react_component('UserSelect') }}
+                                <div>{{ react_component('UserSelect') }}</div>
+                                <div class="form-text text-muted">
+                                    Search for members by name or email address.
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                            
+                            <div class="mr-2 w-25">
+                                <select class="form-control" name="role" id="Role" style="height:38px;">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                               <button type="submit" class="btn btn-success">Add selected user(s)</button> 
+                            </div>
                         </div>
                         
                     </form>
@@ -50,7 +62,7 @@
                         {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
                         <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
                         <li class="active">
-                            <a href="{{ path('labs') }}">
+                            <a href="#currentMembers" id="currentMembers">
                                 <span>Current</span> <span class="badge badge-pill">{{ group.users|length }}</span>
                             </a>
                         </li>
@@ -84,13 +96,13 @@
                                 <div class="flex-grow-1"></div>
                                 {% if not (group.isOwner(user) or user is same as(app.user)) %}
                                     <div style="min-width: 150px">
-                                        {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.slug}] %}
+                                        {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.path}] %}
                                         
-                                            {{ react_component('GroupRoleSelect', {'props': props|json_encode()}) }}
+                                            {{- react_component('GroupRoleSelect', {'props': props|json_encode()}) -}}
                                         
                                     </div>
                                     <div class="ml-2">
-                                        <a href="" class="btn btn-danger">{{ svg('remove') }}</a>
+                                        <a href="{{ path('remove_user_group', {slug: group.path, userId: user.id}) }}" class="btn btn-danger">{{ svg('remove') }}</a>
                                     </div>
                                 {% endif %} 
                             </div>

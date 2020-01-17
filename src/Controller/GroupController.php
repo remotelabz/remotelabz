@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use Exception;
+use App\Entity\User;
 use App\Entity\Group;
 use App\Form\GroupType;
 use App\Entity\UserGroup;
@@ -188,6 +190,74 @@ class GroupController extends AbstractFOSRestController
     }
 
     /**
+     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
+     * @Entity("group", expr="repository.findOneBySlug(slug)")
+     */
+    public function updateUserRoleAction(Request $request, Group $group, int $id, UserRepository $userRepository)
+    {
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
+        $user = $userRepository->find($id);
+
+        try {
+            $group->setUserRole($userRepository->find($id), $request->request->get('role'));
+        } catch (Exception $e) {
+            throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
+        }
+
+        //     foreach ($users as $user) {
+        //         $group->addUser($user);
+        //     }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        //     $this->addFlash('success', sizeof($users) . ' users has been added to the group ' . $group->getName() . '.');
+        // }
+
+        $view = $this->view(null, 200)
+            // ->setTemplate('group/dashboard_members.html.twig')
+            // ->setTemplateData([
+            //     'group' => $group,
+            // ])
+        ;
+
+        return $this->handleView($view);
+    }
+
+    /**
+     * @Route("/admin/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
+        $user = $userRepository->find($userId);
+
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
+        //$entry = $group->getUserGroupEntry($user);
+        $group->removeUser($user);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        //$entityManager->remove($entry);
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        $view = $this->view();
+
+        // if request match browser route
+        if ($request->attributes->get('_route') === "remove_user_group") {
+            $view->setLocation($this->generateUrl('dashboard_group_members', [
+                'slug' => $slug
+            ]));
+            $this->addFlash('success', $user->getName() . ' has been removed from ' . $group->getName() . '.');
+        }
+
+        return $this->handleView($view);
+    }
+
+    /**
      * @Route("/admin/groups/{slug}/edit", name="edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
@@ -294,6 +364,7 @@ class GroupController extends AbstractFOSRestController
         $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
 
         $users = $request->request->get('users');
+        $role = $request->request->get('role', 'user');
         // trim empty values
         $users = array_filter(array_map('trim', $users), 'strlen');
 
@@ -308,7 +379,7 @@ class GroupController extends AbstractFOSRestController
             $users = $userRepository->findBy(['id' => $users]);
 
             foreach ($users as $user) {
-                $group->addUser($user);
+                $group->addUser($user, $role);
             }
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -319,49 +390,16 @@ class GroupController extends AbstractFOSRestController
         }
 
         $view = $this->view()
-            ->setLocation($this->generateUrl('admin_show_group', ["slug" => $group->getPath()]));
+            ->setLocation($this->generateUrl('dashboard_group_members', ["slug" => $group->getPath()]));
         ;
 
         return $this->handleView($view);
     }
 
-    /**
-     * @Rest\Put("/groups/{slug}/user/{id}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
-     * @Entity("group", expr="repository.findOneBySlug(slug)")
-     */
-    public function updateUserRoleAction(Request $request, Group $group, int $id, UserRepository $userRepository)
-    {
-        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
-
-        $user = $userRepository->find($id);
-
-        // try {
-        //     $group->setUserRole($user, )
-        // }
-
-        //     foreach ($users as $user) {
-        //         $group->addUser($user);
-        //     }
-
-        //     $entityManager = $this->getDoctrine()->getManager();
-        //     $entityManager->persist($group);
-        //     $entityManager->flush();
-
-        //     $this->addFlash('success', sizeof($users) . ' users has been added to the group ' . $group->getName() . '.');
-        // }
-
-        $view = $this->view($request, 200)
-            ->setTemplate('group/dashboard_members.html.twig')
-            ->setTemplateData([
-                'group' => $group,
-            ])
-        ;
-
-        return $this->handleView($view);
-    }
+    
 
     /**
-     * @Route("/groups/{slug}/members", name="dashboard_group_members")
+     * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
      */
     public function dashboardMembersAction(string $slug)
     {

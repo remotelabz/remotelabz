@@ -9,6 +9,11 @@
         fill: currentColor;
     }
 
+    .card-footer {
+        background-color: theme-color("dark-lighter");
+        fill: currentColor;
+    }
+
     //         border-color: lighten(theme-color("dark-lighter"), 7.5%);
     //         color: darken(theme-color("light"), 5%);
 

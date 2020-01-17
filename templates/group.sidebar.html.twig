@@ -21,8 +21,8 @@
         {% endblock %}
 
         <ul class="nav">
-            {{ sidebar.link("Overview", 'dashboard_show_group', {slug: group.slug}, 'home', 'dashboard_show_group', _context) }}
-            {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.slug}, 'group', 'dashboard_group_members', _context) }}
+            {{ sidebar.link("Overview", 'dashboard_show_group', {slug: group.path}, 'home', 'dashboard_show_group', _context) }}
+            {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.path}, 'group', 'dashboard_group_members', _context) }}
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">

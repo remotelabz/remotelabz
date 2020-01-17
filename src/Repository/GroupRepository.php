@@ -24,16 +24,26 @@ class GroupRepository extends ServiceEntityRepository
     {
         $splitedSlug = explode('/', $slug);
 
-        $qb = $this->createQueryBuilder('g')
-            ->andWhere('g.slug = :slug')
+        $qb = $this->createQueryBuilder(chr(65))
+            ->andWhere(chr(65) . '.slug = :slug')
             ->setParameter('slug', $splitedSlug[sizeof($splitedSlug) - 1])
         ;
 
         if (sizeof($splitedSlug) > 1) {
-            $qb->leftJoin('g.parent', 'p')
-                ->andWhere('p.slug = :parentSlug')
-                ->setParameter('parentSlug', $splitedSlug[sizeof($splitedSlug) - 2])
-            ;
+            for ($i=0; $i < sizeof($splitedSlug) - 1; $i++) {
+                $qb->andWhere(chr(65 + $i) . '.parent is not null')
+                    ->leftJoin(chr(65 + $i) . '.parent', chr(65 + $i + 1))
+                    ->andWhere(chr(65 + $i) . '.slug = :' . chr(65 + $i) . 'Slug')
+                    ->setParameter(chr(65 + $i) . 'Slug', $splitedSlug[sizeof($splitedSlug) - 1 - $i])
+                ;
+            }
+            // $qb->andWhere('g.parent is not null')
+            //     ->leftJoin('g.parent', 'p')
+            //     ->andWhere('p.slug = :parentSlug')
+            //     ->setParameter('parentSlug', $splitedSlug[sizeof($splitedSlug) - 2])
+            // ;
+        } else {
+            $qb->andWhere(chr(65) . '.parent is null');
         }
 
         return $qb->getQuery()
