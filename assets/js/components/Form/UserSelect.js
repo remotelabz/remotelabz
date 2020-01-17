@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
 import { components } from 'react-select';
 import AsyncSelect from 'react-select/async';
+import API from '../../api';
 
-const axios = require('axios').default;
+const api = API.getInstance();
 
 const ValueContainer = ({ children, ...props }) => (
   <components.ValueContainer {...props}>{children}</components.ValueContainer>
 );
 
 const Option = props => {
-    console.log(props);
+    // console.log(props);
     return (
         <components.Option {...props}>
             <div className="d-flex">
@@ -31,7 +32,7 @@ export default class UserSelect extends Component {
     }
 
     loadOptions = (inputValue) => {
-        return axios.get('/api/users', {
+        return api.get('/api/users', {
             params: {
                 search: inputValue
             }

@@ -32,6 +32,7 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class UserController extends AbstractFOSRestController
@@ -239,88 +240,66 @@ class UserController extends AbstractFOSRestController
     }
 
     /**
-     * @Route("/users", name="get_users", methods="GET")
-     */
-    public function cgetAction()
-    {
-        return $this->renderJson($this->userRepository->findAll());
-    }
-
-    /**
-     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods={"GET", "PATCH"})
+     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="GET")
+     * 
+     * @Rest\Patch("/api/users/{id<\d+>}", name="api_toggle_user")
      */
     public function toggleAction(Request $request, $id)
     {
-        $status = 200;
-        $data = [];
-
         $user = $this->userRepository->find($id);
+        $view = $this->view();
 
-        if ($user == null) {
+        if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
         } elseif ($user == $this->getUser()) {
-            $status = 403;
-            $data['message'] = 'You cannot lock your own account.';
+            throw new UnauthorizedHttpException('You cannot lock your own account.');
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            // Prevent super admin deletion
-            $status = 403;
-            $data['message'] = 'You cannot lock root account.';
+            throw new UnauthorizedHttpException('You cannot lock root account.');
         } else {
             $user->setEnabled(!$user->isEnabled());
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);
             $em->flush();
-
-            $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        if ($request->getRequestFormat() === 'json') {
-            return $this->renderJson($data, $status);
-        } else {
-            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
-
-            return $this->redirectToRoute('users');
+        if ($request->attributes->get('_route') === "toggle_user") {
+            $this->addFlash('success', $user->getName() . "'s account has been locked.");
+            $view->setLocation($this->generateUrl('users'));
         }
+
+        return $this->handleView($view);
     }
 
     /**
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
+     * @Rest\Delete("/api/users/{id<\d+>}, name="api_delete_user")
      */
     public function deleteAction(Request $request, $id)
     {
-        $status = 200;
-        $data = [];
-        
         $user = $this->userRepository->find($id);
+        $view = $this->view();
 
-        if ($user == null) {
-            $status = 404;
+        if (!$user) {
+            throw new NotFoundHttpException('This user does not exist.');
         } elseif ($user == $this->getUser()) {
-            $status = 403;
-            $data['message'] = 'You cannot delete your own account.';
+            throw new UnauthorizedHttpException('You cannot delete your own account.');
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            // Prevent super admin deletion
-            $status = 403;
-            $data['message'] = 'You cannot delete root account.';
+            throw new UnauthorizedHttpException('You cannot delete root account.');
         } elseif ($user->getInstances()->count() > 0) {
-            $status = 403;
-            $data['message'] = 'You cannot delete an user who still has instances. Please stop them and try again.';
+            throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
         } else {
             $em = $this->getDoctrine()->getManager();
             $em->remove($user);
             $em->flush();
-
-            $data['message'] = 'User has been deleted.';
         }
 
-        if ($request->getRequestFormat() === 'json') {
-            return $this->renderJson($data, $status);
-        } else {
-            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
-
-            return $this->redirectToRoute('users');
+        if ($request->attributes->get('_route') === "toggle_user") {
+            $this->addFlash('success', $user->getName() . "'s account has been deleted.");
+            $view->setLocation($this->generateUrl('users'));
         }
+
+        return $this->handleView($view);
     }
 
     /**
