@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import Noty from 'noty';
-import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
 
 Noty.overrideDefaults({
     timeout: 5000
@@ -22,7 +21,7 @@ export default class API {
     }
 
     toggle(url) {
-        const api = API.getInstance();
+        // const api = API.getInstance();
 
         $.ajax({
             url,
