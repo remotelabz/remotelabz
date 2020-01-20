@@ -17,8 +17,13 @@
       {% endif %}
     {% endblock %}
 
+    
     <div class="content-wrapper">
+      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
       <div class="container-fluid container-limited-xl">
+      {% else %}
+      <div class="container-fluid container-limited">
+      {% endif %}
         <div class="container-header-wrapper d-flex">
           <div class="show-sidebar">{{ svg('hamburger', 'image-sm') }}</div>
           {% block breadcrumbs %}
@@ -26,7 +31,7 @@
               {% if '/admin' in app.request.uri %}
                 {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('users') }) %}
               {% else %}
-                {% set breadcrumbs = breadcrumbs | merge({ 'Dashboard': path('index') }) %}
+                {% set breadcrumbs = breadcrumbs | merge({}) %}
               {% endif %}
               {% for breadcrumb, link in breadcrumbs|reverse(true) %}
                 <div class="breadcrumb-item">
@@ -42,7 +47,11 @@
           {% endblock %}
         </div>
       </div>
+      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
       <div class="container-fluid container-limited-xl">
+      {% else %}
+      <div class="container-fluid container-limited">
+      {% endif %}
         <div class="flashbag-container">
           {%- for label, messages in app.flashes -%}
             {%- for message in messages -%}
@@ -54,9 +63,12 @@
               </div>
             {%- endfor -%}
           {%- endfor -%}
-          </div>
-          {% block wrapper %}{% endblock %}
         </div>
+        {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
+          {{ block('wrapper_xl') }}
+        {% else %}
+          {{ block('wrapper') }}
+        {% endif %}
       </div>
     </div>
   </div>

@@ -46,6 +46,10 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        profile_picture:
+            pattern: ^/users/\d+/picture
+            security: false
+
         default:
             anonymous: true
             guard:

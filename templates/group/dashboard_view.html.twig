@@ -16,6 +16,7 @@
 {% endmacro %}
 
 {% block sidebar %}
+    {% set category = 'dashboard_show_group' %} 
     {% include "group.sidebar.html.twig" %}
 {% endblock %}
 
@@ -23,50 +24,90 @@
     {% macro groupParent(group) %}
        {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('dashboard_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
     {% endmacro %}
-    <div class="content-title">
-        <div class="content-title-infos">
-            <h3>{{ _self.groupParent(group) }} {{ group.name }}</h3>
-        </div>
-        {% if is_granted('edit', group) %}
-            <div class="content-title-actions">
-                <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
-            </div>
-        {% endif %}
-    </div>
     <div class="content-body">
-        <div class="card mb-4">
-            <div class="card-header">
-                Group info
-            </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                    <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
-                        {% if group.pictureFilename is defined and group.pictureFilename %}
-                            image
-                        {% else %}
-                            {{- group.name|firstLetter|upper -}}
-                        {% endif %}
+        <div class="row mb-4">
+            <div class="col d-flex align-items-center">
+                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                    {% if group.pictureFilename is defined and group.pictureFilename %}
+                        image
+                    {% else %}
+                        {{- group.name|firstLetter|upper -}}
+                    {% endif %}
+                </div>
+                <div class="ml-2">
+                    <div class="d-flex">
+                        <h5 class="font-weight-bold mb-1 mr-2">{{ group.name }}</h5>
+                        <span class="text-muted">
+                            {% if group.visibility is defined %}
+                                {% if group.visibility == '0' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                        {{ svg('lock') }}
+                                    </div>
+                                {% elseif group.visibility == '1' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                        {{ svg('shield') }}
+                                    </div>
+                                {% elseif group.visibility == '2' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
+                                        {{ svg('earth') }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </span>
                     </div>
-                </li>
-                <li class="list-group-item">
-                    Name: <strong>{{ group.name }}</strong>
-                </li>
-                <li class="list-group-item">
-                    Path: <strong>{{ group.slug }}</strong>
-                </li>
-                <li class="list-group-item">
-                    Description: <strong>{{ group.description }}</strong>
-                </li>
-                <li class="list-group-item">
-                    Visibility level: <strong>{{ group.visibility }}</strong>
-                </li>
-                <li class="list-group-item">
-                    Created on: <strong>{{ group.createdAt|date }}</strong>
-                </li>
-                <li class="list-group-item">
-                    ID: <strong>{{ group.id }}</strong>
+                    
+                    <div class="text-muted">Group ID: {{group.id}}</div>
+                </div>
+            </div>
+            <div class="col d-flex justify-content-end align-items-center">
+                <div>
+                    <a href="#" class="btn btn-success">New subgroup</a>
+                </div>
+            </div>
+        </div>
+        <div class="top-panel">
+            <ul class="nav-links nav nav-tabs">
+                <li class="active">
+                    <a href="#subs" id="subs">
+                        <span>Subgroups and activities</span>
+                    </a>
                 </li>
             </ul>
         </div>
+        <div class="labs-panel">
+            {% if group.children|length == 0 %}
+                <div class="w-100 d-flex justify-content-center py-4">
+                    None
+                </div>
+            {% else %}
+                {% for child in group.children %}
+                    <div class="lab-item {% if not loop.last %}border-bottom{% endif %} py-4">
+                        <div class="d-flex align-items-center pl-2">
+                            <div class="text-muted mr-3">
+                                {{ svg('folder-o') }}
+                            </div>
+                            
+                            <div class="avatar identicon bg-{{ child.id % 8 + 1 }} s40 rounded-lg mr-3">
+                                {% if child.pictureFilename is defined and child.pictureFilename %}
+                                    image
+                                {% else %}
+                                    {{- child.name|firstLetter|upper -}}
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex flex-column">
+                                <div class="fw600">
+                                    <span class="fw600">{{ child.name }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            
+        </div>
+        
     </div>
 {% endblock %}

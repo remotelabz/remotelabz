@@ -483,11 +483,11 @@ class GroupController extends AbstractFOSRestController
     public function showDashboardAction(string $slug)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
- 
+
         if (!$group) {
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
- 
+
         // $context = new Context();
         // $context->setGroups([
         //     "primary_key",
@@ -497,7 +497,7 @@ class GroupController extends AbstractFOSRestController
         //     ],
         //     "editor"
         // ]);
- 
+
         $view = $this->view($group, 200)
             ->setTemplate("group/dashboard_view.html.twig")
             ->setTemplateData([
@@ -505,7 +505,7 @@ class GroupController extends AbstractFOSRestController
             ])
             // ->setContext($context)
         ;
- 
+
         return $this->handleView($view);
     }
 }

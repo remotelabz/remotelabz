@@ -1,7 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block header %}
-    {% set category = 'dashboard_show_group' %}
+    {% set category = 'dashboard_group_members' %}
     {{ parent() }}
 {% endblock %}
 
@@ -16,6 +16,7 @@
 {% endmacro %}
 
 {% block sidebar %}
+    {% set category = 'dashboard_group_members' %}
     {% include "group.sidebar.html.twig" %}
 {% endblock %}
 
@@ -59,8 +60,6 @@
                 {% endif %}
                 <div class="top-panel">
                     <ul class="nav-links nav nav-tabs">
-                        {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
-                        <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
                         <li class="active">
                             <a href="#currentMembers" id="currentMembers">
                                 <span>Current</span> <span class="badge badge-pill">{{ group.users|length }}</span>
@@ -68,13 +67,13 @@
                         </li>
                     </ul>
                 </div>
-                <!-- <div class="search-panel">
+                {# <div class="search-panel">
                     <form action="{{ path('labs') }}" method="GET">
                         <input type="search" class="form-control input-sm" name="search"
                         placeholder="Search by name"
                         spellcheck="false" value="{{ search|default('') }}" type="search">
                     </form>
-                </div> -->
+                </div> #}
                 <div class="labs-panel">
                     {% for user in group.users %}
                         <div class="lab-item {% if not loop.last %}border-bottom{% endif %}">
@@ -109,31 +108,6 @@
                         </div>
                     {% endfor %}
                 </div>
-                <!-- <div class="card">
-                    <div class="card-header">
-                        Group members <span class="badge badge-pill">{{ group.users|length }}</span>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        {% for user in group.users %}
-                            <li class="list-group-item">
-                                <div class="d-flex">
-                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
-
-                                    <div class="d-flex flex-column">
-                                        <div class="fw600">
-                                            <span class="fw600">{{ user.name }}</span>
-                                            {% if user.id == app.user.id %}
-                                                <label class="badge badge-success ml-2 mb-0">It's you!</label>
-                                            {% endif %}
-                                        </div>
-                                        <div class="text-muted">{{ user.email }}</div>
-                                        {{ group.getUserRole(user) }}
-                                    </div>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div> -->
             </div>
         </div>
     </div>
