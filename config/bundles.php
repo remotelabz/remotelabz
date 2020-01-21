@@ -22,6 +22,5 @@ return [
     Knp\Bundle\MarkdownBundle\KnpMarkdownBundle::class => ['all' => true],
     Nelmio\ApiDocBundle\NelmioApiDocBundle::class => ['all' => true],
     Gesdinet\JWTRefreshTokenBundle\GesdinetJWTRefreshTokenBundle::class => ['all' => true],
-    OldSound\RabbitMqBundle\OldSoundRabbitMqBundle::class => ['all' => true],
     Limenius\ReactBundle\LimeniusReactBundle::class => ['all' => true],
 ];
