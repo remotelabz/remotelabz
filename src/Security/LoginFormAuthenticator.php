@@ -16,6 +16,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\DisabledException;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -118,9 +119,24 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
         return $response;
     }
 
-    protected function getLoginUrl()
+    /**
+     * @inheritDoc
+     */
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        return $this->router->generate('login');
+        if ($request->hasSession()) {
+            $request->getSession()->set(Security::AUTHENTICATION_ERROR, $exception);
+        }
+
+        $parameters = $request->query->has('ref_url') ? ['ref_url' => $request->query->get('ref_url')] : [];
+        $url = $this->getLoginUrl($parameters);
+
+        return new RedirectResponse($url);
+    }
+
+    protected function getLoginUrl($parameters = [])
+    {
+        return $this->router->generate('login', $parameters);
     }
 
     /**
