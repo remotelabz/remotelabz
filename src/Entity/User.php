@@ -23,7 +23,7 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "group_tree", "group_explore"})
      * @var int
      */
     private $id;
@@ -31,7 +31,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore"})
      * @var string
      */
     private $email;
@@ -131,7 +131,7 @@ class User implements UserInterface, InstancierInterface
     private $lastActivity; 
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="user", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
      */
     private $_groups;
 
@@ -273,7 +273,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore"})
      */
     public function getName(): ?string
     {

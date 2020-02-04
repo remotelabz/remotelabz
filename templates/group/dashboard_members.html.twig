@@ -1,7 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block header %}
-    {% set category = 'dashboard_group_members' %}
+    {% set category = 'dashboard_groups' %}
     {{ parent() }}
 {% endblock %}
 
@@ -95,10 +95,7 @@
                                 <div class="flex-grow-1"></div>
                                 {% if not (group.isOwner(user) or user is same as(app.user)) %}
                                     <div style="min-width: 150px">
-                                        {% set props = [{'role': group.getUserRole(user), 'user': user.id, 'group': group.path}] %}
-                                        
-                                            {{- react_component('GroupRoleSelect', {'props': props|json_encode()}) -}}
-                                        
+                                        {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
                                     </div>
                                     <div class="ml-2">
                                         <a href="{{ path('remove_user_group', {slug: group.path, userId: user.id}) }}" class="btn btn-danger">{{ svg('remove') }}</a>

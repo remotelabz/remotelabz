@@ -29,15 +29,23 @@ class AppExtension extends AbstractExtension
         ];
     }
 
-    public function stdClassObject($object)
+    public function stdClassObject($data)
     {
-        $properties = [];
+        if ((! is_array($data)) and (! is_object($data)))
+            return 'xxx'; // $data;
 
-        foreach ((array) $object as $key => $value) {
-            $properties[$key] = $value;
+        $result = array();
+
+        $data = (array) $data;
+        foreach ($data as $key => $value) {
+            if (is_object($value))
+                $value = (array) $value;
+            if (is_array($value))
+                $result[$key] = $this->stdClassObject($value);
+            else
+                $result[$key] = $value;
         }
-
-        return $properties;
+        return $result;
     }
 
     public function firstLetterFilter(string $str)

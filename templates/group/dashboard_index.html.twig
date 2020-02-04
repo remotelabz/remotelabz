@@ -29,11 +29,11 @@
             {% embed "@layouts/topbar_tabbed.html.twig" %}
                 {% import "components.html.twig" as components %}
                 {% block quick_actions %}
-                    <form action="{{ path('dashboard_groups') }}" method="GET">
+                    {# <form action="{{ path('dashboard_groups') }}" method="GET">
                         <input type="search" class="form-control input-sm" name="search"
                         placeholder="Search by name"
                         spellcheck="false" value="{{ search|default('') }}" type="search" />
-                    </form>
+                    </form> #}
                 {% endblock %}
                 {% block items %}
                     {{ components.topbar_tab('Your groups', 'dashboard_groups') }}
@@ -41,7 +41,8 @@
                 {% endblock %}
             {% endembed %}
         </div>
-        <ul>
+        {{- react_component('GroupExplorer', {'props': {"endpoint": path('api_groups'), "user": app.user.email}, 'trace': true}) -}}
+        {# <ul>
             {% for group in groups %}
                 <li>
                     <div class="item-left d-flex flex-column">
@@ -81,10 +82,10 @@
                             {% endif %}
                         </span>
                         {# <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
-                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a> #}
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
                     </div>
                 </li>
             {% endfor %}
-        </ul>
+        </ul> #}
     </div>
 {% endblock %}

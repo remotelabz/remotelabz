@@ -7,13 +7,13 @@
             <div class="context-header">
                 <a href="{{ path('dashboard_show_group', {slug: group.path}) }}" title="{{ group.name }}">
                     <div class="s40 mr-2 d-flex">
-                        <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded-lg">
-                            {% if group.pictureFilename is defined and group.pictureFilename %}
-                                image
-                            {% else %}
+                        {% if group.pictureFilename is defined and group.pictureFilename %}
+                            <img src="{{ path('get_group_picture', {slug: group.path, size: 40}) }}" alt="profile-img" class="rounded-lg mr-1" />
+                        {% else %}
+                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded-lg">
                                 {{- group.name|firstLetter|upper -}}
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="sidebar-context-title ml-2">{{ group.name }}</div>
                 </a>
@@ -22,7 +22,7 @@
 
         <ul class="nav">
             {{ sidebar.link("Overview", 'dashboard_show_group', {slug: group.path}, 'home', 'dashboard_show_group', _context) }}
-            {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.path}, 'group', 'dashboard_group_members', _context) }}
+            {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.path}, 'users', 'dashboard_group_members', _context) }}
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">

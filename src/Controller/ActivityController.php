@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Activity;
 use App\Form\ActivityType;
 use App\Service\FileUploader;
+use App\Repository\GroupRepository;
 use App\Repository\ActivityRepository;
 use App\Repository\LabInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
@@ -71,7 +72,7 @@ class ActivityController extends AppController
     /**
      * @Route("/activities/new", name="new_activity")
      */
-    public function newAction(Request $request, FileUploader $fileUploader)
+    public function newAction(Request $request, FileUploader $fileUploader, GroupRepository $groupRepository)
     {
         $activity = new Activity();
         $activityForm = $this->createForm(ActivityType::class, $activity);
@@ -80,6 +81,7 @@ class ActivityController extends AppController
         if ($activityForm->isSubmitted() && $activityForm->isValid()) {
             $activity = $activityForm->getData();
             $activity->setAuthor($this->getUser());
+            $activity->setGroup($groupRepository->find($request->request->get('activity[_group]')));
             
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($activity);

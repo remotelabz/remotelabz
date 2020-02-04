@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use DateTime;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -101,9 +102,14 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
         $response = new RedirectResponse('/');
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
-        $response->headers->setCookie(Cookie::create('bearer', $this->JWTManager->create($user)));
-        $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
-        $user->setLastActivity(new \DateTime());
+
+        $jwtToken = $this->JWTManager->create($user);
+        $now = new DateTime();
+        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
+
+        $response->headers->setCookie($jwtTokenCookie);
+        // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
+        $user->setLastActivity(new DateTime());
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 

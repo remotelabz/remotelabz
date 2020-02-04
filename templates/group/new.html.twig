@@ -39,7 +39,8 @@
                     {{ form_label(form.slug) }}
 
                     <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/{{_self.groupParent(group)}}</span></div>
+                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/{% if parent is defined %}{{ parent.path }}/{% endif %}
+                        </span></div>
                         {{ form_widget(form.slug) }}
                     </div>
                 </div>
@@ -60,7 +61,7 @@
                                 required="required"
                                 class="form-check-input"
                                 value="{{ form.visibility.children[1].vars.value }}"
-                                {%- if app.request.uri ends with 'new' -%}
+                                {%- if app.request.attributes.get('_route') == 'new_group' -%}
                                  checked  
                                 {%- elseif group.visibility is not null and group.visibility == '0' -%}
                                  checked
@@ -107,8 +108,11 @@
                         </div>
                     </div>
                 </div>
-                {{ form_row(form.parent) }}
-                {{ form_row(form.submit) }}
+                <div class="form-actions">
+                    {{ form_widget(form.submit) }}
+                    {{ form_widget(form.reset) }}
+                </div>
+                
                 {{ form_end(form, {render_rest: false}) }}
             </div>
         </div>

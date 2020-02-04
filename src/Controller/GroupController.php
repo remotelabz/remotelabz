@@ -3,19 +3,24 @@
 namespace App\Controller;
 
 use Exception;
+use App\Utils\Uuid;
 use App\Entity\User;
 use App\Entity\Group;
 use App\Form\GroupType;
-use App\Entity\UserGroup;
+use App\Entity\GroupUser;
 use Swagger\Annotations as SWG;
 use App\Security\ACL\GroupVoter;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use FOS\RestBundle\Context\Context;
+use App\Service\GroupPictureFileUploader;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\KernelInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
@@ -78,6 +83,7 @@ class GroupController extends AbstractFOSRestController
     /**
      * @Route("/groups", name="dashboard_groups")
      * @Route("/explore/groups", name="dashboard_explore_groups")
+     * @Rest\Get("/api/groups", name="api_groups")
      */
     public function dashboardIndexAction(Request $request)
     {
@@ -88,6 +94,10 @@ class GroupController extends AbstractFOSRestController
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
         ;
+
+        if ($request->query->has('root_only')) {
+            $criteria->andWhere(Criteria::expr()->isNull('parent'));
+        }
 
         $criteria
             ->orderBy([
@@ -112,6 +122,10 @@ class GroupController extends AbstractFOSRestController
             });
         }
 
+        $requestedContext = $request->query->get('context');
+        $context = new Context();
+        $context->setGroups($requestedContext ? (is_array($requestedContext) ?: [$requestedContext]) : ['groups']);
+
         $view = $this->view($groups->getValues())
             ->setTemplate("group/dashboard_index.html.twig")
             ->setTemplateData([
@@ -120,7 +134,7 @@ class GroupController extends AbstractFOSRestController
                 'limit' => $limit,
                 'page' => $page,
             ])
-            // ->setContext($context)
+            ->setContext($context)
         ;
 
         return $this->handleView($view);
@@ -155,19 +169,28 @@ class GroupController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group);
-        } 
+        }
+
+        $data = [
+            "form" => $groupForm->createView(),
+            "group" => $group
+        ];
+
+        if ($request->query->has('parent_id')) {
+            $data["parent"] = $this->groupRepository->find($request->query->get('parent_id'));
+        }
 
         $view = $this->view($groupForm)
             ->setTemplate("group/new.html.twig")
-            ->setTemplateData([
-                "form" => $groupForm->createView(),
-                "group" => $group
-            ])
+            ->setTemplateData($data)
         ;
 
         if ($groupForm->isSubmitted() && $groupForm->isValid()) {
             /** @var Group $group */
             $group = $groupForm->getData();
+            if ($request->query->has('parent_id')) {
+                $group->setParent($this->groupRepository->find($request->query->get('parent_id')));
+            }
             $group->addUser($this->getUser(), Group::ROLE_OWNER);
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -236,7 +259,7 @@ class GroupController extends AbstractFOSRestController
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
 
-        //$entry = $group->getUserGroupEntry($user);
+        //$entry = $group->getGroupUserEntry($user);
         $group->removeUser($user);
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -418,6 +441,55 @@ class GroupController extends AbstractFOSRestController
         ;
  
         return $this->handleView($view);
+    }
+
+    /**
+     * @Route("/groups/{slug}/picture", name="get_group_picture", requirements={"slug"="[\w\-\/]+"}, methods="GET")
+     */
+    public function getGroupPictureAction(Request $request, string $slug, KernelInterface $kernel)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
+        $size = $request->query->get('size', 128);
+        $picture = $group->getPicture();
+
+        if ($picture && is_file($picture)) {
+            $image = file_get_contents($picture);
+            $image = imagecreatefrompng($picture);
+            $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
+            $image = imagepng($image, $imageTmp, 9);
+
+            $response = new Response(file_get_contents($imageTmp), 200);
+            $response->headers->set('Content-Type', 'image/png');
+            $response->headers->set('Content-Disposition', 'inline; filename="'.$group->getPictureFilename().'"');
+
+            return $response;
+        } else {
+            return new Response(null);
+        }
+    }
+
+    /**
+     * @Route("/groups/{slug}/picture", name="upload_group_picture", requirements={"slug"="[\w\-\/]+"}, methods="POST")
+     */
+    public function uploadGroupPictureAction(Request $request, GroupPictureFileUploader $fileUploader, string $slug)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
+        $fileUploader->setGroup($group);
+
+        $pictureFile = $request->files->get('picture');
+        if ($pictureFile) {
+            $pictureFileName = $fileUploader->upload($pictureFile, $group);
+            $group->setPictureFilename($pictureFileName);
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('dashboard_show_group', [
+            'slug' => $slug
+        ]);
     }
 
     /**

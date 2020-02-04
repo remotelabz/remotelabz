@@ -42,6 +42,8 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
                 'admin'
             ))
         ;
+
+        $this->addReference('root', $user);
         
         $manager->persist($user);
 

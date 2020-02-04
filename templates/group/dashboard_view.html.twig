@@ -1,7 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block header %}
-    {% set category = 'dashboard_show_group' %}
+    {% set category = 'dashboard_groups' %}
     {{ parent() }}
 {% endblock %}
 
@@ -27,13 +27,15 @@
     <div class="content-body">
         <div class="row mb-4">
             <div class="col d-flex align-items-center">
-                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                <!-- <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2"> -->
                     {% if group.pictureFilename is defined and group.pictureFilename %}
-                        image
+                        <img src="{{ path('get_group_picture', {slug: group.path, size: 60}) }}" alt="profile-img" class="rounded-lg mr-1" />
                     {% else %}
-                        {{- group.name|firstLetter|upper -}}
+                        <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                            {{- group.name|firstLetter|upper -}}
+                        </div>
                     {% endif %}
-                </div>
+                <!-- </div> -->
                 <div class="ml-2">
                     <div class="d-flex">
                         <h5 class="font-weight-bold mb-1 mr-2">{{ group.name }}</h5>
@@ -61,7 +63,7 @@
             </div>
             <div class="col d-flex justify-content-end align-items-center">
                 <div>
-                    <a href="#" class="btn btn-success">New subgroup</a>
+                    <a href="{{ path('new_group', {parent_id: group.id}) }}" class="btn btn-success">New subgroup</a>
                 </div>
             </div>
         </div>
@@ -75,12 +77,12 @@
             </ul>
         </div>
         <div class="labs-panel">
-            {% if group.children|length == 0 %}
+            {% if group.children|length == 0 and group.activities|length == 0 %}
                 <div class="w-100 d-flex justify-content-center py-4">
                     None
                 </div>
             {% else %}
-                {% for child in group.children %}
+                {#{% for child in group.children %}
                     <div class="lab-item {% if not loop.last %}border-bottom{% endif %} py-4">
                         <div class="d-flex align-items-center pl-2">
                             <div class="text-muted mr-3">
@@ -104,9 +106,32 @@
                         </div>
                     </div>
                 {% endfor %}
+                {% for child in group.activities %}
+                    <div class="lab-item {% if not loop.last %}border-bottom{% endif %} py-4">
+                        <div class="d-flex align-items-center pl-2">
+                            <div class="text-muted mr-3">
+                                {{ svg('bookmark') }}
+                            </div>
+                            
+                            <div class="avatar identicon bg-{{ child.id % 8 + 1 }} s40 rounded-lg mr-3">
+                                {% if child.pictureFilename is defined and child.pictureFilename %}
+                                    image
+                                {% else %}
+                                    {{- child.name|firstLetter|upper -}}
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex flex-column">
+                                <div class="fw600">
+                                    <span class="fw600">{{ child.name }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1"></div>
+                        </div>
+                    </div>
+                {% endfor %}#}
+                {{- react_component('GroupExplorer', {'props': {"path": group.path, "user": app.user.email, 'trace': true}}) -}}
             {% endif %}
-            
-            
         </div>
         
     </div>

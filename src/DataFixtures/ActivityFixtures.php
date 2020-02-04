@@ -136,6 +136,7 @@ EOD;
             ->setInternetAllowed(false)
             ->setInterconnected(false)
             ->setAuthor($this->getReference('user1'))
+            ->setGroup($this->getReference('default-group'))
         ;
 
         $manager->persist($activity);
@@ -147,6 +148,7 @@ EOD;
         return [
             LabFixtures::class,
             UserFixtures::class,
+            GroupFixtures::class
         ];
     }
 }

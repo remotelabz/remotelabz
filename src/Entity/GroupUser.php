@@ -5,18 +5,20 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\UserGroupRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\GroupUserRepository")
  * @ORM\Table(name="user_group")
  */
-class UserGroup
+class GroupUser
 {
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"group_tree"})
      */
     private $id;
 
@@ -29,6 +31,7 @@ class UserGroup
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="_groups")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @Serializer\Groups({"group_tree", "group_explore"})
      */
     private $user;
 
@@ -40,6 +43,7 @@ class UserGroup
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"group_tree"})
      */
     private $role;
 

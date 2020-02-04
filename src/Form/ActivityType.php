@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Lab;
+use App\Entity\Group;
 use App\Entity\Activity;
 use App\Entity\ActivityAuthorization;
 use Symfony\Component\Form\AbstractType;
@@ -42,15 +43,6 @@ class ActivityType extends AbstractType
                 'help' => 'If all laboratory of the same activity of the same course is together interconnected.',
                 'required' => false
             ])
-            ->add('scope', ChoiceType::class, [
-                'choices' => [
-                    'Single user' => Activity::SCOPE_SINGLE_USER,
-                    'Group' => Activity::SCOPE_GROUP,
-                    'Course' => Activity::SCOPE_COURSE
-                ],
-                'expanded' => true,
-                'help' => "Choose how this activity must be achieved. An activity may be done either by a single user, a group of users or the whole course."
-            ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)
         ;
@@ -60,6 +52,7 @@ class ActivityType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Activity::class,
+            'allow_extra_fields' => true
         ]);
     }
 }

@@ -2,8 +2,10 @@ import React, { Component } from 'react';
 import PictureEditor from './PictureEditor';
 import { Modal, Button } from 'react-bootstrap';
 import Noty from 'noty';
+import GroupPicture from './GroupPicture';
+import Routing from 'fos-jsrouting';
 
-export default class ProfilePictureUploader extends Component {
+export default class GroupPictureUploader extends Component {
     constructor(props) {
         super(props);
 
@@ -31,7 +33,7 @@ export default class ProfilePictureUploader extends Component {
             guid: new Date(),
         });
         this.upload.files = null;
-        
+
         new Noty({
             type: 'success',
             text: 'Profile picture has been updated.',
@@ -44,10 +46,9 @@ export default class ProfilePictureUploader extends Component {
     }
 
     render() {
-
         return (
             <div>
-                <img src={"/profile/picture?size=160&hash=" + Date.now()} className="img-xl rounded-circle mr-4 float-left"></img>
+                <GroupPicture group={this.props.group} size={64} circled></GroupPicture>
                 <h5>Upload new avatar</h5>
                 <p className="text-muted">The maximum file size allowed is 200KB.</p>
                 <div className="file-upload">
@@ -65,7 +66,7 @@ export default class ProfilePictureUploader extends Component {
                         <Modal.Title>Upload a profile picture</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <PictureEditor setUpload={click => this.onModalValid = click} file={this.file} uploadCallback={this.uploadCallback} endpoint="/profile/picture" />
+                        <PictureEditor setUpload={click => this.onModalValid = click} file={this.file} uploadCallback={this.uploadCallback} endpoint={Routing.generate('upload_group_picture', {slug: this.props.group.path})} />
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="info" onClick={() => this.onModalValid()}>Set new profile picture</Button>

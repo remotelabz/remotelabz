@@ -7,6 +7,7 @@ use Exception;
 use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -26,63 +27,81 @@ class Group implements InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
      */
     private $name;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\UserGroup", mappedBy="group", cascade={"persist", "remove"}, orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="group", cascade={"persist", "remove"}, orphanRemoval=true)
+     * @Serializer\Groups({"group_users", "group_tree", "group_explore"})
      */
     private $users;
 
     /**
      * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $updatedAt;
 
     /**
      * @ORM\Column(type="smallint")
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $visibility;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $pictureFilename;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $slug;
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $description;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="children")
+     * @Serializer\Groups({"group_parent", "group_explore"})
      */
     private $parent;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Group", mappedBy="parent")
+     * @Serializer\Groups({"group_children", "group_tree", "group_explore"})
      */
     private $children;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $uuid;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="_group")
+     * @Serializer\Groups({"group_activities", "group_tree", "group_explore"})
+     */
+    private $activities;
 
     public const VISIBILITY_PRIVATE  = 0;
     public const VISIBILITY_INTERNAL = 1;
@@ -98,6 +117,7 @@ class Group implements InstancierInterface
         $this->updatedAt = new \DateTime();
         $this->children = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->activities = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -142,6 +162,8 @@ class Group implements InstancierInterface
     }
 
     /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
      * @return User
      */
     public function getOwner(): User
@@ -184,11 +206,30 @@ class Group implements InstancierInterface
         return $this;
     }
 
+    /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     */
+    public function getPicture(): ?string
+    {
+        if ($this->getPictureFilename() == null || $this->getPictureFilename() === "") {
+            return null;
+        }
+
+        $imagePath = 'uploads/group/avatar/' . $this->getId() . '/' . $this->getPictureFilename();
+
+        return $imagePath;
+    }
+
     public function getSlug(): ?string
     {
         return $this->slug;
     }
 
+    /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     */
     public function getPath(): ?string
     {
         $path = $this->slug;
@@ -230,7 +271,7 @@ class Group implements InstancierInterface
         return $this->users->map(function ($value) { return $value->getUser(); });
     }
 
-    public function getUserGroupEntry(User $user): UserGroup
+    public function getGroupUserEntry(User $user): GroupUser
     {
         return $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
     }
@@ -240,7 +281,7 @@ class Group implements InstancierInterface
      */
     public function getUser(User $user): User
     {
-        return $this->getUserGroupEntry($user)->getUser();
+        return $this->getGroupUserEntry($user)->getUser();
     }
 
     public function hasUser(User $user): bool
@@ -251,7 +292,7 @@ class Group implements InstancierInterface
     public function addUser(User $user, string $role = Group::ROLE_USER): self
     {
         if (!$this->hasUser($user)) {
-            $this->users[] = new UserGroup($user, $this, $role);
+            $this->users[] = new GroupUser($user, $this, $role);
         }
 
         return $this;
@@ -259,7 +300,7 @@ class Group implements InstancierInterface
 
     public function removeUser(User $user): self
     {
-        $result = $this->users->removeElement($this->getUserGroupEntry($user));
+        $result = $this->users->removeElement($this->getGroupUserEntry($user));
 
         if (!$result) {
             throw new Exception("User not found.");
@@ -270,12 +311,12 @@ class Group implements InstancierInterface
 
     public function getUserPermissions(User $user): Collection
     {
-        return $this->getUserGroupEntry($user)->getPermissions();
+        return $this->getGroupUserEntry($user)->getPermissions();
     }
 
     public function getUserRole(User $user): string
     {
-        return $this->getUserGroupEntry($user)->getRole();
+        return $this->getGroupUserEntry($user)->getRole();
     }
 
     public function setUserRole(User $user, string $role): self
@@ -284,14 +325,14 @@ class Group implements InstancierInterface
             throw new Exception('Incorrect role provided.');
         }
 
-        $this->getUserGroupEntry($user)->setRole($role);
+        $this->getGroupUserEntry($user)->setRole($role);
 
         return $this;
     }
 
     public function getUserRegistrationDate(User $user): DateTime
     {
-        return $this->getUserGroupEntry($user)->getCreatedAt();
+        return $this->getGroupUserEntry($user)->getCreatedAt();
     }
 
     public function getParent(): ?self
@@ -345,6 +386,37 @@ class Group implements InstancierInterface
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Activity[]
+     */
+    public function getActivities(): Collection
+    {
+        return $this->activities;
+    }
+
+    public function addActivity(Activity $activity): self
+    {
+        if (!$this->activities->contains($activity)) {
+            $this->activities[] = $activity;
+            $activity->setGroup($this);
+        }
+
+        return $this;
+    }
+
+    public function removeActivity(Activity $activity): self
+    {
+        if ($this->activities->contains($activity)) {
+            $this->activities->removeElement($activity);
+            // set the owning side to null (unless already changed)
+            if ($activity->getGroup() === $this) {
+                $activity->setGroup(null);
+            }
+        }
 
         return $this;
     }

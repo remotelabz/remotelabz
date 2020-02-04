@@ -1,4 +1,5 @@
 var Encore = require('@symfony/webpack-encore');
+var path = require('path');
 
 Encore
     // directory where compiled assets will be stored
@@ -85,6 +86,11 @@ Encore
         to: 'svg/[path][name].[ext]',
         // only copy files matching this pattern
         //pattern: /\.(png|jpg|jpeg)$/
+    })
+    .addAliases({
+        'fos-js-router': path.resolve(__dirname, 'vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.js'),
+        'routes': path.resolve(__dirname, 'public/fos_js_routes.json'),
+        'fos-jsrouting': path.resolve(__dirname, 'assets/js/routing.js')
     })
 ;
 

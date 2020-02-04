@@ -1,3 +1,16 @@
+2.0.0-rc3:
+----------
+
+### Added
+- Courses and groups are now fusionned into **Groups**. You can now create groups which may contains subgroups and activities
+- Dark theme 🌓
+
+### Updated
+- Public and admin areas are now seperated
+- Groups and activities are now linked. An activity belongs to a group, and an user must be part of the owner group or one of its subgroups to see/launch an actrivity (depending on the group's privacy settings)
+- You are automatically disconnected when your JWT token is expired and you must login again in order to refresh it. When you logged in again succesfully, you are redirected to the last page you visited
+- Various visual updates
+
 2.0.0-rc2:
 ----------
 

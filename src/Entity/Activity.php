@@ -5,6 +5,7 @@ namespace App\Entity;
 use UnexpectedValueException;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -17,6 +18,7 @@ class Activity
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"primary_key", "group_explore"})
      */
     private $id;
 
@@ -53,12 +55,6 @@ class Activity
     private $interconnected = false;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\Choice({"alone", "group", "course"})
-     */
-    private $scope;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="activity")
      */
     private $labInstances;
@@ -84,15 +80,13 @@ class Activity
     private $authorizedUsers;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true, name="_group")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="activities")
+     * @ORM\JoinColumn(nullable=false)
      */
-    private $group;
+    private $_group;
 
     const VPN_ACCESS = "vpn";
     const HTTP_ACCESS = "http";
-    const SCOPE_SINGLE_USER = 'alone';
-    const SCOPE_GROUP = 'group';
-    const SCOPE_COURSE = 'course';
 
     public function __construct()
     {
@@ -100,7 +94,6 @@ class Activity
         $this->authorizedUsers = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
-        $this->scope = 'alone';
     }
 
     public function getId(): ?int
@@ -276,23 +269,6 @@ class Activity
     }
 
     /**
-     * Returns the UUID of the group which can view/execute the activity.
-     *
-     * @return string|null
-     */
-    public function getGroup(): ?string
-    {
-        return $this->group;
-    }
-
-    public function setGroup(?string $group): self
-    {
-        $this->group = $group;
-
-        return $this;
-    }
-
-    /**
      * A collection of user-by-user authorizations.
      * 
      * @return Collection|User[]
@@ -316,6 +292,18 @@ class Activity
         if ($this->authorizedUsers->contains($authorizedUser)) {
             $this->authorizedUsers->removeElement($authorizedUser);
         }
+
+        return $this;
+    }
+
+    public function getGroup(): ?Group
+    {
+        return $this->_group;
+    }
+
+    public function setGroup(?Group $_group): self
+    {
+        $this->_group = $_group;
 
         return $this;
     }

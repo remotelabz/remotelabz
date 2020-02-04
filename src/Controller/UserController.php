@@ -502,13 +502,20 @@ class UserController extends AbstractFOSRestController
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
-            $image = file_get_contents($profilePicture);
-            $image = imagecreatefrompng($profilePicture);
-            $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
-            imagepng($image, $imageTmp, 9);
+            $cachedImagePath = $kernel->getCacheDir() . "/users/avatar/" . $user->getId() . "/" . $size;
 
-            $response = new Response(file_get_contents($imageTmp), 200);
+            if (!is_file($cachedImagePath)) {
+                $image = file_get_contents($profilePicture);
+                $image = imagecreatefrompng($profilePicture);
+                $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
+                $imageTmp = $cachedImagePath;
+                if (!is_dir($kernel->getCacheDir() . "/users/avatar/" . $user->getId())) {
+                    mkdir($kernel->getCacheDir() . "/users/avatar/" . $user->getId(), 0777, true);
+                }
+                imagepng($image, $imageTmp, 9);
+            }
+
+            $response = new Response(file_get_contents($cachedImagePath), 200);
             $response->headers->set('Content-Type', 'image/png');
             $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
 

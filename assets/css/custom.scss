@@ -10,6 +10,10 @@ html, body
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, fill 0.15s ease-in-out;
 }
 
+svg {
+  fill: currentColor;
+}
+
 h1 {
   font-size: 2rem;
   font-weight: 600;
@@ -611,6 +615,82 @@ img.rounded-circle {
   margin-top: 4px;
 }
 
+.content-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li {
+    border-top: 1px solid #f0f0f0;
+
+    &::after {
+      display: block;
+      clear: both;
+      content: "";
+    }
+  }
+
+  > li:first-child {
+    border-top: none;
+  }
+
+  .title {
+    font-size: 16px;
+    color: #2e2e2e;
+  }
+}
+
+.group-list-tree .group-list-tree {
+  margin-bottom: 0;
+  margin-left: 30px;
+  position: relative;
+
+  li {
+    position: relative;
+  }
+
+  &::before {
+    content: '';
+    display: block;
+    width: 0;
+    position: absolute;
+    top: 5px;
+    bottom: 0;
+    left: -16px;
+    border-left: 2px solid #e3e3e3;
+  }
+
+  li::before {
+    content: '';
+    display: block;
+    width: 10px;
+    height: 0;
+    border-top: 2px solid #e3e3e3;
+    position: absolute;
+    top: 30px;
+    left: -16px;
+  }
+
+  li:last-child::before {
+    background: #fff;
+    height: auto;
+    top: 30px;
+    bottom: 0;
+  }
+
+  > li:first-child {
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
+.group-row-contents {
+  padding: 16px;
+  &:hover {
+    background-color: #f6fafe;
+    cursor: pointer;
+  }
+}
+
 /// ICONS
 
 .image-sm {
@@ -647,6 +727,10 @@ img.rounded-circle {
   color: #707070;
 }
 
+.flex-basis-0 {
+  flex-basis: 0 !important;
+}
+
 $size-count: 64;
 
 @for $i from 1 through $size-count {
@@ -660,7 +744,7 @@ $bg-number: 8;
 
 @for $i from 1 through $bg-number {
   .bg-#{$i} {
-    background-color: hsl($i * (360 / $bg-number), 50%, 90%);
+    background-color: hsl($i * (360 / $bg-number + 32), 60%, 90%);
   }
 }
 
@@ -672,6 +756,11 @@ $bg-number: 8;
   html, body {
     background-color: theme-color("dark");
     color: theme-color("light");
+  }
+
+  .text-muted {
+    color: #9b9b9b !important;
+    fill: currentColor;
   }
 
   a {
@@ -790,6 +879,41 @@ $bg-number: 8;
     background-color: theme-color("dark");
     border-color: theme-color("dark-lighter");
   }
+
+  .content-list {
+    > li {
+      border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+
+    .title {
+      color: white;
+    }
+  }
+  
+  .group-list-tree .group-list-tree {
+    &::before {
+      border-left-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+  
+    li::before {
+      border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+  
+    li:last-child::before {
+      background: theme-color("dark");
+    }
+  
+    > li:first-child {
+      border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+  }
+  
+  .group-row-contents {
+    &:hover {
+      background-color: theme-color("dark-lighter");
+    }
+  }
+  
 
   .identicon {
     color: theme-color("light");
