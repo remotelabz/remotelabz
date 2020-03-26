@@ -40,9 +40,9 @@ const Option = props => {
                     <OverlayTrigger placement="bottom" overlay={<Tooltip>Subgroups</Tooltip>}>
                         <div className="mr-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
                     </OverlayTrigger>
-                    <OverlayTrigger placement="bottom" overlay={<Tooltip>Activities</Tooltip>}>
+                    {/* <OverlayTrigger placement="bottom" overlay={<Tooltip>Activities</Tooltip>}>
                         <div className="mr-2"><SVG name="bookmark"></SVG> {props.data.activities.length}</div>
-                    </OverlayTrigger>
+                    </OverlayTrigger> */}
                     <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
                         <div><SVG name="users"></SVG> {props.data.users.length}</div>
                     </OverlayTrigger>
@@ -74,26 +74,29 @@ export default class GroupSelect extends Component {
             }
         })
         .then(response => {
-            let options = [];
-            response.data.forEach(group => {
-                options.push({
-                    ...group,
-                    value: group.id,
-                    label: group.name,
-                })
+            return response.data.map(group => {
+                return {...group, value: group.id, label: group.name};
             });
-            return options;
+            // let options = [];
+            // response.data.forEach(group => {
+            //     options.push({
+            //         ...group,
+            //         value: group.id,
+            //         label: group.name,
+            //     })
+            // });
+            // return options;
         });
     }
 
     render() {
         return (
             <AsyncSelect
-                loadOptions={this.loadOptions}
+                loadOptions={this.props.loadOptions || this.loadOptions}
                 className='react-select-container'
                 classNamePrefix="react-select"
                 cacheOptions
-                defaultOptions
+                defaultOptions={this.props.defaultOptions || true}
                 placeholder={this.props.placeholder || "Search for a group"}
                 components={{ ValueContainer, Option, SingleValue }}
                 isSearchable

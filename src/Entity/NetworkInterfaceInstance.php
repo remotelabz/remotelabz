@@ -27,11 +27,11 @@ class NetworkInterfaceInstance extends Instance
      */
     protected $networkInterface;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="networkInterfaceInstances")
-     * @Serializer\Groups({"user"})
-     */
-    protected $user;
+    // /**
+    //  * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="networkInterfaceInstances")
+    //  * @Serializer\Groups({"user"})
+    //  */
+    // protected $user;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
@@ -68,17 +68,17 @@ class NetworkInterfaceInstance extends Instance
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
+    // public function getUser(): ?User
+    // {
+    //     return $this->user;
+    // }
 
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
+    // public function setUser(?User $user): self
+    // {
+    //     $this->user = $user;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     public function getRemotePort(): ?int
     {

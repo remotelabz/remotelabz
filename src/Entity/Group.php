@@ -33,7 +33,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     private $name;
 
@@ -87,7 +87,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Group", mappedBy="parent")
-     * @Serializer\Groups({"group_children", "group_tree", "group_explore"})
+     * @Serializer\Groups({"group_children", "group_tree", "group_explore", "group_details"})
      */
     private $children;
 
@@ -208,7 +208,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     public function getPicture(): ?string
     {
@@ -228,14 +228,14 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     public function getPath(): ?string
     {
         $path = $this->slug;
         $group = $this;
 
-        while($group->getParent() !== null) {
+        while ($group->getParent() !== null) {
             $group = $group->getParent();
 
             $path = $group->getSlug() . '/' . $path;
@@ -264,16 +264,24 @@ class Group implements InstancierInterface
     }
 
     /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\SerializedName("users")
+     * @Serializer\Groups({"group_details"})
+     *
      * @return Collection|User[]
      */
     public function getUsers(): Collection
     {
-        return $this->users->map(function ($value) { return $value->getUser(); });
+        return $this->users->map(function ($value) {
+            return $value->getUser();
+        });
     }
 
     public function getGroupUserEntry(User $user): GroupUser
     {
-        return $this->users->filter(function ($value) use ($user) { return $value->getUser() === $user; })->first();
+        return $this->users->filter(function ($value) use ($user) {
+            return $value->getUser() === $user;
+        })->first();
     }
 
     /**
@@ -286,7 +294,9 @@ class Group implements InstancierInterface
 
     public function hasUser(User $user): bool
     {
-        return $this->users->exists(function ($key, $value) use ($user) { return $value->getUser() === $user; });
+        return $this->users->exists(function ($key, $value) use ($user) {
+            return $value->getUser() === $user;
+        });
     }
 
     public function addUser(User $user, string $role = Group::ROLE_USER): self
@@ -345,6 +355,11 @@ class Group implements InstancierInterface
         $this->parent = $parent;
 
         return $this;
+    }
+
+    public function isRootGroup(): bool
+    {
+        return $this->parent === null;
     }
 
     /**

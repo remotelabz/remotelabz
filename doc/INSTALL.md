@@ -9,7 +9,7 @@ Requirements
 ============
 
 You will need the following software installed in order to run RemoteLabz.
-- PHP >= 7.2
+- PHP >= 7.3
 - Apache
 - [Composer](https://getcomposer.org/download/)
 - [Node.js](https://nodejs.org/en/download/package-manager/)
@@ -33,8 +33,11 @@ Ubuntu
 
 - PHP
 ```bash
-# default php packages version from 18.04 is 7.2, therefore this command will work
-sudo apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip
+apt-get update && apt-get upgrade
+apt-get install software-properties-common
+add-apt-repository ppa:ondrej/php
+apt-get update
+sudo apt install -y curl gnupg php7.3 zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip
 ```
 - Composer
 ```bash

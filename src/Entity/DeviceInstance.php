@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Instance;
+use App\Instance\InstanceState;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
 use JMS\Serializer\Annotation as Serializer;
@@ -25,15 +26,15 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     protected $device;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="deviceInstances")
-     * @Serializer\Groups({"user"})
-     */
-    protected $user;
+    // /**
+    //  * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="deviceInstances")
+    //  * @Serializer\Groups({"user"})
+    //  */
+    // protected $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="deviceInstances")
@@ -43,7 +44,7 @@ class DeviceInstance extends Instance
     private $lab;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances")
+     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist"})
      * @Serializer\XmlElement(cdata=false)
      * @Serializer\Groups({"lab"})
      */
@@ -56,9 +57,16 @@ class DeviceInstance extends Instance
      */
     protected $networkInterfaceInstances;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $state;
+
     public function __construct()
     {
         parent::__construct();
+        $this->state = InstanceState::STOPPED;
         $this->networkInterfaceInstances = new ArrayCollection();
     }
 
@@ -79,17 +87,17 @@ class DeviceInstance extends Instance
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
+    // public function getUser(): ?User
+    // {
+    //     return $this->user;
+    // }
 
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
+    // public function setUser(?User $user): self
+    // {
+    //     $this->user = $user;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     /**
      * @Serializer\VirtualProperty()
@@ -136,7 +144,7 @@ class DeviceInstance extends Instance
             ->where(Criteria::expr()->eq("networkInterface", $networkInterface));
 
         $networkInterfaceInstance = ($this->networkInterfaceInstances !== null) ? $this->networkInterfaceInstances->matching($criteria)->first() : null;
-        
+
         return $networkInterfaceInstance ?: null;
     }
 
@@ -173,4 +181,20 @@ class DeviceInstance extends Instance
         return $this;
     }
 
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(?string $state): self
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    public function isStarted(): ?bool
+    {
+        return $this->state === InstanceState::STARTED;
+    }
 }

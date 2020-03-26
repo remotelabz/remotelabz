@@ -6,3 +6,4 @@ twig:
         - 'custom.form.html.twig'
     paths:
         'templates/layouts': 'layouts'
+    exception_controller: null

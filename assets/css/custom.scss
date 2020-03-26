@@ -751,7 +751,7 @@ $bg-number: 8;
 /** media specific */
 
 [theme="dark"] {
-  background-color: theme-color("dark");
+  background-color: var(--dark);
 
   html, body {
     background-color: theme-color("dark");

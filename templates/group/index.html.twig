@@ -46,13 +46,15 @@
                 <li>
                     <div class="item-left d-flex flex-column">
                         <div class="d-flex">
-                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
-                                {% if group.pictureFilename is defined and group.pictureFilename %}
-                                    image
-                                {% else %}
+                            {% if group.pictureFilename is defined and group.pictureFilename %}
+                                <div class="mr-2">
+                                    <img src="{{ path('get_group_picture', {slug: group.path}) }}" class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded" />
+                                </div>
+                            {% else %}
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
                                     {{- group.name|firstLetter|upper -}}
-                                {% endif %}
-                            </div>
+                                </div>
+                            {% endif %}
                             <div class="d-flex flex-column">
                                 <div class="item-title">
                                     <a href="{{ path('admin_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>

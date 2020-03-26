@@ -29,7 +29,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $name;
 
@@ -77,7 +77,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
 
@@ -252,7 +252,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 */
- 
+
     /**
      * @return Collection|Instance[]
      */

@@ -7,7 +7,6 @@ use App\Form\DeviceType;
 
 use App\Entity\EditorData;
 use App\Service\FileUploader;
-use Swagger\Annotations as SWG;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use JMS\Serializer\SerializerInterface;
@@ -40,24 +39,6 @@ class DeviceController extends AbstractFOSRestController
      * @Route("/devices", name="devices")
      * 
      * @Rest\Get("/api/devices", name="api_devices")
-     * 
-     * @SWG\Parameter(
-     *     name="search",
-     *     in="query",
-     *     type="string",
-     *     description="Filter devices by name. All devices with a name containing this value will be shown."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns all existing devices",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=Lab::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function indexAction(Request $request)
     {
@@ -114,21 +95,6 @@ class DeviceController extends AbstractFOSRestController
      * @Route("/admin/devices/new", name="new_device")
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=201,
-     *     description="Returns the newly created device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function newAction(Request $request)
     {
@@ -176,21 +142,6 @@ class DeviceController extends AbstractFOSRestController
      * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
      * 
      * @Rest\Put("/api/devices/{id<\d+>}", name="api_edit_device")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the newly edited device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function updateAction(Request $request, int $id)
     {
@@ -244,21 +195,6 @@ class DeviceController extends AbstractFOSRestController
 
     /**
      * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the newly edited device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function updateEditorDataAction(Request $request, int $id)
     {

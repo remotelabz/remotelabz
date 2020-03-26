@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\OperatingSystem;
-use Swagger\Annotations as SWG;
+
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
 use FOS\RestBundle\Context\Context;
@@ -61,24 +61,6 @@ class OperatingSystemController extends AbstractFOSRestController
      * @Route("/admin/operating-systems", name="operating_systems")
      * 
      * @Rest\Get("/api/operating-systems", name="api_operating_systems")
-     * 
-     * @SWG\Parameter(
-     *     name="search",
-     *     in="query",
-     *     type="string",
-     *     description="Filter operating systems by name. All operating systems with a name containing this value will be shown."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns all existing operating-systems",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=Lab::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="Operating system")
      */
     public function indexAction(Request $request)
     {

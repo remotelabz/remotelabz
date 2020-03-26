@@ -29,7 +29,8 @@
         "dev-server": "encore dev-server",
         "dev": "encore dev",
         "watch": "encore dev --watch",
-        "build": "encore production --progress"
+        "build": "encore production --progress",
+        "consume": "php bin/console messenger:consume front -vv"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.11.2",

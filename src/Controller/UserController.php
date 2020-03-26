@@ -9,9 +9,10 @@ use App\Form\UserType;
 use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
-use Swagger\Annotations as SWG;
+
 use App\Controller\AppController;
 use App\Repository\UserRepository;
+use FOS\RestBundle\Context\Context;
 use JMS\Serializer\SerializerBuilder;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -57,29 +58,12 @@ class UserController extends AbstractFOSRestController
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
      * 
      * @Rest\Get("/api/users", name="api_users")
-     * 
-     * @SWG\Parameter(
-     *     name="search",
-     *     in="query",
-     *     type="string",
-     *     description="Filter users by name. All users with a name containing this value will be shown."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns all existing users",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=Lab::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="User")
      */
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
+        $groupDetails = $request->query->has('group_details');
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('firstName', $search))
@@ -88,8 +72,7 @@ class UserController extends AbstractFOSRestController
             ->orderBy([
                 'lastName' => Criteria::ASC
             ])
-            ->setMaxResults($limit)
-        ;
+            ->setMaxResults($limit);
 
         $users = $this->userRepository->matching($criteria);
 
@@ -127,11 +110,17 @@ class UserController extends AbstractFOSRestController
                         utilisateurs spécifiés dans le fichier n\'existent pas déjà ou que le format du fichier est correct.'
                     );
                 }
-                
+
                 fclose($fileSocket);
             } else {
                 $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
             }
+        }
+
+        $context = new Context();
+        $context->addGroup("user");
+        if ($groupDetails) {
+            $context->addGroup("group_details");
         }
 
         $view = $this->view($users->getValues())
@@ -141,14 +130,14 @@ class UserController extends AbstractFOSRestController
                 'addUserFromFileForm' => $addUserFromFileForm->createView(),
                 'search' => $search
             ])
-        ;
+            ->setContext($context);
 
         return $this->handleView($view);
 
-        return $this->render('user/index.html.twig', [
-            'users' => $users,
-            'addUserFromFileForm' => $addUserFromFileForm->createView(),
-        ]);
+        // return $this->render('user/index.html.twig', [
+        //     'users' => $users,
+        //     'addUserFromFileForm' => $addUserFromFileForm->createView(),
+        // ]);
     }
 
     /**
@@ -163,7 +152,7 @@ class UserController extends AbstractFOSRestController
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             /** @var User $user */
             $user = $userForm->getData();
-            
+
             // foreach ($userForm->get('roles') as $role)
             //         $user->setRoles($role);
 
@@ -204,7 +193,7 @@ class UserController extends AbstractFOSRestController
         if (null === $user) {
             throw new NotFoundHttpException();
         }
-        
+
         $userForm = $this->createForm(UserType::class, $user);
         $userForm->handleRequest($request);
 
@@ -220,10 +209,10 @@ class UserController extends AbstractFOSRestController
                 } else {
                     $this->addFlash('danger', "Passwords doesn't match. If you don't want to change user's password, please leave password field empty.");
 
-                    return $this->redirectToRoute('edit_user', [ 'id' => $id ]);
+                    return $this->redirectToRoute('edit_user', ['id' => $id]);
                 }
             }
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);
             $entityManager->flush();
@@ -332,11 +321,10 @@ class UserController extends AbstractFOSRestController
                     ->setLastName($firstName)
                     ->setFirstName($lastName)
                     ->setEmail($email)
-                    ->setPassword($this->passwordEncoder->encodePassword($user, $password))
-                ;
+                    ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
-                $validEmail = count($validator->validate($email, [ new Email() ])) === 0;
-    
+                $validEmail = count($validator->validate($email, [new Email()])) === 0;
+
                 if ($validEmail && $this->userRepository->findByEmail($email) == null) {
                     $entityManager->persist($user);
                     $this->sendNewAccountEmail($user, $password);
@@ -373,8 +361,7 @@ class UserController extends AbstractFOSRestController
                     ]
                 ),
                 'text/html'
-            )
-        ;
+            );
 
         $this->mailer->send($message);
     }
@@ -392,11 +379,11 @@ class UserController extends AbstractFOSRestController
 
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             $user = $userForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);
             $entityManager->flush();
-            
+
             $this->addFlash('success', 'Your profile has been updated.');
         }
 
@@ -414,7 +401,7 @@ class UserController extends AbstractFOSRestController
                     $entityManager->flush();
 
                     $this->addFlash('success', 'Your password has been changed.');
-                    
+
                     return $this->redirectToRoute('user_profile');
                 } else {
                     $this->addFlash('danger', "Passwords doesn't match.");
@@ -470,13 +457,13 @@ class UserController extends AbstractFOSRestController
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         // $pictureFile = $request->files->get('picture');
         // if ($pictureFile) {
@@ -517,13 +504,13 @@ class UserController extends AbstractFOSRestController
 
             $response = new Response(file_get_contents($cachedImagePath), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
 
@@ -546,13 +533,13 @@ class UserController extends AbstractFOSRestController
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         // $pictureFile = $request->files->get('picture');
         // if ($pictureFile) {
@@ -569,17 +556,6 @@ class UserController extends AbstractFOSRestController
 
     /**
      * @Rest\Get("/api/users/me", name="api_users_me")
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns current logged user",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=User::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="User")
      */
     public function meAction()
     {

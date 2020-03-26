@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Flavor;
 use App\Form\FlavorType;
-use Swagger\Annotations as SWG;
+
 use FOS\RestBundle\Context\Context;
 use App\Repository\FlavorRepository;
 use Doctrine\Common\Collections\Criteria;
@@ -27,17 +27,6 @@ class FlavorController extends AbstractFOSRestController
      * @Route("/admin/flavors", name="flavors")
      * 
      * @Rest\Get("/api/flavors", name="api_flavors")
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns all existing flavors",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=Flavor::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="Flavor")
      */
     public function indexAction(Request $request)
     {
@@ -73,21 +62,6 @@ class FlavorController extends AbstractFOSRestController
      * @Route("/admin/flavors/new", name="new_flavor", methods={"GET", "POST"})
      * 
      * @Rest\Post("/api/flavors", name="api_new_flavor")
-     * 
-     * @SWG\Parameter(
-     *     name="flavor",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Flavor::class, groups={"api"})),
-     *     description="Flavor data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=201,
-     *     description="Returns the newly created flavor.",
-     *     @SWG\Schema(ref=@Model(type=Flavor::class))
-     * )
-     * 
-     * @SWG\Tag(name="Flavor")
      */
     public function newAction(Request $request)
     {
@@ -162,20 +136,6 @@ class FlavorController extends AbstractFOSRestController
      * @Route("/admin/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
      * 
      * @Rest\Delete("/api/flavors/{id<\d+>}", name="api_delete_flavor")
-     * 
-     * @SWG\Parameter(
-     *     name="id",
-     *     in="path",
-     *     type="integer",
-     *     description="ID of the flavor."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns when the flavor is deleted."
-     * )
-     * 
-     * @SWG\Tag(name="Flavor")
      */
     public function deleteAction(int $id)
     {

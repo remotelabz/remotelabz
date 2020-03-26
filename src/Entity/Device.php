@@ -29,7 +29,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -137,7 +137,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
 

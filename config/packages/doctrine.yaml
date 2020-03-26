@@ -14,6 +14,7 @@ doctrine:
         default_table_options:
             charset: utf8mb4
             collate: utf8mb4_unicode_ci
+        schema_filter: '~^(?!messenger_messages)~'
 
         url: 'mysql://%env(MYSQL_USER)%:%env(MYSQL_PASSWORD)%@%env(MYSQL_SERVER)%/%env(MYSQL_DATABASE)%'
     orm:

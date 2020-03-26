@@ -8,7 +8,7 @@ use App\Entity\User;
 use App\Entity\Group;
 use App\Form\GroupType;
 use App\Entity\GroupUser;
-use Swagger\Annotations as SWG;
+use App\Message\TestMessage;
 use App\Security\ACL\GroupVoter;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
@@ -144,21 +144,6 @@ class GroupController extends AbstractFOSRestController
      * @Route("/admin/groups/new", name="new_group")
      * 
      * @Rest\Post("/api/groups", name="api_new_group")
-     * 
-     * @SWG\Parameter(
-     *     name="group",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Group::class, groups={"api"})),
-     *     description="Group data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=201,
-     *     description="Returns the newly created group.",
-     *     @SWG\Schema(ref=@Model(type=Group::class))
-     * )
-     * 
-     * @SWG\Tag(name="Group")
      */
     public function newAction(Request $request)
     {
@@ -284,21 +269,6 @@ class GroupController extends AbstractFOSRestController
      * @Route("/admin/groups/{slug}/edit", name="edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
-     * 
-     * @SWG\Parameter(
-     *     name="group",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Group::class, groups={"api"})),
-     *     description="Group data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the newly edited group.",
-     *     @SWG\Schema(ref=@Model(type=Group::class))
-     * )
-     * 
-     * @SWG\Tag(name="Group")
      */
     public function updateAction(Request $request, string $slug)
     {
@@ -536,21 +506,6 @@ class GroupController extends AbstractFOSRestController
      * )
      * 
      * @Rest\Get("/api/groups/{slug}", name="api_get_group", requirements={"slug"="[\w\-\/]+"})
-     * 
-     * @SWG\Parameter(
-     *     name="slug",
-     *     in="path",
-     *     type="string",
-     *     description="URL of the group."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns requested group",
-     *     @Model(type=Group::class)
-     * )
-     * 
-     * @SWG\Tag(name="Group")
      */
     public function showDashboardAction(string $slug)
     {
@@ -569,6 +524,7 @@ class GroupController extends AbstractFOSRestController
         //     ],
         //     "editor"
         // ]);
+        $this->dispatchMessage(new TestMessage('Look! I created a message!'));
 
         $view = $this->view($group, 200)
             ->setTemplate("group/dashboard_view.html.twig")

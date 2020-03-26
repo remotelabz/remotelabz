@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Activity;
 use App\Form\ActivityType;
+use App\Entity\LabInstance;
 use App\Service\FileUploader;
 use App\Repository\GroupRepository;
 use App\Repository\ActivityRepository;
@@ -30,13 +31,13 @@ class ActivityController extends AppController
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
-    
+
         if ($search !== '') {
             $data = $this->activityRepository->findByNameLike($search);
         } else {
             $data = $this->activityRepository->findAll();
         }
-        
+
         return $this->render('activity/index.html.twig', [
             'activities' => $data,
             'search' => $search
@@ -62,7 +63,7 @@ class ActivityController extends AppController
         if ($this->getRequestedFormat($request) === JsonRequest::class) {
             return $this->renderJson($data);
         }
-        
+
         return $this->render('activity/view.html.twig', [
             'activity' => $data,
             'labInstance' => $labInstance
@@ -77,21 +78,21 @@ class ActivityController extends AppController
         $activity = new Activity();
         $activityForm = $this->createForm(ActivityType::class, $activity);
         $activityForm->handleRequest($request);
-        
+
         if ($activityForm->isSubmitted() && $activityForm->isValid()) {
             $activity = $activityForm->getData();
             $activity->setAuthor($this->getUser());
             $activity->setGroup($groupRepository->find($request->request->get('activity[_group]')));
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($activity);
             $entityManager->flush();
-            
+
             $this->addFlash('success', 'Activity has been created.');
 
             return $this->redirectToRoute('activities');
         }
-        
+
         return $this->render('activity/new.html.twig', [
             'activityForm' => $activityForm->createView(),
         ]);
@@ -111,21 +112,21 @@ class ActivityController extends AppController
 
         $activityForm = $this->createForm(ActivityType::class, $activity);
         $activityForm->handleRequest($request);
-        
+
         if ($activityForm->isSubmitted() && $activityForm->isValid()) {
             $activity = $activityForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($activity);
             $entityManager->flush();
-            
+
             $this->addFlash('success', 'Activity has been edited.');
 
             return $this->redirectToRoute('show_activity', [
                 'id' => $id
             ]);
         }
-        
+
         return $this->render('activity/new.html.twig', [
             'activityForm' => $activityForm->createView(),
             'activity' => $activity,
@@ -160,11 +161,24 @@ class ActivityController extends AppController
      */
     public function startActivityAction(int $id)
     {
-        $lab = $this->activityRepository->find($id)->getLab();
+        $activity = $this->activityRepository->find($id);
 
-        return $this->redirectToRoute('start_lab_activity', [
-            'id' => $lab->getId(),
-            'activityId' => $id
+        $labInstance = LabInstance::create()
+            ->setLab($activity->getLab())
+            ->setUser($this->getUser())
+            ->setInternetConnected(false)
+            ->setInterconnected(false)
+            ->setActivity($activity)
+            ->setScope('activity');
+
+        $labInstance->populate();
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($labInstance);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('show_activity', [
+            'id' => $id
         ]);
     }
 }

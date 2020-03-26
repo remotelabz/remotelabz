@@ -7,6 +7,7 @@ use App\Exception\WorkerException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,13 +23,14 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
      */
     private $logger;
 
-    public function __construct(LoggerInterface $logger) {
+    public function __construct(LoggerInterface $logger)
+    {
         $this->logger = $logger;
     }
 
-    public function onKernelException(GetResponseForExceptionEvent $event)
+    public function onKernelException(ExceptionEvent $event)
     {
-        $exception = $event->getException();
+        $exception = $event->getThrowable();
         $request = $event->getRequest();
         $response = $event->getResponse();
 
@@ -59,8 +61,7 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
                 ->setData([
                     'code' => $status,
                     'message' => $exception->getMessage(),
-                ])
-            ;
+                ]);
 
             $event->setResponse($response);
         }

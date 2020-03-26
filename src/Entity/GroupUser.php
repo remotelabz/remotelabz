@@ -25,6 +25,9 @@ class GroupUser
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="users")
      * @ORM\JoinColumn(name="group_id", referencedColumnName="id")
+     * 
+     * @Serializer\Groups({"user"})
+     * @Serializer\Inline
      */
     private $group;
 
@@ -43,7 +46,7 @@ class GroupUser
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"group_tree"})
+     * @Serializer\Groups({"group_tree", "user"})
      */
     private $role;
 
@@ -52,7 +55,8 @@ class GroupUser
      */
     private $createdAt;
 
-    public function __construct(User $user, Group $group, ?string $role = Group::ROLE_USER, ?array $permissions = []) {
+    public function __construct(User $user, Group $group, ?string $role = Group::ROLE_USER, ?array $permissions = [])
+    {
         $this->user = $user;
         $this->group = $group;
         $this->permissions = new ArrayCollection($permissions);

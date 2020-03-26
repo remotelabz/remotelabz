@@ -23,7 +23,7 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key", "group_tree", "group_explore"})
+     * @Serializer\Groups({"primary_key", "group_tree", "group_explore", "instances", "user"})
      * @var int
      */
     private $id;
@@ -31,7 +31,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user"})
      * @var string
      */
     private $email;
@@ -40,7 +40,7 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
      * @Serializer\XmlList(inline=false, entry="role")
-     * @Serializer\Groups({"details"})
+     * @Serializer\Groups({"details", "user"})
      * @var array|string[]
      */
     private $roles = [];
@@ -55,7 +55,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
     private $lastName;
@@ -63,7 +63,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
     private $firstName;
@@ -71,7 +71,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="boolean")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details"})
+     * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
      * @var bool
      */
     private $enabled = true;
@@ -80,7 +80,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
+     * @Serializer\Groups({"user_instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;
@@ -88,7 +88,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
+     * @Serializer\Groups({"user_instances"})
      * @var Collection|DeviceInstance[]
      */
     private $deviceInstances;
@@ -96,7 +96,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="user")
      * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
+     * @Serializer\Groups({"user_instances"})
      * @var Collection|NetworkInterfaceInstance[]
      */
     private $networkInterfaceInstances;
@@ -122,13 +122,15 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"user"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"user"})
      */
-    private $lastActivity; 
+    private $lastActivity;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
@@ -137,6 +139,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $uuid;
 
@@ -273,7 +276,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager"})
      */
     public function getName(): ?string
     {
@@ -325,7 +328,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "instances", "details"})
+     * @Serializer\Groups({"lab", "user_instances", "details"})
      * @Serializer\XmlList(inline=false, entry="instances")
      */
     public function getInstances(): Collection
@@ -512,12 +515,12 @@ class User implements UserInterface, InstancierInterface
             return null;
 
             // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
-            
+
             // return $package->getUrl('build/images/faces/default-user-image.png');
         }
 
         $imagePath = 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
-        
+
         return $imagePath;
     }
 
@@ -551,6 +554,39 @@ class User implements UserInterface, InstancierInterface
     public function getGroups(): Collection
     {
         return $this->_groups;
+    }
+
+    /**
+     * @return Collection|Group[]
+     * 
+     */
+    public function getGroupsInfo(): Collection
+    {
+        return $this->_groups->map(function ($groupUser) {
+            return $groupUser->getGroup();
+        });
+    }
+
+    /**
+     * @return Collection|Group[]
+     * 
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"group_details"})
+     * @Serializer\SerializedName("groups")
+     */
+    public function getTopLevelGroups(): Collection
+    {
+        $groups = $this->_groups->map(function ($groupUser) {
+            /** @var Group $group */
+            return $groupUser->getGroup();
+            return $group->isRootGroup() ? $group : null;
+        });
+
+        $filtered = $groups->filter(function ($group) {
+            return $group->isRootGroup();
+        });
+
+        return $filtered->toArray();
     }
 
     public function isMemberOf(Group $group): bool

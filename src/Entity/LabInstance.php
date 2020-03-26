@@ -2,7 +2,10 @@
 
 namespace App\Entity;
 
+use Exception;
 use App\Entity\Instance;
+use UnexpectedValueException;
+use App\Entity\DeviceInstance;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
@@ -27,30 +30,32 @@ class LabInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $lab;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labInstances")
-     * @Serializer\Groups({"user", "start_lab", "stop_lab"})
-     */
-    protected $user;
+    // /**
+    //  * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labInstances")
+    //  * @Serializer\Groups({"user", "start_lab", "stop_lab", "instances"})
+    //  */
+    // protected $user;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance")
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist"})
      * @Serializer\XmlList(inline=true, entry="device_instance")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $deviceInstances;
 
     /**
      * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $isInterconnected;
 
     /**
      * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $isInternetConnected;
 
@@ -62,7 +67,7 @@ class LabInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
-     * @Serializer\Groups({"activity", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"activity", "lab", "start_lab", "stop_lab"})
      */
     private $activity;
 
@@ -97,28 +102,28 @@ class LabInstance extends Instance
 
         return $this;
     }
-    
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
 
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
+    // public function getUser(): ?User
+    // {
+    //     return $this->user;
+    // }
 
-        return $this;
-    }
+    // public function setUser(?User $user): self
+    // {
+    //     $this->user = $user;
 
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     * @Serializer\XmlAttribute
-     */
-    public function getUserId(): ?int
-    {
-        return $this->user->getId();
-    }
+    //     return $this;
+    // }
+
+    // /**
+    //  * @Serializer\VirtualProperty()
+    //  * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+    //  * @Serializer\XmlAttribute
+    //  */
+    // public function getUserId(): ?int
+    // {
+    //     return $this->user->getId();
+    // }
 
     /**
      * Generate a bridge name with instance UUID.
@@ -143,7 +148,7 @@ class LabInstance extends Instance
             ->where(Criteria::expr()->eq("device", $device));
 
         $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
-        
+
         return $deviceInstance ?: null;
     }
 
@@ -166,11 +171,10 @@ class LabInstance extends Instance
     {
         $criteria = Criteria::create()
             ->where(Criteria::expr()->eq("device", $device))
-            ->andWhere(Criteria::expr()->eq("user", $this->user))
-        ;
+            ->andWhere(Criteria::expr()->eq("user", $this->user));
 
         $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
-        
+
         return $deviceInstance ?: null;
     }
 
@@ -182,8 +186,7 @@ class LabInstance extends Instance
     public function getUserDeviceInstances(): Collection
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("user", $this->user))
-        ;
+            ->where(Criteria::expr()->eq("user", $this->user));
 
         $deviceInstances = $this->deviceInstances->matching($criteria);
 
@@ -198,8 +201,7 @@ class LabInstance extends Instance
     public function getNetworkInterfaceInstances(): Collection
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("user", $this->user))
-        ;
+            ->where(Criteria::expr()->eq("user", $this->user));
 
         $networkInterfaceInstances = $this->lab->getNetworkInterfaceInstances()->matching($criteria);
 
@@ -292,9 +294,30 @@ class LabInstance extends Instance
         if (in_array($scope, [self::SCOPE_STANDALONE, self::SCOPE_ACTIVITY])) {
             $this->scope = $scope;
         } else {
-            throw new UnexpectedValueException("'" . $scope . "' is not a correct value for Activity::scope. Must be one of '".self::SCOPE_STANDALONE."' or '".self::SCOPE_ACTIVITY."'.");
+            throw new UnexpectedValueException("'" . $scope . "' is not a correct value for Activity::scope. Must be one of '" . self::SCOPE_STANDALONE . "' or '" . self::SCOPE_ACTIVITY . "'.");
         }
 
         return $this;
+    }
+
+    /**
+     * Creates all sub-instances from Lab descriptor. This does not record them in the database.
+     */
+    public function populate()
+    {
+        if (null === $this->lab) {
+            throw new Exception('No lab is associated to this instance.');
+        }
+
+        foreach ($this->getLab()->getDevices() as $device) {
+            $deviceInstance = DeviceInstance::create()
+                ->setDevice($device)
+                ->setUser($this->user)
+                ->setLab($this->lab)
+                ->setLabInstance($this);
+
+            $device->addInstance($deviceInstance);
+            $this->addDeviceInstance($deviceInstance);
+        }
     }
 }
