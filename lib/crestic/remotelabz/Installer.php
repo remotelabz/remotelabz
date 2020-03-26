@@ -195,13 +195,13 @@ class Installer {
     private function copyFiles() : void {
         $isCopied = true;
         // Check if directory is already to the right place
-        if (dirname(__FILE__) != $this->installPath) {
+        if (dirname(__FILE__, 4) != $this->installPath) {
             // Check if there is already a directory
             if (is_dir($this->installPath)) {
                 $isCopied = false;
             } else {
                 // Copy files
-            $this->rcopy(dirname(__FILE__), $this->installPath);
+            $this->rcopy(dirname(__FILE__, 4), $this->installPath);
             }
             
         } else {
