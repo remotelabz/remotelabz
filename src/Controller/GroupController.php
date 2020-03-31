@@ -33,7 +33,8 @@ class GroupController extends AbstractFOSRestController
     /** @var GroupRepository $groupRepository */
     protected $groupRepository;
 
-    public function __construct(GroupRepository $groupRepository) {
+    public function __construct(GroupRepository $groupRepository)
+    {
         $this->groupRepository = $groupRepository;
     }
 
@@ -45,7 +46,7 @@ class GroupController extends AbstractFOSRestController
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
-        
+
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search));
 
@@ -65,19 +66,19 @@ class GroupController extends AbstractFOSRestController
         //     ->addGroup("lab")
         // ;
 
-        $view = $this->view($groups->getValues())
-            ->setTemplate("group/index.html.twig")
-            ->setTemplateData([
-                'groups' => $groups->slice($page * $limit - $limit, $limit),
-                'count' => $count,
-                'search' => $search,
-                'limit' => $limit,
-                'page' => $page,
-            ])
-            // ->setContext($context)
-        ;
+        if ('json' === $request->getRequestFormat()) {
+            $view = $this->view($groups->getValues());
 
-        return $this->handleView($view);
+            return $this->handleView($view);
+        }
+
+        return $this->render('group/index.html.twig', [
+            'groups' => $groups->slice($page * $limit - $limit, $limit),
+            'count' => $count,
+            'search' => $search,
+            'limit' => $limit,
+            'page' => $page,
+        ]);
     }
 
     /**
@@ -90,10 +91,9 @@ class GroupController extends AbstractFOSRestController
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
-        
+
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->contains('name', $search))
-        ;
+            ->where(Criteria::expr()->contains('name', $search));
 
         if ($request->query->has('root_only')) {
             $criteria->andWhere(Criteria::expr()->isNull('parent'));
@@ -102,12 +102,11 @@ class GroupController extends AbstractFOSRestController
         $criteria
             ->orderBy([
                 'id' => Criteria::DESC
-            ])
-        ;
+            ]);
 
         /** @param Group $value */
         $groups = $this->groupRepository->matching($criteria);
-        
+
         $matchedRoute = $request->get('_route');
 
         if ($matchedRoute == 'dashboard_groups') {
@@ -126,18 +125,19 @@ class GroupController extends AbstractFOSRestController
         $context = new Context();
         $context->setGroups($requestedContext ? (is_array($requestedContext) ?: [$requestedContext]) : ['groups']);
 
-        $view = $this->view($groups->getValues())
-            ->setTemplate("group/dashboard_index.html.twig")
-            ->setTemplateData([
-                'groups' => $groups->slice($page * $limit - $limit, $limit),
-                'search' => $search,
-                'limit' => $limit,
-                'page' => $page,
-            ])
-            ->setContext($context)
-        ;
+        if ('json' === $request->getRequestFormat()) {
+            $view = $this->view($groups->getValues())
+                ->setContext($context);
 
-        return $this->handleView($view);
+            return $this->handleView($view);
+        }
+
+        return $this->render('group/dashboard_index.html.twig', [
+            'groups' => $groups->slice($page * $limit - $limit, $limit),
+            'search' => $search,
+            'limit' => $limit,
+            'page' => $page,
+        ]);
     }
 
     /**
@@ -167,8 +167,7 @@ class GroupController extends AbstractFOSRestController
 
         $view = $this->view($groupForm)
             ->setTemplate("group/new.html.twig")
-            ->setTemplateData($data)
-        ;
+            ->setTemplateData($data);
 
         if ($groupForm->isSubmitted() && $groupForm->isValid()) {
             /** @var Group $group */
@@ -284,15 +283,14 @@ class GroupController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group, false);
-        } 
+        }
 
         $view = $this->view($groupForm)
             ->setTemplate("group/new.html.twig")
             ->setTemplateData([
                 "form" => $groupForm->createView(),
                 "group" => $group
-            ])
-        ;
+            ]);
 
         if ($groupForm->isSubmitted() && $groupForm->isValid()) {
             /** @var Group $group */
@@ -340,10 +338,9 @@ class GroupController extends AbstractFOSRestController
         if ($request->getRequestFormat() === 'html') {
             $this->addFlash('success', $group->getName() . ' has been deleted.');
         }
-        
+
         $view = $this->view()
-            ->setLocation($this->generateUrl('groups'));
-        ;
+            ->setLocation($this->generateUrl('groups'));;
 
         return $this->handleView($view);
     }
@@ -383,13 +380,12 @@ class GroupController extends AbstractFOSRestController
         }
 
         $view = $this->view()
-            ->setLocation($this->generateUrl('dashboard_group_members', ["slug" => $group->getPath()]));
-        ;
+            ->setLocation($this->generateUrl('dashboard_group_members', ["slug" => $group->getPath()]));;
 
         return $this->handleView($view);
     }
 
-    
+
 
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
@@ -409,7 +405,7 @@ class GroupController extends AbstractFOSRestController
             ])
             // ->setContext($context)
         ;
- 
+
         return $this->handleView($view);
     }
 
@@ -431,7 +427,7 @@ class GroupController extends AbstractFOSRestController
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$group->getPictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $group->getPictureFilename() . '"');
 
             return $response;
         } else {
@@ -469,36 +465,36 @@ class GroupController extends AbstractFOSRestController
      *  requirements={"slug"="[\w\-\/]+"}
      * )
      */
-   public function showAction(string $slug)
-   {
-       $group = $this->groupRepository->findOneBySlug($slug);
+    public function showAction(string $slug)
+    {
+        $group = $this->groupRepository->findOneBySlug($slug);
 
-       if (!$group) {
-           throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
-       }
+        if (!$group) {
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
+        }
 
-       // $context = new Context();
-       // $context->setGroups([
-       //     "primary_key",
-       //     "group",
-       //     "author" => [
-       //         "primary_key"
-       //     ],
-       //     "editor"
-       // ]);
+        // $context = new Context();
+        // $context->setGroups([
+        //     "primary_key",
+        //     "group",
+        //     "author" => [
+        //         "primary_key"
+        //     ],
+        //     "editor"
+        // ]);
 
-       $view = $this->view($group, 200)
-           ->setTemplate("group/view.html.twig")
-           ->setTemplateData([
-               'group' => $group,
-           ])
-           // ->setContext($context)
-       ;
+        $view = $this->view($group, 200)
+            ->setTemplate("group/view.html.twig")
+            ->setTemplateData([
+                'group' => $group,
+            ])
+            // ->setContext($context)
+        ;
 
-       return $this->handleView($view);
-   }
+        return $this->handleView($view);
+    }
 
-   /**
+    /**
      * @Route("/groups/{slug}",
      *  name="dashboard_show_group",
      *  methods="GET",

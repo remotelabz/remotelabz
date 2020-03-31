@@ -123,21 +123,18 @@ class UserController extends AbstractFOSRestController
             $context->addGroup("group_details");
         }
 
-        $view = $this->view($users->getValues())
-            ->setTemplate("user/index.html.twig")
-            ->setTemplateData([
-                'users' => $users,
-                'addUserFromFileForm' => $addUserFromFileForm->createView(),
-                'search' => $search
-            ])
-            ->setContext($context);
+        if ('json' === $request->getRequestFormat()) {
+            $view = $this->view($users->getValues())
+                ->setContext($context);
 
-        return $this->handleView($view);
+            return $this->handleView($view);
+        }
 
-        // return $this->render('user/index.html.twig', [
-        //     'users' => $users,
-        //     'addUserFromFileForm' => $addUserFromFileForm->createView(),
-        // ]);
+        return $this->render('user/index.html.twig', [
+            'users' => $users,
+            'addUserFromFileForm' => $addUserFromFileForm->createView(),
+            'search' => $search,
+        ]);
     }
 
     /**

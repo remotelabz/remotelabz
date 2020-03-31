@@ -7,7 +7,7 @@
         "ext-iconv": "*",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
-        "friendsofsymfony/rest-bundle": ">=2.4-dev",
+        "friendsofsymfony/rest-bundle": "dev-master",
         "gesdinet/jwt-refresh-token-bundle": "^0.9",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer-bundle": "^3.1",

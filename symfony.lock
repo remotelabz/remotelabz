@@ -101,8 +101,11 @@
             "repo": "github.com/symfony/recipes-contrib",
             "branch": "master",
             "version": "2.2",
-            "ref": "258300d52be6ad59b32a888d5ddafbf9638540ff"
-        }
+            "ref": "cad41ef93d6150067ae2bb3c7fd729492dff6f0a"
+        },
+        "files": [
+            "./config/packages/fos_rest.yaml"
+        ]
     },
     "fzaninotto/faker": {
         "version": "v1.8.0"
@@ -318,7 +321,7 @@
         "version": "v4.1.7"
     },
     "symfony/debug": {
-        "version": "v4.1.7"
+        "version": "v4.4.6"
     },
     "symfony/debug-bundle": {
         "version": "4.1",

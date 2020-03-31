@@ -568,13 +568,13 @@ class User implements UserInterface, InstancierInterface
     }
 
     /**
-     * @return Collection|Group[]
+     * @return array|Group[]
      * 
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"group_details"})
      * @Serializer\SerializedName("groups")
      */
-    public function getTopLevelGroups(): Collection
+    public function getTopLevelGroupEntries(): Collection
     {
         $groups = $this->_groups->map(function ($groupUser) {
             /** @var Group $group */
@@ -582,11 +582,12 @@ class User implements UserInterface, InstancierInterface
             return $group->isRootGroup() ? $group : null;
         });
 
-        $filtered = $groups->filter(function ($group) {
-            return $group->isRootGroup();
-        });
+        $filtered = new ArrayCollection();
+        foreach ($this->_groups as $group) {
+            if (null !== $group->getGroup()) $filtered->add($group);
+        }
 
-        return $filtered->toArray();
+        return $filtered;
     }
 
     public function isMemberOf(Group $group): bool

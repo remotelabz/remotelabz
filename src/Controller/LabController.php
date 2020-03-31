@@ -137,19 +137,21 @@ class LabController extends AbstractFOSRestController
         $context
             ->addGroup("lab");
 
-        $view = $this->view($labs->getValues())
-            ->setTemplate("lab/index.html.twig")
-            ->setTemplateData([
-                'labs' => $labs->slice($page * $limit - $limit, $limit),
-                'count' => $count,
-                'search' => $search,
-                'limit' => $limit,
-                'page' => $page,
-                'author' => $author,
-            ])
-            ->setContext($context);
+        if ('json' === $request->getRequestFormat()) {
+            $view = $this->view($labs->getValues())
+                ->setContext($context);
 
-        return $this->handleView($view);
+            return $this->handleView($view);
+        }
+
+        return $this->render('lab/index.html.twig', [
+            'labs' => $labs->slice($page * $limit - $limit, $limit),
+            'count' => $count,
+            'search' => $search,
+            'limit' => $limit,
+            'page' => $page,
+            'author' => $author,
+        ]);
     }
 
     /**
@@ -189,21 +191,9 @@ class LabController extends AbstractFOSRestController
             'labInstance' => $userLabInstance
         ];
 
-        $view = $this->view($lab, 200)
-            ->setTemplate("lab/view.html.twig")
-            ->setTemplateData([
-                'lab' => $lab,
-                'labInstance' => $userLabInstance,
-                'deviceStarted' => $deviceStarted,
-                'user' => $user,
-                'props' => $serializer->serialize(
-                    $instanceManagerProps,
-                    'json',
-                    SerializationContext::create()->setGroups(['instance_manager', 'user'])
-                )
-            ]);
+        $view = $this->view($lab, 200);
 
-        if ($request->getRequestFormat() === 'json') {
+        if ('json' === $request->getRequestFormat()) {
             $context = new Context();
             $context->setGroups([
                 "primary_key",
@@ -215,9 +205,21 @@ class LabController extends AbstractFOSRestController
             ]);
 
             $view->setContext($context);
+
+            return $this->handleView($view);
         }
 
-        return $this->handleView($view);
+        return $this->render('lab/view.html.twig', [
+            'lab' => $lab,
+            'labInstance' => $userLabInstance,
+            'deviceStarted' => $deviceStarted,
+            'user' => $user,
+            'props' => $serializer->serialize(
+                $instanceManagerProps,
+                'json',
+                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details'])
+            )
+        ]);
     }
 
     /**

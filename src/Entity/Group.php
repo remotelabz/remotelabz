@@ -27,7 +27,7 @@ class Group implements InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     private $id;
 
@@ -163,7 +163,8 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"groups", "group_tree", "group_explore"})
+     * @Serializer\SerializedName("owner")
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "group_details"})
      * @return User
      */
     public function getOwner(): User
@@ -275,6 +276,17 @@ class Group implements InstancierInterface
         return $this->users->map(function ($value) {
             return $value->getUser();
         });
+    }
+
+    /**
+     * @Serializer\VirtualProperty
+     * @Serializer\Groups({"group_details"})
+     *
+     * @return integer
+     */
+    public function getUsersCount(): int
+    {
+        return $this->users->count();
     }
 
     public function getGroupUserEntry(User $user): GroupUser

@@ -41,11 +41,22 @@ export class InstanceManager extends Component {
                 label: group.name,
                 type: 'group',
                 owner: {
-                    name: this.props.user.name
+                    id: group.owner.id,
+                    name: group.owner.name
                 },
                 ...group
             } : null;
         }).filter(value => value !== null);
+
+        // add current user option
+        this.viewAsOptions.unshift({
+            value: props.user.id,
+            label: props.user.name,
+            type: 'user',
+            name: props.user.name,
+            owner: null,
+            children: []
+        });
     }
 
     /**
@@ -61,8 +72,16 @@ export class InstanceManager extends Component {
         return this.state.user.id === user.id;
     }
 
-    loadImpersonationOptions = () => {
+    filterViewAsOptions = (input) => {
+        return this.viewAsOptions.filter(
+            i => i.label.toLowerCase().includes(input.toLowerCase())
+        )
+    }
 
+    loadImpersonationOptions = (input) => {
+        return new Promise(resolve => {
+            resolve(this.filterViewAsOptions(input));
+        });
     }
 
     fetchInstance = (uuid, type = 'lab') => {
@@ -83,11 +102,13 @@ export class InstanceManager extends Component {
     }
 
     render() {
+        console.log(this.viewAsOptions);
         return (<>
             View as {this.state.viewAs.name}
             <GroupSelect
                 defaultOptions={this.viewAsOptions}
                 loadOptions={this.loadImpersonationOptions}
+                className="mb-2"
             />
 
             <InstanceList instances={this.state.labInstance.deviceInstances} onStateUpdate={this.onStateUpdate} />

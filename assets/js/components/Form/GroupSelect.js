@@ -24,16 +24,24 @@ const ValueContainer = ({ children, ...props }) => (
 );
 
 const Option = props => {
-    console.log(props);
+    // console.log(props);
     return (
         <components.Option {...props}>
             <div className="d-flex">
                 <div className="mr-2">
-                    <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s36 rounded mr-2"}>{props.data.name.charAt(0).toUpperCase()}</div>
+                    {props.data.type && props.data.type == 'user' ?
+                        <div className="s36 mr-2">
+                            <img src={"/users/" + props.data.value + "/picture?size=36"} className="rounded-circle"></img>
+                        </div>
+                        :
+                        <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s36 rounded mr-2"}>{props.data.name.charAt(0).toUpperCase()}</div>
+                    }
                 </div>
                 <div className="d-flex flex-column">
                     <div style={{lineHeight: 16 + 'px'}}>{getPath(props.data)} <span className="fw600">{props.data.name}</span></div>
-                    <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
+                    {props.data.owner != undefined &&
+                        <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
+                    }
                 </div>
                 <div className="d-flex flex-grow-1"></div>
                 <div className="d-flex align-items-center">
@@ -44,7 +52,7 @@ const Option = props => {
                         <div className="mr-2"><SVG name="bookmark"></SVG> {props.data.activities.length}</div>
                     </OverlayTrigger> */}
                     <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
-                        <div><SVG name="users"></SVG> {props.data.users.length}</div>
+                        <div><SVG name="users"></SVG> {props.data.usersCount}</div>
                     </OverlayTrigger>
                 </div>
             </div>
@@ -77,15 +85,6 @@ export default class GroupSelect extends Component {
             return response.data.map(group => {
                 return {...group, value: group.id, label: group.name};
             });
-            // let options = [];
-            // response.data.forEach(group => {
-            //     options.push({
-            //         ...group,
-            //         value: group.id,
-            //         label: group.name,
-            //     })
-            // });
-            // return options;
         });
     }
 
@@ -93,7 +92,7 @@ export default class GroupSelect extends Component {
         return (
             <AsyncSelect
                 loadOptions={this.props.loadOptions || this.loadOptions}
-                className='react-select-container'
+                className={'react-select-container ' + (this.props.className || "")}
                 classNamePrefix="react-select"
                 cacheOptions
                 defaultOptions={this.props.defaultOptions || true}

@@ -22,8 +22,6 @@ fos_rest:
         messages:
            # 'Symfony\Component\Security\Core\Exception\AccessDeniedException': false
            # 'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
-    service:
-        templating: twig
     param_fetcher_listener:  true
 #    allowed_methods_listener:  true
     # view:
