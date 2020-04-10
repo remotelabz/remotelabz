@@ -186,10 +186,10 @@
         }
     },
     "limenius/react-bundle": {
-        "version": "v4.0.0"
+        "version": "dev-master"
     },
     "limenius/react-renderer": {
-        "version": "v4.0.2"
+        "version": "v5.0.0"
     },
     "michelf/php-markdown": {
         "version": "1.8.0"
@@ -201,7 +201,7 @@
         "version": "1.9.3"
     },
     "nacmartin/phpexecjs": {
-        "version": "v2.0.0"
+        "version": "v3.0.0"
     },
     "namshi/jose": {
         "version": "7.2.3"
@@ -586,15 +586,6 @@
     },
     "symfony/yaml": {
         "version": "v4.1.7"
-    },
-    "twig/extensions": {
-        "version": "1.0",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "master",
-            "version": "1.0",
-            "ref": "ddb2e0a77773b7fd75d8d649545f174e664500ab"
-        }
     },
     "twig/twig": {
         "version": "v2.5.0"

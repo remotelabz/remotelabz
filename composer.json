@@ -13,7 +13,8 @@
         "jms/serializer-bundle": "^3.1",
         "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
-        "limenius/react-bundle": "^5.0",
+        "limenius/react-bundle": "5.0.4",
+        "limenius/react-renderer": "5.0.3",
         "myclabs/deep-copy": "^1.9",
         "onurb/doctrine-yuml-bundle": "dev-master",
         "s1lentium/iptools": "^1.1",
@@ -37,12 +38,11 @@
         "symfony/swiftmailer-bundle": "^3.2",
         "symfony/templating": "5.0.*",
         "symfony/translation": "^5.0",
-        "symfony/twig-bundle": "5.0.*",
+        "symfony/twig-bundle": "^5.0",
         "symfony/validator": "^5.0",
         "symfony/web-link": "^5.0",
         "symfony/webpack-encore-bundle": "^1.0",
-        "symfony/yaml": "^5.0",
-        "twig/extensions": "^1.5"
+        "symfony/yaml": "^5.0"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.8",
@@ -106,6 +106,14 @@
         {
             "type": "vcs",
             "url": "https://gitlab.remotelabz.com/jhubert/doctrine-yuml-bundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.remotelabz.com/jhubert/ReactBundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.remotelabz.com/jhubert/ReactRenderer.git"
         }
     ]
 }
