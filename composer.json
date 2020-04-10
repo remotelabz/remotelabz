@@ -85,10 +85,12 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
         ],
         "post-update-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
         ]
     },
     "conflict": {
