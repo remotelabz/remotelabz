@@ -22,21 +22,21 @@
         "typescript": "^3.6.3",
         "webpack-notifier": "1.6.0"
     },
-    "license": "UNLICENSED",
+    "license": "GNU",
     "private": true,
     "scripts": {
         "start": "symfony server:start",
         "stop": "symfony server:stop",
         "dump-routes": "php bin/console fos:js-routing:dump --format=json --target public/fos_js_routes.json",
         "watch": "encore dev --watch",
-        "build": "encore production --progress",
-        "build-dev": "encore dev",
+        "build": "encore dev",
+        "prod": "encore production --progress",
         "consume": "php bin/console messenger:consume front -vv",
-        "test": "\"php bin/phpunit\" || cd .",
+        "test": "php bin/phpunit || cd .",
         "reset-database": "php bin/console doctrine:database:drop --force && php bin/console doctrine:database:create && php bin/console doctrine:migrations:migrate -n && php bin/console doctrine:fixtures:load -n",
-        "install": "php composer.phar install",
+        "install": "php composer.phar install && npm run build",
         "start-proxy": "configurable-http-proxy --port 8888",
-        "update": "php composer.phar update"
+        "update": "php composer.phar update && yarn upgrade"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.11.2",
