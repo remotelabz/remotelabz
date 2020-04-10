@@ -158,7 +158,7 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @return Collection|Instance[]
      */
-    public function getInstances(): Collection
+    public function getInstances()
     {
         return $this->instances;
     }

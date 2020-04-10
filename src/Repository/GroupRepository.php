@@ -22,33 +22,21 @@ class GroupRepository extends ServiceEntityRepository
 
     public function findOneBySlug(string $slug): ?Group
     {
-        $splitedSlug = explode('/', $slug);
+        $slugs = array_reverse(explode('/', $slug));
 
-        $qb = $this->createQueryBuilder(chr(65))
-            ->andWhere(chr(65) . '.slug = :slug')
-            ->setParameter('slug', $splitedSlug[sizeof($splitedSlug) - 1])
-        ;
+        $group = $this->findOneBy(['slug' => array_pop($slugs), 'parent' => null]);
 
-        if (sizeof($splitedSlug) > 1) {
-            for ($i=0; $i < sizeof($splitedSlug) - 1; $i++) {
-                $qb->andWhere(chr(65 + $i) . '.parent is not null')
-                    ->leftJoin(chr(65 + $i) . '.parent', chr(65 + $i + 1))
-                    ->andWhere(chr(65 + $i) . '.slug = :' . chr(65 + $i) . 'Slug')
-                    ->setParameter(chr(65 + $i) . 'Slug', $splitedSlug[sizeof($splitedSlug) - 1 - $i])
-                ;
+        if ($group && !empty($slugs)) {
+            while (!empty($slugs) && $group) {
+                $slug = array_pop($slugs);
+
+                $group = $group->getChildren()->filter(function ($child) use ($slug, $group) {
+                    return $child->getSlug() == $slug && $child->getParent()->getId() == $group->getId();
+                })->first();
             }
-            // $qb->andWhere('g.parent is not null')
-            //     ->leftJoin('g.parent', 'p')
-            //     ->andWhere('p.slug = :parentSlug')
-            //     ->setParameter('parentSlug', $splitedSlug[sizeof($splitedSlug) - 2])
-            // ;
-        } else {
-            $qb->andWhere(chr(65) . '.parent is null');
         }
 
-        return $qb->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $group ?: null;
     }
 
     // /**

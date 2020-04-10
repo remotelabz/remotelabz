@@ -98,7 +98,7 @@ class GroupUser
      *
      * @return Collection
      */
-    public function getPermissions(): Collection
+    public function getPermissions()
     {
         return $this->permissions;
     }

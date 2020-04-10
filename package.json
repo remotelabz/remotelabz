@@ -26,11 +26,17 @@
     "private": true,
     "scripts": {
         "start": "symfony server:start",
-        "dev-server": "encore dev-server",
-        "dev": "encore dev",
+        "stop": "symfony server:stop",
+        "dump-routes": "php bin/console fos:js-routing:dump --format=json --target public/fos_js_routes.json",
         "watch": "encore dev --watch",
         "build": "encore production --progress",
-        "consume": "php bin/console messenger:consume front -vv"
+        "build-dev": "encore dev",
+        "consume": "php bin/console messenger:consume front -vv",
+        "test": "\"php bin/phpunit\" || cd .",
+        "reset-database": "php bin/console doctrine:database:drop --force && php bin/console doctrine:database:create && php bin/console doctrine:migrations:migrate -n && php bin/console doctrine:fixtures:load -n",
+        "install": "php composer.phar install",
+        "start-proxy": "configurable-http-proxy --port 8888",
+        "update": "php composer.phar update"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.11.2",

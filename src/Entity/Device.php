@@ -252,7 +252,7 @@ class Device implements InstanciableInterface
     /**
      * @return Collection|NetworkInterface[]
      */
-    public function getNetworkInterfaces(): Collection
+    public function getNetworkInterfaces()
     {
         return $this->networkInterfaces;
     }
@@ -283,7 +283,7 @@ class Device implements InstanciableInterface
     /**
      * @return Collection|Lab[]
      */
-    public function getLabs(): Collection
+    public function getLabs()
     {
         return $this->labs;
     }
@@ -383,7 +383,7 @@ class Device implements InstanciableInterface
     /**
      * @return Collection|Instance[]
      */
-    public function getInstances(): Collection
+    public function getInstances()
     {
         return $this->instances;
     }

@@ -2,9 +2,14 @@
 
 namespace App\Instance;
 
+use Exception;
+use App\Entity\Lab;
 use GuzzleHttp\Client;
+use App\Entity\LabInstance;
 use Psr\Log\LoggerInterface;
+use App\Entity\DeviceInstance;
 use App\Message\InstanceMessage;
+use App\Entity\InstancierInterface;
 use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
 use Doctrine\ORM\EntityManagerInterface;
@@ -47,26 +52,125 @@ class InstanceManager
     }
 
     /**
-     * Start a device instance by it's UUID.
-     *
-     * @param string $uuid
+     * Creates a new lab instance.
+     * 
+     * @param Lab $lab The lab to instanciate.
+     * @param InstancierInterface $instancier The owner of the new instance.
+     * @return LabInstance
+     */
+    public function create(Lab $lab, InstancierInterface $instancier)
+    {
+        $labInstance = LabInstance::create()
+            ->setLab($lab)
+            ->setInternetConnected(false)
+            ->setInterconnected(false);
+
+        switch ($instancier->getType()) {
+            case 'user':
+                $labInstance->setUser($instancier)
+                    ->setOwnedBy($instancier->getType());
+                break;
+
+            case 'group':
+                $labInstance->setGroup($instancier);
+                break;
+
+            default:
+                throw new Exception('Instancier must be an instance of User or Group.');
+        }
+
+        $labInstance
+            ->setOwnedBy($instancier->getType())
+            ->populate();
+
+        $this->entityManager->persist($labInstance);
+        $this->entityManager->flush();
+
+        return $labInstance;
+    }
+
+    /**
+     * Deletes a lab instance.
+     * 
+     * @param LabInstance $lab The lab instance to delete.
+     * 
      * @return void
      */
-    public function start(string $uuid)
+    public function delete(LabInstance $labInstance)
     {
-        $deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+        $this->entityManager->remove($labInstance);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Start a device instance.
+     *
+     * @param DeviceInstance $deviceInstance
+     * @return void
+     */
+    public function start(DeviceInstance $deviceInstance)
+    {
         $device = $deviceInstance->getDevice();
         $lab = $deviceInstance->getLab();
         $user = $deviceInstance->getUser();
         $this->logger->debug("Starting device instance with UUID " . $uuid . ".");
 
+        /** @var NetworkInterfaceInstance */
+        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
+            $networkInterface = $networkInterfaceInstance->getNetworkInterface();
+            $this->logger->debug('Looking for Network interface ' . $networkInterface->getName() . ' of device ' . $device->getName() . ' in device instance ' . $uuid);
+
+            // if vnc access is requested, ask for a free port and register it
+            if ('VNC' == $networkInterface->getSettings()->getProtocol()) {
+                $this->logger->debug('Network interface ' . $networkInterface->getName() . ' of device ' . $device->getName() . ' for lab ' . $lab->getName() . ' uses for VNC');
+                $remotePort = $this->getRemoteAvailablePort();
+                $networkInterfaceInstance->setRemotePort($remotePort);
+                try {
+                    $this->createDeviceInstanceProxyRoute($deviceInstance->getUuid(), $remotePort);
+                } catch (ServerException $exception) {
+                    $this->logger->error($exception->getResponse()->getBody()->getContents());
+                    throw $exception;
+                }
+            } else {
+                $this->logger->debug('Network interface ' . $networkInterface->getName() . ' of device ' . $device->getName() . ' for lab ' . $lab->getName() . ' no control protocol defined');
+            }
+
+            $this->entityManager->persist($networkInterfaceInstance);
+        }
+
+        $deviceInstance->setState(InstanceState::STARTING);
+        // $networkInterfaceInstance don't exist outside of this block. We have to save it before to quit this block
+        $this->entityManager->flush();
+
+        $context = SerializationContext::create()->setGroups("start_lab");
+        $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+
+        $this->logger->info('Sending device instance ' . $uuid . ' start message.', json_decode($labJson, true));
+        $this->bus->dispatch(
+            new InstanceMessage($labJson, $uuid, InstanceMessage::ACTION_START)
+        );
+    }
+
+    /**
+     * Stop a device instance.
+     */
+    public function stop(DeviceInstance $deviceInstance)
+    {
+        $device = $deviceInstance->getDevice();
+        $uuid = $device->getUuid();
+        $lab = $deviceInstance->getLab();
+        $user = $deviceInstance->getUser();
+        $this->logger->debug("Stopping device instance with UUID " . $uuid . ".");
+
+        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
+        }
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             $this->logger->debug("Looking for Network interface " . $networkInterface->getName() . " of device " . $device->getName() . " in device instance " . $uuid);
+            $deviceInstance->getNetworkInterfaceInstance($networkInterface);
 
-            if ($deviceInstance->getNetworkInterfaceInstance($networkInterface) == null) {
+            if ($deviceInstance->getNetworkInterfaceInstance($networkInterface)) {
                 $networkInterfaceInstance = NetworkInterfaceInstance::create()
                     ->setNetworkInterface($networkInterface)
-                    ->setLab($lab)
                     ->setOwnedBy($deviceInstance->getOwnedBy());
                 $this->logger->debug("Network interface instance created by " . $user->getUsername() . " for lab " . $lab->getName() . " and for " . $networkInterface->getName());
 
@@ -125,8 +229,6 @@ class InstanceManager
      * @param string $uuid
      * @param integer $remotePort
      * 
-     * @throws RequestException 
-     * 
      * @return void
      */
     private function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
@@ -136,18 +238,13 @@ class InstanceManager
         $url = 'http://' . getenv('WEBSOCKET_PROXY_SERVER') . ':' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/device/' . $uuid;
         $this->logger->debug("Create route in proxy " . $url);
 
-        try {
-            $client->post($url, [
-                'body' => json_encode([
-                    'target' => 'ws://' . getenv('WORKER_SERVER') . ':' . ($remotePort + 1000) . ''
-                ]),
-                'headers' => [
-                    'Content-Type' => 'application/json'
-                ]
-            ]);
-        } catch (RequestException $exception) {
-        } catch (ServerException $exception) {
-            throw $exception;
-        }
+        $client->post($url, [
+            'body' => json_encode([
+                'target' => 'ws://' . getenv('WORKER_SERVER') . ':' . ($remotePort + 1000) . ''
+            ]),
+            'headers' => [
+                'Content-Type' => 'application/json'
+            ]
+        ]);
     }
 }

@@ -54,7 +54,7 @@ class Network
     /**
      * @return Collection|IP[]
      */
-    public function getIps(): Collection
+    public function getIps()
     {
         return $this->ips;
     }

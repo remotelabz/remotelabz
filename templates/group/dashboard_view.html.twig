@@ -71,13 +71,13 @@
             <ul class="nav-links nav nav-tabs">
                 <li class="active">
                     <a href="#subs" id="subs">
-                        <span>Subgroups and activities</span>
+                        <span>Subgroups</span>
                     </a>
                 </li>
             </ul>
         </div>
         <div class="labs-panel">
-            {% if group.children|length == 0 and group.activities|length == 0 %}
+            {% if group.children|length == 0 %}
                 <div class="w-100 d-flex justify-content-center py-4">
                     None
                 </div>

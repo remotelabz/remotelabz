@@ -6,27 +6,18 @@ use App\Entity\Device;
 use App\Form\DeviceType;
 
 use App\Entity\EditorData;
-use App\Service\FileUploader;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
-use JMS\Serializer\SerializerInterface;
 use App\Repository\EditorDataRepository;
 use Doctrine\Common\Collections\Criteria;
-use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use FOS\RestBundle\Controller\AbstractFOSRestController;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class DeviceController extends AbstractFOSRestController
+class DeviceController extends Controller
 {
     private $deviceRepository;
 
@@ -50,26 +41,18 @@ class DeviceController extends AbstractFOSRestController
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
             ->orderBy([
                 'id' => Criteria::DESC
-            ])
-        ;
+            ]);
 
         $devices = $this->deviceRepository->matching($criteria);
 
-        $context = new Context();
-        $context
-            ->addGroup("device")
-        ;
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($devices->getValues());
+        }
 
-        $view = $this->view($devices->getValues())
-            ->setTemplate("device/index.html.twig")
-            ->setTemplateData([
-                'devices' => $devices,
-                'search' => $search
-            ])
-            ->setContext($context)
-        ;
-
-        return $this->handleView($view);
+        return $this->render('device/index.html.twig', [
+            'devices' => $devices,
+            'search' => $search
+        ]);
     }
 
     /**
@@ -78,17 +61,19 @@ class DeviceController extends AbstractFOSRestController
      * 
      * @Rest\Get("/api/devices/{id<\d+>}", name="api_get_device")
      */
-    public function showAction(int $id)
+    public function showAction(Request $request, int $id)
     {
-        $context = new Context();
-        $context->addGroup("device");
+        $device = $this->deviceRepository->find($id);
 
-        $view = $this->view($this->deviceRepository->find($id))
-            ->setTemplate("device/view.html.twig")
-            ->setContext($context)
-        ;
+        if (!$device) {
+            throw new NotFoundHttpException();
+        }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($device);
+        }
+
+        return $this->render('device/view.html.twig', ['device' => $device]);
     }
 
     /**
@@ -105,15 +90,14 @@ class DeviceController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
             $deviceForm->submit($device);
-        } 
+        }
 
         $view = $this->view($deviceForm)
             ->setTemplate("device/new.html.twig")
             ->setTemplateData([
                 "form" => $deviceForm->createView(),
                 "data" => $device
-            ])
-        ;
+            ]);
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
@@ -130,12 +114,14 @@ class DeviceController extends AbstractFOSRestController
             $view->setData($device);
             $context = new Context();
             $context
-                ->addGroup("device")
-            ;
+                ->addGroup("device");
             $view->setContext($context);
         }
 
-        return $this->handleView($view);
+        return $this->render('device/new.html.twig', [
+            'form' => $deviceForm->createView(),
+            'data' => $device
+        ]);
     }
 
     /**
@@ -157,15 +143,14 @@ class DeviceController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
             $deviceForm->submit($device, false);
-        } 
+        }
 
         $view = $this->view($deviceForm)
             ->setTemplate("device/new.html.twig")
             ->setTemplateData([
                 "form" => $deviceForm->createView(),
                 "data" => $device
-            ])
-        ;
+            ]);
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
@@ -233,7 +218,7 @@ class DeviceController extends AbstractFOSRestController
 
         return new JsonResponse();
     }
-        
+
     /**
      * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
      * 
@@ -254,10 +239,9 @@ class DeviceController extends AbstractFOSRestController
         if ($request->getRequestFormat() === 'html') {
             $this->addFlash('success', $device->getName() . ' has been deleted.');
         }
-        
+
         $view = $this->view()
-            ->setLocation($this->generateUrl('devices'));
-        ;
+            ->setLocation($this->generateUrl('devices'));;
 
         return $this->handleView($view);
     }

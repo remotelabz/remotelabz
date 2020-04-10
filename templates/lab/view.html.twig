@@ -20,9 +20,6 @@
     </div>
     <div class="content-title-actions">
         {% if labInstance is empty %} 
-            <a href="{{ path('start_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                {{ 'Start all'|trans }}
-            </a>
             {% if is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER") %}
                 <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> 
                     {{ 'Edit'|trans }}
@@ -30,37 +27,6 @@
                 {# <a href="{{ path('delete_lab', {'id': lab.id}) }}" class="btn btn-danger" role="button">
                     {{ 'Delete'|trans }}
                 </a> #}
-            {% endif %}
-        {% elseif not labInstance.isStarted %}
-            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                {{ 'Stop all'|trans }}
-            </a>
-        {% else %}
-            <a href="{{ path('stop_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                    {{ 'Stop all'|trans }}
-            </a>
-        {% endif %}
-        <!-- Connect -->
-        {% if labInstance %}
-            {% if (is_granted("ROLE_USER") and labInstance.activity and labInstance.activity.internetAllowed) or is_granted("ROLE_TEACHER") or is_granted("ROLE_ADMINISTRATOR") %}                                          
-                {% if (not labInstance.internetConnected) %}
-                    <a href="{{ path('connect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                        {{ 'Connect'|trans }}
-                    </a>
-                {% else %}
-                    <a href="{{ path('disconnect_internet', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                        {{ 'Disconnect'|trans }}
-                    </a>
-                {% endif %}
-                {% if (not labInstance.IsInterconnected) %}
-                    <a href="{{ path('interconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                        {{ 'Interconnect'|trans }}
-                    </a>
-                {% else %}
-                    <a href="{{ path('disinterconnect', {'id': lab.id}) }}" class="btn btn-primary" role="button">
-                        {{ 'Dis-interconnect'|trans }}
-                    </a>
-                {% endif %}
             {% endif %}
         {% endif %}
 
@@ -70,97 +36,19 @@
     </div>
 </div>
 <div class="content-body">
-    <h1 class="mb-0">{{ lab.name }}</h1>
+    <h1 class="mb-4">{{ lab.name }}</h1>
+
+    <div class="row">
+        <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
+    </div>
 </div>
 {% if lab.description is defined %}
     {{ lab.description|markdown }}
 {% else %}
     <p class="text-muted">No description</p>
 {% endif %}
-<br>
-<div class="row mb-3">
-    <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
-</div>
-<div class="row">
-    <div class="col">
-        <h3>Devices</h3>
-        <hr>
-
-        {% for device in lab.devices %}
-        {% set deviceInstance = device.getUserInstance(app.user) %}
-        <div class="wrapper d-flex justify-content-between align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
-            {% if is_granted("ROLE_ADMINISTRATOR") %}
-                {% set path = 'show_device' %}
-            {% else %}
-                {% set path = 'show_device_public' %}
-            {% endif %}
-            <a href="{{ path(path, {'id': device.id}) }}">
-                {{ device.name }}
-            </a>
-            {% set isVNC = false %}
-            {% for networkInterface in device.networkInterfaces %}
-                {% if networkInterface.settings is defined %}
-                    {% if networkInterface.settings.protocol == "VNC" %}
-                        {% set isVNC = true %}
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-            
-            <div>
-                {%- if (deviceInstance is not null and deviceInstance.state == "stopped") or deviceInstance is null -%}
-                    <form action="{{ path('start_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" method="GET" class="d-flex justify-content-between">
-                        <!-- <div class="dropdown">
-                            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Start for
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <h6 class="dropdown-header">User</h6>
-                                <a class="dropdown-item" href="#">Me</a>
-                                <h6 class="dropdown-header">Groups</h6>
-                                <a class="dropdown-item" href="#">Action</a>
-                            </div>
-                        </div> -->
-                        {# <div data-toggle="tooltip" data-placement="top" title="Start for">
-                            {{ react_component('InstanceOwnerSelector') }}
-                        </div> #}
-                        <button type="submit" class="btn btn-success ml-3" role="button" title="Start device" data-toggle="tooltip" data-placement="top">
-                            {{ svg('play') }}
-                        </button>
-                    </form>
-                    
-                {%- endif -%}
-
-                {% if isVNC and deviceStarted[device.id] %}
-                    <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id}) }}" class="btn btn-primary" role="button" title="View console" data-toggle="tooltip" data-placement="top">
-                        {{ svg('eye') }}
-                    </a>
-                {% endif %}
-                
-                {%- if deviceInstance is not null and deviceInstance.state == "started" -%}
-                    <a href="{{ path('stop_lab_device', {'labId': lab.id, 'deviceId': device.id}) }}" class="btn btn-danger" role="button" title="Stop device" data-toggle="tooltip" data-placement="top">
-                        {{ svg('stop') }}
-                    </a>
-                {%- endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    <div class="col">
-        <h3>Related activities</h3>
-        <hr>
-
-        {% for activity in lab.activities %}
-        <div class="wrapper align-items-center py-4 {% if not loop.last %}border-bottom{% endif %}">
-            <a href="{{ path('show_activity', {'id': activity.id}) }}">
-                {{- activity.name -}}
-            </a> (#{{ activity.id }})
-        </div>
-        {% endfor %}
-    </div>
-</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('lab') }} #}
 {% endblock %}

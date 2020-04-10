@@ -8,7 +8,6 @@ use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceInstanceRepository")
- * @Serializer\XmlRoot("instance")
  */
 class NetworkInterfaceInstance extends Instance
 {
@@ -16,7 +15,6 @@ class NetworkInterfaceInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"primary_key"})
      */
     private $id;
@@ -27,29 +25,22 @@ class NetworkInterfaceInstance extends Instance
      */
     protected $networkInterface;
 
-    // /**
-    //  * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="networkInterfaceInstances")
-    //  * @Serializer\Groups({"user"})
-    //  */
-    // protected $user;
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\DeviceInstance", inversedBy="networkInterfaceInstances", cascade={"persist"})
+     * @ORM\JoinColumn(onDelete="CASCADE")
+     */
+    private $deviceInstance;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $remotePort;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="networkInterfaceInstances")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $lab;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\DeviceInstance", inversedBy="networkInterfaceInstances")
-     */
-    private $deviceInstance;
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
     public function getId(): ?int
     {
@@ -68,18 +59,6 @@ class NetworkInterfaceInstance extends Instance
         return $this;
     }
 
-    // public function getUser(): ?User
-    // {
-    //     return $this->user;
-    // }
-
-    // public function setUser(?User $user): self
-    // {
-    //     $this->user = $user;
-
-    //     return $this;
-    // }
-
     public function getRemotePort(): ?int
     {
         return $this->remotePort;
@@ -88,18 +67,6 @@ class NetworkInterfaceInstance extends Instance
     public function setRemotePort(int $remotePort): self
     {
         $this->remotePort = $remotePort;
-
-        return $this;
-    }
-
-    public function getLab(): ?Lab
-    {
-        return $this->lab;
-    }
-
-    public function setLab(?Lab $lab): self
-    {
-        $this->lab = $lab;
 
         return $this;
     }
@@ -114,5 +81,9 @@ class NetworkInterfaceInstance extends Instance
         $this->deviceInstance = $deviceInstance;
 
         return $this;
+    }
+
+    public function populate()
+    {
     }
 }

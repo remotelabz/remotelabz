@@ -18,7 +18,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  * @UniqueEntity(
  *      fields={"slug", "parent"},
  *      errorPath="slug",
- *      message="Group URL has already been taken."
+ *      message="Another group with this slug already exists in this group.",
+ *      ignoreNull=false
  * )
  */
 class Group implements InstancierInterface
@@ -33,7 +34,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user", "instance_manager"})
      */
     private $name;
 
@@ -81,7 +82,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="children")
-     * @Serializer\Groups({"group_parent", "group_explore"})
+     * @Serializer\Groups({"group_parent", "group_explore", "group_details", "instance_manager"})
      */
     private $parent;
 
@@ -93,15 +94,9 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"groups", "group_tree"})
+     * @Serializer\Groups({"groups", "group_tree", "user", "instance_manager"})
      */
     private $uuid;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="_group")
-     * @Serializer\Groups({"group_activities", "group_tree", "group_explore"})
-     */
-    private $activities;
 
     public const VISIBILITY_PRIVATE  = 0;
     public const VISIBILITY_INTERNAL = 1;
@@ -162,10 +157,11 @@ class Group implements InstancierInterface
     }
 
     /**
+     * @return User
+     * 
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"groups", "group_tree", "group_explore", "group_details"})
-     * @return User
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "group_details", "user"})
      */
     public function getOwner(): User
     {
@@ -229,7 +225,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user", "instance_manager"})
      */
     public function getPath(): ?string
     {
@@ -271,7 +267,7 @@ class Group implements InstancierInterface
      *
      * @return Collection|User[]
      */
-    public function getUsers(): Collection
+    public function getUsers()
     {
         return $this->users->map(function ($value) {
             return $value->getUser();
@@ -375,9 +371,9 @@ class Group implements InstancierInterface
     }
 
     /**
-     * @return Collection|self[]
+     * @return Collection|Group[]
      */
-    public function getChildren(): Collection
+    public function getChildren()
     {
         return $this->children;
     }
@@ -405,7 +401,7 @@ class Group implements InstancierInterface
         return $this;
     }
 
-    public function getUuid(): ?string
+    public function getUuid(): string
     {
         return $this->uuid;
     }
@@ -417,34 +413,8 @@ class Group implements InstancierInterface
         return $this;
     }
 
-    /**
-     * @return Collection|Activity[]
-     */
-    public function getActivities(): Collection
+    public function getType(): string
     {
-        return $this->activities;
-    }
-
-    public function addActivity(Activity $activity): self
-    {
-        if (!$this->activities->contains($activity)) {
-            $this->activities[] = $activity;
-            $activity->setGroup($this);
-        }
-
-        return $this;
-    }
-
-    public function removeActivity(Activity $activity): self
-    {
-        if ($this->activities->contains($activity)) {
-            $this->activities->removeElement($activity);
-            // set the owning side to null (unless already changed)
-            if ($activity->getGroup() === $this) {
-                $activity->setGroup(null);
-            }
-        }
-
-        return $this;
+        return 'group';
     }
 }

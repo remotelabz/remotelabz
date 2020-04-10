@@ -2,22 +2,23 @@
 
 namespace App\Controller;
 
-use App\Utils\JsonRequest;
+use Exception;
 use App\Instance\InstanceManager;
+use App\Repository\LabRepository;
 use App\Repository\UserRepository;
+use App\Entity\InstancierInterface;
 use App\Repository\GroupRepository;
-use FOS\RestBundle\Context\Context;
+use App\Exception\InstanceException;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
-use FOS\RestBundle\Controller\AbstractFOSRestController;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class InstanceController extends AbstractFOSRestController
+class InstanceController extends Controller
 {
     private $labInstanceRepository;
     private $deviceInstanceRepository;
@@ -40,6 +41,10 @@ class InstanceController extends AbstractFOSRestController
      */
     public function indexAction(Request $request)
     {
+        if ($request->query->has('uuid')) {
+            return $this->redirectToRoute('api_get_instance_by_uuid', ['uuid' => $request->query->get('uuid')]);
+        }
+
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', '');
         $type = $request->query->get('type', 'lab');
@@ -52,22 +57,55 @@ class InstanceController extends AbstractFOSRestController
             case 'device':
                 $data = $this->deviceInstanceRepository->findAll();
                 break;
+
+            default:
+                throw new BadRequestHttpException('Unknown instance type.');
         }
 
-        $context = new Context();
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($data, 200, [], ["instances"]);
+        }
 
-        $view = $this->view($data)
-            ->setTemplate("instance/index.html.twig")
-            ->setTemplateData([
-                'labInstances' => $this->labInstanceRepository->findAll(),
-                'deviceInstances' => $this->deviceInstanceRepository->findAll(),
-                'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll(),
-                'search' => $search,
-                'filter' => $filter
-            ])
-            ->setContext($context->setGroups(["instances"]));
+        return $this->render('instance/index.html.twig', [
+            'labInstances' => $this->labInstanceRepository->findAll(),
+            'deviceInstances' => $this->deviceInstanceRepository->findAll(),
+            'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll(),
+            'search' => $search,
+            'filter' => $filter
+        ]);
+    }
 
-        return $this->handleView($view);
+    /**
+     * @Rest\Post("/api/instances/create", name="api_create_instance")
+     */
+    public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
+    {
+        $labUuid = $request->request->get('lab');
+        $instancierUuid = $request->request->get('instancier');
+        $instancierType = $request->request->get('instancierType', 'group');
+
+        switch ($instancierType) {
+            case 'user':
+                $repository = $userRepository;
+                break;
+            case 'group':
+                $repository = $groupRepository;
+                break;
+            default:
+                throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
+        }
+
+        /** @var InstancierInterface $instancier */
+        $instancier = $repository->findOneBy(['uuid' => $instancierUuid]);
+        $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
+
+        try {
+            $instance = $instanceManager->create($lab, $instancier);
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+        return $this->json($instance, 200, [], ["instances", "instance_manager", "user"]);
     }
 
     /**
@@ -75,17 +113,27 @@ class InstanceController extends AbstractFOSRestController
      */
     public function startByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
-        $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
-
-        if (null === $data) { // uuid not found
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
 
-        $instanceManager->start($uuid);
+        $instanceManager->start($deviceInstance);
 
-        $view = $this->view(null, 200);
+        return $this->json();
+    }
 
-        return $this->handleView($view);
+    /**
+     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_start_instance_by_uuid")
+     */
+    public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->stop($deviceInstance);
+
+        return $this->json();
     }
 
     /**
@@ -95,32 +143,22 @@ class InstanceController extends AbstractFOSRestController
     {
         $data = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
 
-        if (null === $data) {
-            $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
-        }
+        if (!$data) $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+        // uuid not found
+        if (!$data) throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
 
-        if (null === $data) { // uuid not found
-            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
-        }
-
-        $context = new Context();
-        $view = $this->view($data)
-            ->setContext($context->setGroups(["instances", "instance_manager"]));
-
-        return $this->handleView($view);
+        return $this->json($data, 200, [], ["instances", "instance_manager"]);
     }
 
     /**
-     * @Rest\Get("/api/instances/by-user/{userId}", name="api_get_instance_by_user")
+     * @Rest\Get("/api/instances/by-user/{uuid}", name="api_get_instance_by_user")
      */
-    public function fetchByUserAction(Request $request, string $userId, UserRepository $userRepository)
+    public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
     {
         $type = $request->query->get('type', 'lab');
-        $user = is_numeric($userId) ? $userRepository->find($userId) : $userRepository->findOneBy(['email' => $userId]);
+        $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
 
-        if (null === $user) {
-            throw new NotFoundHttpException('User not found.');
-        }
+        if (!$user) throw new NotFoundHttpException('User not found.');
 
         switch ($type) {
             case 'lab':
@@ -130,26 +168,25 @@ class InstanceController extends AbstractFOSRestController
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['user' => $user]);
                 break;
+
+            default:
+                throw new BadRequestHttpException('Unknown instance type.');
         }
 
-        $context = new Context();
-        $view = $this->view($data)
-            ->setContext($context->setGroups(["instances"]));
+        if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->handleView($view);
+        return $this->json($data, 200, [], ['instance_manager', 'user']);
     }
 
     /**
-     * @Rest\Get("/api/instances/by-group/{groupId}", name="api_get_instance_by_group")
+     * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group")
      */
-    public function fetchByGroupAction(Request $request, string $groupId, GroupRepository $groupRepository)
+    public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
     {
         $type = $request->query->get('type', 'lab');
-        $group = is_numeric($groupId) ? $groupRepository->find($groupId) : $groupRepository->findOneBy(['uuid' => $groupId]);
+        $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
 
-        if (null === $group) {
-            throw new NotFoundHttpException('Group not found.');
-        }
+        if (!$group) throw new NotFoundHttpException('Group not found.');
 
         switch ($type) {
             case 'lab':
@@ -159,19 +196,33 @@ class InstanceController extends AbstractFOSRestController
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['_group' => $group]);
                 break;
+
+            default:
+                throw new BadRequestHttpException('Unknown instance type.');
         }
 
-        $context = new Context();
-        $view = $this->view($data)
-            ->setContext($context->setGroups(["instances"]));
+        if (!$data) throw new NotFoundHttpException();
 
-        return $this->handleView($view);
+        return $this->json($data, 200, [], ['instance_manager']);
+    }
+
+    /**
+     * @Rest\Delete("/api/instances/{uuid}", name="api_delete_instance")
+     */
+    public function deleteRestAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
+        }
+
+        $instanceManager->delete($instance);
+
+        return $this->json();
     }
 
     /**
      * @Route("/admin/instances/{type}/{id<\d+>}/delete", name="delete_instance", methods="GET")
      * 
-     * @Rest\Delete("/api/instances/{type}/{id<\d+>}", name="api_delete_instance")
      */
     public function deleteAction(Request $request, string $type, int $id)
     {
@@ -179,42 +230,33 @@ class InstanceController extends AbstractFOSRestController
             case 'lab':
                 $repository = $this->labInstanceRepository;
                 break;
+
             case 'device':
                 $repository = $this->deviceInstanceRepository;
                 break;
+
             case 'network-interface':
                 $repository = $this->networkInterfaceInstanceRepository;
                 break;
-            default:
-                throw new NotFoundHttpException();
-                break;
-        }
 
-        $data = null;
-        $status = 200;
+            default:
+                throw new BadRequestHttpException('Unknown instance type.');
+        }
 
         $instance = $repository->find($id);
 
-        if ($instance == null) {
-            $status = 404;
-            $this->addFlash('danger', 'No such instance.');
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($instance);
-            $em->flush();
+        if (!$instance) throw new NotFoundHttpException('Instance not found.');
 
-            $data = [
-                'message' => 'Instance has been deleted.'
-            ];
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($instance);
+        $em->flush();
 
-            $this->addFlash('success', $instance->getUuid() . ' has been deleted.');
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json('Instance has been deleted.');
         }
 
-        $view = $this->view('Instance has been deleted.')
-            ->setLocation('instances');
+        $this->addFlash('success', $instance->getUuid() . ' has been deleted.');
 
-        return $this->handleView($view);
-
-        // return $this->redirectToRoute('instances');
+        return $this->redirectToRoute('instances');
     }
 }

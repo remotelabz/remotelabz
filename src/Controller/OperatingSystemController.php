@@ -20,8 +20,9 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class OperatingSystemController extends AbstractFOSRestController
+class OperatingSystemController extends Controller
 {
     /**
      * @var OperatingSystemRepository
@@ -32,30 +33,6 @@ class OperatingSystemController extends AbstractFOSRestController
     {
         $this->operatingSystemRepository = $operatingSystemRepository;
     }
-
-    // /**
-    //  * @Route("/admin/operating-systems", name="operating_systems")
-    //  */
-    // public function indexAction(Request $request)
-    // {
-    //     $search = $request->query->get('search', '');
-    //     $data = [];
-        
-    //     if ($search !== '') {
-    //         $data = $this->operatingSystemRepository->findByNameLike($search);
-    //     } else {
-    //         $data = $this->operatingSystemRepository->findAll();
-    //     }
-
-    //     if ($this->getRequestedFormat($request) === JsonRequest::class) {
-    //         return $this->renderJson($data);
-    //     }
-        
-    //     return $this->render('operating_system/index.html.twig', [
-    //         'operatingSystems' => $data,
-    //         'search' => $search
-    //     ]);
-    // }
 
     /**
      * @Route("/admin/operating-systems", name="operating_systems")
@@ -70,51 +47,35 @@ class OperatingSystemController extends AbstractFOSRestController
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
                 'id' => Criteria::DESC
-            ])
-        ;
+            ]);
 
-        $operatingSystems = $this->operatingSystemRepository->matching($criteria);
+        $operatingSystems = $this->operatingSystemRepository->matching($criteria)->getValues();
 
-        // $context = new Context();
-        // $context
-        //     ->addGroup("operating-system")
-        // ;
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($operatingSystems);
+        }
 
-        $view = $this->view($operatingSystems->getValues())
-            ->setTemplate("operating_system/index.html.twig")
-            ->setTemplateData([
-                'operatingSystems' => $operatingSystems,
-                'search' => $search
-            ])
-            // ->setContext($context)
-        ;
-
-        return $this->handleView($view);
+        return $this->render('operating_system/index.html.twig', [
+            'operatingSystems' => $operatingSystems,
+            'search' => $search
+        ]);
     }
 
     /**
-     * @Route("/admin/operating-systems/{id<\d+>}.{_format}",
-     *  defaults={"_format": "html"},
-     *  requirements={"_format": "html|xml"},
-     *  name="show_operating_system",
-     *  methods="GET")
+     * @Route("/admin/operating-systems/{id<\d+>}", name="show_operating_system")
      */
-    public function showAction(Request $request, int $id, SerializerInterface $serializer)
+    public function showAction(Request $request, int $id)
     {
-        $data = $this->operatingSystemRepository->find($id);
-
-        if (null === $data) {
+        if (!$operatingSystem = $this->operatingSystemRepository->find($id)) {
             throw new NotFoundHttpException();
         }
 
-        if ($request->getRequestFormat() == 'xml') {
-            return new Response($serializer->serialize($data, 'xml'), 200, [
-                'Content-Type' => 'application/xml'
-            ]);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($operatingSystem);
         }
-        
+
         return $this->render('operating_system/view.html.twig', [
-            'operatingSystem' => $data
+            'operatingSystem' => $operatingSystem
         ]);
     }
 
@@ -126,7 +87,7 @@ class OperatingSystemController extends AbstractFOSRestController
         $operatingSystem = new OperatingSystem();
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
-        
+
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystem */
             $operatingSystem = $operatingSystemForm->getData();
@@ -143,18 +104,18 @@ class OperatingSystemController extends AbstractFOSRestController
                         $imageFileName = $imageFileUploader->upload($imageFile);
                         $operatingSystem->setImageFilename($imageFileName);
                     }
-    
+
                     $entityManager = $this->getDoctrine()->getManager();
                     $entityManager->persist($operatingSystem);
                     $entityManager->flush();
-                    
+
                     $this->addFlash('success', 'Operating system has been created.');
-        
+
                     return $this->redirectToRoute('operating_systems');
                 }
             }
         }
-        
+
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
         ]);
@@ -176,10 +137,10 @@ class OperatingSystemController extends AbstractFOSRestController
 
         if ($operatingSystemFilename !== null) {
             $operatingSystemEdited->setImageFilename(
-                $this->getParameter('image_directory').'/'.$operatingSystem->getImageFilename()
+                $this->getParameter('image_directory') . '/' . $operatingSystem->getImageFilename()
             );
         }
-        
+
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
         $operatingSystemForm->handleRequest($request);
 
@@ -205,32 +166,32 @@ class OperatingSystemController extends AbstractFOSRestController
                                 try {
                                     $filesystem = new Filesystem();
                                     $filesystem->remove(
-                                        $this->getParameter('image_directory').'/'.$operatingSystemFilename
+                                        $this->getParameter('image_directory') . '/' . $operatingSystemFilename
                                     );
                                 } catch (IOExceptionInterface $exception) {
                                 }
                             }
-                            
+
                             $operatingSystemEdited->setImageFilename(null);
                         } else {
                             $operatingSystemEdited->setImageFilename($operatingSystemFilename);
                             $operatingSystemEdited->setImageUrl(null);
                         }
                     }
-    
+
                     $entityManager = $this->getDoctrine()->getManager();
                     $entityManager->persist($operatingSystemEdited);
                     $entityManager->flush();
-                    
+
                     $this->addFlash('success', 'Operating system has been edited.');
-        
+
                     return $this->redirectToRoute('show_operating_system', [
                         'id' => $id
                     ]);
                 }
             }
         }
-        
+
         return $this->render('operating_system/new.html.twig', [
             'operatingSystem' => $operatingSystem,
             'operatingSystemForm' => $operatingSystemForm->createView()

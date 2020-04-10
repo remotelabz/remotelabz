@@ -30,7 +30,6 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user"})
      * @var string
      */
@@ -39,7 +38,6 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
-     * @Serializer\XmlList(inline=false, entry="role")
      * @Serializer\Groups({"details", "user"})
      * @var array|string[]
      */
@@ -54,7 +52,6 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
@@ -62,7 +59,6 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
@@ -70,48 +66,23 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
      * @var bool
      */
     private $enabled = true;
 
-
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"user_instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"user_instances"})
-     * @var Collection|DeviceInstance[]
-     */
-    private $deviceInstances;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"user_instances"})
-     * @var Collection|NetworkInterfaceInstance[]
-     */
-    private $networkInterfaceInstances;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
      * @var Collection|Lab[]
      */
     private $createdLabs;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="author")
-     * @var Collection|Activity[]
-     */
-    private $createdActivities;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -146,10 +117,7 @@ class User implements UserInterface, InstancierInterface
     public function __construct()
     {
         $this->courses = new ArrayCollection();
-        $this->labs = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
-        $this->deviceInstances = new ArrayCollection();
-        $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
         $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
@@ -278,7 +246,7 @@ class User implements UserInterface, InstancierInterface
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager"})
      */
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->firstName . " " . $this->lastName;
     }
@@ -301,51 +269,19 @@ class User implements UserInterface, InstancierInterface
     }
 
     /**
-     * @return Collection|Lab[]
-     */
-    public function getLabs(): Collection
-    {
-        return $this->labs;
-    }
-
-    public function addLab(Lab $lab): self
-    {
-        if (!$this->labs->contains($lab)) {
-            $this->labs[] = $lab;
-        }
-
-        return $this;
-    }
-
-    public function removeLab(Lab $lab): self
-    {
-        if ($this->labs->contains($lab)) {
-            $this->labs->removeElement($lab);
-        }
-
-        return $this;
-    }
-
-    /**
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"lab", "user_instances", "details"})
      * @Serializer\XmlList(inline=false, entry="instances")
      */
-    public function getInstances(): Collection
+    public function getInstances()
     {
-        return new ArrayCollection(
-            array_merge(
-                $this->labInstances->toArray(),
-                $this->deviceInstances->toArray(),
-                $this->networkInterfaceInstances->toArray()
-            )
-        );
+        return $this->labInstances;
     }
 
     /**
      * @return Collection|LabInstance[]
      */
-    public function getLabInstances(): Collection
+    public function getLabInstances()
     {
         return $this->labInstances;
     }
@@ -374,71 +310,9 @@ class User implements UserInterface, InstancierInterface
     }
 
     /**
-     * @return Collection|DeviceInstance[]
-     */
-    public function getDeviceInstances(): Collection
-    {
-        return $this->deviceInstances;
-    }
-
-    public function addDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if (!$this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances[] = $deviceInstance;
-            $deviceInstance->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if ($this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances->removeElement($deviceInstance);
-            // set the owning side to null (unless already changed)
-            if ($deviceInstance->getUser() === $this) {
-                $deviceInstance->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|NetworkInterfaceInstance[]
-     */
-    public function getNetworkInterfaceInstances(): Collection
-    {
-        return $this->networkInterfaceInstances;
-    }
-
-    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
-            $networkInterfaceInstance->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
-            // set the owning side to null (unless already changed)
-            if ($networkInterfaceInstance->getUser() === $this) {
-                $networkInterfaceInstance->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection|Lab[]
      */
-    public function getCreatedLabs(): Collection
+    public function getCreatedLabs()
     {
         return $this->createdLabs;
     }
@@ -460,37 +334,6 @@ class User implements UserInterface, InstancierInterface
             // set the owning side to null (unless already changed)
             if ($createdLab->getAuthor() === $this) {
                 $createdLab->setAuthor(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Activities[]
-     */
-    public function getCreatedActivities(): Collection
-    {
-        return $this->createdActivities;
-    }
-
-    public function addCreatedActivity(Activity $createdActivity): self
-    {
-        if (!$this->createdActivitiess->contains($createdActivity)) {
-            $this->createdActivitiess[] = $createdActivity;
-            $createdActivity->setAuthor($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCreatedActivity(Activity $createdActivity): self
-    {
-        if ($this->createdActivitiess->contains($createdActivity)) {
-            $this->createdActivitiess->removeElement($createdActivity);
-            // set the owning side to null (unless already changed)
-            if ($createdActivity->getAuthor() === $this) {
-                $createdActivity->setAuthor(null);
             }
         }
 
@@ -550,17 +393,20 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @return Collection|Group[]
+     * 
+     * @Serializer\VirtualProperty()
+     * @Serializer\SerializedName("groups")
+     * @Serializer\Groups({"group_details", "user"})
      */
-    public function getGroups(): Collection
+    public function getGroups()
     {
         return $this->_groups;
     }
 
     /**
      * @return Collection|Group[]
-     * 
      */
-    public function getGroupsInfo(): Collection
+    public function getGroupsInfo()
     {
         return $this->_groups->map(function ($groupUser) {
             return $groupUser->getGroup();
@@ -569,22 +415,24 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @return array|Group[]
-     * 
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"group_details"})
-     * @Serializer\SerializedName("groups")
      */
-    public function getTopLevelGroupEntries(): Collection
+    public function getTopLevelGroupEntries()
     {
+        // Get all groups objects...
         $groups = $this->_groups->map(function ($groupUser) {
             /** @var Group $group */
             return $groupUser->getGroup();
-            return $group->isRootGroup() ? $group : null;
         });
 
         $filtered = new ArrayCollection();
+
+        // ...then filter out those with no parents
         foreach ($this->_groups as $group) {
-            if (null !== $group->getGroup()) $filtered->add($group);
+            $parent = $group->getGroup()->getParent();
+
+            if (null === $parent) {
+                $filtered->add($group);
+            }
         }
 
         return $filtered;
@@ -615,7 +463,7 @@ class User implements UserInterface, InstancierInterface
         return $this;
     }
 
-    public function getUuid(): ?string
+    public function getUuid(): string
     {
         return $this->uuid;
     }
@@ -625,5 +473,10 @@ class User implements UserInterface, InstancierInterface
         $this->uuid = $uuid;
 
         return $this;
+    }
+
+    public function getType(): string
+    {
+        return 'user';
     }
 }

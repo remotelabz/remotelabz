@@ -4,16 +4,14 @@ namespace App\Controller;
 
 use App\Utils\Uuid;
 use App\Entity\User;
-
 use App\Form\UserType;
 use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
-
-use App\Controller\AppController;
 use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use JMS\Serializer\SerializerBuilder;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\MakerBundle\Validator;
@@ -32,11 +30,12 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserController extends AbstractFOSRestController
+class UserController extends Controller
 {
     public $passwordEncoder;
 
@@ -44,16 +43,16 @@ class UserController extends AbstractFOSRestController
 
     public $mailer;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer)
+    public $serializer;
+
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer, SerializerInterface $serializer)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
         $this->mailer = $mailer;
+        $this->serializer = $serializer;
     }
 
-    /**
-     * @Route("/admin/users", name="users", methods={"GET", "POST"})
-     */
     /**
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
      * 
@@ -117,24 +116,42 @@ class UserController extends AbstractFOSRestController
             }
         }
 
-        $context = new Context();
-        $context->addGroup("user");
-        if ($groupDetails) {
-            $context->addGroup("group_details");
-        }
-
         if ('json' === $request->getRequestFormat()) {
-            $view = $this->view($users->getValues())
-                ->setContext($context);
-
-            return $this->handleView($view);
+            return $this->json($users->getValues(), 200, [], []);
         }
+
+        // $context = new Context();
+        // $context->addGroup("user");
+        // if ($groupDetails) {
+        //     $context->addGroup("group_details");
+        // }
+
+        // if ('json' === $request->getRequestFormat()) {
+        //     $view = $this->view($users->getValues())
+        //         ->setContext($context);
+
+        //     return $this->handleView($view);
+        // }
 
         return $this->render('user/index.html.twig', [
             'users' => $users,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
             'search' => $search,
         ]);
+    }
+
+    /**
+     * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
+     */
+    public function showAction(Request $request, int $id)
+    {
+        $user = $this->userRepository->find($id);
+
+        if (!$user) {
+            throw new NotFoundHttpException();
+        }
+
+        return $this->json($user, 200, [], []);
     }
 
     /**
@@ -233,7 +250,6 @@ class UserController extends AbstractFOSRestController
     public function toggleAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
-        $view = $this->view();
 
         if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
@@ -249,22 +265,23 @@ class UserController extends AbstractFOSRestController
             $em->flush();
         }
 
-        if ($request->attributes->get('_route') === "toggle_user") {
-            $this->addFlash('success', $user->getName() . "'s account has been locked.");
-            $view->setLocation($this->generateUrl('users'));
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
 
-        return $this->handleView($view);
+        $this->addFlash('success', $user->getName() . "'s account has been locked.");
+
+        return $this->redirectToRoute('users');
     }
 
     /**
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
+     * 
      * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
      */
     public function deleteAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
-        $view = $this->view();
 
         if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
@@ -280,12 +297,13 @@ class UserController extends AbstractFOSRestController
             $em->flush();
         }
 
-        if ($request->attributes->get('_route') === "toggle_user") {
-            $this->addFlash('success', $user->getName() . "'s account has been deleted.");
-            $view->setLocation($this->generateUrl('users'));
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
 
-        return $this->handleView($view);
+        $this->addFlash('success', $user->getName() . "'s account has been deleted.");
+
+        return $this->redirectToRoute('users');
     }
 
     /**
@@ -556,8 +574,6 @@ class UserController extends AbstractFOSRestController
      */
     public function meAction()
     {
-        $view = $this->view($this->getUser());
-
-        return $this->handleView($view);
+        return $this->json($this->getUser());
     }
 }

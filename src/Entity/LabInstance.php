@@ -15,7 +15,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabInstanceRepository")
- * @Serializer\XmlRoot("lab_instance")
  */
 class LabInstance extends Instance
 {
@@ -23,7 +22,6 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"primary_key"})
      */
     private $id;
@@ -34,15 +32,8 @@ class LabInstance extends Instance
      */
     protected $lab;
 
-    // /**
-    //  * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labInstances")
-    //  * @Serializer\Groups({"user", "start_lab", "stop_lab", "instances"})
-    //  */
-    // protected $user;
-
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist"})
-     * @Serializer\XmlList(inline=true, entry="device_instance")
+     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist", "remove"})
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $deviceInstances;
@@ -58,18 +49,6 @@ class LabInstance extends Instance
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $isInternetConnected;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\Choice({"standalone", "activity"})
-     */
-    private $scope;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Activity", inversedBy="labInstances")
-     * @Serializer\Groups({"activity", "lab", "start_lab", "stop_lab"})
-     */
-    private $activity;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
@@ -103,28 +82,6 @@ class LabInstance extends Instance
         return $this;
     }
 
-    // public function getUser(): ?User
-    // {
-    //     return $this->user;
-    // }
-
-    // public function setUser(?User $user): self
-    // {
-    //     $this->user = $user;
-
-    //     return $this;
-    // }
-
-    // /**
-    //  * @Serializer\VirtualProperty()
-    //  * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-    //  * @Serializer\XmlAttribute
-    //  */
-    // public function getUserId(): ?int
-    // {
-    //     return $this->user->getId();
-    // }
-
     /**
      * Generate a bridge name with instance UUID.
      * 
@@ -157,7 +114,7 @@ class LabInstance extends Instance
      *
      * @return Collection|DeviceInstance[]
      */
-    public function getDeviceInstances(): Collection
+    public function getDeviceInstances()
     {
         return $this->deviceInstances;
     }
@@ -183,7 +140,7 @@ class LabInstance extends Instance
      *
      * @return Collection|DeviceInstance[]
      */
-    public function getUserDeviceInstances(): Collection
+    public function getUserDeviceInstances()
     {
         $criteria = Criteria::create()
             ->where(Criteria::expr()->eq("user", $this->user));
@@ -191,21 +148,6 @@ class LabInstance extends Instance
         $deviceInstances = $this->deviceInstances->matching($criteria);
 
         return $deviceInstances;
-    }
-
-    /**
-     * Get network interface instances associated to this lab instance
-     *
-     * @return Collection|NetworkInterfaceInstance[]
-     */
-    public function getNetworkInterfaceInstances(): Collection
-    {
-        $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("user", $this->user));
-
-        $networkInterfaceInstances = $this->lab->getNetworkInterfaceInstances()->matching($criteria);
-
-        return $networkInterfaceInstances;
     }
 
     public function isInternetConnected(): ?bool
@@ -260,18 +202,6 @@ class LabInstance extends Instance
         return $this->deviceInstances->count() > 0;
     }
 
-    public function getActivity(): ?Activity
-    {
-        return $this->activity;
-    }
-
-    public function setActivity(?Activity $activity): self
-    {
-        $this->activity = $activity;
-
-        return $this;
-    }
-
     public function getNetworkSettings(): ?NetworkSettings
     {
         return $this->networkSettings;
@@ -284,37 +214,32 @@ class LabInstance extends Instance
         return $this;
     }
 
-    public function getScope(): string
-    {
-        return $this->scope;
-    }
-
-    public function setScope(string $scope): self
-    {
-        if (in_array($scope, [self::SCOPE_STANDALONE, self::SCOPE_ACTIVITY])) {
-            $this->scope = $scope;
-        } else {
-            throw new UnexpectedValueException("'" . $scope . "' is not a correct value for Activity::scope. Must be one of '" . self::SCOPE_STANDALONE . "' or '" . self::SCOPE_ACTIVITY . "'.");
-        }
-
-        return $this;
-    }
-
     /**
      * Creates all sub-instances from Lab descriptor. This does not record them in the database.
      */
     public function populate()
     {
-        if (null === $this->lab) {
+        if (!$this->lab) {
             throw new Exception('No lab is associated to this instance.');
         }
 
-        foreach ($this->getLab()->getDevices() as $device) {
+        foreach ($this->lab->getDevices() as $device) {
             $deviceInstance = DeviceInstance::create()
                 ->setDevice($device)
-                ->setUser($this->user)
-                ->setLab($this->lab)
-                ->setLabInstance($this);
+                ->setLabInstance($this)
+                ->setOwnedBy($this->ownedBy);
+
+            switch ($this->ownedBy) {
+                case self::OWNED_BY_USER:
+                    $deviceInstance->setUser($this->user);
+                    break;
+
+                case self::OWNED_BY_GROUP:
+                    $deviceInstance->setGroup($this->_group);
+                    break;
+            }
+
+            $deviceInstance->populate();
 
             $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);

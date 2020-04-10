@@ -13,7 +13,9 @@ interface InstancierInterface
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
-    public function getUuid();
+    public function getUuid(): string;
 
-    public function getName();
+    public function getName(): ?string;
+
+    public function getType(): string;
 }

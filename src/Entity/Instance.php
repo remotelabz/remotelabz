@@ -22,20 +22,13 @@ class Instance implements InstanciableInterface
     protected $uuid;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
-    protected $isStarted = false;
-
-    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $ownedBy = self::OWNED_BY_USER;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labInstances")
      */
     protected $user;
 
@@ -62,7 +55,7 @@ class Instance implements InstanciableInterface
         return $this->uuid;
     }
 
-    public function setUuid(string $uuid): self
+    public function setUuid(string $uuid)
     {
         $this->uuid = $uuid;
 
@@ -72,18 +65,6 @@ class Instance implements InstanciableInterface
     public function belongsToCurrentUser($object, $context): bool
     {
         return $context->getAttribute('user') == $this->user;
-    }
-
-    public function isStarted(): ?bool
-    {
-        return $this->isStarted;
-    }
-
-    public function setStarted(bool $isStarted): self
-    {
-        $this->isStarted = $isStarted;
-
-        return $this;
     }
 
     public static function belongsTo($user): bool
@@ -126,7 +107,7 @@ class Instance implements InstanciableInterface
         return $this->isOwnedByUser() ? $this->getUser() : $this->getGroup();
     }
 
-    public function setOwner(string $uuid): self
+    public function setOwner(string $uuid)
     {
         $this->uuid = $uuid;
 
@@ -138,7 +119,7 @@ class Instance implements InstanciableInterface
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user)
     {
         $this->user = $user;
 
@@ -150,7 +131,7 @@ class Instance implements InstanciableInterface
         return $this->_group;
     }
 
-    public function setGroup(?Group $_group): self
+    public function setGroup(?Group $_group)
     {
         $this->_group = $_group;
 

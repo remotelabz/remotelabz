@@ -4,17 +4,14 @@ namespace App\Controller;
 
 use App\Entity\Flavor;
 use App\Form\FlavorType;
-
-use FOS\RestBundle\Context\Context;
 use App\Repository\FlavorRepository;
 use Doctrine\Common\Collections\Criteria;
-use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Controller\AbstractFOSRestController;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class FlavorController extends AbstractFOSRestController
+class FlavorController extends Controller
 {
     public $flavorRepository;
 
@@ -36,26 +33,18 @@ class FlavorController extends AbstractFOSRestController
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
                 'id' => Criteria::DESC
-            ])
-        ;
+            ]);
 
-        $flavors = $this->flavorRepository->matching($criteria);
+        $flavors = $this->flavorRepository->matching($criteria)->getValues();
 
-        // $context = new Context();
-        // $context
-        //     ->addGroup("flavor")
-        // ;
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($flavors);
+        }
 
-        $view = $this->view($flavors->getValues())
-            ->setTemplate("flavor/index.html.twig")
-            ->setTemplateData([
-                'flavors' => $flavors,
-                'search' => $search
-            ])
-            // ->setContext($context)
-        ;
-
-        return $this->handleView($view);
+        return $this->render('flavor/index.html.twig', [
+            'flavors' => $flavors,
+            'search' => $search
+        ]);
     }
 
     /**
@@ -72,14 +61,7 @@ class FlavorController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $flavor = json_decode($request->getContent(), true);
             $flavorForm->submit($flavor);
-        } 
-
-        $view = $this->view($flavorForm)
-            ->setTemplate("flavor/new.html.twig")
-            ->setTemplateData([
-                'form' => $flavorForm->createView()
-            ])
-        ;
+        }
 
         if ($flavorForm->isSubmitted() && $flavorForm->isValid()) {
             /** @var Flavor $flavor */
@@ -89,14 +71,22 @@ class FlavorController extends AbstractFOSRestController
             $entityManager->persist($flavor);
             $entityManager->flush();
 
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($flavor, 201);
+            }
+
             $this->addFlash('success', 'Flavor has been created.');
 
-            $view->setLocation($this->generateUrl('flavors'));
-            $view->setStatusCode(201);
-            $view->setData($flavor);
+            return $this->redirectToRoute('flavors');
         }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($flavorForm);
+        }
+
+        return $this->render('flavor/new.html.twig', [
+            'form' => $flavorForm->createView()
+        ]);
     }
 
     /**
@@ -104,19 +94,17 @@ class FlavorController extends AbstractFOSRestController
      */
     public function editAction(Request $request, int $id)
     {
-        $flavor = $this->flavorRepository->find($id);
-
-        if (null === $flavor) {
+        if (!$flavor = $this->flavorRepository->find($id)) {
             throw new NotFoundHttpException();
         }
-        
+
         $flavorForm = $this->createForm(FlavorType::class, $flavor);
         $flavorForm->handleRequest($request);
 
         if ($flavorForm->isSubmitted() && $flavorForm->isValid()) {
             /** @var Flavor $flavor */
             $flavor = $flavorForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($flavor);
             $entityManager->flush();
@@ -131,26 +119,26 @@ class FlavorController extends AbstractFOSRestController
             'flavor' => $flavor
         ]);
     }
-    
+
     /**
      * @Route("/admin/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
      * 
      * @Rest\Delete("/api/flavors/{id<\d+>}", name="api_delete_flavor")
      */
-    public function deleteAction(int $id)
+    public function deleteAction(Request $request, int $id)
     {
-        $view = $this->view(null, 200);
-            
-        $flavor = $this->flavorRepository->find($id);
-            
-        if (!$flavor) {
-            $view->setStatusCode(404);
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($flavor);
-            $em->flush();
+        if (!$flavor = $this->flavorRepository->find($id)) {
+            throw new NotFoundHttpException();
         }
-        
-        return $this->handleView($view);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->remove($flavor);
+        $entityManager->flush();
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
+        }
+
+        return $this->redirectToRoute('flavors');
     }
 }

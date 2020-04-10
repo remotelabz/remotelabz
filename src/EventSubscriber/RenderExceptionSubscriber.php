@@ -4,17 +4,14 @@ namespace App\EventSubscriber;
 
 use Psr\Log\LoggerInterface;
 use App\Exception\WorkerException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class RenderExceptionSubscriber implements EventSubscriberInterface
 {
@@ -44,24 +41,21 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
         }
 
         // test if we want a json return
-        if ($request->isXmlHttpRequest()) {
+        if ('json' === $request->getRequestFormat() || $request->isXmlHttpRequest()) {
             $status = $response === null ? 400 : $response->getStatusCode();
 
-            $response = new JsonResponse();
+            $response = new JsonResponse(null, 500);
 
-            if ($exception instanceof NotFoundHttpException) {
-                $status = 404;
-            }
-            if ($exception instanceof MethodNotAllowedHttpException) {
-                $status = 405;
+            if ($exception instanceof HttpException) {
+                $response->setStatusCode($exception->getStatusCode());
             }
 
-            $response
-                ->setStatusCode($status)
-                ->setData([
-                    'code' => $status,
-                    'message' => $exception->getMessage(),
-                ]);
+            if (!empty($exception->getMessage())) {
+                $response->setData(['message' => $exception->getMessage()]);
+            } else {
+                $response->setContent(null)
+                    ->headers->set('Content-Type', 'text/plain');
+            }
 
             $event->setResponse($response);
         }

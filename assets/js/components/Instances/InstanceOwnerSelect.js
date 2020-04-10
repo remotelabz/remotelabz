@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { components } from 'react-select';
-import AsyncSelect from 'react-select/async';
+import Select from 'react-select';
 import API from '../../api';
 import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
@@ -23,14 +23,8 @@ const ValueContainer = ({ children, ...props }) => (
   <components.ValueContainer {...props}>{children}</components.ValueContainer>
 );
 
-const formatGroupLabel = data => (
-    <div>
-      <span>{data.label}</span>
-      <span>{data.options.length}</span>
-    </div>
-  );
-
 const Option = props => {
+    console.log (props);
     return (
         <components.Option {...props}>
             <div className="d-flex">
@@ -55,9 +49,6 @@ const Option = props => {
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Subgroups</Tooltip>}>
                             <div className="mr-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
                         </OverlayTrigger>
-                        {/* <OverlayTrigger placement="bottom" overlay={<Tooltip>Activities</Tooltip>}>
-                            <div className="mr-2"><SVG name="bookmark"></SVG> {props.data.activities.length}</div>
-                        </OverlayTrigger> */}
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
                             <div><SVG name="users"></SVG> {props.data.usersCount}</div>
                         </OverlayTrigger>
@@ -77,14 +68,13 @@ const SingleValue = ({ children, ...props }) => (
             :
             <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.name.charAt(0).toUpperCase()}</div>
         }
-        {/* <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.name.charAt(0).toUpperCase()}</div> */}
         <div>
-            {getPath(props.data)} <span className="fw600">{props.data.name}</span>
+            {getPath(props.data)} <span className="fw600">{ props.data.name }</span>
         </div>
     </components.SingleValue>
 );
 
-export default class GroupSelect extends Component {
+export default class InstanceOwnerSelect extends Component {
     constructor(props) {
         super(props);
     }
@@ -105,15 +95,12 @@ export default class GroupSelect extends Component {
 
     render() {
         return (
-            <AsyncSelect
-                loadOptions={this.props.loadOptions || this.loadOptions}
+            <Select
+                options={this.props.options}
                 className={'react-select-container ' + (this.props.className || "")}
                 classNamePrefix="react-select"
-                cacheOptions
-                defaultOptions={this.props.defaultOptions || true}
                 placeholder={this.props.placeholder || "Search for a group"}
                 components={{ ValueContainer, Option, SingleValue }}
-                isSearchable
                 name={this.props.fieldName || "_group"}
                 isClearable={this.props.isClearable || false}
                 {...this.props}

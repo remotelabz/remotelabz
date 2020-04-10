@@ -109,13 +109,6 @@ class GroupNode extends Component {
                                 </span>
                             </OverlayTrigger>
 
-                            <OverlayTrigger placement="bottom" overlay={<Tooltip>Activities</Tooltip>}>
-                                <span className="d-inline-flex align-items-center mr-3">
-                                    <SVG name="bookmark" className="s16"></SVG>
-                                    <span className="ml-1">{ group.activities.length }</span>
-                                </span>
-                            </OverlayTrigger>
-
                             <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
                                 <span className="d-inline-flex align-items-center mr-3">
                                     <SVG name="users" className="s16"></SVG>
