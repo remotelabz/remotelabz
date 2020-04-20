@@ -18,6 +18,7 @@
         {% if required -%}
             {% set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' required')|trim}) %}
         {%- endif -%}
+        {% set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' text-right')|trim}) %}
         {% if label is empty -%}
             {%- if label_format is not empty -%}
                 {% set label = label_format|replace({
@@ -48,7 +49,6 @@
     {%- if help is not empty -%}
         {%- set widget_attr = {attr: {'aria-describedby': id ~"_help"}} -%}
     {%- endif -%}
-     
         <div class="form-group row{% if (not compound or force_error|default(false)) and not valid %} is-invalid{% endif %}">
             {{- form_label(form) -}}
             <div class="{{ block('form_group_class') }}">
@@ -60,7 +60,7 @@
     {%- endif -%}
 {%- endblock form_row %}
 
-{#{% block fieldset_form_row -%}
+{% block fieldset_form_row -%}
     {%- set widget_attr = {} -%}
     {%- if help is not empty -%}
         {%- set widget_attr = {attr: {'aria-describedby': id ~"_help"}} -%}
@@ -73,7 +73,7 @@
                 {{- form_help(form) -}}
             </div>
         </div>
-{%- endblock fieldset_form_row %}#}
+{%- endblock fieldset_form_row %}
 
 
 {% block file_widget -%}
@@ -106,6 +106,27 @@
     {%- set attr = attr|merge({class: (attr.class|default('btn-success'))|trim}) -%}
     {{- parent() -}}
 {%- endblock submit_widget %}
+
+{% block form_help -%}
+    {%- if help is not empty -%}
+        {%- set help_attr = help_attr|merge({class: (help_attr.class|default('') ~ ' form-text text-muted')|trim}) -%}
+        <div id="{{ id }}_help"{% with { attr: help_attr } %}{{ block('attributes') }}{% endwith %}>
+            {%- if translation_domain is same as(false) -%}
+                {%- if help_html is same as(false) -%}
+                    {{- help -}}
+                {%- else -%}
+                    {{- help|raw -}}
+                {%- endif -%}
+            {%- else -%}
+                {%- if help_html is same as(false) -%}
+                    {{- help|trans(help_translation_parameters, translation_domain) -}}
+                {%- else -%}
+                    {{- help|trans(help_translation_parameters, translation_domain)|raw -}}
+                {%- endif -%}
+            {%- endif -%}
+        </div>
+    {%- endif -%}
+{%- endblock form_help %}
 
 {# {% block checkbox_widget -%}
     {%- set parent_label_class = parent_label_class|default(label_attr.class|default('')) -%}

@@ -10,7 +10,7 @@ export default class DeviceTemplateSelect extends React.Component
 
     onChange = selectedOption => {
         this.setState({selectedOption});
-        // console.log(selectedOption);
+        console.log(selectedOption);
         if (this.props.onChange) {
             this.props.onChange(selectedOption);
         }
@@ -41,6 +41,8 @@ export default class DeviceTemplateSelect extends React.Component
             <AsyncSelect
                 value={this.state.selectedOption}
                 onChange={this.onChange}
+                className='react-select-container'
+                classNamePrefix="react-select"
                 loadOptions={this.loadOptions}
                 cacheOptions
                 defaultOptions

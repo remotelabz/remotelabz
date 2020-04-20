@@ -2,32 +2,23 @@
 
 namespace App\Controller;
 
+use DateTime;
 use App\Entity\Device;
-use App\Form\DeviceType;
 
+use App\Form\DeviceType;
 use App\Entity\EditorData;
-use App\Service\FileUploader;
-use Swagger\Annotations as SWG;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
-use JMS\Serializer\SerializerInterface;
 use App\Repository\EditorDataRepository;
 use Doctrine\Common\Collections\Criteria;
-use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use FOS\RestBundle\Controller\AbstractFOSRestController;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class DeviceController extends AbstractFOSRestController
+class DeviceController extends Controller
 {
     private $deviceRepository;
 
@@ -37,27 +28,9 @@ class DeviceController extends AbstractFOSRestController
     }
 
     /**
-     * @Route("/devices", name="devices")
+     * @Route("/admin/devices", name="devices")
      * 
      * @Rest\Get("/api/devices", name="api_devices")
-     * 
-     * @SWG\Parameter(
-     *     name="search",
-     *     in="query",
-     *     type="string",
-     *     description="Filter devices by name. All devices with a name containing this value will be shown."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns all existing devices",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=Lab::class))
-     *     )
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function indexAction(Request $request)
     {
@@ -69,26 +42,18 @@ class DeviceController extends AbstractFOSRestController
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
             ->orderBy([
                 'id' => Criteria::DESC
-            ])
-        ;
+            ]);
 
         $devices = $this->deviceRepository->matching($criteria);
 
-        $context = new Context();
-        $context
-            ->addGroup("device")
-        ;
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($devices->getValues());
+        }
 
-        $view = $this->view($devices->getValues())
-            ->setTemplate("device/index.html.twig")
-            ->setTemplateData([
-                'devices' => $devices,
-                'search' => $search
-            ])
-            ->setContext($context)
-        ;
-
-        return $this->handleView($view);
+        return $this->render('device/index.html.twig', [
+            'devices' => $devices,
+            'search' => $search
+        ]);
     }
 
     /**
@@ -97,38 +62,25 @@ class DeviceController extends AbstractFOSRestController
      * 
      * @Rest\Get("/api/devices/{id<\d+>}", name="api_get_device")
      */
-    public function showAction(int $id)
+    public function showAction(Request $request, int $id)
     {
-        $context = new Context();
-        $context->addGroup("device");
+        $device = $this->deviceRepository->find($id);
 
-        $view = $this->view($this->deviceRepository->find($id))
-            ->setTemplate("device/view.html.twig")
-            ->setContext($context)
-        ;
+        if (!$device) {
+            throw new NotFoundHttpException();
+        }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($device);
+        }
+
+        return $this->render('device/view.html.twig', ['device' => $device]);
     }
 
     /**
      * @Route("/admin/devices/new", name="new_device")
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=201,
-     *     description="Returns the newly created device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function newAction(Request $request)
     {
@@ -139,15 +91,7 @@ class DeviceController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
             $deviceForm->submit($device);
-        } 
-
-        $view = $this->view($deviceForm)
-            ->setTemplate("device/new.html.twig")
-            ->setTemplateData([
-                "form" => $deviceForm->createView(),
-                "data" => $device
-            ])
-        ;
+        }
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
@@ -157,46 +101,33 @@ class DeviceController extends AbstractFOSRestController
             $entityManager->persist($device);
             $entityManager->flush();
 
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($device, 201, [], ['device']);
+            }
+
             $this->addFlash('success', 'Device has been created.');
 
-            $view->setLocation($this->generateUrl('devices'));
-            $view->setStatusCode(201);
-            $view->setData($device);
-            $context = new Context();
-            $context
-                ->addGroup("device")
-            ;
-            $view->setContext($context);
+            return $this->redirectToRoute('devices');
         }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($deviceForm, 200, [], ['device']);
+        }
+
+        return $this->render('device/new.html.twig', [
+            'form' => $deviceForm->createView(),
+            'data' => $device
+        ]);
     }
 
     /**
      * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
      * 
      * @Rest\Put("/api/devices/{id<\d+>}", name="api_edit_device")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the newly edited device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function updateAction(Request $request, int $id)
     {
-        $device = $this->deviceRepository->find($id);
-
-        if (null === $device) {
+        if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
@@ -206,59 +137,38 @@ class DeviceController extends AbstractFOSRestController
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
             $deviceForm->submit($device, false);
-        } 
-
-        $view = $this->view($deviceForm)
-            ->setTemplate("device/new.html.twig")
-            ->setTemplateData([
-                "form" => $deviceForm->createView(),
-                "data" => $device
-            ])
-        ;
+        }
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-            $device->setLastUpdated(new \DateTime());
+            $device->setLastUpdated(new DateTime());
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
 
-            if ($request->getRequestFormat() === 'html') {
-                $this->addFlash('info', 'Device has been edited.');
-                $view->setLocation($this->generateUrl('show_device', ['id' => $id]));
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($device, 200, [], ['device']);
             }
 
-            $view->setStatusCode(200);
-            $view->setData($this->deviceRepository->find($device->getId()));
-            // $context = new Context();
-            // $context
-            //     ->addGroup("device")
-            // ;
-            // $view->setContext($context);
+            $this->addFlash('success', 'Device has been updated.');
+
+            return $this->redirectToRoute('show_device', ['id' => $id]);
         }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($deviceForm, 200, [], ['device']);
+        }
+
+        return $this->render('device/new.html.twig', [
+            'form' => $deviceForm->createView(),
+            'data' => $device
+        ]);
     }
 
     /**
      * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
-     * 
-     * @SWG\Parameter(
-     *     name="device",
-     *     in="body",
-     *     @SWG\Schema(ref=@Model(type=Device::class, groups={"api"})),
-     *     description="Device data."
-     * )
-     * 
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the newly edited device.",
-     *     @SWG\Schema(ref=@Model(type=Device::class))
-     * )
-     * 
-     * @SWG\Tag(name="Device")
      */
     public function updateEditorDataAction(Request $request, int $id)
     {
@@ -297,7 +207,7 @@ class DeviceController extends AbstractFOSRestController
 
         return new JsonResponse();
     }
-        
+
     /**
      * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
      * 
@@ -307,22 +217,20 @@ class DeviceController extends AbstractFOSRestController
     {
         $device = $this->deviceRepository->find($id);
 
-        if (null === $device) {
-            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        if (!$device = $this->deviceRepository->find($id)) {
+            throw new NotFoundHttpException();
         }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($device);
         $entityManager->flush();
 
-        if ($request->getRequestFormat() === 'html') {
-            $this->addFlash('success', $device->getName() . ' has been deleted.');
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
-        
-        $view = $this->view()
-            ->setLocation($this->generateUrl('devices'));
-        ;
 
-        return $this->handleView($view);
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
+
+        return $this->redirectToRoute('devices');
     }
 }

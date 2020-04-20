@@ -1,0 +1,30 @@
+{% import "sidebar.html.twig" as sidebar %}
+
+{% block sidebar %}
+    {% set category = category|default('dashboard') %}
+    <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
+        {% block sidebar_header %}
+            <div class="context-header">
+                {{ sidebar.header('users', 'admin') }}
+            </div>
+        {% endblock %}
+
+        <ul class="nav">
+            {{ sidebar.link("Users", 'users', null, 'users', 'users', _context) }}
+            {{ sidebar.link("Groups", 'groups', null, 'group', 'groups', _context) }}
+            {{ sidebar.link("Flavors", 'flavors', null, 'disk', 'flavors', _context) }}
+            {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
+            {# {{ sidebar.link("Network interfaces", 'network_interfaces', null, 'issue-parent', 'network_interfaces', _context) }} #}
+            {{ sidebar.link("Operating systems", 'operating_systems', null, 'package', 'operating_systems', _context) }}
+            {{ sidebar.link("Device Templates", 'devices', null, 'monitor-o', 'devices', _context) }}
+            {# {{ sidebar.link("Instances", 'instances', null, 'terminal', 'instances', _context) }} #}
+
+            <div class="nav-item">
+            <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
+                <span class="toggle-sidebar-hide">{{ svg('angle-double-left') }}Collapse sidebar</span>
+                <span class="toggle-sidebar-show">{{ svg('angle-double-right') }}</span>
+            </a>
+            </div>
+        </ul>
+    </nav>
+{% endblock %}

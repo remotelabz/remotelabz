@@ -6,6 +6,7 @@ export default class Canvas extends React.Component {
     }
 
     onWheel = (e) => {
+        e.preventDefault();
         if (e.deltaY < 0) {
             this.props.onZoomIn();
         }

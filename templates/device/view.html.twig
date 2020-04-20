@@ -3,7 +3,7 @@
 {% set publicPath = is_granted("ROLE_ADMINISTRATOR") ? "" : "_public" %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ (data.name): path('show_device' ~ publicPath, {'id': data.id}) }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device' ~ publicPath, {'id': device.id}) }) -%}
     {{ parent() }}
 {% endblock %}
 
@@ -11,37 +11,37 @@
     <div class="content-title">
         <div class="content-title-infos">
             <h1>
-                {{ data.name }}
+                {{ device.name }}
             </h1>
         </div>
         <div class="content-title-actions">
             {% if is_granted("ROLE_ADMINISTRATOR") %}
-                <a href="{{ path('edit_device', {'id': data.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
-                <a href="{{ path('delete_device', {'id': data.id}) }}" class="btn btn-danger" role="button">Delete</a>
+                <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                <a href="{{ path('delete_device', {'id': device.id}) }}" class="btn btn-danger" role="button">Delete</a>
             {% endif %}
         </div>
     </div>
     <div class="content-body">     
-        <p>Brand : {{ data.brand }}</p>
+        <p>Brand : {{ device.brand }}</p>
         <hr>
-        <p>Model : {{ data.model }}</p>
+        <p>Model : {{ device.model }}</p>
         <hr>
         <p>Flavor : 
-            {# <a href="{{ path('show_flavor', {'id': data.flavor.id}) }}"> #}
-            {{ data.flavor.name }}
+            {# <a href="{{ path('show_flavor', {'id': device.flavor.id}) }}"> #}
+            {{ device.flavor.name }}
             {# </a> #}
         </p>
-        <hr>
+        {# <hr>
         <p>Network interfaces :</p>
         <ul>
-            {% for networkInterface in data.networkInterfaces %}
+            {% for networkInterface in device.networkInterfaces %}
                 <li>{{ networkInterface.name }} ({{ networkInterface.type }}, {{ networkInterface.settings.protocol }} access)</li>
             {% else %}
                 None
             {% endfor %}
-        </ul>
+        </ul> #}
         <hr>
-        <p>Operating system : {{ data.operatingSystem.name }}</p>
+        <p>Operating system : {{ device.operatingSystem.name }}</p>
     </div>
 {% endblock %}
 

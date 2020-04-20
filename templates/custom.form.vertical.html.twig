@@ -1,0 +1,27 @@
+{% use "bootstrap_4_layout.html.twig" %}
+
+{% block submit_widget -%}
+    {%- set attr = attr|merge({class: (attr.class|default('btn-success'))|trim}) -%}
+    {{- parent() -}}
+{%- endblock submit_widget %}
+
+{% block form_help -%}
+    {%- if help is not empty -%}
+        {%- set help_attr = help_attr|merge({class: (help_attr.class|default('') ~ ' form-text text-muted')|trim}) -%}
+        <div id="{{ id }}_help"{% with { attr: help_attr } %}{{ block('attributes') }}{% endwith %}>
+            {%- if translation_domain is same as(false) -%}
+                {%- if help_html is same as(false) -%}
+                    {{- help -}}
+                {%- else -%}
+                    {{- help|raw -}}
+                {%- endif -%}
+            {%- else -%}
+                {%- if help_html is same as(false) -%}
+                    {{- help|trans(help_translation_parameters, translation_domain) -}}
+                {%- else -%}
+                    {{- help|trans(help_translation_parameters, translation_domain)|raw -}}
+                {%- endif -%}
+            {%- endif -%}
+        </div>
+    {%- endif -%}
+{%- endblock form_help %}

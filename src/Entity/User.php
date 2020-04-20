@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Utils\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use emberlabs\GravatarLib\Gravatar;
 use Symfony\Component\Asset\Package;
@@ -16,21 +17,20 @@ use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
-class User implements UserInterface
+class User implements UserInterface, InstancierInterface
 {
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "group_tree", "group_explore", "instances", "user"})
      * @var int
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user"})
      * @var string
      */
     private $email;
@@ -38,8 +38,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
-     * @Serializer\XmlList(inline=false, entry="role")
-     * @Serializer\Groups({"details"})
+     * @Serializer\Groups({"details", "user"})
      * @var array|string[]
      */
     private $roles = [];
@@ -53,60 +52,31 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      * @var string
      */
     private $firstName;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Course", inversedBy="users")
-     * @Serializer\XmlList(inline=true, entry="course")
-     * @Serializer\Groups({"courses"})
-     * @var Collection|Course[]
-     */
-    private $courses;
-
-    /**
      * @ORM\Column(type="boolean")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details"})
+     * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
      * @var bool
      */
     private $enabled = true;
 
-
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
+     * @Serializer\Groups({"user_instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
-     * @var Collection|DeviceInstance[]
-     */
-    private $deviceInstances;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="user")
-     * @Serializer\XmlList(inline=true, entry="instance")
-     * @Serializer\Groups({"instances"})
-     * @var Collection|NetworkInterfaceInstance[]
-     */
-    private $networkInterfaceInstances;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
@@ -123,23 +93,37 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"user"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"user"})
      */
     private $lastActivity;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
+     */
+    private $_groups;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $uuid;
 
     public function __construct()
     {
         $this->courses = new ArrayCollection();
-        $this->labs = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
-        $this->deviceInstances = new ArrayCollection();
-        $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
+        $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
+        $this->ownedGroups = new ArrayCollection();
+        $this->_groups = new ArrayCollection();
+        $this->uuid = (string) new Uuid();
     }
 
     public function getId(): ?int
@@ -180,6 +164,14 @@ class User implements UserInterface
 
         return array_unique($roles);
     }
+
+    // public function getHighestRole(): string
+    // {
+    //     if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+    //     if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+    //     if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
+    //     return 'ROLE_USER';
+    // }
 
     public function setRoles(array $roles): self
     {
@@ -252,37 +244,11 @@ class User implements UserInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager"})
      */
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->firstName . " " . $this->lastName;
-    }
-
-    /**
-     * @return Collection|Course[]
-     */
-    public function getCourses(): Collection
-    {
-        return $this->courses;
-    }
-
-    public function addCourse(Course $course): self
-    {
-        if (!$this->courses->contains($course)) {
-            $this->courses[] = $course;
-        }
-
-        return $this;
-    }
-
-    public function removeCourse(Course $course): self
-    {
-        if ($this->courses->contains($course)) {
-            $this->courses->removeElement($course);
-        }
-
-        return $this;
     }
 
     public function getEnabled(): ?bool
@@ -303,56 +269,19 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection|Lab[]
-     */
-    public function getLabs(): Collection
-    {
-        return $this->labs;
-    }
-
-    public function addLab(Lab $lab): self
-    {
-        if (!$this->labs->contains($lab)) {
-            $this->labs[] = $lab;
-            $lab->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLab(Lab $lab): self
-    {
-        if ($this->labs->contains($lab)) {
-            $this->labs->removeElement($lab);
-            // set the owning side to null (unless already changed)
-            if ($lab->getUser() === $this) {
-                $lab->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "instances", "details"})
+     * @Serializer\Groups({"lab", "user_instances", "details"})
      * @Serializer\XmlList(inline=false, entry="instances")
      */
-    public function getInstances(): Collection
+    public function getInstances()
     {
-        return new ArrayCollection(
-            array_merge(
-                $this->labInstances->toArray(),
-                $this->deviceInstances->toArray(),
-                $this->networkInterfaceInstances->toArray()
-            )
-        );
+        return $this->labInstances;
     }
 
     /**
      * @return Collection|LabInstance[]
      */
-    public function getLabInstances(): Collection
+    public function getLabInstances()
     {
         return $this->labInstances;
     }
@@ -381,71 +310,9 @@ class User implements UserInterface
     }
 
     /**
-     * @return Collection|DeviceInstance[]
-     */
-    public function getDeviceInstances(): Collection
-    {
-        return $this->deviceInstances;
-    }
-
-    public function addDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if (!$this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances[] = $deviceInstance;
-            $deviceInstance->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if ($this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances->removeElement($deviceInstance);
-            // set the owning side to null (unless already changed)
-            if ($deviceInstance->getUser() === $this) {
-                $deviceInstance->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|NetworkInterfaceInstance[]
-     */
-    public function getNetworkInterfaceInstances(): Collection
-    {
-        return $this->networkInterfaceInstances;
-    }
-
-    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
-            $networkInterfaceInstance->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
-            // set the owning side to null (unless already changed)
-            if ($networkInterfaceInstance->getUser() === $this) {
-                $networkInterfaceInstance->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection|Lab[]
      */
-    public function getCreatedLabs(): Collection
+    public function getCreatedLabs()
     {
         return $this->createdLabs;
     }
@@ -491,12 +358,12 @@ class User implements UserInterface
             return null;
 
             // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
-            
+
             // return $package->getUrl('build/images/faces/default-user-image.png');
         }
 
         $imagePath = 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
-        
+
         return $imagePath;
     }
 
@@ -522,5 +389,94 @@ class User implements UserInterface
         $this->lastActivity = $lastActivity;
 
         return $this;
+    }
+
+    /**
+     * @return Collection|Group[]
+     * 
+     * @Serializer\VirtualProperty()
+     * @Serializer\SerializedName("groups")
+     * @Serializer\Groups({"group_details", "user"})
+     */
+    public function getGroups()
+    {
+        return $this->_groups;
+    }
+
+    /**
+     * @return Collection|Group[]
+     */
+    public function getGroupsInfo()
+    {
+        return $this->_groups->map(function ($groupUser) {
+            return $groupUser->getGroup();
+        });
+    }
+
+    /**
+     * @return array|Group[]
+     */
+    public function getTopLevelGroupEntries()
+    {
+        // Get all groups objects...
+        $groups = $this->_groups->map(function ($groupUser) {
+            /** @var Group $group */
+            return $groupUser->getGroup();
+        });
+
+        $filtered = new ArrayCollection();
+
+        // ...then filter out those with no parents
+        foreach ($this->_groups as $group) {
+            $parent = $group->getGroup()->getParent();
+
+            if (null === $parent) {
+                $filtered->add($group);
+            }
+        }
+
+        return $filtered;
+    }
+
+    public function isMemberOf(Group $group): bool
+    {
+        return $group->hasUser($this);
+    }
+
+    public function addGroup(Group $group): self
+    {
+        if (!$this->_groups->contains($group)) {
+            $this->_groups[] = $group;
+            $group->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGroup(Group $group): self
+    {
+        if ($this->_groups->contains($group)) {
+            $this->_groups->removeElement($group);
+            $group->removeUser($this);
+        }
+
+        return $this;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getType(): string
+    {
+        return 'user';
     }
 }

@@ -21,8 +21,7 @@ class NetworkSettingsType extends AbstractType
             ->add('gateway')
             ->add('protocol')
             ->add('port')
-            ->add('submit', SubmitType::class)
-        ;
+            ->add('submit', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver)

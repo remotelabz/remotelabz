@@ -1,0 +1,97 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Groups': path('groups') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'groups' %}
+    {{ parent() }}
+{% endblock %}
+
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
+{% endmacro %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <form action="{{ path('groups') }}" method="GET">
+                <div class="search-field">
+                    <i class="fa fa-search"></i>
+                    <input type="search" class="form-control" name="search" placeholder="Search by name" spellcheck="false" value="{{ search|default('') }}" />
+                </div>
+            </form>
+        </div>
+        <div class="content-title-actions">
+            {% if is_granted('ROLE_TEACHER') %}
+                <a href="{{ path('new_group') }}" class="btn btn-success">{{ 'New group'|trans }}</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="content-list">
+        <!-- <table id="groupTable" class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|trans }}</th>
+                    <th>{{ 'Users'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table> -->
+        <ul>
+            {% for group in groups %}
+                <li>
+                    <div class="item-left d-flex flex-column">
+                        <div class="d-flex">
+                            {% if group.pictureFilename is defined and group.pictureFilename %}
+                                <div class="mr-2">
+                                    <img src="{{ path('get_group_picture', {slug: group.path}) }}" class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded" />
+                                </div>
+                            {% else %}
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
+                                    {{- group.name|firstLetter|upper -}}
+                                </div>
+                            {% endif %}
+                            <div class="d-flex flex-column">
+                                <div class="item-title">
+                                    <a href="{{ path('admin_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
+                                </div>
+                                <div>{{ group.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-right item-margin text-muted">
+                        <span class="mr-3">{{ svg('group') }} {{ group.users|length }}</span>
+                        <span class="mr-3">
+                            {% if group.visibility is defined %}
+                                {% if group.visibility == '0' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
+                                        {{ svg('lock') }}
+                                    </div>
+                                {% elseif group.visibility == '1' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
+                                        {{ svg('shield') }}
+                                    </div>
+                                {% elseif group.visibility == '2' %}
+                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
+                                        {{ svg('earth') }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                        <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('groups') }}
+{% endblock %}

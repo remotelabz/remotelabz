@@ -1,0 +1,23 @@
+[theme="dark"] {
+    .modal-content {
+        background-color: theme-color("dark");
+        border-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+
+    .modal-header {
+        border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+
+    .modal-footer {
+        border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+
+    .close {
+        color: theme-color("light");
+        text-shadow: none;
+
+        &:hover {
+            color: white;
+        }
+    }
+}

@@ -2,50 +2,30 @@
 
 namespace App\EventSubscriber;
 
-use App\Repository\UserRepository;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Lexik\Bundle\JWTAuthenticationBundle\Events;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
-use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTExpiredEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class RefreshTokenSubscriber implements EventSubscriberInterface
 {
-    // /**
-    //  * @param RefreshTokenManagerInterface $refreshTokenManager
-    //  */
-    // private $refreshTokenManager;
+    private $tokenStorageInterface;
+    /** @var Session $sessionInterface */
+    private $sessionInterface;
 
-    // /**
-    //  * @param JWTTokenManagerInterface $JWTManager
-    //  */
-    // private $JWTManager;
-
-    // /** @param string $updatedJWTToken */
-    // private $updatedJWTToken;
-
-    // private $userRepository;
-    
-    // public function __construct(JWTTokenManagerInterface $JWTManager, RefreshTokenManagerInterface $refreshTokenManager, UserRepository $userRepository)
-    // {
-    //     $this->refreshTokenManager = $refreshTokenManager;
-    //     $this->JWTManager = $JWTManager;
-    //     $this->updatedJWTToken = null;
-    //     $this->userRepository = $userRepository;
-    // }
+    public function __construct(TokenStorageInterface $tokenStorageInterface, SessionInterface $sessionInterface)
+    {
+        $this->tokenStorageInterface = $tokenStorageInterface;
+        $this->sessionInterface = $sessionInterface;
+    }
 
     public static function getSubscribedEvents()
     {
         return [
             // KernelEvents::REQUEST => ['onKernelRequest', 100],
-            // KernelEvents::RESPONSE => 'onKernelResponse',
+            KernelEvents::RESPONSE => 'onKernelResponse',
         ];
     }
 
@@ -63,11 +43,13 @@ class RefreshTokenSubscriber implements EventSubscriberInterface
     //     }
     // }
 
-    // public function onKernelResponse(ResponseEvent $event)
-    // {
-    //     if ($this->updatedJWTToken) {
-    //         $event->getResponse()->headers->setCookie(Cookie::create('bearer', $this->updatedJWTToken));
-    //     }
-    // }
+    public function onKernelResponse(ResponseEvent $event)
+    {
+        if ($event->getResponse()->getStatusCode() == 401) {
+            $this->tokenStorageInterface->setToken(null);
+            $this->sessionInterface->getFlashBag()->set('danger', 'You have been disconnected. Please log in again');
+            $event->getResponse()->headers->clearCookie('PHPSESSID');
+        }
+    }
 
 }

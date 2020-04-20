@@ -1,0 +1,9 @@
+{% macro topbar_tab(content, route, params, badge) %}
+    {% set route = route|default('') %}
+    {% set currentRoute = app.request.attributes.get('_route') %}
+    <li {%- if currentRoute == route %} class="active"{% endif %}>
+        <a href="{{ params ? path(route, params) : path(route) }}">
+            <span>{{ content }}</span>
+        </a>
+    </li>
+{% endmacro %}

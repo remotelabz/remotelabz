@@ -1,0 +1,33 @@
+.table {
+    thead {
+      font-weight: 600;
+      th {
+        font-weight: inherit;
+        border-bottom: 1px solid #f0f0f0;
+        border-top: none;
+      }
+    }
+  
+    td {
+      border-top: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+  
+    .item {
+      padding: 0 !important;
+    }
+}
+
+[theme="dark"] {
+    .table {
+        color: theme-color("light");
+
+        th, td {
+            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+        }
+
+        thead th {
+            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+        }
+    }
+}

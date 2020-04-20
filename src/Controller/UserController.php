@@ -4,32 +4,38 @@ namespace App\Controller;
 
 use App\Utils\Uuid;
 use App\Entity\User;
-
 use App\Form\UserType;
 use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
-use App\Controller\AppController;
 use App\Repository\UserRepository;
+use FOS\RestBundle\Context\Context;
 use JMS\Serializer\SerializerBuilder;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\KernelInterface;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\Email;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserController extends AppController
+class UserController extends Controller
 {
     public $passwordEncoder;
 
@@ -37,20 +43,26 @@ class UserController extends AppController
 
     public $mailer;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer)
+    public $serializer;
+
+    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer, SerializerInterface $serializer)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
         $this->mailer = $mailer;
+        $this->serializer = $serializer;
     }
 
     /**
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
+     * 
+     * @Rest\Get("/api/users", name="api_users")
      */
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
+        $groupDetails = $request->query->has('group_details');
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('firstName', $search))
@@ -59,12 +71,9 @@ class UserController extends AppController
             ->orderBy([
                 'lastName' => Criteria::ASC
             ])
-            ->setMaxResults($limit)
-        ;
+            ->setMaxResults($limit);
 
         $users = $this->userRepository->matching($criteria);
-
-        $user = new User();
 
         $addUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
@@ -100,17 +109,49 @@ class UserController extends AppController
                         utilisateurs spécifiés dans le fichier n\'existent pas déjà ou que le format du fichier est correct.'
                     );
                 }
-                
+
                 fclose($fileSocket);
             } else {
                 $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
             }
         }
 
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users->getValues(), 200, [], []);
+        }
+
+        // $context = new Context();
+        // $context->addGroup("user");
+        // if ($groupDetails) {
+        //     $context->addGroup("group_details");
+        // }
+
+        // if ('json' === $request->getRequestFormat()) {
+        //     $view = $this->view($users->getValues())
+        //         ->setContext($context);
+
+        //     return $this->handleView($view);
+        // }
+
         return $this->render('user/index.html.twig', [
             'users' => $users,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
+            'search' => $search,
         ]);
+    }
+
+    /**
+     * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
+     */
+    public function showAction(Request $request, int $id)
+    {
+        $user = $this->userRepository->find($id);
+
+        if (!$user) {
+            throw new NotFoundHttpException();
+        }
+
+        return $this->json($user, 200, [], []);
     }
 
     /**
@@ -125,9 +166,9 @@ class UserController extends AppController
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             /** @var User $user */
             $user = $userForm->getData();
-            
-            foreach ($userForm->get('roles')  as $role)
-                    $user->setRoles($role);
+
+            // foreach ($userForm->get('roles') as $role)
+            //         $user->setRoles($role);
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
@@ -166,7 +207,7 @@ class UserController extends AppController
         if (null === $user) {
             throw new NotFoundHttpException();
         }
-        
+
         $userForm = $this->createForm(UserType::class, $user);
         $userForm->handleRequest($request);
 
@@ -182,10 +223,10 @@ class UserController extends AppController
                 } else {
                     $this->addFlash('danger', "Passwords doesn't match. If you don't want to change user's password, please leave password field empty.");
 
-                    return $this->redirectToRoute('edit_user', [ 'id' => $id ]);
+                    return $this->redirectToRoute('edit_user', ['id' => $id]);
                 }
             }
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);
             $entityManager->flush();
@@ -202,88 +243,67 @@ class UserController extends AppController
     }
 
     /**
-     * @Route("/users", name="get_users", methods="GET")
-     */
-    public function cgetAction()
-    {
-        return $this->renderJson($this->userRepository->findAll());
-    }
-
-    /**
-     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods={"GET", "PATCH"})
+     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="GET")
+     * 
+     * @Rest\Patch("/api/users/{id<\d+>}", name="api_toggle_user")
      */
     public function toggleAction(Request $request, $id)
     {
-        $status = 200;
-        $data = [];
-
         $user = $this->userRepository->find($id);
 
-        if ($user == null) {
+        if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
         } elseif ($user == $this->getUser()) {
-            $status = 403;
-            $data['message'] = 'You cannot lock your own account.';
+            throw new UnauthorizedHttpException('You cannot lock your own account.');
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            // Prevent super admin deletion
-            $status = 403;
-            $data['message'] = 'You cannot lock root account.';
+            throw new UnauthorizedHttpException('You cannot lock root account.');
         } else {
             $user->setEnabled(!$user->isEnabled());
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);
             $em->flush();
-
-            $data['message'] = 'User has been ' . ($user->isEnabled() ? 'enabled' : 'disabled') . '.';
         }
 
-        if ($request->getRequestFormat() === 'json') {
-            return $this->renderJson($data, $status);
-        } else {
-            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
-
-            return $this->redirectToRoute('users');
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
+
+        $this->addFlash('success', $user->getName() . "'s account has been locked.");
+
+        return $this->redirectToRoute('users');
     }
 
     /**
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
+     * 
+     * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
      */
     public function deleteAction(Request $request, $id)
     {
-        $status = 200;
-        $data = [];
-        
         $user = $this->userRepository->find($id);
 
-        if ($user == null) {
-            $status = 404;
+        if (!$user) {
+            throw new NotFoundHttpException('This user does not exist.');
         } elseif ($user == $this->getUser()) {
-            $status = 403;
-            $data['message'] = 'You cannot delete your own account.';
+            throw new UnauthorizedHttpException('You cannot delete your own account.');
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            // Prevent super admin deletion
-            $status = 403;
-            $data['message'] = 'You cannot delete root account.';
+            throw new UnauthorizedHttpException('You cannot delete root account.');
         } elseif ($user->getInstances()->count() > 0) {
-            $status = 403;
-            $data['message'] = 'You cannot delete an user who still has instances. Please stop them and try again.';
+            throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
         } else {
             $em = $this->getDoctrine()->getManager();
             $em->remove($user);
             $em->flush();
-
-            $data['message'] = 'User has been deleted.';
         }
 
-        if ($request->getRequestFormat() === 'json') {
-            return $this->renderJson($data, $status);
-        } else {
-            $this->addFlash($status < 400 ? 'success' : 'danger', $data['message']);
-
-            return $this->redirectToRoute('users');
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
+
+        $this->addFlash('success', $user->getName() . "'s account has been deleted.");
+
+        return $this->redirectToRoute('users');
     }
 
     /**
@@ -316,11 +336,10 @@ class UserController extends AppController
                     ->setLastName($firstName)
                     ->setFirstName($lastName)
                     ->setEmail($email)
-                    ->setPassword($this->passwordEncoder->encodePassword($user, $password))
-                ;
+                    ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
-                $validEmail = count($validator->validate($email, [ new Email() ])) === 0;
-    
+                $validEmail = count($validator->validate($email, [new Email()])) === 0;
+
                 if ($validEmail && $this->userRepository->findByEmail($email) == null) {
                     $entityManager->persist($user);
                     $this->sendNewAccountEmail($user, $password);
@@ -357,8 +376,7 @@ class UserController extends AppController
                     ]
                 ),
                 'text/html'
-            )
-        ;
+            );
 
         $this->mailer->send($message);
     }
@@ -376,11 +394,11 @@ class UserController extends AppController
 
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             $user = $userForm->getData();
-            
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($user);
             $entityManager->flush();
-            
+
             $this->addFlash('success', 'Your profile has been updated.');
         }
 
@@ -398,7 +416,7 @@ class UserController extends AppController
                     $entityManager->flush();
 
                     $this->addFlash('success', 'Your password has been changed.');
-                    
+
                     return $this->redirectToRoute('user_profile');
                 } else {
                     $this->addFlash('danger', "Passwords doesn't match.");
@@ -438,7 +456,7 @@ class UserController extends AppController
     /**
      * @Route("/profile/picture", name="get_current_user_profile_picture", methods="GET")
      */
-    public function getProfilePictureAction(Request $request)
+    public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
         $size = $request->query->get('size', 128);
@@ -449,18 +467,18 @@ class UserController extends AppController
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = "/tmp/" . new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         // $pictureFile = $request->files->get('picture');
         // if ($pictureFile) {
@@ -478,7 +496,7 @@ class UserController extends AppController
     /**
      * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
-    public function getUserProfilePictureAction(Request $request, int $id)
+    public function getUserProfilePictureAction(Request $request, int $id, KernelInterface $kernel)
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
@@ -486,28 +504,35 @@ class UserController extends AppController
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
-            $image = file_get_contents($profilePicture);
-            $image = imagecreatefrompng($profilePicture);
-            $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = "/tmp/" . new Uuid();
-            imagepng($image, $imageTmp, 9);
+            $cachedImagePath = $kernel->getCacheDir() . "/users/avatar/" . $user->getId() . "/" . $size;
 
-            $response = new Response(file_get_contents($imageTmp), 200);
+            if (!is_file($cachedImagePath)) {
+                $image = file_get_contents($profilePicture);
+                $image = imagecreatefrompng($profilePicture);
+                $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
+                $imageTmp = $cachedImagePath;
+                if (!is_dir($kernel->getCacheDir() . "/users/avatar/" . $user->getId())) {
+                    mkdir($kernel->getCacheDir() . "/users/avatar/" . $user->getId(), 0777, true);
+                }
+                imagepng($image, $imageTmp, 9);
+            }
+
+            $response = new Response(file_get_contents($cachedImagePath), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
 
     /**
      * @Route("/profile/picture", name="delete_user_profile_picture", methods="DELETE")
      */
-    public function deleteProfilePictureAction(Request $request)
+    public function deleteProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
         $size = $request->query->get('size', 128);
@@ -518,18 +543,18 @@ class UserController extends AppController
             $image = file_get_contents($profilePicture);
             $image = imagecreatefrompng($profilePicture);
             $image = imagescale($image, $size, $size, IMG_BILINEAR_FIXED);
-            $imageTmp = "/tmp/" . new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
-            $response->headers->set('Content-Disposition', 'inline; filename="'.$user->getProfilePictureFilename().'"');
+            $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
         } else {
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
-            return new Response($picture, 200, [ 'Content-Type' => 'image/jpeg' ]);
+            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         // $pictureFile = $request->files->get('picture');
         // if ($pictureFile) {
@@ -542,5 +567,13 @@ class UserController extends AppController
         // $entityManager->flush();
 
         // return $this->redirectToRoute('user_profile');
+    }
+
+    /**
+     * @Rest\Get("/api/users/me", name="api_users_me")
+     */
+    public function meAction()
+    {
+        return $this->json($this->getUser());
     }
 }

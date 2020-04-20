@@ -2,8 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\Lab;
+use App\Entity\User;
 use App\Entity\Instance;
-use Symfony\Bridge\Doctrine\RegistryInterface;
+use App\Entity\LabInstance;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
@@ -14,12 +17,12 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  */
 class InstanceRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Instance::class);
     }
 
-    public function findByIdAndUser($id, $user)
+    public function findByIdAndUser(int $id, User $user)
     {
         return $this->createQueryBuilder('i')
             ->andWhere('i.id = :id')
@@ -27,11 +30,10 @@ class InstanceRepository extends ServiceEntityRepository
             ->andWhere('i.user = :user')
             ->setParameter('user', $user->getId())
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
-    public function findByUserAndLab($user, $lab)
+    public function findByUserAndLab(User $user, Lab $lab): LabInstance
     {
         return $this->createQueryBuilder('i')
             ->andWhere('i.user = :user')
@@ -39,8 +41,7 @@ class InstanceRepository extends ServiceEntityRepository
             ->andWhere('i.lab = :lab')
             ->setParameter('lab', $lab->getId())
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     // /**

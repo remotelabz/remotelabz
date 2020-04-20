@@ -2,9 +2,12 @@
 
 namespace App\Entity;
 
+use Exception;
 use App\Entity\Instance;
+use App\Instance\InstanceState;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -25,40 +28,33 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     protected $device;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="deviceInstances")
-     * @Serializer\Groups({"user"})
-     */
-    protected $user;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="deviceInstances")
-     * @ORM\JoinColumn(nullable=false)
-     * @Serializer\Groups({"lab"})
-     */
-    private $lab;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances")
-     * @Serializer\XmlElement(cdata=false)
+     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist"})
+     * @ORM\JoinColumn(onDelete="CASCADE")
      * @Serializer\Groups({"lab"})
      */
     protected $labInstance;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance")
-     * @Serializer\XmlList(inline=true, entry="network_interface_instance")
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $networkInterfaceInstances;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $state;
+
     public function __construct()
     {
         parent::__construct();
+        $this->state = InstanceState::STOPPED;
         $this->networkInterfaceInstances = new ArrayCollection();
     }
 
@@ -79,18 +75,6 @@ class DeviceInstance extends Instance
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"lab"})
@@ -103,14 +87,7 @@ class DeviceInstance extends Instance
 
     public function getLab(): ?Lab
     {
-        return $this->lab;
-    }
-
-    public function setLab(?Lab $lab): self
-    {
-        $this->lab = $lab;
-
-        return $this;
+        return $this->labInstance->getLab();
     }
 
     public function getLabInstance(): ?LabInstance
@@ -136,7 +113,7 @@ class DeviceInstance extends Instance
             ->where(Criteria::expr()->eq("networkInterface", $networkInterface));
 
         $networkInterfaceInstance = ($this->networkInterfaceInstances !== null) ? $this->networkInterfaceInstances->matching($criteria)->first() : null;
-        
+
         return $networkInterfaceInstance ?: null;
     }
 
@@ -145,7 +122,7 @@ class DeviceInstance extends Instance
      *
      * @return Collection|NetworkInterfaceInstance[]
      */
-    public function getNetworkInterfaceInstances(): ArrayCollection
+    public function getNetworkInterfaceInstances(): Collection
     {
         return $this->networkInterfaceInstances;
     }
@@ -173,4 +150,54 @@ class DeviceInstance extends Instance
         return $this;
     }
 
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(?string $state): self
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    public function isStarted(): ?bool
+    {
+        return $this->state === InstanceState::STARTED;
+    }
+
+    /**
+     * Creates all sub-instances from device descriptor. This does not record them in the database.
+     */
+    public function populate()
+    {
+        if (!$this->device) {
+            throw new Exception('No device is associated to this instance.');
+        }
+
+        /** @var NetworkInterface $networkInterface */
+        foreach ($this->device->getNetworkInterfaces() as $networkInterface) {
+            $networkInterfaceInstance = NetworkInterfaceInstance::create()
+                ->setNetworkInterface($networkInterface)
+                ->setDeviceInstance($this)
+                ->setRemotePort(0)
+                ->setOwnedBy($this->ownedBy);
+
+            switch ($this->ownedBy) {
+                case self::OWNED_BY_USER:
+                    $networkInterfaceInstance->setUser($this->user);
+                    break;
+
+                case self::OWNED_BY_GROUP:
+                    $networkInterfaceInstance->setGroup($this->_group);
+                    break;
+            }
+
+            $networkInterfaceInstance->populate();
+
+            $networkInterface->addInstance($networkInterfaceInstance);
+            $this->addNetworkInterfaceInstance($networkInterfaceInstance);
+        }
+    }
 }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PictureEditor from './PictureEditor';
-import { Modal, Button, ModalBody } from 'react-bootstrap';
+import { Modal, Button } from 'react-bootstrap';
 import Noty from 'noty';
 
 export default class ProfilePictureUploader extends Component {
@@ -65,7 +65,7 @@ export default class ProfilePictureUploader extends Component {
                         <Modal.Title>Upload a profile picture</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <PictureEditor setUpload={click => this.onModalValid = click} file={this.file} uploadCallback={this.uploadCallback} />
+                        <PictureEditor setUpload={click => this.onModalValid = click} file={this.file} uploadCallback={this.uploadCallback} endpoint="/profile/picture" />
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="info" onClick={() => this.onModalValid()}>Set new profile picture</Button>

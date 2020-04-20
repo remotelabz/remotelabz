@@ -20,3 +20,6 @@ shib_logout:
 gesdinet_jwt_refresh_token:
     path:       /api/auth/refresh
     controller: gesdinet.jwtrefreshtoken::refresh
+
+fos_js_routing:
+    resource: "@FOSJsRoutingBundle/Resources/config/routing/routing.xml"

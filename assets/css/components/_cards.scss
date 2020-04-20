@@ -1,0 +1,41 @@
+[theme="dark"] {
+    .card {
+        background-color: theme-color("dark");
+        border-color: lighten(theme-color("dark-lighter"), 7.5%);
+    }
+
+    .card-header {
+        background-color: theme-color("dark-lighter");
+        fill: currentColor;
+    }
+
+    .card-footer {
+        background-color: theme-color("dark-lighter");
+        fill: currentColor;
+    }
+
+    //         border-color: lighten(theme-color("dark-lighter"), 7.5%);
+    //         color: darken(theme-color("light"), 5%);
+
+    //         &:focus {
+    //             background-color: lighten(theme-color("dark-lighter"), 7.5%);
+    //             color: theme-color("light");
+    //         }
+
+    //         &:disabled {
+    //             border-color: theme-color("dark-lighter");
+    //             background-color: darken(theme-color("dark-lighter"), 5%);
+    //         }
+    //     }
+    // }
+
+    // .input-group-text {
+    //     background-color: darken(theme-color("dark-lighter"), 5%);
+    //     border-color: lighten(theme-color("dark-lighter"), 7.5%);
+    //     color: theme-color("light");
+    // }
+
+    // .form-actions {
+    //     border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+    // }
+}

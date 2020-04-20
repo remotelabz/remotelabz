@@ -198,6 +198,8 @@ export default class DeviceForm extends React.Component
                                 onChange={value => setFieldValue("operatingSystem", value)}
                                 onBlur={setFieldTouched}
                                 error={errors.operatingSystem}
+                                className='react-select-container'
+                                classNamePrefix="react-select"
                                 loadOptions={this.loadOperatingSystemOptions}
                                 defaultOptions={this.state.operatingSystemOptions}
                                 placeholder="Select an operating system..."
@@ -211,6 +213,8 @@ export default class DeviceForm extends React.Component
                                 onChange={value => setFieldValue("flavor", value)}
                                 onBlur={setFieldTouched}
                                 error={errors.flavor}
+                                className='react-select-container'
+                                classNamePrefix="react-select"
                                 loadOptions={this.loadFlavorOptions}
                                 defaultOptions={this.state.flavorOptions}
                                 placeholder="Select an flavor..."

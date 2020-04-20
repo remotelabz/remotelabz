@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" {% if app.request.cookies.get('theme') == "dark" %}theme="dark"{% endif %}>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>{% block title %}RemoteLabz{% endblock %}</title>
+
+        {% block stylesheets %}
+        {{ encore_entry_link_tags('app') }}
+        {% endblock %}
+    </head>
+
+    <body>
+        <div id="root"></div>
+
+        {% block javascripts %}
+        {{ encore_entry_script_tags('react-app') }}
+        {% endblock %}
+    </body>
+</html>
