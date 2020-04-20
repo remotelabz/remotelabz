@@ -8,6 +8,4 @@ use App\Entity\Instance;
 interface InstanciableInterface
 {
     function getUuid();
-
-    function getUserInstance(User $user): ?Instance;
 }

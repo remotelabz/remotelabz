@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import Noty from 'noty';
-import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
+import Axios from 'axios';
 
 Noty.overrideDefaults({
     timeout: 5000
@@ -22,7 +22,7 @@ export default class API {
     }
 
     toggle(url) {
-        const api = API.getInstance();
+        // const api = API.getInstance();
 
         $.ajax({
             url,
@@ -77,9 +77,8 @@ export default class API {
     }
 }
 
-API.getInstance = (options) => {
-    const axios = require('axios').default;
-    if (!options) options = {};
+API.getInstance = (options = {}) => {
+    const axios = Axios.create(options);
 
     axios.interceptors.request.use(
         config => {
@@ -96,7 +95,9 @@ API.getInstance = (options) => {
             options.responseCallback && options.responseCallback();
             options.successCallback && options.successCallback();
             return response;
-        }, error => {
+        },
+        /** @param {import('axios').AxiosError} error */
+        error => {
             options.responseCallback && options.responseCallback();
             options.errorCallback && options.errorCallback();
             // Unauthentified
@@ -106,11 +107,13 @@ API.getInstance = (options) => {
                     type: 'error',
                     text: 'Your session has expired. Please log in again.'
                 }).show();
+
+                window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
             } else if (error.response.status >= 500) {
-                new Noty({
-                    type: 'error',
-                    text: 'Oops, an error happened. Please reload your window.'
-                }).show();
+                // new Noty({
+                //     type: 'error',
+                //     text: 'Oops, an error happened. Please reload your window.'
+                // }).show();
             }
 
             return Promise.reject(error);

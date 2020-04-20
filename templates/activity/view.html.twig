@@ -6,30 +6,33 @@
 {% endblock %}
 
 {% block wrapper %}
-<div class="content-title">
-    <div class="content-title-infos">
-        <h1>{{ activity.name }}</h1>
-    </div>
-    <div class="content-title-actions">
-        {% if activity.lab is not null %}
-            {% set lab_on=false %}  
-            {% if labInstance is null %}
-                <a href="{{ path('start_activity', {'id': activity.id}) }}" class="btn btn-primary">Start activity</a>
-            {% else %}
-                Activity already started - 
-                <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
-                {% set lab_on=true %}                      
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ activity.name }}</h1>
+        </div>
+        <div class="content-title-actions">
+            {% if activity.lab is not null %}
+                {% set lab_on=false %}  
+                {% if labInstance is null %}
+                    <a href="{{ path('start_activity', {'id': activity.id}) }}" class="btn btn-primary">Start activity</a>
+                {% else %}
+                    Activity already started - 
+                    <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+                    {% set lab_on=true %}                      
+                {% endif %}
+                {% if  is_granted("ROLE_TEACHER") and not lab_on %}
+                    <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+                {% endif %}
             {% endif %}
-            {% if  is_granted("ROLE_TEACHER") and not lab_on %}
-                <a href="{{ path('show_lab', {'id': activity.lab.id}) }}" class="btn btn-default">Go to Lab</a>
+            {% if is_granted("ROLE_ADMINISTRATOR") %}
+                <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
+                <a href="{{ path('delete_activity', {'id': activity.id}) }}" class="btn btn-danger" role="button">Delete</a>
             {% endif %}
-        {% endif %}
-        {% if is_granted("ROLE_ADMINISTRATOR") %}
-            <a href="{{ path('edit_activity', {'id': activity.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
-            <a href="{{ path('delete_activity', {'id': activity.id}) }}" class="btn btn-danger" role="button">Delete</a>
-        {% endif %}
+        </div>
     </div>
-    </div>
+
+    {{ react_component('InstanceManager', {props: {user: app.user.email}}) }}
+
     <div class="content-body">     
         {{ activity.description|markdown }}
     </div>

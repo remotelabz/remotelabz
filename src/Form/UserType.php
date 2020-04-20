@@ -35,12 +35,15 @@ class UserType extends AbstractType
             ->add('roles', ChoiceType::class, [
                 'label' => 'Role',
                 'choices' => [
-                    'Administrator' => 'ROLE_ADMINISTRATOR',
-                    'Teacher' => 'ROLE_TEACHER',
                     'Student' => 'ROLE_USER',
+                    'Teacher' => 'ROLE_TEACHER',
+                    'Administrator' => 'ROLE_ADMINISTRATOR',
                 ],
-                'multiple' => true,
-                'help' => 'Only the highest rights level is important.'
+                'empty_data' => 'ROLE_USER',
+                'mapped' => false,
+                'expanded' => true,
+                'multiple' => false,
+                'label' => 'Access level'
             ])
             ->add('enabled', CheckboxType::class, [
                 'help' => 'If the user is disabled, he can\'t log in.'

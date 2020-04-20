@@ -9,7 +9,7 @@ Requirements
 ============
 
 You will need the following software installed in order to run RemoteLabz.
-- PHP >= 7.2
+- PHP >= 7.3
 - Apache
 - [Composer](https://getcomposer.org/download/)
 - [Node.js](https://nodejs.org/en/download/package-manager/)
@@ -33,8 +33,11 @@ Ubuntu
 
 - PHP
 ```bash
-# default php packages version from 18.04 is 7.2, therefore this command will work
-sudo apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip
+sudo apt-get update && apt-get upgrade
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:ondrej/php
+sudo apt-get update
+sudo apt install -y curl gnupg php7.3 zip unzip php7.3-bcmath php7.3-curl php7.3-gd php7.3-intl php7.3-mbstring php7.3-mysql php7.3-xml php7.3-zip
 ```
 - Composer
 ```bash
@@ -54,10 +57,6 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 sudo apt-get update
 sudo apt-get install --no-install-recommends yarn
 ```
-- configurable-http-proxy
-```bash
-sudo npm install -g configurable-http-proxy
-```
 
 ### Install RemoteLabz
 
@@ -70,10 +69,10 @@ sudo bin/install
 Then, you should modify the `.env` file according to your environment, including SQL database variables with `MYSQL_SERVER`, `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_DATABASE`.
 
 ```bash
-sudo cp .env.dist .env
-# you may now append variables or directly edit sample values
+# Replace 'mysqlpassword' by your actual password
 echo "MYSQL_PASSWORD=mysqlpassword" | sudo tee -a .env
-# or
+
+# or edit ENV file directly
 sudo nano .env
 ```
 

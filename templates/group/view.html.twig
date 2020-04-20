@@ -1,0 +1,132 @@
+{% extends 'group/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('admin_show_group', {'slug': group.slug}) }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    {% macro groupParent(group) %}
+       {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
+    {% endmacro %}
+
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h3>{{ _self.groupParent(group) }} {{ group.name }}</h3>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+        </div>
+    </div>
+
+    <div class="content-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-4">
+                    {% embed "@layouts/card.html.twig" %}
+                        {% block header %}Group info{% endblock %}
+                        {% block list %}
+                            <li class="list-group-item">
+                                <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s60 rounded-lg mr-2">
+                                    {% if group.pictureFilename is defined and group.pictureFilename %}
+                                        image
+                                    {% else %}
+                                        {{- group.name|firstLetter|upper -}}
+                                    {% endif %}
+                                </div>
+                            </li>
+                            <li class="list-group-item">
+                                Name: <strong>{{ group.name }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Path: <strong>{{ group.slug }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Description: <strong>{{ group.description }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Visibility level: <strong>{{ group.visibility }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                Created on: <strong>{{ group.createdAt|date }}</strong>
+                            </li>
+                            <li class="list-group-item">
+                                ID: <strong>{{ group.id }}</strong>
+                            </li>
+                        {% endblock %}
+                    {% endembed %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="mb-4">
+                    {% embed "@layouts/card.html.twig" %}
+                        {% block header %}
+                            Add user(s) to the group 
+                        {% endblock %}
+                        {% block body %}
+                            <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                                {{ react_component('UserSelect') }}
+                                <hr>
+                                <button type="submit" class="btn btn-success">Add selected user(s)</button>
+                            </form>
+                        {% endblock %}
+                    {% endembed %}
+                </div>
+
+                {% embed "@layouts/card.html.twig" %}
+                    {% block header %}
+                    <div class="d-flex align-items-center">
+                        <div><strong>{{ group.name }}</strong> group members <span class="badge badge-pill badge-default">{{ group.users|length }}</span></div>
+                        <div class="flex-grow-1"></div>
+                        <div><a class="btn btn-sm btn-default"><i class="fa fa-edit"></i> Manage access</a></div>
+                    </div>
+                    {% endblock %}
+                    {% block list %}
+                        {% for user in group.users %}
+                            <li class="list-group-item">
+                                <div class="d-flex">
+                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
+
+                                    <div class="d-flex flex-column">
+                                        <div>
+                                            <span class="fw600">{{ user.name }}</span>
+                                            <span class="text-muted">{{ user.email }}</span>
+                                            {% if user.id == app.user.id %}
+                                                <label class="badge badge-success ml-2 mb-0">It's you!</label>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            Given access <span class="timeago" datetime="{{ group.getUserRegistrationDate(user)|date }}" data-toggle="tooltip" data-placement="top" title="{{ group.getUserRegistrationDate(user)|date('M d, Y h:ia') }}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1"></div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="group-user-role">
+                                            {%- set role = group.getUserRole(user) %}
+                                            {% if role is same as('owner') -%}
+                                                Owner
+                                            {%- elseif role is same as('admin') -%}
+                                                Administrator
+                                            {%- elseif role is same as('user') -%}
+                                                User
+                                            {% endif -%}
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </li>
+                        {% endfor %}
+                    {% endblock %}
+                    {% block footer %} {% endblock %}
+                {% endembed %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('users-select') }}
+    {{ encore_entry_script_tags('timeago') }}
+{% endblock %}

@@ -7,6 +7,7 @@ parameters:
     locale: 'en'
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
     profile_picture_directory: '%kernel.project_dir%/public/uploads/user/avatar'
+    group_image_directory: '%kernel.project_dir%/public/uploads/group/avatar'
     image_directory: '%kernel.project_dir%/public/uploads/images'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
@@ -48,6 +49,10 @@ services:
         arguments:
             $targetDirectory: '%image_directory%'
 
+    App\Service\GroupPictureFileUploader:
+        arguments:
+            $targetDirectory: '%group_image_directory%'
+
     App\Service\ProfilePictureFileUploader:
         arguments:
            - '%profile_picture_directory%'
@@ -63,10 +68,10 @@ services:
             - "%shibboleth_idp_url%"
             - "%shibboleth_remote_user_var%"
 
+    App\EventSubscriber\RenderExceptionSubscriber:
+        arguments:
+            $logger: '@logger'
+
     App\EventListener\InstanceSerializationListener:
         tags:
             - { name: jms_serializer.event_subscriber }
-
-    App\EventListener\InstanceDeleteListener:
-        tags:
-            - { name: doctrine.event_listener, event: preRemove }

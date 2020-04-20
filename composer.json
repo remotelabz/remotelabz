@@ -6,40 +6,43 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
-        "friendsofsymfony/jsrouting-bundle": "^2.2",
-        "friendsofsymfony/rest-bundle": ">=2.4-dev",
-        "gesdinet/jwt-refresh-token-bundle": "^0.8.2",
+        "friendsofsymfony/jsrouting-bundle": "^2.5",
+        "friendsofsymfony/rest-bundle": "dev-master",
+        "gesdinet/jwt-refresh-token-bundle": "^0.9",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer-bundle": "^3.1",
         "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
-        "nelmio/api-doc-bundle": "^3.4",
+        "limenius/react-bundle": "5.0.4",
+        "limenius/react-renderer": "5.0.3",
+        "myclabs/deep-copy": "^1.9",
+        "onurb/doctrine-yuml-bundle": "dev-master",
         "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
         "symfony/apache-pack": "^1.0",
-        "symfony/asset": "4.3.*",
-        "symfony/console": "^4.0",
-        "symfony/debug-bundle": "4.3.*",
+        "symfony/asset": "5.0.*",
+        "symfony/console": "^5.0",
+        "symfony/debug-bundle": "5.0.*",
         "symfony/debug-pack": "^1.0",
-        "symfony/expression-language": "^4.0",
+        "symfony/expression-language": "^5.0",
         "symfony/flex": "^1.1",
-        "symfony/form": "^4.0",
-        "symfony/framework-bundle": "^4.0",
+        "symfony/form": "^5.0",
+        "symfony/framework-bundle": "^5.0",
+        "symfony/messenger": "5.0.*",
         "symfony/monolog-bundle": "^3.1",
         "symfony/orm-pack": "^1.0",
-        "symfony/process": "^4.0",
-        "symfony/security-bundle": "^4.0",
-        "symfony/serializer": "^4.0",
+        "symfony/process": "^5.0",
+        "symfony/security-bundle": "^5.0",
+        "symfony/serializer": "5.0.*",
         "symfony/serializer-pack": "^1.0",
         "symfony/swiftmailer-bundle": "^3.2",
-        "symfony/templating": "4.3.*",
-        "symfony/translation": "^4.0",
-        "symfony/twig-bundle": "4.3.*",
-        "symfony/validator": "^4.0",
-        "symfony/web-link": "^4.0",
+        "symfony/templating": "5.0.*",
+        "symfony/translation": "^5.0",
+        "symfony/twig-bundle": "^5.0",
+        "symfony/validator": "^5.0",
+        "symfony/web-link": "^5.0",
         "symfony/webpack-encore-bundle": "^1.0",
-        "symfony/yaml": "^4.0",
-        "twig/extensions": "^1.5"
+        "symfony/yaml": "^5.0"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.8",
@@ -47,11 +50,10 @@
         "symfony/css-selector": "^4.0",
         "symfony/debug-pack": "^1.0",
         "symfony/dotenv": "^4.0",
-        "symfony/maker-bundle": "^1.9",
+        "symfony/maker-bundle": "^1.15",
         "symfony/phpunit-bridge": "^4.3",
         "symfony/profiler-pack": "^1.0",
-        "symfony/test-pack": "^1.0",
-        "symfony/web-server-bundle": "^4.0"
+        "symfony/test-pack": "^1.0"
     },
     "config": {
         "preferred-install": {
@@ -83,10 +85,12 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
         ],
         "post-update-cmd": [
-            "@auto-scripts"
+            "@auto-scripts",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
         ]
     },
     "conflict": {
@@ -95,7 +99,21 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "4.3.*"
+            "require": "5.0.*"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://gitlab.remotelabz.com/jhubert/doctrine-yuml-bundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.remotelabz.com/jhubert/ReactBundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.remotelabz.com/jhubert/ReactRenderer.git"
+        }
+    ]
 }

@@ -22,7 +22,7 @@ class NetworkSettings
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"network_interfaces", "lab", "details", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -74,7 +74,7 @@ class NetworkSettings
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $protocol;
 

@@ -1,0 +1,32 @@
+.tooltip {
+    line-height: 16px;
+
+    .tooltip-inner {
+        padding: 8px;
+    }
+}
+
+[theme=dark] {
+    .tooltip {
+        .tooltip-inner {
+            background-color: theme-color('dark-lighter');
+            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+        }
+    }
+
+    .bs-tooltip-top .arrow::before {
+        border-top-color: theme-color('dark-lighter');
+    }
+
+    .bs-tooltip-bottom .arrow::before {
+        border-bottom-color: theme-color('dark-lighter');
+    }
+
+    .bs-tooltip-left .arrow::before {
+        border-left-color: theme-color('dark-lighter');
+    }
+
+    .bs-tooltip-right .arrow::before {
+        border-right-color: theme-color('dark-lighter');
+    }
+}

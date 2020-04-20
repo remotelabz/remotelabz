@@ -13,6 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
 class NetworkInterfaceType extends AbstractType
 {
@@ -28,7 +29,9 @@ class NetworkInterfaceType extends AbstractType
             //     ]
             // ])
             ->add('type', HiddenType::class, [
-                'data' => 'tap'
+                'data' => 'tap',
+                'empty_data' => 'tap',
+                'required' => false
             ])
             ->add('accessType', ChoiceType::class, [
                 'choices' => [
@@ -46,16 +49,22 @@ class NetworkInterfaceType extends AbstractType
                 'label' => 'MAC address',
                 'help' => 'MAC address must be in shape like 52:54:00:XX:XX:XX where X is a digit in hexa',
                 //'data' => '52:54:00:',
-                'required' => true
+                'required' => false
             ])
-            ->add('submit', SubmitType::class)
-        ;
+            ->add('isTemplate', CheckboxType::class, [
+                'required' => false,
+                'data' => true,
+                'label' => 'Template',
+                'help' => "Check this if this network interface is a template meant to be re-used in the Lab editor."
+            ])
+            ->add('submit', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
             'data_class' => NetworkInterface::class,
+            'allow_extra_fields' => true
         ]);
     }
 }

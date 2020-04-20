@@ -5,7 +5,7 @@ namespace App\Repository;
 use App\Entity\Lab;
 use App\Entity\User;
 use App\Entity\LabInstance;
-use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
@@ -17,7 +17,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  */
 class LabInstanceRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, LabInstance::class);
     }
@@ -30,9 +30,7 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->setParameter('lab', $lab)
             ->getQuery()
-            //->getOneOrNullResult() 
-            // If a lab doesn't start because we have an error, an instance is created and if the user clicks again on a start lab, we have 2 answers to this query and generate and error
-            ->getResult()
+            ->getOneOrNullResult()
         ;
     }
 

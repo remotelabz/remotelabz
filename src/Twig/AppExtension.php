@@ -15,7 +15,8 @@ class AppExtension extends AbstractExtension
     public function getFilters()
     {
         return [
-            new TwigFilter('cast_to_array', [$this, 'stdClassObject'])
+            new TwigFilter('cast_to_array', [$this, 'stdClassObject']),
+            new TwigFilter('firstLetter', [$this, 'firstLetterFilter']),
         ];
     }
 
@@ -23,19 +24,33 @@ class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('svg', [$this, 'renderSvg'], ['is_safe' => ['html']]),
-            new TwigFunction('category', [$this, 'setActiveCategory'], ['is_safe' => ['html'], 'needs_context' => true])
+            new TwigFunction('category', [$this, 'setActiveCategory'], ['is_safe' => ['html'], 'needs_context' => true]),
+            new TwigFunction('groupicon', [$this, 'getGroupIcon'], ['is_safe' => ['html']])
         ];
     }
 
-    public function stdClassObject($object)
+    public function stdClassObject($data)
     {
-        $properties = [];
+        if ((! is_array($data)) and (! is_object($data)))
+            return 'xxx'; // $data;
 
-        foreach ((array) $object as $key => $value) {
-            $properties[$key] = $value;
+        $result = array();
+
+        $data = (array) $data;
+        foreach ($data as $key => $value) {
+            if (is_object($value))
+                $value = (array) $value;
+            if (is_array($value))
+                $result[$key] = $this->stdClassObject($value);
+            else
+                $result[$key] = $value;
         }
+        return $result;
+    }
 
-        return $properties;
+    public function firstLetterFilter(string $str)
+    {
+        return substr($str, 0, 1);
     }
 
     public function renderSvg($svg, $class = 'image-sm v-sub')
@@ -52,5 +67,10 @@ class AppExtension extends AbstractExtension
         if ($context['category'] == $context) {
             return "active";
         }
+    }
+
+    public function groupicon($value)
+    {
+        
     }
 }

@@ -2,14 +2,15 @@
 
 namespace App\Tests;
 
-use App\Entity\User;
-use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Security\Guard\Token\PostAuthenticationGuardToken;
 
 class ApplicationAvailabilityFunctionalTest extends WebTestCase
 {
-    private $client = null;
+    /**
+     * @var KernelBrowser $client
+     */
+    private $client;
 
     public function setUp()
     {
@@ -33,14 +34,12 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/password/reset'];
 
         yield ['/admin/users'];
-        yield ['/admin/courses'];
         yield ['/admin/flavors'];
         yield ['/admin/network-settings'];
         yield ['/admin/network-interfaces'];
         yield ['/admin/operating-systems'];
         yield ['/admin/instances'];
 
-        yield ['/activities'];
         yield ['/devices'];
         yield ['/profile'];
     }

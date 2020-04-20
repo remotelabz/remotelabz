@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use DateTime;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -16,6 +17,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\DisabledException;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -100,13 +102,20 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
         $response = new RedirectResponse('/');
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
-        $response->headers->setCookie(Cookie::create('bearer', $this->JWTManager->create($user)));
-        $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
-        $user->setLastActivity(new \DateTime());
+
+        $jwtToken = $this->JWTManager->create($user);
+        $now = new DateTime();
+        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
+
+        $response->headers->setCookie($jwtTokenCookie);
+        // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
+        $user->setLastActivity(new DateTime());
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
+        if ($request->query->has('ref_url')) {
+            $response->setTargetUrl(urldecode($request->query->get('ref_url')));
+        } else if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
             $response->setTargetUrl($targetPath);
         }
         else {
@@ -116,9 +125,24 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
         return $response;
     }
 
-    protected function getLoginUrl()
+    /**
+     * @inheritDoc
+     */
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        return $this->router->generate('login');
+        if ($request->hasSession()) {
+            $request->getSession()->set(Security::AUTHENTICATION_ERROR, $exception);
+        }
+
+        $parameters = $request->query->has('ref_url') ? ['ref_url' => $request->query->get('ref_url')] : [];
+        $url = $this->getLoginUrl($parameters);
+
+        return new RedirectResponse($url);
+    }
+
+    protected function getLoginUrl($parameters = [])
+    {
+        return $this->router->generate('login', $parameters);
     }
 
     /**

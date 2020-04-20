@@ -13,7 +13,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
- * @Serializer\XmlRoot("lab")
  */
 class Lab implements InstanciableInterface
 {
@@ -21,15 +20,13 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $name;
 
@@ -41,57 +38,27 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
-     * @Serializer\XmlList(inline=true, entry="device")
      * @Serializer\Groups({"lab"})
      */
     private $devices;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Connexion", inversedBy="labs")
-     * @Serializer\XmlList(inline=true, entry="connexion")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
-    private $connexions;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Activity", mappedBy="lab")
-     * @Serializer\XmlList(inline=true, entry="activity")
-     * @Serializer\Groups({"lab"})
-     */
-    private $activities;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="lab", cascade={"persist", "remove"})
-     * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $instances;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\XmlElement(cdata=false)
      * @Serializer\Groups({"lab", "lab_author"})
      */
     private $author;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="lab")
-     * @Serializer\Exclude
-     */
-    private $deviceInstances;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="lab")
-     * @Serializer\Exclude
-     */
-    private $networkInterfaceInstances;
 
     /**
      * @ORM\Column(type="datetime")
@@ -158,9 +125,9 @@ class Lab implements InstanciableInterface
     }
 
     /**
-     * @return Collection|Devices[]
+     * @return Collection|Device[]
      */
-    public function getDevices(): Collection
+    public function getDevices()
     {
         return $this->devices;
     }
@@ -184,79 +151,9 @@ class Lab implements InstanciableInterface
     }
 
     /**
-     * @return Collection|Connexion[]
-     */
-    public function getConnexions(): Collection
-    {
-        return $this->connexions;
-    }
-
-    public function addConnexion(Connexion $connexion): self
-    {
-        if (!$this->connexions->contains($connexion)) {
-            $this->connexions[] = $connexion;
-        }
-
-        return $this;
-    }
-
-    public function removeConnexion(Connexion $connexion): self
-    {
-        if ($this->connexions->contains($connexion)) {
-            $this->connexions->removeElement($connexion);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Activity[]
-     */
-    public function getActivities(): Collection
-    {
-        return $this->activities;
-    }
-
-    public function addActivity(Activity $activity): self
-    {
-        if (!$this->activities->contains($activity)) {
-            $this->activities[] = $activity;
-            $activity->setLab($this);
-        }
-
-        return $this;
-    }
-
-    public function removeActivity(Activity $activity): self
-    {
-        if ($this->activities->contains($activity)) {
-            $this->activities->removeElement($activity);
-            // set the owning side to null (unless already changed)
-            if ($activity->getLab() === $this) {
-                $activity->setLab(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /*public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-*/
- 
-    /**
      * @return Collection|Instance[]
      */
-    public function getInstances(): Collection
+    public function getInstances()
     {
         return $this->instances;
     }
@@ -267,23 +164,19 @@ class Lab implements InstanciableInterface
      * @param User $user
      * @return LabInstance|null
      */
-    public function getUserInstance(User $user): ?Instance
+    public function getUserInstance(User $user): ?LabInstance
     {
         $criteria = Criteria::create()->where(Criteria::expr()->eq("user", $user));
 
-        $instance = $this->getInstances()->matching($criteria)->first();
+        $instance = $this->instances->matching($criteria)->first();
 
-        if (!$instance) {
-            return null;
-        }
-        return $instance;
+        return $instance ?: null;
     }
 
     public function addInstance(Instance $instance): self
     {
         if (!$this->instances->contains($instance)) {
             $this->instances[] = $instance;
-            $instance->setLab($this);
         }
 
         return $this;
@@ -293,10 +186,6 @@ class Lab implements InstanciableInterface
     {
         if ($this->instances->contains($instance)) {
             $this->instances->removeElement($instance);
-            // set the owning side to null (unless already changed)
-            if ($instance->getLab() === $this) {
-                $instance->setLab(null);
-            }
         }
 
         return $this;
@@ -339,68 +228,6 @@ class Lab implements InstanciableInterface
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|DeviceInstance[]
-     */
-    public function getDeviceInstances(): Collection
-    {
-        return $this->deviceInstances;
-    }
-
-    public function addDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if (!$this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances[] = $deviceInstance;
-            $deviceInstance->setLab($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDeviceInstance(DeviceInstance $deviceInstance): self
-    {
-        if ($this->deviceInstances->contains($deviceInstance)) {
-            $this->deviceInstances->removeElement($deviceInstance);
-            // set the owning side to null (unless already changed)
-            if ($deviceInstance->getLab() === $this) {
-                $deviceInstance->setLab(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|NetworkInterfaceInstance[]
-     */
-    public function getNetworkInterfaceInstances(): Collection
-    {
-        return $this->networkInterfaceInstances;
-    }
-
-    public function addNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if (!$this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances[] = $networkInterfaceInstance;
-            $networkInterfaceInstance->setLab($this);
-        }
-
-        return $this;
-    }
-
-    public function removeNetworkInterfaceInstance(NetworkInterfaceInstance $networkInterfaceInstance): self
-    {
-        if ($this->networkInterfaceInstances->contains($networkInterfaceInstance)) {
-            $this->networkInterfaceInstances->removeElement($networkInterfaceInstance);
-            // set the owning side to null (unless already changed)
-            if ($networkInterfaceInstance->getLab() === $this) {
-                $networkInterfaceInstance->setLab(null);
-            }
-        }
 
         return $this;
     }

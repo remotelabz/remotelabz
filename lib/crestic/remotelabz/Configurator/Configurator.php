@@ -5,11 +5,13 @@ namespace RemoteLabz\Configurator;
 use RemoteLabz\Logger;
 use RemoteLabz\System;
 use RemoteLabz\Configurator\Database;
+use RemoteLabz\Exception\NotRootException;
 use RemoteLabz\Exception\ConfigurationException;
 
 class Configurator
 {
-    static public function getRegisteredServices() : array {
+    static public function getRegisteredServices(): array
+    {
         return [
             "database" => Database::class,
         ];
@@ -35,11 +37,11 @@ class Configurator
                 }
             }
         } else {
-            $log->debug("Command ".$action." invoked");
+            $log->debug("Command " . $action . " invoked");
             $hasError = false;
             try {
                 call_user_func([self::getRegisteredServices()[$action], 'configure'], $options, $operands, $log);
-            } catch(ConfigurationException $e) {
+            } catch (ConfigurationException $e) {
                 Logger::println($e->getMessage(), Logger::COLOR_RED);
                 $hasError = true;
             }
@@ -47,10 +49,10 @@ class Configurator
 
         if ($hasError) {
             $log->error("Command terminated with errors!");
-            Logger::println("Command terminated with errors! See logs at ".$log->getLogPath()." to get more information.", Logger::COLOR_RED);
+            Logger::println("Command terminated with errors! See logs at " . $log->getLogPath() . " to get more information.", Logger::COLOR_RED);
         } else {
             $log->debug("Command ended without error.");
-            Logger::println("Command \"".$action."\" terminated succesfully.");
+            Logger::println("Command \"" . $action . "\" terminated succesfully.");
         }
     }
 }

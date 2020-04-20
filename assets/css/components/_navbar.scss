@@ -1,0 +1,89 @@
+.navbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    z-index: 6;
+
+    > .navbar-menu-wrapper {
+        flex: 1 1 auto;
+        display: flex;
+        min-height: inherit;
+    }
+
+    .navbar-menu-element {
+        transition: width $action-transition-duration $action-transition-timing-function, background $action-transition-duration $action-transition-timing-function, fill $action-transition-duration $action-transition-timing-function;
+
+        display: flex;
+        align-items: center;
+        color: #d1d1f0;
+        fill: currentColor;
+
+        li.dropdown.show > a {
+            color: #292961;
+            fill: #292961;
+            background-color: #fff;
+        }
+
+        a.nav-link {
+            transition: width 100ms linear,
+            background 100ms linear,
+            fill 100ms linear,
+            color 100ms linear,
+            border 100ms linear;
+            height: 32px;
+            padding: 6px 8px;
+            will-change: color;
+            margin: 4px 0;
+            margin-left: 0px;
+            border-radius: 4px;
+            color: #d1d1f0;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+            &:hover,
+            &:focus,
+            &.active {
+                background-color: rgba(209,209,240,0.2);
+                color: $white;
+
+                &.profile-image img {
+                    border-color: $white;
+                }
+            }
+
+            &.active {
+                color: #292961;
+                background-color: #fff;
+            }
+
+            img {
+                width: unset;
+                // max-width: 70%;
+                max-height: 24px;
+            }
+
+            &.profile-image {
+                img {
+                    border: 1px solid #d1d1f0;
+                }
+                svg {
+                    width: 11px;
+                    height: 11px;
+                }
+            }
+
+            
+        }
+
+        // padding: 5px;
+        
+        // height: 32px;
+
+        
+    }
+}

@@ -20,8 +20,7 @@
         </div>
     </div>
     <div class="content-body">
-        {{ form(activityForm) }}
-        {# {{ form_start(activityForm) }}
+        {{ form_start(activityForm) }}
             {{ form_errors(activityForm) }}
 
             {{ form_row(activityForm.name) }}
@@ -29,11 +28,14 @@
             {{ form_row(activityForm.lab) }}
             {{ form_row(activityForm.internetAllowed) }}
             {{ form_row(activityForm.interconnected) }}
-            
-            {{ form_label(activityForm.scope) }}
 
-            {{ form_rest(activityForm) }}
-        {{ form_end(activityForm) }} #}
+            <div class="form-group row">
+                <legend class="col-sm-2 col-form-label required text-right">Group</legend>
+                <div class="col-sm-10">
+                    {{- react_component('GroupSelect', {props: {"fieldName": "activity[_group]"}}) -}}
+                </div>
+            </div>
+        {{ form_end(activityForm) }}
     </div>
 {% endblock %}
 

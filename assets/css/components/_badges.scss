@@ -1,0 +1,13 @@
+.badge {
+    &.badge-default {
+        background-color: rgba(0,0,0,0.07);
+    }
+}
+
+[theme="dark"] {
+    .badge {
+        &.badge-default {
+            background-color: lighten(theme-color("dark-lighter"), 7.5%);
+        }
+    }
+}

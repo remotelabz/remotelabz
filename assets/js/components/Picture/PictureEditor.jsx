@@ -1,7 +1,10 @@
 import React from 'react';
 import Noty from 'noty';
+import API from '../../api';
 import Cropper from 'cropperjs';
 import { ButtonToolbar, ButtonGroup, Button } from 'react-bootstrap';
+
+const api = API.getInstance();
 
 export default class PictureEditor extends React.Component {
     constructor(props) {
@@ -61,20 +64,15 @@ export default class PictureEditor extends React.Component {
             imageSmoothingQuality: 'high',
           }).toBlob((blob) => {
             const formData = new FormData();
-
             formData.append('picture', blob);
 
             // Use `jQuery.ajax` method
-            $.ajax('/profile/picture', {
-              method: "POST",
-              data: formData,
-              processData: false,
-              contentType: false,
-              success() {
+            api.post(parent.props.endpoint, formData)
+            .then(() => {
                 console.log('Upload success');
                 parent.props.uploadCallback();
-              },
-              error() {
+            })
+            .catch(() => {
                 console.log('Upload failed');
 
                 new Noty({
@@ -82,7 +80,6 @@ export default class PictureEditor extends React.Component {
                     text: 'Error uploading your new profile picture. Please try again.',
                     timeout: 5000
                 }).show();
-              },
             });
         });
     }
@@ -109,8 +106,6 @@ export default class PictureEditor extends React.Component {
                     <Button variant="info" onClick={this.zoomIn}><i className="fa fa-search-plus" aria-hidden="true"></i></Button>
                 </ButtonGroup>
             </ButtonToolbar>
-
-            {/* <Button variant="info" onClick={this.upload}>Set new profile picture</Button> */}
         </>);
     }
 }

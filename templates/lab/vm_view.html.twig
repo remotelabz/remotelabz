@@ -1,5 +1,9 @@
 {% extends 'lab/index.html.twig' %}
 
+{% block title %}
+    {{ lab.name }}: {{ device.name }}
+{% endblock %}
+
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ (device.name): path('show_device', {'id': device.id}) }) -%}
     {%- set breadcrumbs = breadcrumbs|merge({ (lab.name): path('show_lab', {'id': lab.id}) }) -%}
@@ -7,25 +11,19 @@
 {% endblock %}
 
 {% block wrapper %}
-<div class="row">
-    <div class="col grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">
-                    {{ device.name }}
-                    <div class="float-right">
-                        <a href="{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen.{{device.name}}" onclick="openFullscreen(); return false;">
-                            {{ svg('external-link') }}
-                        </a>
-                    </div>
-                </h4>
-                <div id="noVNC_screen" style="height:1000px;">
-        
-                </div>
-                <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}">
-
-                </div>
-            </div>
+<div class="content-title">
+    <div class="content-title-infos"><h1>{{ device.name }}</h1></div>
+    <div class="content-title-actions">
+        <a href="{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen.{{device.name}}" onclick="openFullscreen(); return false;">
+            {{ svg('external-link') }}
+        </a>
+    </div>
+</div>
+<div class="content-body">
+    <div class="card stretch-card">
+        <div class="card-body">
+            <div id="noVNC_screen" style="height:1000px;"></div>
+            <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"> </div>
         </div>
     </div>
 </div>
@@ -42,7 +40,7 @@
           if (WindowObjectReference == null || WindowObjectReference.closed) {
             /* si le pointeur vers l'objet window n'existe pas, ou s'il existe
                mais que la fenêtre a été fermée */
-            WindowObjectReference = window.open("{{ path('view_lab_device', {'id': lab.id, 'deviceId': device.id, 'size': 'fullscreen'}) }}",
+            WindowObjectReference = window.open("{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}",
                    "OpenVNCFullscreen"+"{{device.name}}", "resizable=yes,scrollbars=yes,status=no,location=no,menubar=no,toolbar=no");
             /* alors, création du pointeur. La nouvelle fenêtre sera créée par dessus
                toute autre fenêtre existante. */

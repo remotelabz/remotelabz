@@ -1,0 +1,277 @@
+.btn {
+    background-color:
+    #fff;
+    
+    border-color:
+    #e5e5e5;
+    
+    &:hover {
+        background-color: #f0f0f0;
+        border-color: #e3e3e3;
+        color: #2e2e2e;
+    }
+    
+    &:focus {
+        box-shadow: none;
+    }
+    
+    &:active {
+        background-color: #eaeaea;
+        border-color: #e3e3e3;
+        color: #2e2e2e;
+    }
+    
+    &.btn-danger,
+    &.btn-info,
+    &.btn-primary,
+    &.btn-secondary,
+    &.btn-warning,
+    &.btn-success {
+        color: $white;
+        fill: $white;
+    }
+    
+    &.btn-light {
+        color: $black;
+    }
+    
+    &.btn-outline-light {
+    }
+    
+    &.btn-outline-secondary {
+        color: rgba($black, 0.5);
+    }
+    
+    &.btn-inverse-secondary {
+        background-color: rgba(theme-color(secondary), 0.5);
+        color: rgba($black, 0.5);
+        
+        &:hover {
+            color: rgba($black, 0.5);
+        }
+    }
+    
+    &.btn-inverse-light {
+        background-color: $white;
+        color: rgba($black, 0.5);
+        border-color: lighten($black, 85%);
+        
+        &:hover {
+            color: rgba($black, 0.5);
+            border-color: lighten($black, 85%);
+        }
+    }
+    
+    &.btn-outline-primary {
+        border-color: darken(theme-color(primary),5%);
+    }
+    
+    &.btn-outline-secondary {
+        border-color: darken(theme-color(secondary),5%);
+    }
+    
+    &.btn-outline-info {
+        border-color: darken(theme-color(info),5%);
+    }
+    
+    &.btn-outline-warning {
+        border-color: darken(theme-color(warning),5%);
+    }
+    
+    &.btn-outline-success {
+        border-color: darken(theme-color(success),5%);
+    }
+    
+    &.btn-outline-danger {
+        border-color: darken(theme-color(danger),5%);
+    }
+    
+    &.btn-outline-dark {
+        border-color: darken(theme-color(dark),5%);
+    }
+    
+    &.btn-outline-light {
+        border-color: darken(theme-color(light),5%);
+    }
+    
+    &.btn-primary {
+        background-color: theme-color(primary);
+        border-color: theme-color(primary-alt);
+    }
+    
+    &.btn-secondary {
+        background-color: theme-color(secondary);
+        border-color: darken(theme-color(secondary),5%);
+    }
+    
+    &.btn-info {
+        background-color: theme-color(info);
+        border-color: darken(theme-color(info),5%);
+    }
+    
+    &.btn-warning {
+        background-color: theme-color(warning);
+        border-color: theme-color(warning-alt);
+    }
+    
+    &.btn-success {
+        background-color: theme-color(success);
+        border-color: theme-color(success-alt);
+    }
+    
+    &.btn-danger {
+        background-color: theme-color(danger);
+        border-color: theme-color(danger-alt);
+    }
+    
+    &.btn-dark {
+        background-color: theme-color(dark);
+        border-color: darken(theme-color(dark),5%);
+    }
+    
+    &.btn-light {
+        background-color: theme-color(light);
+        border-color: darken(theme-color(light),5%);
+    }
+}
+
+.tgl {
+    display: none;
+    
+    // add default box-sizing for this scope
+    &,
+    &:after,
+    &:before,
+    & *,
+    & *:after,
+    & *:before,
+    & + .tgl-btn {
+        box-sizing: border-box;
+        &::selection {
+            background: none;
+        }
+    }
+    
+    + .tgl-btn {
+        outline: 0;
+        display: block;
+        width: 4em;
+        height: 2em;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+        &:after,
+        &:before {
+            position: relative;
+            display: block;
+            content: "";
+            width: 50%;
+            height: 100%;
+        }
+        
+        &:after {
+            left: 0;
+        }
+        
+        &:before {
+            display: none;
+        }
+    }
+    
+    &:checked + .tgl-btn:after {
+        left: 50%;
+    }
+}
+
+// themes
+.tgl-light {
+    + .tgl-btn {
+        background: #f0f0f0;
+        border-radius: 2em;
+        padding: 4px;
+        transition: all .4s ease;
+        &:after {
+            border-radius: 50%;
+            background: #fff;
+            transition: all .2s ease;
+        }
+    }
+    
+    &:checked + .tgl-btn {
+        // background: #9FD6AE;
+        background: theme-color("primary");
+    }
+}
+
+.tgl-ios {
+    + .tgl-btn {
+        background: #fbfbfb;
+        border-radius: 2em;
+        padding: 4px;
+        transition: all .4s ease;
+        border: 1px solid #e8eae9;
+        &:after {
+            border-radius: 2em;
+            background: #fbfbfb;
+            transition:
+            left .3s cubic-bezier(
+            0.175, 0.885, 0.320, 1.275
+            ),
+            padding .3s ease, margin .3s ease;
+            box-shadow:
+            0 0 0 1px rgba(0,0,0,.1),
+            0 4px 0 rgba(0,0,0,.08);
+        }
+        
+        &:hover:after {
+            will-change: padding;
+        }
+        
+        &:active {
+            box-shadow: inset 0 0 0 2em #e8eae9;
+            &:after {
+                padding-right: .8em;
+            }
+        }
+    }
+    
+    &:checked + .tgl-btn {
+        // background: #86d993;
+        background: theme-color("primary");
+        &:active {
+            box-shadow: none;
+            &:after {
+                margin-left: -.8em;
+            }
+        }
+    }
+}
+
+[theme="dark"] {
+    .btn {
+        background-color: theme-color("dark-lighter");
+        border-color: lighten(theme-color("dark-lighter"), 7.5%);
+        fill: theme-color("light");
+        color: theme-color("light");
+        
+        &:hover {
+            background-color: lighten(theme-color("dark-lighter"), 5%);
+            border-color: lighten(theme-color("dark-lighter"), 10%);
+            color: theme-color("light");
+            fill: theme-color("light");
+        }
+        
+        @each $color, $value in $theme-colors {
+            &.btn-#{$color} {
+                background-color: darken(theme-color("#{$color}"), 10%);
+                border-color: darken(theme-color("#{$color}"), 5%);
+            }
+        }
+    }
+
+    .tgl-ios {
+        + .tgl-btn {
+            border: none;
+        }
+    }
+}

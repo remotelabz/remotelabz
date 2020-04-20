@@ -1,9 +1,9 @@
-
 ###> symfony/framework-bundle ###
 /.env
 /.env.local
 /.env.*.local
 /public/bundles/
+/public/eve/
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
@@ -12,11 +12,6 @@
 .phpunit
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
-
-###> symfony/web-server-bundle ###
-/.web-server-pid
-###< symfony/web-server-bundle ###
-
 # Visual Studio config
 /.vscode/
 *.code-workspace

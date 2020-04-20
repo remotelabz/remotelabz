@@ -23,7 +23,7 @@ security:
             anonymous: true
             json_login:
                 check_path:               /api/auth
-                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                success_handler:          App\Security\AuthenticationSuccessHandler
                 failure_handler:          lexik_jwt_authentication.handler.authentication_failure
 
         refresh:
@@ -44,6 +44,10 @@ security:
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        profile_picture:
+            pattern: ^/users/\d+/picture
             security: false
 
         default:

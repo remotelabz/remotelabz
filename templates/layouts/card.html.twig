@@ -1,0 +1,22 @@
+<div class="card">
+    {% if block('header') is defined and block('header') is not empty %}
+        <div class="card-header">
+            {{ block('header') }}
+        </div>
+    {% endif %}
+    {% if block('body') is defined and block('body') is not empty %}
+        <div class="card-body">
+            {{ block('body') }}
+        </div>
+    {% endif %}
+    {% if block('list') is defined and block('list') is not empty %}
+        <ul class="list-group list-group-flush">
+            {{ block('list') }}
+        </ul>
+    {% endif %}
+    {% if block('footer') is defined and block('footer') is not empty %}
+        <div class="card-footer">
+            {{ block('footer') }}
+        </div>
+    {% endif %}
+</div>

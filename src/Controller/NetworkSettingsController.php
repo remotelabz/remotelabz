@@ -8,7 +8,7 @@ use App\Repository\NetworkSettingsRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-class NetworkSettingsController extends AppController
+class NetworkSettingsController extends Controller
 {
     public $networkSettingsRepository;
 

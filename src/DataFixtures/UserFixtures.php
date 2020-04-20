@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
-class UserFixtures extends Fixture implements DependentFixtureInterface, ContainerAwareInterface
+class UserFixtures extends Fixture implements ContainerAwareInterface
 {
     /**
      * The dependency injection container.
@@ -22,12 +22,12 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
     protected $container;
 
     private $passwordEncoder;
- 
+
     public function __construct(UserPasswordEncoderInterface $passwordEncoder)
     {
         $this->passwordEncoder = $passwordEncoder;
     }
-    
+
     public function load(ObjectManager $manager)
     {
         /* Static data, for super-admin */
@@ -37,13 +37,13 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
             ->setFirstName("Florent")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
-            ->addCourse($this->getReference(CourseFixtures::LAST_COURSE))
             ->setPassword($this->passwordEncoder->encodePassword(
                 $user,
                 'admin'
-            ))
-        ;
-        
+            ));
+
+        $this->addReference('root', $user);
+
         $manager->persist($user);
 
         // Flush once before to ensure admin has ID == 1
@@ -55,7 +55,7 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
 
         if (in_array($kernel->getEnvironment(), ["dev", "test"])) {
             $faker = RandomDataFactory::create('fr_FR');
- 
+
             for ($i = 0; $i < 10; $i++) {
                 $user = new User();
 
@@ -66,15 +66,14 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
                     ->setPassword($this->passwordEncoder->encodePassword(
                         $user,
                         'user'
-                    ))
-                ;
+                    ));
 
                 $manager->persist($user);
 
                 $this->addReference('user' . $i, $user);
             }
         }
- 
+
         $manager->flush();
     }
 
@@ -84,12 +83,5 @@ class UserFixtures extends Fixture implements DependentFixtureInterface, Contain
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;
-    }
-
-    public function getDependencies()
-    {
-        return [
-            CourseFixtures::class,
-        ];
     }
 }

@@ -57,14 +57,22 @@ class DeviceType extends AbstractType
                 'class' => Flavor::class,
                 'choice_label' => 'name'
             ])
+            ->add('networkInterfaces', EntityType::class, [
+                'class' => NetworkInterface::class,
+                'choice_label' => 'name',
+                'multiple' => true,
+                'required' => false,
+                'row_attr' => ['class' => 'd-none'],
+                'label_attr' => ['class' => 'd-none'],
+                'attr' => ['class' => 'd-none'],
+            ])
             ->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
                 'label' => 'Template',
                 'help' => "Check this if this device is a template meant to be re-used in the Lab editor."
             ])
-            ->add('submit', SubmitType::class)
-        ;
+            ->add('submit', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver)

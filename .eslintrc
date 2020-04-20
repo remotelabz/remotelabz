@@ -19,7 +19,7 @@
         "react/display-name": 1,
         "react/prop-types": 0,
         "no-unused-vars": "warn",
-        "no-console": "warn",
+        "no-console": "off",
         "no-unexpected-multiline": "warn",
         "no-trailing-spaces": [
             "warn",
