@@ -1,3 +1,16 @@
+2.1.0-beta
+----------
+
+### Added
+- Groups can now join labs with instances
+- Labs and activities are now fusionned into **Labs**. Activity description is now Lab description.
+
+### Updated
+- Device instances controls are now asynchronous.
+- Most of the previous objects are now included into others to create **templates**. Templates can be used to be cloned to create new objects.
+- Network interfaces are now managed by lab.
+
+
 2.0.0-rc3:
 ----------
 
@@ -7,7 +20,7 @@
 
 ### Updated
 - Public and admin areas are now seperated
-- Groups and activities are now linked. An activity belongs to a group, and an user must be part of the owner group or one of its subgroups to see/launch an actrivity (depending on the group's privacy settings)
+- Groups and activities are now linked. An activity belongs to a group, and an user must be part of the owner group or one of its subgroups to see/launch an activity (depending on the group's privacy settings)
 - You are automatically disconnected when your JWT token is expired and you must login again in order to refresh it. When you logged in again succesfully, you are redirected to the last page you visited
 - Various visual updates
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class Device extends React.Component {
+export default class DeviceNode extends React.Component {
     static defaultProps = {
         x: 0,
         y: 0,

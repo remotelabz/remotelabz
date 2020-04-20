@@ -34,7 +34,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user", "instance_manager"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "groups", "group_tree", "group_explore", "user", "instance_manager"})
      */
     private $name;
 
@@ -94,7 +94,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"groups", "group_tree", "user", "instance_manager"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "groups", "group_tree", "user", "instance_manager"})
      */
     private $uuid;
 
@@ -285,11 +285,11 @@ class Group implements InstancierInterface
         return $this->users->count();
     }
 
-    public function getGroupUserEntry(User $user): GroupUser
+    public function getGroupUserEntry(User $user): ?GroupUser
     {
         return $this->users->filter(function ($value) use ($user) {
             return $value->getUser() === $user;
-        })->first();
+        })->first() ?: null;
     }
 
     /**
@@ -332,9 +332,10 @@ class Group implements InstancierInterface
         return $this->getGroupUserEntry($user)->getPermissions();
     }
 
-    public function getUserRole(User $user): string
+    public function getUserRole(User $user): ?string
     {
-        return $this->getGroupUserEntry($user)->getRole();
+        $groupUser = $this->getGroupUserEntry($user);
+        return $groupUser ? $groupUser->getRole() : null;
     }
 
     public function setUserRole(User $user, string $role): self

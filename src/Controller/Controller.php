@@ -49,4 +49,12 @@ class Controller extends AbstractFOSRestController
     {
         return $this->redirectToRoute('labs');
     }
+
+    /**
+     * @Route("/react/{reactRouting}", name="index_react", defaults={"reactRouting": null})
+     */
+    public function defaultReactAction()
+    {
+        return $this->render('react.html.twig');
+    }
 }

@@ -22,7 +22,7 @@ class Device implements InstanciableInterface
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key", "device"})
+     * @Serializer\Groups({"network_interfaces", "primary_key", "device"})
      */
     private $id;
 
@@ -67,9 +67,9 @@ class Device implements InstanciableInterface
     private $launchScript;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist"})
      * @Serializer\XmlList(inline=true, entry="network_interface")
-     * @Serializer\Groups({"device", "lab"})
+     * @Serializer\Groups({"device", "lab", "instance_manager"})
      */
     private $networkInterfaces;
 
@@ -162,7 +162,7 @@ class Device implements InstanciableInterface
     private $editorData;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="boolean", options={"default": 0})
      * @Serializer\Groups({"lab"})
      * @Assert\NotNull
      * @Assert\Type(type="boolean")
@@ -381,7 +381,7 @@ class Device implements InstanciableInterface
     }
 
     /**
-     * @return Collection|Instance[]
+     * @return ArrayCollection|Instance[]
      */
     public function getInstances()
     {

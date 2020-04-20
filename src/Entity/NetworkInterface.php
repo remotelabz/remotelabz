@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Utils\Uuid;
+use App\Utils\MacAddress;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -13,7 +14,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
- * @Serializer\XmlRoot("network_interface")
  * @UniqueEntity(
  *     fields="macAddress",
  *     errorPath="macAddress",
@@ -26,42 +26,36 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key","device"})
+     * @Serializer\Groups({"network_interfaces", "primary_key", "device"})
      */
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
+     * @ORM\Column(type="string", length=255, options={"default": "tap"})
      * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
-    private $type;
+    private $type = 'tap';
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $name;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", cascade={"persist", "remove"})
-     * @Serializer\XmlList(entry="network_settings")
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $settings;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=true)
      * @Serializer\Groups({"network_interfaces", "lab"})
      */
     private $device;
 
     /**
      * @ORM\Column(type="string", length=17)
-     * @Serializer\XmlAttribute
      * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
@@ -69,17 +63,23 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
-     * @Serializer\XmlList(inline=true, entry="instance")
      * @Serializer\Groups({"lab"})
      */
     private $instances;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
+
+    /**
+     * @ORM\Column(type="boolean", options={"default": 0})
+     * @Serializer\Groups({"lab"})
+     * @Assert\NotNull
+     * @Assert\Type(type="boolean")
+     */
+    private $isTemplate;
 
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
@@ -88,6 +88,7 @@ class NetworkInterface implements InstanciableInterface
     {
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->macAddress = MacAddress::generate(['52', '54', '00']);
     }
 
     public function getId(): ?int
@@ -131,6 +132,15 @@ class NetworkInterface implements InstanciableInterface
         return $this;
     }
 
+    /**
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
+     */
+    public function getAccessType(): ?string
+    {
+        return $this->settings->getProtocol();
+    }
+
     public function getDevice(): ?Device
     {
         return $this->device;
@@ -156,7 +166,7 @@ class NetworkInterface implements InstanciableInterface
     }
 
     /**
-     * @return Collection|Instance[]
+     * @return ArrayCollection|Instance[]
      */
     public function getInstances()
     {
@@ -168,11 +178,11 @@ class NetworkInterface implements InstanciableInterface
         $instance = $this->instances->filter(function ($value) use ($user) {
             return $value->getUser() == $user;
         });
-        
+
         if (is_null($instance)) {
             return null;
         }
-        
+
         return $instance[0];
     }
 
@@ -217,6 +227,18 @@ class NetworkInterface implements InstanciableInterface
     public function setUuid(?string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getIsTemplate(): ?bool
+    {
+        return $this->isTemplate;
+    }
+
+    public function setIsTemplate(bool $isTemplate): self
+    {
+        $this->isTemplate = $isTemplate;
 
         return $this;
     }

@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import Noty from 'noty';
+import Axios from 'axios';
 
 Noty.overrideDefaults({
     timeout: 5000
@@ -76,9 +77,8 @@ export default class API {
     }
 }
 
-API.getInstance = (options) => {
-    const axios = require('axios').default;
-    if (!options) options = {};
+API.getInstance = (options = {}) => {
+    const axios = Axios.create(options);
 
     axios.interceptors.request.use(
         config => {
@@ -110,10 +110,10 @@ API.getInstance = (options) => {
 
                 window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
             } else if (error.response.status >= 500) {
-                new Noty({
-                    type: 'error',
-                    text: 'Oops, an error happened. Please reload your window.'
-                }).show();
+                // new Noty({
+                //     type: 'error',
+                //     text: 'Oops, an error happened. Please reload your window.'
+                // }).show();
             }
 
             return Promise.reject(error);

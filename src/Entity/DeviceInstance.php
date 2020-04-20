@@ -7,6 +7,7 @@ use App\Entity\Instance;
 use App\Instance\InstanceState;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -121,7 +122,7 @@ class DeviceInstance extends Instance
      *
      * @return Collection|NetworkInterfaceInstance[]
      */
-    public function getNetworkInterfaceInstances(): ArrayCollection
+    public function getNetworkInterfaceInstances(): Collection
     {
         return $this->networkInterfaceInstances;
     }

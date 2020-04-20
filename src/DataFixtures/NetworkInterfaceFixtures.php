@@ -17,7 +17,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
     public function load(ObjectManager $manager)
     {
         $faker = Factory::create();
-        
+
         // foreach (range(1, self::COUNT) as $number) {
         //     $networkInterface = new NetworkInterface();
 
@@ -50,7 +50,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
 
         $networkInterface
             ->setName('ToAlpine')
-            ->setType("tap")           
+            ->setType("tap")
             ->setSettings(
                 $this->getReference(
                     'network_settings3'
@@ -62,7 +62,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                 )
             )
             ->setMacAddress('52:54:00:00:00:01')
-        ;
+            ->setIsTemplate(true);
 
         $manager->persist($networkInterface);
 
@@ -70,43 +70,38 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
         $networkInterface
             ->setName('ToDebian')
             ->setType("tap")
-           ->setSettings(
-            $this->getReference(
-                'network_settings4'
+            ->setSettings(
+                $this->getReference(
+                    'network_settings4'
+                )
             )
-           )
             ->setDevice(
                 $this->getReference(
                     'device-debian'
                 )
             )
             ->setMacAddress('52:54:00:00:00:02')
-        ;
+            ->setIsTemplate(true);
         $manager->persist($networkInterface);
 
         $networkInterface = new NetworkInterface();
         $networkInterface
             ->setName('ToUbuntuX')
             ->setType("tap")
-           ->setSettings(
-            $this->getReference(
-                'network_settings5'
+            ->setSettings(
+                $this->getReference(
+                    'network_settings5'
+                )
             )
-           )
             ->setDevice(
                 $this->getReference(
                     'device-ubuntu'
                 )
             )
             ->setMacAddress('52:54:00:00:00:03')
-        ;
+            ->setIsTemplate(true);
+
         $manager->persist($networkInterface);
-
-
-
-
-
-
 
         $manager->flush();
     }

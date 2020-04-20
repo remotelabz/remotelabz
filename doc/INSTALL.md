@@ -37,7 +37,7 @@ sudo apt-get update && apt-get upgrade
 sudo apt-get install software-properties-common
 sudo add-apt-repository ppa:ondrej/php
 sudo apt-get update
-sudo apt install -y curl gnupg php7.3 zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip
+sudo apt install -y curl gnupg php7.3 zip unzip php7.3-bcmath php7.3-curl php7.3-gd php7.3-intl php7.3-mbstring php7.3-mysql php7.3-xml php7.3-zip
 ```
 - Composer
 ```bash

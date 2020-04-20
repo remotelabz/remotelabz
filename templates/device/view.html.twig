@@ -31,7 +31,7 @@
             {{ device.flavor.name }}
             {# </a> #}
         </p>
-        <hr>
+        {# <hr>
         <p>Network interfaces :</p>
         <ul>
             {% for networkInterface in device.networkInterfaces %}
@@ -39,7 +39,7 @@
             {% else %}
                 None
             {% endfor %}
-        </ul>
+        </ul> #}
         <hr>
         <p>Operating system : {{ device.operatingSystem.name }}</p>
     </div>

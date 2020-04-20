@@ -2,9 +2,10 @@
 
 namespace App\Controller;
 
+use DateTime;
 use App\Entity\Device;
-use App\Form\DeviceType;
 
+use App\Form\DeviceType;
 use App\Entity\EditorData;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
@@ -27,7 +28,7 @@ class DeviceController extends Controller
     }
 
     /**
-     * @Route("/devices", name="devices")
+     * @Route("/admin/devices", name="devices")
      * 
      * @Rest\Get("/api/devices", name="api_devices")
      */
@@ -92,13 +93,6 @@ class DeviceController extends Controller
             $deviceForm->submit($device);
         }
 
-        $view = $this->view($deviceForm)
-            ->setTemplate("device/new.html.twig")
-            ->setTemplateData([
-                "form" => $deviceForm->createView(),
-                "data" => $device
-            ]);
-
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
@@ -107,15 +101,17 @@ class DeviceController extends Controller
             $entityManager->persist($device);
             $entityManager->flush();
 
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($device, 201, [], ['device']);
+            }
+
             $this->addFlash('success', 'Device has been created.');
 
-            $view->setLocation($this->generateUrl('devices'));
-            $view->setStatusCode(201);
-            $view->setData($device);
-            $context = new Context();
-            $context
-                ->addGroup("device");
-            $view->setContext($context);
+            return $this->redirectToRoute('devices');
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($deviceForm, 200, [], ['device']);
         }
 
         return $this->render('device/new.html.twig', [
@@ -131,9 +127,7 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-        $device = $this->deviceRepository->find($id);
-
-        if (null === $device) {
+        if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
@@ -145,37 +139,32 @@ class DeviceController extends Controller
             $deviceForm->submit($device, false);
         }
 
-        $view = $this->view($deviceForm)
-            ->setTemplate("device/new.html.twig")
-            ->setTemplateData([
-                "form" => $deviceForm->createView(),
-                "data" => $device
-            ]);
-
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-            $device->setLastUpdated(new \DateTime());
+            $device->setLastUpdated(new DateTime());
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
 
-            if ($request->getRequestFormat() === 'html') {
-                $this->addFlash('info', 'Device has been edited.');
-                $view->setLocation($this->generateUrl('show_device', ['id' => $id]));
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($device, 200, [], ['device']);
             }
 
-            $view->setStatusCode(200);
-            $view->setData($this->deviceRepository->find($device->getId()));
-            // $context = new Context();
-            // $context
-            //     ->addGroup("device")
-            // ;
-            // $view->setContext($context);
+            $this->addFlash('success', 'Device has been updated.');
+
+            return $this->redirectToRoute('show_device', ['id' => $id]);
         }
 
-        return $this->handleView($view);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($deviceForm, 200, [], ['device']);
+        }
+
+        return $this->render('device/new.html.twig', [
+            'form' => $deviceForm->createView(),
+            'data' => $device
+        ]);
     }
 
     /**
@@ -228,21 +217,20 @@ class DeviceController extends Controller
     {
         $device = $this->deviceRepository->find($id);
 
-        if (null === $device) {
-            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        if (!$device = $this->deviceRepository->find($id)) {
+            throw new NotFoundHttpException();
         }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($device);
         $entityManager->flush();
 
-        if ($request->getRequestFormat() === 'html') {
-            $this->addFlash('success', $device->getName() . ' has been deleted.');
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
         }
 
-        $view = $this->view()
-            ->setLocation($this->generateUrl('devices'));;
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
 
-        return $this->handleView($view);
+        return $this->redirectToRoute('devices');
     }
 }

@@ -123,7 +123,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_start_instance_by_uuid")
+     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid")
      */
     public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
@@ -135,6 +135,20 @@ class InstanceController extends Controller
 
         return $this->json();
     }
+
+    // /**
+    //  * @Rest\Get("/api/instances/state/by-uuid/{uuid}", name="api_get_instance_state_by_uuid")
+    //  */
+    // public function fetchStateByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    // {
+    //     if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+    //         throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+    //     }
+
+    //     $state = $instanceManager->state($deviceInstance);
+
+    //     return $this->json($state);
+    // }
 
     /**
      * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid")
@@ -148,6 +162,56 @@ class InstanceController extends Controller
         if (!$data) throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
 
         return $this->json($data, 200, [], ["instances", "instance_manager"]);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/{labUuid}/by-user/{userUuid}", name="api_get_lab_instance_by_user")
+     */
+    public function fetchLabInstanceByUserAction(
+        Request $request,
+        string $labUuid,
+        string $userUuid,
+        UserRepository $userRepository,
+        LabRepository $labRepository
+    ) {
+        if (!$user = $userRepository->findOneBy(['uuid' => $userUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$lab = $labRepository->findOneBy(['uuid' => $labUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['user' => $user, 'lab' => $lab])) {
+            throw new NotFoundHttpException();
+        }
+
+        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/{labUuid}/by-group/{groupUuid}", name="api_get_lab_instance_by_group")
+     */
+    public function fetchLabInstanceByGroupAction(
+        Request $request,
+        string $labUuid,
+        string $groupUuid,
+        GroupRepository $groupRepository,
+        LabRepository $labRepository
+    ) {
+        if (!$group = $groupRepository->findOneBy(['uuid' => $groupUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$lab = $labRepository->findOneBy(['uuid' => $labUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['_group' => $group, 'lab' => $lab])) {
+            throw new NotFoundHttpException();
+        }
+
+        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
     }
 
     /**
@@ -258,5 +322,43 @@ class InstanceController extends Controller
         $this->addFlash('success', $instance->getUuid() . ' has been deleted.');
 
         return $this->redirectToRoute('instances');
+    }
+
+    /**
+     * @Route("/instances/{uuid}/view", name="view_instance")
+     */
+    public function viewInstanceAction(Request $request, string $uuid)
+    {
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        $lab = $deviceInstance->getLab();
+        $device = $deviceInstance->getDevice();
+
+        if ($request->get('size') == "fullscreen") {
+            $fullscreen = true;
+        } else {
+            $fullscreen = false;
+        }
+        if (array_key_exists('REQUEST_SCHEME', $_SERVER))
+            if (explode('://', strtolower($_SERVER['REQUEST_SCHEME']))[0] == 'https') //False = 0 en php et strpos retourne 0 pour la 1ère place
+                $protocol = "wss://";
+            else
+                $protocol = "ws://";
+        else if (array_key_exists('HTTPS', $_SERVER))
+            if ($_SERVER['HTTPS'] == 'on')
+                $protocol = "wss://";
+            else
+                $protocol = "ws://";
+
+        return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
+            'lab' => $lab,
+            'device' => $device,
+            'uuid' => $uuid,
+            'host' => $protocol . "" . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
+            'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
+            'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
+        ]);
     }
 }

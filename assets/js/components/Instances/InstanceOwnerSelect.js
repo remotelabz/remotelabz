@@ -4,7 +4,9 @@ import Select from 'react-select';
 import API from '../../api';
 import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
-import {Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Tooltip, OverlayTrigger, Badge} from 'react-bootstrap';
+import { Group, getGroupIdenticonClass, getGroupPath } from '../Groups';
+import { GroupRoleLabel } from '../Groups/Groups';
 
 const api = API.getInstance();
 
@@ -24,7 +26,8 @@ const ValueContainer = ({ children, ...props }) => (
 );
 
 const Option = props => {
-    console.log (props);
+    /** @type {Group} group */
+    const group = props.data;
     return (
         <components.Option {...props}>
             <div className="d-flex">
@@ -34,12 +37,16 @@ const Option = props => {
                             <img src={"/users/" + props.data.value + "/picture?size=36"} className="rounded-circle"></img>
                         </div>
                         :
-                        <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s36 rounded mr-2"}>{props.data.name.charAt(0).toUpperCase()}</div>
+                        <div className={`avatar identicon s36 rounded mr-2 ${getGroupIdenticonClass(props.data)}`}>{props.data.name.charAt(0).toUpperCase()}</div>
                     }
                 </div>
                 <div className="d-flex flex-column">
-                    <div style={{lineHeight: 16 + 'px'}}>{getPath(props.data)} <span className="fw600">{props.data.name}</span></div>
-                    {props.data.owner != undefined &&
+                    <div style={{lineHeight: 16 + 'px'}}>{getGroupPath(group)} <span className="fw600">{props.data.name}
+                        {(props.data.type && props.data.type == 'group') &&
+                            <Badge variant="default" className="ml-2">{GroupRoleLabel[props.data.role]}</Badge>
+                        }
+                    </span></div>
+                    {props.data.owner &&
                         <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
                     }
                 </div>
@@ -59,7 +66,7 @@ const Option = props => {
     );
 };
 
-const SingleValue = ({ children, ...props }) => (
+const SingleValue = ({ ...props }) => (
     <components.SingleValue {...props} className="d-flex align-items-center">
         {props.data.type && props.data.type == 'user' ?
             <div className="s24 mr-2">

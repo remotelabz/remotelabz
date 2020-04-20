@@ -79,9 +79,15 @@
         display:none;
     }
     
-    width: 200px;
+    width: 300px;
+    min-height: 100%;
     padding: 16px;
     border-left: 1px solid #e5e5e5;
+}
+
+.device-network-interface-item {
+    border: 1px solid #e5e5e5;
+    border-radius: 5px;
 }
 
 .editor-toolbar-wrapper {
@@ -232,6 +238,10 @@
                 justify-content: space-between;
             }
         }
+    }
+
+    .device-network-interface-item {
+        border-color: lighten(theme-color("dark-lighter"), 7.5%);
     }
 
     .editor-contextual-menu-option {

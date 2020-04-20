@@ -4,6 +4,7 @@ namespace App\MessageHandler;
 
 use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
+use App\Instance\InstanceState;
 use App\Message\InstanceStateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\DeviceInstanceRepository;
@@ -15,8 +16,11 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     private $entityManager;
     private $logger;
 
-    public function __construct(DeviceInstanceRepository $deviceInstanceRepository, EntityManagerInterface $entityManager, LoggerInterface $logger)
-    {
+    public function __construct(
+        DeviceInstanceRepository $deviceInstanceRepository,
+        EntityManagerInterface $entityManager,
+        LoggerInterface $logger
+    ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
@@ -28,8 +32,26 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             'uuid' => $message->getUuid(),
             'state' => $message->getState()
         ]);
+
         $deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $message->getUuid()]);
-        $deviceInstance->setState($message->getState());
+
+        // if an error happened, set device instance in its previous state
+        // TODO: handle error
+        if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
+            switch ($deviceInstance->getState()) {
+                case InstanceState::STARTING:
+                    $deviceInstance->setState(InstanceState::STOPPED);
+                    break;
+
+                case InstanceState::STOPPING:
+                    $deviceInstance->setState(InstanceState::STARTED);
+                    break;
+
+                default:
+                    $deviceInstance->setState($message->getState());
+            }
+        }
+
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
     }

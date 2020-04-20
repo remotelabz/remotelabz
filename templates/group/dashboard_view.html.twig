@@ -63,7 +63,10 @@
             </div>
             <div class="col d-flex justify-content-end align-items-center">
                 <div>
-                    <a href="{{ path('new_group', {parent_id: group.id}) }}" class="btn btn-success">New subgroup</a>
+                    {% set userRole = group.getUserRole(app.user) %}
+                    {% if userRole is not null and (userRole == 'admin' or userRole == 'owner') %}
+                        <a href="{{ path('new_group', {parent_id: group.id}) }}" class="btn btn-success">New subgroup</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
