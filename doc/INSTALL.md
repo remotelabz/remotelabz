@@ -48,7 +48,14 @@ sudo mv composer.phar /usr/local/bin/composer
 ```
 - Node.js
 ```bash
-sudo apt install -y nodejs npm
+wget https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz
+tar -xJf node-v12.16.2-linux-x64.tar.xz
+sudo mv -f node-v12.16.2-linux-x64/bin/* usr/bin/
+sudo mv -f node-v12.16.2-linux-x64/include/* usr/include/
+sudo mv -f node-v12.16.2-linux-x64/share/* usr/share/
+sudo mv -f node-v12.16.2-linux-x64/lib/* usr/lib/
+sudo rm -rf node-v12.16.2-linux-x64
+sudo rm node-v12.16.2-linux-x64.tar.xz
 ```
 - Yarn
 ```bash
@@ -98,6 +105,7 @@ At the root of your RemoteLabz folder:
 mkdir -p config/jwt
 openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096
 openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+chown -R www-data:www-data config/jwt
 ```
 
 Don't forget to edit your `.env` :
