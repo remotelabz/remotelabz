@@ -5,7 +5,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && \
-    apt-get install -y apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace apt-transport-https exim4 sudo
+    apt-get install -y curl software-properties-common && \
+    add-apt-repository -y ppa:ondrej/php
+
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+
+RUN apt-get update && \
+    apt-get install -y apache2 zip unzip gnupg php7.3 php7.3-bcmath php7.3-curl php7.3-gd php7.3-intl php7.3-mbstring php7.3-mysql php7.3-xml php7.3-zip libxml2-utils git nodejs swapspace apt-transport-https exim4 sudo
 
 # Exim
 RUN sed -i "s/dc_eximconfig_configtype='local'/dc_eximconfig_configtype='satellite'/g" /etc/exim4/update-exim4.conf.conf && \
@@ -25,12 +31,9 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     php -r "unlink('composer-setup.php');"
 
 # Shibboleth
-RUN curl -O http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc && \
-    shasum -a 256 SWITCHaai-swdistrib.asc && \
-    apt-key add SWITCHaai-swdistrib.asc && \
-    rm -f SWITCHaai-swdistrib.asc && \
-    echo 'deb http://pkg.switch.ch/switchaai/ubuntu bionic main' | tee /etc/apt/sources.list.d/SWITCHaai-swdistrib.list
-RUN apt-get update && \
+RUN curl -sS http://pkg.switch.ch/switchaai/SWITCHaai-swdistrib.asc | apt-key add - && \
+    echo "deb http://pkg.switch.ch/switchaai/ubuntu bionic main" | tee /etc/apt/sources.list.d/SWITCHaai-swdistrib.list && \
+    apt-get update && \
     apt-get install -y --install-recommends shibboleth
 
 RUN shib-keygen -f -u _shibd -h staging.remotelabz.com -y 3 -e https://staging.remotelabz.com/shibboleth -o /etc/shibboleth/
@@ -66,11 +69,7 @@ ARG SERVER_NAME=remotelabz.com
 
 ADD --chown=www-data:www-data . ${REMOTELABZ_PATH}
 
-RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT} --database-server ${DATABASE_SERVER} --database-user ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME}
-
-# Folders
-RUN chmod -R g+rwx /opt/remotelabz && \
-    chown www-data:www-data /opt/remotelabz
+RUN php ${REMOTELABZ_PATH}/bin/install -e ${ENVIRONMENT} -p ${PORT} --worker-server ${WORKER_SERVER} --worker-port ${WORKER_PORT} --proxy-server ${PROXY_SERVER} --proxy-port ${PROXY_PORT} --proxy-api-port ${PROXY_API_PORT} --database-server ${DATABASE_SERVER} --database-user ${DATABASE_USER} --database-password ${DATABASE_PASSWORD} --database-name ${DATABASE_NAME} --mailer-url ${MAILER_URL} --server-name ${SERVER_NAME} --no-permission
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 

@@ -11,7 +11,7 @@ use GetOpt\ArgumentException\Invalid;
 use GetOpt\ArgumentException\Missing;
 use GetOpt\ArgumentException\Unexpected;
 
-require dirname(__DIR__).'/lib/autoload.php';
+require dirname(__DIR__) . '/lib/autoload.php';
 
 // Default values
 const REMOTELABZ_PATH               = "/opt/remotelabz";
@@ -98,6 +98,9 @@ $getopt = new GetOpt([
     Option::create(null, 'server-name', GetOpt::REQUIRED_ARGUMENT)
         ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : " . REMOTELABZ_SERVER_NAME)
         ->setArgument(new Argument(REMOTELABZ_SERVER_NAME, 'is_string', 'name')),
+
+    Option::create(null, 'no-permission', GetOpt::NO_ARGUMENT)
+        ->setDescription("Skip file permissions step."),
 ]);
 try {
     $getopt->process();
@@ -110,7 +113,7 @@ try {
     } elseif ($e instanceof Unexpected) {
         Logger::print("Unexpected value: ", Logger::COLOR_RED);
     }
-    Logger::print($e->getMessage() ."\n", Logger::COLOR_RED);
+    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
     exit(1);
 }
 
@@ -125,7 +128,7 @@ $installer = Installer::create(REMOTELABZ_PATH, $getopt->getOptions());
 try {
     $installer->checkRoot();
 } catch (Exception $e) {
-    Logger::print($e->getMessage()."\n", Logger::COLOR_RED);
+    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
     exit(1);
 }
 
@@ -135,7 +138,7 @@ $installer->setLogger($logger);
 try {
     $installer->checkRequirements();
 } catch (Exception $e) {
-    Logger::print($e->getMessage()."\n", Logger::COLOR_RED);
+    Logger::print($e->getMessage() . "\n", Logger::COLOR_RED);
     $logger->error($e->getMessage());
     exit(1);
 }
@@ -147,11 +150,11 @@ try {
     $count = 0;
     while ($e !== null) {
         $logger->error($e->getMessage());
-        Logger::print("#$count ".$e->getFile()."(".$e->getLine()."): ".$e->getMessage()."\n", Logger::COLOR_RED);
+        Logger::print("#$count " . $e->getFile() . "(" . $e->getLine() . "): " . $e->getMessage() . "\n", Logger::COLOR_RED);
         $e = $e->getPrevious();
         $count++;
     }
-    Logger::print("Please check the install logs in ".INSTALL_LOG_PATH." to get more information.\n", Logger::COLOR_RED);
+    Logger::print("Please check the install logs in " . INSTALL_LOG_PATH . " to get more information.\n", Logger::COLOR_RED);
     exit(1);
 }
 
