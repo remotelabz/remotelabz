@@ -36,7 +36,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     private $entityManager;
 
     private $passwordEncoder;
- 
+
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
         $idpUrl = null,
@@ -63,10 +63,12 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        $credentials = ['eppn' => $request->server->get($this->remoteUserVar),
-        'FirstName' => $request->server->get('givenName'),
-        'LastName' => $request->server->get('sn')];
-    
+        $credentials = [
+            'eppn' => $request->server->get($this->remoteUserVar),
+            'FirstName' => $request->server->get('givenName'),
+            'LastName' => $request->server->get('sn')
+        ];
+
         return $credentials;
     }
 
@@ -82,10 +84,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
-        
+
         if (!$user) {
             $user = new User();
-            $role=array("ROLE_USER");
+            $role = array("ROLE_USER");
             $user->setEmail($credentials['eppn'])
                 ->setPassword($this->passwordEncoder->encodePassword(
                     $user,
@@ -93,8 +95,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 ))
                 ->setFirstName(ucfirst(strtolower($credentials['FirstName'])))
                 ->setLastName($credentials['LastName'])
-                ->setRoles("ROLE_USER")
-            ;
+                ->setRoles($role);
 
             # TODO: Add user's firstname and lastname fetching
 
@@ -134,7 +135,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 'redirect' => $redirectTo,
             ), Response::HTTP_FORBIDDEN);
         } else {
-            return new Response();//RedirectResponse($redirectTo);
+            return new Response(); //RedirectResponse($redirectTo);
         }
     }
 
@@ -211,5 +212,4 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         ));
         return new RedirectResponse($redirectTo);
     }
-    
 }
