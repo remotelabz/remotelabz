@@ -38,9 +38,7 @@
         "consume": "php bin/console messenger:consume front -vv",
         "test": "php bin/phpunit || cd .",
         "reset-database": "php bin/console doctrine:database:drop --force && php bin/console doctrine:database:create && php bin/console doctrine:migrations:migrate -n && php bin/console doctrine:fixtures:load -n",
-        "install": "php composer.phar install && npm i -g configurable-http-proxy && npm run build",
-        "start-proxy": "configurable-http-proxy --port 8888",
-        "update": "php composer.phar update && yarn upgrade && npm run build"
+        "start-proxy": "configurable-http-proxy --port 8888"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.11.2",

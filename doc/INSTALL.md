@@ -40,6 +40,7 @@ sudo apt-get update
 sudo apt install -y curl gnupg php7.3 zip unzip php7.3-bcmath php7.3-curl php7.3-gd php7.3-intl php7.3-mbstring php7.3-mysql php7.3-xml php7.3-zip
 ```
 - Composer
+Composer is included in root directory. You can copy it in `/bin` from there or download it from composer website:
 ```bash
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 php composer-setup.php
