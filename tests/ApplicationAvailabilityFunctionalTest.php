@@ -39,8 +39,8 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/admin/network-interfaces'];
         yield ['/admin/operating-systems'];
         yield ['/admin/instances'];
+        yield ['/admin/devices'];
 
-        yield ['/devices'];
         yield ['/profile'];
     }
 

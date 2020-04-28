@@ -49,14 +49,8 @@ sudo mv composer.phar /usr/local/bin/composer
 ```
 - Node.js
 ```bash
-wget https://nodejs.org/dist/v12.16.2/node-v12.16.2-linux-x64.tar.xz
-tar -xJf node-v12.16.2-linux-x64.tar.xz
-sudo mv -f node-v12.16.2-linux-x64/bin/* /usr/bin/
-sudo mv -f node-v12.16.2-linux-x64/include/* /usr/include/
-sudo mv -f node-v12.16.2-linux-x64/share/* /usr/share/
-sudo mv -f node-v12.16.2-linux-x64/lib/* /usr/lib/
-sudo rm -rf node-v12.16.2-linux-x64
-sudo rm node-v12.16.2-linux-x64.tar.xz
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+sudo apt-get install -y nodejs
 ```
 - Yarn
 ```bash
