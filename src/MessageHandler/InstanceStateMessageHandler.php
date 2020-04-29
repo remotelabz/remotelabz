@@ -50,6 +50,8 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                 default:
                     $deviceInstance->setState($message->getState());
             }
+        } else {
+            $deviceInstance->setState($message->getState());
         }
 
         $this->entityManager->persist($deviceInstance);
