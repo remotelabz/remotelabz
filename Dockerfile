@@ -55,6 +55,7 @@ RUN npm install -g configurable-http-proxy
 
 ARG ENVIRONMENT=dev
 ARG PORT=80
+ARG PORT_SSL=443
 ARG WORKER_SERVER=localhost
 ARG WORKER_PORT=8080
 ARG PROXY_SERVER=localhost
@@ -78,6 +79,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 WORKDIR ${REMOTELABZ_PATH}
 
 EXPOSE ${PORT}/tcp
+EXPOSE ${PORT_SSL}/tcp
 EXPOSE ${PROXY_PORT}/tcp
 
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]

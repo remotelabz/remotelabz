@@ -102,7 +102,7 @@
         <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
 
         <!-- Simple file-based resolver for using a single keypair. -->
-        <CredentialResolver type="File" key="remotelabz.com.key" certificate="remotelabz.com.crt"/>
+        <CredentialResolver type="File" key="sp-key.pem" certificate="sp-cert.pem"/>
 
         <!--
         The default settings can be overridden by creating ApplicationOverride elements (see
