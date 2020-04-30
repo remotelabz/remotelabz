@@ -304,9 +304,6 @@ class Installer
         if (!is_file("/etc/apache2/sites-enabled/100-remotelabz.conf")) {
             symlink("/etc/apache2/sites-available/100-remotelabz.conf", "/etc/apache2/sites-enabled/100-remotelabz.conf");
         }
-        if (!is_file("/etc/apache2/sites-enabled/200-remotelabz-ssl.conf")) {
-            symlink("/etc/apache2/sites-available/200-remotelabz-ssl.conf", "/etc/apache2/sites-enabled/200-remotelabz-ssl.conf");
-        }
 
         // Handle PHP max upload filesize
         $phpPath = str_replace(["cli", ",", "\n"], ["apache2", "", ""], shell_exec("php --ini | grep fileinfo"));

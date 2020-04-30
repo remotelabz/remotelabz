@@ -112,6 +112,7 @@ deploy_staging:
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG yarn encore prod
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_KEY\" >> /etc/shibboleth/sp-key.pem"
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_CRT\" >> /etc/shibboleth/sp-cert.pem"
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG a2ensite 200-remotelabz-ssl
   environment:
     name: staging
     url: https://staging.remotelabz.com/
