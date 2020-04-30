@@ -49,7 +49,8 @@ RUN cd /tmp && \
 ADD ./config/shibboleth/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD ./config/shibboleth/shib2.conf /etc/apache2/conf-available/
 RUN a2enconf shib2 && \
-    a2enmod shib
+    a2enmod shib && \
+    a2enmod ssl
 
 RUN npm install -g configurable-http-proxy
 
