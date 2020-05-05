@@ -53,6 +53,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     protected function getRedirectUrl()
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return $this->urlGenerator->generate('login');
+        }
+
         return $this->urlGenerator->generate('shib_login');
     }
 
@@ -193,6 +197,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return false;
+        }
+
         if ($request->server->has($this->remoteUserVar)) {
             return true;
         }
