@@ -15,9 +15,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
 class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 {
@@ -40,27 +42,27 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     private $passwordEncoder;
 
+    private $JWTManager;
+
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
         $idpUrl = null,
         $remoteUserVar = null,
         EntityManagerInterface $entityManager = null,
-        UserPasswordEncoderInterface $passwordEncoder = null
+        UserPasswordEncoderInterface $passwordEncoder = null,
+        JWTTokenManagerInterface $JWTManager
     ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
         $this->urlGenerator = $urlGenerator;
         $this->entityManager = $entityManager;
         $this->passwordEncoder = $passwordEncoder;
+        $this->JWTManager = $JWTManager;
     }
 
     protected function getRedirectUrl()
     {
-        if (!\getenv('ENABLE_SHIBBOLETH')) {
-            return $this->urlGenerator->generate('login');
-        }
-
-        return $this->urlGenerator->generate('shib_login');
+        return $this->urlGenerator->generate('login');
     }
 
     /**
@@ -72,7 +74,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         $credentials = [
             'eppn' => $request->server->get($this->remoteUserVar),
-            'mail' => $request->server->get('mail'),
+            'email' => $request->server->get('mail'),
             'firstName' => $request->server->get('givenName'),
             'lastName' => $request->server->get('sn')
         ];
@@ -92,13 +94,13 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
         /** @var User $user */
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['mail']]);
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
 
         if (!$user) {
             $user = new User();
             $role = array("ROLE_USER");
             $user
-                ->setEmail($credentials['mail'])
+                ->setEmail($credentials['email'])
                 ->setPassword($this->passwordEncoder->encodePassword(
                     $user,
                     random_bytes(32)
@@ -149,7 +151,13 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 'redirect' => $redirectTo,
             ), Response::HTTP_FORBIDDEN);
         } else {
-            return new Response(); //RedirectResponse($redirectTo);
+            if ($exception instanceof DisabledException) {
+                /** @var FlashBagInterface $flashbag */
+                $flashbag = $request->getSession()->getBag('flashes');
+                $flashbag->add('danger', 'This university account has been locked by a RemoteLabz administrator. Please try again later.');
+            }
+
+            return null;
         }
     }
 
@@ -162,20 +170,24 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
-        $response = new RedirectResponse('/');
-        /** @var User $user */
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+        if (!$request->cookies->has('bearer')) {
+            $response = new RedirectResponse($this->urlGenerator->generate('index'));
+            /** @var User $user */
+            $user = $token->getUser();
 
-        $jwtToken = $this->JWTManager->create($user);
-        $now = new DateTime();
-        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
+            $jwtToken = $this->JWTManager->create($user);
+            $now = new DateTime();
+            $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
 
-        $response->headers->setCookie($jwtTokenCookie);
-        $user->setLastActivity(new DateTime());
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+            $response->headers->setCookie($jwtTokenCookie);
+            $user->setLastActivity(new DateTime());
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
-        return $response;
+            return $response;
+        }
+
+        return new RedirectResponse($this->urlGenerator->generate('index'));
     }
 
     /**
@@ -186,15 +198,14 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $redirectTo = $this->getRedirectUrl();
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
                 'status' => 'error',
                 'message' => 'You are not authenticated.',
-                'redirect' => $redirectTo,
+                'redirect' => $this->urlGenerator->generate('shib_login'),
             ), Response::HTTP_FORBIDDEN);
         } else {
-            return new RedirectResponse($redirectTo);
+            return new RedirectResponse($this->urlGenerator->generate('shib_login'));
         }
     }
 
@@ -212,7 +223,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             return false;
         }
 
-        if ($request->server->has($this->remoteUserVar)) {
+        if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
             return true;
         }
 
