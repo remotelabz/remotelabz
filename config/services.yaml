@@ -11,6 +11,7 @@ parameters:
     image_directory: '%kernel.project_dir%/public/uploads/images'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
+    api_key_cookie_name: 'bearer'
 
 services:
     # default configuration for services in *this* file
