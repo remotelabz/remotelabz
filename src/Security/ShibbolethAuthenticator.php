@@ -24,7 +24,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     private $idpUrl;
 
     /**
-     * @var null
+     * @var string|null
      */
     private $remoteUserVar;
 
@@ -53,6 +53,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     protected function getRedirectUrl()
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return $this->urlGenerator->generate('login');
+        }
+
         return $this->urlGenerator->generate('shib_login');
     }
 
@@ -65,8 +69,9 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         $credentials = [
             'eppn' => $request->server->get($this->remoteUserVar),
-            'FirstName' => $request->server->get('givenName'),
-            'LastName' => $request->server->get('sn')
+            'mail' => $request->server->get('mail'),
+            'firstName' => $request->server->get('givenName'),
+            'lastName' => $request->server->get('sn')
         ];
 
         return $credentials;
@@ -83,18 +88,20 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
+        /** @var User $user */
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['mail']]);
 
         if (!$user) {
             $user = new User();
             $role = array("ROLE_USER");
-            $user->setEmail($credentials['eppn'])
+            $user
+                ->setEmail($credentials['mail'])
                 ->setPassword($this->passwordEncoder->encodePassword(
                     $user,
                     random_bytes(32)
                 ))
-                ->setFirstName(ucfirst(strtolower($credentials['FirstName'])))
-                ->setLastName($credentials['LastName'])
+                ->setFirstName(ucfirst(strtolower($credentials['firstName'])))
+                ->setLastName($credentials['lastName'])
                 ->setRoles($role);
 
             # TODO: Add user's firstname and lastname fetching
@@ -193,6 +200,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return false;
+        }
+
         if ($request->server->has($this->remoteUserVar)) {
             return true;
         }
