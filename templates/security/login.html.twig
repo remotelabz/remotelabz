@@ -45,7 +45,13 @@
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
                         <div class="form-group">
-                            <button class="btn btn-success submit-btn btn-block" name="submit">Local sign in</button>
+                            <button class="btn btn-success submit-btn btn-block" name="submit">
+                                {% if enable_shibboleth %}
+                                    Local sign in
+                                {% else %}
+                                    Sign in
+                                {% endif %}
+                            </button>
                             <p class="footer-text text-right"><a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
                         </div>
                         {# Add remember_me and forgot_password #}
@@ -59,9 +65,10 @@
                         </div> #}
                     </form>
 
-                    <hr>
-                    <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
-                   
+                    {% if enable_shibboleth %}
+                        <hr>
+                        <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
+                    {% endif %}
                 </div>
                 <ul class="auth-footer">
                     {# <li>

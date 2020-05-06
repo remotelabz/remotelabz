@@ -33,31 +33,25 @@ Ubuntu
 
 - PHP
 ```bash
-sudo apt-get update && apt-get upgrade
-sudo apt-get install software-properties-common
 sudo add-apt-repository ppa:ondrej/php
 sudo apt-get update
 sudo apt install -y curl gnupg php7.3 zip unzip php7.3-bcmath php7.3-curl php7.3-gd php7.3-intl php7.3-mbstring php7.3-mysql php7.3-xml php7.3-zip
 ```
+
 - Composer
-Composer is included in root directory. You can copy it in `/bin` from there or download it from composer website:
 ```bash
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
-sudo mv composer.phar /usr/local/bin/composer
+sudo cp composer.phar /usr/local/bin/composer
 ```
+
 - Node.js
 ```bash
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
+
 - Yarn
 ```bash
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt-get update
-sudo apt-get install --no-install-recommends yarn
+sudo npm install -g yarn
 ```
 
 ### Install RemoteLabz
@@ -106,9 +100,6 @@ chown -R www-data:www-data config/jwt
 Don't forget to edit your `.env` :
 
 ```bash
-###> lexik/jwt-authentication-bundle ###
-JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
-JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
-JWT_PASSPHRASE=yourpassphrase
-###< lexik/jwt-authentication-bundle ###
+# Replace 'yourpassphrase' by your actual passphrase
+echo "JWT_PASSPHRASE=yourpassphrase" | sudo tee -a .env
 ```

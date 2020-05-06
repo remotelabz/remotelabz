@@ -7,3 +7,5 @@ twig:
     paths:
         'templates/layouts': 'layouts'
     exception_controller: null
+    globals:
+        enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
