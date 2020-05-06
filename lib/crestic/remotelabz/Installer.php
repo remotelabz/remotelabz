@@ -296,6 +296,7 @@ class Installer
             file_put_contents("/etc/apache2/ports.conf", "\nListen ${port}\n", FILE_APPEND);
         }
         copy($this->installPath . "/config/apache/100-remotelabz.conf", "/etc/apache2/sites-available/100-remotelabz.conf");
+        copy($this->installPath . "/config/apache/200-remotelabz-ssl.conf", "/etc/apache2/sites-available/200-remotelabz-ssl.conf");
         $configFileContent = file_get_contents("/etc/apache2/sites-available/100-remotelabz.conf");
         $configFileContent = preg_replace("/^<VirtualHost *:80>$/", "<VirtualHost *:${port}>", $configFileContent);
         $configFileContent = preg_replace("/ServerName remotelabz.com/", "ServerName ${serverName}", $configFileContent);

@@ -56,6 +56,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     protected function getRedirectUrl()
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return $this->urlGenerator->generate('login');
+        }
+
         return $this->urlGenerator->generate('shib_login');
     }
 
@@ -68,6 +72,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         $credentials = [
             'eppn' => $request->server->get($this->remoteUserVar),
+            'mail' => $request->server->get('mail'),
             'firstName' => $request->server->get('givenName'),
             'lastName' => $request->server->get('sn')
         ];
@@ -86,12 +91,14 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['eppn']]);
+        /** @var User $user */
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['mail']]);
 
         if (!$user) {
             $user = new User();
             $role = array("ROLE_USER");
-            $user->setEmail($credentials['eppn'])
+            $user
+                ->setEmail($credentials['mail'])
                 ->setPassword($this->passwordEncoder->encodePassword(
                     $user,
                     random_bytes(32)
@@ -201,6 +208,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
+        if (!\getenv('ENABLE_SHIBBOLETH')) {
+            return false;
+        }
+
         if ($request->server->has($this->remoteUserVar)) {
             return true;
         }

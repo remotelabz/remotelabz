@@ -102,7 +102,7 @@ deploy_staging:
     # Wait for mysql
     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d -p 8000:80 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/shibboleth/remotelabz.com.crt -v $(pwd)/remotelabz.com.key:/etc/shibboleth/remotelabz.com.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker run -d -p 8000:80 -p 4430:443 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/ssl/certs/remotelabz.crt -v $(pwd)/remotelabz.com.key:/etc/ssl/private/remotelabz.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG remotelabz-ctl reconfigure database -v
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data mkdir -p config/jwt
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
@@ -110,6 +110,9 @@ deploy_staging:
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo JWT_PASSPHRASE=$JWT_PASSPHRASE >> .env"
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo APP_ENV=prod >> .env"
     - docker exec remotelabz_$CI_COMMIT_REF_SLUG yarn encore prod
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_KEY\" >> /etc/shibboleth/sp-key.pem"
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_CRT\" >> /etc/shibboleth/sp-cert.pem"
+    - docker exec remotelabz_$CI_COMMIT_REF_SLUG a2ensite 200-remotelabz-ssl
   environment:
     name: staging
     url: https://staging.remotelabz.com/

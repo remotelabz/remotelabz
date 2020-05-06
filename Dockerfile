@@ -49,12 +49,14 @@ RUN cd /tmp && \
 ADD ./config/shibboleth/shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD ./config/shibboleth/shib2.conf /etc/apache2/conf-available/
 RUN a2enconf shib2 && \
-    a2enmod shib
+    a2enmod shib && \
+    a2enmod ssl
 
 RUN npm install -g configurable-http-proxy
 
 ARG ENVIRONMENT=dev
 ARG PORT=80
+ARG PORT_SSL=443
 ARG WORKER_SERVER=localhost
 ARG WORKER_PORT=8080
 ARG PROXY_SERVER=localhost
@@ -78,6 +80,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 WORKDIR ${REMOTELABZ_PATH}
 
 EXPOSE ${PORT}/tcp
+EXPOSE ${PORT_SSL}/tcp
 EXPOSE ${PROXY_PORT}/tcp
 
 ENTRYPOINT [ "/usr/local/bin/docker-entrypoint" ]
