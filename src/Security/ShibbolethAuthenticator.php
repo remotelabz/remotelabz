@@ -2,8 +2,10 @@
 
 namespace App\Security;
 
+use DateTime;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,6 +13,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -110,6 +113,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             $this->entityManager->flush();
         }
 
+        if (!$user->isEnabled()) {
+            throw new DisabledException();
+        }
+
         return $user;
     }
 
@@ -156,18 +163,19 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
         $response = new RedirectResponse('/');
+        /** @var User $user */
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
 
-        // // if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
-        // //     $response->setTargetUrl($targetPath);
-        // // }
-        // // else {
-        // //     $response->setTargetUrl($this->router->generate('users'));
-        // // }
+        $jwtToken = $this->JWTManager->create($user);
+        $now = new DateTime();
+        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
 
-        //$response->setTargetUrl($this->urlGenerator->generate('users'));
+        $response->headers->setCookie($jwtTokenCookie);
+        $user->setLastActivity(new DateTime());
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
-        //return $response;
-        return null;
+        return $response;
     }
 
     /**
