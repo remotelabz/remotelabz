@@ -1,181 +1,67 @@
 stages:
-  - build
-  - test
-  - deploy
+  - deploy:staging
+  - tests:functional
 
-variables:
-  REGISTRY_URL: registry.remotelabz.com/$CI_PROJECT_PATH/
-  MYSQL_DATABASE: symfony
-  MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-  MYSQL_USER: symfony
-  MYSQL_PASSWORD: $MYSQL_PASSWORD
-
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-build:
-  stage: build
-  image: docker:18-git
-  services:
-    - docker:18-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    # When using dind, it's wise to use the overlayfs driver for
-    # improved performance.
-    DOCKER_DRIVER: overlay2
+deploy:staging:
+  stage: deploy:staging
   script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --build-arg DATABASE_SERVER=mysql --build-arg DATABASE_USER=$MYSQL_USER --build-arg DATABASE_NAME=$MYSQL_DATABASE --build-arg DATABASE_PASSWORD=$MYSQL_PASSWORD --build-arg SERVER_NAME=staging.remotelabz.com .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  tags:
-    - build
-
-tests:
-  stage: test
-  image: docker:18-git
-  services: 
-    - docker:18-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375/
-    # When using dind, it's wise to use the overlayfs driver for
-    # improved performance.
-    DOCKER_DRIVER: overlay2
-  script:
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker network create remotelabz
-    - docker run -d --rm --name mysql --network remotelabz -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
-    # Wait for mysql
-    - docker run --rm --network remotelabz -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
-    - docker run -d --rm --name remotelabz --network remotelabz $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz remotelabz-ctl reconfigure database -v
-    - docker exec remotelabz php bin/phpunit
-  dependencies:
-    - build
-  tags:
-    - test
-
-# TODO stage with apache to upload on public server
-# deploy_review:
-#   stage: deploy
-#   script:
-#     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-#     - docker stop mysql_$CI_COMMIT_REF_SLUG || true
-#     - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
-#     - docker network create remotelabz_$CI_COMMIT_REF_SLUG
-#     - docker run -d --rm --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
-#     # Wait for mysql
-#     - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
-#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-#     - docker run -d --rm -p 8000 -p 8888 --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-#     - export WEB_PORT=`docker port remotelabz_$CI_COMMIT_REF_SLUG | grep 8000 | cut -d":" -f2`
-#     - sudo cp -rf ci/nginx.conf /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-#     - sudo sed -i -e "s/\${REVIEW_PROXY}/$CI_COMMIT_REF_SLUG.review.remotelabz.com/" -e "s/\${REVIEW_SERVER}/localhost:$WEB_PORT/" /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-#     - sudo service nginx reload
-#     - docker exec remotelabz remotelabz-ctl reconfigure database -v
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     url: http://$CI_COMMIT_REF_SLUG.review.remotelabz.com/
-#     on_stop: stop_review
-#   when: manual
-#   tags:
-#     - review
-#   only:
-#     - branches
-#   except:
-#     - master
-#     - stable
-
-deploy_staging:
-  stage: deploy
-  script:
-    - echo $SSL_CERT >> remotelabz.com.crt
-    - echo $SSL_CERT_KEY >> remotelabz.com.key
-    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG || true
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker stop mysql_$CI_COMMIT_REF_SLUG || true
-    - docker rm remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker rm mysql_$CI_COMMIT_REF_SLUG || true
-    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker network create remotelabz_$CI_COMMIT_REF_SLUG
-    - docker run -d --name mysql_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG --network-alias mysql -e MYSQL_RANDOM_ROOT_PASSWORD=1 -e MYSQL_DATABASE=$MYSQL_DATABASE -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD mysql:5.7
-    # Wait for mysql
-    - docker run --rm --network remotelabz_$CI_COMMIT_REF_SLUG -e MYSQL_PWD=$MYSQL_PASSWORD mysql:5.7 /bin/sh -c "while ! mysqladmin ping -hmysql -u$MYSQL_USER --silent; do sleep 1; done"
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG || true
-    - docker run -d -p 8000:80 -p 4430:443 -p 8888:8888 -v $(pwd)/remotelabz.com.crt:/etc/ssl/certs/remotelabz.crt -v $(pwd)/remotelabz.com.key:/etc/ssl/private/remotelabz.key -v $(pwd)/remotelabz.com.key --name remotelabz_$CI_COMMIT_REF_SLUG --network remotelabz_$CI_COMMIT_REF_SLUG $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG remotelabz-ctl reconfigure database -v
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data mkdir -p config/jwt
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG sudo -u www-data openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo JWT_PASSPHRASE=$JWT_PASSPHRASE >> .env"
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo APP_ENV=prod >> .env"
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG yarn encore prod
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_KEY\" >> /etc/shibboleth/sp-key.pem"
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG bash -c "echo \"$SHIB_CRT\" >> /etc/shibboleth/sp-cert.pem"
-    - docker exec remotelabz_$CI_COMMIT_REF_SLUG a2ensite 200-remotelabz-ssl
+    # stop messenger
+    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh
+    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh
+    # deploy
+    - sudo ln -fs $PWD /opt/remotelabz
+    - sudo ln -fs $PWD/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
+    - sudo ln -fs $PWD/config/apache/200-remotelabz-ssl.conf /etc/apache2/sites-enabled/200-remotelabz-ssl.conf
+    - chgrp -R www-data $PWD /opt/remotelabz
+    - chmod -R g+rwx $PWD /opt/remotelabz
+    - mkdir -p config/jwt
+    - openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
+    - openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+    - cp .env.dist .env
+    - echo JWT_PASSPHRASE=$JWT_PASSPHRASE | tee -a .env
+    - echo WEBSOCKET_PROXY_PORT=8000 | tee -a .env
+    - echo WEBSOCKET_PROXY_API_PORT=8001 | tee -a .env
+    - php composer.phar install
+    - yarn install
+    - yarn encore prod
+    - php bin/console doctrine:database:drop --force || true
+    - php bin/console doctrine:database:create
+    - php bin/console doctrine:migrations:migrate -n || true
+    - php bin/console doctrine:fixtures:load -n
+    - sudo nohup php bin/console messenger:consume front > messenger.log &
+    - sudo nohup configurable-http-proxy > configurable-http-proxy.log &
+    - sudo service apache2 reload
   environment:
     name: staging
     url: https://staging.remotelabz.com/
-    on_stop: stop_staging
-  dependencies:
-    - tests
-  tags:
-    - staging
-  only: 
-    - master
-
-# stop_review:
-#   stage: deploy
-#   variables:
-#     GIT_STRATEGY: none
-#   script:
-#     - docker stop remotelabz_$CI_COMMIT_REF_SLUG
-#     - docker stop mysql_$CI_COMMIT_REF_SLUG
-#     - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
-#     - sudo rm /etc/nginx/sites-enabled/$CI_COMMIT_REF_SLUG.review.remotelabz.com
-#     - sudo service nginx reload
-#   when: manual
-#   environment:
-#     name: review/$CI_COMMIT_REF_NAME
-#     action: stop
-#   tags:
-#     - review
-#   only:
-#     - branches
-#   except: 
-#     - master
-#     - stable
-
-stop_staging:
-  stage: deploy
-  variables:
-    GIT_STRATEGY: none
-  script:
-    # - docker-compose down -v --rmi all
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
-    - docker stop mysql_$CI_COMMIT_REF_SLUG
-    - docker network rm remotelabz_$CI_COMMIT_REF_SLUG
-  when: manual
-  environment:
-    name: staging
-    action: stop
+    on_stop: stop:staging
   tags:
     - staging
   only:
     - master
 
-reload_staging:
-  stage: deploy
+tests:functional:
+  stage: tests:functional
+  script:
+    - php bin/phpunit
+  dependencies:
+    - deploy:staging
+  tags:
+    - test
+  only:
+    - master
+
+stop:staging:
+  stage: deploy:staging
   variables:
     GIT_STRATEGY: none
   script:
-    - docker stop remotelabz_$CI_COMMIT_REF_SLUG
-    - docker stop mysql_$CI_COMMIT_REF_SLUG
-    - docker start remotelabz_$CI_COMMIT_REF_SLUG
-    - docker start mysql_$CI_COMMIT_REF_SLUG
+    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh
+    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh
   when: manual
   environment:
     name: staging
+    action: stop
   tags:
     - staging
   only:
