@@ -19,7 +19,8 @@ deploy:staging:
     - echo JWT_PASSPHRASE=$JWT_PASSPHRASE | tee -a .env
     - echo WEBSOCKET_PROXY_PORT=8000 | tee -a .env
     - echo WEBSOCKET_PROXY_API_PORT=8001 | tee -a .env
-    - php composer.phar install --no-progress --no-suggest --no-scripts
+    - . ./.env
+    - php composer.phar install --no-progress --no-suggest
     - yarn install
     - yarn encore prod
     - php bin/console doctrine:database:drop --force || true
