@@ -6,8 +6,8 @@ deploy:staging:
   stage: deploy:staging
   script:
     # stop messenger
-    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh
-    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh
+    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
+    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
     # deploy
     - sudo ln -fs $PWD /opt/remotelabz
     - sudo ln -fs $PWD/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
@@ -56,8 +56,8 @@ stop:staging:
   variables:
     GIT_STRATEGY: none
   script:
-    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh
-    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh
+    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
+    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
   when: manual
   environment:
     name: staging
