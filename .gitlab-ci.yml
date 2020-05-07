@@ -12,8 +12,6 @@ deploy:staging:
     - sudo ln -fs $PWD /opt/remotelabz
     - sudo ln -fs $PWD/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
     - sudo ln -fs $PWD/config/apache/200-remotelabz-ssl.conf /etc/apache2/sites-enabled/200-remotelabz-ssl.conf
-    - sudo chgrp -R www-data $PWD /opt/remotelabz
-    - sudo chmod -R g+rwx $PWD /opt/remotelabz
     - mkdir -p config/jwt
     - openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
     - openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
@@ -21,7 +19,7 @@ deploy:staging:
     - echo JWT_PASSPHRASE=$JWT_PASSPHRASE | tee -a .env
     - echo WEBSOCKET_PROXY_PORT=8000 | tee -a .env
     - echo WEBSOCKET_PROXY_API_PORT=8001 | tee -a .env
-    - php composer.phar install
+    - php composer.phar install --no-progress --no-suggest --no-scripts
     - yarn install
     - yarn encore prod
     - php bin/console doctrine:database:drop --force || true
@@ -30,6 +28,8 @@ deploy:staging:
     - php bin/console doctrine:fixtures:load -n
     - sudo nohup php bin/console messenger:consume front > messenger.log &
     - sudo nohup configurable-http-proxy > configurable-http-proxy.log &
+    - sudo chgrp -R www-data $PWD /opt/remotelabz
+    - sudo chmod -R g+rwx $PWD /opt/remotelabz
     - sudo service apache2 reload
   environment:
     name: staging
