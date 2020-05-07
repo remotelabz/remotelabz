@@ -72,7 +72,7 @@ echo "MYSQL_PASSWORD=mysqlpassword" | sudo tee -a .env
 sudo nano .env
 ```
 
-Finally, run the `remotelabz-ctl` configuration utility to setup your database :
+Run the `remotelabz-ctl` configuration utility to setup your database :
 
 ```bash
 sudo remotelabz-ctl reconfigure database
@@ -83,6 +83,24 @@ With the loaded fixtures, default credentials are :
 - Password : `admin`
 
 You may change those values by using the web interface.
+
+### Instances
+
+In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/crestic/remotelabz-worker), you need to start **Symfony Messenger** :
+
+```bash
+sudo php bin/console messenger:consume front
+```
+
+**Warning :** When consuming messages, a timestamp is used to determine which messages the messenger worker is able to consume. Therefore, each machines needs to be time-synchronized. We recommand you to use a service like `ntp` to keep your machines synchronized.
+
+You will also need to start the proxy service to display VNC console :
+
+```bash
+sudo npm install -g configurable-http-proxy
+# then start it
+configurable-http-proxy
+```
 
 #### Generate API keys
 
@@ -103,3 +121,7 @@ Don't forget to edit your `.env` :
 # Replace 'yourpassphrase' by your actual passphrase
 echo "JWT_PASSPHRASE=yourpassphrase" | sudo tee -a .env
 ```
+
+### Shibboleth (optional)
+
+Follow [this guide](https://www.switch.ch/aai/guides/sp/installation/?os=ubuntu#2) to install Shibboleth on 18.04.
