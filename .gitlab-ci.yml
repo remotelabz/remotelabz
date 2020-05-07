@@ -6,14 +6,14 @@ deploy:staging:
   stage: deploy:staging
   script:
     # stop messenger
-    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
-    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
+    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
+    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     # deploy
     - sudo ln -fs $PWD /opt/remotelabz
     - sudo ln -fs $PWD/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
     - sudo ln -fs $PWD/config/apache/200-remotelabz-ssl.conf /etc/apache2/sites-enabled/200-remotelabz-ssl.conf
-    - chgrp -R www-data $PWD /opt/remotelabz
-    - chmod -R g+rwx $PWD /opt/remotelabz
+    - sudo chgrp -R www-data $PWD /opt/remotelabz
+    - sudo chmod -R g+rwx $PWD /opt/remotelabz
     - mkdir -p config/jwt
     - openssl genpkey -pass pass:$JWT_PASSPHRASE -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -out config/jwt/private.pem
     - openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
