@@ -4,7 +4,10 @@ stages:
 
 deploy:staging:
   stage: deploy:staging
+  variables:
+    GIT_STRATEGY: none
   script:
+    - git clean -f -x
     # stop messenger
     - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
