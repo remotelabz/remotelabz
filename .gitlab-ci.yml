@@ -43,6 +43,8 @@ deploy:staging:
 
 tests:functional:
   stage: tests:functional
+  variables:
+    GIT_STRATEGY: none
   script:
     - php bin/phpunit
   dependencies:
