@@ -71,11 +71,11 @@ class Installer
      */
     function checkRequirements()
     {
-        if (!(strnatcmp(phpversion(), '7.2.0') >= 0)) {
-            throw new Exception("You need PHP 7.2 or higher to use RemoteLabz. Please upgrade your PHP version to continue.");
+        if (!(strnatcmp(phpversion(), '7.3.0') >= 0)) {
+            throw new Exception("You need PHP 7.3 or higher to use RemoteLabz. Please upgrade your PHP version to continue.");
         }
         if (!System::commandExists("apache2ctl")) {
-            throw new Exception("Apache 2 has not been found on your system. Please install Composer to continue.");
+            throw new Exception("Apache 2 has not been found on your system. Please install Apache to continue.");
         }
         if (!System::commandExists("composer")) {
             throw new Exception("Composer has not been found on your system. Please install Composer to continue.");
@@ -188,6 +188,15 @@ class Installer
             echo "OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring Apache.", 0, $e);
+        }
+
+        $this->logger->debug("Creating Remotelabz service");
+        echo "Creating Remotelabz service";
+        try {
+            $this->configureMessengerService();
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring Remotelabz service.", 0, $e);
         }
 
         $this->logger->debug("Finished RemoteLabz installation");
@@ -359,6 +368,20 @@ class Installer
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not symlink assets correctly.");
+        }
+    }
+
+    private function configureMessengerService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz.service')) {
+            $this->logger->debug('Remove old service file');
+            unlink('/etc/systemd/system/remotelabz.service');
+        }
+        $returnCode = symlink($this->installPath . '/bin/remotelabz.service', '/etc/systemd/system/remotelabz.service');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink messenger service correctly.");
         }
     }
 

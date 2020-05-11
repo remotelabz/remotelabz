@@ -1,0 +1,15 @@
+[Unit]
+Description=Remotelabz Messages Consumer Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=remotelabz
+ExecStart=/usr/bin/env php /opt/remotelabz/bin/console messenger:consume front
+ExecStop=/usr/bin/env php /opt/remotelabz/bin/console messenger:stop-workers
+
+[Install]
+WantedBy=multi-user.target
