@@ -7,9 +7,8 @@ deploy:staging:
   variables:
     GIT_STRATEGY: none
   script:
-    - git clean -f -x
+    - git clean -f -d -x
     # stop messenger
-    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     # deploy
     - sudo ln -fs $PWD /opt/remotelabz
@@ -65,7 +64,7 @@ stop:staging:
   variables:
     GIT_STRATEGY: none
   script:
-    - ps axf | grep "php bin/console messenger:consume front" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
+    - sudo service remotelabz stop
     - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "kill -9 " $1}' | sh || true
   when: manual
   environment:
