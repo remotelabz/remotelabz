@@ -30,7 +30,8 @@ deploy:staging:
     - php bin/console doctrine:database:create
     - php bin/console doctrine:migrations:migrate -n || true
     - php bin/console doctrine:fixtures:load -n
-    - ln -fs $PWD/bin/remotelabz.service /etc/systemd/system/remotelabz.service
+    - sudo service remotelabz stop || true
+    - sudo ln -fs $PWD/bin/remotelabz.service /etc/systemd/system/remotelabz.service
     - sudo systemctl daemon-reload
     - sudo service remotelabz start
     - sudo nohup configurable-http-proxy > configurable-http-proxy.log &
