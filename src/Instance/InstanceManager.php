@@ -8,9 +8,10 @@ use GuzzleHttp\Client;
 use App\Entity\LabInstance;
 use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
-use App\Message\InstanceMessage;
 use App\Exception\WorkerException;
 use App\Entity\InstancierInterface;
+use App\Message\InstanceStateMessage;
+use App\Message\InstanceActionMessage;
 use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
 use Doctrine\ORM\EntityManagerInterface;
@@ -83,10 +84,17 @@ class InstanceManager
 
         $labInstance
             ->setOwnedBy($instancier->getType())
+            ->setState(InstanceStateMessage::STATE_CREATING)
             ->populate();
 
         $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
+
+        $context = SerializationContext::create()->setGroups("start_lab");
+        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+        $this->bus->dispatch(
+            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE)
+        );
 
         return $labInstance;
     }
@@ -100,8 +108,14 @@ class InstanceManager
      */
     public function delete(LabInstance $labInstance)
     {
-        $this->entityManager->remove($labInstance);
+        $context = SerializationContext::create()->setGroups("stop_lab");
+        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+        $labInstance->setState(InstanceStateMessage::STATE_DELETING);
+        $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
+        $this->bus->dispatch(
+            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_DELETE)
+        );
     }
 
     /**
@@ -129,12 +143,6 @@ class InstanceManager
                 $this->logger->debug('Network interface ' . $networkInterface->getName() . ' of device ' . $device->getName() . ' for lab ' . $lab->getName() . ' uses for VNC');
                 $remotePort = $this->getRemoteAvailablePort();
                 $networkInterfaceInstance->setRemotePort($remotePort);
-                try {
-                    $this->createDeviceInstanceProxyRoute($deviceInstance->getUuid(), $remotePort);
-                } catch (ServerException $exception) {
-                    $this->logger->error($exception->getResponse()->getBody()->getContents());
-                    throw $exception;
-                }
 
                 $this->entityManager->persist($networkInterfaceInstance);
             } else {
@@ -151,7 +159,7 @@ class InstanceManager
 
         $this->logger->info('Sending device instance ' . $uuid . ' start message.', json_decode($labJson, true));
         $this->bus->dispatch(
-            new InstanceMessage($labJson, $uuid, InstanceMessage::ACTION_START)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
         );
     }
 
@@ -200,7 +208,7 @@ class InstanceManager
 
         $this->logger->info('Sending device instance ' . $uuid . ' start message.', json_decode($labJson, true));
         $this->bus->dispatch(
-            new InstanceMessage($labJson, $uuid, InstanceMessage::ACTION_STOP)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP)
         );
     }
 
@@ -220,7 +228,7 @@ class InstanceManager
     //     return $response->getBody()->getContents();
     // }
 
-    private function getRemoteAvailablePort(): int
+    public function getRemoteAvailablePort(): int
     {
         $client = new Client();
 
@@ -240,11 +248,11 @@ class InstanceManager
      * 
      * @return void
      */
-    private function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
+    public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
     {
         $client = new Client();
 
-        $url = 'http://' . getenv('WEBSOCKET_PROXY_SERVER') . ':' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/device/' . $uuid;
+        $url = 'http://localhost:' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/device/' . $uuid;
         $this->logger->debug("Create route in proxy " . $url);
 
         $client->post($url, [
@@ -263,11 +271,11 @@ class InstanceManager
      * 
      * @return void
      */
-    private function deleteDeviceInstanceProxyRoute(string $uuid)
+    public function deleteDeviceInstanceProxyRoute(string $uuid)
     {
         $client = new Client();
 
-        $url = 'http://' . getenv('WEBSOCKET_PROXY_SERVER') . ':' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/device/' . $uuid;
+        $url = 'http://localhost:' . getenv('WEBSOCKET_PROXY_API_PORT') . '/api/routes/device/' . $uuid;
         $this->logger->debug("Delete route in proxy " . $url);
 
         $client->delete($url);

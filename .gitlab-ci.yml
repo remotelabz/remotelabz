@@ -9,7 +9,7 @@ deploy:staging:
   script:
     - sudo git clean -f -d -x
     # stop messenger
-    - ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
+    - sudo ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     # deploy
     - sudo ln -fs $PWD /opt/remotelabz
     - sudo ln -fs $PWD/config/apache/100-remotelabz.conf /etc/apache2/sites-enabled/100-remotelabz.conf
@@ -29,10 +29,10 @@ deploy:staging:
     - php bin/console doctrine:database:create
     - php bin/console doctrine:migrations:migrate -n || true
     - php bin/console doctrine:fixtures:load -n
-    - sudo service remotelabz stop || true
+    - sudo systemctl stop remotelabz || true
     - sudo ln -fs $PWD/bin/remotelabz.service /etc/systemd/system/remotelabz.service
     - sudo systemctl daemon-reload
-    - sudo service remotelabz start
+    - sudo systemctl start remotelabz
     - sudo nohup configurable-http-proxy > configurable-http-proxy.log &
     - sudo chgrp -R www-data $PWD /opt/remotelabz
     - sudo chmod -R g+rwx $PWD /opt/remotelabz

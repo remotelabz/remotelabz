@@ -9,13 +9,17 @@ class InstanceStateMessage
     private $state;
     const TYPE_LAB = "lab";
     const TYPE_DEVICE = "device";
+    const STATE_CREATING = "creating";
+    const STATE_DELETING = "deleting";
+    const STATE_CREATED = "created";
+    const STATE_DELETED = "deleted";
     const STATE_STARTING = "starting";
     const STATE_STOPPING = "stopping";
     const STATE_STARTED = "started";
     const STATE_STOPPED = "stopped";
     const STATE_ERROR = "error";
 
-    public function __construct(string $type, string $uuid, string $state)
+    public function __construct(string $type = self::TYPE_DEVICE, string $uuid, string $state)
     {
         $this->type = $type;
         $this->uuid = $uuid;

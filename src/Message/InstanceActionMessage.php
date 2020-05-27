@@ -2,11 +2,13 @@
 
 namespace App\Message;
 
-class InstanceMessage
+class InstanceActionMessage
 {
     private $content;
     private $uuid;
     private $action;
+    const ACTION_CREATE = "create";
+    const ACTION_DELETE = "delete";
     const ACTION_START = "start";
     const ACTION_STOP  = "stop";
 
