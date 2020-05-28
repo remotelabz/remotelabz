@@ -120,7 +120,7 @@ echo "JWT_PASSPHRASE=yourpassphrase" | sudo tee -a .env
 In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/crestic/remotelabz-worker), you need to start **Symfony Messenger** :
 
 ```bash
-sudo php bin/console messenger:consume front
+sudo systemctl start remotelabz
 ```
 
 **Warning :** When consuming messages, a timestamp is used to determine which messages the messenger worker is able to consume. Therefore, each machines needs to be time-synchronized. We recommand you to use a service like `ntp` to keep your machines synchronized.
@@ -137,6 +137,26 @@ configurable-http-proxy
 
 Follow [this guide](https://www.switch.ch/aai/guides/sp/installation/?os=ubuntu#2) to install Shibboleth on 18.04.
 
+### RabbitMQ (optional)
+
+To use RabbitMQ instead of Doctrine as messaging backend, you need the **php-amqp** extension :
+
+```bash
+sudo apt-get install -y php7.3-amqp
+```
+
+Then, modify the `.env` file according to your RabbitMQ configuration :
+
+```bash
+# you may change this string for your credentials and server location
+MESSENGER_TRANSPORT_DSN=amqp://guest:guest@localhost:5672/%2f/messages
+```
+
+Don't forget to restart the messenger service :
+
+```bash
+sudo systemctl restart remotelabz
+```
 
 General informations
 ====================
