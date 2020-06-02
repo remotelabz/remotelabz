@@ -136,7 +136,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/admin/groups/new", name="new_group")
+     * @Route("/groups/new", name="new_group")
      * 
      * @Rest\Post("/api/groups", name="api_new_group")
      */
@@ -184,7 +184,7 @@ class GroupController extends Controller
 
             $this->addFlash('success', 'Group has been created.');
 
-            return $this->redirectToRoute('groups');
+            return $this->redirectToRoute('dashboard_groups');
         }
 
         if ('json' === $request->getRequestFormat()) {
@@ -195,7 +195,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/admin/groups/{slug}/users", name="add_user_group", methods="POST", requirements={"slug"="[\w\-\/]+"})
+     * @Route("/groups/{slug}/users", name="add_user_group", methods="POST", requirements={"slug"="[\w\-\/]+"})
      */
     public function addUserAction(Request $request, string $slug, UserRepository $userRepository)
     {
@@ -234,7 +234,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/admin/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
+     * @Route("/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
      */
     public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
     {
@@ -260,7 +260,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/admin/groups/{slug}/edit", name="edit_group", requirements={"slug"="[\w\-\/]+"})
+     * @Route("/groups/{slug}/edit", name="dashboard_edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
      */
@@ -293,14 +293,14 @@ class GroupController extends Controller
 
             $this->addFlash('info', 'Group has been edited.');
 
-            return $this->redirectToRoute('admin_show_group', ['slug' => $group->getSlug()]);
+            return $this->redirectToRoute('dashboard_show_group', ['slug' => $group->getSlug()]);
         }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($groupForm, 200, [], []);
         }
 
-        return $this->render('group/new.html.twig', [
+        return $this->render('group/dashboard_settings.html.twig', [
             "form" => $groupForm->createView(),
             "group" => $group
         ]);
@@ -339,7 +339,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/admin/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
+     * @Route("/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w\-\/]+"})
      */
@@ -348,6 +348,8 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException("Group " . $slug . " does not exist.");
         }
+
+        $this->denyAccessUnlessGranted(GroupVoter::DELETE, $group);
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($group);
@@ -359,7 +361,7 @@ class GroupController extends Controller
 
         $this->addFlash('success', $group->getName() . ' has been deleted.');
 
-        return $this->redirectToRoute('groups');
+        return $this->redirectToRoute('dashboard_groups');
     }
 
     /**

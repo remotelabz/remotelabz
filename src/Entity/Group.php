@@ -179,6 +179,34 @@ class Group implements InstancierInterface
         return $owner === $user;
     }
 
+    /**
+     * Returns a collection containing group administratos
+     *
+     * @return Collection|User[]
+     */
+    public function getAdmins(): Collection
+    {
+        $admins = $this->users->filter(function ($user) {
+            return $user->getRole() === self::ROLE_ADMIN;
+        });
+
+        return $admins;
+    }
+
+    public function isAdmin(User $user): bool
+    {
+        $admins = $this->getAdmins();
+
+        return $admins->exists(function ($key, $admin) use ($user) {
+            return $admin->getUser()->getId() == $user->getId();
+        });
+    }
+
+    public function isElevatedUser(User $user): bool
+    {
+        return $this->isOwner($user) || $this->isAdmin($user);
+    }
+
     public function getVisibility(): ?int
     {
         return $this->visibility;

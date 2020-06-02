@@ -1,32 +1,38 @@
-{% extends 'group/index.html.twig' %}
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'dashboard_groups' %}
+    {{ parent() }}
+{% endblock %}
 
 {% form_theme form 'custom.form.vertical.html.twig' %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_group') }) %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Members': path('dashboard_group_members', {'slug': group.path}) }) %}
+    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('dashboard_show_group', {'slug': group.path}) }) %}
     {{ parent() }}
 {% endblock %}
 
 {% macro groupParent(group) %}
-    {%- if group.parent is not null %}{{ _self.groupParent(group.parent) }}{{ group.parent.slug }}/{% endif -%}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
 {% endmacro %}
 
 {% block sidebar %}
+    {% set category = 'dashboard_edit_group' %}
+    {% include "group.sidebar.html.twig" %}
 {% endblock %}
 
 {% block wrapper %}
+    {% macro groupParent(group) %}
+       {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
+    {% endmacro %}
     <div class="content-title">
         <div class="content-title-infos">
-            <h1>
-                {% if app.request.uri ends with 'edit' %}
-                    {{ 'Edit group'|trans }}: {{ group.name }}
-                {% else %}
-                    {{ 'New group'|trans }}
-                {% endif %}
-            </h1>
+            <h3>Group settings</h3>
         </div>
     </div>
     <div class="content-body">
+        <h3>Edit</h3><hr>
         <div class="row">
             <div class="col-md-3">
                 Groups allow you to manage users and handle permissions across multiple activities. Members of a group have access to all of its activities.
@@ -118,10 +124,15 @@
                 {{ form_end(form, {render_rest: false}) }}
             </div>
         </div>
-        
+        {% if group.isOwner(app.user) %}
+        <h3>Delete</h3><hr>
+        <div class="row">
+            <div class="col">
+                <p>A group can only be deleted by its owner.</p>
+                <p><strong>Deleted groups cannot be restored! Proceed with caution.</strong></p>
+                <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete group</a>
+            </div>
+        </div>
+        {% endif %}
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
 {% endblock %}

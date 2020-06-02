@@ -10,16 +10,13 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 class GroupVoter extends Voter
 {
     // these strings are just invented: you can use anything
-    const ADD_MEMBER = 'add_member';
     const EDIT = 'edit';
+    const DELETE = 'delete';
+    const ADD_MEMBER = 'add_member';
+    const CREATE_SUBGROUP = 'create_subgroup';
 
     protected function supports($attribute, $subject)
     {
-        // if the attribute isn't one we support, return false
-        if (!in_array($attribute, [self::ADD_MEMBER, self::EDIT])) {
-            return false;
-        }
-
         // only vote on Group objects inside this voter
         if (!$subject instanceof Group) {
             return false;
@@ -46,9 +43,13 @@ class GroupVoter extends Voter
                 return $this->canAddMember($group, $user);
             case self::EDIT:
                 return $this->canEdit($group, $user);
+            case self::CREATE_SUBGROUP:
+                return $this->canCreateSubgroup($group, $user);
+            case self::DELETE:
+                return $this->canDelete($group, $user);
+            default:
+                return false;
         }
-
-        throw new \LogicException('This code should not be reached!');
     }
 
     private function canAddMember(Group $group, User $user)
@@ -61,5 +62,17 @@ class GroupVoter extends Voter
     {
         // user is the group owner or an admin
         return $user->isMemberOf($group) && ($user === $group->getOwner() || in_array($group->getUserRole($user), [Group::ROLE_ADMIN, Group::ROLE_OWNER]));
+    }
+
+    private function canCreateSubgroup(Group $group, User $user)
+    {
+        // user is the group owner or an admin
+        return $user->isMemberOf($group) && ($group->isOwner($user) || $group->isAdmin($user));
+    }
+
+    private function canDelete(Group $group, User $user)
+    {
+        // user is the group owner or an admin
+        return $user->isMemberOf($group) && $group->isOwner($user);
     }
 }
