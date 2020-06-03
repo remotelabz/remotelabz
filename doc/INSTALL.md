@@ -4,6 +4,9 @@ How to install RemoteLabz
 - [Requirements](#requirements)
 - [Installation](#installation)
     - [Ubuntu](#ubuntu)
+- [General Informations](#general-informations)
+- [FAQ](#faq)
+- [Known Bug](#known-bug)
 
 Requirements
 ============
@@ -41,6 +44,7 @@ sudo apt install -y curl gnupg php7.3 zip unzip php7.3-bcmath php7.3-curl php7.3
 - Composer
 ```bash
 sudo cp composer.phar /usr/local/bin/composer
+sudo chmod 755 /usr/local/bin/composer
 ```
 
 - Node.js
@@ -65,12 +69,19 @@ sudo bin/install
 Then, you should modify the `.env` file according to your environment, including SQL database variables with `MYSQL_SERVER`, `MYSQL_USER`, `MYSQL_PASSWORD` and `MYSQL_DATABASE`.
 
 ```bash
+sudo cp .env.dist .env
 # Replace 'mysqlpassword' by your actual password
 echo "MYSQL_PASSWORD=mysqlpassword" | sudo tee -a .env
 
 # or edit ENV file directly
 sudo nano .env
 ```
+
+> **Notes:**
+> If you are using mysql >= 8.0 don't forget to create user with password plugin
+> ```sql
+> CREATE USER 'user'@'%' IDENTIFIED WITH mysql_native_password BY 'password';
+> ```
 
 Run the `remotelabz-ctl` configuration utility to setup your database :
 
@@ -83,24 +94,6 @@ With the loaded fixtures, default credentials are :
 - Password : `admin`
 
 You may change those values by using the web interface.
-
-### Instances
-
-In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/crestic/remotelabz-worker), you need to start **Symfony Messenger** :
-
-```bash
-sudo php bin/console messenger:consume front
-```
-
-**Warning :** When consuming messages, a timestamp is used to determine which messages the messenger worker is able to consume. Therefore, each machines needs to be time-synchronized. We recommand you to use a service like `ntp` to keep your machines synchronized.
-
-You will also need to start the proxy service to display VNC console :
-
-```bash
-sudo npm install -g configurable-http-proxy
-# then start it
-configurable-http-proxy
-```
 
 #### Generate API keys
 
@@ -120,6 +113,24 @@ Don't forget to edit your `.env` :
 ```bash
 # Replace 'yourpassphrase' by your actual passphrase
 echo "JWT_PASSPHRASE=yourpassphrase" | sudo tee -a .env
+```
+
+### Instances
+
+In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/crestic/remotelabz-worker), you need to start **Symfony Messenger** :
+
+```bash
+sudo systemctl start remotelabz
+```
+
+**Warning :** When consuming messages, a timestamp is used to determine which messages the messenger worker is able to consume. Therefore, each machines needs to be time-synchronized. We recommand you to use a service like `ntp` to keep your machines synchronized.
+
+You will also need to start the proxy service to display VNC console :
+
+```bash
+sudo npm install -g configurable-http-proxy
+# then start it
+configurable-http-proxy
 ```
 
 ### Shibboleth (optional)
@@ -145,4 +156,61 @@ Don't forget to restart the messenger service :
 
 ```bash
 sudo systemctl restart remotelabz
+```
+
+General informations
+====================
+## Ports
+- TCP 80, 443 : http(s) pages
+- TCP 8000 : websocket
+
+## Logs
+- Logs are located under `/opt/remotelabz/var/log/`
+
+FAQ
+====
+### How to increase size of disk on LVM virtual machines
+1. Shutdown the VM
+2. Right click the VM and select Edit Settings
+3. Select the hard disk you would like to extend
+4. On the right side, make the provisioned size as large as you need it and confirm
+5. Power on the VM and connect to it.
+6. Identify your disk name with `sudo fdisk -l` for example /dev/sda
+7. `sudo fdisk /dev/sda`
+8. Enter `p` to print the partition table
+9. Enter `n` to add a new partition
+10. Enter `p` again to make it a primary partition
+11. Enter the number of your new partition
+12. Pick the first cylinder which will most like come at the end of the last partition (this is the default value)
+13. Enter the amount of space (default is the rest of space available)
+14. Enter `w` to save these changes
+15. Restart the VM and log in
+16. Type `sudo fdisk -l` and check that a new partition is present
+17. Find your volume group with `df -h`.
+ * Example: `/dev/mapper/ubuntu--vg-root 15G 4.5G ...`
+ * Volume group is: `ubuntu-vg`
+18. Extend the volume group : `sudo vgextend [volume group] /dev/sdaX`
+ * Example: `sudo vgextend ubuntu-vg /dev/sda3`
+19. Find the amount of free space available : `sudo vgdisplay [volume group] | grep "Free"`
+20. Expand the logical volume : `sudo lvextend -L+[freespace]G /dev/[volgroup]/[volume]`
+ * Example: `sudo lvextend -L+64G /dev/ubuntu-vg/root`
+21. Expand the ext3 file system in the logical volume : `sudo resize2fs /dev/[volgroup]/[volume]`
+ * Example: `sudo resize2fs /dev/ubuntu-vg/root`
+22. You can now run the df command to very that you have more space `df -h`
+
+Known Bug
+=========
+
+### 500 Internal Server Error on Login page
+Wrong permission for config/jwt/
+```bash
+# Change owner of config/jwt/*
+chown -R www-data:www-data config/jwt
+``` 
+
+### 500 Internal Server Error on Labs page
+Wrong permission in var/cache/prod/
+```bash
+# Change owner of cache/prod/
+chown -R www-data:www-data *
 ```
