@@ -23,6 +23,9 @@
         <ul class="nav">
             {{ sidebar.link("Overview", 'dashboard_show_group', {slug: group.path}, 'home', 'dashboard_show_group', _context) }}
             {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.path}, 'users', 'dashboard_group_members', _context) }}
+            {% if group.isElevatedUser(app.user) %}
+                {{ sidebar.link("Settings", 'dashboard_edit_group', {slug: group.path}, 'settings', 'dashboard_edit_group', _context) }}
+            {% endif %}
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">

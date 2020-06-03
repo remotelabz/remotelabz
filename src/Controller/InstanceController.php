@@ -3,13 +3,18 @@
 namespace App\Controller;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use App\Instance\InstanceManager;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
 use App\Entity\InstancierInterface;
 use App\Repository\GroupRepository;
 use App\Exception\InstanceException;
+use App\Entity\NetworkInterfaceInstance;
 use App\Repository\LabInstanceRepository;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,15 +25,18 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class InstanceController extends Controller
 {
+    private $logger;
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
 
     public function __construct(
+        LoggerInterface $logger,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
     ) {
+        $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
@@ -327,7 +335,7 @@ class InstanceController extends Controller
     /**
      * @Route("/instances/{uuid}/view", name="view_instance")
      */
-    public function viewInstanceAction(Request $request, string $uuid)
+    public function viewInstanceAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException();
@@ -335,6 +343,33 @@ class InstanceController extends Controller
 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
+
+        /** @var NetworkInterfaceInstance */
+        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
+            $networkInterface = $networkInterfaceInstance->getNetworkInterface();
+
+            // if vnc access is requested, register the port in CHP
+            if ('VNC' == $networkInterface->getSettings()->getProtocol()) {
+                try {
+                    $instanceManager->createDeviceInstanceProxyRoute(
+                        $deviceInstance->getUuid(),
+                        $networkInterfaceInstance->getRemotePort()
+                    );
+                } catch (ServerException $exception) {
+                    $this->logger->error($exception->getResponse()->getBody()->getContents());
+
+                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                } catch (RequestException $exception) {
+                    $this->logger->error($exception);
+
+                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                } catch (ConnectException $exception) {
+                    $this->logger->error($exception);
+
+                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                }
+            }
+        }
 
         if ($request->get('size') == "fullscreen") {
             $fullscreen = true;
@@ -356,7 +391,7 @@ class InstanceController extends Controller
             'lab' => $lab,
             'device' => $device,
             'uuid' => $uuid,
-            'host' => $protocol . "" . ($request->get('host') ?: getenv('WEBSOCKET_PROXY_SERVER')),
+            'host' => $protocol . "" . ($request->get('host') ?: $request->getHost()),
             'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);

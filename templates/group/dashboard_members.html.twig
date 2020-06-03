@@ -89,6 +89,9 @@
                                         {% if group.isOwner(user) %}
                                             <label class="badge badge-info ml-2 mb-0">Owner</label>
                                         {% endif %}
+                                        {% if group.isAdmin(user) %}
+                                            <label class="badge badge-warning ml-2 mb-0">Admin</label>
+                                        {% endif %}
                                     </div>
                                     <div class="text-muted">{{ user.email }}</div>
                                 </div>

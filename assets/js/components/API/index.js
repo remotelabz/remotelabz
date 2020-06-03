@@ -78,6 +78,7 @@ import Axios from 'axios';
  * @property {DeviceInstance[]} deviceInstances
  * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
+ * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
  * @typedef {{name: string, uuid: string}} InstanceOwnerInterface
  * @typedef {"qemu"} Hypervisor
@@ -218,6 +219,19 @@ export class RemotelabzAPI {
      */
     instances = {
         /**
+         * Get an instance by UUID.
+         * 
+         * Implements GET `/api/instances/by-uuid/{uuid}`
+         * 
+         * @param {string} uuid 
+         * @param {InstanceType} type
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<LabInstance|DeviceInstance>>}
+         */
+        get(uuid, type) {
+            return axios.get(`/instances/by-uuid/${uuid}`, { params: { type } });
+        },
+        /**
          * Lab instances methods
          */
         lab: {
@@ -261,6 +275,19 @@ export class RemotelabzAPI {
             getByLabAndGroup(labUuid, groupUuid) {
                 return axios.get(`/instances/lab/${labUuid}/by-group/${groupUuid}`);
             },
+
+            /**
+             * Delete a lab instance by UUID.
+             * 
+             * Implements DELETE `/api/instances/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            delete(uuid) {
+                return axios.delete(`/instances/${uuid}`);
+            }
         },
 
         /**

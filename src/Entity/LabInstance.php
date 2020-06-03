@@ -7,6 +7,7 @@ use App\Entity\Instance;
 use UnexpectedValueException;
 use App\Entity\DeviceInstance;
 use Doctrine\ORM\Mapping as ORM;
+use App\Message\InstanceStateMessage;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
@@ -55,6 +56,12 @@ class LabInstance extends Instance
      */
     private $networkSettings;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $state;
+
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
 
@@ -63,6 +70,7 @@ class LabInstance extends Instance
         parent::__construct();
         $this->deviceInstances = new ArrayCollection();
         $this->scope = self::SCOPE_STANDALONE;
+        $this->state = InstanceStateMessage::STATE_CREATING;
     }
 
     public function getId(): ?int
@@ -212,6 +220,23 @@ class LabInstance extends Instance
         $this->networkSettings = $networkSettings;
 
         return $this;
+    }
+
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(?string $state): self
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    public function isCreated(): ?bool
+    {
+        return $this->state === InstanceStateMessage::STATE_CREATED;
     }
 
     /**
