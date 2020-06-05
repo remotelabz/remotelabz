@@ -124,6 +124,14 @@ export class InstanceManager extends Component {
         return this.state.user.id === user.id;
     }
 
+    isOwnedByGroup() {
+        return this.state.labInstance.ownedBy == "group";
+    }
+
+    isCallStarted() {
+        return this.state.labInstance.isCallStarted;
+    }
+
     hasInstancesStillRunning = () => {
         return this.state.labInstance.deviceInstances.some(i => i.state != 'stopped');
     }
@@ -260,7 +268,43 @@ export class InstanceManager extends Component {
 
     onLeaveLabModalClose = () => this.setState({ showLeaveLabModal: false });
 
+    onMakeACallButtonClick = () => {
+        Remotelabz.instances.lab.startCall(this.state.lab.uuid, this.state.labInstance.owner.uuid)
+            .then(() => this.setState({ labInstance: { ...this.state.labInstance, isCallStarted: true}}))
+    }
+
+    onJoinCallButtonClick = () => {
+        // Gather informations and create JWT.
+        console.log("Join that call !");
+
+        let user_name = this.state.user.name;
+        let user_email = this.state.user.email;
+        let user_id = this.state.user.uuid;
+        
+        if (this.state.labInstance.ownedBy == "group") {
+            Remotelabz.instances.lab.joinCall(this.state.lab.uuid, this.state.labInstance.owner.uuid, user_name, user_email)
+                .then(response => {
+                    console.log(response.data);
+                })
+        }
+    }
+    
     render() {
+        let callButton;
+
+        if (this.state.labInstance && this.isOwnedByGroup()) {
+            if(this.isCurrentUserGroupAdmin(this.state.viewAs)) {
+                if(this.isCallStarted()) {
+                    callButton = <Button variant="link" onClick={this.onJoinCallButtonClick}>Join call</Button>;
+                }
+                else {
+                    callButton = <Button variant="success" onClick={this.onMakeACallButtonClick}>Make a Call</Button>;
+                }
+            }
+            else {
+                callButton = <Button variant="secondary" onClick={this.onJoinCallButtonClick} disabled={!this.isCallStarted()}>Join call</Button>
+            }
+        }
         return (<>
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
@@ -279,6 +323,7 @@ export class InstanceManager extends Component {
                 <ListGroup>
                     <ListGroupItem className="d-flex align-items-center justify-content-between">
                         <h4 className="mb-0">Instances</h4>
+                        {callButton}
                         {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
                             <Button variant="danger" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
                         }
