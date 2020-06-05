@@ -212,6 +212,12 @@ class InstanceManager
         );
     }
 
+    public function startCall(LabInstance $labInstance)
+    {
+        $labInstance->setCallStarted(true);
+        $this->entityManager->flush();
+    }
+
     // public function state(DeviceInstance $deviceInstance)
     // {
     //     $client = new Client();

@@ -144,6 +144,93 @@ class InstanceController extends Controller
         return $this->json();
     }
 
+    /**
+     * @Rest\Get("/api/instances/lab/{labUuid}/{groupUuid}/call/start", name="api_start_lab_call")
+     */
+    public function startLabCall(
+        Request $request,
+        string $labUuid,
+        string $groupUuid,
+        InstanceManager $instanceManager,
+        GroupRepository $groupRepository,
+        LabRepository $labRepository
+    ) {
+        if (!$group = $groupRepository->findOneBy(['uuid' => $groupUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$lab = $labRepository->findOneBy(['uuid' => $labUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['_group' => $group, 'lab' => $lab])) {
+            throw new NotFoundHttpException();
+        }
+
+        $instanceManager->startCall($labInstance);
+
+        return $this->json();
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/{labUuid}/{groupUuid}/call/join", name="api_join_lab_call")
+     */
+    public function joinLabCall(
+        Request $request,
+        string $labUuid,
+        string $groupUuid,
+        GroupRepository $groupRepository,
+        LabRepository $labRepository
+    ) {
+        $username = $request->query->get("name");
+        $usermail = $request->query->get("email");
+
+        if (!$group = $groupRepository->findOneBy(['uuid' => $groupUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$lab = $labRepository->findOneBy(['uuid' => $labUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['_group' => $group, 'lab' => $lab])) {
+            throw new NotFoundHttpException();
+        }
+
+        if(!$labInstance->isCallStarted()) {
+            // Change this
+            throw new NotFoundHttpException();
+        }
+        $expirationDate = 1594129151;
+        $header = json_encode(["alg" => "HS256", "typ" => "JWT"]);
+        $payload = json_encode([
+            "context" => [
+                "user" => [
+                    "name" => $username,
+                    "email" => $usermail
+                ],
+                "group" => $group->getName()
+            ],
+            "room" => $lab->getName(),
+            "exp" => $expirationDate,
+            "sub" => "remotelabz",
+            "aud" => "jitsi-call",
+            "iss" => "remotelabz"
+        ]);
+
+        // For test only
+        $HARDCODED_SECRET = "YP42399A2Wnfxw5BLqjm";
+
+        $encodedHeader = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($header));
+        $encodedPayload = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($payload));
+        $signature = hash_hmac('sha256', $encodedHeader . "." . $encodedPayload, $HARDCODED_SECRET, true);
+        $encodedSignature = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($signature));
+
+        $token = $encodedHeader . "." . $encodedPayload . "." . $encodedSignature;
+
+        return $this->json($token, 200, []);
+    }
+
     // /**
     //  * @Rest\Get("/api/instances/state/by-uuid/{uuid}", name="api_get_instance_state_by_uuid")
     //  */
