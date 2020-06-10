@@ -198,37 +198,38 @@ class InstanceController extends Controller
         }
 
         if(!$labInstance->isCallStarted()) {
-            // Change this
-            throw new NotFoundHttpException();
+            throw new AccessDeniedHttpException();
         }
-        $expirationDate = 1594129151;
+
         $header = json_encode(["alg" => "HS256", "typ" => "JWT"]);
         $payload = json_encode([
             "context" => [
                 "user" => [
                     "name" => $username,
                     "email" => $usermail
-                ],
-                "group" => $group->getName()
+                ]
             ],
-            "room" => $lab->getName(),
-            "exp" => $expirationDate,
-            "sub" => "remotelabz",
-            "aud" => "jitsi-call",
+            "room" => $group->getName() . "-" . $lab->getName(),
+            "exp" => time() + 60,
+            "aud" => "rl-jitsi-call",
             "iss" => "remotelabz"
         ]);
 
-        // For test only
-        $HARDCODED_SECRET = "YP42399A2Wnfxw5BLqjm";
+        $jwt_secret= (string) getenv('JITSI_CALL_SECRET');
+        $URL_JITSI = (string) getenv('JITSI_CALL_URL');
+
+        $uri = $URL_JITSI . "/" . $group->getName() . "-" . $lab->getName();
 
         $encodedHeader = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($header));
         $encodedPayload = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($payload));
-        $signature = hash_hmac('sha256', $encodedHeader . "." . $encodedPayload, $HARDCODED_SECRET, true);
+        $signature = hash_hmac('sha256', $encodedHeader . "." . $encodedPayload, $jwt_secret, true);
         $encodedSignature = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($signature));
 
         $token = $encodedHeader . "." . $encodedPayload . "." . $encodedSignature;
 
-        return $this->json($token, 200, []);
+        $uri .= "?jwt=" . $token;
+
+        return $this->json($uri, 200, []);
     }
 
     // /**

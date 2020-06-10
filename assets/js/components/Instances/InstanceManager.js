@@ -274,9 +274,6 @@ export class InstanceManager extends Component {
     }
 
     onJoinCallButtonClick = () => {
-        // Gather informations and create JWT.
-        console.log("Join that call !");
-
         let user_name = this.state.user.name;
         let user_email = this.state.user.email;
         let user_id = this.state.user.uuid;
@@ -284,7 +281,7 @@ export class InstanceManager extends Component {
         if (this.state.labInstance.ownedBy == "group") {
             Remotelabz.instances.lab.joinCall(this.state.lab.uuid, this.state.labInstance.owner.uuid, user_name, user_email)
                 .then(response => {
-                    console.log(response.data);
+                    window.open(response.data);
                 })
         }
     }
@@ -295,14 +292,14 @@ export class InstanceManager extends Component {
         if (this.state.labInstance && this.isOwnedByGroup()) {
             if(this.isCurrentUserGroupAdmin(this.state.viewAs)) {
                 if(this.isCallStarted()) {
-                    callButton = <Button variant="link" onClick={this.onJoinCallButtonClick}>Join call</Button>;
+                    callButton = <Button variant="primary" onClick={this.onJoinCallButtonClick}>Join call</Button>;
                 }
                 else {
                     callButton = <Button variant="success" onClick={this.onMakeACallButtonClick}>Make a Call</Button>;
                 }
             }
             else {
-                callButton = <Button variant="secondary" onClick={this.onJoinCallButtonClick} disabled={!this.isCallStarted()}>Join call</Button>
+                callButton = <Button variant="primary" onClick={this.onJoinCallButtonClick} disabled={!this.isCallStarted()}>Join call</Button>
             }
         }
         return (<>
