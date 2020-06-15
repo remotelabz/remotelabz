@@ -9,6 +9,7 @@ import InstanceOwnerSelect from './InstanceOwnerSelect';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
+const getenv = require('getenv')
 
 /**
  * @typedef {Object} Instancier
@@ -289,7 +290,7 @@ export class InstanceManager extends Component {
     render() {
         let callButton;
 
-        if (this.state.labInstance && this.isOwnedByGroup()) {
+        if (this.state.labInstance && this.isOwnedByGroup() && getenv.bool('ENABLE_JITSI_CALL', false)) {
             if(this.isCurrentUserGroupAdmin(this.state.viewAs)) {
                 if(this.isCallStarted()) {
                     callButton = <Button variant="primary" onClick={this.onJoinCallButtonClick}>Join call</Button>;
