@@ -214,6 +214,8 @@ class UserController extends Controller
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             /** @var User $user */
             $user = $userForm->getData();
+            $roles[] = $userForm->get('roles')->getData();
+            $user->setRoles($roles);
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
 
