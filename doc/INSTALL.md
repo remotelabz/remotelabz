@@ -172,6 +172,7 @@ asap_accepted_audiences = {"rl-jitsi-call"}
 To complete, edit the `.env` file with your Jitsi URI and your shared secret :
 
 ```bash
+JITSI_CALL_ENABLE=1
 JITSI_CALL_URL="jitsiurl.com"
 JITSI_CALL_SECRET="changeThisSecret"
 ```
