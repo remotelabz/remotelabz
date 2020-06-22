@@ -62,6 +62,12 @@ class LabInstance extends Instance
      */
     private $state;
 
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $isCallStarted;
+
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
 
@@ -71,6 +77,7 @@ class LabInstance extends Instance
         $this->deviceInstances = new ArrayCollection();
         $this->scope = self::SCOPE_STANDALONE;
         $this->state = InstanceStateMessage::STATE_CREATING;
+        $this->isCallStarted = false;
     }
 
     public function getId(): ?int
@@ -237,6 +244,18 @@ class LabInstance extends Instance
     public function isCreated(): ?bool
     {
         return $this->state === InstanceStateMessage::STATE_CREATED;
+    }
+
+    public function isCallStarted(): ?bool
+    {
+        return $this->isCallStarted;
+    }
+
+    public function setCallStarted(bool $isCallStarted): self
+    {
+        $this->isCallStarted = $isCallStarted;
+
+        return $this;
     }
 
     /**
