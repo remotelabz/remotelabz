@@ -9,7 +9,6 @@ import InstanceOwnerSelect from './InstanceOwnerSelect';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
-const getenv = require('getenv')
 
 /**
  * @typedef {Object} Instancier
@@ -275,12 +274,8 @@ export class InstanceManager extends Component {
     }
 
     onJoinCallButtonClick = () => {
-        let user_name = this.state.user.name;
-        let user_email = this.state.user.email;
-        let user_id = this.state.user.uuid;
-        
         if (this.state.labInstance.ownedBy == "group") {
-            Remotelabz.instances.lab.joinCall(this.state.lab.uuid, this.state.labInstance.owner.uuid, user_name, user_email)
+            Remotelabz.instances.lab.joinCall(this.state.lab.uuid, this.state.labInstance.owner.uuid)
                 .then(response => {
                     window.open(response.data);
                 })

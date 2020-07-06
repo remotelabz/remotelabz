@@ -145,7 +145,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/{groupUuid}/call/start", name="api_start_lab_call")
+     * @Rest\Get("/api/jitsi-call/{labUuid}/{groupUuid}/start", name="api_start_jitsi_call")
      */
     public function startLabCall(
         Request $request,
@@ -173,7 +173,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/{groupUuid}/call/join", name="api_join_lab_call")
+     * @Rest\Get("/api/jitsi-call/{labUuid}/{groupUuid}/join", name="api_join_jitsi_call")
      */
     public function joinLabCall(
         Request $request,
@@ -201,12 +201,17 @@ class InstanceController extends Controller
             throw new AccessDeniedHttpException();
         }
 
+        $user = $this->getUser();
+
+        $email = $user->getEmail();
+        $name = $user->getName();
+
         $header = json_encode(["alg" => "HS256", "typ" => "JWT"]);
         $payload = json_encode([
             "context" => [
                 "user" => [
-                    "name" => $username,
-                    "email" => $usermail
+                    "name" => $name,
+                    "email" => $email
                 ]
             ],
             "room" => $group->getName() . "-" . $lab->getName(),
@@ -215,10 +220,10 @@ class InstanceController extends Controller
             "iss" => "remotelabz"
         ]);
 
-        $jwt_secret= (string) getenv('JITSI_CALL_SECRET');
-        $URL_JITSI = (string) getenv('JITSI_CALL_URL');
+        $jwtSecret= (string) getenv('JITSI_CALL_SECRET');
+        $urlJitsi = (string) getenv('JITSI_CALL_URL');
 
-        $uri = $URL_JITSI . "/" . $group->getName() . "-" . $lab->getName();
+        $url = $urlJitsi . "/" . $group->getName() . "-" . $lab->getName();
 
         $encodedHeader = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($header));
         $encodedPayload = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($payload));
@@ -227,9 +232,9 @@ class InstanceController extends Controller
 
         $token = $encodedHeader . "." . $encodedPayload . "." . $encodedSignature;
 
-        $uri .= "?jwt=" . $token;
+        $url .= "?jwt=" . $token;
 
-        return $this->json($uri, 200, []);
+        return $this->json($url, 200, []);
     }
 
     // /**

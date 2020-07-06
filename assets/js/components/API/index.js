@@ -287,36 +287,6 @@ export class RemotelabzAPI {
              */
             delete(uuid) {
                 return axios.delete(`/instances/${uuid}`);
-            },
-
-            /**
-             * Start a Call in lab instance by UUID.
-             * 
-             * Implements GET `/api/instances/lab/{labUuid}/{groupUuid}/call/start
-             * 
-             * @param {string} labUuid
-             * @param {string} groupUuid
-             * 
-             * @return {Promise<import('axios').AxiosResponse<void>>}
-             */
-            startCall(labUuid, groupUuid) {
-                return axios.get(`/instances/lab/${labUuid}/${groupUuid}/call/start`);
-            },
-
-            /**
-             * Join a Call in lab instance by UUID and group UUID
-             * 
-             * Implements GET `/api/instances/lab/{labUuid}/{groupUuid}/call/join
-             * 
-             * @param {string} labUuid
-             * @param {string} groupUuid
-             * @param {string} username
-             * @param {string} usermail
-             * 
-             * @return {Promise<import('axios').AxiosResponse<void>>}
-             */
-            joinCall(labUuid, groupUuid, username, usermail) {
-                return axios.get(`/instances/lab/${labUuid}/${groupUuid}/call/join?name=${username}&email=${usermail}`);
             }
         },
 
@@ -337,6 +307,35 @@ export class RemotelabzAPI {
                 return axios.get(`/instances/${uuid}`, { params: { type: 'device' } });
             }
         },
+    }
+    jitsiCall = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements GET `/api/jitsi-call/{labUuid}/{groupUuid}/start
+         * 
+         * @param {string} labUuid
+         * @param {string} groupUuid
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        start(labUuid, groupUuid) {
+            return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/start`);
+        },
+
+        /**
+         * Join a Call in lab instance by UUID and group UUID
+         * 
+         * Implements GET `/api/jitsi-call/{labUuid}/{groupUuid}/join
+         * 
+         * @param {string} labUuid
+         * @param {string} groupUuid
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        join(labUuid, groupUuid) {
+            return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/join`);
+        }
     }
 }
 
