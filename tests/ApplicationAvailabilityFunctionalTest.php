@@ -42,6 +42,7 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
         yield ['/admin/devices'];
 
         yield ['/profile'];
+        yield ['/groups'];
     }
 
     private function logIn()
