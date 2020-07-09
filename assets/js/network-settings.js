@@ -15,12 +15,14 @@ $(function () {
         buttons: [{
             extend: 'edit',
             action: function() {
-                api.edit($('table tr.selected').data('id'));
+                let id = $('table tr.selected').data('id');
+                api.edit('/admin/network-settings/' + id + '/edit');
             }
         }, {
             extend: 'delete',
             action: function() {
-                api.delete($('table tr.selected').data('id'));
+                let id = $('table tr.selected').data('id');
+                api.delete('/api/network-interfaces/' + id);
             }
         }],
         columns: [{
