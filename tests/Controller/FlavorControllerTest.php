@@ -23,7 +23,8 @@ class FlavorControllerTest extends WebTestCase
             array(),
             array(),
             array('CONTENT_TYPE' => 'application/json'),
-            $data);
+            $data
+        );
 
         $this->assertTrue($this->client->getResponse()->isSuccessful());
 

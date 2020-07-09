@@ -25,12 +25,13 @@ class DeviceControllerTest extends WebTestCase
             array(),
             array(),
             array('CONTENT_TYPE' => 'application/json'),
-            $data);
+            $data
+        );
 
         $this->assertTrue($this->client->getResponse()->isSuccessful());
 
-        $device = json_decode($this->client->getResponse()->getContent());
-
+        $device = json_decode($this->client->getResponse()->getContent(), true);
+        
         return $device['id'];
     }
 
@@ -46,6 +47,7 @@ class DeviceControllerTest extends WebTestCase
         $form['model'] = 'test model edited';
         $form['operatingSystem'] = '1';
         $form['flavor'] = '2';
+        $form['isTemplate'] = '1';
 
         $data = json_encode($form);
 
@@ -54,7 +56,8 @@ class DeviceControllerTest extends WebTestCase
             array(),
             array(),
             array('CONTENT_TYPE' => 'application/json'),
-            $data);
+            $data
+        );
         
         $this->assertTrue($this->client->getResponse()->isSuccessful());
 
