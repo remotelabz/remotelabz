@@ -22,7 +22,7 @@ $(function () {
             extend: 'delete',
             action: function() {
                 let id = $('table tr.selected').data('id');
-                api.delete('/api/network-interfaces/' + id);
+                api.delete('/admin/network-settings/' + id);
             }
         }],
         columns: [{
