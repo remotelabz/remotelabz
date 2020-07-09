@@ -46,6 +46,9 @@ class InstanceControllerTest extends WebTestCase
      */
     public function testStartDeviceInstance(array $data)
     {
+        // Wait ~ 3 seconds for initialisation of lab instance
+        sleep(3);
+        
         $deviceUuid = $data['deviceUuid'];
 
         $this->logIn();
@@ -60,6 +63,9 @@ class InstanceControllerTest extends WebTestCase
      */
     public function testViewDeviceInstance($deviceUuid)
     {
+        // Wait ~ 3 seconds for initialisation of device instance
+        sleep(3);
+
         $this->login();
         $crawler = $this->client->request('GET', '/instances/' . $deviceUuid . '/view');
         $this->assertSame(0, $crawler->filter('.flash-notice.alert-danger')->count());
@@ -70,9 +76,6 @@ class InstanceControllerTest extends WebTestCase
      */
     public function testStopDeviceInstance($deviceUuid)
     {
-        // Wait ~ 3 seconds for initialisation of device instance
-        sleep(3);
-
         $this->logIn();
         $this->client->request('GET', '/api/instances/stop/by-uuid/' . $deviceUuid);
         $this->assertTrue($this->client->getResponse()->isSuccessful());
@@ -83,9 +86,6 @@ class InstanceControllerTest extends WebTestCase
      */
     public function testDeleteLabInstance(array $data)
     {
-        // Wait ~ 3 seconds for initialisation of lab instance
-        sleep(3);
-
         // Resume tests
         $this->logIn();
         $this->client->request('DELETE', '/api/instances/' . $data['labInstanceUuid']);
