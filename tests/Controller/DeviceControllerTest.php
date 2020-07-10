@@ -6,67 +6,40 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class DeviceControllerTest extends WebTestCase
 {
-    use ControllerTestTrait;
+    use ControllerTestTrait, DeviceControllerTestTrait;
 
-    public function testAddNewDevice()
+    public function testCreateDevice()
     {
         $this->logIn();
-
-        $form['name'] = 'test-device';
-        $form['brand'] = 'test';
-        $form['model'] = 'test model';
-        $form['operatingSystem'] = '2';
-        $form['flavor'] = '1';
-
-        $data = json_encode($form);
-
-        $this->client->request('POST', 
-            '/api/devices',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            $data
+        $device = $this->createDevice('test-device',
+            'test',
+            'test model',
+            '2',
+            '1',
+            '0'
         );
 
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
-
-        $device = json_decode($this->client->getResponse()->getContent(), true);
-        
         return $device['id'];
     }
 
     /**
-     * @depends testAddNewDevice
+     * @depends testCreateDevice
      */
     public function testEditDevice($id)
     {
         $this->logIn();
-        
-        $form['name'] = 'test-device-edited';
-        $form['brand'] = 'test-edited';
-        $form['model'] = 'test model edited';
-        $form['operatingSystem'] = '1';
-        $form['flavor'] = '2';
-        $form['isTemplate'] = '1';
-
-        $data = json_encode($form);
-
-        $this->client->request('PUT', 
-            '/api/devices/' . $id,
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            $data
+        $this->editDevice($id,
+            'test-device-edited',
+            'test-edited',
+            'test model edited',
+            '1',
+            '2',
+            '1'
         );
-        
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
-
-        $this->client->request('GET', '/admin/devices/' . $id . '/edit');
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
 
     /**
-     * @depends testAddNewDevice
+     * @depends testCreateDevice
      */
     public function testShowDevice($id)
     {
@@ -76,7 +49,7 @@ class DeviceControllerTest extends WebTestCase
     }
 
     /**
-     * @depends testAddNewDevice
+     * @depends testCreateDevice
      */
     public function testShowDevicePublic($id)
     {
@@ -86,14 +59,11 @@ class DeviceControllerTest extends WebTestCase
     }
 
     /**
-     * @depends testAddNewDevice
+     * @depends testCreateDevice
      */
     public function testDeleteDevice($id)
     {
         $this->logIn();
-        $this->client->followRedirects();
-
-        $crawler = $this->client->request('GET', '/admin/devices/' . $id . '/delete');
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+        $this->deleteDevice($id);
     }
 }

@@ -6,7 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class UserControllerTest extends WebTestCase
 {
-    use ControllerTestTrait;
+    use ControllerTestTrait, UserControllerTestTrait;
 
     public function testIndexGetAction()
     {
@@ -24,47 +24,30 @@ class UserControllerTest extends WebTestCase
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
 
-    public function testAddNewUser()
+    public function testCreateUser()
     {
         $this->logIn();
-        $crawler = $this->client->request('GET', '/admin/users/new');
-
-        $this->client->enableProfiler();
-        $this->client->followRedirects();
-
-        $form = $crawler->selectButton('user[submit]')->form();
-
-        $form['user[email]'] = "unittest@localhost";
-        $form['user[password]'] = "P@sSW0rD_Un1t_T3st";
-        $form['user[confirmPassword]'] = "P@sSW0rD_Un1t_T3st";
-        $form['user[lastName]'] = "LastName";
-        $form['user[firstName]'] = "FirstName";
-        $form['user[roles]']->select('ROLE_USER');
-
-        $crawler = $this->client->submit($form);
-
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+        $this->createUser('unittest@localhost',
+            'P@sSW0rD_Un1t_T3st',
+            'LastName',
+            'FirstName',
+            'ROLE_USER'
+        );
     }
 
     /**
-     * @depends testAddNewUser
+     * @depends testCreateUser
      */
     public function testBlockUser()
     {
-        $userId = $this->getGuestId();
+        $userInfos = $this->getGuestInfo();
         $this->logIn();
-
-        $this->client->followRedirects();
-
-        $crawler = $this->client->request('GET', '/admin/users/' . $userId . '/toggle');
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
-
-        $this->logOut();
+        $this->toggleBlockUser($userInfos['id']);
 
         $crawler = $this->logInGuest();
         $this->assertSame(1, $crawler->filter('.alert.alert-danger')->count());
-
-        return $userId;
+        
+        return $userInfos['id'];
     }
 
     /**
@@ -73,39 +56,20 @@ class UserControllerTest extends WebTestCase
     public function testUnblockUser($userId)
     {
         $this->logIn();
+        $this->toggleBlockUser($userId);
 
-        $this->client->followRedirects();
-        $crawler = $this->client->request('GET', '/admin/users/' . $userId . '/toggle');
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
-
-        $this->logOut();
-
-        $this->logInGuest();
+        $crawler = $this->logInGuest();
         $this->assertSame(0, $crawler->filter('.alert.alert-danger')->count());
     }
 
     /**
-     * @depends testAddNewUser
+     * @depends testCreateUser
      */
     public function testDeleteUser()
     {
-        $userId = $this->getGuestId();
+        $userInfos = $this->getGuestInfo();
         $this->logIn();
 
-        $this->client->followRedirects();
-
-        $crawler = $this->client->request('DELETE', '/admin/users/' . $userId);
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
-
-    }
-
-    private function getGuestId()
-    {
-        $this->logInGuest();
-        $this->client->request('GET', '/api/users/me');
-        $data = json_decode($this->client->getResponse()->getContent(), true);
-        $userId = $data['id'];
-        $this->logOut();
-        return $userId;
+        $this->deleteUser($userInfos['id']);
     }
 }

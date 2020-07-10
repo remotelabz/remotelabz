@@ -6,31 +6,12 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class FlavorControllerTest extends WebTestCase
 {
-    use ControllerTestTrait;
+    use ControllerTestTrait, FlavorControllerTestTrait;
 
     public function testCreateFlavor()
     {
         $this->logIn();
-
-        $form['name'] = 'x-test';
-        $form['memory'] = '8192';
-        $form['disk'] = '50';
-
-        $data = json_encode($form);
-
-        $this->client->request('POST', 
-            '/api/flavors',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            $data
-        );
-
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
-
-        $flavor = json_decode($this->client->getResponse()->getContent(), true);
-
-        return $flavor['id'];
+        return $this->createFlavor('x-test', '8192', '50');
     }
 
     /**
@@ -39,19 +20,7 @@ class FlavorControllerTest extends WebTestCase
     public function testEditFlavor($id)
     {
         $this->logIn();
-        $this->client->followRedirects();
-
-        $crawler = $this->client->request('GET', '/admin/flavors/' . $id . '/edit');
-
-        $form = $crawler->selectButton('flavor[submit]')->form();
-
-        $form['flavor[name]'] = 'x-test-edited';
-        $form['flavor[memory]'] = '2048';
-        $form['flavor[disk]'] = '35';
-
-        $crawler = $this->client->submit($form);
-
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+        $this->editFlavor($id, 'x-test-edited', '2048', '35');
 
         // Check that value changed
         $crawler = $this->client->request('GET', '/admin/flavors/' . $id . '/edit');
@@ -68,8 +37,6 @@ class FlavorControllerTest extends WebTestCase
     public function testDeleteFlavor($id)
     {
         $this->logIn();
-        $crawler = $this->client->request('DELETE', '/api/flavors/' . $id);
-
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->deleteFlavor($id);
     }
 }

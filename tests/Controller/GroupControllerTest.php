@@ -6,42 +6,20 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class GroupControllerTest extends WebTestCase
 {
-    use ControllerTestTrait;
+    use ControllerTestTrait, GroupControllerTestTrait;
 
-    public function testAddNewGroup()
+    public function testCreateGroup()
     {
         $this->logIn();
-        $crawler = $this->client->request('GET', '/groups/new');
-        
-        $this->client->enableProfiler();
-        $this->client->followRedirects();
-
-        $form = $crawler->selectButton('group[submit]')->form();
-
-        $form['group[name]'] = "Test Group";
-        $form['group[slug]'] = "test-group";
-        $form['group[description]'] = "That's a description";
-        $form['group[visibility]']->select('1');
-
-        $crawler = $this->client->submit($form);
-
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
-
+        $this->createGroup('Test Group', 'test-group', 'That\'s a description', '1');
     }
 
-    // ToDo
-    /*
-    public function testAddUserToGroup()
-    {
-    }
-    */
-
+    /**
+     * @depends testCreateGroup
+     */
     public function testDeleteGroup()
     {
         $this->logIn();
-        $this->client->followRedirects();
-        $crawler = $this->client->request('GET', '/groups/test-group/delete');
-        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
-
+        $this->deleteGroup('test-group');
     }
 }

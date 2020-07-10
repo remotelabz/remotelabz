@@ -6,7 +6,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class InstanceControllerTest extends WebTestCase
 {
-    use ControllerTestTrait;
+    use ControllerTestTrait, InstanceControllerTestTrait;
+    
     private $labUuid;
     private $userUuid;
     
@@ -25,20 +26,7 @@ class InstanceControllerTest extends WebTestCase
     public function testCreateLabInstance()
     {
         $this->loadData();
-        $this->client->request('POST', '/api/instances/create',
-            array(
-                "lab" => $this->labUuid,
-                "instancier" => $this->userUuid,
-                "instancierType" => "user"
-            ));
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
-        $tmp = json_decode($this->client->getResponse()->getContent(), true);
-
-        $data = array();
-        $data['labInstanceUuid'] = $tmp['uuid'];
-        $data['deviceUuid'] = $tmp['deviceInstances'][0]['uuid'];
-        
-        return $data;
+        return $this->createLabInstance($this->labUuid, $this->userUuid, 'user');
     }
 
     /**
@@ -49,11 +37,10 @@ class InstanceControllerTest extends WebTestCase
         // Wait ~ 3 seconds for initialisation of lab instance
         sleep(3);
         
-        $deviceUuid = $data['deviceUuid'];
+        $deviceUuid = $data['deviceInstances'][0]['uuid'];
 
         $this->logIn();
-        $this->client->request('GET', '/api/instances/start/by-uuid/' . $deviceUuid);
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->startDeviceInstance($deviceUuid);
 
         return $deviceUuid;
     }
@@ -77,8 +64,7 @@ class InstanceControllerTest extends WebTestCase
     public function testStopDeviceInstance($deviceUuid)
     {
         $this->logIn();
-        $this->client->request('GET', '/api/instances/stop/by-uuid/' . $deviceUuid);
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->stopDeviceInstance($deviceUuid);
     }
 
     /**
@@ -88,7 +74,6 @@ class InstanceControllerTest extends WebTestCase
     {
         // Resume tests
         $this->logIn();
-        $this->client->request('DELETE', '/api/instances/' . $data['labInstanceUuid']);
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->deleteLabInstance($data['uuid']);
     }
 }
