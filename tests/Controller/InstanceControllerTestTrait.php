@@ -35,6 +35,17 @@ trait InstanceControllerTestTrait
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
 
+    /**
+     * False positive due to javascript 
+    */
+    /*
+    protected function viewDeviceInstance($deviceUuid)
+    {
+        $crawler = $this->client->request('GET', '/instances/' . $deviceUuid . '/view');
+        $this->assertSame(0, $crawler->filter('.flash-notice.alert-danger')->count());
+    }
+    */
+
     protected function stopDeviceInstance($deviceUuid)
     {
         $this->client->request('GET', '/api/instances/stop/by-uuid/' . $deviceUuid);

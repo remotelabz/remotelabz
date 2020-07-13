@@ -48,15 +48,16 @@ class InstanceControllerTest extends WebTestCase
     /**
      * @depends testStartDeviceInstance
      */
+    /*
     public function testViewDeviceInstance($deviceUuid)
     {
         // Wait ~ 3 seconds for initialisation of device instance
         sleep(3);
 
         $this->login();
-        $crawler = $this->client->request('GET', '/instances/' . $deviceUuid . '/view');
-        $this->assertSame(0, $crawler->filter('.flash-notice.alert-danger')->count());
+        $this->viewDeviceInstance($deviceUuid);
     }
+    */
 
     /**
      * @depends testStartDeviceInstance

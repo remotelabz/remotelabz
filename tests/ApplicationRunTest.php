@@ -63,11 +63,6 @@ class ApplicationRunTest extends WebTestCase
         $labInstance = $this->createLabInstance($labInfos['uuid'], $adminInfos['uuid'], 'user');
         $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
 
-        // Wait ~3 sec for instance to be started
-        sleep(3);
-        
-        // ToDo : Test access to VNC Console
-
         $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
         $this->deleteLabInstance($labInstance['uuid']);
 
@@ -75,13 +70,14 @@ class ApplicationRunTest extends WebTestCase
         $labInstance = $this->createLabInstance($labInfos['uuid'], $groupUuid, 'group');
         $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
 
+        // Try to access to VNC Console with a guest
+        /*
         $this->logOut();
         $this->logInGuest();
-
-        // ToDo : Test access to VNC Console
         
         $this->logOut();
         $this->logIn();
+        */
 
         // Stop Device and Lab instance
         $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
