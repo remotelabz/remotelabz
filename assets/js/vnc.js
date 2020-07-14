@@ -5,7 +5,9 @@ var host = userRating.dataset.host;
 var port = userRating.dataset.port;
 var path = userRating.dataset.path;
 console.log('Connecting to ' + host + ':' + port + '/' + path + '...');
-let rfb = new RFB($('#noVNC_screen')[0], host + ':' + port + '/' + path, {
-    scaleViewport: true
+var rfb = new RFB($('#noVNC_screen')[0], host + ':' + port + '/' + path, {
+    scaleViewport: true,
+    clipViewport: true,
 });
 rfb.scaleViewport = true;
+
