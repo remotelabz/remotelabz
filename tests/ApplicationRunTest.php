@@ -53,7 +53,7 @@ class ApplicationRunTest extends WebTestCase
         // We need to relog after getGuestInfo
         $this->logIn();
         $groupUuid = $this->createGroup('Test Group', 'test-group', 'This group is for test only', '1');
-        $this->addUserToGroup('test-group', $userInfos['id']);
+        $this->addUserToGroup('test-group', $userInfos['id'], 'user');
 
         // Start lab instance by user (admin)
         $adminInfos = $this->getUserInfo();
@@ -82,6 +82,31 @@ class ApplicationRunTest extends WebTestCase
         // Stop Device and Lab instance
         $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
         $this->deleteLabInstance($labInstance['uuid']);
+
+        // Change user (guest) from a user to a group admin
+        $this->removeUserFromGroup('test-group',  $userInfos['id']);
+        $this->addUserToGroup('test-group', $userInfos['id'], 'admin');
+
+        $this->logOut();
+        $this->logInGuest();
+        // Test to create a lab instance being a group admin
+        $labInstance = $this->createLabInstance($labInfos['uuid'], $groupUuid, 'group');
+        $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
+
+        $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
+        $this->deleteLabInstance($labInstance['uuid']);
+        
+        $this->logOut();
+        $this->logIn();
+
+        // Remove all
+        $this->deleteGroup('test-group');
+        $this->removeUser($userInfos['id']);
+        //$this->deleteDevice($deviceInLab['id']); // Issue #460
+        $this->deleteLab($labInfos['id']);
+        $this->deleteDevice($device['id']);
+        $this->deleteFlavor($flavorId);
+        $this->deleteOperatingSystems($osId);
     }
 
     private function logIn()

@@ -31,7 +31,7 @@ trait GroupControllerTestTrait
         return $group['uuid'];
     }
 
-    protected function addUserToGroup($slug, $userId)
+    protected function addUserToGroup($slug, $userId, $role)
     {
         $this->client->followRedirects();
         $crawler = $this->client->request('POST',
@@ -39,14 +39,15 @@ trait GroupControllerTestTrait
             array(
                 'users' => array(
                     0 => $userId
-                )
+                ),
+                'role' => $role
             )
         );
 
         $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 
-    protected function deleteUserFromGroup($slug, $userId)
+    protected function removeUserFromGroup($slug, $userId)
     {
         $this->client->followRedirects();
         $crawler = $this->client->request('GET', '/groups/' . $slug . '/user/' . $userId . '/delete');
