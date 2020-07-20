@@ -99,14 +99,16 @@ class ApplicationRunTest extends WebTestCase
         $this->logOut();
         $this->logIn();
 
-        // Remove all
+        // Wait Instance to be correctly removed and then clean all
+        sleep(5);
         $this->deleteGroup('test-group');
-        $this->removeUser($userInfos['id']);
-        //$this->deleteDevice($deviceInLab['id']); // Issue #460
+        $this->deleteUser($userInfos['id']);
+        $this->deleteNetworkInterface($networkInterfaceId);
+        $this->deleteDevice($deviceInLab['id']);
         $this->deleteLab($labInfos['id']);
         $this->deleteDevice($device['id']);
         $this->deleteFlavor($flavorId);
-        $this->deleteOperatingSystems($osId);
+        $this->deleteOperatingSystem($osId);
     }
 
     private function logIn()
