@@ -156,7 +156,8 @@ class LabController extends Controller
         $instanceManagerProps = [
             'user' => $this->getUser(),
             'labInstance' => $userLabInstance,
-            'lab' => $lab
+            'lab' => $lab,
+            'isJitsiCallEnabled' => getenv('ENABLE_JITSI_CALL')
         ];
 
         return $this->render('lab/view.html.twig', [

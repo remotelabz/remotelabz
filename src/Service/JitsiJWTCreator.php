@@ -3,43 +3,38 @@
 namespace App\Service;
 
 class JitsiJWTCreator {
-    
-    private $name;
-    private $email;
-    private $groupName;
-    private $labName;
+
     private $jwtSecret;
     private $urlJitsi;
 
-    public function __construct(string $name, string $email)
+    public function __construct()
     {
-        $this->name = $name;
-        $this->email = $email;
-        $this->groupName = $groupName;
-        $this->labName = $labName;
         $this->jwtSecret = (string)getenv('JITSI_CALL_SECRET');
         $this->urlJitsi = (string)getenv('JITSI_CALL_URL');
     }
 
-    public function getToken()
+    public function getToken(string $name, string $email, string $groupName, string $labName)
     {
-        $roomName = filterRoomName($this->groupName . "-" . $this->labName);
+        $groupNameFiltered = $this->filterName($groupName);
+        $labNameFiltered = $this->filterName($labName);
+        $roomName = $groupNameFiltered . $labNameFiltered;
+
         $header = json_encode(["alg" => "HS256", "typ" => "JWT"]);
 
         $payload = json_encode([
             "context" => [
                 "user" => [
-                    "name" => $this->name,
-                    "email" => $this->email
+                    "name" => $name,
+                    "email" => $email
                 ]
             ],
             "room" => $roomName,
-            "exp" => time() + 60,
+            "exp" => time() + 30,
             "aud" => "rl-jitsi-call",
             "iss" => "remotelabz"
         ]);
 
-        $url = $this->urlJitsi . "/" . $this->groupName . "-" . $this->labName;
+        $url = $this->urlJitsi . "/" . $roomName;
 
         $encodedHeader = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($header));
         $encodedPayload = str_replace(['+', '/', '='], ['-',  '_', ''], base64_encode($payload));
@@ -49,11 +44,14 @@ class JitsiJWTCreator {
         $token = $encodedHeader . "." . $encodedPayload . "." . $encodedSignature;
 
         $url .= "?jwt=" . $token;
+
+        return $url;
     }
 
-    private function filterRoomName(string $name)
+    private function filterName(string $name)
     {
-        $charset = iconv_get_encoding();
-        $convertedName = iconv($charset, 'ASCII//TRANSLIT', $name);
+        $filteredName = str_replace(' ', '', $name);
+        
+        return $filteredName;
     }
 }

@@ -63,10 +63,10 @@ class LabInstance extends Instance
     private $state;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
+     * @Serializer\Groups({"lab", "instance_manager"})
      */
-    private $isCallStarted;
+    private $jitsiCall;
 
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
@@ -77,7 +77,6 @@ class LabInstance extends Instance
         $this->deviceInstances = new ArrayCollection();
         $this->scope = self::SCOPE_STANDALONE;
         $this->state = InstanceStateMessage::STATE_CREATING;
-        $this->isCallStarted = false;
     }
 
     public function getId(): ?int
@@ -246,15 +245,14 @@ class LabInstance extends Instance
         return $this->state === InstanceStateMessage::STATE_CREATED;
     }
 
-    public function isCallStarted(): ?bool
+    public function getJitsiCall(): ?JitsiCall
     {
-        return $this->isCallStarted;
+        return $this->jitsiCall;
     }
 
-    public function setCallStarted(bool $isCallStarted): self
+    public function setJitsiCall(?JitsiCall $jitsiCall): self
     {
-        $this->isCallStarted = $isCallStarted;
-
+        $this->jitsiCall = $jitsiCall;
         return $this;
     }
 
@@ -287,6 +285,12 @@ class LabInstance extends Instance
 
             $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);
+        }
+
+        if($this->ownedBy == self::OWNED_BY_GROUP)
+        {
+            $jitsiCall = new JitsiCall();
+            $this->setJitsiCall($jitsiCall);
         }
     }
 }
