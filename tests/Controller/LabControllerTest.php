@@ -18,6 +18,15 @@ class LabControllerTest extends WebTestCase
     /**
      * @depends testCreateLab
      */
+    public function testEditLab($labId)
+    {
+        $this->logIn();
+        $this->editLab($labId, 'Edited Lab', 'This is a new description');
+    }
+
+    /**
+     * @depends testCreateLab
+     */
     public function testDeleteLab($labId)
     {
         $this->logIn();

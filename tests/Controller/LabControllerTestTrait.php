@@ -19,6 +19,25 @@ trait LabControllerTestTrait
         return $tmp;
     }
 
+    protected function editLab($labId, $name, $description)
+    {
+        $tmp['name'] = $name;
+        $tmp['description'] = $description;
+        $data = json_encode($tmp);
+
+        $this->client->request('PUT',
+            '/api/labs/' . $labId,
+            array(),
+            array(),
+            array('CONTENT_TYPE' => 'application/json'),
+            $data
+        );
+
+        $this->assertTrue($this->client->getResponse()->isSuccessful());
+
+        return json_decode($this->client->getResponse()->getContent(), true);
+    }
+
     protected function addDeviceToLab($labId, $device)
     {
         $data = json_encode($device);

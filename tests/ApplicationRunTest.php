@@ -30,6 +30,36 @@ class ApplicationRunTest extends WebTestCase
     public function testRun()
     {
         $this->logIn();
+        
+        $entities = $this->createEntities();
+
+        // Start tests for user
+        $this->launchLabAndDeviceTests($entities['labInfos']['uuid'], $entities['adminInfos']['uuid'], 'user');
+        
+        // Start tests for group
+        $this->launchLabAndDeviceTests($entities['labInfos']['uuid'], $entities['groupUuid'], 'group');
+
+        // Change user (guest) from a user to a group admin
+        $this->removeUserFromGroup('test-group',  $entities['userInfos']['id']);
+        $this->addUserToGroup('test-group', $entities['userInfos']['id'], 'admin');
+
+        $this->logOut();
+        $this->logInGuest();
+        
+        // Test to create a lab instance being a group admin
+        $this->launchLabAndDeviceTests($entities['labInfos']['uuid'], $entities['groupUuid'], 'group');
+
+        $this->logOut();
+        $this->logIn();
+        // Wait Instance to be correctly removed and then clean all
+        sleep(5);
+        $this->deleteEntities($entities);
+    }
+
+    private function createEntities()
+    {
+        $ret = array();
+
         $osId = $this->createOperatingSystem('Alpine 2', 'http://194.57.105.124/~fnolot/alpinelab1.img');
         $flavorId = $this->createFlavor('x-test', '1024', '10');
         $device = $this->createDevice('Linux Alpine 2', 'brand', 'model', strval($osId), strval($flavorId), '1');
@@ -60,55 +90,38 @@ class ApplicationRunTest extends WebTestCase
         $this->logIn();
         
         $networkInterfaceId = $this->createNetworkInterface('ToAlpine2', '52:54:00:54:54:54', 'VNC', $deviceInLab['id'], '1');
-        $labInstance = $this->createLabInstance($labInfos['uuid'], $adminInfos['uuid'], 'user');
-        $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
+    
+        $ret['osId'] = $osId;
+        $ret['flavorId'] = $flavorId;
+        $ret['device'] = $device;
+        $ret['labInfos'] = $labInfos;
+        $ret['deviceInLab'] = $deviceInLab;
+        $ret['userInfos'] = $userInfos;
+        $ret['groupUuid'] = $groupUuid;
+        $ret['adminInfos'] = $adminInfos;
+        $ret['networkInterfaceId'] = $networkInterfaceId;
 
+        return $ret;
+    }
+
+    private function launchLabAndDeviceTests($labUuid, $instancierUuid, $instancierType)
+    {
+        $labInstance = $this->createLabInstance($labUuid, $instancierUuid, $instancierType);
+        $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
         $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
         $this->deleteLabInstance($labInstance['uuid']);
+    }
 
-        // Start lab instance for group
-        $labInstance = $this->createLabInstance($labInfos['uuid'], $groupUuid, 'group');
-        $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
-
-        // Try to access to VNC Console with a guest
-        /*
-        $this->logOut();
-        $this->logInGuest();
-        
-        $this->logOut();
-        $this->logIn();
-        */
-
-        // Stop Device and Lab instance
-        $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
-        $this->deleteLabInstance($labInstance['uuid']);
-
-        // Change user (guest) from a user to a group admin
-        $this->removeUserFromGroup('test-group',  $userInfos['id']);
-        $this->addUserToGroup('test-group', $userInfos['id'], 'admin');
-
-        $this->logOut();
-        $this->logInGuest();
-        // Test to create a lab instance being a group admin
-        $labInstance = $this->createLabInstance($labInfos['uuid'], $groupUuid, 'group');
-        $this->startDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
-
-        $this->stopDeviceInstance($labInstance['deviceInstances'][0]['uuid']);
-        $this->deleteLabInstance($labInstance['uuid']);
-        
-        $this->logOut();
-        $this->logIn();
-
-        // Wait Instance to be correctly removed and then clean all
-        sleep(5);
+    private function deleteEntities(array $entities)
+    {
         $this->deleteGroup('test-group');
-        $this->deleteUser($userInfos['id']);
-        $this->deleteNetworkInterface($networkInterfaceId);
-        $this->deleteDevice($deviceInLab['id']);
-        $this->deleteLab($labInfos['id']);
-        $this->deleteDevice($device['id']);
-        $this->deleteFlavor($flavorId);
-        $this->deleteOperatingSystem($osId);
+        $this->deleteUser($entities['userInfos']['id']);
+        $this->deleteNetworkInterface($entities['networkInterfaceId']);
+        $this->deleteDevice($entities['deviceInLab']['id']);
+        $this->deleteLab($entities['labInfos']['id']);
+        $this->deleteDevice($entities['device']['id']);
+        $this->deleteFlavor($entities['flavorId']);
+        $this->deleteOperatingSystem($entities['osId']);
     }
 
     private function logIn()
