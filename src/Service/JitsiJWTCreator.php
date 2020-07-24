@@ -50,7 +50,7 @@ class JitsiJWTCreator {
 
     private function filterName(string $name)
     {
-        $filteredName = str_replace(' ', '', $name);
+        $filteredName = str_replace([' ', '-', '_'], '', $name);
 
         $filteredName = $this->removeAccents($filteredName);
         
