@@ -56,17 +56,8 @@
                ou de recharger la ressource référencée. */
           };
         }
-
-        var el = document.getElementById('noVNC_button')
-            clickerFn = function() {
-                if (el.value=="CtrlAltDel") {
-                    console.log("click "+el.value);
-                    rfb.sendCtrlAltDel();
-                }
-                else console.log("Alert");
-        }
-
-        el.addEventListener('click', clickerFn);
+        
+        
 
 
         </script>
