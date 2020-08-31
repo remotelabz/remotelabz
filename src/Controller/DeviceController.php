@@ -222,12 +222,6 @@ class DeviceController extends Controller
         }
 
         $entityManager = $this->getDoctrine()->getManager();
-
-        foreach ($device->getNetworkInterfaces() as $networkInterface) {
-            $entityManager->remove($networkInterface);
-        }
-
-        $entityManager->flush();
         $entityManager->remove($device);
         $entityManager->flush();
 
