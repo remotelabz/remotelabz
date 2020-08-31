@@ -1,0 +1,6 @@
+Remotelabz\NetworkBundle\Entity\IP:
+    exclusion_policy: ALL
+    properties:
+        addr:
+            expose: true
+            groups: ["start_lab", "stop_lab", "lab"]

@@ -45,7 +45,8 @@ const Option = props => {
                         {(props.data.type && props.data.type == 'group') &&
                             <Badge variant="default" className="ml-2">{GroupRoleLabel[props.data.role]}</Badge>
                         }
-                    </span></div>
+                    </span>{ props.data.hasLabInstance && <Badge variant="success" className="ml-2">Joined</Badge> }</div>
+
                     {props.data.owner &&
                         <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
                     }

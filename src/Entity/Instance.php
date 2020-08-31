@@ -33,7 +33,7 @@ class Instance implements InstanciableInterface
     protected $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Group")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="labInstances")
      */
     protected $_group;
 

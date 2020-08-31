@@ -73,7 +73,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({"user_instances"})
+     * @Serializer\Groups({"user_instances", "instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;

@@ -1,10 +1,13 @@
 {
+    "name": "crestic-urca/remotelabz",
+    "description": "Education software to provide VMs and networks as-a-service.",
     "type": "project",
     "license": "proprietary",
     "require": {
         "php": "^7.1.3",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "crestic-urca/network-bundle": "^1.0",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
         "friendsofsymfony/rest-bundle": "dev-master",
@@ -13,10 +16,8 @@
         "jms/serializer-bundle": "^3.1",
         "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
-        "limenius/react-bundle": "5.0.4",
-        "limenius/react-renderer": "5.0.3",
+        "limenius/react-bundle": "^5.0",
         "myclabs/deep-copy": "^1.9",
-        "onurb/doctrine-yuml-bundle": "dev-master",
         "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
         "symfony/apache-pack": "^1.0",
@@ -51,7 +52,7 @@
         "symfony/debug-pack": "^1.0",
         "symfony/dotenv": "^4.0",
         "symfony/maker-bundle": "^1.15",
-        "symfony/phpunit-bridge": "^4.3",
+        "symfony/phpunit-bridge": "^5.1",
         "symfony/profiler-pack": "^1.0",
         "symfony/test-pack": "^1.0"
     },
@@ -105,15 +106,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/doctrine-yuml-bundle.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/ReactBundle.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/ReactRenderer.git"
+            "url": "https://github.com/crestic-urca/network-bundle.git"
         }
     ]
 }
