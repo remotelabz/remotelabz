@@ -459,8 +459,14 @@ class GroupController extends Controller
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
+        $groups = ['groups'];
+
+        if ($request->query->get('instances', false)) {
+            $groups[] = 'instances';
+        }
+
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($group, 200, [], []);
+            return $this->json($group, 200, [], $groups);
         }
 
         return $this->render('group/dashboard_view.html.twig', [

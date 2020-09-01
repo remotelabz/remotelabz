@@ -167,7 +167,7 @@ class LabController extends Controller
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details'])
+                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details', 'instances'])
             )
         ]);
     }

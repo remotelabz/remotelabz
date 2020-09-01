@@ -1,4 +1,7 @@
 {
+    "crestic-urca/network-bundle": {
+        "version": "v1.0.0"
+    },
     "doctrine/annotations": {
         "version": "1.0",
         "recipe": {
@@ -74,6 +77,9 @@
     "doctrine/reflection": {
         "version": "v1.0.0"
     },
+    "doctrine/sql-formatter": {
+        "version": "1.1.0"
+    },
     "egulias/email-validator": {
         "version": "2.1.6"
     },
@@ -113,48 +119,6 @@
     "guzzlehttp/psr7": {
         "version": "1.5.2"
     },
-    "hoa/compiler": {
-        "version": "3.17.08.08"
-    },
-    "hoa/consistency": {
-        "version": "1.17.05.02"
-    },
-    "hoa/event": {
-        "version": "1.17.01.13"
-    },
-    "hoa/exception": {
-        "version": "1.17.01.16"
-    },
-    "hoa/file": {
-        "version": "1.17.07.11"
-    },
-    "hoa/iterator": {
-        "version": "2.17.01.10"
-    },
-    "hoa/math": {
-        "version": "1.17.05.16"
-    },
-    "hoa/protocol": {
-        "version": "1.17.01.14"
-    },
-    "hoa/regex": {
-        "version": "1.17.01.13"
-    },
-    "hoa/stream": {
-        "version": "1.17.02.21"
-    },
-    "hoa/ustring": {
-        "version": "4.17.01.16"
-    },
-    "hoa/visitor": {
-        "version": "2.17.01.16"
-    },
-    "hoa/zformat": {
-        "version": "1.17.01.10"
-    },
-    "jdorn/sql-formatter": {
-        "version": "v1.2.17"
-    },
     "jms/metadata": {
         "version": "1.7.0"
     },
@@ -186,10 +150,10 @@
         }
     },
     "limenius/react-bundle": {
-        "version": "dev-master"
+        "version": "v5.0.3"
     },
     "limenius/react-renderer": {
-        "version": "v5.0.0"
+        "version": "v5.0.2"
     },
     "michelf/php-markdown": {
         "version": "1.8.0"
@@ -211,21 +175,6 @@
     },
     "ocramius/proxy-manager": {
         "version": "2.1.1"
-    },
-    "onurb/doctrine-metadata-grapher": {
-        "version": "1.1.11"
-    },
-    "onurb/doctrine-yuml-bundle": {
-        "version": "1.1",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "master",
-            "version": "1.1",
-            "ref": "81130d6607195660087a01442f30be1edad71804"
-        },
-        "files": [
-            "./config/routes/dev/yuml.yaml"
-        ]
     },
     "php": {
         "version": "7.3"
@@ -446,6 +395,9 @@
     "symfony/polyfill-intl-idn": {
         "version": "v1.10.0"
     },
+    "symfony/polyfill-intl-normalizer": {
+        "version": "v1.18.0"
+    },
     "symfony/polyfill-mbstring": {
         "version": "v1.10.0"
     },
@@ -454,6 +406,9 @@
     },
     "symfony/polyfill-php73": {
         "version": "v1.11.0"
+    },
+    "symfony/polyfill-php80": {
+        "version": "v1.17.1"
     },
     "symfony/process": {
         "version": "v4.1.7"
