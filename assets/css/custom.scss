@@ -735,8 +735,8 @@ $size-count: 64;
 
 @for $i from 1 through $size-count {
   .s#{$i} {
-    width: $i + px;
-    height: $i + px;
+    width: $i + px !important;
+    height: $i + px !important;
   }
 }
 
