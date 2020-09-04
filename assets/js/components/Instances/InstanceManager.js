@@ -84,21 +84,23 @@ export class InstanceManager extends Component {
         }];
 
         this.interval = setInterval(() => {
-            this.fetchInstance(this.state.labInstance.uuid, 'lab')
-            .then(response => {
-                this.setState({ labInstance: response.data });
-            })
-            .catch(error => {
-                if (error.response.status === 404) {
-                    this.setState({ labInstance: null });
-                } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show();
-                    clearInterval(this.interval);
-                }
-            });
+            if (this.state.labInstance !== null || this.state.isLoadingInstanceState) {
+                this.fetchInstance(this.state.labInstance.uuid, 'lab')
+                .then(response => {
+                    this.setState({ labInstance: response.data });
+                })
+                .catch(error => {
+                    if (error.response.status === 404) {
+                        this.setState({ labInstance: null });
+                    } else {
+                        new Noty({
+                            text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                            type: 'error'
+                        }).show();
+                        clearInterval(this.interval);
+                    }
+                });
+            }
         }, 5000);
     }
 
@@ -191,21 +193,6 @@ export class InstanceManager extends Component {
 
             request.then(response => {
                 this.setState({ viewAs: option, labInstance: response.data });
-
-                this.interval = setInterval(() => {
-                    this.fetchInstance(this.state.labInstance.uuid, 'lab')
-                        .then(response => {
-                            this.setState({ labInstance: response.data });
-                        })
-                        .catch(error => {
-                            console.error(error);
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show();
-                            clearInterval(this.interval);
-                        })
-                }, 5000);
             })
             .catch(error => {
                 if (status <= 500) {
@@ -219,6 +206,26 @@ export class InstanceManager extends Component {
                 }
             })
             .finally(() => this.setState({ isLoadingInstanceState: false }));
+
+            this.interval = setInterval(() => {
+                if (this.state.labInstance !== null || this.state.isLoadingInstanceState) {
+                    this.fetchInstance(this.state.labInstance.uuid, 'lab')
+                    .then(response => {
+                        this.setState({ labInstance: response.data });
+                    })
+                    .catch(error => {
+                        if (error.response.status === 404) {
+                            this.setState({ labInstance: null });
+                        } else {
+                            new Noty({
+                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                                type: 'error'
+                            }).show();
+                            clearInterval(this.interval);
+                        }
+                    });
+                }
+            }, 5000);
         }
     }
 
