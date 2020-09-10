@@ -77,6 +77,28 @@ import Axios from 'axios';
  * @property {{name: string, uuid: string}} lab
  * @property {DeviceInstance[]} deviceInstances
  * 
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} email
+ * @property {string} lastName
+ * @property {string} firstName
+ * @property {string} name Full name.
+ * @property {boolean} enabled If user is able to connect or not.
+ * @property {string} createdAt Datetime format.
+ * @property {string} lastActivity Datetime format.
+ * @property {string} uuid
+ * @property {string[]} roles
+ * 
+ * @typedef {Object} Group
+ * @property {number} id
+ * @property {string} path
+ * @property {string} name
+ * @property {string} slug
+ * @property {string} description
+ * @property {string} createdAt Datetime format.
+ * @property {string} updatedAt Datetime format.
+ * @property {string} uuid
+ * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
@@ -113,6 +135,56 @@ axios.interceptors.response.use(
 );
 
 export class RemotelabzAPI {
+    /**
+     * User endpoint.
+     */
+    users = {
+        /**
+         * Get a collection of users.
+         * 
+         * Implements GET `/api/users`
+         * 
+         * @param {number} search Search string. Can contain anything in user's name or email.
+         * @param {number} limit Limit number of users fetched.
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        all(search = '', limit = 10) {
+            return axios.get('/users', {
+                params: {
+                    limit,
+                    search
+                }
+            })
+        },
+    }
+
+    /**
+     * Group endpoint.
+     */
+    groups = {
+        /**
+         * Get a collection of groups.
+         * 
+         * Implements GET `/api/groups`
+         * 
+         * @param {number} search Search string. Can contain anything in user's name or email.
+         * @param {number} limit Limit number of groups fetched.
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Group[]>>}
+         */
+        all(search = '', limit = 10, page = 1, withUsers = true) {
+            return axios.get('/groups', {
+                params: {
+                    limit,
+                    search,
+                    page,
+                    context: withUsers ? ["group_users", "groups"] : "groups"
+                }
+            })
+        },
+    }
+
     /**
      * Labs endpoint.
      */

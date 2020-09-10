@@ -17,7 +17,7 @@ export default class GroupRoleSelect extends Component {
 
         this.state = {
             selectedOption: options.find(el => {
-                return el.value === props[0].role;
+                return el.value === props.role;
             }),
             isLoading: false
         }

@@ -23,14 +23,14 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key", "group_tree", "group_explore", "instances", "user"})
+     * @Serializer\Groups({"primary_key", "group_users", "group_tree", "group_explore", "instances", "user"})
      * @var int
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user", "groups", "group_users"})
      * @var string
      */
     private $email;
@@ -244,7 +244,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users"})
      */
     public function getName(): string
     {

@@ -69,7 +69,7 @@
         "react-editext": "^3.9.1",
         "react-loading-skeleton": "^1.2.0",
         "react-markdown": "^4.2.2",
-        "react-on-rails": "^11.3.0",
+        "react-on-rails": "12",
         "react-router-dom": "^5.1.2",
         "react-select": "^3.0.8",
         "react-simplemde-editor": "^4.1.0",

@@ -13,6 +13,8 @@ use App\Security\ACL\GroupVoter;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use FOS\RestBundle\Context\Context;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 use App\Service\GroupPictureFileUploader;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -121,10 +123,10 @@ class GroupController extends Controller
             });
         }
 
-        $requestedContext = $request->query->get('context');
+        $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groups->getValues(), 200, [], $requestedContext ? (is_array($requestedContext) ?: [$requestedContext]) : ['groups']);
+            return $this->json($groups->getValues(), 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
         }
 
         return $this->render('group/dashboard_index.html.twig', [
@@ -367,7 +369,7 @@ class GroupController extends Controller
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
      */
-    public function dashboardMembersAction(string $slug)
+    public function dashboardMembersAction(string $slug, SerializerInterface $serializer)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
@@ -375,6 +377,11 @@ class GroupController extends Controller
 
         return $this->render('group/dashboard_members.html.twig', [
             'group' => $group,
+            'props' => $serializer->serialize(
+                $group,
+                'json',
+                SerializationContext::create()->setGroups(['groups', 'group_users', 'group_details'])
+            )
         ]);
     }
 
@@ -459,14 +466,10 @@ class GroupController extends Controller
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
-        $groups = ['groups'];
-
-        if ($request->query->get('instances', false)) {
-            $groups[] = 'instances';
-        }
+        $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($group, 200, [], $groups);
+            return $this->json($group, 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
         }
 
         return $this->render('group/dashboard_view.html.twig', [
