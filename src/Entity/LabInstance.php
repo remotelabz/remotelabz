@@ -11,6 +11,7 @@ use App\Message\InstanceStateMessage;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Remotelabz\NetworkBundle\Entity\Network;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -52,9 +53,10 @@ class LabInstance extends Instance
     private $isInternetConnected;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="Remotelabz\NetworkBundle\Entity\Network", cascade={"persist", "remove"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
-    private $networkSettings;
+    private $network;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -216,14 +218,14 @@ class LabInstance extends Instance
         return $this->deviceInstances->count() > 0;
     }
 
-    public function getNetworkSettings(): ?NetworkSettings
+    public function getNetwork(): ?Network
     {
-        return $this->networkSettings;
+        return $this->network;
     }
 
-    public function setNetworkSettings(?NetworkSettings $networkSettings): self
+    public function setNetwork(?Network $network): self
     {
-        $this->networkSettings = $networkSettings;
+        $this->network = $network;
 
         return $this;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Instance;
+namespace App\Service\Instance;
 
 use Exception;
 use App\Entity\Lab;
@@ -8,10 +8,12 @@ use GuzzleHttp\Client;
 use App\Entity\LabInstance;
 use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
+use App\Instance\InstanceState;
 use App\Exception\WorkerException;
 use App\Entity\InstancierInterface;
 use App\Message\InstanceStateMessage;
 use App\Message\InstanceActionMessage;
+use App\Service\Network\NetworkManager;
 use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,9 +25,10 @@ use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Remotelabz\NetworkBundle\Exception\NoNetworkAvailableException;
 
 /**
- * @deprecated This service has been moved. Use App\Service\Instance\InstanceManager instead.
+ * @since 2.2.0
  */
 class InstanceManager
 {
@@ -35,6 +38,7 @@ class InstanceManager
     protected $entityManager;
     protected $userRepository;
     protected $groupRepository;
+    protected $networkManager;
     protected $labInstanceRepository;
     protected $deviceInstanceRepository;
     protected $networkInterfaceInstanceRepository;
@@ -42,6 +46,7 @@ class InstanceManager
     public function __construct(
         MessageBusInterface $bus,
         LoggerInterface $logger,
+        NetworkManager $networkManager,
         SerializerInterface $serializer,
         EntityManagerInterface $entityManager,
         LabInstanceRepository $labInstanceRepository,
@@ -52,6 +57,7 @@ class InstanceManager
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->entityManager = $entityManager;
+        $this->networkManager = $networkManager;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
@@ -85,9 +91,15 @@ class InstanceManager
                 throw new Exception('Instancier must be an instance of User or Group.');
         }
 
+        $network = $this->networkManager->getAvailableSubnet();
+
+        if (!$network)
+            throw new NoNetworkAvailableException();
+
         $labInstance
             ->setOwnedBy($instancier->getType())
             ->setState(InstanceStateMessage::STATE_CREATING)
+            ->setNetwork($network)
             ->populate();
 
         $this->entityManager->persist($labInstance);

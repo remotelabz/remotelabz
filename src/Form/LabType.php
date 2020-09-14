@@ -33,13 +33,7 @@ class LabType extends AbstractType
                 'by_reference' => false,
                 'multiple' => true
             ])
-            ->add('NetworkSettings', EntityType::class, [
-                'class' => NetworkSettings::class,
-                'choice_label' => 'name',
-                'by_reference' => false,
-                'multiple' => false
-            ])
-         /*   ->add('connexions', EntityType::class, [
+            /*   ->add('connexions', EntityType::class, [
                 'class' => Connexion::class,
                 'choice_label' => 'name',
                 'by_reference' => false,
@@ -47,8 +41,7 @@ class LabType extends AbstractType
                 'required' => false
             ])*/
             ->add('submit', SubmitType::class)
-            ->add('reset', ResetType::class)
-        ;
+            ->add('reset', ResetType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver)

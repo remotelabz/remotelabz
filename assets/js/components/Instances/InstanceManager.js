@@ -49,6 +49,7 @@ export class InstanceManager extends Component {
             children: [],
             value: props.user.id,
             label: props.user.name,
+            hasLabInstance: props.labInstance ? props.labInstance.state : null,
             ...props.user
         };
 
@@ -72,6 +73,7 @@ export class InstanceManager extends Component {
                     name: group.owner.name
                 },
                 parent: group.parent,
+                hasLabInstance: group.labInstances.find(instance => instance.lab.uuid == props.lab.uuid) || null,
                 ...group
             };
         }).filter(value => value !== null);

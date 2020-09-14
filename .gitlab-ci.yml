@@ -4,10 +4,7 @@ stages:
 
 deploy:staging:
   stage: deploy:staging
-  variables:
-    GIT_STRATEGY: none
   script:
-    - sudo git clean -f -d -x
     # stop messenger
     - sudo ps axf | grep "configurable-http-proxy" | grep -v grep | awk '{print "sudo kill -9 " $1}' | sh || true
     # deploy
