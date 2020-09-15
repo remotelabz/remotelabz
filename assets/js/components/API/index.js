@@ -380,6 +380,7 @@ export class RemotelabzAPI {
             }
         },
     }
+
     jitsiCall = {
         /**
          * Start a Call in lab instance by UUID.

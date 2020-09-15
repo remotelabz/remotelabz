@@ -157,7 +157,7 @@ class LabController extends Controller
             'user' => $this->getUser(),
             'labInstance' => $userLabInstance,
             'lab' => $lab,
-            'isJitsiCallEnabled' => getenv('ENABLE_JITSI_CALL')
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call')
         ];
 
         return $this->render('lab/view.html.twig', [

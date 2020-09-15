@@ -1,60 +1,43 @@
-import API from '../../api';
 import Remotelabz from '../API';
-import React, { Component } from 'react';
-import { Button} from 'react-bootstrap';
+import SVG from '../Display/SVG';
+import React, { useState } from 'react';
+import { Button } from 'react-bootstrap';
 
-const api = API.getInstance();
+function JitsiCallButton(props) {
+    const [loading, setLoading] = useState(false);
 
-class JitsiCallButton extends Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            lab: this.props.lab,
-            user: this.props.user,
-            labInstance: this.props.labInstance
-        }
+    let isCallStarted = () => {
+        return props.labInstance.jitsiCall.state == "started";
     }
 
-    isCallStarted() {
-        return this.state.labInstance.jitsiCall.state == "started";
+    let onMakeACallButtonClick = () => {
+        setLoading(true);
+        Remotelabz.jitsiCall.start(props.lab.uuid, props.labInstance.owner.uuid).finally(() => {
+            setLoading(false);
+            if(props.onStartedCall)
+                props.onStartedCall()
+        });
     }
 
-    onMakeACallButtonClick = () => {
-        Remotelabz.jitsiCall.start(this.state.lab.uuid, this.state.labInstance.owner.uuid)
-            .then(() => {
-                this.state.labInstance.jitsiCall.state = "started";
-                this.setState({ labInstance: { ...this.state.labInstance}});
-            })
-    }
-
-    onJoinCallButtonClick = () => {
-        if (this.state.labInstance.ownedBy == "group") {
-            Remotelabz.jitsiCall.join(this.state.lab.uuid, this.state.labInstance.owner.uuid)
+    let onJoinCallButtonClick = () => {
+        if (props.labInstance.ownedBy == "group") {
+            Remotelabz.jitsiCall.join(props.lab.uuid, props.labInstance.owner.uuid)
                 .then(response => {
                     window.open(response.data);
                 })
         }
     }
 
-    render() {
-        let callButton = '';
-
-        if (this.props.isOwnedByGroup) {
-            if(this.props.isCurrentUserGroupAdmin) {
-                if(this.isCallStarted()) {
-                    callButton = <Button variant="primary" onClick={this.onJoinCallButtonClick}>Join call</Button>;
-                }
-                else {
-                    callButton = <Button variant="success" onClick={this.onMakeACallButtonClick}>Make a Call</Button>;
-                }
-            }
-            else {
-                callButton = <Button variant="primary" onClick={this.onJoinCallButtonClick} disabled={!this.isCallStarted()}>Join call</Button>
-            }
+    if(props.isCurrentUserGroupAdmin) {
+        if(isCallStarted()) {
+            return <Button variant="primary" onClick={onJoinCallButtonClick}><SVG name="volume-up" /> Join call</Button>;
         }
-
-        return (callButton);
+        else {
+            return <Button variant="success" onClick={onMakeACallButtonClick}>Make a Call</Button>;
+        }
+    }
+    else {
+        return <Button variant="primary" onClick={onJoinCallButtonClick} disabled={loading}>Join call</Button>
     }
 }
 
