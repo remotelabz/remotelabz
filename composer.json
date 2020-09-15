@@ -86,11 +86,11 @@
         },
         "post-install-cmd": [
             "@auto-scripts",
-            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+            "php -r \"file_exists('.env.local') || copy('.env', '.env.local');\""
         ],
         "post-update-cmd": [
             "@auto-scripts",
-            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+            "php -r \"file_exists('.env.local') || copy('.env', '.env.local');\""
         ]
     },
     "conflict": {
