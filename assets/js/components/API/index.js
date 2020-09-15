@@ -380,6 +380,36 @@ export class RemotelabzAPI {
             }
         },
     }
+
+    jitsiCall = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements GET `/api/jitsi-call/{labUuid}/{groupUuid}/start
+         * 
+         * @param {string} labUuid
+         * @param {string} groupUuid
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        start(labUuid, groupUuid) {
+            return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/start`);
+        },
+
+        /**
+         * Join a Call in lab instance by UUID and group UUID
+         * 
+         * Implements GET `/api/jitsi-call/{labUuid}/{groupUuid}/join
+         * 
+         * @param {string} labUuid
+         * @param {string} groupUuid
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        join(labUuid, groupUuid) {
+            return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/join`);
+        }
+    }
 }
 
 const Remotelabz = new RemotelabzAPI();

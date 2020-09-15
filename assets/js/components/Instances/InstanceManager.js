@@ -6,6 +6,7 @@ import React, { Component } from 'react';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
+import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
@@ -124,6 +125,10 @@ export class InstanceManager extends Component {
 
     isCurrentUser = (user) => {
         return this.state.user.id === user.id;
+    }
+
+    isOwnedByGroup() {
+        return this.state.labInstance.ownedBy == "group";
     }
 
     hasInstancesStillRunning = () => {
@@ -262,6 +267,12 @@ export class InstanceManager extends Component {
 
     onLeaveLabModalClose = () => this.setState({ showLeaveLabModal: false });
 
+    onStartedCall = () => {
+        let labInstance = {...this.state.labInstance};
+        labInstance.jitsiCall.state = 'started';
+        this.setState({labInstance});
+    }
+
     render() {
         return (<>
             <div className="d-flex align-items-center mb-2">
@@ -280,10 +291,23 @@ export class InstanceManager extends Component {
             {this.state.labInstance ?
                 <ListGroup>
                     <ListGroupItem className="d-flex align-items-center justify-content-between">
-                        <h4 className="mb-0">Instances</h4>
-                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
-                            <Button variant="danger" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
+                        <div>
+                            <h4 className="mb-0">Instances</h4>
+                        </div>
+                        <div>
+                        {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
+                            <JitsiCallButton
+                                className="mr-2"
+                                isOwnedByGroup={this.isOwnedByGroup()}
+                                isCurrentUserGroupAdmin={this.isCurrentUserGroupAdmin(this.state.viewAs)}
+                                onStartCall={this.onStartedCall}
+                                {...this.state}
+                            />
                         }
+                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
+                            <Button variant="danger" className="ml-2" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
+                        }
+                        </div>
                     </ListGroupItem>
                     {this.state.labInstance.state === "creating" &&
                         <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">

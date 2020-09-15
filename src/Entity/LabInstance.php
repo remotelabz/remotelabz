@@ -64,6 +64,12 @@ class LabInstance extends Instance
      */
     private $state;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
+     * @Serializer\Groups({"lab", "instance_manager"})
+     */
+    private $jitsiCall;
+
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
 
@@ -241,6 +247,17 @@ class LabInstance extends Instance
         return $this->state === InstanceStateMessage::STATE_CREATED;
     }
 
+    public function getJitsiCall(): ?JitsiCall
+    {
+        return $this->jitsiCall;
+    }
+
+    public function setJitsiCall(?JitsiCall $jitsiCall): self
+    {
+        $this->jitsiCall = $jitsiCall;
+        return $this;
+    }
+
     /**
      * Creates all sub-instances from Lab descriptor. This does not record them in the database.
      */
@@ -270,6 +287,12 @@ class LabInstance extends Instance
 
             $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);
+        }
+
+        if($this->ownedBy == self::OWNED_BY_GROUP)
+        {
+            $jitsiCall = new JitsiCall();
+            $this->setJitsiCall($jitsiCall);
         }
     }
 }
