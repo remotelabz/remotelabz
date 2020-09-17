@@ -17,7 +17,7 @@ export default class GroupRoleSelect extends Component {
 
         this.state = {
             selectedOption: options.find(el => {
-                return el.value === props[0].role;
+                return el.value === props.role;
             }),
             isLoading: false
         }
@@ -30,7 +30,7 @@ export default class GroupRoleSelect extends Component {
             isLoading: true
         });
 
-        API.getInstance().put(`/api/groups/${this.props[0].group}/user/${this.props[0].user}/role`, {role: selectedOption.value})
+        API.getInstance().put(`/api/groups/${this.props.group}/user/${this.props.user}/role`, {role: selectedOption.value})
         .then(() => {
             this.setState({ selectedOption });
             new Noty({
