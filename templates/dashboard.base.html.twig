@@ -17,9 +17,15 @@
       {% endif %}
     {% endblock %}
 
+    {% set wrapper = block('wrapper_xl') is defined %}
+    {% if wrapper is not empty %}
+      {% set xl = true %}
+    {% else %}
+      {% set xl = false %}
+    {% endif %}
     
     <div class="content-wrapper">
-      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
+      {% if xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -47,7 +53,7 @@
           {% endblock %}
         </div>
       </div>
-      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
+      {% if xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -64,10 +70,10 @@
             {%- endfor -%}
           {%- endfor -%}
         </div>
-        {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
-        {{ block('wrapper_xl') }}
+        {% if xl %}
+          {{- block('wrapper_xl') -}}
         {% else %}
-        {{ block('wrapper') }}
+          {{- block('wrapper') -}}
         {% endif %}
         <footer>
           <div class="d-flex flex-column align-items-center justify-content-center">
