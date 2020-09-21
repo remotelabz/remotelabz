@@ -6,7 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 # Install packages
 apt-get update
 apt-get install -y curl gnupg php zip unzip php-bcmath php-curl php-intl php-mbstring php-mysql php-xdebug php-xml php-zip libxml2-utils git nodejs npm swapspace mysql-server exim4
-. "${REMOTELABZ_PATH}"/.env.dist
+. "${REMOTELABZ_PATH}"/.env
 # Redirections
 echo "127.0.0.1       ${MYSQL_SERVER}" >> /etc/hosts
 # MySQL

@@ -262,6 +262,38 @@ class GroupController extends Controller
     }
 
     /**
+     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
+        }
+
+        if (!$user = $userRepository->find($id)) {
+            throw new NotFoundHttpException("User with ID " . $id . " does not exist.");
+        }
+
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
+        try {
+            $group->setUserRole($user, $request->request->get('role'));
+        } catch (Exception $e) {
+            throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json('', 200, [], []);
+        }
+
+        return new Response();
+    }
+
+    /**
      * @Route("/groups/{slug}/edit", name="dashboard_edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
@@ -306,38 +338,6 @@ class GroupController extends Controller
             "form" => $groupForm->createView(),
             "group" => $group
         ]);
-    }
-
-    /**
-     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
-     */
-    public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
-    {
-        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
-        }
-
-        if (!$user = $userRepository->find($id)) {
-            throw new NotFoundHttpException("User with ID " . $id . " does not exist.");
-        }
-
-        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
-
-        try {
-            $group->setUserRole($user, $request->request->get('role'));
-        } catch (Exception $e) {
-            throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
-        }
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($group);
-        $entityManager->flush();
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json(null, 200, [], []);
-        }
-
-        return new Response();
     }
 
     /**
