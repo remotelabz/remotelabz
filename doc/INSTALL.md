@@ -158,6 +158,25 @@ Don't forget to restart the messenger service :
 sudo systemctl restart remotelabz
 ```
 
+### Jitsi-Meet (optionnal)
+In order to authenticate with Jitsi, RemoteLabz use JWT token authentication from Prosody plugin with a shared secret.
+To use it, your need to add [those changes](https://github.com/jitsi/lib-jitsi-meet/blob/master/doc/tokens.md) to your Jitsi server.
+
+Then, you need to allow JWT Token coming from RemoteLabz.
+Add theses lines on top of your prosody config file (/etc/prosody/conf.d/x.cfg.lua)
+```lua
+asap_accepted_issuers = {"remotelabz"}
+asap_accepted_audiences = {"rl-jitsi-call"}
+```
+
+To complete, edit the `.env` file with your Jitsi URI and your shared secret :
+
+```bash
+JITSI_CALL_ENABLE=1
+JITSI_CALL_URL="jitsiurl.com"
+JITSI_CALL_SECRET="changeThisSecret"
+```
+
 General informations
 ====================
 ## Ports

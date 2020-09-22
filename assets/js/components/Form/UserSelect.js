@@ -1,16 +1,13 @@
 import React, { Component } from 'react';
 import { components } from 'react-select';
 import AsyncSelect from 'react-select/async';
-import API from '../../api';
+import Remotelabz from '../API';
 
-const api = API.getInstance();
-
-const ValueContainer = ({ children, ...props }) => (
+export const ValueContainer = ({ children, ...props }) => (
   <components.ValueContainer {...props}>{children}</components.ValueContainer>
 );
 
-const Option = props => {
-    // console.log(props);
+export const Option = props => {
     return (
         <components.Option {...props}>
             <div className="d-flex">
@@ -31,24 +28,7 @@ export default class UserSelect extends Component {
         super(props);
     }
 
-    loadOptions = (inputValue) => {
-        return api.get('/api/users', {
-            params: {
-                search: inputValue
-            }
-        })
-        .then(response => {
-            let options = [];
-            response.data.forEach(user => {
-                options.push({
-                    ...user,
-                    value: user.id,
-                    label: user.name,
-                })
-            });
-            return options;
-        });
-    }
+    loadOptions = async (inputValue) => (await Remotelabz.users.all(inputValue)).data;
 
     render() {
         return (
@@ -56,6 +36,8 @@ export default class UserSelect extends Component {
                 isMulti
                 closeMenuOnSelect={false}
                 loadOptions={this.loadOptions}
+                getOptionLabel={o => o.name}
+                getOptionValue={o => o.id}
                 className='react-select-container'
                 classNamePrefix="react-select"
                 cacheOptions
@@ -64,6 +46,7 @@ export default class UserSelect extends Component {
                 components={{ ValueContainer, Option }}
                 isSearchable
                 name="users[]"
+                {...this.props}
             />
         );
     }

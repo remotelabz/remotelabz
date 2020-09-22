@@ -13,6 +13,8 @@ use App\Security\ACL\GroupVoter;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use FOS\RestBundle\Context\Context;
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 use App\Service\GroupPictureFileUploader;
 use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
@@ -121,10 +123,10 @@ class GroupController extends Controller
             });
         }
 
-        $requestedContext = $request->query->get('context');
+        $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groups->getValues(), 200, [], $requestedContext ? (is_array($requestedContext) ?: [$requestedContext]) : ['groups']);
+            return $this->json($groups->getValues(), 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
         }
 
         return $this->render('group/dashboard_index.html.twig', [
@@ -260,6 +262,38 @@ class GroupController extends Controller
     }
 
     /**
+     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
+        }
+
+        if (!$user = $userRepository->find($id)) {
+            throw new NotFoundHttpException("User with ID " . $id . " does not exist.");
+        }
+
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
+        try {
+            $group->setUserRole($user, $request->request->get('role'));
+        } catch (Exception $e) {
+            throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json('', 200, [], []);
+        }
+
+        return new Response();
+    }
+
+    /**
      * @Route("/groups/{slug}/edit", name="dashboard_edit_group", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
@@ -307,38 +341,6 @@ class GroupController extends Controller
     }
 
     /**
-     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
-     */
-    public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
-    {
-        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
-        }
-
-        if (!$user = $userRepository->find($id)) {
-            throw new NotFoundHttpException("User with ID " . $id . " does not exist.");
-        }
-
-        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
-
-        try {
-            $group->setUserRole($user, $request->request->get('role'));
-        } catch (Exception $e) {
-            throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
-        }
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($group);
-        $entityManager->flush();
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json(null, 200, [], []);
-        }
-
-        return new Response();
-    }
-
-    /**
      * @Route("/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
      * 
      * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w\-\/]+"})
@@ -367,7 +369,7 @@ class GroupController extends Controller
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
      */
-    public function dashboardMembersAction(string $slug)
+    public function dashboardMembersAction(string $slug, SerializerInterface $serializer)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
@@ -375,6 +377,11 @@ class GroupController extends Controller
 
         return $this->render('group/dashboard_members.html.twig', [
             'group' => $group,
+            'props' => $serializer->serialize(
+                $group,
+                'json',
+                SerializationContext::create()->setGroups(['groups', 'group_users', 'group_details'])
+            )
         ]);
     }
 
@@ -459,8 +466,10 @@ class GroupController extends Controller
             throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
+        $context = $request->query->get('context');
+
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($group, 200, [], []);
+            return $this->json($group, 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
         }
 
         return $this->render('group/dashboard_view.html.twig', [

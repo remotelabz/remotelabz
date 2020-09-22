@@ -11,6 +11,7 @@ use App\Message\InstanceStateMessage;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Remotelabz\NetworkBundle\Entity\Network;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -52,15 +53,22 @@ class LabInstance extends Instance
     private $isInternetConnected;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="Remotelabz\NetworkBundle\Entity\Network", cascade={"persist", "remove"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
-    private $networkSettings;
+    private $network;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $state;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
+     * @Serializer\Groups({"lab", "instance_manager"})
+     */
+    private $jitsiCall;
 
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
@@ -210,14 +218,14 @@ class LabInstance extends Instance
         return $this->deviceInstances->count() > 0;
     }
 
-    public function getNetworkSettings(): ?NetworkSettings
+    public function getNetwork(): ?Network
     {
-        return $this->networkSettings;
+        return $this->network;
     }
 
-    public function setNetworkSettings(?NetworkSettings $networkSettings): self
+    public function setNetwork(?Network $network): self
     {
-        $this->networkSettings = $networkSettings;
+        $this->network = $network;
 
         return $this;
     }
@@ -237,6 +245,17 @@ class LabInstance extends Instance
     public function isCreated(): ?bool
     {
         return $this->state === InstanceStateMessage::STATE_CREATED;
+    }
+
+    public function getJitsiCall(): ?JitsiCall
+    {
+        return $this->jitsiCall;
+    }
+
+    public function setJitsiCall(?JitsiCall $jitsiCall): self
+    {
+        $this->jitsiCall = $jitsiCall;
+        return $this;
     }
 
     /**
@@ -268,6 +287,12 @@ class LabInstance extends Instance
 
             $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);
+        }
+
+        if($this->ownedBy == self::OWNED_BY_GROUP)
+        {
+            $jitsiCall = new JitsiCall();
+            $this->setJitsiCall($jitsiCall);
         }
     }
 }

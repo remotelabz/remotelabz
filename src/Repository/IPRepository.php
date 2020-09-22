@@ -2,9 +2,9 @@
 
 namespace App\Repository;
 
-use App\Entity\IP;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Remotelabz\NetworkBundle\Entity\IP;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method IP|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,6 +17,22 @@ class IPRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, IP::class);
+    }
+
+    /**
+     * Returns all IP between $from and $to (inclusive)
+     *
+     * @param IP $from First IP to find.
+     * @param IP $to Last IP from range. This IP is included in results if exists.
+     * @return IP[]
+     */
+    public function findAllBetween(IP $from, IP $to)
+    {
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.long BETWEEN ' . $from->getLong() . ' AND ' . $to->getLong())
+            ->orderBy('i.long', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     // /**
