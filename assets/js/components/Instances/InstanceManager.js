@@ -6,6 +6,7 @@ import React, { Component } from 'react';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
+import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
@@ -48,6 +49,7 @@ export class InstanceManager extends Component {
             children: [],
             value: props.user.id,
             label: props.user.name,
+            hasLabInstance: props.labInstance ? props.labInstance.state : null,
             ...props.user
         };
 
@@ -71,6 +73,7 @@ export class InstanceManager extends Component {
                     name: group.owner.name
                 },
                 parent: group.parent,
+                hasLabInstance: group.labInstances.find(instance => instance.lab.uuid == props.lab.uuid) || null,
                 ...group
             };
         }).filter(value => value !== null);
@@ -84,23 +87,21 @@ export class InstanceManager extends Component {
         }];
 
         this.interval = setInterval(() => {
-            if (this.state.labInstance !== null || this.state.isLoadingInstanceState) {
-                this.fetchInstance(this.state.labInstance.uuid, 'lab')
-                .then(response => {
-                    this.setState({ labInstance: response.data });
-                })
-                .catch(error => {
-                    if (error.response.status === 404) {
-                        this.setState({ labInstance: null });
-                    } else {
-                        new Noty({
-                            text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                            type: 'error'
-                        }).show();
-                        clearInterval(this.interval);
-                    }
-                });
-            }
+            this.fetchInstance(this.state.labInstance.uuid, 'lab')
+            .then(response => {
+                this.setState({ labInstance: response.data });
+            })
+            .catch(error => {
+                if (error.response.status === 404) {
+                    this.setState({ labInstance: null });
+                } else {
+                    new Noty({
+                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                        type: 'error'
+                    }).show();
+                    clearInterval(this.interval);
+                }
+            });
         }, 5000);
     }
 
@@ -124,6 +125,10 @@ export class InstanceManager extends Component {
 
     isCurrentUser = (user) => {
         return this.state.user.id === user.id;
+    }
+
+    isOwnedByGroup() {
+        return this.state.labInstance.ownedBy == "group";
     }
 
     hasInstancesStillRunning = () => {
@@ -193,6 +198,21 @@ export class InstanceManager extends Component {
 
             request.then(response => {
                 this.setState({ viewAs: option, labInstance: response.data });
+
+                this.interval = setInterval(() => {
+                    this.fetchInstance(this.state.labInstance.uuid, 'lab')
+                        .then(response => {
+                            this.setState({ labInstance: response.data });
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            new Noty({
+                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                                type: 'error'
+                            }).show();
+                            clearInterval(this.interval);
+                        })
+                }, 5000);
             })
             .catch(error => {
                 if (status <= 500) {
@@ -206,26 +226,6 @@ export class InstanceManager extends Component {
                 }
             })
             .finally(() => this.setState({ isLoadingInstanceState: false }));
-
-            this.interval = setInterval(() => {
-                if (this.state.labInstance !== null || this.state.isLoadingInstanceState) {
-                    this.fetchInstance(this.state.labInstance.uuid, 'lab')
-                    .then(response => {
-                        this.setState({ labInstance: response.data });
-                    })
-                    .catch(error => {
-                        if (error.response.status === 404) {
-                            this.setState({ labInstance: null });
-                        } else {
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show();
-                            clearInterval(this.interval);
-                        }
-                    });
-                }
-            }, 5000);
         }
     }
 
@@ -267,6 +267,12 @@ export class InstanceManager extends Component {
 
     onLeaveLabModalClose = () => this.setState({ showLeaveLabModal: false });
 
+    onStartedCall = () => {
+        let labInstance = {...this.state.labInstance};
+        labInstance.jitsiCall.state = 'started';
+        this.setState({labInstance});
+    }
+
     render() {
         return (<>
             <div className="d-flex align-items-center mb-2">
@@ -285,10 +291,23 @@ export class InstanceManager extends Component {
             {this.state.labInstance ?
                 <ListGroup>
                     <ListGroupItem className="d-flex align-items-center justify-content-between">
-                        <h4 className="mb-0">Instances</h4>
-                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
-                            <Button variant="danger" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
+                        <div>
+                            <h4 className="mb-0">Instances</h4>
+                        </div>
+                        <div>
+                        {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
+                            <JitsiCallButton
+                                className="mr-2"
+                                isOwnedByGroup={this.isOwnedByGroup()}
+                                isCurrentUserGroupAdmin={this.isCurrentUserGroupAdmin(this.state.viewAs)}
+                                onStartCall={this.onStartedCall}
+                                {...this.state}
+                            />
                         }
+                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
+                            <Button variant="danger" className="ml-2" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
+                        }
+                        </div>
                     </ListGroupItem>
                     {this.state.labInstance.state === "creating" &&
                         <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">

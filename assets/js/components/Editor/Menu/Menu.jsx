@@ -53,7 +53,7 @@ export default class Menu extends Component
                 <ButtonToolbar className="d-flex">
                     <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle fullscreen</Tooltip>}>
                         <Button variant="default" onClick={this.handleToggleFullscreen}>
-                            <SVG name={this.state.fullscreen ? "minimize" : "maximize"} className="image-sm v-sub"></SVG>
+                            <SVG name={this.state.fullscreen ? "screen-normal" : "screen-full"} className="image-sm v-sub"></SVG>
                         </Button>
                     </OverlayTrigger>
                 </ButtonToolbar>

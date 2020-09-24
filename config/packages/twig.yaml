@@ -9,4 +9,3 @@ twig:
     exception_controller: null
     globals:
         enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
-        contact_mail: '%env(CONTACT_MAIL)%'
