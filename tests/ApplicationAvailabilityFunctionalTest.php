@@ -2,30 +2,29 @@
 
 namespace App\Tests;
 
+use App\Tests\Controller\AuthenticatedWebTestCase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ApplicationAvailabilityFunctionalTest extends WebTestCase
+class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
 {
     /**
-     * @var KernelBrowser $client
+     * @var KernelBrowser
      */
     private $client;
-
-    public function setUp()
-    {
-        $this->client = static::createClient();
-    }
 
     /**
      * @dataProvider urlProvider
      */
     public function testPageIsSuccessful($url)
     {
-        $this->logIn();
         $this->client->request('GET', $url);
+        $this->assertResponseIsSuccessful();
+    }
 
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+    public function testPageIsError()
+    {
+        $this->client->request('GET', '/nonexistentpage');
+        $this->assertResponseStatusCodeSame(404);
     }
 
     public function urlProvider()
@@ -47,21 +46,5 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
 
         yield ['/profile'];
         yield ['/groups'];
-    }
-
-    private function logIn()
-    {
-        $crawler = $this->client->request('GET', '/login');
-
-        // Start by testing if login page sucessfully loaded
-        // echo $this->client->getResponse();
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-
-        $form = $crawler->selectButton('submit')->form();
-
-        $form['email'] = 'root@localhost';
-        $form['password'] = 'admin';
-
-        $crawler = $this->client->submit($form);
     }
 }

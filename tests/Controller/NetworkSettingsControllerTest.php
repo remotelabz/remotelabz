@@ -2,8 +2,6 @@
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-
 class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
 {
     private function getIdOfNetworkSettingTest()
@@ -13,16 +11,20 @@ class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
         $this->assertResponseIsSuccessful();
         $networkSettings = json_decode($this->client->getResponse()->getContent(), true);
         $id = 0;
-        foreach($networkSettings as $networkSetting)
-        {
-            if($networkSetting['name'] === 'testNetworkSettings')
-            {
+        foreach ($networkSettings as $networkSetting) {
+            if ('testNetworkSettings' === $networkSetting['name']) {
                 $id = $networkSetting['id'];
                 break;
             }
         }
 
         return $id;
+    }
+
+    public function testCgetAction()
+    {
+        $this->client->request('GET', '/network-settings');
+        $this->assertResponseIsSuccessful();
     }
 
     public function testCreateNetworkSettings()
@@ -42,6 +44,7 @@ class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
         $crawler = $this->client->submit($form);
         $this->assertResponseIsSuccessful();
         $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+
         return $this->getIdOfNetworkSettingTest();
     }
 
@@ -50,7 +53,10 @@ class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
      */
     public function testEditNetworkSettings($id)
     {
-        $crawler = $this->client->request('GET', '/admin/network-settings/' . $id . '/edit');
+        $this->client->request('GET', '/admin/network-settings/99999999/edit');
+        $this->assertResponseStatusCodeSame(404);
+
+        $crawler = $this->client->request('GET', '/admin/network-settings/'.$id.'/edit');
         $this->assertResponseIsSuccessful();
         $form = $crawler->selectButton('network_settings[submit]')->form();
 
@@ -66,7 +72,10 @@ class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
      */
     public function testDeleteNetworkSettings($id)
     {
-        $this->client->request('DELETE', '/admin/network-settings/' . $id);
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->client->request('DELETE', '/admin/network-settings/'.$id);
+        $this->assertResponseIsSuccessful();
+
+        $this->client->request('DELETE', '/admin/network-settings/99999999');
+        $this->assertResponseStatusCodeSame(404);
     }
 }
