@@ -231,7 +231,7 @@ class Installer
         }
         chmod("/usr/bin/remotelabz-ctl", 0777);
 
-        copy($this->installPath . "/.env.dist", $this->installPath . "/.env");
+        copy($this->installPath . "/.env", $this->installPath . "/.env.local");
 
         if (!$isCopied) {
             throw new AlreadyExistException("Folder already exists.");
@@ -241,7 +241,7 @@ class Installer
     private function configureEnvironment($options)
     {
         // Modify environment
-        Dotenv::create($this->installPath . "/.env")
+        Dotenv::create($this->installPath . "/.env.local")
             ->parse()
             ->set("WORKER_SERVER", $options['worker-server'])
             ->set("WORKER_PORT", $options['worker-port'])

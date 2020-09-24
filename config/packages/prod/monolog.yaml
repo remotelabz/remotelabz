@@ -6,7 +6,7 @@ monolog:
             handler: nested
             excluded_http_codes: [ { 404: [/*]} ]
         nested:
-            type: stream
+            type: rotating_file
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: error
 #        console:
@@ -21,4 +21,7 @@ monolog:
             handler: deprecation
             max_level: info
             channels: ["php"]
-
+        syslog_handler:
+            type: syslog
+            # log error-level messages and higher
+            level: error

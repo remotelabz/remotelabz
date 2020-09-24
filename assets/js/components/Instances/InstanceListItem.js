@@ -97,20 +97,7 @@ class InstanceListItem extends Component {
                 break;
 
             case 'started':
-                controls = (<>
-                    {deviceInstance.device.networkInterfaces.some(nic => nic.accessType === 'VNC') &&
-                        <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            href={"/instances/" + deviceInstance.uuid + "/view"}
-                            className="btn btn-primary ml-3"
-                            title="Open VNC console"
-                            data-toggle="tooltip"
-                            data-placement="top"
-                        >
-                            <SVG name="external-link" />
-                        </a>
-                    }
+                controls = (
                     <Button
                         className="ml-3"
                         variant="danger"
@@ -123,7 +110,7 @@ class InstanceListItem extends Component {
                     >
                         <SVG name="stop" />
                     </Button>
-                </>);
+                );
                 break;
         }
 
@@ -138,11 +125,25 @@ class InstanceListItem extends Component {
                     </div>
                 </div>
 
-                {this.props.showControls &&
-                    <div className="d-flex align-items-center">
-                        {controls}
-                    </div>
-                }
+                <div className="d-flex align-items-center">
+                    {(deviceInstance.state == 'started' && deviceInstance.device.networkInterfaces.some(nic => nic.accessType === 'VNC')) &&
+                        <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={"/instances/" + deviceInstance.uuid + "/view"}
+                            className="btn btn-primary ml-3"
+                            title="Open VNC console"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                        >
+                            <SVG name="external-link" />
+                        </a>
+                    }
+
+                    {this.props.showControls &&
+                        controls
+                    }
+                </div>
             </ListGroupItem>
         )
     }

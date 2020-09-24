@@ -33,30 +33,53 @@
         <div class="row">
             <div class="col">
                 {% if is_granted('add_member', group) %}
-                    <p>
-                        Add new member(s) to <strong>{{group.name}}</strong>
-                    </p>
-                    <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
-                        <div class="d-flex">
-                            <div class="flex-grow-1 mr-2">
-                                <div>{{ react_component('UserSelect') }}</div>
-                                <div class="form-text text-muted">
-                                    Search for members by name or email address.
+                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link active" id="add-users-tab" data-toggle="pill" href="#add-users" role="tab" aria-controls="add-users" aria-selected="true">Add users</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link" id="import-from-group-tab" data-toggle="pill" href="#import-from-group" role="tab" aria-controls="import-from-group" aria-selected="false">Import from group</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="add-users" role="tabpanel" aria-labelledby="add-users-tab">
+                        <p>
+                            Add new member(s) to <strong>{{group.name}}</strong>
+                        </p>
+                        <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                            <div class="d-flex">
+                                <div class="flex-grow-1 mr-2">
+                                    <div>{{ react_component('UserSelect') }}</div>
+                                    <div class="form-text text-muted">
+                                        Search for members by name or email address.
+                                    </div>
+                                </div>
+
+                                <div class="mr-2 w-25">
+                                    <select class="form-control" name="role" id="Role" style="height:38px;">
+                                        <option value="user">User</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                   <button type="submit" class="btn btn-success">Add selected user(s)</button> 
                                 </div>
                             </div>
-                            
-                            <div class="mr-2 w-25">
-                                <select class="form-control" name="role" id="Role" style="height:38px;">
-                                    <option value="user">User</option>
-                                    <option value="admin">Admin</option>
-                                </select>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="import-from-group" role="tabpanel" aria-labelledby="import-from-group-tab">
+                        <p>
+                            Import members from another group to <strong>{{group.name}}</strong>
+                        </p>
+                        <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
+                            <div class="d-flex">
+                                <div class="flex-grow-1 mr-2">
+                                    <div>{{ react_component('GroupImport', {'props': props}) }}</div>
+                                </div>
                             </div>
-                            <div>
-                               <button type="submit" class="btn btn-success">Add selected user(s)</button> 
-                            </div>
-                        </div>
-                        
-                    </form>
+                        </form>
+                    </div>
+                </div>
                 {% endif %}
                 <div class="top-panel">
                     <ul class="nav-links nav nav-tabs">
