@@ -8,11 +8,6 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
 {
     /**
-     * @var KernelBrowser
-     */
-    private $client;
-
-    /**
      * @dataProvider urlProvider
      */
     public function testPageIsSuccessful($url)
