@@ -1,4 +1,10 @@
 {
+    "composer/semver": {
+        "version": "1.7.0"
+    },
+    "composer/xdebug-handler": {
+        "version": "1.4.3"
+    },
     "crestic-urca/network-bundle": {
         "version": "v1.0.0"
     },
@@ -82,6 +88,18 @@
     },
     "egulias/email-validator": {
         "version": "2.1.6"
+    },
+    "friendsofphp/php-cs-fixer": {
+        "version": "2.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "2.2",
+            "ref": "cc05ab6abf6894bddb9bbd6a252459010ebe040b"
+        },
+        "files": [
+            ".php_cs.dist"
+        ]
     },
     "friendsofsymfony/jsrouting-bundle": {
         "version": "2.0",
@@ -178,6 +196,9 @@
     },
     "php": {
         "version": "7.3"
+    },
+    "php-cs-fixer/diff": {
+        "version": "v1.3.0"
     },
     "phpdocumentor/reflection-common": {
         "version": "1.0.1"
