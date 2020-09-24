@@ -8,7 +8,7 @@ monolog:
                 # regex: exclude all 404 errors from the logs
                 - ^/
         nested:
-            type: rotating_file
+            type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
         console:
@@ -23,7 +23,3 @@ monolog:
             handler: deprecation
             max_level: info
             channels: ["php"]
-        syslog_handler:
-            type: syslog
-            # log error-level messages and higher
-            level: error

@@ -2,13 +2,14 @@
 
 namespace App\Entity;
 
-use App\Instance\InstanciableInterface;
 use App\Utils\Uuid;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Filesystem\Filesystem;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -129,6 +130,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="device", cascade={"persist", "remove"})
      * @Serializer\XmlList(inline=true, entry="instance")
+     * @Serializer\Groups({"lab"})
      */
     private $instances;
 
@@ -176,8 +178,8 @@ class Device implements InstanciableInterface
         $this->labs = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
-        $this->type = 'vm';
-        $this->hypervisor = 'qemu';
+        $this->type = "vm";
+        $this->hypervisor = "qemu";
         $this->launchOrder = 0;
         $this->virtuality = 1;
     }
@@ -388,14 +390,13 @@ class Device implements InstanciableInterface
 
     public function getUserInstance(User $user): ?Instance
     {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('user', $user));
+        $criteria = Criteria::create()->where(Criteria::expr()->eq("user", $user));
 
         $instance = $this->getInstances()->matching($criteria)->first();
 
         if (!$instance) {
             return null;
         }
-
         return $instance;
     }
 

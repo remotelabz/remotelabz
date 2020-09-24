@@ -1,7 +1,6 @@
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.*.local
-/.env.test
 /public/bundles/
 /public/eve/
 /var/
@@ -18,8 +17,6 @@
 
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
-!/config/jwt/private-test.pem
-!/config/jwt/public-test.pem
 ###< lexik/jwt-authentication-bundle ###
 
 ###> symfony/webpack-encore-bundle ###
@@ -39,8 +36,3 @@ yarn-error.log
 .env.prod
 /images/
 vagrant/provision_prod.sh
-
-###> friendsofphp/php-cs-fixer ###
-/.php_cs
-/.php_cs.cache
-###< friendsofphp/php-cs-fixer ###

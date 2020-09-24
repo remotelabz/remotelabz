@@ -26,7 +26,7 @@ class InstanceRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('i')
             ->andWhere('i.id = :id')
-            ->setParameter('id', $id)
+            ->setParameter('id', $id->getId())
             ->andWhere('i.user = :user')
             ->setParameter('user', $user->getId())
             ->getQuery()

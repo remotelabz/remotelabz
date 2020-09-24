@@ -12,9 +12,7 @@
 
 {% block wrapper %}
 <div class="content-title">
-    <div class="content-title-infos">
-        <h1>{{ device.name }}</h1>
-    </div>
+    <div class="content-title-infos"><h1>{{ device.name }}</h1></div>
     <div class="content-title-actions">
         <a href="{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen.{{device.name}}" onclick="openFullscreen(); return false;">
             {{ svg('external-link') }}
@@ -22,10 +20,6 @@
     </div>
 </div>
 <div class="content-body">
-    <div class="text-muted">UUID: {{ deviceInstance.uuid }}</div>
-    <div class="alert alert-info mt-2" role="alert">
-        Attributed network : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
-    </div>
     <div class="card stretch-card">
         <div class="card-body">
             <div id="noVNC_screen" style="height:1000px;"></div>

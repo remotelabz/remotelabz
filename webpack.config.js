@@ -46,7 +46,7 @@ Encore
      */
     // .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
-    .enableSourceMaps(!Encore.isProduction())
+    // .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
 
@@ -89,9 +89,7 @@ Encore
     .addAliases({
         'fos-js-router': path.resolve(__dirname, 'vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.js'),
         'routes': path.resolve(__dirname, 'public/fos_js_routes.json'),
-        'fos-jsrouting': path.resolve(__dirname, 'assets/js/routing.js'),
-        // 'react': path.resolve(__dirname, './node_modules/react'),
-        // 'react-dom': path.resolve(__dirname, './node_modules/react-dom')
+        'fos-jsrouting': path.resolve(__dirname, 'assets/js/routing.js')
     })
 ;
 

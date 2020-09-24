@@ -156,8 +156,7 @@ class LabController extends Controller
         $instanceManagerProps = [
             'user' => $this->getUser(),
             'labInstance' => $userLabInstance,
-            'lab' => $lab,
-            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call')
+            'lab' => $lab
         ];
 
         return $this->render('lab/view.html.twig', [
@@ -168,7 +167,7 @@ class LabController extends Controller
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details', 'instances'])
+                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details'])
             )
         ]);
     }

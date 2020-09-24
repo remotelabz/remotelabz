@@ -19,7 +19,6 @@ trait ControllerTestTrait
 
     protected function logIn()
     {
-        $this->client->followRedirects();
         $crawler = $this->client->request('GET', '/login');
 
         // Start by testing if login page sucessfully loaded
@@ -31,28 +30,5 @@ trait ControllerTestTrait
         $form['password'] = 'admin';
 
         $crawler = $this->client->submit($form);
-
-        $this->assertResponseIsSuccessful();
-    }
-
-    protected function logOut()
-    {
-        $this->client->request('GET', '/logout');
-    }
-
-    protected function logInGuest()
-    {
-        $crawler = $this->client->request('GET', '/login');
-
-        // Start by testing if login page sucessfully loaded
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-
-        $form = $crawler->selectButton('submit')->form();
-
-        $form['email'] = 'unittest@localhost';
-        $form['password'] = 'P@sSW0rD_Un1t_T3st';
-
-        $crawler = $this->client->submit($form);
-        return $crawler;
     }
 }

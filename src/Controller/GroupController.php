@@ -2,31 +2,36 @@
 
 namespace App\Controller;
 
-use App\Entity\Group;
-use App\Entity\User;
-use App\Form\GroupType;
-use App\Repository\GroupRepository;
-use App\Repository\UserRepository;
-use App\Security\ACL\GroupVoter;
-use App\Service\GroupPictureFileUploader;
-use App\Utils\Uuid;
-use Doctrine\Common\Collections\Criteria;
 use Exception;
+use App\Utils\Uuid;
+use App\Entity\User;
+use App\Entity\Group;
+use App\Form\GroupType;
+use App\Entity\GroupUser;
+use App\Message\TestMessage;
+use App\Security\ACL\GroupVoter;
+use App\Repository\UserRepository;
+use App\Repository\GroupRepository;
 use FOS\RestBundle\Context\Context;
-use FOS\RestBundle\Controller\Annotations as Rest;
-use JMS\Serializer\SerializationContext;
-use JMS\Serializer\SerializerInterface;
+use App\Service\GroupPictureFileUploader;
+use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\KernelInterface;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class GroupController extends Controller
 {
-    /** @var GroupRepository */
+    /** @var GroupRepository $groupRepository */
     protected $groupRepository;
 
     public function __construct(GroupRepository $groupRepository)
@@ -48,7 +53,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'id' => Criteria::DESC
             ])
             // ->setMaxResults($limit)
             // ->setFirstResult($page * $limit - $limit)
@@ -78,7 +83,7 @@ class GroupController extends Controller
     /**
      * @Route("/groups", name="dashboard_groups")
      * @Route("/explore/groups", name="dashboard_explore_groups")
-     *
+     * 
      * @Rest\Get("/api/groups", name="api_groups")
      */
     public function dashboardIndexAction(Request $request)
@@ -96,7 +101,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'id' => Criteria::DESC
             ]);
 
         /** @param Group $value */
@@ -104,22 +109,22 @@ class GroupController extends Controller
 
         $matchedRoute = $request->get('_route');
 
-        if ('dashboard_groups' == $matchedRoute) {
+        if ($matchedRoute == 'dashboard_groups') {
             /** @param Group $value */
             $groups = $groups->filter(function ($value) {
                 return $value->getUsers()->contains($this->getUser());
             });
-        } elseif ('dashboard_explore_groups' == $matchedRoute) {
+        } else if ($matchedRoute == 'dashboard_explore_groups') {
             /** @param Group $value */
             $groups = $groups->filter(function ($value) {
-                return Group::VISIBILITY_PUBLIC === $value->getVisibility();
+                return $value->getVisibility() === Group::VISIBILITY_PUBLIC;
             });
         }
 
-        $context = $request->query->get('context');
+        $requestedContext = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groups->getValues(), 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
+            return $this->json($groups->getValues(), 200, [], $requestedContext ? (is_array($requestedContext) ?: [$requestedContext]) : ['groups']);
         }
 
         return $this->render('group/dashboard_index.html.twig', [
@@ -132,7 +137,7 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/new", name="new_group")
-     *
+     * 
      * @Rest\Post("/api/groups", name="api_new_group")
      */
     public function newAction(Request $request, ValidatorInterface $validator)
@@ -141,18 +146,18 @@ class GroupController extends Controller
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
 
-        if ('json' === $request->getContentType()) {
+        if ($request->getContentType() === 'json') {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group);
         }
 
         $data = [
-            'form' => $groupForm->createView(),
-            'group' => $group,
+            "form" => $groupForm->createView(),
+            "group" => $group
         ];
 
         if ($request->query->has('parent_id')) {
-            $data['parent'] = $this->groupRepository->find($request->query->get('parent_id'));
+            $data["parent"] = $this->groupRepository->find($request->query->get('parent_id'));
         }
 
         if ($groupForm->isSubmitted() && $groupForm->isValid()) {
@@ -174,7 +179,7 @@ class GroupController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($group, 201, [], ['groups']);
+                return $this->json($group, 201, [], []);
             }
 
             $this->addFlash('success', 'Group has been created.');
@@ -195,7 +200,7 @@ class GroupController extends Controller
     public function addUserAction(Request $request, string $slug, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
@@ -205,8 +210,8 @@ class GroupController extends Controller
         // trim empty values
         $users = array_filter(array_map('trim', $users), 'strlen');
 
-        if (0 === sizeof($users)) {
-            if ('html' === $request->getRequestFormat()) {
+        if (sizeof($users) === 0) {
+            if ($request->getRequestFormat() === 'html') {
                 $this->addFlash('warning', 'No user selected.');
             } else {
                 throw new BadRequestHttpException();
@@ -222,10 +227,10 @@ class GroupController extends Controller
             $entityManager->persist($group);
             $entityManager->flush();
 
-            $this->addFlash('success', sizeof($users).' users has been added to the group '.$group->getName().'.');
+            $this->addFlash('success', sizeof($users) . ' users has been added to the group ' . $group->getName() . '.');
         }
 
-        return $this->redirectToRoute('dashboard_group_members', ['slug' => $group->getPath()]);
+        return $this->redirectToRoute('dashboard_group_members', ["slug" => $group->getPath()]);
     }
 
     /**
@@ -234,11 +239,11 @@ class GroupController extends Controller
     public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         if (!$user = $userRepository->find($userId)) {
-            throw new NotFoundHttpException('User with ID '.$userId.' does not exist.');
+            throw new NotFoundHttpException("User with ID " . $userId . " does not exist.");
         }
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
@@ -249,7 +254,7 @@ class GroupController extends Controller
         $entityManager->persist($group);
         $entityManager->flush();
 
-        $this->addFlash('success', $user->getName().' has been removed from '.$group->getName().'.');
+        $this->addFlash('success', $user->getName() . ' has been removed from ' . $group->getName() . '.');
 
         return $this->redirectToRoute('dashboard_group_members', ['slug' => $slug]);
     }
@@ -260,11 +265,11 @@ class GroupController extends Controller
     public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         if (!$user = $userRepository->find($id)) {
-            throw new NotFoundHttpException('User with ID '.$id.' does not exist.');
+            throw new NotFoundHttpException("User with ID " . $id . " does not exist.");
         }
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
@@ -288,19 +293,19 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/{slug}/edit", name="dashboard_edit_group", requirements={"slug"="[\w\-\/]+"})
-     *
+     * 
      * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function updateAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
 
-        if ('json' === $request->getContentType()) {
+        if ($request->getContentType() === 'json') {
             $group = json_decode($request->getContent(), true);
             $groupForm->submit($group, false);
         }
@@ -315,7 +320,7 @@ class GroupController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($group, 200, [], ['groups']);
+                return $this->json($group, 200, [], []);
             }
 
             $this->addFlash('info', 'Group has been edited.');
@@ -328,20 +333,20 @@ class GroupController extends Controller
         }
 
         return $this->render('group/dashboard_settings.html.twig', [
-            'form' => $groupForm->createView(),
-            'group' => $group,
+            "form" => $groupForm->createView(),
+            "group" => $group
         ]);
     }
 
     /**
      * @Route("/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
-     *
+     * 
      * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function deleteAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group " . $slug . " does not exist.");
         }
 
         $this->denyAccessUnlessGranted(GroupVoter::DELETE, $group);
@@ -354,7 +359,7 @@ class GroupController extends Controller
             return $this->json(null, 200, [], []);
         }
 
-        $this->addFlash('success', $group->getName().' has been deleted.');
+        $this->addFlash('success', $group->getName() . ' has been deleted.');
 
         return $this->redirectToRoute('dashboard_groups');
     }
@@ -362,19 +367,14 @@ class GroupController extends Controller
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
      */
-    public function dashboardMembersAction(string $slug, SerializerInterface $serializer)
+    public function dashboardMembersAction(string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         return $this->render('group/dashboard_members.html.twig', [
             'group' => $group,
-            'props' => $serializer->serialize(
-                $group,
-                'json',
-                SerializationContext::create()->setGroups(['groups', 'group_users', 'group_details'])
-            ),
         ]);
     }
 
@@ -391,12 +391,12 @@ class GroupController extends Controller
             $image = file_get_contents($picture);
             $image = imagecreatefrompng($picture);
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
-            $imageTmp = $kernel->getCacheDir().'/'.new Uuid();
+            $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
 
             return new Response(file_get_contents($imageTmp), 200, [
                 'Content-Type' => 'image/png',
-                'Content-Disposition' => 'inline; filename="'.$group->getPictureFilename().'"',
+                'Content-Disposition' => 'inline; filename="' . $group->getPictureFilename() . '"'
             ]);
         } else {
             return new Response(null);
@@ -422,7 +422,7 @@ class GroupController extends Controller
         $entityManager->flush();
 
         return $this->redirectToRoute('dashboard_show_group', [
-            'slug' => $slug,
+            'slug' => $slug
         ]);
     }
 
@@ -436,7 +436,7 @@ class GroupController extends Controller
     public function showAction(string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
         return $this->render('group/view.html.twig', [
@@ -450,19 +450,17 @@ class GroupController extends Controller
      *  methods="GET",
      *  requirements={"slug"="[\w\-\/]+"}
      * )
-     *
+     * 
      * @Rest\Get("/api/groups/{slug}", name="api_get_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function showDashboardAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
-            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+            throw new NotFoundHttpException("Group with URL " . $slug . " does not exist.");
         }
 
-        $context = $request->query->get('context');
-
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($group, 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
+            return $this->json($group, 200, [], []);
         }
 
         return $this->render('group/dashboard_view.html.twig', [

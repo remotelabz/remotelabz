@@ -161,14 +161,6 @@ class NetworkInterfaceController extends Controller
     }
 
     /**
-     * @Route("/network-interfaces", name="get_network_interface", methods="GET")
-     */
-    public function cgetAction()
-    {
-        return $this->json($this->networkInterfaceRepository->findAll());
-    }
-
-    /**
      * @Route("/admin/network-interfaces/{id<\d+>}/delete", name="delete_network_interface", methods="GET")
      * 
      * @Rest\Delete("/api/network-interfaces/{id<\d+>}", name="api_delete_network_interface")

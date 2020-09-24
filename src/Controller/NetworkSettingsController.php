@@ -90,7 +90,7 @@ class NetworkSettingsController extends Controller
      */
     public function cgetAction()
     {
-        return $this->json($this->networkSettingsRepository->findAll());
+        return $this->renderJson($this->networkSettingsRepository->findAll());
     }
         
     /**
@@ -112,7 +112,7 @@ class NetworkSettingsController extends Controller
                 
             $data['message'] = 'Settings has been deleted.';
         }
-
-        return $this->json($data, $status);
+            
+        return $this->renderJson($data, $status);
     }
 }

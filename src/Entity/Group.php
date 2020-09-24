@@ -93,13 +93,6 @@ class Group implements InstancierInterface
     private $children;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="_group")
-     * @Serializer\Groups({"instances"})
-     * @var Collection|LabInstance[]
-     */
-    private $labInstances;
-
-    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "groups", "group_tree", "user", "instance_manager"})
      */
@@ -119,7 +112,7 @@ class Group implements InstancierInterface
         $this->updatedAt = new \DateTime();
         $this->children = new ArrayCollection();
         $this->uuid = (string) new Uuid();
-        $this->labInstances = new ArrayCollection();
+        $this->activities = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -168,7 +161,7 @@ class Group implements InstancierInterface
      * 
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"group_tree", "group_explore", "group_details", "user"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "group_details", "user"})
      */
     public function getOwner(): User
     {
@@ -445,37 +438,6 @@ class Group implements InstancierInterface
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|LabInstance[]
-     */
-    public function getLabInstances()
-    {
-        return $this->labInstances;
-    }
-
-    public function addLabInstance(LabInstance $labInstance): self
-    {
-        if (!$this->labInstances->contains($labInstance)) {
-            $this->labInstances[] = $labInstance;
-            $labInstance->setGroup($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLabInstance(LabInstance $labInstance): self
-    {
-        if ($this->labInstances->contains($labInstance)) {
-            $this->labInstances->removeElement($labInstance);
-            // set the owning side to null (unless already changed)
-            if ($labInstance->getGroup() === $this) {
-                $labInstance->setGroup(null);
-            }
-        }
 
         return $this;
     }

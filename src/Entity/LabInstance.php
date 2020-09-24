@@ -2,14 +2,17 @@
 
 namespace App\Entity;
 
-use App\Message\InstanceStateMessage;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
-use Doctrine\ORM\Mapping as ORM;
 use Exception;
+use App\Entity\Instance;
+use UnexpectedValueException;
+use App\Entity\DeviceInstance;
+use Doctrine\ORM\Mapping as ORM;
+use App\Message\InstanceStateMessage;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
-use Remotelabz\NetworkBundle\Entity\Network;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabInstanceRepository")
@@ -20,7 +23,7 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key", "instances"})
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
@@ -49,22 +52,15 @@ class LabInstance extends Instance
     private $isInternetConnected;
 
     /**
-     * @ORM\OneToOne(targetEntity="Remotelabz\NetworkBundle\Entity\Network", cascade={"persist", "remove"})
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="labInstance", cascade={"persist", "remove"})
      */
-    private $network;
+    private $networkSettings;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $state;
-
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
-     * @Serializer\Groups({"lab", "instance_manager"})
-     */
-    private $jitsiCall;
 
     const SCOPE_STANDALONE = 'standalone';
     const SCOPE_ACTIVITY = 'activity';
@@ -96,33 +92,33 @@ class LabInstance extends Instance
 
     /**
      * Generate a bridge name with instance UUID.
-     *
+     * 
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Serializer\XmlAttribute
      */
     public function getBridgeName(): string
     {
-        return 'br-'.substr($this->uuid, 0, 8);
+        return "br-" . substr($this->uuid, 0, 8);
     }
 
     /**
-     * Get device instance associated to this lab instance.
+     * Get device instance associated to this lab instance
      *
      * @return DeviceInstance
      */
     public function getDeviceInstance($device): ?DeviceInstance
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq('device', $device));
+            ->where(Criteria::expr()->eq("device", $device));
 
-        $deviceInstance = (null !== $this->deviceInstances) ? $this->deviceInstances->matching($criteria)->first() : null;
+        $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
 
         return $deviceInstance ?: null;
     }
 
     /**
-     * Get device instances associated to this lab instance.
+     * Get device instances associated to this lab instance
      *
      * @return Collection|DeviceInstance[]
      */
@@ -132,30 +128,30 @@ class LabInstance extends Instance
     }
 
     /**
-     * Get device instance associated to this lab instance and the current user.
+     * Get device instance associated to this lab instance and the current user
      *
      * @return DeviceInstance
      */
     public function getUserDeviceInstance($device): ?DeviceInstance
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq('device', $device))
-            ->andWhere(Criteria::expr()->eq('user', $this->user));
+            ->where(Criteria::expr()->eq("device", $device))
+            ->andWhere(Criteria::expr()->eq("user", $this->user));
 
-        $deviceInstance = (null !== $this->deviceInstances) ? $this->deviceInstances->matching($criteria)->first() : null;
+        $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
 
         return $deviceInstance ?: null;
     }
 
     /**
-     * Get device instances associated to this lab instance and the current user.
+     * Get device instances associated to this lab instance and the current user
      *
      * @return Collection|DeviceInstance[]
      */
     public function getUserDeviceInstances()
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq('user', $this->user));
+            ->where(Criteria::expr()->eq("user", $this->user));
 
         $deviceInstances = $this->deviceInstances->matching($criteria);
 
@@ -214,14 +210,14 @@ class LabInstance extends Instance
         return $this->deviceInstances->count() > 0;
     }
 
-    public function getNetwork(): ?Network
+    public function getNetworkSettings(): ?NetworkSettings
     {
-        return $this->network;
+        return $this->networkSettings;
     }
 
-    public function setNetwork(?Network $network): self
+    public function setNetworkSettings(?NetworkSettings $networkSettings): self
     {
-        $this->network = $network;
+        $this->networkSettings = $networkSettings;
 
         return $this;
     }
@@ -240,19 +236,7 @@ class LabInstance extends Instance
 
     public function isCreated(): ?bool
     {
-        return InstanceStateMessage::STATE_CREATED === $this->state;
-    }
-
-    public function getJitsiCall(): ?JitsiCall
-    {
-        return $this->jitsiCall;
-    }
-
-    public function setJitsiCall(?JitsiCall $jitsiCall): self
-    {
-        $this->jitsiCall = $jitsiCall;
-
-        return $this;
+        return $this->state === InstanceStateMessage::STATE_CREATED;
     }
 
     /**
@@ -284,11 +268,6 @@ class LabInstance extends Instance
 
             $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);
-        }
-
-        if (self::OWNED_BY_GROUP == $this->ownedBy) {
-            $jitsiCall = new JitsiCall();
-            $this->setJitsiCall($jitsiCall);
         }
     }
 }

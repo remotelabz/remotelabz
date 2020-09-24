@@ -735,8 +735,20 @@ $size-count: 64;
 
 @for $i from 1 through $size-count {
   .s#{$i} {
-    width: $i + px;
-    height: $i + px;
+    width: $i + px !important;
+    height: $i + px !important;
+  }
+}
+
+@for $i from 1 through $size-count {
+  .w#{$i} {
+    width: $i + px !important;
+  }
+}
+
+@for $i from 1 through $size-count {
+  .h#{$i} {
+    height: $i + px !important;
   }
 }
 

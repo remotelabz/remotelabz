@@ -72,6 +72,11 @@ class Lab implements InstanciableInterface
      */
     private $lastUpdated;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", inversedBy="lab", cascade={"persist", "remove"})
+     */
+    private $networkSettings;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -247,6 +252,18 @@ class Lab implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getNetworkSettings(): ?NetworkSettings
+    {
+        return $this->networkSettings;
+    }
+
+    public function setNetworkSettings(?NetworkSettings $networkSettings): self
+    {
+        $this->networkSettings = $networkSettings;
 
         return $this;
     }

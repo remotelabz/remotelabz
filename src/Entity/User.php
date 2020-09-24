@@ -3,13 +3,16 @@
 namespace App\Entity;
 
 use App\Utils\Uuid;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation as Serializer;
+use emberlabs\GravatarLib\Gravatar;
 use Symfony\Component\Asset\Package;
-use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
+use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
+use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
@@ -20,16 +23,14 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key", "group_users", "group_tree", "group_explore", "instances", "user"})
-     *
+     * @Serializer\Groups({"primary_key", "group_tree", "group_explore", "instances", "user"})
      * @var int
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user", "groups", "group_users"})
-     *
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user"})
      * @var string
      */
     private $email;
@@ -38,7 +39,6 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
      * @Serializer\Groups({"details", "user"})
-     *
      * @var array|string[]
      */
     private $roles = [];
@@ -46,7 +46,6 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string")
      * @Serializer\Exclude
-     *
      * @var string The hashed password
      */
     private $password;
@@ -54,7 +53,6 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
-     *
      * @var string
      */
     private $lastName;
@@ -62,7 +60,6 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
-     *
      * @var string
      */
     private $firstName;
@@ -70,22 +67,19 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="boolean")
      * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
-     *
      * @var bool
      */
     private $enabled = true;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({"user_instances", "instances"})
-     *
+     * @Serializer\Groups({"user_instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
-     *
      * @var Collection|Lab[]
      */
     private $createdLabs;
@@ -93,7 +87,6 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="string", nullable=true)
      * @Serializer\Exclude
-     *
      * @var string
      */
     private $profilePictureFilename;
@@ -117,7 +110,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"user", "lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $uuid;
 
@@ -251,11 +244,11 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager"})
      */
     public function getName(): string
     {
-        return $this->firstName.' '.$this->lastName;
+        return $this->firstName . " " . $this->lastName;
     }
 
     public function getEnabled(): ?bool
@@ -361,7 +354,7 @@ class User implements UserInterface, InstancierInterface
 
     public function getProfilePicture(): ?string
     {
-        if (null == $this->getProfilePictureFilename() || '' === $this->getProfilePictureFilename()) {
+        if ($this->getProfilePictureFilename() == null || $this->getProfilePictureFilename() === "") {
             return null;
 
             // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
@@ -369,7 +362,7 @@ class User implements UserInterface, InstancierInterface
             // return $package->getUrl('build/images/faces/default-user-image.png');
         }
 
-        $imagePath = 'uploads/user/avatar/'.$this->getId().'/'.$this->getProfilePictureFilename();
+        $imagePath = 'uploads/user/avatar/' . $this->getId() . '/' . $this->getProfilePictureFilename();
 
         return $imagePath;
     }
@@ -400,7 +393,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @return Collection|Group[]
-     *
+     * 
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
      * @Serializer\Groups({"group_details", "user"})
@@ -427,7 +420,7 @@ class User implements UserInterface, InstancierInterface
     {
         // Get all groups objects...
         $groups = $this->_groups->map(function ($groupUser) {
-            /* @var Group $group */
+            /** @var Group $group */
             return $groupUser->getGroup();
         });
 

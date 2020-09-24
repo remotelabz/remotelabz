@@ -1,6 +1,0 @@
-Remotelabz\NetworkBundle\Entity\Network:
-    properties:
-        ip:
-            groups: ["start_lab", "stop_lab", "lab"]
-        netmask:
-            groups: ["start_lab", "stop_lab", "lab"]

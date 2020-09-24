@@ -15,6 +15,9 @@ class NetworkSettingsType extends AbstractType
         $builder
             ->add('name')
             ->add('ip')
+            ->add('ipv6')
+            ->add('prefix4')
+            ->add('prefix6')
             ->add('gateway')
             ->add('protocol')
             ->add('port')
