@@ -14,8 +14,11 @@
     </php>
 
     <testsuites>
-        <testsuite name="Project Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Test Controller">
+            <directory>tests/Controller</directory>
+        </testsuite>
+        <testsuite name="Test Application">
+            <file>tests/ApplicationAvailabilityFunctionalTest.php</file>
         </testsuite>
     </testsuites>
 

@@ -5,16 +5,18 @@ namespace App\Tests\Controller;
 use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-trait ControllerTestTrait
+class AuthenticatedWebTestCase extends WebTestCase
 {
     /**
-     * @var Client $client Client instance for functional tests
+     * @var Client Client instance for functional tests
      */
     protected $client;
 
     public function setUp()
     {
-        $this->client = WebTestCase::createClient();
+        parent::setUp();
+        $this->client = self::createClient();
+        $this->logIn();
     }
 
     protected function logIn()
@@ -22,8 +24,7 @@ trait ControllerTestTrait
         $this->client->followRedirects();
         $crawler = $this->client->request('GET', '/login');
 
-        // Start by testing if login page sucessfully loaded
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+        $this->assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('submit')->form();
 
@@ -44,8 +45,7 @@ trait ControllerTestTrait
     {
         $crawler = $this->client->request('GET', '/login');
 
-        // Start by testing if login page sucessfully loaded
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+        $this->assertResponseIsSuccessful();
 
         $form = $crawler->selectButton('submit')->form();
 
@@ -53,6 +53,7 @@ trait ControllerTestTrait
         $form['password'] = 'P@sSW0rD_Un1t_T3st';
 
         $crawler = $this->client->submit($form);
+
         return $crawler;
     }
 }

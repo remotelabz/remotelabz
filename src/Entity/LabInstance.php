@@ -2,18 +2,14 @@
 
 namespace App\Entity;
 
-use Exception;
-use App\Entity\Instance;
-use UnexpectedValueException;
-use App\Entity\DeviceInstance;
-use Doctrine\ORM\Mapping as ORM;
 use App\Message\InstanceStateMessage;
-use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\Mapping as ORM;
+use Exception;
 use JMS\Serializer\Annotation as Serializer;
 use Remotelabz\NetworkBundle\Entity\Network;
-use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabInstanceRepository")
@@ -24,7 +20,7 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"primary_key", "instances"})
      */
     private $id;
 
@@ -100,33 +96,33 @@ class LabInstance extends Instance
 
     /**
      * Generate a bridge name with instance UUID.
-     * 
+     *
      * @Serializer\VirtualProperty()
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Serializer\XmlAttribute
      */
     public function getBridgeName(): string
     {
-        return "br-" . substr($this->uuid, 0, 8);
+        return 'br-'.substr($this->uuid, 0, 8);
     }
 
     /**
-     * Get device instance associated to this lab instance
+     * Get device instance associated to this lab instance.
      *
      * @return DeviceInstance
      */
     public function getDeviceInstance($device): ?DeviceInstance
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("device", $device));
+            ->where(Criteria::expr()->eq('device', $device));
 
-        $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
+        $deviceInstance = (null !== $this->deviceInstances) ? $this->deviceInstances->matching($criteria)->first() : null;
 
         return $deviceInstance ?: null;
     }
 
     /**
-     * Get device instances associated to this lab instance
+     * Get device instances associated to this lab instance.
      *
      * @return Collection|DeviceInstance[]
      */
@@ -136,30 +132,30 @@ class LabInstance extends Instance
     }
 
     /**
-     * Get device instance associated to this lab instance and the current user
+     * Get device instance associated to this lab instance and the current user.
      *
      * @return DeviceInstance
      */
     public function getUserDeviceInstance($device): ?DeviceInstance
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("device", $device))
-            ->andWhere(Criteria::expr()->eq("user", $this->user));
+            ->where(Criteria::expr()->eq('device', $device))
+            ->andWhere(Criteria::expr()->eq('user', $this->user));
 
-        $deviceInstance = ($this->deviceInstances !== null) ? $this->deviceInstances->matching($criteria)->first() : null;
+        $deviceInstance = (null !== $this->deviceInstances) ? $this->deviceInstances->matching($criteria)->first() : null;
 
         return $deviceInstance ?: null;
     }
 
     /**
-     * Get device instances associated to this lab instance and the current user
+     * Get device instances associated to this lab instance and the current user.
      *
      * @return Collection|DeviceInstance[]
      */
     public function getUserDeviceInstances()
     {
         $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("user", $this->user));
+            ->where(Criteria::expr()->eq('user', $this->user));
 
         $deviceInstances = $this->deviceInstances->matching($criteria);
 
@@ -244,7 +240,7 @@ class LabInstance extends Instance
 
     public function isCreated(): ?bool
     {
-        return $this->state === InstanceStateMessage::STATE_CREATED;
+        return InstanceStateMessage::STATE_CREATED === $this->state;
     }
 
     public function getJitsiCall(): ?JitsiCall
@@ -255,6 +251,7 @@ class LabInstance extends Instance
     public function setJitsiCall(?JitsiCall $jitsiCall): self
     {
         $this->jitsiCall = $jitsiCall;
+
         return $this;
     }
 
@@ -289,8 +286,7 @@ class LabInstance extends Instance
             $this->addDeviceInstance($deviceInstance);
         }
 
-        if($this->ownedBy == self::OWNED_BY_GROUP)
-        {
+        if (self::OWNED_BY_GROUP == $this->ownedBy) {
             $jitsiCall = new JitsiCall();
             $this->setJitsiCall($jitsiCall);
         }
