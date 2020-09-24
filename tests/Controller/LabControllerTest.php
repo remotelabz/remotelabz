@@ -2,16 +2,15 @@
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-
-class LabControllerTest extends WebTestCase
+class LabControllerTest extends AuthenticatedWebTestCase
 {
-    use ControllerTestTrait, LabControllerTestTrait;
-
     public function testCreateLab()
     {
-        $this->logIn();
-        $data = $this->createLab();
+        $this->client->request('POST', '/api/labs');
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
         return $data['id'];
     }
 
@@ -20,8 +19,49 @@ class LabControllerTest extends WebTestCase
      */
     public function testEditLab($labId)
     {
-        $this->logIn();
-        $this->editLab($labId, 'Edited Lab', 'This is a new description');
+        $tmp['name'] = 'Edited Lab';
+        $tmp['description'] = 'This is a new description';
+        $data = json_encode($tmp);
+
+        $this->client->request('PUT',
+            '/api/labs/'.$labId,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $data
+        );
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    /**
+     * @depends testCreateLab
+     */
+    public function testAddDeviceToLab($labId)
+    {
+        $device = [
+            'name' => 'test-device',
+            'operatingSystem' => 1,
+            'networkInterfaces' => [],
+            'flavor' => 1,
+            'isTemplate' => 0,
+        ];
+
+        $this->client->request('POST',
+            '/api/labs/'.$labId.'/devices',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($device)
+        );
+
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->client->request('DELETE', '/api/devices/'.$data['id']);
+
+        $this->assertResponseIsSuccessful();
     }
 
     /**
@@ -29,7 +69,18 @@ class LabControllerTest extends WebTestCase
      */
     public function testDeleteLab($labId)
     {
-        $this->logIn();
-        $this->deleteLab($labId);
+        $this->client->followRedirects();
+        $crawler = $this->client->request('GET', '/admin/labs/'.$labId.'/delete');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+
+        // api side
+        $this->client->request('POST', '/api/labs');
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->client->request('DELETE', '/api/labs/'.$data['id']);
+        $this->assertResponseIsSuccessful();
     }
 }

@@ -2,79 +2,136 @@
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Entity\Lab;
+use App\Entity\User;
+use App\Entity\LabInstance;
+use Psr\Log\LoggerInterface;
+use App\Entity\DeviceInstance;
+use App\Instance\InstanceState;
+use App\Message\InstanceStateMessage;
+use Doctrine\ORM\EntityManagerInterface;
+use App\MessageHandler\InstanceStateMessageHandler;
 
-class InstanceControllerTest extends WebTestCase
+class InstanceControllerTest extends AuthenticatedWebTestCase
 {
-    use ControllerTestTrait, InstanceControllerTestTrait;
-    
+    /** @var string */
     private $labUuid;
+
+    /** @var string */
     private $userUuid;
-    
-    private function loadData()
+
+    /** @var EntityManagerInterface */
+    private $entityManager;
+
+    /** @var InstanceStateMessageHandler */
+    private $handler;
+
+    /** @var LoggerInterface */
+    private $logger;
+
+    public function setUp()
     {
-        $this->logIn();
-        $this->client->request('GET', '/api/users/me'); 
-        $data = json_decode($this->client->getResponse()->getContent(), true);
-        $this->userUuid = $data['uuid'];
-        
-        $this->client->request('GET', '/api/labs/1');
-        $data = json_decode($this->client->getResponse()->getContent(), true);
-        $this->labUuid = $data['uuid'];
+        parent::setUp();
+        $this->entityManager = static::bootKernel()->getContainer()->get('doctrine')->getManager();
+
+        /** @var LoggerInterface */
+        $this->logger = $this->getMockBuilder(LoggerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->handler = new InstanceStateMessageHandler(
+            $this->entityManager->getRepository(DeviceInstance::class),
+            $this->entityManager->getRepository(LabInstance::class),
+            $this->entityManager,
+            $this->logger
+        );
     }
 
     public function testCreateLabInstance()
     {
-        $this->loadData();
-        return $this->createLabInstance($this->labUuid, $this->userUuid, 'user');
+        /** @var User */
+        $user = $this->entityManager
+            ->getRepository(User::class)
+            ->find(1);
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->userUuid = $user->getUuid();
+
+        /** @var Lab */
+        $lab = $this->entityManager
+            ->getRepository(Lab::class)
+            ->find(1);
+
+        $this->assertInstanceOf(Lab::class, $lab);
+
+        $this->labUuid = $lab->getUuid();
+
+        $this->client->request(
+            'POST',
+            '/api/instances/create',
+            [
+                'lab' => $this->labUuid,
+                'instancier' => $this->userUuid,
+                'instancierType' => 'user',
+            ]
+        );
+
+        $this->assertResponseIsSuccessful();
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $labInstance = $this->entityManager
+            ->getRepository(LabInstance::class)
+            ->find($data['id']);
+
+        return $labInstance;
     }
+
+    // TODO test start and stop requests
+    // /**
+    //  * @depends testCreateLabInstance
+    //  * @param LabInstance $labInstance
+    //  */
+    // public function testStartDeviceInstance($labInstance)
+    // {
+    //     $this->client->request('GET', '/api/instances/start/by-uuid/' . $labInstance->getDeviceInstances()->first()->getUuid());
+    //     $this->assertResponseIsSuccessful();
+
+    //     $message = new InstanceStateMessage(InstanceStateMessage::TYPE_LAB, $labInstance->getUuid(), InstanceState::STARTED);
+
+    //     $this->handler->__invoke($message);
+
+    //     return $labInstance;
+    // }
+
+    // /**
+    //  * @depends testStartLabInstance
+    //  * @param LabInstance $labInstance
+    //  */
+    // public function testStopDeviceInstance($labInstance)
+    // {
+    //     $this->client->request('GET', '/api/instances/stop/by-uuid/' . $labInstance->getDeviceInstances()->first()->getUuid());
+    //     $this->assertResponseIsSuccessful();
+
+    //     $message = new InstanceStateMessage(InstanceStateMessage::TYPE_LAB, $labInstance->getUuid(), InstanceState::STOPPED);
+
+    //     $this->handler->__invoke($message);
+
+    //     return $labInstance;
+    // }
 
     /**
      * @depends testCreateLabInstance
+     *
+     * @param LabInstance $labInstance
      */
-    public function testStartDeviceInstance(array $data)
+    public function testDeleteLabInstance($labInstance)
     {
-        // Wait ~ 3 seconds for initialisation of lab instance
-        sleep(3);
-        
-        $deviceUuid = $data['deviceInstances'][0]['uuid'];
+        $this->client->request('DELETE', '/api/instances/'.$labInstance->getUuid());
+        $this->assertResponseIsSuccessful();
 
-        $this->logIn();
-        $this->startDeviceInstance($deviceUuid);
+        $message = new InstanceStateMessage(InstanceStateMessage::TYPE_LAB, $labInstance->getUuid(), InstanceState::DELETED);
 
-        return $deviceUuid;
-    }
-
-    /**
-     * @depends testStartDeviceInstance
-     */
-    /*
-    public function testViewDeviceInstance($deviceUuid)
-    {
-        // Wait ~ 3 seconds for initialisation of device instance
-        sleep(3);
-
-        $this->login();
-        $this->viewDeviceInstance($deviceUuid);
-    }
-    */
-
-    /**
-     * @depends testStartDeviceInstance
-     */
-    public function testStopDeviceInstance($deviceUuid)
-    {
-        $this->logIn();
-        $this->stopDeviceInstance($deviceUuid);
-    }
-
-    /**
-     * @depends testCreateLabInstance
-     */
-    public function testDeleteLabInstance(array $data)
-    {
-        // Resume tests
-        $this->logIn();
-        $this->deleteLabInstance($data['uuid']);
+        $this->handler->__invoke($message);
     }
 }

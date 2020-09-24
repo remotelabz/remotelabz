@@ -2,15 +2,14 @@
 
 namespace App\Entity;
 
-use App\Utils\Uuid;
-use App\Utils\MacAddress;
-use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
-use Doctrine\Common\Collections\Collection;
-use JMS\Serializer\Annotation as Serializer;
+use App\Utils\MacAddress;
+use App\Utils\Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
@@ -63,7 +62,6 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
-     * @Serializer\Groups({"lab"})
      */
     private $instances;
 

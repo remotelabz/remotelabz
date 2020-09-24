@@ -2,16 +2,32 @@
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-
-class OperatingSystemControllerTest extends WebTestCase
+class OperatingSystemControllerTest extends AuthenticatedWebTestCase
 {
-    use ControllerTestTrait, OperatingSystemControllerTestTrait;
+    private function getOperatingSystemByName($name)
+    {
+        $this->client->request('GET', '/api/operating-systems?search='.$name);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        return $data[0]['id'];
+    }
 
     public function testCreateOperatingSystem()
     {
-        $this->logIn();
-        return $this->createOperatingSystem('OS - Test', 'http://urlto.img');
+        $this->client->followRedirects();
+
+        $crawler = $this->client->request('GET', '/admin/operating-systems/new');
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->selectButton('operating_system[submit]')->form();
+
+        $form['operating_system[name]'] = 'OS - Test';
+        $form['operating_system[imageUrl]'] = 'http://urlto.img';
+
+        $crawler = $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
+
+        return $this->getOperatingSystemByName('OS - Test');
     }
 
     /**
@@ -19,9 +35,8 @@ class OperatingSystemControllerTest extends WebTestCase
      */
     public function testShowOperatingSystem($id)
     {
-        $this->logIn();
-        $this->client->request('GET', '/admin/operating-systems/' . $id);
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+        $this->client->request('GET', '/admin/operating-systems/'.$id);
+        $this->assertResponseIsSuccessful();
     }
 
     /**
@@ -29,8 +44,18 @@ class OperatingSystemControllerTest extends WebTestCase
      */
     public function testEditOperatingSystem($id)
     {
-        $this->logIn();
-        $this->editOperatingSystem($id, 'OS - Test Edited', 'http://new-urlto.img');
+        $this->client->followRedirects();
+
+        $crawler = $this->client->request('GET', '/admin/operating-systems/'.$id.'/edit');
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->selectButton('operating_system[submit]')->form();
+
+        $form['operating_system[name]'] = 'OS - Test Edited';
+        $form['operating_system[imageUrl]'] = 'http://new-urlto.img';
+
+        $crawler = $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 
     /**
@@ -38,7 +63,10 @@ class OperatingSystemControllerTest extends WebTestCase
      */
     public function testDeleteOperatingSystem($id)
     {
-        $this->logIn();
-        $this->deleteOperatingSystem($id);
+        $this->client->followRedirects();
+
+        $crawler = $this->client->request('GET', '/admin/operating-systems/'.$id.'/delete');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 }

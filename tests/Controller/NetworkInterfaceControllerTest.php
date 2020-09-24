@@ -2,18 +2,16 @@
 
 namespace App\Tests\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Faker\Factory;
 
-class NetworkInterfaceControllerTest extends WebTestCase
+class NetworkInterfaceControllerTest extends AuthenticatedWebTestCase
 {
-    use ControllerTestTrait, NetworkInterfaceControllerTestTrait;
-
     public function testInvalidDataOnNewAction()
     {
         /** @var \Faker\Generator $faker */
-        $faker = \Faker\Factory::create();
-        $this->logIn();
+        $faker = Factory::create();
         $crawler = $this->client->request('GET', '/admin/network-interfaces/new');
+        $this->assertResponseIsSuccessful();
 
         $this->client->enableProfiler();
 
@@ -33,10 +31,26 @@ class NetworkInterfaceControllerTest extends WebTestCase
 
     public function testCreateNetworkInterface()
     {
-        $this->logIn();
-        return $this->createNetworkInterface('NetworkInterface Test',
-            '52:54:00:FF:FF:FF'
+        $form = [
+            'name' => 'NetworkInterface Test',
+            'macAddress' => '52:54:00:FF:FF:FF',
+            'isTemplate' => 1,
+        ];
+
+        $data = json_encode($form);
+
+        $this->client->request('POST',
+            '/api/network-interfaces',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $data
         );
+        $this->assertResponseIsSuccessful();
+
+        $networkInterface = json_decode($this->client->getResponse()->getContent(), true);
+
+        return $networkInterface['id'];
     }
 
     /**
@@ -44,14 +58,29 @@ class NetworkInterfaceControllerTest extends WebTestCase
      */
     public function testEditNetworkInterface($id)
     {
-        $this->logIn();
-        $this->editNetworkInterface($id,
-            'NetworkInterface Test Edited',
-            '52:54:00:FF:0F:FF',
-            'VNC',
-            '1',
-            '0'
+        $form = [
+            'name' => 'NetworkInterface Test Edited',
+            'macAddress' => '52:54:00:FF:0F:FF',
+            'accessType' => 'VNC',
+            'device' => 1,
+            'isTemplate' => 0,
+        ];
+
+        $data = json_encode($form);
+
+        $this->client->request('PUT',
+            '/api/network-interfaces/'.$id,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $data
         );
+        $this->assertResponseIsSuccessful();
+        $networkInterface = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertEquals('NetworkInterface Test Edited', $networkInterface['name']);
+
+        $this->client->request('GET', '/admin/network-interfaces/'.$id.'/edit');
+        $this->assertResponseIsSuccessful();
     }
 
     /**
@@ -59,7 +88,10 @@ class NetworkInterfaceControllerTest extends WebTestCase
      */
     public function testDeleteNetworkInterface($id)
     {
-        $this->login();
-        $this->deleteNetworkInterface($id);
+        $this->client->followRedirects();
+
+        $crawler = $this->client->request('GET', '/admin/network-interfaces/'.$id.'/delete');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 }

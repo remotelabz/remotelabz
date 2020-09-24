@@ -4,14 +4,13 @@ namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class NetworkSettingsControllerTest extends WebTestCase
+class NetworkSettingsControllerTest extends AuthenticatedWebTestCase
 {
-    use ControllerTestTrait, NetworkSettingsControllerTestTrait;
-
     private function getIdOfNetworkSettingTest()
     {
         $this->logIn();
         $this->client->request('GET', '/network-settings');
+        $this->assertResponseIsSuccessful();
         $networkSettings = json_decode($this->client->getResponse()->getContent(), true);
         $id = 0;
         foreach($networkSettings as $networkSetting)
@@ -28,15 +27,21 @@ class NetworkSettingsControllerTest extends WebTestCase
 
     public function testCreateNetworkSettings()
     {
-        $this->logIn();
-        $this->createNetworkSettings('testNetworkSettings',
-            '192.168.56.0',
-            '',
-            '24',
-            '',
-            '192.168.56.254'
-        );
+        $this->client->followRedirects();
 
+        $crawler = $this->client->request('GET', '/admin/network-settings/new');
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->selectButton('network_settings[submit]')->form();
+
+        $form['network_settings[name]'] = 'testNetworkSettings';
+        $form['network_settings[ip]'] = '192.168.56.0';
+        $form['network_settings[gateway]'] = '192.168.56.254';
+        $form['network_settings[protocol]'] = '';
+        $form['network_settings[port]'] = 0;
+
+        $crawler = $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
         return $this->getIdOfNetworkSettingTest();
     }
 
@@ -45,8 +50,15 @@ class NetworkSettingsControllerTest extends WebTestCase
      */
     public function testEditNetworkSettings($id)
     {
-        $this->logIn();
-        $this->editNetworkSettings($id, 'testNetworkSettings-edited');
+        $crawler = $this->client->request('GET', '/admin/network-settings/' . $id . '/edit');
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->selectButton('network_settings[submit]')->form();
+
+        $form['network_settings[name]'] = 'testNetworkSettings-edited';
+
+        $crawler = $this->client->submit($form);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(1, $crawler->filter('.flash-notice.alert-success')->count());
     }
 
     /**
@@ -54,7 +66,7 @@ class NetworkSettingsControllerTest extends WebTestCase
      */
     public function testDeleteNetworkSettings($id)
     {
-        $this->logIn();
-        $this->deleteNetworkSettings($id);
+        $this->client->request('DELETE', '/admin/network-settings/' . $id);
+        $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
 }

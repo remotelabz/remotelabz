@@ -80,3 +80,7 @@ services:
     App\EventListener\InstanceSerializationListener:
         tags:
             - { name: jms_serializer.event_subscriber }
+    
+    GuzzleHttp\Client: ~
+
+    GuzzleHttp\ClientInterface: '@GuzzleHttp\Client'
