@@ -12,9 +12,9 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: error
         console:
-           type: console
-           process_psr_3_messages: false
-           channels: ["!event", "!doctrine"]
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!doctrine"]
         deprecation:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
