@@ -25,7 +25,6 @@ Encore
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
-    .addEntry('operating-system', './assets/js/operating-system.js')
     .addEntry('activity', './assets/js/activity.js')
     .addEntry('vnc', './assets/js/vnc.js')
     .addEntry('editor-react', './assets/js/editor.jsx')

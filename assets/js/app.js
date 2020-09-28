@@ -6,31 +6,26 @@
 * @author Julien Hubert <julien.hubert@outlook.com>
 */
 
-require('jquery');
+// require('jquery');
 
-require('../css/style.scss');
+import '../css/style.scss';
 
-require('datatables.net-bs4/css/dataTables.bootstrap4.css');
-require('datatables.net-buttons-bs4/css/buttons.bootstrap4.css');
-require('datatables.net-select-bs4/css/select.bootstrap4.css');
-require('flag-icon-css/sass/flag-icon.scss');
-require('noty/src/noty.scss');
-require('noty/src/themes/mint.scss');
-require('simplemde/dist/simplemde.min.css');
-require('@fortawesome/fontawesome-free/css/all.css');
-require('cropperjs/dist/cropper.min.css');
-require('vis-network/dist/vis-network.min.css');
+import 'datatables.net-bs4/css/dataTables.bootstrap4.css';
+import 'datatables.net-buttons-bs4/css/buttons.bootstrap4.css';
+import 'datatables.net-select-bs4/css/select.bootstrap4.css';
+import 'flag-icon-css/sass/flag-icon.scss';
+import 'noty/src/noty.scss';
+import 'noty/src/themes/mint.scss';
+import 'simplemde/dist/simplemde.min.css';
+import '@fortawesome/fontawesome-free/css/all.css';
+import 'cropperjs/dist/cropper.min.css';
 
-require('popper.js');
-require('bootstrap');
-require('datatables.net-bs4');
-require('datatables.net-buttons-bs4');
-require('datatables.net-select-bs4');
-require('icheck');
-require('selectize');
-require('select2');
-require('@novnc/novnc/core/rfb');
-require("jsplumb");
+import 'popper.js';
+import 'bootstrap';
+import 'datatables.net-bs4';
+import 'datatables.net-buttons-bs4';
+import 'datatables.net-select-bs4';
+import '@novnc/novnc/core/rfb';
 
 import './components/registration';
 
