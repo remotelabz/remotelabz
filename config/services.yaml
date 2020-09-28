@@ -84,3 +84,7 @@ services:
     GuzzleHttp\Client: ~
 
     GuzzleHttp\ClientInterface: '@GuzzleHttp\Client'
+
+    App\EventSubscriber\LogoutEventSubscriber:
+        arguments:
+            - "%api_key_cookie_name%"

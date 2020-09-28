@@ -60,7 +60,6 @@ security:
 
             logout:
                 path: logout
-                success_handler: App\Security\LoginFormAuthenticator
 
             # activate different ways to authenticate
 
