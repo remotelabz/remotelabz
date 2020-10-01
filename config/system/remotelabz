@@ -1,0 +1,3 @@
+Cmnd_Alias REMOTELABZ_CMDS = /bin/systemctl start remotelabz, /bin/systemctl stop remotelabz
+
+%remotelabz ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS

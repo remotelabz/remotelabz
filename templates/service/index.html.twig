@@ -1,0 +1,44 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Services': path('services') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'services' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>Local Services</h1>
+    </div>
+</div>
+<div class="content-body">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <span class="fw600">Messaging service</span>
+                        {% if messageServiceStarted %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                        {% else %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                        {% endif %}
+                        <div class="float-right">
+                        {% if messageServiceStarted %}
+                            <a href="{{ path('stop_service', {'service': 'remotelabz'}) }}" class="btn btn-danger">Stop</a>
+                        {% else %}
+                            <a href="{{ path('start_service', {'service': 'remotelabz'}) }}" class="btn btn-success">Start</a>
+                        {% endif %}
+                        </div>
+                    </li>
+                </ul>
+              </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
