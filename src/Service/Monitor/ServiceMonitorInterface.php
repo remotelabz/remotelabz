@@ -19,5 +19,5 @@ interface ServiceMonitorInterface
      */
     public function stop();
 
-    public function getServiceName(): string;
+    public static function getServiceName(): string;
 }

@@ -14,7 +14,7 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
         $process = new Process([
             'systemctl',
             'status',
-            $this->serviceName,
+            static::getServiceName(),
         ]);
 
         $status = $process->run();
@@ -28,7 +28,7 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
             'sudo',
             'systemctl',
             'start',
-            $this->serviceName,
+            static::getServiceName(),
         ]);
 
         $process->run();
@@ -44,7 +44,7 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
             'sudo',
             'systemctl',
             'stop',
-            $this->serviceName,
+            static::getServiceName(),
         ]);
 
         $process->run();
@@ -54,8 +54,5 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
         }
     }
 
-    public function getServiceName(): string
-    {
-        return $this->serviceName;
-    }
+    public static abstract function getServiceName(): string;
 }

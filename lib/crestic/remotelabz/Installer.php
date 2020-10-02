@@ -190,13 +190,14 @@ class Installer
             throw new Exception("Error while configuring Apache.", 0, $e);
         }
 
-        $this->logger->debug("Creating Remotelabz service");
-        echo "Creating Remotelabz service";
+        $this->logger->debug("Creating Remotelabz services");
+        echo "Creating Remotelabz services";
         try {
             $this->configureMessengerService();
+            $this->configureProxyService();
             echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring Remotelabz service.", 0, $e);
+            throw new Exception("Error while configuring Remotelabz services.", 0, $e);
         }
 
         $this->logger->debug("Finished RemoteLabz installation");
@@ -382,6 +383,20 @@ class Installer
         $returnCode = symlink($this->installPath . '/bin/remotelabz.service', '/etc/systemd/system/remotelabz.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink messenger service correctly.");
+        }
+    }
+
+    private function configureProxyService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-proxy.service')) {
+            $this->logger->debug('Remove old proxy service file');
+            unlink('/etc/systemd/system/remotelabz-proxy.service');
+        }
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-proxy.service', '/etc/systemd/system/remotelabz-proxy.service');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink proxy service correctly.");
         }
     }
 

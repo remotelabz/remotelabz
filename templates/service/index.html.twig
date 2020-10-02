@@ -23,18 +23,65 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <span class="fw600">Messaging service</span>
-                        {% if messageServiceStarted %}
+                        {% if serviceStarted['remotelabz'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
                         {% endif %}
                         <div class="float-right">
-                        {% if messageServiceStarted %}
+                        {% if serviceStarted['remotelabz'] %}
                             <a href="{{ path('stop_service', {'service': 'remotelabz'}) }}" class="btn btn-danger">Stop</a>
                         {% else %}
                             <a href="{{ path('start_service', {'service': 'remotelabz'}) }}" class="btn btn-success">Start</a>
                         {% endif %}
                         </div>
+                    </li>
+                    <li class="list-group-item">
+                        <span class="fw600">Proxy service</span>
+                        {% if serviceStarted['remotelabz-proxy'] %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                        {% else %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                        {% endif %}
+                        <div class="float-right">
+                        {% if serviceStarted['remotelabz-proxy'] %}
+                            <a href="{{ path('stop_service', {'service': 'remotelabz-proxy'}) }}" class="btn btn-danger">Stop</a>
+                        {% else %}
+                            <a href="{{ path('start_service', {'service': 'remotelabz-proxy'}) }}" class="btn btn-success">Start</a>
+                        {% endif %}
+                        </div>
+                    </li>
+                </ul>
+              </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>Remote Services</h1>
+    </div>
+</div>
+<div class="content-body">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <span class="fw600">Worker service</span>
+                        {% if serviceStarted['remotelabz-worker'] %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                        {% else %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <span class="fw600">Worker Messaging service</span>
+                        {% if serviceStarted['remotelabz-worker-message'] %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                        {% else %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                        {% endif %}
                     </li>
                 </ul>
               </div>

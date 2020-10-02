@@ -35,7 +35,10 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
                 'response' => json_decode($exception->getResponse()->getBody()->getContents(), true)
             ]);
         } elseif (!$exception instanceof NotFoundHttpException) {
-            $this->logger->error($exception->getMessage());
+            $this->logger->error($exception->getMessage(), [
+                'line' => $exception->getLine(),
+                'file' => $exception->getFile(),
+            ]);
         }
 
         // test if we want a json return

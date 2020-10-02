@@ -3,6 +3,10 @@
 namespace App\Controller;
 
 use App\Service\Monitor\MessageServiceMonitor;
+use App\Service\Monitor\ProxyServiceMonitor;
+use App\Service\Monitor\ServiceMonitorInterface;
+use App\Service\Monitor\WorkerMessageServiceMonitor;
+use App\Service\Monitor\WorkerServiceMonitor;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
@@ -12,11 +16,17 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class ServiceController extends Controller
 {
-    private $messageServiceMonitor;
-
-    public function __construct(MessageServiceMonitor $messageServiceMonitor)
+    /**
+     * @return string[]
+     */
+    public function getRegistredServices(): array
     {
-        $this->messageServiceMonitor = $messageServiceMonitor;
+        return [
+            MessageServiceMonitor::class,
+            ProxyServiceMonitor::class,
+            WorkerServiceMonitor::class,
+            WorkerMessageServiceMonitor::class,
+        ];
     }
 
     /**
@@ -24,8 +34,15 @@ class ServiceController extends Controller
      */
     public function index()
     {
+        $serviceStatus = [];
+        foreach ($this->getRegistredServices() as $registredService) {
+            /** @var ServiceMonitorInterface */
+            $service = new $registredService();
+            $serviceStatus[$service::getServiceName()] = $service->isStarted();
+        }
+
         return $this->render('service/index.html.twig', [
-            'messageServiceStarted' => $this->messageServiceMonitor->isStarted(),
+            'serviceStarted' => $serviceStatus,
         ]);
     }
 
@@ -34,20 +51,21 @@ class ServiceController extends Controller
      */
     public function startServiceAction(Request $request)
     {
-        $service = $request->query->get('service');
+        $requestedService = $request->query->get('service');
 
         try {
-            switch ($service) {
-                case 'remotelabz':
-                    $this->messageServiceMonitor->start();
+            foreach ($this->getRegistredServices() as $registredService) {
+                $serviceName = call_user_func($registredService.'::getServiceName');
+
+                if ($requestedService === $serviceName) {
+                    $service = new $registredService();
+                    $service->start();
                     $this->addFlash('success', 'Service succesfully started.');
-                    break;
-                
-                default:
-                    break;
+                }
             }
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to start.');
+
             return $this->redirectToRoute('services', ['error' => true]);
         }
 
@@ -59,20 +77,21 @@ class ServiceController extends Controller
      */
     public function stopServiceAction(Request $request)
     {
-        $service = $request->query->get('service');
+        $requestedService = $request->query->get('service');
 
         try {
-            switch ($service) {
-                case 'remotelabz':
-                    $this->messageServiceMonitor->stop();
+            foreach ($this->getRegistredServices() as $registredService) {
+                $serviceName = call_user_func($registredService.'::getServiceName');
+
+                if ($requestedService === $serviceName) {
+                    $service = new $registredService();
+                    $service->stop();
                     $this->addFlash('success', 'Service succesfully stopped.');
-                    break;
-                
-                default:
-                    break;
+                }
             }
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to stop.');
+
             return $this->redirectToRoute('services', ['error' => true]);
         }
 
