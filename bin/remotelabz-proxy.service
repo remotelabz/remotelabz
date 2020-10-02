@@ -1,0 +1,14 @@
+[Unit]
+Description=Remotelabz Proxy Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/env php /opt/remotelabz/bin/remotelabz-proxy
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target
