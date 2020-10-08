@@ -1,5 +1,9 @@
-var Encore = require('@symfony/webpack-encore');
-var path = require('path');
+const Encore = require('@symfony/webpack-encore');
+const path = require('path');
+
+if (!Encore.isRuntimeEnvironmentConfigured()) {
+    Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
+}
 
 Encore
     // directory where compiled assets will be stored
