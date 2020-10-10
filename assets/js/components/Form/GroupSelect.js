@@ -23,13 +23,6 @@ const ValueContainer = ({ children, ...props }) => (
   <components.ValueContainer {...props}>{children}</components.ValueContainer>
 );
 
-const formatGroupLabel = data => (
-    <div>
-      <span>{data.label}</span>
-      <span>{data.options.length}</span>
-    </div>
-  );
-
 const Option = props => {
     return (
         <components.Option {...props}>

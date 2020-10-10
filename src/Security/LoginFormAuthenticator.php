@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
-class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements LogoutSuccessHandlerInterface
+class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
 {
     use TargetPathTrait;
 
@@ -152,29 +152,6 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements L
     protected function getLoginUrl($parameters = [])
     {
         return $this->router->generate('login', $parameters);
-    }
-
-    /**
-     * @param Request $request
-     *
-     * @return Response never null
-     */
-    public function onLogoutSuccess(Request $request)
-    {
-        $response = new RedirectResponse('/');
-        $response->headers->clearCookie($this->config->get('api_key_cookie_name'));
-
-        if ($request->server->has('eppn')) {
-            $response->setTargetUrl(
-                $this->router->generate('shib_logout', [
-                    'return' => $this->router->generate('login')
-                ])
-            );
-        } else {
-            $response->setTargetUrl($this->router->generate('login'));
-        }
-
-        return $response;
     }
 
     protected function createRefreshToken($user)

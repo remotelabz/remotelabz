@@ -4,6 +4,7 @@
 
 logout:
     path: /logout
+    methods: GET
 
 # home:
 #     path: /

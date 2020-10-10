@@ -17,9 +17,15 @@
       {% endif %}
     {% endblock %}
 
+    {% set wrapper = block('wrapper_xl') is defined %}
+    {% if wrapper is not empty %}
+      {% set xl = true %}
+    {% else %}
+      {% set xl = false %}
+    {% endif %}
     
     <div class="content-wrapper">
-      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
+      {% if xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -47,7 +53,7 @@
           {% endblock %}
         </div>
       </div>
-      {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
+      {% if xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -64,11 +70,23 @@
             {%- endfor -%}
           {%- endfor -%}
         </div>
-        {% if block('wrapper_xl') is defined and block('wrapper_xl') is not empty %}
-          {{ block('wrapper_xl') }}
+        {% if xl %}
+          {{- block('wrapper_xl') -}}
         {% else %}
-          {{ block('wrapper') }}
+          {{- block('wrapper') -}}
         {% endif %}
+        <footer>
+          
+          <div>
+            <a href="https://anr.fr" target="_blank"><img height="50px" src="{{ asset('build/images/logo_investirlavenir_rvb.png') }}" class="partnership-logo" /></a>
+            <a href="http://www.dune-eole.fr/" target="_blank">ANR-16-DUNE-0001-EOLE</a>
+            <div>Made by F. Nolot, J. Hubert &amp; O. Flauzac</div>
+          </div>
+          <div class="d-flex">
+            <div class="flex-fill"><a href="https://docs.remotelabz.com" target="_blank">Help</a></div>
+            <div class="flex-fill"><a href="https://github.com/crestic-urca/remotelabz/issues/new" target="_blank">Submit an issue</a></div>
+          </div>
+        </footer>
       </div>
     </div>
   </div>

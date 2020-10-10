@@ -2,30 +2,24 @@
 
 namespace App\Tests;
 
+use App\Tests\Controller\AuthenticatedWebTestCase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ApplicationAvailabilityFunctionalTest extends WebTestCase
+class ApplicationAvailabilityFunctionalTest extends AuthenticatedWebTestCase
 {
-    /**
-     * @var KernelBrowser $client
-     */
-    private $client;
-
-    public function setUp()
-    {
-        $this->client = static::createClient();
-    }
-
     /**
      * @dataProvider urlProvider
      */
     public function testPageIsSuccessful($url)
     {
-        $this->logIn();
         $this->client->request('GET', $url);
+        $this->assertResponseIsSuccessful();
+    }
 
-        $this->assertTrue($this->client->getResponse()->isSuccessful());
+    public function testPageIsError()
+    {
+        $this->client->request('GET', '/nonexistentpage');
+        $this->assertResponseStatusCodeSame(404);
     }
 
     public function urlProvider()
@@ -35,28 +29,17 @@ class ApplicationAvailabilityFunctionalTest extends WebTestCase
 
         yield ['/admin/users'];
         yield ['/admin/flavors'];
+        yield ['/admin/flavors/new'];
         yield ['/admin/network-settings'];
+        yield ['/admin/network-settings/new'];
         yield ['/admin/network-interfaces'];
+        yield ['/admin/network-interfaces/new'];
         yield ['/admin/operating-systems'];
         yield ['/admin/instances'];
         yield ['/admin/devices'];
+        yield ['/admin/devices/new'];
 
         yield ['/profile'];
-    }
-
-    private function logIn()
-    {
-        $crawler = $this->client->request('GET', '/login');
-
-        // Start by testing if login page sucessfully loaded
-        // echo $this->client->getResponse();
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-
-        $form = $crawler->selectButton('submit')->form();
-
-        $form['email'] = 'root@localhost';
-        $form['password'] = 'admin';
-
-        $crawler = $this->client->submit($form);
+        yield ['/groups'];
     }
 }

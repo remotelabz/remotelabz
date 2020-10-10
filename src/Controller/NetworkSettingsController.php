@@ -7,6 +7,7 @@ use App\Form\NetworkSettingsType;
 use App\Repository\NetworkSettingsRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class NetworkSettingsController extends Controller
 {
@@ -90,7 +91,7 @@ class NetworkSettingsController extends Controller
      */
     public function cgetAction()
     {
-        return $this->renderJson($this->networkSettingsRepository->findAll());
+        return $this->json($this->networkSettingsRepository->findAll());
     }
         
     /**
@@ -112,7 +113,7 @@ class NetworkSettingsController extends Controller
                 
             $data['message'] = 'Settings has been deleted.';
         }
-            
-        return $this->renderJson($data, $status);
+
+        return $this->json($data, $status);
     }
 }

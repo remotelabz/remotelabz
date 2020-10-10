@@ -92,25 +92,36 @@ class Installer
         $this->logger->debug("Starting RemoteLabz installation");
         echo "Welcome to RemoteLabz!\n";
 
-        // Copy self-directory into destination
-        $this->logger->debug("Copying files to " . $this->installPath);
-        echo "📁 Copying files to " . $this->installPath . "... ";
-        try {
-            $this->copyFiles();
-            $this->logger->debug("Files has been moved to " . $this->installPath);
-            echo "OK ✔️\n";
-        } catch (AlreadyExistException $e) {
-            $this->logger->warning("Install directory already exists. Not copying files.");
-            Logger::print("Warning: Target directory exists. Files will not be copied.\n", Logger::COLOR_YELLOW);
+        if (array_key_exists('symlink', $this->options) && $this->options['symlink']) {
+            // Symlink self-directory into destination
+            $this->logger->debug("Symlink files to " . $this->installPath);
+            echo "📁 Symlink files to " . $this->installPath . "... ";
+            try {
+                $this->copyFiles();
+                $this->logger->debug("Files have been symlinked to " . $this->installPath);
+                echo "OK ✔️\n";
+            } catch (AlreadyExistException $e) {
+                $this->logger->warning("Install directory already exists.");
+                Logger::print("Warning: Target directory exists. Files will not be symlinked.\n", Logger::COLOR_YELLOW);
+            }
+        } else {
+            // Copy self-directory into destination
+            $this->logger->debug("Copying files to " . $this->installPath);
+            echo "📁 Copying files to " . $this->installPath . "... ";
+            try {
+                $this->copyFiles();
+                $this->logger->debug("Files have been moved to " . $this->installPath);
+                echo "OK ✔️\n";
+            } catch (AlreadyExistException $e) {
+                $this->logger->warning("Install directory already exists. Not copying files.");
+                Logger::print("Warning: Target directory exists. Files will not be copied.\n", Logger::COLOR_YELLOW);
+            }
         }
+        
 
         $directoryError = "There was a problem switching to install dir.";
         // Goto new directory
         if (chdir($this->installPath) == false) {
-            throw new Exception($directoryError);
-        }
-        // Check new dir
-        if (getcwd() !== $this->installPath) {
             throw new Exception($directoryError);
         }
 
@@ -145,14 +156,14 @@ class Installer
             throw new Exception("There was an error downloading Yarn packages.");
         }
 
-        // $this->logger->debug("Warming cache");
-        // echo "🔥 Warming cache... ";
-        // if ($this->configureCache($this->options['environment'])) {
-        //     $this->logger->debug("Finished warming cache");
-        //     echo "OK ✔️\n";
-        // } else {
-        //     throw new Exception("There was an error warming app cache.");
-        // }
+        $this->logger->debug("Warming cache");
+        echo "🔥 Warming cache... ";
+        if ($this->configureCache($this->options['environment'])) {
+            $this->logger->debug("Finished warming cache");
+            echo "OK ✔️\n";
+        } else {
+            throw new Exception("There was an error warming app cache.");
+        }
 
         // Handle file permissions
         $this->logger->debug("Handling file permissions");
@@ -190,14 +201,17 @@ class Installer
             throw new Exception("Error while configuring Apache.", 0, $e);
         }
 
-        $this->logger->debug("Creating Remotelabz service");
-        echo "Creating Remotelabz service";
+        $this->logger->debug("Creating Remotelabz services");
+        echo "🔨 Creating Remotelabz services... ";
         try {
             $this->configureMessengerService();
+            $this->configureProxyService();
             echo "OK ✔️\n";
         } catch (Exception $e) {
-            throw new Exception("Error while configuring Remotelabz service.", 0, $e);
+            throw new Exception("Error while configuring Remotelabz services.", 0, $e);
         }
+
+        // TODO Copy sudo config
 
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
@@ -231,17 +245,50 @@ class Installer
         }
         chmod("/usr/bin/remotelabz-ctl", 0777);
 
-        copy($this->installPath . "/.env.dist", $this->installPath . "/.env");
+        copy($this->installPath . "/.env", $this->installPath . "/.env.local");
 
         if (!$isCopied) {
             throw new AlreadyExistException("Folder already exists.");
         }
     }
 
+    /**
+     * Symlink current directory to target installation directory if it's not done already.
+     *
+     * @return boolean Returns `true` if everything went well, returns `false` otherwise.
+     */
+    private function symlkinkFiles(): void
+    {
+        $isCopied = true;
+        // Check if directory is already to the right place
+        if (dirname(__FILE__, 4) != $this->installPath) {
+            // Check if there is already a directory
+            if (is_link($this->installPath)) {
+                $isCopied = false;
+            } else {
+                // symlink files
+                $this->symlink(dirname(__FILE__, 4), $this->installPath);
+            }
+        } else {
+            $isCopied = false;
+        }
+
+        if (!is_file("/usr/bin/remotelabz-ctl")) {
+            symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
+        }
+        chmod("/usr/bin/remotelabz-ctl", 0777);
+
+        copy($this->installPath . "/.env", $this->installPath . "/.env.local");
+
+        if (!$isCopied) {
+            throw new AlreadyExistException("Symlink already exists.");
+        }
+    }
+
     private function configureEnvironment($options)
     {
         // Modify environment
-        Dotenv::create($this->installPath . "/.env")
+        Dotenv::create($this->installPath . "/.env.local")
             ->parse()
             ->set("WORKER_SERVER", $options['worker-server'])
             ->set("WORKER_PORT", $options['worker-port'])
@@ -382,6 +429,20 @@ class Installer
         $returnCode = symlink($this->installPath . '/bin/remotelabz.service', '/etc/systemd/system/remotelabz.service');
         if (!$returnCode) {
             throw new Exception("Could not symlink messenger service correctly.");
+        }
+    }
+
+    private function configureProxyService()
+    {
+        chdir($this->installPath);
+        $returnCode = false;
+        if (file_exists('/etc/systemd/system/remotelabz-proxy.service')) {
+            $this->logger->debug('Remove old proxy service file');
+            unlink('/etc/systemd/system/remotelabz-proxy.service');
+        }
+        $returnCode = symlink($this->installPath . '/bin/remotelabz-proxy.service', '/etc/systemd/system/remotelabz-proxy.service');
+        if (!$returnCode) {
+            throw new Exception("Could not symlink proxy service correctly.");
         }
     }
 

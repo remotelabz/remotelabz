@@ -4,19 +4,22 @@ namespace App\Controller;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use App\Instance\InstanceManager;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
 use App\Entity\InstancierInterface;
 use App\Repository\GroupRepository;
 use App\Exception\InstanceException;
+use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
+use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
+use App\Service\Instance\InstanceManager;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
@@ -41,6 +44,17 @@ class InstanceController extends Controller
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
     }
+
+    // /**
+    //  * @Route("/debug/network/{id}", name="debug_network")
+    //  */
+    // public function debugNetworkAction(int $id, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
+    // {
+    //     $labInstance = $labInstanceRepository->find($id);
+    //     $context = SerializationContext::create()->setGroups("start_lab");
+    //     $labJson = $serializer->serialize($labInstance, 'json', $context);
+    //     return new Response($labJson);
+    // }
 
     /**
      * @Route("/admin/instances", name="instances")
@@ -390,6 +404,7 @@ class InstanceController extends Controller
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'device' => $device,
+            'deviceInstance' => $deviceInstance,
             'uuid' => $uuid,
             'host' => $protocol . "" . ($request->get('host') ?: $request->getHost()),
             'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),

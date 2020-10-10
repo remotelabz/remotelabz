@@ -56,7 +56,9 @@ EOF;
                 $lab = Lab::create()
                     ->setName($faker->words(2, true))
                     ->setDescription($description)
-                    ->setAuthor($this->getReference('user' . $faker->numberBetween(0, 9)));
+                    ->setAuthor($this->getReference('user' . $faker->numberBetween(0, 9)))
+                    ->addDevice($this->getReference('device-alpine'))
+                    ->addDevice($this->getReference('device-ubuntu'));
 
                 $manager->persist($lab);
 
@@ -71,6 +73,7 @@ EOF;
     {
         return [
             UserFixtures::class,
+            DeviceFixtures::class,
         ];
     }
 

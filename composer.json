@@ -1,10 +1,13 @@
 {
+    "name": "crestic-urca/remotelabz",
+    "description": "Education software to provide VMs and networks as-a-service.",
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^7.1.3",
+        "php": "^7.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "crestic-urca/network-bundle": "^1.0",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
         "friendsofsymfony/rest-bundle": "dev-master",
@@ -13,45 +16,43 @@
         "jms/serializer-bundle": "^3.1",
         "knplabs/knp-markdown-bundle": "^1.7",
         "lexik/jwt-authentication-bundle": "^2.6",
-        "limenius/react-bundle": "5.0.4",
-        "limenius/react-renderer": "5.0.3",
+        "limenius/react-bundle": "^5.0",
         "myclabs/deep-copy": "^1.9",
-        "onurb/doctrine-yuml-bundle": "dev-master",
         "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
         "symfony/apache-pack": "^1.0",
-        "symfony/asset": "5.0.*",
-        "symfony/console": "^5.0",
-        "symfony/debug-bundle": "5.0.*",
-        "symfony/debug-pack": "^1.0",
-        "symfony/expression-language": "^5.0",
+        "symfony/asset": "5.1.*",
+        "symfony/console": "5.1.*",
+        "symfony/dotenv": "5.1.*",
+        "symfony/expression-language": "5.1.*",
         "symfony/flex": "^1.1",
-        "symfony/form": "^5.0",
-        "symfony/framework-bundle": "^5.0",
-        "symfony/messenger": "5.0.*",
+        "symfony/form": "5.1.*",
+        "symfony/framework-bundle": "5.1.*",
+        "symfony/messenger": "5.1.*",
         "symfony/monolog-bundle": "^3.1",
         "symfony/orm-pack": "^1.0",
-        "symfony/process": "^5.0",
-        "symfony/security-bundle": "^5.0",
-        "symfony/serializer": "5.0.*",
+        "symfony/process": "5.1.*",
+        "symfony/security-bundle": "5.1.*",
+        "symfony/serializer": "5.1.*",
         "symfony/serializer-pack": "^1.0",
         "symfony/swiftmailer-bundle": "^3.2",
-        "symfony/templating": "5.0.*",
-        "symfony/translation": "^5.0",
-        "symfony/twig-bundle": "^5.0",
-        "symfony/validator": "^5.0",
-        "symfony/web-link": "^5.0",
+        "symfony/templating": "5.1.*",
+        "symfony/translation": "5.1.*",
+        "symfony/twig-bundle": "5.1.*",
+        "symfony/validator": "5.1.*",
+        "symfony/web-link": "5.1.*",
         "symfony/webpack-encore-bundle": "^1.0",
-        "symfony/yaml": "^5.0"
+        "symfony/yaml": "5.1.*"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.16",
         "fzaninotto/faker": "^1.8",
-        "symfony/browser-kit": "^4.0",
-        "symfony/css-selector": "^4.0",
+        "symfony/browser-kit": "5.1.*",
+        "symfony/css-selector": "5.1.*",
+        "symfony/debug-bundle": "5.1.*",
         "symfony/debug-pack": "^1.0",
-        "symfony/dotenv": "^4.0",
         "symfony/maker-bundle": "^1.15",
-        "symfony/phpunit-bridge": "^4.3",
+        "symfony/phpunit-bridge": "5.1.*",
         "symfony/profiler-pack": "^1.0",
         "symfony/test-pack": "^1.0"
     },
@@ -86,11 +87,11 @@
         },
         "post-install-cmd": [
             "@auto-scripts",
-            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+            "php -r \"file_exists('.env.local') || copy('.env', '.env.local');\""
         ],
         "post-update-cmd": [
             "@auto-scripts",
-            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+            "php -r \"file_exists('.env.local') || copy('.env', '.env.local');\""
         ]
     },
     "conflict": {
@@ -99,21 +100,13 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "5.0.*"
+            "require": "5.1.*"
         }
     },
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/doctrine-yuml-bundle.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/ReactBundle.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://gitlab.remotelabz.com/jhubert/ReactRenderer.git"
+            "url": "https://github.com/crestic-urca/network-bundle.git"
         }
     ]
 }

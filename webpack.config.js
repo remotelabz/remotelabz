@@ -1,5 +1,9 @@
-var Encore = require('@symfony/webpack-encore');
-var path = require('path');
+const Encore = require('@symfony/webpack-encore');
+const path = require('path');
+
+if (!Encore.isRuntimeEnvironmentConfigured()) {
+    Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
+}
 
 Encore
     // directory where compiled assets will be stored
@@ -25,7 +29,6 @@ Encore
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
-    .addEntry('operating-system', './assets/js/operating-system.js')
     .addEntry('activity', './assets/js/activity.js')
     .addEntry('vnc', './assets/js/vnc.js')
     .addEntry('editor-react', './assets/js/editor.jsx')
@@ -46,7 +49,7 @@ Encore
      */
     // .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
-    // .enableSourceMaps(!Encore.isProduction())
+    .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
 
@@ -89,7 +92,9 @@ Encore
     .addAliases({
         'fos-js-router': path.resolve(__dirname, 'vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.js'),
         'routes': path.resolve(__dirname, 'public/fos_js_routes.json'),
-        'fos-jsrouting': path.resolve(__dirname, 'assets/js/routing.js')
+        'fos-jsrouting': path.resolve(__dirname, 'assets/js/routing.js'),
+        // 'react': path.resolve(__dirname, './node_modules/react'),
+        // 'react-dom': path.resolve(__dirname, './node_modules/react-dom')
     })
 ;
 
