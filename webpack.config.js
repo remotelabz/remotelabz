@@ -22,7 +22,6 @@ Encore
      * Each entry will result in one JavaScript file (e.g. app.js)
      * and one CSS file (e.g. app.css) if you JavaScript imports CSS.
      */
-    .addEntry('react-app', './assets/js/App.jsx')
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
     .addEntry('profile', './assets/js/profile.jsx')
