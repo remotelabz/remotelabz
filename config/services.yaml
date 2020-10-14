@@ -16,7 +16,22 @@ parameters:
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
-    
+
+    app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
+
+    app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
+    app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
+    app.ssl.ca.key.passphrase: '%env(resolve:SSL_CA_KEY_PASSPHRASE)%'
+    app.ssl.tls.key: '%env(resolve:SSL_TLS_KEY)%'
+    app.ssl.certs.dir: '%env(resolve:SSL_CERTS_DIR)%'
+    app.ssl.certs.validity: '%env(resolve:SSL_CERTS_VALIDITY_DAYS)%'
+    app.ssl.dn.cn: '%env(resolve:SSL_DN_CN)%'
+    app.ssl.dn.country: '%env(resolve:SSL_DN_COUNTRY)%'
+    app.ssl.dn.province: '%env(resolve:SSL_DN_PROVINCE)%'
+    app.ssl.dn.city: '%env(resolve:SSL_DN_CITY)%'
+    app.ssl.dn.org: '%env(resolve:SSL_DN_ORG)%'
+    app.ssl.dn.email: '%env(resolve:SSL_DN_EMAIL)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -88,3 +103,19 @@ services:
     App\EventSubscriber\LogoutEventSubscriber:
         arguments:
             - "%api_key_cookie_name%"
+    
+    openvpn_configuration_generator:
+        class: App\Service\VPN\OpenVPNConfigurationGenerator
+        public: true
+        arguments:
+            - '%app.ssl.dn.cn%'
+            - '%app.ssl.dn.country%'
+            - '%app.ssl.dn.province%'
+            - '%app.ssl.dn.city%'
+            - '%app.ssl.dn.org%'
+            - '%app.ssl.dn.email%'
+            - '%app.ssl.ca.cert%'
+            - '%app.ssl.ca.key%'
+            - '%app.ssl.tls.key%'
+            - '%app.ssl.certs.dir%'
+            - '%app.general.public_adress%'
