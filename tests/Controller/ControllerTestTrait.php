@@ -12,7 +12,7 @@ trait ControllerTestTrait
      */
     protected $client;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->client = WebTestCase::createClient();
     }

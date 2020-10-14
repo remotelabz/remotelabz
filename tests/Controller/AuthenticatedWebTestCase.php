@@ -12,7 +12,7 @@ class AuthenticatedWebTestCase extends WebTestCase
      */
     protected $client;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->client = self::createClient();
