@@ -15,6 +15,7 @@
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer-bundle": "^3.1",
         "knplabs/knp-markdown-bundle": "^1.7",
+        "laminas/laminas-code": "^3.4",
         "lexik/jwt-authentication-bundle": "^2.6",
         "limenius/react-bundle": "^5.0",
         "myclabs/deep-copy": "^1.9",
