@@ -16,6 +16,7 @@
         <h1>{{ device.name }}</h1>
     </div>
     <div class="content-title-actions">
+        
         <a href="{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen.{{device.name}}" onclick="openFullscreen(); return false;">
             {{ svg('external-link') }}
         </a>
@@ -28,7 +29,8 @@
     </div>
     <div class="card stretch-card">
         <div class="card-body">
-            <div id="noVNC_screen" style="height:1000px;"></div>
+            <input type="button" value="CtrlAltDel" src="" id="noVNC_button">
+            <div id="noVNC_screen" style="height:768px;"></div>
             <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"> </div>
         </div>
     </div>
@@ -47,7 +49,7 @@
             /* si le pointeur vers l'objet window n'existe pas, ou s'il existe
                mais que la fenêtre a été fermée */
             WindowObjectReference = window.open("{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}",
-                   "OpenVNCFullscreen"+"{{device.name}}", "resizable=yes,scrollbars=yes,status=no,location=no,menubar=no,toolbar=no");
+                   "OpenVNCFullscreen"+"{{device.name}}", "resizable=yes,scrollbars=no,status=no,location=no,menubar=no,toolbar=no");
             /* alors, création du pointeur. La nouvelle fenêtre sera créée par dessus
                toute autre fenêtre existante. */
           }
@@ -60,5 +62,9 @@
                ou de recharger la ressource référencée. */
           };
         }
+        
+        
+
+
         </script>
 {% endblock %}
