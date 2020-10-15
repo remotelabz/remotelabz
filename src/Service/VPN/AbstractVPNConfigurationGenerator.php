@@ -22,9 +22,13 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
 
     protected $CAKey;
 
+    protected $CAKeyPassphrase;
+
     protected $TLSKey;
 
     protected $remote;
+
+    protected $validity;
 
     public function __construct(
         string $commonName,
@@ -35,8 +39,10 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         string $email,
         string $CACert,
         string $CAKey,
+        string $CAKeyPassphrase,
         string $TLSKey,
         string $exportPath,
+        int $validity,
         string $remote
     ) {
         $this->country = $country;
@@ -48,11 +54,15 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         $this->exportPath = $exportPath;
         $this->commonName = $commonName;
         $this->CAKey = $CAKey;
+        $this->CAKeyPassphrase = $CAKeyPassphrase;
         $this->TLSKey = $TLSKey;
         $this->remote = $remote;
+        $this->validity = $validity;
     }
 
-    abstract public function generate(string $login, string $password, &$privateKey, &$certificate, int $validity = 365): string;
+    abstract public function generate(&$privateKey, &$certificate);
+
+    abstract public function generateConfig(string $privateKey, string $certificate): string;
 
     public function getCountry(): string
     {
@@ -175,6 +185,24 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
     }
 
     /**
+     * Get the CA key passphrase.
+     */
+    public function getCAKeyPassphrase(): string
+    {
+        return $this->CAKeyPassphrase;
+    }
+
+    /**
+     * Set the CA key passphrase.
+     */
+    public function setCAKeyPassphrase(string $CAKeyPassphrase): VPNConfiguratorGeneratorInterface
+    {
+        $this->CAKeyPassphrase = $CAKeyPassphrase;
+
+        return $this;
+    }
+
+    /**
      * @inheritdoc
      */
     public function getTLSKey(): string
@@ -206,6 +234,24 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
     public function setRemote(string $remote): VPNConfiguratorGeneratorInterface
     {
         $this->remote = $remote;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getValidity(): int
+    {
+        return $this->validity;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setValidity(int $validity): VPNConfiguratorGeneratorInterface
+    {
+        $this->validity = $validity;
 
         return $this;
     }

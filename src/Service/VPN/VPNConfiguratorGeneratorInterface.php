@@ -5,9 +5,16 @@ namespace App\Service\VPN;
 interface VPNConfiguratorGeneratorInterface
 {
     /**
-     * Generate a string containing the VPN config file content.
+     * Generate a new x509 certificate.
      */
-    public function generate(string $login, string $password, &$privateKey, &$certificate, int $validity = 365): string;
+    public function generate(&$privateKey, &$certificate);
+
+    /**
+     * Generates a new OpenVPN configuration file.
+     *
+     * @return string the OpenVPN configuration file
+     */
+    public function generateConfig(string $privateKey, string $certificate): string;
 
     public function getCountry(): string;
 
@@ -55,7 +62,17 @@ interface VPNConfiguratorGeneratorInterface
     /**
      * Set the CA key path.
      */
-    public function setCAKey(string $CAKey): VPNConfiguratorGeneratorInterface;
+    public function setCAKey(string $CAKey): self;
+
+    /**
+     * Get the CA key passphrase.
+     */
+    public function getCAKeyPassphrase(): string;
+
+    /**
+     * Set the CA key passphrase.
+     */
+    public function setCAKeyPassphrase(string $CAKeyPassphrase): self;
 
     /**
      * Get the TLS key path.
@@ -65,7 +82,7 @@ interface VPNConfiguratorGeneratorInterface
     /**
      * Set the TLS key path.
      */
-    public function setTLSKey(string $TLSKey): VPNConfiguratorGeneratorInterface;
+    public function setTLSKey(string $TLSKey): self;
 
     /**
      * Get the remote addr to use in OVPN files.
@@ -75,5 +92,15 @@ interface VPNConfiguratorGeneratorInterface
     /**
      * Set the remote addr to use in OVPN files.
      */
-    public function setRemote(string $remote): VPNConfiguratorGeneratorInterface;
+    public function setRemote(string $remote): self;
+
+    /**
+     * Get the certificate validity (in days).
+     */
+    public function getValidity(): int;
+
+    /**
+     * Set the certificate validity (in days).
+     */
+    public function setValidity(int $validity): self;
 }

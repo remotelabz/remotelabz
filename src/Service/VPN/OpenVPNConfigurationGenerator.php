@@ -7,14 +7,12 @@ use Exception;
 class OpenVPNConfigurationGenerator extends AbstractVPNConfigurationGenerator implements VPNConfiguratorGeneratorInterface
 {
     /**
-     * Generates a new OpenSSL certificate.
+     * Generates a new x509 certificate.
      *
      * @param resource $privateKey  The private key generated
      * @param resource $certificate The x509 certificate generated
-     *
-     * @return string the OpenVPN configuration file
      */
-    public function generate(string $login, string $CAKeyPassphrase, &$privateKey, &$certificate, int $validity = 365): string
+    public function generate(&$privateKey, &$certificate)
     {
         $dn = [
             'countryName' => $this->getCountry(),
@@ -49,20 +47,25 @@ class OpenVPNConfigurationGenerator extends AbstractVPNConfigurationGenerator im
         $certificate = openssl_csr_sign(
             $csr,
             file_get_contents($this->getCACert()),
-            [file_get_contents($this->getCAKey()), $CAKeyPassphrase],
-            $validity,
+            [file_get_contents($this->getCAKey()), $this->getCAKeyPassphrase()],
+            $this->getValidity(),
             [
                 'digest_alg' => 'sha256',
             ]
         );
 
-        openssl_x509_export($certificate, $certificateOut, true);
-        openssl_pkey_export($privateKey, $privateKeyOut);
-
         if (!$certificate) {
             throw new Exception('Failed to sign OpenSSL X509 Certificate.');
         }
+    }
 
+    /**
+     * Generates a new OpenVPN configuration file.
+     *
+     * @return string the OpenVPN configuration file
+     */
+    public function generateConfig(string $privateKey, string $certificate): string
+    {
         $hostname = $this->getRemote();
         $CACert = file_get_contents($this->getCACert());
         $TLSKeyContent = file_get_contents($this->getTLSKey());
@@ -87,10 +90,10 @@ comp-lzo
 $CACert
 </ca>
 <cert>
-$certificateOut
+$certificate
 </cert>
 <key>
-$privateKeyOut
+$privateKey
 </key>
 <tls-auth>
 $TLSKeyContent

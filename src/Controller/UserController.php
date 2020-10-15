@@ -9,28 +9,22 @@ use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
 use App\Repository\UserRepository;
-use FOS\RestBundle\Context\Context;
-use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Symfony\Bundle\MakerBundle\Validator;
 use App\Service\ProfilePictureFileUploader;
+use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\KernelInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\Email;
-use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -577,5 +571,45 @@ class UserController extends Controller
     public function meAction()
     {
         return $this->json($this->getUser());
+    }
+
+    /** 
+     * @Route("/profile/vpn", name="get_user_vpn_config", methods="GET")
+     */
+    public function vpnConfigurationGenerateAction(VPNConfiguratorGeneratorInterface $VPNConfigurationGenerator)
+    {
+        $user = $this->getUser();
+        $x509 = null;
+        $privateKey = null;
+        $certsDir = $VPNConfigurationGenerator->getExportPath();
+        $certPath = $certsDir.'/'.$user->getUsername().'.crt';
+        $pkeyPath = $certsDir.'/'.$user->getUsername().'.key';
+        $filesystem = new Filesystem();
+
+        if (!$filesystem->exists($certPath))
+        {
+            $VPNConfigurationGenerator->generate($privateKeyResource, $x509Resource);
+            openssl_x509_export_to_file($x509Resource, $certPath);
+            openssl_pkey_export_to_file($privateKeyResource, $pkeyPath);
+            openssl_x509_export($x509Resource, $x509);
+            openssl_pkey_export($privateKeyResource, $privateKey);
+        } else {
+            $x509 = file_get_contents($certPath);
+            $privateKey = file_get_contents($pkeyPath);
+        }
+
+        $config = $VPNConfigurationGenerator->generateConfig($privateKey, $x509);
+
+        $response = new Response($config);
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $user->getUsername().'.ovpn'
+        );
+
+        $response->headers->set('Content-Type', 'application/x-openvpn-profile');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 }
