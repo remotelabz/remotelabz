@@ -97,7 +97,7 @@ class Installer
             $this->logger->debug("Symlink files to " . $this->installPath);
             echo "📁 Symlink files to " . $this->installPath . "... ";
             try {
-                $this->copyFiles();
+                $this->symlinkFiles();
                 $this->logger->debug("Files have been symlinked to " . $this->installPath);
                 echo "OK ✔️\n";
             } catch (AlreadyExistException $e) {
@@ -257,7 +257,7 @@ class Installer
      *
      * @return boolean Returns `true` if everything went well, returns `false` otherwise.
      */
-    private function symlkinkFiles(): void
+    private function symlinkFiles(): void
     {
         $isCopied = true;
         // Check if directory is already to the right place
@@ -267,7 +267,7 @@ class Installer
                 $isCopied = false;
             } else {
                 // symlink files
-                $this->symlink(dirname(__FILE__, 4), $this->installPath);
+                symlink(dirname(__FILE__, 4), $this->installPath);
             }
         } else {
             $isCopied = false;
