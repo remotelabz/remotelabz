@@ -50,7 +50,7 @@ select {
 
 [theme="dark"] {
     form .form-control,
-    .form-control, input {
+    .form-control, input, .custom-file-label {
         background-color: theme-color("dark-lighter");
         border-color: lighten(theme-color("dark-lighter"), 7.5%);
         color: darken(theme-color("light"), 5%);
@@ -63,6 +63,11 @@ select {
         &:disabled {
             border-color: theme-color("dark-lighter");
             background-color: darken(theme-color("dark-lighter"), 5%);
+        }
+
+        &::after {
+            color: darken(theme-color("light"), 5%);
+            background-color: lighten(theme-color("dark-lighter"), 5%);
         }
     }
 

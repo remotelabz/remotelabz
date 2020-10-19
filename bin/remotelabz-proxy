@@ -1,0 +1,48 @@
+#!/usr/bin/env php
+<?php
+
+use Symfony\Component\Process\Process;
+
+require dirname(__DIR__).'/src/.bootstrap.php';
+
+if (!`which configurable-http-proxy`) {
+    echo "Unable to find configurable-http-proxy on your system.\n";
+    echo "You can install it using the following command :\n";
+    echo "\n";
+    echo "\t sudo npm install -g configurable-http-proxy\n";
+    echo "\n";
+    exit(1);
+}
+
+$cmd = ['configurable-http-proxy'];
+
+if (array_key_exists('WEBSOCKET_PROXY_PORT', $_ENV)) {
+    $cmd[] = '--port';
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_PORT'];
+}
+
+if (array_key_exists('WEBSOCKET_PROXY_API_PORT', $_ENV)) {
+    $cmd[] = '--api-port';
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_API_PORT'];
+}
+
+if (array_key_exists('WEBSOCKET_PROXY_LOG_LEVEL', $_ENV)) {
+    $cmd[] = '--log-level';
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_LOG_LEVEL'];
+}
+
+if (array_key_exists('WEBSOCKET_PROXY_SSL_KEY', $_ENV)) {
+    $cmd[] = '--ssl-key';
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_KEY'];
+}
+
+if (array_key_exists('WEBSOCKET_PROXY_SSL_CERT', $_ENV)) {
+    $cmd[] = '--ssl-cert';
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_CERT'];
+}
+
+$process = new Process($cmd);
+
+$process->run(function ($type, $buffer) {
+    echo $buffer;
+});

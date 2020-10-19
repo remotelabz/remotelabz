@@ -29,7 +29,7 @@ class InstanceControllerTest extends AuthenticatedWebTestCase
     /** @var LoggerInterface */
     private $logger;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->entityManager = static::bootKernel()->getContainer()->get('doctrine')->getManager();

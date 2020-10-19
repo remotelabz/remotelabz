@@ -1,6 +1,7 @@
 import Noty from 'noty';
 import API from '../../api';
 import Remotelabz from '../API';
+import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { Component } from 'react';
 import InstanceList from './InstanceList';
@@ -295,6 +296,12 @@ export class InstanceManager extends Component {
                             <h4 className="mb-0">Instances</h4>
                         </div>
                         <div>
+                        {this.state.labInstance.state === "created" &&
+                            <Button href="/profile/vpn" variant="primary">
+                                <SVG name="download" className="v-sub image-sm"></SVG>
+                                <span className="ml-1">OpenVPN file</span>
+                            </Button>
+                        }
                         {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
                             <JitsiCallButton
                                 className="mr-2"

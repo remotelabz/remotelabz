@@ -1,0 +1,34 @@
+footer {
+    border-top: 1px solid #e5e5e5;
+    text-align: center;
+    font-size: 12px;
+    padding: 20px;
+    color: #aaa;
+    margin-top: 20px;
+    display: flex;
+
+    > * {
+        display: inline-flex;
+        align-items: center;
+        flex: 1;
+    }
+
+    img {
+        width: 96px;
+        -webkit-filter: grayscale(100%);
+        filter: grayscale(100%);
+        transition: all 0.15s linear;
+        opacity: .5;
+
+        &:hover {
+            transition: all 0.15s linear;
+            opacity: 1;
+        }
+    }
+}
+
+[theme="dark"] {
+    footer {
+        border-top: 1px solid #35353b;
+    }
+}

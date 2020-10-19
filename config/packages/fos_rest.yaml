@@ -3,10 +3,10 @@ fos_rest:
     disable_csrf_role: ROLE_USER
     zone:
         - { path: ^/api/* }
-    routing_loader:
-        default_format: json
-        prefix_methods: api
-        parse_controller_name: false
+    # routing_loader:
+    #     default_format: json
+    #     prefix_methods: api
+    #     parse_controller_name: false
     format_listener:
         enabled: true
         rules:
@@ -14,7 +14,6 @@ fos_rest:
         - { path: '^/api', priorities: ['json'], fallback_format: json, prefer_extension: true }
         - { path: '^/', priorities: ['html', 'json'], fallback_format: html, prefer_extension: true }
     exception:
-        exception_controller: 'fos_rest.exception.controller::showAction'
         # Set exceptions status code, may be useful for custom exceptions
         codes:
             'Doctrine\ORM\OptimisticLockException': HTTP_CONFLICT

@@ -4,14 +4,12 @@ namespace App\EventSubscriber;
 
 use Psr\Log\LoggerInterface;
 use App\Exception\WorkerException;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class RenderExceptionSubscriber implements EventSubscriberInterface
 {
@@ -36,8 +34,11 @@ class RenderExceptionSubscriber implements EventSubscriberInterface
                 'uuid' => $exception->getInstance()->getUuid(),
                 'response' => json_decode($exception->getResponse()->getBody()->getContents(), true)
             ]);
-        } else {
-            $this->logger->error($exception->getMessage());
+        } elseif (!$exception instanceof NotFoundHttpException) {
+            $this->logger->error($exception->getMessage(), [
+                'line' => $exception->getLine(),
+                'file' => $exception->getFile(),
+            ]);
         }
 
         // test if we want a json return

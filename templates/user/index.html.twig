@@ -22,6 +22,10 @@
                 <span class="text-danger">Warning:</span> Lines with an already used e-mail will be silently ignored.
             </p>
             {{ form(addUserFromFileForm, {'id': 'addUserFromFileForm'}) }}
+            {# <div class="custom-file">
+                <input type="file" class="custom-file-input" id="customFile">
+                <label class="custom-file-label" for="customFile">Choose file</label>
+              </div> #}
         {% endblock %}
     {% endembed %}
 
@@ -139,4 +143,5 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('timeago') }}
+    {{ encore_entry_script_tags('user') }}
 {% endblock %}

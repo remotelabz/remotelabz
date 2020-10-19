@@ -7,6 +7,7 @@ use App\Form\NetworkSettingsType;
 use App\Repository\NetworkSettingsRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class NetworkSettingsController extends Controller
 {

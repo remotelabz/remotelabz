@@ -1,5 +1,9 @@
-var Encore = require('@symfony/webpack-encore');
-var path = require('path');
+const Encore = require('@symfony/webpack-encore');
+const path = require('path');
+
+if (!Encore.isRuntimeEnvironmentConfigured()) {
+    Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
+}
 
 Encore
     // directory where compiled assets will be stored
@@ -18,20 +22,21 @@ Encore
      * Each entry will result in one JavaScript file (e.g. app.js)
      * and one CSS file (e.g. app.css) if you JavaScript imports CSS.
      */
-    .addEntry('react-app', './assets/js/App.jsx')
     .addEntry('app', './assets/js/app.js')
     .addEntry('user', './assets/js/user.js')
     .addEntry('profile', './assets/js/profile.jsx')
     .addEntry('flavor', './assets/js/flavor.js')
     .addEntry('network-settings', './assets/js/network-settings.js')
     .addEntry('network-interface', './assets/js/network-interface.js')
-    .addEntry('operating-system', './assets/js/operating-system.js')
     .addEntry('activity', './assets/js/activity.js')
     .addEntry('vnc', './assets/js/vnc.js')
     .addEntry('editor-react', './assets/js/editor.jsx')
     .addEntry('timeago', './assets/js/timeago.js')
     .addEntry('users-select', './assets/js/SelectUser.jsx')
     .addEntry('groups', './assets/js/groups.js')
+
+    // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
+    .splitEntryChunks()
 
     // will require an extra script tag for runtime.js
     // but, you probably want this, unless you're building a single-page app
@@ -44,11 +49,17 @@ Encore
      * list of features, see:
      * https://symfony.com/doc/current/frontend.html#adding-more-features
      */
-    // .cleanupOutputBeforeBuild()
+    .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
     .enableSourceMaps(!Encore.isProduction())
     // enables hashed filenames (e.g. app.abc123.css)
     .enableVersioning(Encore.isProduction())
+
+    // enables @babel/preset-env polyfills
+    .configureBabelPresetEnv((config) => {
+        config.useBuiltIns = 'usage';
+        config.corejs = 3;
+    })
 
     // enables Sass/SCSS support
     .enableSassLoader((options) => {

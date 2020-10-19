@@ -76,14 +76,11 @@
           {{- block('wrapper') -}}
         {% endif %}
         <footer>
-          <div class="d-flex flex-column align-items-center justify-content-center">
-            <div><a href="http://www.dune-eole.fr/" target="_blank">ANR-16-DUNE-0001-EOLE</a></div>
-            <div>Made by F. Nolot, J. Hubert & O. Flauzac</div>
-          </div>
-          <div class="d-flex flex-column">
-            <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/logo_investirlavenir_rvb.png') }}" class="partnership-logo" /></a>
-          </div>
-          <div class="d-flex">
+          
+          <div class="d-flex align-items-center justify-content-center">
+            <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/logo_investirlavenir_rvb.png') }}" class="partnership-logo w-100 h64" /></a>
+            <div class="flex-fill">Made by F. Nolot, J. Hubert &amp; O. Flauzac</div>
+            <div class="flex-fill"><a href="http://www.dune-eole.fr/" target="_blank">ANR-16-DUNE-0001-EOLE</a></div>
             <div class="flex-fill"><a href="https://docs.remotelabz.com" target="_blank">Help</a></div>
             <div class="flex-fill"><a href="https://github.com/crestic-urca/remotelabz/issues/new" target="_blank">Submit an issue</a></div>
           </div>
