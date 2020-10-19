@@ -1,6 +1,7 @@
 footer {
     border-top: 1px solid #e5e5e5;
     text-align: center;
+    font-size: 12px;
     padding: 20px;
     color: #aaa;
     margin-top: 20px;
@@ -23,5 +24,11 @@ footer {
             transition: all 0.15s linear;
             opacity: 1;
         }
+    }
+}
+
+[theme="dark"] {
+    footer {
+        border-top: 1px solid #35353b;
     }
 }
