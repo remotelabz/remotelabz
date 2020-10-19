@@ -259,21 +259,16 @@ class Installer
      */
     private function symlinkFiles(): void
     {
-        $isCopied = true;
-        // Check if directory is already to the right place
-        if (dirname(__FILE__, 4) != $this->installPath) {
-            // Check if there is already a directory
-            if (is_link($this->installPath)) {
-                $isCopied = false;
-            } else {
-                // symlink files
-                symlink(dirname(__FILE__, 4), $this->installPath);
-            }
-        } else {
+        // Check if there is already a directory
+        if (is_link($this->installPath)) {
             $isCopied = false;
+        } else {
+            // symlink files
+            symlink(dirname(__FILE__, 4), $this->installPath);
+            $isCopied = true;
         }
 
-        if (!is_file("/usr/bin/remotelabz-ctl")) {
+        if (!is_link("/usr/bin/remotelabz-ctl")) {
             symlink($this->installPath . "/bin/remotelabz-ctl", "/usr/bin/remotelabz-ctl");
         }
         chmod("/usr/bin/remotelabz-ctl", 0777);
