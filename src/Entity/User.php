@@ -172,13 +172,13 @@ class User implements UserInterface, InstancierInterface
         return array_unique($roles);
     }
 
-    // public function getHighestRole(): string
-    // {
-    //     if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
-    //     if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
-    //     if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
-    //     return 'ROLE_USER';
-    // }
+    public function getHighestRole(): string
+    {
+        if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_SUPER_ADMINISTRATOR';
+        if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+        if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
+        return 'ROLE_USER';
+    }
 
     public function setRoles(array $roles): self
     {
