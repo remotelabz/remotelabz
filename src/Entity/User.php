@@ -131,6 +131,7 @@ class User implements UserInterface, InstancierInterface
         $this->ownedGroups = new ArrayCollection();
         $this->_groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->roles = ["ROLE_USER"];
     }
 
     public function getId(): ?int
