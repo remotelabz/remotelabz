@@ -207,8 +207,7 @@ class UserController extends Controller
             /** @var User $user */
             $user = $userForm->getData();
 
-            // foreach ($userForm->get('roles') as $role)
-            //         $user->setRoles($role);
+            $user->setRoles([$userForm->get('roles')->getData()]);
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
