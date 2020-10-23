@@ -19,6 +19,10 @@ parameters:
 
     app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
 
+    app.network.base_network: '%env(resolve:BASE_NETWORK)%'
+    app.network.base_network_netmask: '%env(resolve:BASE_NETWORK_NETMASK)%'
+    app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
+
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
     app.ssl.ca.key.passphrase: '%env(resolve:SSL_CA_KEY_PASSPHRASE)%'
@@ -124,3 +128,11 @@ services:
             $remote: '%app.general.public_adress%'
     
     App\Service\VPN\VPNConfiguratorGeneratorInterface: '@openvpn_configuration_generator'
+
+    App\Service\Network\NetworkManager:
+        arguments:
+            $baseNetwork: '%app.network.base_network%'
+            $baseNetworkNetmask: '%app.network.base_network_netmask%'
+            $labNetworkNetmask: '%app.network.lab_network_netmask%'
+    
+    network_manager: '@App\Service\Network\NetworkManager'

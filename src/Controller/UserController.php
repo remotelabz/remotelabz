@@ -13,12 +13,14 @@ use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
 use App\Service\ProfilePictureFileUploader;
 use App\Service\VPN\VPNConfiguratorGeneratorInterface;
+use Doctrine\Common\Collections\Expr\Comparison;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\KernelInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use Doctrine\Common\Collections\Expr\Expression;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -57,6 +59,8 @@ class UserController extends Controller
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
         $groupDetails = $request->query->has('group_details');
+        $page = $request->query->get('page', 1);
+        $role = $request->query->get('role');
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('firstName', $search))
@@ -64,10 +68,40 @@ class UserController extends Controller
             ->orWhere(Criteria::expr()->contains('email', $search))
             ->orderBy([
                 'lastName' => Criteria::ASC
-            ])
-            ->setMaxResults($limit);
+            ]);
 
         $users = $this->userRepository->matching($criteria);
+        $count = $users->count();
+        $adminCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
+        })->count();
+        $teacherCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_TEACHER';
+        })->count();
+        $studentCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_USER';
+        })->count();
+
+        if ($role) {
+            switch ($role) {
+                case 'admin':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
+                    });
+                break;
+                case 'teacher':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_TEACHER';
+                    });
+                break;
+                
+                case 'student':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_USER';
+                    });
+                break;
+            }
+        }
 
         $addUserFromFileForm = $this->createFormBuilder([])
             ->add('file', FileType::class, [
@@ -114,7 +148,7 @@ class UserController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($users->getValues(), 200, [], []);
+            return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], []);
         }
 
         // $context = new Context();
@@ -131,9 +165,18 @@ class UserController extends Controller
         // }
 
         return $this->render('user/index.html.twig', [
-            'users' => $users,
+            'users' => $users->slice($page * $limit - $limit, $limit),
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
             'search' => $search,
+            'count' => [
+                'total' => $count,
+                'current' => $users->count(),
+                'admins' => $adminCount,
+                'teachers' => $teacherCount,
+                'students' => $studentCount
+            ],
+            'limit' => $limit,
+            'page' => $page,
         ]);
     }
 
@@ -164,8 +207,7 @@ class UserController extends Controller
             /** @var User $user */
             $user = $userForm->getData();
 
-            // foreach ($userForm->get('roles') as $role)
-            //         $user->setRoles($role);
+            $user->setRoles([$userForm->get('roles')->getData()]);
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();

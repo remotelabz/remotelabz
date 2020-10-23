@@ -39,14 +39,27 @@
             {% endif %}
         </div>
         <ul class="nav-links nav nav-tabs">
-            <li class="active">
-                <a href="#">
-                    <span>All</span> <span class="badge badge-pill">{{ users|length }}</span>
+            {% set role = app.request.query.get('role') %}
+            <li {% if role is null %} class="active"{% endif %}>
+                <a href="{{ path('users', app.request.query|merge({role: null, page: null})) }}">
+                    <span>All</span> <span class="badge badge-pill">{{ count.total }}</span>
                 </a>
             </li>
-            <li><a href="#"><span>Admins</span> <span class="badge badge-pill">0</span></a></li>
-            <li><a href="#"><span>Teachers</span> <span class="badge badge-pill">0</span></a></li>
-            <li><a href="#"><span>Students</span> <span class="badge badge-pill">0</span></a></li>
+            <li {% if role == 'admin' %}class="active"{% endif %}>
+                <a href="{{ path('users', app.request.query|merge({role: 'admin', page: null})) }}">
+                    <span>Admins</span> <span class="badge badge-pill">{{ count.admins }}</span>
+                </a>
+            </li>
+            <li {% if role == 'teacher' %}class="active"{% endif %}>
+                <a href="{{ path('users', app.request.query|merge({role: 'teacher', page: null})) }}">
+                    <span>Teachers</span> <span class="badge badge-pill">{{ count.teachers }}</span>
+                </a>
+            </li>
+            <li {% if role == 'student' %}class="active"{% endif %}>
+                <a href="{{ path('users', app.request.query|merge({role: 'student', page: null})) }}">
+                    <span>Students</span> <span class="badge badge-pill">{{ count.students }}</span>
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -60,83 +73,89 @@
     </div>
 
     <div class="table-responsive item-panel user-panel">
-        {% if users|length > 0 %}
-            <table class="table">
-                <thead>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Created on</th>
+                    <th scope="col">Last activity</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
                     <tr>
-                        <th scope="col">User</th>
-                        <th scope="col">Created on</th>
-                        <th scope="col">Last activity</th>
-                        <th scope="col"></th>
+                        <td>
+                            <div class="wrapper d-flex align-items-center item">
+                                <div class="item-user-avatar mr-2">
+                                    <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle" />
+                                </div>
+                                <div class="item-left d-flex flex-column">
+                                    <div>
+                                        <a href="{{ path('edit_user', {'id': user.id}) }}" class="item-name">
+                                            {{- user.name -}}
+                                        </a>
+                                        {% if 'ROLE_ADMINISTRATOR' in user.roles or 'ROLE_SUPER_ADMINISTRATOR' in user.roles %}
+                                            <label class="badge badge-success">Admin</label>
+                                        {% elseif 'ROLE_TEACHER' in user.roles %}
+                                            <label class="badge badge-info">Teacher</label>
+                                        {% endif %}
+                                        {% if not user.enabled %}
+                                            <label class="badge badge-warning">Blocked</label>
+                                        {% endif %}
+                                        {% if user.email == app.user.email %}It's you!{% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="mailto:{{user.email}}" class="item-user-email">
+                                            {{- user.email -}}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="item-right d-flex flex-column text-right">
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="timeago" datetime="{{ user.createdAt|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
+                        </td>
+                        <td>
+                            {% if user.lastActivity is not null %}
+                                <span class="timeago" datetime="{{ user.lastActivity|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
+                            <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-user-cog"></i>
+                                <i class="fa fa-caret-down"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
+                            <a class="dropdown-item text-warning" href="{{ path('toggle_user', {id: user.id}) }}">Block</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-danger" href="{{ path('delete_user', {id: user.id}) }}">Delete user</a>
+                            </div>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                        <tr>
-                            <td>
-                                <div class="wrapper d-flex align-items-center item">
-                                    <div class="item-user-avatar mr-2">
-                                        <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle" />
-                                    </div>
-                                    <div class="item-left d-flex flex-column">
-                                        <div>
-                                            <a href="{{ path('edit_user', {'id': user.id}) }}" class="item-name">
-                                                {{- user.name -}}
-                                            </a>
-                                            {% if 'ROLE_ADMINISTRATOR' in user.roles or 'ROLE_SUPER_ADMINISTRATOR' in user.roles %}
-                                                <label class="badge badge-success">Admin</label>
-                                            {% elseif 'ROLE_TEACHER' in user.roles %}
-                                                <label class="badge badge-info">Teacher</label>
-                                            {% endif %}
-                                            {% if not user.enabled %}
-                                                <label class="badge badge-warning">Blocked</label>
-                                            {% endif %}
-                                            {% if user.email == app.user.email %}It's you!{% endif %}
-                                        </div>
-                                        <div>
-                                            <a href="mailto:{{user.email}}" class="item-user-email">
-                                                {{- user.email -}}
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="item-right d-flex flex-column text-right">
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="timeago" datetime="{{ user.createdAt|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.createdAt|date('M d, Y h:ia') }}"></span>
-                            </td>
-                            <td>
-                                {% if user.lastActivity is not null %}
-                                    <span class="timeago" datetime="{{ user.lastActivity|date }}" data-toggle="tooltip" data-placement="top" title="{{ user.lastActivity|date('M d, Y h:ia') }}"></span>
-                                {% else %}
-                                    Never
-                                {% endif %}
-                            </td>
-                            <td class="text-right">
-                                <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
-                                <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="fa fa-user-cog"></i>
-                                    <i class="fa fa-caret-down"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
-                                <div class="dropdown-header">
-                                    Settings
-                                </div>
-                                <a class="dropdown-item text-warning" href="{{ path('toggle_user', {id: user.id}) }}">Block</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="{{ path('delete_user', {id: user.id}) }}">Delete user</a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="p-4 text-center">
-                No users found
-            </div>
-        {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% set pagesNumber = count.current > limit ? count.current // limit + 1 : 1 %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination mt-3 justify-content-center">
+                <li class="page-item {% if page <= 1 %}disabled{%endif%}">
+                    <a class="page-link" href="{{ path('users', app.request.query|merge({page: page-1})) }}">Previous</a>
+                </li>
+                {% for i in 1.. pagesNumber %}
+                    <li class="page-item {% if i == page %}active{%endif%}"><a class="page-link" href="{{ path('users', app.request.query|merge({page: i})) }}">{{ i }}</a></li>
+                {% endfor %}
+                <li class="page-item {% if page >= pagesNumber %}disabled{%endif%}">
+                    <a class="page-link" href="{{ path('users', app.request.query|merge({page: page+1})) }}">Next</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 {% endblock %}
 

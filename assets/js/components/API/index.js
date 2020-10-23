@@ -308,6 +308,31 @@ export class RemotelabzAPI {
          */
         lab: {
             /**
+             * Create a lab instance.
+             * 
+             * Implements POST `/api/instances/create`
+             * 
+             * @param {string} labUuid 
+             * @param {string} instancierUuid 
+             * @param {"user"|"group"} instancierType 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            create(lab, instancier, instancierType) {
+                var myDataObj = { lab, instancier, instancierType };
+                var formData = new FormData();
+
+                for (var key in myDataObj) {
+                    formData.append(key, myDataObj[key])
+                }
+
+                // return axios.post(`/instances/create`, formData, {
+                //     headers: { 'Content-Type': 'multipart/form-data' }
+                // });
+                return axios.post(`/instances/create`, myDataObj);
+            },
+
+            /**
              * Get a lab instance by UUID.
              * 
              * Implements GET `/api/instances/by-uuid/{uuid}`
