@@ -149,11 +149,7 @@ export class InstanceManager extends Component {
     }
 
     createInstance = (labUuid, ownerUuid, ownerType = 'group') => {
-        return api.post(Routing.generate('api_create_instance'), {
-            'lab': labUuid,
-            'instancier': ownerUuid,
-            'instancierType': ownerType
-        });
+        return Remotelabz.instances.lab.create(labUuid, ownerUuid, ownerType);
     }
 
     fetchInstance = (uuid, type = 'lab') => {
