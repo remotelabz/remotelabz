@@ -13,6 +13,12 @@ parameters:
     shibboleth_remote_user_var: 'eppn'
     api_key_cookie_name: 'bearer'
 
+    app.worker_server: '%env(resolve:WORKER_SERVER)%'
+    app.worker_port: '%env(resolve:WORKER_PORT)%'
+
+    app.websocket_proxy_port: '%env(resolve:WEBSOCKET_PROXY_PORT)%'
+    app.websocket_proxy_api_port: '%env(resolve:WEBSOCKET_PROXY_API_PORT)%'
+
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
@@ -134,5 +140,17 @@ services:
             $baseNetwork: '%app.network.base_network%'
             $baseNetworkNetmask: '%app.network.base_network_netmask%'
             $labNetworkNetmask: '%app.network.lab_network_netmask%'
-    
+
     network_manager: '@App\Service\Network\NetworkManager'
+    
+    App\Service\Instance\InstanceManager:
+        arguments:
+            $worker_server: '%app.worker_server%'
+            $worker_port: '%app.worker_port%'
+            $websocket_proxy_port: '%app.websocket_proxy_port%'
+            $websocket_proxy_api_port: '%app.websocket_proxy_api_port%'
+
+         
+            
+    
+    
