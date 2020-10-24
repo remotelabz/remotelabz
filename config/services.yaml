@@ -150,7 +150,12 @@ services:
             $websocket_proxy_port: '%app.websocket_proxy_port%'
             $websocket_proxy_api_port: '%app.websocket_proxy_api_port%'
 
-         
+    App\Controller\InstanceController:
+        arguments:
+            $worker_server: '%app.worker_server%'
+            $worker_port: '%app.worker_port%'
+            $websocket_proxy_port: '%app.websocket_proxy_port%'
+            $websocket_proxy_api_port: '%app.websocket_proxy_api_port%'
             
     
     
