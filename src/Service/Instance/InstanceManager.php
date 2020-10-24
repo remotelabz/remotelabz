@@ -301,7 +301,7 @@ class InstanceManager
     {
         $client = new Client();
 
-        $url = 'http://localhost:'.getenv('WEBSOCKET_PROXY_API_PORT').'/api/routes/device/'.$uuid;
+        $url = 'http://localhost:'.$this->websocket_proxy_api_port.'/api/routes/device/'.$uuid;
         $this->logger->debug('Delete route in proxy '.$url);
 
         $client->delete($url);
