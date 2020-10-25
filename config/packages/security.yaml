@@ -1,3 +1,5 @@
+parameters:
+    enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
 security:
     encoders:
         App\Entity\User:

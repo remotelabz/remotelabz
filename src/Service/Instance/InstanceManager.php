@@ -28,7 +28,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * @since 2.2.0
+ * @since Remotelabz v2.2.0
  */
 class InstanceManager
 {
@@ -44,6 +44,10 @@ class InstanceManager
     protected $labInstanceRepository;
     protected $deviceInstanceRepository;
     protected $networkInterfaceInstanceRepository;
+    protected $worker_server;
+    protected $worker_port;
+    protected $websocket_proxy_api_port;
+    protected $websocket_proxy_port;
 
     public function __construct(
         LoggerInterface $logger,
@@ -54,7 +58,12 @@ class InstanceManager
         EntityManagerInterface $entityManager,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
-        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
+        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        string $worker_server,
+        string $worker_port,
+        string $websocket_proxy_api_port,
+        string $websocket_proxy_port
+    
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -65,6 +74,11 @@ class InstanceManager
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
+        $this->worker_server = $worker_server;
+        $this->worker_port = $worker_port;
+        $this->websocket_proxy_api_port = $websocket_proxy_api_port;
+        $this->websocket_proxy_port = $websocket_proxy_port;
+            
     }
 
     /**
@@ -249,7 +263,8 @@ class InstanceManager
 
     public function getRemoteAvailablePort(): int
     {
-        $url = 'http://'.getenv('WORKER_SERVER').':'.getenv('WORKER_PORT').'/worker/port/free';
+        $url = 'http://'.$this->worker_server.':'.$this->worker_port.'/worker/port/free';
+        $this->logger->debug('Request the remote available port at '.$url);
         try {
             $response = $this->client->get($url);
         } catch (RequestException $exception) {
@@ -264,12 +279,12 @@ class InstanceManager
      */
     public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
     {
-        $url = 'http://localhost:'.getenv('WEBSOCKET_PROXY_API_PORT').'/api/routes/device/'.$uuid;
+        $url = 'http://localhost:'.$this->websocket_proxy_api_port.'/api/routes/device/'.$uuid;
         $this->logger->debug('Create route in proxy '.$url);
 
         $this->client->post($url, [
             'body' => json_encode([
-                'target' => 'ws://'.getenv('WORKER_SERVER').':'.($remotePort + 1000).'',
+                'target' => 'ws://'.$this->worker_server.':'.($remotePort + 1000).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -286,7 +301,7 @@ class InstanceManager
     {
         $client = new Client();
 
-        $url = 'http://localhost:'.getenv('WEBSOCKET_PROXY_API_PORT').'/api/routes/device/'.$uuid;
+        $url = 'http://localhost:'.$this->websocket_proxy_api_port.'/api/routes/device/'.$uuid;
         $this->logger->debug('Delete route in proxy '.$url);
 
         $client->delete($url);
