@@ -20,9 +20,15 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+
+use Psr\Log\LoggerInterface;
 
 class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 {
+    private $logger;
+
     /**
      * @var
      */
@@ -43,14 +49,20 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     private $passwordEncoder;
 
     private $JWTManager;
+    private $params;
+    private $tokenStorage;
 
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
         $idpUrl = null,
         $remoteUserVar = null,
+        TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager = null,
         UserPasswordEncoderInterface $passwordEncoder = null,
-        JWTTokenManagerInterface $JWTManager
+        JWTTokenManagerInterface $JWTManager,
+        LoggerInterface $logger,
+        ParameterBagInterface $params
+        
     ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
@@ -58,10 +70,17 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $this->entityManager = $entityManager;
         $this->passwordEncoder = $passwordEncoder;
         $this->JWTManager = $JWTManager;
+        $this->logger = $logger;
+        $this->params = $params;
+        $this->tokenStorage = $tokenStorage;
+
+        $this->logger->debug("Shibboleth Authenticator constructor call");
     }
 
     protected function getRedirectUrl()
     {
+        $this->logger->debug("Redirect Shibboleth URL to login");
+
         return $this->urlGenerator->generate('login');
     }
 
@@ -78,6 +97,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             'firstName' => $request->server->get('givenName'),
             'lastName' => $request->server->get('sn')
         ];
+        $this->logger->debug("getCredentials Shibboleth email:".$credentials['email']);
+        $this->logger->debug("getCredentials Shibboleth eppn:".$credentials['eppn']);
+        $this->logger->debug("getCredentials Shibboleth firstname:".$credentials['firstName']);
+        $this->logger->debug("getCredentials Shibboleth lastname:".$credentials['lastName']);
 
         return $credentials;
     }
@@ -95,6 +118,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
+        $this->logger->debug("getUser:".$user);
 
         if (!$user) {
             $user = new User();
@@ -143,6 +167,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
+        $this->logger->debug("onAuthenticationFailure");
+
         $redirectTo = $this->getRedirectUrl();
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
@@ -198,6 +224,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
+        $this->logger->debug("start authentication shibboleth");
+
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
                 'status' => 'error',
@@ -219,13 +247,21 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
-        if (!\getenv('ENABLE_SHIBBOLETH')) {
+        $this->logger->debug("Is shibboleth support ? :".$this->params->get("enable_shibboleth"));
+        
+        /*if (!$this->params->get("enable_shibboleth")) {
+            $this->logger->debug("Shibboleth support No");
             return false;
         }
+        */
+        
+        $this->logger->debug("Shibboleth Request".$this->tokenStorage->getToken());
 
-        if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
+
+        /*if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
+            $this->logger->debug("Shibboleth - Remote User Var is present");
             return true;
-        }
+        }*/
 
         return false;
     }
