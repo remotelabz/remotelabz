@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\Criteria;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\OperatingSystemRepository;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\File;
@@ -220,10 +221,19 @@ class OperatingSystemController extends Controller
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($operatingSystem);
-        $entityManager->flush();
 
-        $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
+        try {
+            $entityManager->flush();
 
-        return $this->redirectToRoute('operating_systems');
+            $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
+
+            return $this->redirectToRoute('operating_systems');
+        } catch (ForeignKeyConstraintViolationException $e) {
+            $this->addFlash('danger', 'This operating system is still used in some device templates or device instances. Please delete them first.');
+
+            return $this->redirectToRoute('show_operating_system', [
+                'id' => $id
+            ]);
+        }
     }
 }
