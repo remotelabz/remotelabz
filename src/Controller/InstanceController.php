@@ -32,32 +32,29 @@ class InstanceController extends Controller
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
-    //For issue #556
-    protected $worker_server;
-    protected $worker_port;
-    protected $websocket_proxy_api_port;
-    protected $websocket_proxy_port;
+    protected $workerServer;
+    protected $workerPort;
+    protected $websocketProxyApiPort;
+    protected $websocketProxyPort;
     
     public function __construct(
+        string $workerServer,
+        string $workerPort,
+        string $websocketProxyApiPort,
+        string $websocketProxyPort,
         LoggerInterface $logger,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
-        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
-        //For issue #556
-        string $worker_server,
-        string $worker_port,
-        string $websocket_proxy_api_port,
-        string $websocket_proxy_port
+        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
-        //For issue #556
-        $this->worker_server = $worker_server;
-        $this->worker_port = $worker_port;
-        $this->websocket_proxy_api_port = $websocket_proxy_api_port;
-        $this->websocket_proxy_port = $websocket_proxy_port;
+        $this->workerServer = $workerServer;
+        $this->workerPort = $workerPort;
+        $this->websocketProxyApiPort = $websocketProxyApiPort;
+        $this->websocketProxyPort = $websocketProxyPort;
     }
 
     // /**
@@ -417,7 +414,7 @@ class InstanceController extends Controller
             else
                 $protocol = "ws://";
 
-        $this->logger->debug("Request to ".$request->getHost().":".$this->websocket_proxy_port."/".'device/'.$deviceInstance->getUuid());
+        $this->logger->debug("Request to ".$request->getHost().":".$this->websocketProxyPort."/".'device/'.$deviceInstance->getUuid());
                 
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
@@ -426,7 +423,7 @@ class InstanceController extends Controller
             'uuid' => $uuid,
             'host' => $protocol . "" . ($request->get('host') ?: $request->getHost()),
             //'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
-            'port' => $request->get('port') ?: $this->websocket_proxy_port,
+            'port' => $request->get('port') ?: $this->websocketProxyPort,
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);
     }

@@ -61,8 +61,8 @@ class InstanceManager
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         string $workerServer,
         string $workerPort,
-        string $websocketProxyApiPort,
-        string $websocketProxyPort
+        string $websocketProxyPort,
+        string $websocketProxyApiPort
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -75,9 +75,8 @@ class InstanceManager
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
-        $this->websocketProxyApiPort = $websocketProxyApiPort;
         $this->websocketProxyPort = $websocketProxyPort;
-            
+        $this->websocketProxyApiPort = $websocketProxyApiPort;
     }
 
     /**
