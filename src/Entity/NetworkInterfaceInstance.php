@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Instance;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceInstanceRepository")
@@ -36,6 +37,13 @@ class NetworkInterfaceInstance extends Instance
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $remotePort;
+
+    /**
+     * @ORM\Column(type="string", length=17)
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
+     */
+    private $macAddress;
 
     public function __construct()
     {
@@ -79,6 +87,18 @@ class NetworkInterfaceInstance extends Instance
     public function setDeviceInstance(?DeviceInstance $deviceInstance): self
     {
         $this->deviceInstance = $deviceInstance;
+
+        return $this;
+    }
+
+    public function getMacAddress(): ?string
+    {
+        return $this->macAddress;
+    }
+
+    public function setMacAddress(string $macAddress): self
+    {
+        $this->macAddress = $macAddress;
 
         return $this;
     }
