@@ -5,6 +5,7 @@ namespace App\Entity;
 use Exception;
 use App\Entity\Instance;
 use App\Instance\InstanceState;
+use App\Utils\MacAddress;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
@@ -182,6 +183,7 @@ class DeviceInstance extends Instance
                 ->setNetworkInterface($networkInterface)
                 ->setDeviceInstance($this)
                 ->setRemotePort(0)
+                ->setMacAddress(MacAddress::generate(['52', '54', '00']))
                 ->setOwnedBy($this->ownedBy);
 
             switch ($this->ownedBy) {
