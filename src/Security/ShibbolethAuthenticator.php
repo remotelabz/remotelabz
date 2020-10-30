@@ -73,14 +73,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $this->logger = $logger;
         $this->params = $params;
         $this->tokenStorage = $tokenStorage;
-
-        $this->logger->debug("Shibboleth Authenticator constructor call");
     }
 
     protected function getRedirectUrl()
     {
-        $this->logger->debug("Redirect Shibboleth URL to login");
-
         return $this->urlGenerator->generate('login');
     }
 
@@ -97,10 +93,6 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             'firstName' => $request->server->get('givenName'),
             'lastName' => $request->server->get('sn')
         ];
-        $this->logger->debug("getCredentials Shibboleth email:".$credentials['email']);
-        $this->logger->debug("getCredentials Shibboleth eppn:".$credentials['eppn']);
-        $this->logger->debug("getCredentials Shibboleth firstname:".$credentials['firstName']);
-        $this->logger->debug("getCredentials Shibboleth lastname:".$credentials['lastName']);
 
         return $credentials;
     }
@@ -118,7 +110,6 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     {
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
-        $this->logger->debug("getUser:".$user);
 
         if (!$user) {
             $user = new User();
@@ -167,8 +158,6 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        $this->logger->debug("onAuthenticationFailure");
-
         $redirectTo = $this->getRedirectUrl();
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
@@ -224,8 +213,6 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $this->logger->debug("start authentication shibboleth");
-
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
                 'status' => 'error',
@@ -247,21 +234,13 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     public function supports(Request $request)
     {
-        $this->logger->debug("Is shibboleth support ? :".$this->params->get("enable_shibboleth"));
-        
-        /*if (!$this->params->get("enable_shibboleth")) {
-            $this->logger->debug("Shibboleth support No");
+        if (!$this->params->get("enable_shibboleth")) {
             return false;
         }
-        */
-        
-        $this->logger->debug("Shibboleth Request".$this->tokenStorage->getToken());
 
-
-        /*if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
-            $this->logger->debug("Shibboleth - Remote User Var is present");
+        if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
             return true;
-        }*/
+        }
 
         return false;
     }

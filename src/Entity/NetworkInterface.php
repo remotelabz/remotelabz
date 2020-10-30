@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Instance\InstanciableInterface;
-use App\Utils\MacAddress;
 use App\Utils\Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -54,13 +53,6 @@ class NetworkInterface implements InstanciableInterface
     private $device;
 
     /**
-     * @ORM\Column(type="string", length=17)
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
-     * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
-     */
-    private $macAddress;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
      */
     private $instances;
@@ -86,7 +78,6 @@ class NetworkInterface implements InstanciableInterface
     {
         $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
-        $this->macAddress = MacAddress::generate(['52', '54', '00']);
     }
 
     public function getId(): ?int
@@ -147,18 +138,6 @@ class NetworkInterface implements InstanciableInterface
     public function setDevice(?Device $device): self
     {
         $this->device = $device;
-
-        return $this;
-    }
-
-    public function getMacAddress(): ?string
-    {
-        return $this->macAddress;
-    }
-
-    public function setMacAddress(string $macAddress): self
-    {
-        $this->macAddress = $macAddress;
 
         return $this;
     }

@@ -146,17 +146,16 @@ services:
     
     App\Service\Instance\InstanceManager:
         arguments:
-            $worker_server: '%app.worker_server%'
-            $worker_port: '%app.worker_port%'
-            $websocket_proxy_port: '%app.websocket_proxy_port%'
-            $websocket_proxy_api_port: '%app.websocket_proxy_api_port%'
+            $workerServer: '%app.worker_server%'
+            $workerPort: '%app.worker_port%'
+            $websocketProxyPort: '%app.websocket_proxy_port%'
+            $websocketProxyApiPort: '%app.websocket_proxy_api_port%'
+
+    instance_manager: '@App\Service\Instance\InstanceManager'
 
     App\Controller\InstanceController:
         arguments:
-            $worker_server: '%app.worker_server%'
-            $worker_port: '%app.worker_port%'
-            $websocket_proxy_port: '%app.websocket_proxy_port%'
-            $websocket_proxy_api_port: '%app.websocket_proxy_api_port%'
-            
-    
-    
+            $workerServer: '%app.worker_server%'
+            $workerPort: '%app.worker_port%'
+            $websocketProxyPort: '%app.websocket_proxy_port%'
+            $websocketProxyApiPort: '%app.websocket_proxy_api_port%'

@@ -44,10 +44,10 @@ class InstanceManager
     protected $labInstanceRepository;
     protected $deviceInstanceRepository;
     protected $networkInterfaceInstanceRepository;
-    protected $worker_server;
-    protected $worker_port;
-    protected $websocket_proxy_api_port;
-    protected $websocket_proxy_port;
+    protected $workerServer;
+    protected $workerPort;
+    protected $websocketProxyApiPort;
+    protected $websocketProxyPort;
 
     public function __construct(
         LoggerInterface $logger,
@@ -59,11 +59,10 @@ class InstanceManager
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
-        string $worker_server,
-        string $worker_port,
-        string $websocket_proxy_api_port,
-        string $websocket_proxy_port
-    
+        string $workerServer,
+        string $workerPort,
+        string $websocketProxyPort,
+        string $websocketProxyApiPort
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -74,11 +73,10 @@ class InstanceManager
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
-        $this->worker_server = $worker_server;
-        $this->worker_port = $worker_port;
-        $this->websocket_proxy_api_port = $websocket_proxy_api_port;
-        $this->websocket_proxy_port = $websocket_proxy_port;
-            
+        $this->workerServer = $workerServer;
+        $this->workerPort = $workerPort;
+        $this->websocketProxyPort = $websocketProxyPort;
+        $this->websocketProxyApiPort = $websocketProxyApiPort;
     }
 
     /**
@@ -263,7 +261,7 @@ class InstanceManager
 
     public function getRemoteAvailablePort(): int
     {
-        $url = 'http://'.$this->worker_server.':'.$this->worker_port.'/worker/port/free';
+        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/worker/port/free';
         $this->logger->debug('Request the remote available port at '.$url);
         try {
             $response = $this->client->get($url);
@@ -279,12 +277,12 @@ class InstanceManager
      */
     public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
     {
-        $url = 'http://localhost:'.$this->websocket_proxy_api_port.'/api/routes/device/'.$uuid;
+        $url = 'http://localhost:'.$this->websocketProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Create route in proxy '.$url);
 
         $this->client->post($url, [
             'body' => json_encode([
-                'target' => 'ws://'.$this->worker_server.':'.($remotePort + 1000).'',
+                'target' => 'ws://'.$this->workerServer.':'.($remotePort + 1000).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -301,7 +299,7 @@ class InstanceManager
     {
         $client = new Client();
 
-        $url = 'http://localhost:'.$this->websocket_proxy_api_port.'/api/routes/device/'.$uuid;
+        $url = 'http://localhost:'.$this->websocketProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Delete route in proxy '.$url);
 
         $client->delete($url);
