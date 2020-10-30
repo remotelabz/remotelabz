@@ -19,7 +19,7 @@ use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
-use App\Message\InstanceActionMessage;
+use Remotelabz\Message\Message\InstanceActionMessage;
 use App\Repository\ActivityRepository;
 use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;

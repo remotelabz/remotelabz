@@ -45,7 +45,9 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->deviceRepository = $deviceRepository;
-        $this->user = $tokenStorage->getToken()->getUser();
+        $token = $tokenStorage->getToken();
+        if ($token)
+            $this->user = $token->getUser();
         $this->router = $router;
     }
 

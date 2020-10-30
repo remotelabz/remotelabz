@@ -34,6 +34,18 @@ class DeviceInstanceRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findAllStartingOrStarted()
+    {
+        return $this->createQueryBuilder('l')
+            ->where('l.state = :a')
+            ->orWhere('l.state = :b')
+            ->setParameter('a', 'starting')
+            ->setParameter('b', 'started')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     // /**
     //  * @return DeviceInstance[] Returns an array of DeviceInstance objects
     //  */

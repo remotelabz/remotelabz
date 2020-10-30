@@ -8,6 +8,9 @@
     "crestic-urca/network-bundle": {
         "version": "v1.0.0"
     },
+    "crestic-urca/remotelabz-message-bundle": {
+        "version": "dev-master"
+    },
     "doctrine/annotations": {
         "version": "1.0",
         "recipe": {

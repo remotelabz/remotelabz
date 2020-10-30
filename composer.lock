@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "031c693a242b82e476d580cf7fe9b6de",
+    "content-hash": "b508332541299578c6d18d844064d30d",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -132,6 +132,65 @@
                 "issues": "https://github.com/crestic-urca/network-bundle/issues"
             },
             "time": "2020-08-26T09:49:40+00:00"
+        },
+        {
+            "name": "crestic-urca/remotelabz-message-bundle",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
+                "reference": "a1dea66d75ce20da8a5f703ef307fff5ee96e6b7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/a1dea66d75ce20da8a5f703ef307fff5ee96e6b7",
+                "reference": "a1dea66d75ce20da8a5f703ef307fff5ee96e6b7",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.3"
+            },
+            "require-dev": {
+                "squizlabs/php_codesniffer": "3.*",
+                "symfony/phpunit-bridge": "^5.1"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Remotelabz\\Message\\": ""
+                },
+                "exclude-from-classmap": [
+                    "Resources/",
+                    "Tests/"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "./vendor/bin/simple-phpunit --coverage-clover coverage.xml --colors=never"
+                ],
+                "phpcs": [
+                    "./vendor/bin/phpcs --standard=PSR2 --exclude=Generic.Files.LineLength ./Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Julien Hubert",
+                    "email": "julien.hubert1@univ-reims.fr"
+                },
+                {
+                    "name": "Florent Nolot",
+                    "email": "florent.nolot@univ-reims.fr"
+                }
+            ],
+            "description": "Shared messages between remotelabz components.",
+            "support": {
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/1.0.0",
+                "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
+            },
+            "time": "2020-10-29T15:07:44+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -4096,16 +4155,16 @@
         },
         {
             "name": "symfony/amqp-messenger",
-            "version": "v5.1.7",
+            "version": "v5.1.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/amqp-messenger.git",
-                "reference": "4cbeeb561be52763a814f4e886fde0ee115b82cd"
+                "reference": "daa895ff04c3a692b8ca3568445a46b44796e254"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/amqp-messenger/zipball/4cbeeb561be52763a814f4e886fde0ee115b82cd",
-                "reference": "4cbeeb561be52763a814f4e886fde0ee115b82cd",
+                "url": "https://api.github.com/repos/symfony/amqp-messenger/zipball/daa895ff04c3a692b8ca3568445a46b44796e254",
+                "reference": "daa895ff04c3a692b8ca3568445a46b44796e254",
                 "shasum": ""
             },
             "require": {
@@ -4119,11 +4178,6 @@
                 "symfony/serializer": "^4.4|^5.0"
             },
             "type": "symfony-bridge",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "5.1-dev"
-                }
-            },
             "autoload": {
                 "psr-4": {
                     "Symfony\\Component\\Messenger\\Bridge\\Amqp\\": ""
@@ -4149,7 +4203,7 @@
             "description": "Symfony AMQP extension Messenger Bridge",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/amqp-messenger/tree/v5.1.7"
+                "source": "https://github.com/symfony/amqp-messenger/tree/v5.1.8"
             },
             "funding": [
                 {
@@ -4165,7 +4219,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-09-14T15:02:15+00:00"
+            "time": "2020-10-27T10:11:13+00:00"
         },
         {
             "name": "symfony/apache-pack",
