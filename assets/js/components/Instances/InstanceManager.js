@@ -270,6 +270,10 @@ export class InstanceManager extends Component {
         this.setState({labInstance});
     }
 
+    connectToInternet = () => {
+        Remotelabz.instances.lab.connectToInternet(this.state.labInstance.uuid);
+    }
+
     render() {
         return (<>
             <div className="d-flex align-items-center mb-2">
@@ -298,9 +302,15 @@ export class InstanceManager extends Component {
                                 <span className="ml-1">OpenVPN file</span>
                             </Button>
                         }
+                        {(this.state.labInstance.state === "created" && this.state.lab.isInternetAuthorized) &&
+                            <Button onClick={this.connectToInternet} variant="primary" className="ml-2">
+                                <SVG name="earth" className="v-sub image-sm"></SVG>
+                                <span className="ml-1">Connect to Internet</span>
+                            </Button>
+                        }
                         {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
                             <JitsiCallButton
-                                className="mr-2"
+                                className="ml-2"
                                 isOwnedByGroup={this.isOwnedByGroup()}
                                 isCurrentUserGroupAdmin={this.isCurrentUserGroupAdmin(this.state.viewAs)}
                                 onStartCall={this.onStartedCall}

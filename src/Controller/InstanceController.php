@@ -427,4 +427,14 @@ class InstanceController extends Controller
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);
     }
+
+    /**
+     * @Rest\Post("/api/instances/{uuid}/internet/connect", name="connect_lab_instance_to_internet", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function connectLabInstanceToInternet(string $uuid, InstanceManager $instanceManager)
+    {
+        $instanceManager->connectLabInstanceToInternet($uuid);
+
+        return $this->json();
+    }
 }

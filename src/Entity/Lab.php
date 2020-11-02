@@ -74,7 +74,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"lab", "instance_manager"})
      */
     private $isInternetAuthorized;
 

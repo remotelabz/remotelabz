@@ -304,4 +304,20 @@ class InstanceManager
 
         $client->delete($url);
     }
+
+    public function connectLabInstanceToInternet(string $uuid)
+    {
+        $labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
+
+        $this->logger->debug('Sending internet connection request message.', [
+            'uuid' => $labInstance->getUuid()
+        ]);
+
+        $context = SerializationContext::create()->setGroups('start_lab');
+        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+
+        $this->bus->dispatch(
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_CONNECT)
+        );
+    }
 }
