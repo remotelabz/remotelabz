@@ -61,7 +61,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                     'device-alpine'
                 )
             )
-            ->setMacAddress('52:54:00:00:00:01')
+            //->setMacAddress('52:54:00:00:00:01')
             ->setIsTemplate(true);
 
         $manager->persist($networkInterface);
@@ -80,7 +80,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                     'device-debian'
                 )
             )
-            ->setMacAddress('52:54:00:00:00:02')
+            //->setMacAddress('52:54:00:00:00:02')
             ->setIsTemplate(true);
         $manager->persist($networkInterface);
 
@@ -98,7 +98,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                     'device-ubuntu'
                 )
             )
-            ->setMacAddress('52:54:00:00:00:03')
+            //->setMacAddress('52:54:00:00:00:03')
             ->setIsTemplate(true);
 
         $manager->persist($networkInterface);

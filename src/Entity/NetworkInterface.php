@@ -7,16 +7,10 @@ use App\Utils\Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
- * @UniqueEntity(
- *     fields="macAddress",
- *     errorPath="macAddress",
- *     message="This MAC address is already used by another interface."
- * )
  */
 class NetworkInterface implements InstanciableInterface
 {

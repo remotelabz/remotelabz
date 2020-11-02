@@ -45,12 +45,6 @@ class NetworkInterfaceType extends AbstractType
                 'choice_label' => 'name',
                 'required' => false
             ])
-            ->add('macAddress', TextType::class, [
-                'label' => 'MAC address',
-                'help' => 'MAC address must be in shape like 52:54:00:XX:XX:XX where X is a digit in hexa',
-                //'data' => '52:54:00:',
-                'required' => false
-            ])
             ->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
