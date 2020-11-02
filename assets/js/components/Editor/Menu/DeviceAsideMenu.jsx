@@ -22,10 +22,6 @@ export default function DeviceAsideMenu(props) {
             return <div key={networkInterface.uuid} className="device-network-interface-item px-3 py-3 mb-3">
                 <h4 className="mb-2">NIC #{index + 1}</h4>
                 <div className="form-group">
-                    <label className="form-label">MAC Address</label>
-                    <input disabled className="form-control" value={networkInterface.macAddress} />
-                </div>
-                <div className="form-group">
                     <label className="form-label">Access type</label>
                     <Select
                         options={accessTypeOptions}
