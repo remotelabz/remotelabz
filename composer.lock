@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "031c693a242b82e476d580cf7fe9b6de",
+    "content-hash": "28157fa5324a53e4645c93b6b3532653",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -132,6 +132,66 @@
                 "issues": "https://github.com/crestic-urca/network-bundle/issues"
             },
             "time": "2020-08-26T09:49:40+00:00"
+        },
+        {
+            "name": "crestic-urca/remotelabz-message-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
+                "reference": "627cfec57a94d8772a75057c794a21982dadbf34"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/627cfec57a94d8772a75057c794a21982dadbf34",
+                "reference": "627cfec57a94d8772a75057c794a21982dadbf34",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.3"
+            },
+            "require-dev": {
+                "squizlabs/php_codesniffer": "3.*",
+                "symfony/phpunit-bridge": "^5.1"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Remotelabz\\Message\\": ""
+                },
+                "exclude-from-classmap": [
+                    "Resources/",
+                    "Tests/"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "./vendor/bin/simple-phpunit --coverage-clover coverage.xml --colors=never"
+                ],
+                "phpcs": [
+                    "./vendor/bin/phpcs --standard=PSR2 --exclude=Generic.Files.LineLength ./Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Julien Hubert",
+                    "email": "julien.hubert1@univ-reims.fr"
+                },
+                {
+                    "name": "Florent Nolot",
+                    "email": "florent.nolot@univ-reims.fr"
+                }
+            ],
+            "description": "Shared messages between remotelabz components.",
+            "support": {
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
+                "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
+            },
+            "time": "2020-10-30T13:07:02+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -10896,7 +10956,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "crestic-urca/remotelabz-message-bundle": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

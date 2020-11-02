@@ -72,6 +72,12 @@ class Lab implements InstanciableInterface
      */
     private $lastUpdated;
 
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"lab"})
+     */
+    private $isInternetAuthorized;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -247,6 +253,18 @@ class Lab implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function isInternetAuthorized(): bool
+    {
+        return $this->isInternetAuthorized;
+    }
+
+    public function setIsInternetAuthorized(bool $isInternetAuthorized): self
+    {
+        $this->isInternetAuthorized = $isInternetAuthorized;
 
         return $this;
     }
