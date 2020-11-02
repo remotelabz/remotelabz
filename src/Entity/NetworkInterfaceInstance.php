@@ -6,9 +6,15 @@ use App\Entity\Instance;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceInstanceRepository")
+ * @UniqueEntity(
+ *     fields="macAddress",
+ *     errorPath="macAddress",
+ *     message="This MAC address is already used by another interface."
+ * )
  */
 class NetworkInterfaceInstance extends Instance
 {
