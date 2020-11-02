@@ -7,7 +7,7 @@ use App\Repository\JitsiCallRepository;
 use App\Repository\LabRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\GroupRepository;
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use App\Service\JitsiJWTCreator;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;

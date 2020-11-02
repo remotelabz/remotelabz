@@ -4,7 +4,7 @@ namespace App\MessageHandler;
 
 use Psr\Log\LoggerInterface;
 use App\Instance\InstanceState;
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;

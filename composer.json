@@ -22,6 +22,7 @@
         "myclabs/deep-copy": "^1.9",
         "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
+        "symfony/amqp-messenger": "5.1.*",
         "symfony/apache-pack": "^1.0",
         "symfony/asset": "5.1.*",
         "symfony/console": "5.1.*",
