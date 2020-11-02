@@ -217,6 +217,23 @@ export class RemotelabzAPI {
          */
         get(id) {
             return axios.get(`/labs/${id}`);
+        },
+
+        /**
+         * Updates a lab by ID.
+         * 
+         * Implements PUT `/api/labs/{id}`
+         * 
+         * @typedef {Object} UpdateLabParams
+         * @property {number} id ID of the lab to update
+         * @property {Object} fields Fields to update and their values
+         * 
+         * @param {UpdateLabParams} params 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        update(params) {
+            return axios.put(`/labs/${params.id}`, params.fields)
         }
     }
 

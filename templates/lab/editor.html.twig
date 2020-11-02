@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_lab') }) %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs|merge({ ("!" ~ lab.id): path('show_lab', {'id': lab.id}) }) : breadcrumbs|merge({ 'New': path('new_lab') }) %}
     {{ parent() }}
 {% endblock %}
 

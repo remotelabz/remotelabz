@@ -17,6 +17,9 @@ import ReactMarkdown from 'react-markdown';
 import Remotelabz, { Device } from '../API';
 import Select from 'react-select';
 import Noty from 'noty';
+import AsideMenuContainer from './Menu/AsideMenuContainer';
+import DeviceAsideMenu from './Menu/DeviceAsideMenu';
+import LabAsideMenu from './Menu/LabAsideMenu';
 
 export default class Editor extends React.Component {
     jsPlumb = null;
@@ -61,7 +64,7 @@ export default class Editor extends React.Component {
             },
             asideMenu: {
                 show: false,
-                action: null
+                type: null
             },
             lab: {
                 name: null
@@ -77,9 +80,7 @@ export default class Editor extends React.Component {
             Remotelabz.labs.get(this.labId).then(response => this.setState({
                 devices: response.data.devices,
                 lab: {
-                    ...this.state.lab,
-                    name: response.data.name,
-                    description: response.data.description
+                    ...response.data,
                 },
                 ready: true
             }));
@@ -147,7 +148,7 @@ export default class Editor extends React.Component {
             },
             asideMenu: {
                 show: true,
-                action: 'edit'
+                type: 'device'
             }
         });
     }
@@ -175,6 +176,23 @@ export default class Editor extends React.Component {
                     devices: update(this.state.devices, { [updatedDeviceIndex]: { $set: response.data } })
                 });
             });
+    }
+
+    onSubmitLabForm = lab => {
+        this.setState({
+            isLoading: true,
+        });
+        Remotelabz.labs.update({
+            id: lab.id,
+            fields: lab
+        })
+        .then(response => {
+            this.hideAsideMenu();
+            this.setState({
+                lab: response.data
+            });
+        })
+        .finally(() => this.setState({ isLoading: false }));
     }
 
     handleDeleteDevice = () => {
@@ -283,6 +301,15 @@ export default class Editor extends React.Component {
         });
     }
 
+    onLabEdit = () => {
+        this.setState({
+            asideMenu: {
+                show: true,
+                type: 'lab'
+            }
+        });
+    }
+
     onNameSave = val => {
         if (val != this.state.lab.name) {
             this.updateLabRequest(this.labId, { name: val })
@@ -312,51 +339,31 @@ export default class Editor extends React.Component {
         }
     }
 
-    getAsideMenuChildren = () => {
+    getAsideMenuChildren = (type) => {
         const id = this.state.editDeviceForm.device;
         const device = this.state.devices.find(d => d.id == id);
 
-        if (this.state.asideMenu.action === 'edit') {
-            return (<>
-                <h2>Edit device</h2>
-                <DeviceForm onSubmit={this.onSubmitEditDevice} device={device} />
-                <hr />
-                <h2 className="mb-3">Network interfaces</h2>
-                {device.networkInterfaces.map((networkInterface, index) => {
-                    const accessTypeOptions = [
-                        { value: '', label: 'None', id: networkInterface.id },
-                        { value: 'VNC', label: 'VNC', id: networkInterface.id }
-                    ];
+        switch (type) {
+            case 'lab':
+                const lab = this.state.lab;
+                return (<LabAsideMenu onClose={this.hideAsideMenu} onSubmitLabForm={this.onSubmitLabForm} lab={lab}></LabAsideMenu>);
 
-                    return <div key={networkInterface.uuid} className="device-network-interface-item px-3 py-3 mb-3">
-                        <h4 className="mb-2">NIC #{index + 1}</h4>
-                        <div className="form-group">
-                            <label className="form-label">MAC Address</label>
-                            <input disabled className="form-control" value={networkInterface.macAddress} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Access type</label>
-                            <Select
-                                options={accessTypeOptions}
-                                menuPlacement={'top'}
-                                className='react-select-container'
-                                classNamePrefix="react-select"
-                                defaultValue={accessTypeOptions.find(v => (!networkInterface.accessType && v.value == '') || (networkInterface.accessType && v.value == networkInterface.accessType))}
-                                onChange={this.onNetworkInterfaceProtocolChange}
-                            />
-                        </div>
-                        <Button variant="danger" onClick={() => this.onNetworkInterfaceRemove(networkInterface.id)} block>
-                            <SVG name="remove" className="image-sm v-sub" /> Remove
-                        </Button>
-                    </div>
-                })}
-                <Button variant="success" onClick={() => this.onNetworkInterfaceCreate(device.id)} block>
-                    <SVG name="plus-square" className="image-sm v-sub" /> Add network interface
-                </Button>
-            </>);
+            case 'device':
+                const id = this.state.editDeviceForm.device;
+                const device = this.state.devices.find(d => d.id == id);
+
+                return <DeviceAsideMenu
+                    onClose={this.hideAsideMenu}
+                    device={device}
+                    onSubmitEditDevice={this.onSubmitEditDevice}
+                    onNetworkInterfaceProtocolChange={this.onNetworkInterfaceProtocolChange}
+                    onNetworkInterfaceCreate={this.onNetworkInterfaceCreate}
+                    onNetworkInterfaceRemove={this.onNetworkInterfaceRemove}
+                ></DeviceAsideMenu>;
+            
+            default:
+                return (<></>);
         }
-
-        return null;
     }
 
     /**
@@ -393,7 +400,7 @@ export default class Editor extends React.Component {
         })
     }
 
-    hideAsideMenu = () => this.setState({ asideMenu: { show: false, action: null } });
+    hideAsideMenu = () => this.setState({ asideMenu: { show: false, type: null } });
 
     render() {
         return (<>
@@ -483,6 +490,7 @@ export default class Editor extends React.Component {
                             onToggleFullscreen={this.toggleFullscreen}
                             onZoomIn={this.onZoomIn}
                             onZoomOut={this.onZoomOut}
+                            onLabEditClick={this.onLabEdit}
                             className="editor-menu"
                         />
 
@@ -505,16 +513,7 @@ export default class Editor extends React.Component {
                             </Canvas>
 
                             {/* SIDE MENU */}
-                            {this.state.asideMenu.show && (
-                                <div style={{ overflowY: 'scroll' }}>
-                                    <aside className="editor-aside-toolbar">
-                                        <OverlayTrigger placement="top" overlay={<Tooltip>Close side menu</Tooltip>}>
-                                            <Button variant="danger" onClick={this.hideAsideMenu} className="float-right"><SVG name="close" className="image-sm v-sub"></SVG></Button>
-                                        </OverlayTrigger>
-                                        {this.getAsideMenuChildren()}
-                                    </aside>
-                                </div>
-                            )}
+                            {this.state.asideMenu.show && this.getAsideMenuChildren(this.state.asideMenu.type)}
                         </div>
 
                         {/* TOOLBAR */}
