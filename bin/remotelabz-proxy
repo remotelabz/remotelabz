@@ -49,6 +49,7 @@ if (array_key_exists('WEBSOCKET_PROXY_TIMEOUT', $_ENV)) {
 }
 
 $process = new Process($cmd);
+$process->setTimeout(null);
 
 $process->run(function ($type, $buffer) {
     echo $buffer;
