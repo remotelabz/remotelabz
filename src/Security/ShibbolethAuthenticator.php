@@ -122,12 +122,16 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 ))
                 ->setFirstName(ucfirst(strtolower($credentials['firstName'])))
                 ->setLastName($credentials['lastName'])
+                ->setIsShibbolethUser(true)
                 ->setRoles($role);
 
             # TODO: Add user's firstname and lastname fetching
 
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+        } else if (!$user->isShibbolethUser()) {
+            // backward compatibility to already created shib users
+            $user->setIsShibbolethUser(true);
         }
 
         if (!$user->isEnabled()) {

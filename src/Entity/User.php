@@ -121,6 +121,14 @@ class User implements UserInterface, InstancierInterface
      */
     private $uuid;
 
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"details", "user"})
+     *
+     * @var bool
+     */
+    private $isShibbolethUser = false;
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
@@ -486,5 +494,17 @@ class User implements UserInterface, InstancierInterface
     public function getType(): string
     {
         return 'user';
+    }
+
+    public function isShibbolethUser(): ?bool
+    {
+        return $this->isShibbolethUser;
+    }
+
+    public function setIsShibbolethUser(bool $isShibbolethUser): self
+    {
+        $this->isShibbolethUser = $isShibbolethUser;
+
+        return $this;
     }
 }
