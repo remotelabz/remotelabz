@@ -26,6 +26,7 @@
                 {{ form(userForm) }}
             </div>
         </div>
+        {% if not user.isShibbolethUser %}
         <hr>
         <div class="row">
             <div class="col-lg-4">
@@ -36,6 +37,7 @@
                 {{ form(passwordForm) }}
             </div>
         </div>
+        {% endif %}
     </div>
     
 {% endblock %}
