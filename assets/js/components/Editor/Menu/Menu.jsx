@@ -51,11 +51,11 @@ export default class Menu extends Component
                         </OverlayTrigger>
                     </ButtonGroup>
 
-                    <OverlayTrigger placement="bottom" overlay={<Tooltip>Lab options</Tooltip>}>
+                    {/* <OverlayTrigger placement="bottom" overlay={<Tooltip>Lab options</Tooltip>}>
                         <Button variant="default" className="ml-3" onClick={this.handleLabEdit}>
                             <span><SVG name="settings" className="image-sm v-sub"></SVG></span>
                         </Button>
-                    </OverlayTrigger>
+                    </OverlayTrigger> */}
                 </ButtonToolbar>
                 <div className="separator flex-grow-1"> </div>
                 <ButtonToolbar className="d-flex">
