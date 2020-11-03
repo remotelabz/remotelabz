@@ -76,7 +76,7 @@ class Lab implements InstanciableInterface
      * @ORM\Column(type="boolean")
      * @Serializer\Groups({"lab"})
      */
-    private $isInternetAuthorized;
+    private $isInternetAuthorized = false;
 
     public function __construct()
     {
