@@ -24,6 +24,9 @@ parameters:
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
 
     app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
+    app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
+
+    app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
     app.network.base_network: '%env(resolve:BASE_NETWORK)%'
     app.network.base_network_netmask: '%env(resolve:BASE_NETWORK_NETMASK)%'
