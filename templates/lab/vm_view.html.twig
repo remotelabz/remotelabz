@@ -23,15 +23,23 @@
     </div>
 </div>
 <div class="content-body">
-    <div class="text-muted">UUID: {{ deviceInstance.uuid }}</div>
     <div class="alert alert-info mt-2" role="alert">
+        Gateway : <strong>{{ deviceInstance.getLabInstance().getNetwork().getLastAddress() }}</strong>
+        <br>
         Attributed network : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
     </div>
     <div class="card stretch-card">
         <div class="card-body">
-            <input type="button" value="CtrlAltDel" src="" id="noVNC_button">
+            <div class="row mb-2">
+                <div class="col">
+                    <button class="btn btn-primary" id="ReconnectButton" disabled>Reconnect</button>
+                    <button class="btn btn-default" id="CtrlAltDelButton">Send CTRL+ALT+DEL</button>
+                </div>
+            </div>
             <div id="noVNC_screen" style="height:768px;"></div>
-            <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"> </div>
+            <div class="row">
+                <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"></div>
+            </div>
         </div>
     </div>
 </div>
