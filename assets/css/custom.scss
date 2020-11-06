@@ -937,6 +937,10 @@ $bg-number: 8;
     color: theme-color("light");
   }
 
+  .CodeMirror-cursor {
+    border-left-color: theme-color("light");
+  }
+
   .editor-toolbar, .editor-toolbar.fullscreen {
     background-color: theme-color("dark");
     border-color: lighten(theme-color("dark-lighter"), 7.5%);
