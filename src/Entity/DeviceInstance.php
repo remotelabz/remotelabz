@@ -83,7 +83,18 @@ class DeviceInstance extends Instance
      */
     public function getUserId(): ?int
     {
-        return $this->user->getId();
+        $id = null;
+        // TODO: refractor to "getOwnerId"
+        switch ($this->ownedBy) {
+            case self::OWNED_BY_USER:
+                $id = $this->user->getId();
+            break;
+            case self::OWNED_BY_GROUP:
+                $id = $this->_group->getId();
+            break;
+        }
+
+        return $id;
     }
 
     public function getLab(): ?Lab
