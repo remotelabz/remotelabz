@@ -11,6 +11,7 @@ use App\Security\ACL\GroupVoter;
 use App\Service\GroupPictureFileUploader;
 use App\Utils\Uuid;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Exception;
 use FOS\RestBundle\Context\Context;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -348,13 +349,26 @@ class GroupController extends Controller
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($group);
-        $entityManager->flush();
+
+        try {
+            $entityManager->flush();
+
+            $this->addFlash('success', $group->getName().' has been deleted.');
+        } catch (ForeignKeyConstraintViolationException $e) {
+            $message = 'Instances of this group are still running. Please delete them first before deleting this group.';
+
+            $this->addFlash('warning', $message);
+
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($message, 400, [], []);
+            }
+
+            return $this->redirectToRoute('dashboard_edit_group', ['slug' => $slug]);
+        }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json(null, 200, [], []);
         }
-
-        $this->addFlash('success', $group->getName().' has been deleted.');
 
         return $this->redirectToRoute('dashboard_groups');
     }
