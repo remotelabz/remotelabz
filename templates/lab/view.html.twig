@@ -8,14 +8,6 @@
 {% block wrapper %}
 <div class="content-title">
     <div class="content-title-infos">
-        {% set labInstanced = lab.getInstances()|length > 0 %}
-        <label class="mr-1 badge badge-{% if labInstanced %}success{% else %}danger{% endif %}">
-            {%- if labInstanced %}
-                {{ 'Has instances'|trans }}
-            {% else %}
-                {{ 'No instance'|trans }}
-            {% endif -%}
-        </label>
         Created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=24&hash=author" class="rounded-circle ml-1 mr-1 d-inline-block" /> <strong>{{lab.author.name}}</strong>
     </div>
     <div class="content-title-actions">

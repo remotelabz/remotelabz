@@ -129,7 +129,7 @@ class LabController extends Controller
 
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
-        $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
+        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
         $deviceStarted = [];
 
         foreach ($lab->getDevices()->getValues() as $device) {
