@@ -27,7 +27,7 @@ class NetworkInterfaceInstance extends Instance
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface", inversedBy="instances")
+     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $networkInterface;
@@ -37,12 +37,6 @@ class NetworkInterfaceInstance extends Instance
      * @ORM\JoinColumn(onDelete="CASCADE")
      */
     private $deviceInstance;
-
-    /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
-    private $remotePort;
 
     /**
      * @ORM\Column(type="string", length=17)
@@ -69,18 +63,6 @@ class NetworkInterfaceInstance extends Instance
     public function setNetworkInterface(?NetworkInterface $networkInterface): self
     {
         $this->networkInterface = $networkInterface;
-
-        return $this;
-    }
-
-    public function getRemotePort(): ?int
-    {
-        return $this->remotePort;
-    }
-
-    public function setRemotePort(int $remotePort): self
-    {
-        $this->remotePort = $remotePort;
 
         return $this;
     }

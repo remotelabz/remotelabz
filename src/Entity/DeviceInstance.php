@@ -28,7 +28,7 @@ class DeviceInstance extends Instance
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     protected $device;
@@ -51,6 +51,12 @@ class DeviceInstance extends Instance
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $state;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     */
+    private $remotePort;
 
     public function __construct()
     {
@@ -179,6 +185,18 @@ class DeviceInstance extends Instance
         return $this->state === InstanceState::STARTED;
     }
 
+    public function getRemotePort(): ?int
+    {
+        return $this->remotePort;
+    }
+
+    public function setRemotePort(?int $remotePort): self
+    {
+        $this->remotePort = $remotePort;
+
+        return $this;
+    }
+
     /**
      * Creates all sub-instances from device descriptor. This does not record them in the database.
      */
@@ -193,7 +211,6 @@ class DeviceInstance extends Instance
             $networkInterfaceInstance = NetworkInterfaceInstance::create()
                 ->setNetworkInterface($networkInterface)
                 ->setDeviceInstance($this)
-                ->setRemotePort(0)
                 ->setMacAddress(MacAddress::generate(['52', '54', '00']))
                 ->setOwnedBy($this->ownedBy);
 
@@ -209,7 +226,7 @@ class DeviceInstance extends Instance
 
             $networkInterfaceInstance->populate();
 
-            $networkInterface->addInstance($networkInterfaceInstance);
+            // $networkInterface->addInstance($networkInterfaceInstance);
             $this->addNetworkInterfaceInstance($networkInterfaceInstance);
         }
     }
