@@ -91,10 +91,9 @@ class InstanceController extends Controller
      */
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
-        $data = json_decode($request->getContent(), true);
-        $labUuid = $data['lab'];
-        $instancierUuid = $data['instancier'];
-        $instancierType = $data['instancierType'];
+        $labUuid = $request->request->get('lab');
+        $instancierUuid = $request->request->get('instancier');
+        $instancierType = $request->request->get('instancierType');
 
         switch ($instancierType) {
             case 'user':
