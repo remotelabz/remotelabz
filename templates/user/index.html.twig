@@ -64,11 +64,23 @@
     </div>
 
     <div class="search-panel">
-        <form action="{{ path('users') }}" method="GET">
-            <div class="search-field">
+        <form action="{{ path('users') }}" method="GET" class="d-flex align-items-center">
+            <div class="search-field flex-grow-1 mr-3">
                 <i class="fa fa-search"></i>
                 <input type="search" class="form-control input-sm" name="search" placeholder="Search by name or email" spellcheck="false" value="{{ search|default('') }}" type="search" />
             </div>
+            <div class="mr-2">
+                {% set searchLimit = app.request.query.get("limit") %}
+                <select name="limit" class="form-control">
+                    <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
+                    <option value="30" {% if searchLimit is defined and searchLimit == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="mr-3">
+                users per page
+            </div>
+            <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
 
