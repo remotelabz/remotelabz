@@ -167,15 +167,21 @@ export default class Editor extends React.Component {
         this.setState({ mdeValue });
     }
 
-    onSubmitEditDevice = device => {
-        this.updateDeviceRequest(device)
-            .then(response => {
-                this.hideAsideMenu();
-                const updatedDeviceIndex = this.state.devices.findIndex(value => { return device.id == value.id });
-                this.setState({
-                    devices: update(this.state.devices, { [updatedDeviceIndex]: { $set: response.data } })
-                });
-            });
+    onSubmitEditDevice = async device => {
+        await this.updateDeviceRequest(device);
+
+        this.labId = document.getElementById("labEditor").dataset.id;
+        const labData = (await Remotelabz.labs.get(this.labId)).data;
+
+        this.setState({
+            devices: labData.devices,
+            lab: {
+                ...labData,
+            },
+            ready: true
+        });
+
+        this.hideAsideMenu();
     }
 
     onSubmitLabForm = lab => {
@@ -352,17 +358,17 @@ export default class Editor extends React.Component {
                 const id = this.state.editDeviceForm.device;
                 const device = this.state.devices.find(d => d.id == id);
 
-                return <DeviceAsideMenu
+                return (<DeviceAsideMenu
                     onClose={this.hideAsideMenu}
                     device={device}
                     onSubmitEditDevice={this.onSubmitEditDevice}
                     onNetworkInterfaceProtocolChange={this.onNetworkInterfaceProtocolChange}
                     onNetworkInterfaceCreate={this.onNetworkInterfaceCreate}
                     onNetworkInterfaceRemove={this.onNetworkInterfaceRemove}
-                ></DeviceAsideMenu>;
+                ></DeviceAsideMenu>);
             
             default:
-                return (<></>);
+                return null;
         }
     }
 

@@ -66,6 +66,11 @@ class DeviceType extends AbstractType
                 'label_attr' => ['class' => 'd-none'],
                 'attr' => ['class' => 'd-none'],
             ])
+            ->add('vnc', CheckboxType::class, [
+                'required' => false,
+                'label' => 'VNC Access',
+                'help' => "If checked, this device will provide an online VNC console."
+            ])
             ->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
