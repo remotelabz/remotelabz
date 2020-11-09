@@ -242,7 +242,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             return false;
         }
 
-        if (($request->server->has($this->remoteUserVar) && $request->getPathInfo() != $this->getRedirectUrl() && $request->isMethod('POST')) || ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl())) {
+        if ($request->server->has($this->remoteUserVar) && $request->getPathInfo() == $this->getRedirectUrl()) {
             return true;
         }
 
