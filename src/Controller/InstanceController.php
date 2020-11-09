@@ -7,11 +7,9 @@ use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
 use App\Entity\InstancierInterface;
+use App\Service\Proxy\ProxyManager;
 use App\Repository\GroupRepository;
-use App\Exception\InstanceException;
-use JMS\Serializer\SerializerInterface;
 use App\Entity\NetworkInterfaceInstance;
-use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
 use App\Service\Instance\InstanceManager;
 use GuzzleHttp\Exception\ServerException;
@@ -19,7 +17,6 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
@@ -29,20 +26,14 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 class InstanceController extends Controller
 {
     private $logger;
+    protected $proxyManager;
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
-    protected $workerServer;
-    protected $workerPort;
-    protected $websocketProxyApiPort;
-    protected $websocketProxyPort;
-    
+
     public function __construct(
-        string $workerServer,
-        string $workerPort,
-        string $websocketProxyApiPort,
-        string $websocketProxyPort,
         LoggerInterface $logger,
+        ProxyManager $proxyManager,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
@@ -51,22 +42,8 @@ class InstanceController extends Controller
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
-        $this->workerServer = $workerServer;
-        $this->workerPort = $workerPort;
-        $this->websocketProxyApiPort = $websocketProxyApiPort;
-        $this->websocketProxyPort = $websocketProxyPort;
+        $this->proxyManager = $proxyManager;
     }
-
-    // /**
-    //  * @Route("/debug/network/{id}", name="debug_network")
-    //  */
-    // public function debugNetworkAction(int $id, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
-    // {
-    //     $labInstance = $labInstanceRepository->find($id);
-    //     $context = SerializationContext::create()->setGroups("start_lab");
-    //     $labJson = $serializer->serialize($labInstance, 'json', $context);
-    //     return new Response($labJson);
-    // }
 
     /**
      * @Route("/admin/instances", name="instances")
@@ -362,7 +339,7 @@ class InstanceController extends Controller
     /**
      * @Route("/instances/{uuid}/view", name="view_instance")
      */
-    public function viewInstanceAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    public function viewInstanceAction(Request $request, string $uuid)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException();
@@ -371,30 +348,24 @@ class InstanceController extends Controller
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
 
-        /** @var NetworkInterfaceInstance */
-        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
-            $networkInterface = $networkInterfaceInstance->getNetworkInterface();
+        if (true === $device->getVnc()) {
+            try {
+                $this->proxyManager->createDeviceInstanceProxyRoute(
+                    $deviceInstance->getUuid(),
+                    $deviceInstance->getRemotePort()
+                );
+            } catch (ServerException $exception) {
+                $this->logger->error($exception->getResponse()->getBody()->getContents());
 
-            // if vnc access is requested, register the port in CHP
-            if ('VNC' == $networkInterface->getSettings()->getProtocol()) {
-                try {
-                    $instanceManager->createDeviceInstanceProxyRoute(
-                        $deviceInstance->getUuid(),
-                        $networkInterfaceInstance->getRemotePort()
-                    );
-                } catch (ServerException $exception) {
-                    $this->logger->error($exception->getResponse()->getBody()->getContents());
+                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+            } catch (RequestException $exception) {
+                $this->logger->error($exception);
 
-                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
-                } catch (RequestException $exception) {
-                    $this->logger->error($exception);
+                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+            } catch (ConnectException $exception) {
+                $this->logger->error($exception);
 
-                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
-                } catch (ConnectException $exception) {
-                    $this->logger->error($exception);
-
-                    $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
-                }
+                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
             }
         }
 
@@ -403,27 +374,15 @@ class InstanceController extends Controller
         } else {
             $fullscreen = false;
         }
-        if (array_key_exists('REQUEST_SCHEME', $_SERVER))
-            if (explode('://', strtolower($_SERVER['REQUEST_SCHEME']))[0] == 'https') //False = 0 en php et strpos retourne 0 pour la 1ère place
-                $protocol = "wss://";
-            else
-                $protocol = "ws://";
-        else if (array_key_exists('HTTPS', $_SERVER))
-            if ($_SERVER['HTTPS'] == 'on')
-                $protocol = "wss://";
-            else
-                $protocol = "ws://";
 
-        $this->logger->debug("Request to ".$request->getHost().":".$this->websocketProxyPort."/".'device/'.$deviceInstance->getUuid());
-                
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
+            'uuid' => $uuid,
             'device' => $device,
             'deviceInstance' => $deviceInstance,
-            'uuid' => $uuid,
-            'host' => $protocol . "" . ($request->get('host') ?: $request->getHost()),
-            //'port' => $request->get('port') ?: getenv('WEBSOCKET_PROXY_PORT'),
-            'port' => $request->get('port') ?: $this->websocketProxyPort,
+            'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseHttps() ? 'wss' : 'ws'),
+            'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
+            'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);
     }

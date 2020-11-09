@@ -48,6 +48,12 @@ if (array_key_exists('WEBSOCKET_PROXY_TIMEOUT', $_ENV)) {
     $cmd[] = 86400000;
 }
 
+$cmd[] = '--ip';
+$cmd[] = '0.0.0.0';
+
+$cmd[] = '--api-ip';
+$cmd[] = '0.0.0.0';
+
 $process = new Process($cmd);
 $process->setTimeout(null);
 

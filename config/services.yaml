@@ -18,6 +18,10 @@ parameters:
 
     app.websocket_proxy_port: '%env(resolve:WEBSOCKET_PROXY_PORT)%'
     app.websocket_proxy_api_port: '%env(resolve:WEBSOCKET_PROXY_API_PORT)%'
+    app.services.proxy.server: '%env(resolve:REMOTELABZ_PROXY_SERVER)%'
+    app.services.proxy.port: '%env(int:REMOTELABZ_PROXY_PORT)%'
+    app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'
+    app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
 
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
@@ -144,21 +148,20 @@ services:
             $baseNetwork: '%app.network.base_network%'
             $baseNetworkNetmask: '%app.network.base_network_netmask%'
             $labNetworkNetmask: '%app.network.lab_network_netmask%'
-
-    network_manager: '@App\Service\Network\NetworkManager'
     
     App\Service\Instance\InstanceManager:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
-            $websocketProxyPort: '%app.websocket_proxy_port%'
-            $websocketProxyApiPort: '%app.websocket_proxy_api_port%'
 
-    instance_manager: '@App\Service\Instance\InstanceManager'
-
-    App\Controller\InstanceController:
+    App\Service\Proxy\ProxyManager:
         arguments:
             $workerServer: '%app.worker_server%'
-            $workerPort: '%app.worker_port%'
-            $websocketProxyPort: '%app.websocket_proxy_port%'
-            $websocketProxyApiPort: '%app.websocket_proxy_api_port%'
+            $remotelabzProxyServer: '%app.services.proxy.server%'
+            $remotelabzProxyPort: '%app.services.proxy.port%'
+            $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
+            $remotelabzProxyUseHttps: '%app.services.proxy.https%'
+
+    instance_manager: '@App\Service\Instance\InstanceManager'
+    network_manager: '@App\Service\Network\NetworkManager'
+    proxy_manager: '@App\Service\Proxy\ProxyManager'
