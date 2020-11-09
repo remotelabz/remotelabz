@@ -18,7 +18,98 @@
         </div>
     </div>
     <div class="content-body">
-        {{ form(userForm) }}
+        {{ form_start(userForm) }}
+            {{ form_row(userForm.email) }}
+            {{ form_row(userForm.password) }}
+            {{ form_row(userForm.confirmPassword) }}
+            {{ form_row(userForm.lastName) }}
+            {{ form_row(userForm.firstName) }}
+
+            <div class="form-group row">
+                {{- form_label(userForm.roles) -}}
+                <div class="col-sm-10">
+                    {% set isRoot = user is defined and user.getHighestRole() == 'ROLE_SUPER_ADMINISTRATOR' %}
+                    {% if isRoot %}
+                    <div class="alert alert-primary">This user is the root user. You cannot change its role.</div>
+                    {% endif %}
+                    {{- form_help(userForm.roles, {attr: {class: 'mb-3'}}) -}}
+                    <div id="{{ userForm.roles.vars.id }}" aria-describedby="{{ userForm.roles.vars.id }}_help">
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ userForm.roles.children[0].vars.id }}"
+                                name="{{ userForm.roles.children[0].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ userForm.roles.children[0].vars.value }}"
+                                {%- if app.request.attributes.get('_route') == 'new_user' -%}
+                                checked  
+                                {%- elseif user is defined and user.getHighestRole() == 'ROLE_USER' -%}
+                                checked
+                                {%- endif -%}
+                                {% if isRoot %}disabled{% endif %}
+                            >
+                            <label class="form-check-label required" for="{{ userForm.roles.children[0].vars.id }}">
+                                <div>Student</div>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ userForm.roles.children[1].vars.id }}"
+                                name="{{ userForm.roles.children[1].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ userForm.roles.children[1].vars.value }}"
+                                {%- if user is defined and user.getHighestRole() == 'ROLE_TEACHER' -%}
+                                checked
+                                {%- endif -%}
+                                {% if isRoot %}disabled{% endif %}
+                            >
+                            <label class="form-check-label required" for="{{ userForm.roles.children[1].vars.id }}">
+                                <div>Teacher</div>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ userForm.roles.children[2].vars.id }}"
+                                name="{{ userForm.roles.children[2].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ userForm.roles.children[2].vars.value }}"
+                                {%- if user is defined and user.getHighestRole() == 'ROLE_ADMINISTRATOR' -%}
+                                checked
+                                {%- endif -%}
+                                {% if isRoot %}disabled{% endif %}
+                            >
+                            <label class="form-check-label required" for="{{ userForm.roles.children[2].vars.id }}">
+                                <div>Administrator</div>
+                            </label>
+                        </div>
+                        {% if isRoot %}
+                        <div class="form-check">
+                            <input
+                                type="hidden"
+                                id="{{ userForm.roles.children[3].vars.id }}"
+                                name="{{ userForm.roles.children[3].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ userForm.roles.children[3].vars.value }}"
+                                checked
+                            >
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {{ form_row(userForm.enabled) }}
+
+            <div class="form-actions">
+                {{ form_widget(userForm.submit) }}
+            </div>
+        {{ form_end(userForm, {render_rest:false}) }}
     </div>
 {% endblock %}
 
