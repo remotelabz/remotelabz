@@ -2,7 +2,7 @@ import React from 'react';
 import Select from 'react-select';
 import SVG from '../../Display/SVG';
 import AsideMenu from './AsideMenu';
-import { Button } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import DeviceForm from './../Form/DeviceForm';
 
 export default function DeviceAsideMenu(props) {
@@ -21,7 +21,14 @@ export default function DeviceAsideMenu(props) {
 
             return <div key={networkInterface.uuid} className="device-network-interface-item px-3 py-3 mb-3">
                 <h4 className="mb-2">NIC #{index + 1}</h4>
-                <div className="form-group">
+                <Form.Group controlId="vlan">
+                    <Form.Label>VLAN</Form.Label>
+                    <Form.Control type="number" max="4095" defaultValue={0} />
+                    <Form.Text className="text-muted">
+                    VLAN number between 1 and 4095. 0 means no VLAN.
+                    </Form.Text>
+                </Form.Group>
+                {/* <div className="form-group">
                     <label className="form-label">Access type</label>
                     <Select
                         options={accessTypeOptions}
@@ -31,7 +38,7 @@ export default function DeviceAsideMenu(props) {
                         defaultValue={accessTypeOptions.find(v => (!networkInterface.accessType && v.value == '') || (networkInterface.accessType && v.value == networkInterface.accessType))}
                         onChange={props.onNetworkInterfaceProtocolChange}
                     />
-                </div>
+                </div> */}
                 <Button variant="danger" onClick={() => props.onNetworkInterfaceRemove(networkInterface.id)} block>
                     <SVG name="remove" className="image-sm v-sub" /> Remove
                 </Button>

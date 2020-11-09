@@ -126,7 +126,7 @@ class InstanceListItem extends Component {
                 </div>
 
                 <div className="d-flex align-items-center">
-                    {(deviceInstance.state == 'started' && deviceInstance.device.networkInterfaces.some(nic => nic.accessType === 'VNC')) &&
+                    {(deviceInstance.state == 'started' && deviceInstance.device.vnc) &&
                         <a
                             target="_blank"
                             rel="noopener noreferrer"
