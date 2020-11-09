@@ -22,6 +22,7 @@ parameters:
     app.services.proxy.port: '%env(int:REMOTELABZ_PROXY_PORT)%'
     app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'
     app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
+    app.services.proxy.wss: '%env(bool:REMOTELABZ_PROXY_USE_WSS)%'
 
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
@@ -161,6 +162,7 @@ services:
             $remotelabzProxyPort: '%app.services.proxy.port%'
             $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
             $remotelabzProxyUseHttps: '%app.services.proxy.https%'
+            $remotelabzProxyUseWss: '%app.services.proxy.wss%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'

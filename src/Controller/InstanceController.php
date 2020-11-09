@@ -379,7 +379,7 @@ class InstanceController extends Controller
             'uuid' => $uuid,
             'device' => $device,
             'deviceInstance' => $deviceInstance,
-            'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseHttps() ? 'wss' : 'ws'),
+            'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
             'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
             'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()

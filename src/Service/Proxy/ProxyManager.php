@@ -13,6 +13,7 @@ class ProxyManager
     protected $remotelabzProxyPort;
     protected $remotelabzProxyApiPort;
     protected $remotelabzProxyUseHttps;
+    protected $remotelabzProxyUseWss;
 
     public function __construct(
         string $workerServer,
@@ -20,6 +21,7 @@ class ProxyManager
         int $remotelabzProxyPort,
         int $remotelabzProxyApiPort,
         bool $remotelabzProxyUseHttps,
+        bool $remotelabzProxyUseWss,
         LoggerInterface $logger
     ) {
         $this->logger = $logger;
@@ -28,6 +30,7 @@ class ProxyManager
         $this->remotelabzProxyPort = $remotelabzProxyPort;
         $this->remotelabzProxyApiPort = $remotelabzProxyApiPort;
         $this->remotelabzProxyUseHttps = $remotelabzProxyUseHttps;
+        $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
     }
 
     public function getRemotelabzProxyServer(): string
@@ -43,6 +46,11 @@ class ProxyManager
     public function getRemotelabzProxyUseHttps(): bool
     {
         return $this->remotelabzProxyUseHttps;
+    }
+
+    public function getRemotelabzProxyUseWss(): bool
+    {
+        return $this->remotelabzProxyUseWss;
     }
 
     /**
@@ -62,7 +70,7 @@ class ProxyManager
 
         $client->post($url, [
             'body' => json_encode([
-                'target' => 'ws://'.$this->workerServer.':'.($remotePort + 1000).'',
+                'target' => ($this->remotelabzProxyUseWss ? 'wss' : 'ws').'://'.$this->workerServer.':'.($remotePort + 1000).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',
