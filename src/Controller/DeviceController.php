@@ -149,7 +149,7 @@ class DeviceController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($device, 200, [], ['device']);
+                return $this->json($device);
             }
 
             $this->addFlash('success', 'Device has been updated.');

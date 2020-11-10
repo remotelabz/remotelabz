@@ -32,6 +32,7 @@ import Axios from 'axios';
  * @property {string} lastUpdated
  * @property {EditorData} editorData
  * @property {boolean} isTemplate
+ * @property {boolean} vnc
  * 
  * @typedef {Object} NetworkInterface
  * @property {number} id
@@ -183,6 +184,38 @@ export class RemotelabzAPI {
                 }
             })
         },
+    }
+
+    /**
+     * Device endpoint.
+     */
+    devices = {
+        /**
+         * Get a collection of labs.
+         * 
+         * Implements GET `/api/devices/{id}`
+         * 
+         * @param {number} id ID of the device
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Device>>}
+         */
+        get(id) {
+            return axios.get(`/devices/${id}`);
+        },
+
+        /**
+         * Updates a device by ID.
+         * 
+         * Implements PUT `/api/devices/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * @param {Device} options Fields to update and their values
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Device>>}
+         */
+        update(id, options) {
+            return axios.put(`/devices/${id}`, options)
+        }
     }
 
     /**

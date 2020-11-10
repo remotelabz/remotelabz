@@ -54,7 +54,7 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"network_interfaces", "lab"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $vlan;
 

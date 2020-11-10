@@ -62,28 +62,31 @@ export default class Editor extends React.Component {
                 y: 0,
                 target: null,
             },
-            asideMenu: {
-                show: false,
-                type: null
-            },
             lab: {
                 name: null
             },
             /** @type {import('../API').Device[]} devices */
             devices: [],
             isLoading: false,
+            asideMenu: null,
         }
+    }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            this.labId = document.getElementById("labEditor").dataset.id;
+    componentDidMount() {
+        this.labId = document.getElementById("labEditor").dataset.id;
 
-            Remotelabz.labs.get(this.labId).then(response => this.setState({
-                devices: response.data.devices,
-                lab: {
-                    ...response.data,
-                },
-                ready: true
-            }));
+        this.reloadLab(this.labId);
+    }
+
+    reloadLab = async id => {
+        const response = await Remotelabz.labs.get(id);
+
+        this.setState({
+            devices: response.data.devices,
+            lab: {
+                ...response.data,
+            },
+            ready: true
         });
     }
 
@@ -146,11 +149,8 @@ export default class Editor extends React.Component {
                 device: device.id,
                 show: true,
             },
-            asideMenu: {
-                show: true,
-                type: 'device'
-            }
         });
+        this.getAsideMenuChildren('device', device.id);
     }
 
     handleEditDescription = () => this.setState({ editDescription: true });
@@ -167,21 +167,8 @@ export default class Editor extends React.Component {
         this.setState({ mdeValue });
     }
 
-    onSubmitEditDevice = async device => {
-        await this.updateDeviceRequest(device);
-
-        this.labId = document.getElementById("labEditor").dataset.id;
-        const labData = (await Remotelabz.labs.get(this.labId)).data;
-
-        this.setState({
-            devices: labData.devices,
-            lab: {
-                ...labData,
-            },
-            ready: true
-        });
-
-        this.hideAsideMenu();
+    onSubmitDeviceForm = () => {
+        this.reloadLab(this.labId);
     }
 
     onSubmitLabForm = lab => {
@@ -307,14 +294,7 @@ export default class Editor extends React.Component {
         });
     }
 
-    onLabEdit = () => {
-        this.setState({
-            asideMenu: {
-                show: true,
-                type: 'lab'
-            }
-        });
-    }
+    onLabEdit = lab => this.getAsideMenuChildren('lab', lab.id);
 
     onNameSave = val => {
         if (val != this.state.lab.name) {
@@ -345,68 +325,40 @@ export default class Editor extends React.Component {
         }
     }
 
-    getAsideMenuChildren = (type) => {
-        const id = this.state.editDeviceForm.device;
-        const device = this.state.devices.find(d => d.id == id);
-
+    getAsideMenuChildren = async (type, id = 0) => {
         switch (type) {
             case 'lab':
                 const lab = this.state.lab;
-                return (<LabAsideMenu onClose={this.hideAsideMenu} onSubmitLabForm={this.onSubmitLabForm} lab={lab}></LabAsideMenu>);
+                this.setState({
+                    asideMenu: (
+                        <LabAsideMenu
+                            lab={lab}
+                            onClose={this.hideAsideMenu}
+                            onSubmitLabForm={this.onSubmitLabForm}
+                        />
+                    )
+                });
+                break;
 
             case 'device':
-                const id = this.state.editDeviceForm.device;
-                const device = this.state.devices.find(d => d.id == id);
-
-                return (<DeviceAsideMenu
-                    onClose={this.hideAsideMenu}
-                    device={device}
-                    onSubmitEditDevice={this.onSubmitEditDevice}
-                    onNetworkInterfaceProtocolChange={this.onNetworkInterfaceProtocolChange}
-                    onNetworkInterfaceCreate={this.onNetworkInterfaceCreate}
-                    onNetworkInterfaceRemove={this.onNetworkInterfaceRemove}
-                ></DeviceAsideMenu>);
+                this.setState({
+                    asideMenu: (
+                        <DeviceAsideMenu
+                            device={id}
+                            onClose={this.hideAsideMenu}
+                            onSubmitDeviceForm={this.onSubmitDeviceForm}
+                        />
+                    )
+                });
+                break;
             
             default:
-                return null;
+                this.setState({ asideMenu: null });
+                break;
         }
     }
 
-    /**
-     * @param {number} id ID of the device
-     */
-    onNetworkInterfaceCreate = (id) => {
-        Remotelabz.networkInterfaces.create({ device: id })
-        .then(response => {
-            const devices = this.state.devices;
-            devices.find(d => d.id == id).networkInterfaces.push(response.data);
-            this.setState({devices});
-        });
-    }
-
-    /** @param {{value: string, label: string, id: number}} option */
-    onNetworkInterfaceProtocolChange = (option) => {
-        Remotelabz.networkInterfaces.update(option.id, {
-            accessType: option.value != '' ? option.value : null
-        })
-        .then(response => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.find(nic => nic.id == option.id).accessType = response.data.accessType;
-            this.setState({devices}, () => new Noty({type: 'success', text: 'NIC access type has been changed.'}).show())
-        })
-    }
-
-    /** @param {number} id ID of the NIC */
-    onNetworkInterfaceRemove = (id) => {
-        Remotelabz.networkInterfaces.delete(id)
-        .then(() => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces = devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.filter(nic => nic.id != id);
-            this.setState({devices}, () => new Noty ({type: 'success', text: 'NIC has been removed from device.'}).show());
-        })
-    }
-
-    hideAsideMenu = () => this.setState({ asideMenu: { show: false, type: null } });
+    hideAsideMenu = () => this.getAsideMenuChildren(null);
 
     render() {
         return (<>
@@ -519,7 +471,7 @@ export default class Editor extends React.Component {
                             </Canvas>
 
                             {/* SIDE MENU */}
-                            {this.state.asideMenu.show && this.getAsideMenuChildren(this.state.asideMenu.type)}
+                            {this.state.asideMenu}
                         </div>
 
                         {/* TOOLBAR */}
