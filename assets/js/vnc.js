@@ -6,7 +6,7 @@ var WindowObjectReference = null;
 function openFullscreen() {
     if (WindowObjectReference == null || WindowObjectReference.closed) {
         WindowObjectReference = window.open(window.location.href + '?size=fullscreen',
-            "OpenVNCFullscreen" + "{{device.name}}", "resizable=yes,scrollbars=no,status=no,location=no,menubar=no,toolbar=no");
+            "OpenVNCFullscreen" + "{{device.name}}", "resizable=yes,scrollbars=no,status=no,location=no,menubar=no,toolbar=no,width="+rfb._fbWidth+",height="+rfb._fbHeight);
 
         if (WindowObjectReference && rfb) {
             rfb.disconnect();
@@ -18,7 +18,10 @@ function openFullscreen() {
                 let host = userRating.dataset.host;
                 var port = userRating.dataset.port;
                 var path = userRating.dataset.path;
-                connectToVNC(protocol, host, port, path);
+                connectToVNC(protocol, host, port, path, {
+                    scaleViewport: true,
+                    clipViewport: true,
+                });
             };
         }
     }
@@ -27,14 +30,12 @@ function openFullscreen() {
     };
 }
 
-function connectToVNC(protocol, host, port, path) {
+function connectToVNC(protocol, host, port, path, options = {}) {
     const url = protocol + '://' + host + ':' + port + '/' + path;
     console.log('Connecting to ' + url);
-    rfb = new RFB(document.getElementById('noVNCScreen'), url, {
-        scaleViewport: true,
-        clipViewport: true,
-    });
+    rfb = new RFB(document.getElementById('noVNCScreen'), url, options);
     rfb.scaleViewport = true;
+    rfb._fbWidth
     rfb.addEventListener('connect', function () {
         reconnectButton.setAttribute("disabled", "disabled");
         console.log("Event: RFB connected");
@@ -71,7 +72,10 @@ if (reconnectButton) {
         let host = userRating.dataset.host;
         let port = userRating.dataset.port;
         let path = userRating.dataset.path;
-        connectToVNC(protocol, host, port, path);
+        connectToVNC(protocol, host, port, path, {
+            scaleViewport: true,
+            clipViewport: true,
+        });
     }
 }
 
@@ -80,4 +84,7 @@ let protocol = userRating.dataset.protocol;
 let host = userRating.dataset.host;
 var port = userRating.dataset.port;
 var path = userRating.dataset.path;
-connectToVNC(protocol, host, port, path);
+connectToVNC(protocol, host, port, path, {
+    scaleViewport: true,
+    clipViewport: true,
+});
