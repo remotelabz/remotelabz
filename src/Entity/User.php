@@ -286,7 +286,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "user_instances", "details"})
+     * @Serializer\Groups({"user_instances", "details"})
      * @Serializer\XmlList(inline=false, entry="instances")
      */
     public function getInstances()

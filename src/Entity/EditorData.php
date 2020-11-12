@@ -21,7 +21,7 @@ class EditorData
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"device", "editor"})
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)
@@ -30,7 +30,7 @@ class EditorData
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"device", "editor"})
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)

@@ -34,14 +34,18 @@ use App\Exception\AlreadyInstancedException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
+use App\Service\Lab\LabImporter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Exception;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class LabController extends Controller
 {
@@ -357,6 +361,46 @@ class LabController extends Controller
         $this->addFlash('success', $lab->getName() . ' has been deleted.');
 
         return $this->redirectToRoute('labs');
+    }
+
+    /**
+     * @Route("/admin/labs/import", name="import_lab", methods="POST")
+     * 
+     * @Rest\Post("/api/labs/import", name="api_import_lab")
+     */
+    public function importAction(Request $request, LabImporter $labImporter)
+    {
+        $json = $request->request->get('json');
+
+        $data = $labImporter->import($json);
+
+        return $this->redirectToRoute('show_lab', ['id' => $data]);
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/export", name="export_lab", methods="GET")
+     */
+    public function exportAction(int $id, LabImporter $labImporter)
+    {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
+        }
+        
+        $data = $labImporter->export($lab);
+        
+        $response = new Response($data);
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'lab_'.$lab->getUuid().'.json'
+        );
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+
+        return new JsonResponse($data, 200, [], true);
     }
 
     /**

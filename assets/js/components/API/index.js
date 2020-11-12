@@ -267,6 +267,19 @@ export class RemotelabzAPI {
          */
         update(params) {
             return axios.put(`/labs/${params.id}`, params.fields)
+        },
+
+        /**
+         * Updates a lab from a JSON string.
+         * 
+         * Implements PUT `/api/labs/import`
+         * 
+         * @param {string} json 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        import(json) {
+            return axios.post(`/labs/import`, { json });
         }
     }
 
