@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\DeviceInstanceLog;
 use Exception;
 use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
@@ -10,6 +11,7 @@ use App\Entity\InstancierInterface;
 use App\Service\Proxy\ProxyManager;
 use App\Repository\GroupRepository;
 use App\Entity\NetworkInterfaceInstance;
+use App\Repository\DeviceInstanceLogRepository;
 use App\Repository\LabInstanceRepository;
 use App\Service\Instance\InstanceManager;
 use GuzzleHttp\Exception\ServerException;
@@ -120,7 +122,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/start/by-uuid/{uuid}", name="api_start_instance_by_uuid")
+     * @Rest\Get("/api/instances/start/by-uuid/{uuid}", name="api_start_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function startByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
@@ -134,7 +136,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid")
+     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
@@ -162,7 +164,7 @@ class InstanceController extends Controller
     // }
 
     /**
-     * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid")
+     * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchByUuidAction(Request $request, string $uuid)
     {
@@ -176,7 +178,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/by-user/{userUuid}", name="api_get_lab_instance_by_user")
+     * @Rest\Get("/api/instances/lab/{labUuid}/by-user/{userUuid}", name="api_get_lab_instance_by_user", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchLabInstanceByUserAction(
         Request $request,
@@ -201,7 +203,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/by-group/{groupUuid}", name="api_get_lab_instance_by_group")
+     * @Rest\Get("/api/instances/lab/{labUuid}/by-group/{groupUuid}", name="api_get_lab_instance_by_group", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchLabInstanceByGroupAction(
         Request $request,
@@ -226,7 +228,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/by-user/{uuid}", name="api_get_instance_by_user")
+     * @Rest\Get("/api/instances/by-user/{uuid}", name="api_get_instance_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
     {
@@ -254,7 +256,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group")
+     * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
     {
@@ -282,7 +284,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Delete("/api/instances/{uuid}", name="api_delete_instance")
+     * @Rest\Delete("/api/instances/{uuid}", name="api_delete_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function deleteRestAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
@@ -297,7 +299,6 @@ class InstanceController extends Controller
 
     /**
      * @Route("/admin/instances/{type}/{id<\d+>}/delete", name="delete_instance", methods="GET")
-     * 
      */
     public function deleteAction(Request $request, string $type, int $id)
     {
@@ -336,7 +337,7 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Route("/instances/{uuid}/view", name="view_instance")
+     * @Route("/instances/{uuid}/view", name="view_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function viewInstanceAction(Request $request, string $uuid)
     {
@@ -384,5 +385,26 @@ class InstanceController extends Controller
             'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/{uuid}/logs", name="api_get_instance_logs", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)
+    {
+        //$uuid = $request->query->get('uuid');
+
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
+        }
+
+        $logs = $deviceInstanceLogRepository->findBy([
+            'deviceInstance' => $deviceInstance,
+            'scope' => DeviceInstanceLog::SCOPE_PUBLIC
+        ], [
+            'id' => 'asc'
+        ]);
+
+        return $this->json($logs);
     }
 }

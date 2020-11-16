@@ -2,6 +2,7 @@
 
 import Noty from 'noty';
 import Axios from 'axios';
+const url = require('url');
 
 /**
  * @typedef {Object} Lab
@@ -439,7 +440,7 @@ export class RemotelabzAPI {
             /**
              * Delete a lab instance by UUID.
              * 
-             * Implements DELETE `/api/instances/{uuid}`
+             * Implements DELETE `/api/instances`
              * 
              * @param {string} uuid 
              * 
@@ -465,6 +466,10 @@ export class RemotelabzAPI {
              */
             get(uuid) {
                 return axios.get(`/instances/${uuid}`, { params: { type: 'device' } });
+            },
+
+            logs(uuid) {
+                return axios.get(`/instances/${uuid}/logs`);
             }
         },
     }

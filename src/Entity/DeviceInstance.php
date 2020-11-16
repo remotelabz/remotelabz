@@ -34,7 +34,7 @@ class DeviceInstance extends Instance
     protected $device;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="CASCADE")
      * @Serializer\Groups({"lab"})
      */
@@ -57,6 +57,12 @@ class DeviceInstance extends Instance
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $remotePort;
+
+    /**
+     * @ORM\OneToMany(targetEntity=DeviceInstanceLog::class, mappedBy="deviceInstance", cascade={"persist"})
+     * @Serializer\Exclude
+     */
+    private $logs;
 
     public function __construct()
     {
@@ -193,6 +199,45 @@ class DeviceInstance extends Instance
     public function setRemotePort(?int $remotePort): self
     {
         $this->remotePort = $remotePort;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DeviceInstanceLog[]
+     */
+    public function getLogs()
+    {
+        return $this->logs;
+    }
+
+    /**
+     * @return Collection|DeviceInstanceLog[]
+     */
+    public function getPublicLogs()
+    {
+        return \array_filter($this->logs, function ($log) { return $log->getScope() === DeviceInstanceLog::SCOPE_PUBLIC; });
+    }
+
+    public function addLog(DeviceInstanceLog $log): DeviceInstance
+    {
+        if (!$this->logs->contains($log)) {
+            $this->logs[] = $log;
+            $log->setDeviceInstance($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLog(DeviceInstanceLog $log): DeviceInstance
+    {
+        if ($this->logs->contains($log)) {
+            $this->logs->removeElement($log);
+            // set the owning side to null (unless already changed)
+            if ($log->getDeviceInstance() === $this) {
+                $log->setDeviceInstance(null);
+            }
+        }
 
         return $this;
     }
