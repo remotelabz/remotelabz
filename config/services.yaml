@@ -164,6 +164,11 @@ services:
             $remotelabzProxyUseHttps: '%app.services.proxy.https%'
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
 
+    App\Controller\ServiceController:
+        arguments:
+            $workerServer: '%app.worker_server%'
+            $workerPort: '%app.worker_port%'
+
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'
