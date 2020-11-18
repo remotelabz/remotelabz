@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "031c693a242b82e476d580cf7fe9b6de",
+    "content-hash": "8dd9eccff0cfa903e0652ad0491959a1",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -132,6 +132,66 @@
                 "issues": "https://github.com/crestic-urca/network-bundle/issues"
             },
             "time": "2020-08-26T09:49:40+00:00"
+        },
+        {
+            "name": "crestic-urca/remotelabz-message-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
+                "reference": "468bd004c59b9ea5727cb512107ad5fae069a003"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/468bd004c59b9ea5727cb512107ad5fae069a003",
+                "reference": "468bd004c59b9ea5727cb512107ad5fae069a003",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.3"
+            },
+            "require-dev": {
+                "squizlabs/php_codesniffer": "3.*",
+                "symfony/phpunit-bridge": "^5.1"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Remotelabz\\Message\\": ""
+                },
+                "exclude-from-classmap": [
+                    "Resources/",
+                    "Tests/"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "./vendor/bin/simple-phpunit --coverage-clover coverage.xml --colors=never"
+                ],
+                "phpcs": [
+                    "./vendor/bin/phpcs --standard=PSR2 --exclude=Generic.Files.LineLength ./Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Julien Hubert",
+                    "email": "julien.hubert1@univ-reims.fr"
+                },
+                {
+                    "name": "Florent Nolot",
+                    "email": "florent.nolot@univ-reims.fr"
+                }
+            ],
+            "description": "Shared messages between remotelabz components.",
+            "support": {
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
+                "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
+            },
+            "time": "2020-11-16T08:31:02+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -4096,16 +4156,16 @@
         },
         {
             "name": "symfony/amqp-messenger",
-            "version": "v5.1.7",
+            "version": "v5.1.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/amqp-messenger.git",
-                "reference": "4cbeeb561be52763a814f4e886fde0ee115b82cd"
+                "reference": "daa895ff04c3a692b8ca3568445a46b44796e254"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/amqp-messenger/zipball/4cbeeb561be52763a814f4e886fde0ee115b82cd",
-                "reference": "4cbeeb561be52763a814f4e886fde0ee115b82cd",
+                "url": "https://api.github.com/repos/symfony/amqp-messenger/zipball/daa895ff04c3a692b8ca3568445a46b44796e254",
+                "reference": "daa895ff04c3a692b8ca3568445a46b44796e254",
                 "shasum": ""
             },
             "require": {
@@ -4119,11 +4179,6 @@
                 "symfony/serializer": "^4.4|^5.0"
             },
             "type": "symfony-bridge",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "5.1-dev"
-                }
-            },
             "autoload": {
                 "psr-4": {
                     "Symfony\\Component\\Messenger\\Bridge\\Amqp\\": ""
@@ -4149,7 +4204,7 @@
             "description": "Symfony AMQP extension Messenger Bridge",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/amqp-messenger/tree/v5.1.7"
+                "source": "https://github.com/symfony/amqp-messenger/tree/v5.1.8"
             },
             "funding": [
                 {
@@ -4165,7 +4220,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-09-14T15:02:15+00:00"
+            "time": "2020-10-27T10:11:13+00:00"
         },
         {
             "name": "symfony/apache-pack",
@@ -4621,6 +4676,84 @@
                 }
             ],
             "time": "2020-10-07T15:23:00+00:00"
+        },
+        {
+            "name": "symfony/debug-bundle",
+            "version": "v5.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/debug-bundle.git",
+                "reference": "183a36bdb251eeeeff640ffbceea3403ac5c8d40"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/debug-bundle/zipball/183a36bdb251eeeeff640ffbceea3403ac5c8d40",
+                "reference": "183a36bdb251eeeeff640ffbceea3403ac5c8d40",
+                "shasum": ""
+            },
+            "require": {
+                "ext-xml": "*",
+                "php": ">=7.2.5",
+                "symfony/http-kernel": "^4.4|^5.0",
+                "symfony/twig-bridge": "^4.4|^5.0",
+                "symfony/var-dumper": "^4.4|^5.0"
+            },
+            "conflict": {
+                "symfony/config": "<4.4",
+                "symfony/dependency-injection": "<4.4"
+            },
+            "require-dev": {
+                "symfony/config": "^4.4|^5.0",
+                "symfony/dependency-injection": "^4.4|^5.0",
+                "symfony/web-profiler-bundle": "^4.4|^5.0"
+            },
+            "suggest": {
+                "symfony/config": "For service container configuration",
+                "symfony/dependency-injection": "For using as a service from the container"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Bundle\\DebugBundle\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony DebugBundle",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/debug-bundle/tree/v5.1.8"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-10-24T12:01:57+00:00"
         },
         {
             "name": "symfony/dependency-injection",
@@ -10354,89 +10487,6 @@
             "time": "2020-05-20T17:43:50+00:00"
         },
         {
-            "name": "symfony/debug-bundle",
-            "version": "v5.1.7",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/debug-bundle.git",
-                "reference": "3f4bcea52678eedf19260973217f5ae7b835edf5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/debug-bundle/zipball/3f4bcea52678eedf19260973217f5ae7b835edf5",
-                "reference": "3f4bcea52678eedf19260973217f5ae7b835edf5",
-                "shasum": ""
-            },
-            "require": {
-                "ext-xml": "*",
-                "php": ">=7.2.5",
-                "symfony/http-kernel": "^4.4|^5.0",
-                "symfony/twig-bridge": "^4.4|^5.0",
-                "symfony/var-dumper": "^4.4|^5.0"
-            },
-            "conflict": {
-                "symfony/config": "<4.4",
-                "symfony/dependency-injection": "<4.4"
-            },
-            "require-dev": {
-                "symfony/config": "^4.4|^5.0",
-                "symfony/dependency-injection": "^4.4|^5.0",
-                "symfony/web-profiler-bundle": "^4.4|^5.0"
-            },
-            "suggest": {
-                "symfony/config": "For service container configuration",
-                "symfony/dependency-injection": "For using as a service from the container"
-            },
-            "type": "symfony-bundle",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "5.1-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Bundle\\DebugBundle\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony DebugBundle",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/debug-bundle/tree/v5.1.4"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2020-05-20T17:43:50+00:00"
-        },
-        {
             "name": "symfony/debug-pack",
             "version": "v1.0.8",
             "source": {
@@ -10896,7 +10946,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "crestic-urca/remotelabz-message-bundle": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

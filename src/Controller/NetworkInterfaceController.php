@@ -77,11 +77,9 @@ class NetworkInterfaceController extends Controller
         if ($networkInterfaceForm->isSubmitted() && $networkInterfaceForm->isValid()) {
             /** @var NetworkInterface $networkInterface */
             $networkInterface = $networkInterfaceForm->getData();
-            $accessType = $networkInterfaceForm->get('accessType')->getData();
             $networkSettings = new NetworkSettings();
             $networkSettings
-                ->setName($networkInterface->getName() . '_settings')
-                ->setProtocol($accessType);
+                ->setName($networkInterface->getName() . '_settings');
             $networkInterface->setSettings($networkSettings);
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -120,7 +118,6 @@ class NetworkInterfaceController extends Controller
         }
 
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
-        $networkInterfaceForm->get('accessType')->setData($networkInterface->getSettings()->getProtocol());
         $networkInterfaceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
@@ -131,11 +128,9 @@ class NetworkInterfaceController extends Controller
         if ($networkInterfaceForm->isSubmitted() && $networkInterfaceForm->isValid()) {
             /** @var NetworkInterface $networkInterface */
             $networkInterface = $networkInterfaceForm->getData();
-            $accessType = $networkInterfaceForm->get('accessType')->getData();
             $networkSettings = $networkInterface->getSettings();
             $networkSettings
-                ->setName($networkInterface->getName() . '_settings')
-                ->setProtocol($accessType);
+                ->setName($networkInterface->getName() . '_settings');
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($networkInterface);

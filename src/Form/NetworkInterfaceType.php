@@ -9,8 +9,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -21,24 +20,13 @@ class NetworkInterfaceType extends AbstractType
     {
         $builder
             ->add('name')
-            // ->add('type', ChoiceType::class, [
-            //     'label' => 'Driver',
-            //     'choices' => [
-            //         'Linux Bridge' => 'tap',
-            //         'OpenVSwitch' => 'ovs'
-            //     ]
-            // ])
             ->add('type', HiddenType::class, [
                 'data' => 'tap',
                 'empty_data' => 'tap',
                 'required' => false
             ])
-            ->add('accessType', ChoiceType::class, [
-                'choices' => [
-                    'VNC' => 'VNC'
-                ],
-                'mapped' => false,
-                'required' => false
+            ->add('vlan', IntegerType::class, [
+                'empty_data' => "0"
             ])
             ->add('device', EntityType::class, [
                 'class' => Device::class,

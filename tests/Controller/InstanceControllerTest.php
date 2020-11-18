@@ -8,7 +8,7 @@ use App\Entity\LabInstance;
 use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
 use App\Instance\InstanceState;
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\MessageHandler\InstanceStateMessageHandler;
 

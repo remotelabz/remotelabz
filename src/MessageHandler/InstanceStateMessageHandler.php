@@ -3,17 +3,18 @@
 namespace App\MessageHandler;
 
 use Psr\Log\LoggerInterface;
-use App\Instance\InstanceState;
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Service\Instance\InstanceManager;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 
 class InstanceStateMessageHandler implements MessageHandlerInterface
 {
     private $deviceInstanceRepository;
     private $labInstanceRepository;
+    private $instanceManager;
     private $entityManager;
     private $logger;
 
@@ -21,10 +22,12 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         DeviceInstanceRepository $deviceInstanceRepository,
         LabInstanceRepository $labInstanceRepository,
         EntityManagerInterface $entityManager,
+        InstanceManager $instanceManager,
         LoggerInterface $logger
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->instanceManager = $instanceManager;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
     }
@@ -46,12 +49,20 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         // TODO: handle error
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
             switch ($instance->getState()) {
-                case InstanceState::STARTING:
-                    $instance->setState(InstanceState::STOPPED);
+                case InstanceStateMessage::STATE_STARTING:
+                    $instance->setState(InstanceStateMessage::STATE_STOPPED);
                     break;
 
-                case InstanceState::STOPPING:
-                    $instance->setState(InstanceState::STARTED);
+                case InstanceStateMessage::STATE_STOPPING:
+                    $instance->setState(InstanceStateMessage::STATE_STARTED);
+                    break;
+                
+                case InstanceStateMessage::STATE_CREATING:
+                    $instance->setState(InstanceStateMessage::STATE_DELETED);
+                    break;
+
+                case InstanceStateMessage::STATE_DELETING:
+                    $instance->setState(InstanceStateMessage::STATE_CREATED);
                     break;
 
                 default:
@@ -59,9 +70,15 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             }
         } else {
             $instance->setState($message->getState());
+
+            switch ($message->getState()) {
+                case InstanceStateMessage::STATE_STOPPED:
+                    $this->instanceManager->setStopped($instance);
+                break;
+            }
         }
 
-        if ($instance->getState() === InstanceState::DELETED) {
+        if ($instance->getState() === InstanceStateMessage::STATE_DELETED) {
             $this->entityManager->remove($instance);
         } else {
             $this->entityManager->persist($instance);

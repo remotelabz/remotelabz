@@ -2,6 +2,7 @@
 
 import Noty from 'noty';
 import Axios from 'axios';
+const url = require('url');
 
 /**
  * @typedef {Object} Lab
@@ -32,6 +33,7 @@ import Axios from 'axios';
  * @property {string} lastUpdated
  * @property {EditorData} editorData
  * @property {boolean} isTemplate
+ * @property {boolean} vnc
  * 
  * @typedef {Object} NetworkInterface
  * @property {number} id
@@ -186,6 +188,38 @@ export class RemotelabzAPI {
     }
 
     /**
+     * Device endpoint.
+     */
+    devices = {
+        /**
+         * Get a collection of labs.
+         * 
+         * Implements GET `/api/devices/{id}`
+         * 
+         * @param {number} id ID of the device
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Device>>}
+         */
+        get(id) {
+            return axios.get(`/devices/${id}`);
+        },
+
+        /**
+         * Updates a device by ID.
+         * 
+         * Implements PUT `/api/devices/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * @param {Device} options Fields to update and their values
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Device>>}
+         */
+        update(id, options) {
+            return axios.put(`/devices/${id}`, options)
+        }
+    }
+
+    /**
      * Labs endpoint.
      */
     labs = {
@@ -217,6 +251,36 @@ export class RemotelabzAPI {
          */
         get(id) {
             return axios.get(`/labs/${id}`);
+        },
+
+        /**
+         * Updates a lab by ID.
+         * 
+         * Implements PUT `/api/labs/{id}`
+         * 
+         * @typedef {Object} UpdateLabParams
+         * @property {number} id ID of the lab to update
+         * @property {Object} fields Fields to update and their values
+         * 
+         * @param {UpdateLabParams} params 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        update(params) {
+            return axios.put(`/labs/${params.id}`, params.fields)
+        },
+
+        /**
+         * Updates a lab from a JSON string.
+         * 
+         * Implements PUT `/api/labs/import`
+         * 
+         * @param {string} json 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        import(json) {
+            return axios.post(`/labs/import`, { json });
         }
     }
 
@@ -376,7 +440,7 @@ export class RemotelabzAPI {
             /**
              * Delete a lab instance by UUID.
              * 
-             * Implements DELETE `/api/instances/{uuid}`
+             * Implements DELETE `/api/instances`
              * 
              * @param {string} uuid 
              * 
@@ -402,6 +466,10 @@ export class RemotelabzAPI {
              */
             get(uuid) {
                 return axios.get(`/instances/${uuid}`, { params: { type: 'device' } });
+            },
+
+            logs(uuid) {
+                return axios.get(`/instances/${uuid}/logs`);
             }
         },
     }

@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;

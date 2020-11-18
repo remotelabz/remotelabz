@@ -8,6 +8,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "crestic-urca/network-bundle": "^1.0",
+        "crestic-urca/remotelabz-message-bundle": "dev-master",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
         "friendsofsymfony/rest-bundle": "^3.0",
@@ -21,9 +22,11 @@
         "myclabs/deep-copy": "^1.9",
         "s1lentium/iptools": "^1.1",
         "sensio/framework-extra-bundle": "^5.2",
+        "symfony/amqp-messenger": "5.1.*",
         "symfony/apache-pack": "^1.0",
         "symfony/asset": "5.1.*",
         "symfony/console": "5.1.*",
+        "symfony/debug-bundle": "5.1.*",
         "symfony/dotenv": "5.1.*",
         "symfony/expression-language": "5.1.*",
         "symfony/flex": "^v1.9.9",
@@ -51,7 +54,6 @@
         "fzaninotto/faker": "^1.8",
         "symfony/browser-kit": "5.1.*",
         "symfony/css-selector": "5.1.*",
-        "symfony/debug-bundle": "5.1.*",
         "symfony/debug-pack": "^1.0",
         "symfony/maker-bundle": "^1.15",
         "symfony/phpunit-bridge": "^5.1",
@@ -109,6 +111,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/crestic-urca/network-bundle.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git"
         }
     ]
 }

@@ -64,21 +64,79 @@
     </div>
 
     <div class="search-panel">
-        <form action="{{ path('users') }}" method="GET">
-            <div class="search-field">
+        <form action="{{ path('users') }}" method="GET" class="d-flex align-items-center">
+            <div class="search-field flex-grow-1 mr-3">
                 <i class="fa fa-search"></i>
                 <input type="search" class="form-control input-sm" name="search" placeholder="Search by name or email" spellcheck="false" value="{{ search|default('') }}" type="search" />
             </div>
+            <div class="mr-2">
+                {% set searchLimit = app.request.query.get("limit") %}
+                <select name="limit" class="form-control">
+                    <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
+                    <option value="30" {% if searchLimit is defined and searchLimit == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="mr-3">
+                users per page
+            </div>
+            <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
+
+    {% set orderBy = app.request.query.get('orderBy')|default('lastName') %}
+    {% set orderDirection = app.request.query.get('orderDirection')|default('ASC') %}
+    {% set invertOrderDirection = 'ASC' %}
+    {% if orderDirection == 'ASC' %}
+        {% set invertOrderDirection = 'DESC' %}
+    {% endif %}
 
     <div class="table-responsive item-panel user-panel">
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">User</th>
-                    <th scope="col">Created on</th>
-                    <th scope="col">Last activity</th>
+                    <th scope="col">
+                        <a href="{{ path('users', app.request.query|merge({orderBy: 'lastName', orderDirection: invertOrderDirection })) }}" title="Sort by last name">
+                            User
+                            {%- if orderBy == 'lastName' -%}
+                                <span class="px-2">
+                                    {%- if orderDirection == 'ASC' -%}
+                                        {{ svg('sort-lowest') }}
+                                    {%- else -%}
+                                        {{ svg('sort-highest') }}
+                                    {%- endif -%}
+                                </span>
+                            {%- endif -%}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('users', app.request.query|merge({orderBy: 'createdAt', orderDirection: invertOrderDirection })) }}" title="Sort by creation date">
+                            Created on
+                            {%- if orderBy == 'createdAt' -%}
+                                <span class="px-2">
+                                    {%- if orderDirection == 'ASC' -%}
+                                        {{ svg('sort-lowest') }}
+                                    {%- else -%}
+                                        {{ svg('sort-highest') }}
+                                    {%- endif -%}
+                                </span>
+                            {%- endif -%}
+                        </a>
+                    </th>
+                    <th scope="col">
+                        <a href="{{ path('users', app.request.query|merge({orderBy: 'lastActivity', orderDirection: invertOrderDirection })) }}" title="Sort by last activity date">
+                            Last activity
+                            {%- if orderBy == 'lastActivity' -%}
+                                <span class="px-2">
+                                    {%- if orderDirection == 'ASC' -%}
+                                        {{ svg('sort-lowest') }}
+                                    {%- else -%}
+                                        {{ svg('sort-highest') }}
+                                    {%- endif -%}
+                                </span>
+                            {%- endif -%}
+                        </a>
+                    </th>
                     <th scope="col"></th>
                 </tr>
             </thead>

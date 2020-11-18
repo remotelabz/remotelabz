@@ -1,5 +1,6 @@
 import Noty from 'noty';
 import API from '../../api';
+import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { Component } from 'react';
@@ -13,8 +14,35 @@ class InstanceListItem extends Component {
         super(props);
 
         this.state = {
-            isLoading: this.isLoading(props.instance)
+            isLoading: this.isLoading(props.instance),
+            logs: [],
+            showLogs: false
         }
+
+        this.fetchLogs();
+        this.interval = setInterval(this.fetchLogs, 5000);
+    }
+
+    fetchLogs = () => {
+        Remotelabz.instances.device.logs(this.props.instance.uuid)
+        .then(response => {
+            this.setState({ logs: response.data });
+        })
+        .catch(error => {
+            if (error.response.status === 404) {
+                this.setState({ logs: [] });
+            } else {
+                new Noty({
+                    text: 'An error happened while fetching instance logs. If this error persist, please contact an administrator.',
+                    type: 'error'
+                }).show();
+                clearInterval(this.interval);
+            }
+        });
+    }
+
+    toggleShowLogs = () => {
+        this.setState({ showLogs: !this.state.showLogs });
     }
 
     /**
@@ -115,35 +143,54 @@ class InstanceListItem extends Component {
         }
 
         return (
-            <ListGroupItem className="d-flex justify-content-between">
-                <div className="d-flex flex-column">
-                    <div>
-                        {deviceInstance.device.name} <InstanceStateBadge state={deviceInstance.state} className="ml-1" />
+            <ListGroupItem>
+                <div className="d-flex justify-content-between">
+                    <div className="d-flex flex-column">
+                        <div>
+                            {deviceInstance.device.name} <InstanceStateBadge state={deviceInstance.state} className="ml-1" />
+                        </div>
+                        <div className="text-muted small">
+                            {deviceInstance.uuid}
+                        </div>
                     </div>
-                    <div className="text-muted small">
-                        {deviceInstance.uuid}
+
+                    <div className="d-flex align-items-center">
+                        {deviceInstance.state !== 'stopped' && 
+                            <div onClick={() => this.toggleShowLogs()}>
+                                {this.state.showLogs ?
+                                    <Button variant="default"><SVG name="chevron-down"></SVG> Hide logs</Button>
+                                :
+                                    <Button variant="default"><SVG name="chevron-right"></SVG> Show logs</Button>
+                                }
+                            </div>
+                        }
+
+                        {(deviceInstance.state == 'started' && deviceInstance.device.vnc) &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + deviceInstance.uuid + "/view"}
+                                className="btn btn-primary ml-3"
+                                title="Open VNC console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="external-link" />
+                            </a>
+                        }
+
+                        {this.props.showControls &&
+                            controls
+                        }
                     </div>
                 </div>
-
-                <div className="d-flex align-items-center">
-                    {(deviceInstance.state == 'started' && deviceInstance.device.networkInterfaces.some(nic => nic.accessType === 'VNC')) &&
-                        <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            href={"/instances/" + deviceInstance.uuid + "/view"}
-                            className="btn btn-primary ml-3"
-                            title="Open VNC console"
-                            data-toggle="tooltip"
-                            data-placement="top"
-                        >
-                            <SVG name="external-link" />
-                        </a>
-                    }
-
-                    {this.props.showControls &&
-                        controls
-                    }
-                </div>
+                {(deviceInstance.state !== 'stopped' && this.state.showLogs) && 
+                    <pre className="d-flex flex-column mt-2">
+                        {(deviceInstance.state != 'stopped' && this.state.logs) && this.state.logs.map((log, index) => {
+                            return <code className="p-1" key={log.id}>[{log.createdAt}] {log.content}</code>;
+                        })}
+                    </pre>
+                }
             </ListGroupItem>
         )
     }

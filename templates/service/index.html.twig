@@ -68,7 +68,7 @@
             <div class="card">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <span class="fw600">Worker service</span>
+                        <span class="fw600">Worker server</span>
                         {% if serviceStarted['remotelabz-worker'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
@@ -82,6 +82,13 @@
                         {% else %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
                         {% endif %}
+                        <div class="float-right">
+                        {% if serviceStarted['remotelabz-worker-message'] %}
+                            <a href="{{ path('stop_service', {'service': 'remotelabz-worker-message'}) }}" class="btn btn-danger">Stop</a>
+                        {% else %}
+                            <a href="{{ path('start_service', {'service': 'remotelabz-worker-message'}) }}" class="btn btn-success">Start</a>
+                        {% endif %}
+                        </div>
                     </li>
                 </ul>
               </div>

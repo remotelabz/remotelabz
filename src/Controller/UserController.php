@@ -26,6 +26,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -61,13 +62,20 @@ class UserController extends Controller
         $groupDetails = $request->query->has('group_details');
         $page = $request->query->get('page', 1);
         $role = $request->query->get('role');
+        $orderBy = $request->query->get('orderBy', 'lastName');
+        $orderDirection = $request->query->get('orderDirection', 'ASC');
+
+        // handle incorrect orderBy field
+        if (!property_exists(User::class, $orderBy)) {
+            $orderBy = 'lastName';
+        }
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('firstName', $search))
             ->orWhere(Criteria::expr()->contains('lastName', $search))
             ->orWhere(Criteria::expr()->contains('email', $search))
             ->orderBy([
-                'lastName' => Criteria::ASC
+                $orderBy => $orderDirection
             ]);
 
         $users = $this->userRepository->matching($criteria);

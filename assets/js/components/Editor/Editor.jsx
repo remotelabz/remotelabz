@@ -17,6 +17,9 @@ import ReactMarkdown from 'react-markdown';
 import Remotelabz, { Device } from '../API';
 import Select from 'react-select';
 import Noty from 'noty';
+import AsideMenuContainer from './Menu/AsideMenuContainer';
+import DeviceAsideMenu from './Menu/DeviceAsideMenu';
+import LabAsideMenu from './Menu/LabAsideMenu';
 
 export default class Editor extends React.Component {
     jsPlumb = null;
@@ -59,30 +62,31 @@ export default class Editor extends React.Component {
                 y: 0,
                 target: null,
             },
-            asideMenu: {
-                show: false,
-                action: null
-            },
             lab: {
                 name: null
             },
             /** @type {import('../API').Device[]} devices */
             devices: [],
             isLoading: false,
+            asideMenu: null,
         }
+    }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            this.labId = document.getElementById("labEditor").dataset.id;
+    componentDidMount() {
+        this.labId = document.getElementById("labEditor").dataset.id;
 
-            Remotelabz.labs.get(this.labId).then(response => this.setState({
-                devices: response.data.devices,
-                lab: {
-                    ...this.state.lab,
-                    name: response.data.name,
-                    description: response.data.description
-                },
-                ready: true
-            }));
+        this.reloadLab(this.labId);
+    }
+
+    reloadLab = async id => {
+        const response = await Remotelabz.labs.get(id);
+
+        this.setState({
+            devices: response.data.devices,
+            lab: {
+                ...response.data,
+            },
+            ready: true
         });
     }
 
@@ -145,11 +149,8 @@ export default class Editor extends React.Component {
                 device: device.id,
                 show: true,
             },
-            asideMenu: {
-                show: true,
-                action: 'edit'
-            }
         });
+        this.getAsideMenuChildren('device', device.id);
     }
 
     handleEditDescription = () => this.setState({ editDescription: true });
@@ -166,15 +167,25 @@ export default class Editor extends React.Component {
         this.setState({ mdeValue });
     }
 
-    onSubmitEditDevice = device => {
-        this.updateDeviceRequest(device)
-            .then(response => {
-                this.hideAsideMenu();
-                const updatedDeviceIndex = this.state.devices.findIndex(value => { return device.id == value.id });
-                this.setState({
-                    devices: update(this.state.devices, { [updatedDeviceIndex]: { $set: response.data } })
-                });
+    onSubmitDeviceForm = () => {
+        this.reloadLab(this.labId);
+    }
+
+    onSubmitLabForm = lab => {
+        this.setState({
+            isLoading: true,
+        });
+        Remotelabz.labs.update({
+            id: lab.id,
+            fields: lab
+        })
+        .then(response => {
+            this.hideAsideMenu();
+            this.setState({
+                lab: response.data
             });
+        })
+        .finally(() => this.setState({ isLoading: false }));
     }
 
     handleDeleteDevice = () => {
@@ -283,6 +294,8 @@ export default class Editor extends React.Component {
         });
     }
 
+    onLabEdit = lab => this.getAsideMenuChildren('lab', lab.id);
+
     onNameSave = val => {
         if (val != this.state.lab.name) {
             this.updateLabRequest(this.labId, { name: val })
@@ -312,84 +325,40 @@ export default class Editor extends React.Component {
         }
     }
 
-    getAsideMenuChildren = () => {
-        const id = this.state.editDeviceForm.device;
-        const device = this.state.devices.find(d => d.id == id);
+    getAsideMenuChildren = async (type, id = 0) => {
+        switch (type) {
+            case 'lab':
+                const lab = this.state.lab;
+                this.setState({
+                    asideMenu: (
+                        <LabAsideMenu
+                            lab={lab}
+                            onClose={this.hideAsideMenu}
+                            onSubmitLabForm={this.onSubmitLabForm}
+                        />
+                    )
+                });
+                break;
 
-        if (this.state.asideMenu.action === 'edit') {
-            return (<>
-                <h2>Edit device</h2>
-                <DeviceForm onSubmit={this.onSubmitEditDevice} device={device} />
-                <hr />
-                <h2 className="mb-3">Network interfaces</h2>
-                {device.networkInterfaces.map((networkInterface, index) => {
-                    const accessTypeOptions = [
-                        { value: '', label: 'None', id: networkInterface.id },
-                        { value: 'VNC', label: 'VNC', id: networkInterface.id }
-                    ];
-
-                    return <div key={networkInterface.uuid} className="device-network-interface-item px-3 py-3 mb-3">
-                        <h4 className="mb-2">NIC #{index + 1}</h4>
-                        <div className="form-group">
-                            <label className="form-label">Access type</label>
-                            <Select
-                                options={accessTypeOptions}
-                                menuPlacement={'top'}
-                                className='react-select-container'
-                                classNamePrefix="react-select"
-                                defaultValue={accessTypeOptions.find(v => (!networkInterface.accessType && v.value == '') || (networkInterface.accessType && v.value == networkInterface.accessType))}
-                                onChange={this.onNetworkInterfaceProtocolChange}
-                            />
-                        </div>
-                        <Button variant="danger" onClick={() => this.onNetworkInterfaceRemove(networkInterface.id)} block>
-                            <SVG name="remove" className="image-sm v-sub" /> Remove
-                        </Button>
-                    </div>
-                })}
-                <Button variant="success" onClick={() => this.onNetworkInterfaceCreate(device.id)} block>
-                    <SVG name="plus-square" className="image-sm v-sub" /> Add network interface
-                </Button>
-            </>);
+            case 'device':
+                this.setState({
+                    asideMenu: (
+                        <DeviceAsideMenu
+                            device={id}
+                            onClose={this.hideAsideMenu}
+                            onSubmitDeviceForm={this.onSubmitDeviceForm}
+                        />
+                    )
+                });
+                break;
+            
+            default:
+                this.setState({ asideMenu: null });
+                break;
         }
-
-        return null;
     }
 
-    /**
-     * @param {number} id ID of the device
-     */
-    onNetworkInterfaceCreate = (id) => {
-        Remotelabz.networkInterfaces.create({ device: id })
-        .then(response => {
-            const devices = this.state.devices;
-            devices.find(d => d.id == id).networkInterfaces.push(response.data);
-            this.setState({devices});
-        });
-    }
-
-    /** @param {{value: string, label: string, id: number}} option */
-    onNetworkInterfaceProtocolChange = (option) => {
-        Remotelabz.networkInterfaces.update(option.id, {
-            accessType: option.value != '' ? option.value : null
-        })
-        .then(response => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.find(nic => nic.id == option.id).accessType = response.data.accessType;
-            this.setState({devices}, () => new Noty({type: 'success', text: 'NIC access type has been changed.'}).show())
-        })
-    }
-
-    /** @param {number} id ID of the NIC */
-    onNetworkInterfaceRemove = (id) => {
-        Remotelabz.networkInterfaces.delete(id)
-        .then(() => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces = devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.filter(nic => nic.id != id);
-            this.setState({devices}, () => new Noty ({type: 'success', text: 'NIC has been removed from device.'}).show());
-        })
-    }
-
-    hideAsideMenu = () => this.setState({ asideMenu: { show: false, action: null } });
+    hideAsideMenu = () => this.getAsideMenuChildren(null);
 
     render() {
         return (<>
@@ -479,6 +448,7 @@ export default class Editor extends React.Component {
                             onToggleFullscreen={this.toggleFullscreen}
                             onZoomIn={this.onZoomIn}
                             onZoomOut={this.onZoomOut}
+                            onLabEditClick={this.onLabEdit}
                             className="editor-menu"
                         />
 
@@ -501,16 +471,7 @@ export default class Editor extends React.Component {
                             </Canvas>
 
                             {/* SIDE MENU */}
-                            {this.state.asideMenu.show && (
-                                <div style={{ overflowY: 'scroll' }}>
-                                    <aside className="editor-aside-toolbar">
-                                        <OverlayTrigger placement="top" overlay={<Tooltip>Close side menu</Tooltip>}>
-                                            <Button variant="danger" onClick={this.hideAsideMenu} className="float-right"><SVG name="close" className="image-sm v-sub"></SVG></Button>
-                                        </OverlayTrigger>
-                                        {this.getAsideMenuChildren()}
-                                    </aside>
-                                </div>
-                            )}
+                            {this.state.asideMenu}
                         </div>
 
                         {/* TOOLBAR */}

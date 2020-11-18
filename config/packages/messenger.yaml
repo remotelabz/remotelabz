@@ -39,5 +39,5 @@ framework:
 
         routing:
             # Route your messages to the transports
-            'App\Message\InstanceActionMessage': worker
-            'App\Message\InstanceStateMessage': front
+            'Remotelabz\Message\Message\InstanceActionMessage': worker
+            'Remotelabz\Message\Message\InstanceStateMessage': front

@@ -47,15 +47,16 @@ class NetworkInterface implements InstanciableInterface
     private $device;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="networkInterface", cascade={"persist", "remove"})
-     */
-    private $instances;
-
-    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
+     */
+    private $vlan;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
@@ -70,8 +71,8 @@ class NetworkInterface implements InstanciableInterface
 
     public function __construct()
     {
-        $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
+        $this->vlan = 0;
     }
 
     public function getId(): ?int
@@ -136,60 +137,6 @@ class NetworkInterface implements InstanciableInterface
         return $this;
     }
 
-    /**
-     * @return ArrayCollection|Instance[]
-     */
-    public function getInstances()
-    {
-        return $this->instances;
-    }
-
-    public function getUserInstance(User $user): ?Instance
-    {
-        $instance = $this->instances->filter(function ($value) use ($user) {
-            return $value->getUser() == $user;
-        });
-
-        if (is_null($instance)) {
-            return null;
-        }
-
-        return $instance[0];
-    }
-
-    public function addInstance(Instance $instance): self
-    {
-        if (!$this->instances->contains($instance)) {
-            $this->instances[] = $instance;
-            $instance->setNetworkInterface($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInstance(Instance $instance): self
-    {
-        if ($this->instances->contains($instance)) {
-            $this->instances->removeElement($instance);
-            // set the owning side to null (unless already changed)
-            if ($instance->getNetworkInterface() === $this) {
-                $instance->setNetworkInterface(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function setInstances(array $instances): self
-    {
-        $this->getInstances()->clear();
-        foreach ($instances as $instance) {
-            $this->addInstance($instance);
-        }
-
-        return $this;
-    }
-
     public function getUuid(): ?string
     {
         return $this->uuid;
@@ -198,6 +145,18 @@ class NetworkInterface implements InstanciableInterface
     public function setUuid(?string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getVlan(): ?int
+    {
+        return $this->vlan;
+    }
+
+    public function setVlan(int $vlan): self
+    {
+        $this->vlan = $vlan;
 
         return $this;
     }

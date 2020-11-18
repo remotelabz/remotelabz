@@ -127,12 +127,6 @@ class Device implements InstanciableInterface
     private $flavor;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="device", cascade={"persist", "remove"})
-     * @Serializer\XmlList(inline=true, entry="instance")
-     */
-    private $instances;
-
-    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
@@ -153,9 +147,15 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
+     * @ORM\Column(type="boolean", options={"default": 1})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
+     */
+    private $vnc;
+
+    /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
      * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="SET NULL")
-     * @Serializer\Groups({"device", "editor"})
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      */
     private $editorData;
 
@@ -170,7 +170,6 @@ class Device implements InstanciableInterface
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
-        $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
@@ -180,6 +179,7 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';
         $this->launchOrder = 0;
         $this->virtuality = 1;
+        $this->vnc = true;
     }
 
     public function getId(): ?int
@@ -378,60 +378,6 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    /**
-     * @return ArrayCollection|Instance[]
-     */
-    public function getInstances()
-    {
-        return $this->instances;
-    }
-
-    public function getUserInstance(User $user): ?Instance
-    {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('user', $user));
-
-        $instance = $this->getInstances()->matching($criteria)->first();
-
-        if (!$instance) {
-            return null;
-        }
-
-        return $instance;
-    }
-
-    public function addInstance(Instance $instance): self
-    {
-        if (!$this->instances->contains($instance)) {
-            $this->instances[] = $instance;
-            $instance->setDevice($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInstance(Instance $instance): self
-    {
-        if ($this->instances->contains($instance)) {
-            $this->instances->removeElement($instance);
-            // set the owning side to null (unless already changed)
-            if ($instance->getDevice() === $this) {
-                $instance->setDevice(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function setInstances(array $instances): self
-    {
-        $this->getInstances()->clear();
-        foreach ($instances as $instance) {
-            $this->addInstance($instance);
-        }
-
-        return $this;
-    }
-
     public function getUuid(): ?string
     {
         return $this->uuid;
@@ -464,6 +410,18 @@ class Device implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getVnc(): bool
+    {
+        return $this->vnc;
+    }
+
+    public function setVnc(bool $vnc): self
+    {
+        $this->vnc = $vnc;
 
         return $this;
     }

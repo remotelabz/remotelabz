@@ -46,3 +46,5 @@ vagrant/provision_prod.sh
 /.php_cs
 /.php_cs.cache
 ###< friendsofphp/php-cs-fixer ###
+
+/database/

@@ -26,6 +26,8 @@ export default class Menu extends Component
 
     handleZoomOut = () => this.props.onZoomOut();
 
+    handleLabEdit = () => this.props.onLabEditClick();
+
     render()
     {
         return (
@@ -48,12 +50,18 @@ export default class Menu extends Component
                             </Button>
                         </OverlayTrigger>
                     </ButtonGroup>
+
+                    {/* <OverlayTrigger placement="bottom" overlay={<Tooltip>Lab options</Tooltip>}>
+                        <Button variant="default" className="ml-3" onClick={this.handleLabEdit}>
+                            <span><SVG name="settings" className="image-sm v-sub"></SVG></span>
+                        </Button>
+                    </OverlayTrigger> */}
                 </ButtonToolbar>
                 <div className="separator flex-grow-1"> </div>
                 <ButtonToolbar className="d-flex">
                     <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle fullscreen</Tooltip>}>
                         <Button variant="default" onClick={this.handleToggleFullscreen}>
-                            <SVG name={this.state.fullscreen ? "screen-normal" : "screen-full"} className="image-sm v-sub"></SVG>
+                            <SVG name={this.state.fullscreen ? "minimize" : "maximize"} className="image-sm v-sub"></SVG>
                         </Button>
                     </OverlayTrigger>
                 </ButtonToolbar>

@@ -12,6 +12,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ResetType;
 use Symfony\Bridge\Doctrine\Form\Type\NetworkSettingsType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
@@ -40,6 +41,9 @@ class LabType extends AbstractType
                 'multiple' => true,
                 'required' => false
             ])*/
+            ->add('isInternetAuthorized', CheckboxType::class, [
+
+            ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class);
     }

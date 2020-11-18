@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Message\InstanceStateMessage;
+use Remotelabz\Message\Message\InstanceStateMessage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
@@ -25,7 +25,7 @@ class LabInstance extends Instance
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="instances")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Lab")
      * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $lab;
@@ -268,6 +268,7 @@ class LabInstance extends Instance
             $deviceInstance = DeviceInstance::create()
                 ->setDevice($device)
                 ->setLabInstance($this)
+                ->setRemotePort(null)
                 ->setOwnedBy($this->ownedBy);
 
             switch ($this->ownedBy) {
@@ -282,7 +283,6 @@ class LabInstance extends Instance
 
             $deviceInstance->populate();
 
-            $device->addInstance($deviceInstance);
             $this->addDeviceInstance($deviceInstance);
         }
 
