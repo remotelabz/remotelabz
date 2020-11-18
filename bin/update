@@ -45,7 +45,7 @@ if [ $? -ne 0 ]; then
     echo "Cannot find mysqldump on your system. Please install it and try again."
     exit 1
 fi
-COMPOSER=$(which composer || echo "php composer.phar")
+COMPOSER=$(which composer || echo "$PHP $PWD/bin/composer")
 
 echo "Checking for new updates..."
 LATEST_TAG=$(git describe --tags)
