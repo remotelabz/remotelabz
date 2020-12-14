@@ -1,0 +1,86 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'dashboard_labs' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
+{% endmacro %}
+
+{% block sidebar %}{% endblock %}
+
+{% block wrapper_fluid %}
+{%- set user = app.user %}
+{% set groups = user.groupsInfo %}
+{% set labs = [] %}
+{% for group in groups %}
+    {% for lab in group.labs %}
+        {% set labs = labs|merge([lab]) %}
+    {% endfor %}
+{% endfor -%}
+{% set labs = labs|sort((a, b) => a.lastUpdated < b.lastUpdated) %}
+
+    <div class="content-title py-3">
+        <div class="content-title-infos">
+            <h1 class="page-title">Labs</h1>
+        </div>
+    </div>
+    <div class="content-list">
+        <div class="top-panel">
+            {% embed "@layouts/topbar_tabbed.html.twig" %}
+                {% import "components.html.twig" as components %}
+                {% block quick_actions %}
+                    {# <form action="{{ path('dashboard_groups') }}" method="GET">
+                        <input type="search" class="form-control input-sm" name="search"
+                        placeholder="Search by name"
+                        spellcheck="false" value="{{ search|default('') }}" type="search" />
+                    </form> #}
+                {% endblock %}
+                {% block items %}
+                    {{ components.topbar_tab('Your labs', 'dashboard_labs') }}
+                    {# {{ components.topbar_tab('Explore public groups', 'dashboard_explore_groups') }} #}
+                {% endblock %}
+            {% endembed %}
+        </div>
+        <div class="grid-xs-1 grid-sm-2 grid-md-2 grid-lg-3 grid-xl-4 grid-xxl-5">
+            {% if labs|length > 0 %}
+            
+            {%- for lab in labs -%}
+            <div class="card m-4">
+                {% if lab.banner is not null %}
+                <img src="{{ path('get_lab_banner', {'id': lab.id}) }}" class="card-img-top" alt="Banner">
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-subtitle mb-2 text-muted">{{ _self.groupParent(lab.group) }} <a href="{{ path('dashboard_show_group', {'slug': lab.group.path}) }}">{{ lab.group.name }}</a> /</h6>
+                    <h4 class="card-title"><a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a></h4>
+                    <p class="card-text flex-grow-1">
+                        {%- if lab.shortDescription is not null -%}
+                        {{- lab.shortDescription -}}
+                        {%- else -%}
+                            No description
+                        {%- endif -%}
+                    </p>
+                    <span class="text-muted">Created by <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" /> {{ lab.author.name }}</span>
+                    <!-- <a href="{{ path('show_lab', {'id': lab.id}) }}" class="btn btn-primary lab-display-more">Go to lab</a> -->
+                </div>
+                <div class="card-footer text-muted">
+                    Last update <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="m-4 see-more-card d-flex justify-content-center align-items-center">
+                <a href="{{ path('labs') }}">
+                    See more labs &RightArrow;
+                </a>
+            </div>
+            {% else %}
+                <p>You don't have access to any lab yet. Come back later!</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

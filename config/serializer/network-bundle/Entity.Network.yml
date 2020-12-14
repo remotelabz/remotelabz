@@ -1,6 +1,6 @@
 Remotelabz\NetworkBundle\Entity\Network:
     properties:
         ip:
-            groups: ["start_lab", "stop_lab", "lab"]
+            groups: ["api_get_lab_instance", "worker"]
         netmask:
-            groups: ["start_lab", "stop_lab", "lab"]
+            groups: ["api_get_lab_instance", "worker"]

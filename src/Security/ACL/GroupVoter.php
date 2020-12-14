@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 class GroupVoter extends Voter
 {
-    // these strings are just invented: you can use anything
+    const VIEW = 'view';
     const EDIT = 'edit';
     const DELETE = 'delete';
     const ADD_MEMBER = 'add_member';
@@ -39,6 +39,8 @@ class GroupVoter extends Voter
         $group = $subject;
 
         switch ($attribute) {
+            case self::VIEW:
+                return $this->canView($group, $user);
             case self::ADD_MEMBER:
                 return $this->canAddMember($group, $user);
             case self::EDIT:
@@ -50,6 +52,15 @@ class GroupVoter extends Voter
             default:
                 return false;
         }
+    }
+
+    private function canView(Group $group, User $user)
+    {
+        return $user->isAdministrator() ||
+            $group->isPublic() ||
+            ($group->isInternal() && $user->isMemberOf($group)) ||
+            ($group->isPrivate() && $group->isOwner($user))
+        ;
     }
 
     private function canAddMember(Group $group, User $user)
