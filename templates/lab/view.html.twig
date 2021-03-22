@@ -35,6 +35,9 @@
     <h1 class="mb-4">{{ lab.name }}</h1>
 
     <div class="row">
+        {# Call to assets/js/components/Instances/InstanceManager.js to check if the lab is instancated
+            Use the react component https://packagist.org/packages/limenius/react-renderer 
+            Need yarn and webpack to compile the js #}
         <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
     </div>
 </div>
