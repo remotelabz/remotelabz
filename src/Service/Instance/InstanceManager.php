@@ -244,4 +244,54 @@ class InstanceManager
 
         return (int) $response->getBody()->getContents();
     }
+  
+    /**
+     * @return void
+     */
+    public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
+    {
+        $url = 'http://localhost:'.$this->websocketProxyApiPort.'/api/routes/device/'.$uuid;
+        $this->logger->debug('Create route in proxy '.$url);
+
+        $this->client->post($url, [
+            'body' => json_encode([
+                'target' => 'ws://'.$this->workerServer.':'.($remotePort + 1000).'',
+            ]),
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+        ]);
+    }
+
+    /**
+     * @param int $remotePort
+     *
+     * @return void
+     */
+    public function deleteDeviceInstanceProxyRoute(string $uuid)
+    {
+        $client = new Client();
+
+        $url = 'http://localhost:'.$this->websocketProxyApiPort.'/api/routes/device/'.$uuid;
+        $this->logger->debug('Delete route in proxy '.$url);
+
+        $client->delete($url);
+    }
+
+    public function connectLabInstanceToInternet(string $uuid)
+    {
+        $labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
+
+        $this->logger->debug('Sending internet connection request message.', [
+            'uuid' => $labInstance->getUuid()
+        ]);
+
+        $context = SerializationContext::create()->setGroups('start_lab');
+        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+
+        $this->bus->dispatch(
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_CONNECT)
+        );
+    }
+
 }

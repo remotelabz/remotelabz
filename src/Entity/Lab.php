@@ -77,11 +77,11 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"lab", "instance_manager"})
      */
     private $isInternetAuthorized = false;
 
-    /**
+  /**
      * @ORM\ManyToOne(targetEntity=Group::class, inversedBy="labs")
      */
     private $_group;
