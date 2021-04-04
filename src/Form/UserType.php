@@ -38,6 +38,7 @@ class UserType extends AbstractType
                     'Student' => 'ROLE_USER',
                     'Teacher' => 'ROLE_TEACHER',
                     'Administrator' => 'ROLE_ADMINISTRATOR',
+                    'Super Administrator' => 'ROLE_SUPER_ADMINISTRATOR',
                 ],
                 'empty_data' => 'ROLE_USER',
                 'mapped' => false,

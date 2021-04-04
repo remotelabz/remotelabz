@@ -1,23 +1,29 @@
 {% extends 'dashboard.base.html.twig' %}
 
-{% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ 'Labs': path('labs') }) -%}
-    {{ parent() }}
-{% endblock %}
-
-{% block sidebar %}
+{% block header %}
     {% set category = 'labs' %}
     {{ parent() }}
 {% endblock %}
 
-{% block wrapper %}
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block wrapper_xl %}
+    <div class="py-3 border-bottom">
+        <h1>Labs</h1>
+    </div>
     <div class="top-panel">
-            <div class="quick-actions">
-                {% if is_granted('ROLE_ADMINISTRATOR') %}
-                    <a class="btn btn-success" role="button" href="{{
-                    path('new_lab') }}">{{ 'New Lab'|trans }}</a>
-                {% endif %}
-            </div>
+        <div class="quick-actions">
+            {% if is_granted('ROLE_ADMINISTRATOR') %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importLabModal">
+                    {{ svg('upload') }} {{ 'Import Lab'|trans }}
+                </button>
+                <a class="btn btn-success" role="button" href="{{
+                path('new_lab') }}">{{ 'New Lab'|trans }}</a>
+            {% endif %}
+        </div>
         <ul class="nav-links nav nav-tabs">
             {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
             <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
@@ -28,13 +34,58 @@
             </li>
         </ul>
     </div>
+
     <div class="search-panel">
-        <form action="{{ path('labs') }}" method="GET">
-            <input type="search" class="form-control input-sm" name="search"
-            placeholder="Search by name"
-            spellcheck="false" value="{{ search|default('') }}" type="search">
+        {% set orderBy = app.request.query.get('orderBy')|default('lastUpdated') %}
+        <form action="{{ path('labs', app.request.query|merge(app.request.query)) }}" method="GET" class="d-flex align-items-center">
+            <div class="search-field flex-grow-1 mr-3">
+                <i class="fa fa-search"></i>
+                <input type="search" class="form-control input-sm" name="search" placeholder="Filter by name" spellcheck="false" value="{{ search|default('') }}" type="search" />
+            </div>
+            <div class="mr-2">
+                {% set searchLimit = app.request.query.get("limit") %}
+                <select name="limit" class="form-control">
+                    <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
+                    <option value="30" {% if searchLimit is defined and searchLimit == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="mr-3">
+                labs per page
+            </div>
+            <div class="dropdown mr-3">
+                <button class="dropdown-menu-toggle btn btn-default" id="sort-projects-dropdown" type="button" data-toggle="dropdown" data-display="static" aria-expanded="true"><span class="dropdown-toggle-text ">Last updated</span>{{ svg('chevron-down') }}</button>
+                <ul class="dropdown-menu">
+                    <h6 class="dropdown-header">
+                    Sort by
+                    </h6>
+                    <li>
+                    <a class="dropdown-item {{ orderBy == 'lastUpdated' ? 'is-active' }}" href="{{ path('labs', app.request.query|merge({'sort_by': 'lastUpdated'})) }}">Last updated
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=created_desc">Last created
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=name_asc">Name
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=name_desc">Name, descending
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=stars_desc">Most stars
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=latest_activity_asc">Oldest updated
+                    </a></li>
+                    <li>
+                    <a class="dropdown-item" href="/dashboard/projects?sort=created_asc">Oldest created
+                    </a></li>
+                </ul>
+            </div>
+            <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
+
     <div class="labs-panel">
     {% for lab in labs %}
         <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
@@ -89,6 +140,24 @@
             </li>
         </ul>
     </nav>
+
+    <div class="modal fade" tabindex="-1" id="importLabModal" aria-labelledby="importLabModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importLabModalLabel">Import a Lab</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        {{- react_component('LabImporter') -}}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block javascripts %}

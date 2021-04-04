@@ -17,15 +17,30 @@
       {% endif %}
     {% endblock %}
 
+    {% set wrapper_fluid = block('wrapper_fluid') is defined %}
     {% set wrapper = block('wrapper_xl') is defined %}
-    {% if wrapper is not empty %}
-      {% set xl = true %}
+    {% if wrapper_fluid is not empty %}
+      {% set fluid = true %}
     {% else %}
-      {% set xl = false %}
+      {% set fluid = false %}
+      {% if wrapper is not empty %}
+        {% set xl = true %}
+      {% else %}
+        {% set xl = false %}
+      {% endif %}
     {% endif %}
     
+    {% set jumbotron = block('jumbotron') is defined %}
+    
     <div class="content-wrapper">
-      {% if xl %}
+      {% if jumbotron is not empty %}
+      <div class="jumbotron jumbotron-fluid">
+        {{- block('jumbotron') -}}
+      </div>
+      {% endif %}
+      {% if fluid %}
+      <div class="container-fluid">
+      {% elseif xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -53,7 +68,9 @@
           {% endblock %}
         </div>
       </div>
-      {% if xl %}
+      {% if fluid %}
+      <div class="container-fluid">
+      {% elseif xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -70,7 +87,9 @@
             {%- endfor -%}
           {%- endfor -%}
         </div>
-        {% if xl %}
+        {% if fluid %}
+          {{- block('wrapper_fluid') -}}
+        {% elseif xl %}
           {{- block('wrapper_xl') -}}
         {% else %}
           {{- block('wrapper') -}}
@@ -78,10 +97,11 @@
         <footer>
           
           <div class="d-flex align-items-center justify-content-center">
-            <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/logo_investirlavenir_rvb.png') }}" class="partnership-logo w-100 h64" /></a>
+            <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/logo_investirlavenir_rvb.png') }}" class="partnership-logo w64 h64" /></a>
             <div class="flex-fill">Made by F. Nolot, J. Hubert &amp; O. Flauzac</div>
             <div class="flex-fill"><a href="http://www.dune-eole.fr/" target="_blank">ANR-16-DUNE-0001-EOLE</a></div>
             <div class="flex-fill"><a href="https://docs.remotelabz.com" target="_blank">Help</a></div>
+            <div class="flex-fill"><a href="mailto:{{ contact_mail }}" target="_blank">Contact</a></div>
             <div class="flex-fill"><a href="https://github.com/crestic-urca/remotelabz/issues/new" target="_blank">Submit an issue</a></div>
           </div>
         </footer>

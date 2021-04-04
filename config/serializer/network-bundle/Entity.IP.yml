@@ -3,4 +3,4 @@ Remotelabz\NetworkBundle\Entity\IP:
     properties:
         addr:
             expose: true
-            groups: ["start_lab", "stop_lab", "lab"]
+            groups: ["api_get_lab_instance", "worker"]

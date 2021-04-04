@@ -1,0 +1,127 @@
+#!/bin/sh
+
+if [ $(id -u) -ne 0 ]; then
+   echo "This script must be run as root."
+   exit 1
+fi
+
+if [ ! -d ".git" ]; then
+    echo "Switching to remotelabz dir"
+    cd $PWD/..
+fi
+
+PHP=$(which php)
+if [ $? -ne 0 ]; then
+    echo "Cannot find PHP on your system. Exiting."
+    exit 1
+fi
+GIT=$(which git)
+if [ $? -ne 0 ]; then
+    echo "Cannot find git on your system. Please install it and try again."
+    exit 1
+fi
+YARN=$(which yarn)
+if [ $? -ne 0 ]; then
+    echo "Cannot find yarn on your system. Please install it and try again."
+    exit 1
+fi
+WGET=$(which wget)
+if [ $? -ne 0 ]; then
+    echo "Cannot find wget on your system. Please install it and try again."
+    exit 1
+fi
+UNZIP=$(which unzip)
+if [ $? -ne 0 ]; then
+    echo "Cannot find unzip on your system. Please install it and try again."
+    exit 1
+fi
+MYSQL=$(which mysql)
+if [ $? -ne 0 ]; then
+    echo "Cannot find mysql on your system. Please install it and try again."
+    exit 1
+fi
+MYSQLDUMP=$(which mysqldump)
+if [ $? -ne 0 ]; then
+    echo "Cannot find mysqldump on your system. Please install it and try again."
+    exit 1
+fi
+COMPOSER=$(which composer || echo "$PHP $PWD/bin/composer")
+
+echo "Checking for new updates..."
+LATEST_REV=$(git rev-list --tags --max-count=1)
+LATEST_TAG=$(git describe --tags $LATEST_REV)
+# compare current version
+CURRENT_VERSION=$(cat $PWD/version | tr -d '\n')
+
+if [ "${LATEST_TAG}" = "${CURRENT_VERSION}" ]; then
+    echo "No update available."
+    exit 2
+else
+    echo "Downloading version ${LATEST_TAG}..."
+fi
+
+LATEST_VERSION_URL="https://github.com/crestic-urca/remotelabz/archive"
+
+ORIGINAL_DIR_OWNER=$(ls -ld $PWD | awk 'NR==1 {print $3}')
+
+echo "Fetching latest changes"
+$WGET $LATEST_VERSION_URL/$LATEST_TAG.zip -O update.zip
+echo "Extracting new files"
+$UNZIP -d $PWD -o $PWD/update.zip > /dev/null
+cp -rp $PWD/remotelabz-$LATEST_TAG/* .
+echo "Deleting temporary files"
+rm -rf $PWD/remotelabz-$LATEST_TAG
+rm -f $PWD/update.zip
+
+APP_ENV=prod
+if [ -f ".env.local" ]; then
+    . $PWD/.env.local
+    echo "Detected $APP_ENV environment"
+fi
+
+echo "Updating composer dependencies"
+COMPOSER_COMMAND="COMPOSER_ALLOW_SUPERUSER=1 ${COMPOSER} install --no-progress --no-suggest --no-interaction --no-ansi"
+if [ "${APP_ENV}" != "dev" ]; then
+    COMPOSER_COMMAND="${COMPOSER_COMMAND} --no-dev"
+fi
+
+eval $COMPOSER_COMMAND
+
+echo "Cleaning cache"
+$PHP bin/console cache:clear --no-ansi
+
+echo "Updating yarn dependencies"
+$YARN install --silent --non-interactive
+$YARN --non-interactive encore $APP_ENV
+
+echo "Dumping database before upgrade"
+
+# registering credentials in a file
+TMP_MYSQL_CRED_FILE=/tmp/remotelabz_update_mysql_creds.cnf
+/bin/cat <<EOM >$TMP_MYSQL_CRED_FILE
+[client]
+user = '$MYSQL_USER'
+password = '$MYSQL_PASSWORD'
+EOM
+chmod 400 $TMP_MYSQL_CRED_FILE
+
+if $MYSQL --defaults-extra-file=$TMP_MYSQL_CRED_FILE -h $MYSQL_SERVER $MYSQL_DATABASE -e ";"; then
+    echo "Database connection succesful"
+    mkdir -p $PWD/database/backup || true
+    BACKUP_FILE_NAME=$PWD/database/backup/remotelabz_backup_$(date '+%d_%m_%Y_%H_%M_%S').sql
+    $MYSQLDUMP --defaults-extra-file=$TMP_MYSQL_CRED_FILE --no-tablespaces -h $MYSQL_SERVER $MYSQL_DATABASE > $BACKUP_FILE_NAME
+    echo "Database dumped succesfully in $BACKUP_FILE_NAME"
+    rm -f $TMP_MYSQL_CRED_FILE
+    echo "Executing database migrations"
+    $PHP bin/console doctrine:migrations:migrate --no-interaction  --no-ansi
+else
+    rm -f $TMP_MYSQL_CRED_FILE
+    echo "Cannot connect to the database. Please check your connection parameters and try again."
+    exit 1
+fi
+
+echo "Setting file permissions"
+chown -R $ORIGINAL_DIR_OWNER:remotelabz .
+chmod -R g+rwx .
+
+echo "All done! Updated remotelabz to ${LATEST_TAG}. Don't forget to update associated workers if necessary!"

@@ -2,13 +2,12 @@
 
 namespace App\Entity;
 
-use App\Instance\InstanciableInterface;
 use App\Utils\Uuid;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
+use App\Instance\InstanciableInterface;
+use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -20,15 +19,13 @@ class Device implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"network_interfaces", "primary_key", "device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -36,24 +33,21 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab"})
      * @Assert\Type(type="string")
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab"})
      * @Assert\Type(type="string")
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({})
      * @Assert\Type(type="integer")
      */
     private $launchOrder;
@@ -67,21 +61,19 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist"})
-     * @Serializer\XmlList(inline=true, entry="network_interface")
-     * @Serializer\Groups({"device", "lab", "instance_manager"})
+     * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $networkInterfaces;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
-     * @Serializer\Groups({"details"})
+     * @Serializer\Groups({"api_get_device"})
      */
     private $labs;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
      * @Assert\Choice({"vm"})
      */
@@ -89,22 +81,19 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
     private $virtuality;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\XmlList(entry="operating_system")
-     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -112,56 +101,53 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
-     * @Serializer\XmlList(inline=true, entry="control_interface")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({})
      */
     private $controlInterface;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     * @Serializer\XmlList(entry="flavor")
-     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
      * @Assert\Valid
      */
     private $flavor;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="device", cascade={"persist", "remove"})
-     * @Serializer\XmlList(inline=true, entry="instance")
-     */
-    private $instances;
-
-    /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
+     * @Serializer\Groups({"api_get_device", "worker"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_device"})
      * @Assert\Type(type="\DateTime")
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_device"})
      */
     private $lastUpdated;
 
     /**
+     * @ORM\Column(type="boolean", options={"default": 1})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     */
+    private $vnc;
+
+    /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="SET NULL")
-     * @Serializer\Groups({"device", "editor"})
+     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
+     * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $editorData;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_device"})
      * @Assert\NotNull
      * @Assert\Type(type="boolean")
      */
@@ -170,7 +156,6 @@ class Device implements InstanciableInterface
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
-        $this->instances = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
@@ -180,6 +165,7 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';
         $this->launchOrder = 0;
         $this->virtuality = 1;
+        $this->vnc = true;
     }
 
     public function getId(): ?int
@@ -378,60 +364,6 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    /**
-     * @return ArrayCollection|Instance[]
-     */
-    public function getInstances()
-    {
-        return $this->instances;
-    }
-
-    public function getUserInstance(User $user): ?Instance
-    {
-        $criteria = Criteria::create()->where(Criteria::expr()->eq('user', $user));
-
-        $instance = $this->getInstances()->matching($criteria)->first();
-
-        if (!$instance) {
-            return null;
-        }
-
-        return $instance;
-    }
-
-    public function addInstance(Instance $instance): self
-    {
-        if (!$this->instances->contains($instance)) {
-            $this->instances[] = $instance;
-            $instance->setDevice($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInstance(Instance $instance): self
-    {
-        if ($this->instances->contains($instance)) {
-            $this->instances->removeElement($instance);
-            // set the owning side to null (unless already changed)
-            if ($instance->getDevice() === $this) {
-                $instance->setDevice(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function setInstances(array $instances): self
-    {
-        $this->getInstances()->clear();
-        foreach ($instances as $instance) {
-            $this->addInstance($instance);
-        }
-
-        return $this;
-    }
-
     public function getUuid(): ?string
     {
         return $this->uuid;
@@ -464,6 +396,18 @@ class Device implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
+
+        return $this;
+    }
+
+    public function getVnc(): bool
+    {
+        return $this->vnc;
+    }
+
+    public function setVnc(bool $vnc): self
+    {
+        $this->vnc = $vnc;
 
         return $this;
     }

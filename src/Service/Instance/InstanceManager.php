@@ -14,6 +14,7 @@ use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use App\Service\Network\NetworkManager;
+use App\Service\Proxy\ProxyManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use GuzzleHttp\Client;
@@ -46,8 +47,10 @@ class InstanceManager
     protected $networkInterfaceInstanceRepository;
     protected $workerServer;
     protected $workerPort;
-    protected $websocketProxyApiPort;
-    protected $websocketProxyPort;
+    protected $proxyManager;
+    protected $workerSerializationGroups = [
+        'worker'
+    ];
 
     public function __construct(
         LoggerInterface $logger,
@@ -61,8 +64,7 @@ class InstanceManager
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         string $workerServer,
         string $workerPort,
-        string $websocketProxyPort,
-        string $websocketProxyApiPort
+        ProxyManager $proxyManager
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -75,8 +77,7 @@ class InstanceManager
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
-        $this->websocketProxyPort = $websocketProxyPort;
-        $this->websocketProxyApiPort = $websocketProxyApiPort;
+        $this->proxyManager = $proxyManager;
     }
 
     /**
@@ -122,7 +123,7 @@ class InstanceManager
         $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('start_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE)
@@ -140,7 +141,7 @@ class InstanceManager
      */
     public function delete(LabInstance $labInstance)
     {
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
         $labInstance->setState(InstanceStateMessage::STATE_DELETING);
         $this->entityManager->persist($labInstance);
@@ -153,45 +154,33 @@ class InstanceManager
     /**
      * Start a device instance.
      *
-     * @return void
+     * @return string The lab instance JSON string
      */
     public function start(DeviceInstance $deviceInstance)
     {
-        $lab = $deviceInstance->getLab();
-        $user = $deviceInstance->getUser();
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
         $this->logger->debug('Starting device instance with UUID '.$uuid.'.');
 
-        /* @var NetworkInterfaceInstance */
-        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
-            $networkInterface = $networkInterfaceInstance->getNetworkInterface();
-            $this->logger->debug('Looking for Network interface '.$networkInterface->getName().' of device '.$device->getName().' in device instance '.$uuid);
-
-            // if vnc access is requested, ask for a free port and register it
-            if ('VNC' == $networkInterface->getSettings()->getProtocol()) {
-                $this->logger->debug('Network interface '.$networkInterface->getName().' of device '.$device->getName().' for lab '.$lab->getName().' uses for VNC');
-                $remotePort = $this->getRemoteAvailablePort();
-                $networkInterfaceInstance->setRemotePort($remotePort);
-
-                $this->entityManager->persist($networkInterfaceInstance);
-            } else {
-                $this->logger->debug('Network interface '.$networkInterface->getName().' of device '.$device->getName().' for lab '.$lab->getName().' no control protocol defined');
-            }
+        if (true === $device->getVnc()) {
+            $remotePort = $this->getRemoteAvailablePort();
+            $deviceInstance->setRemotePort($remotePort);
+            $this->entityManager->persist($deviceInstance);
         }
 
         $deviceInstance->setState(InstanceState::STARTING);
-        // $networkInterfaceInstance don't exist outside of this block. We have to save it before to quit this block
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('start_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
         $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
         );
+
+        return $labJson;
     }
 
     /**
@@ -199,42 +188,15 @@ class InstanceManager
      */
     public function stop(DeviceInstance $deviceInstance)
     {
-        $lab = $deviceInstance->getLab();
-        $user = $deviceInstance->getUser();
         $uuid = $deviceInstance->getUuid();
-        $device = $deviceInstance->getDevice();
+
+        $deviceInstance->setState(InstanceState::STOPPING);
+        $this->entityManager->persist($deviceInstance);
+        $this->entityManager->flush();
 
         $this->logger->debug('Stopping device instance with UUID '.$uuid.'.');
 
-        /* @var NetworkInterfaceInstance */
-        foreach ($deviceInstance->getNetworkInterfaceInstances() as $networkInterfaceInstance) {
-            $networkInterface = $networkInterfaceInstance->getNetworkInterface();
-            $this->logger->debug('Looking for Network interface '.$networkInterface->getName().' of device '.$device->getName().' in device instance '.$uuid);
-
-            // if vnc access is requested, ask for a free port and register it
-            if ('VNC' == $networkInterface->getSettings()->getProtocol()) {
-                $this->logger->debug('Network interface '.$networkInterface->getName().' of device '.$device->getName().' for lab '.$lab->getName().' uses for VNC');
-                try {
-                    $this->deleteDeviceInstanceProxyRoute($deviceInstance->getUuid());
-                } catch (ServerException $exception) {
-                    $this->logger->error($exception->getResponse()->getBody()->getContents());
-                    throw $exception;
-                } catch (RequestException $exception) {
-                    $this->logger->warning('Route has already been deleted.', ['exception' => $exception]);
-                }
-
-                $networkInterfaceInstance->setRemotePort(0);
-                $this->entityManager->persist($networkInterfaceInstance);
-            } else {
-                $this->logger->debug('Network interface '.$networkInterface->getName().' of device '.$device->getName().' for lab '.$lab->getName().' no control protocol defined');
-            }
-        }
-
-        $deviceInstance->setState(InstanceState::STOPPING);
-        // $networkInterfaceInstance don't exist outside of this block. We have to save it before to quit this block
-        $this->entityManager->flush();
-
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
         $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
@@ -243,21 +205,32 @@ class InstanceManager
         );
     }
 
-    // public function state(DeviceInstance $deviceInstance)
-    // {
-    //     $client = new Client();
-    //     $uuid = $deviceInstance->getUuid();
+    public function setStopped(DeviceInstance $deviceInstance)
+    {
+        $this->logger->info('Device instance has been stopped correctly by worker. Performing state change.', [
+            'instance' => $deviceInstance
+        ]);
+        $device = $deviceInstance->getDevice();
 
-    //     $url = "http://" . getenv('WORKER_SERVER') . ":" . getenv('WORKER_PORT') . "/" . $uuid . "/state";
+        if (true === $device->getVnc()) {
+            $this->logger->info('Deleting proxy route');
+            try {
+                $this->proxyManager->deleteDeviceInstanceProxyRoute($deviceInstance->getUuid());
+            } catch (ServerException $exception) {
+                $this->logger->error($exception->getResponse()->getBody()->getContents());
+                throw $exception;
+            } catch (RequestException $exception) {
+                $this->logger->warning('Route has already been deleted.', ['exception' => $exception]);
+            }
 
-    //     try {
-    //         $response = $client->get($url);
-    //     } catch (RequestException $exception) {
-    //         throw new NotFoundHttpException();
-    //     }
+            $deviceInstance->setRemotePort(null);
+            $this->entityManager->persist($deviceInstance);
+        }
 
-    //     return $response->getBody()->getContents();
-    // }
+        $this->entityManager->flush();
+
+        $this->logger->info('Device instance state changed.');
+    }
 
     public function getRemoteAvailablePort(): int
     {
@@ -271,7 +244,7 @@ class InstanceManager
 
         return (int) $response->getBody()->getContents();
     }
-
+  
     /**
      * @return void
      */
@@ -320,4 +293,5 @@ class InstanceManager
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_CONNECT)
         );
     }
+
 }

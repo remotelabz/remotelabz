@@ -8,8 +8,12 @@
 {% form_theme form 'custom.form.vertical.html.twig' %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = breadcrumbs|merge({ 'Members': path('dashboard_group_members', {'slug': group.path}) }) %}
-    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('dashboard_show_group', {'slug': group.path}) }) %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Settings': path('dashboard_edit_group', {'slug': group.getPath()}) }) %}
+    {% set currentGroup = group %}
+    {% for parent in group.getFullyQualifiedName()|reverse %}
+        {% set breadcrumbs = breadcrumbs|merge({ (parent): path('dashboard_show_group', {'slug': currentGroup.getPath()}) }) %}
+        {% set currentGroup = currentGroup.parent %}
+    {% endfor %}
     {{ parent() }}
 {% endblock %}
 
@@ -32,7 +36,8 @@
         </div>
     </div>
     <div class="content-body">
-        <h3>Edit</h3><hr>
+        <h3>Edit</h3>
+        <hr>
         <div class="row">
             <div class="col-md-3">
                 Groups allow you to manage users and handle permissions across multiple activities. Members of a group have access to all of its activities.
@@ -48,8 +53,16 @@
                     {{ form_label(form.slug) }}
 
                     <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/{% if parent is defined %}{{ parent.path }}/{% endif %}
-                        </span></div>
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">{{ app.request.getSchemeAndHttpHost() }}/
+                                {%- if group.parent is defined -%}
+                                    {%- set path = group.parent.getPath()|default('') -%}
+                                    {%- if path is not empty -%}
+                                        {{ path }}/
+                                    {%- endif -%}
+                                {%- endif -%}
+                            </span>
+                        </div>
                         {{ form_widget(form.slug) }}
                     </div>
                 </div>
@@ -68,7 +81,7 @@
                                 name="{{ form.visibility.children[0].vars.full_name }}"
                                 required="required"
                                 class="form-check-input"
-                                value="{{ form.visibility.children[1].vars.value }}"
+                                value="{{ form.visibility.children[0].vars.value }}"
                                 {%- if app.request.attributes.get('_route') == 'new_group' -%}
                                  checked  
                                 {%- elseif group.visibility is not null and group.visibility == '0' -%}
@@ -116,6 +129,7 @@
                         </div>
                     </div>
                 </div>
+                {{ form_widget(form.parent) }}
                 <div class="form-actions">
                     {{ form_widget(form.submit) }}
                     {{ form_widget(form.reset) }}
@@ -125,12 +139,42 @@
             </div>
         </div>
         {% if group.isOwner(app.user) %}
-        <h3>Delete</h3><hr>
         <div class="row">
             <div class="col">
-                <p>A group can only be deleted by its owner.</p>
-                <p><strong>Deleted groups cannot be restored! Proceed with caution.</strong></p>
-                <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete group</a>
+                <h3>Change namespace</h3>
+                <hr>
+                <div class="row">
+                    <div class="col">
+                        <p>A group namespace can only be deleted by its owner.</p>
+                        <p><strong>Warning: Changing group namespace may have side-effects.</strong></p>
+                        <form action="{{ path('dashboard_edit_group_parent', {slug: group.path}) }}" method="POST">
+                            {{- react_component('GroupSelect', {
+                                'props': {
+                                    "endpoint": path('api_groups'),
+                                    "user": app.user.email,
+                                    "fieldName": "parent",
+                                    "exclude": [group.id],
+                                    "isClearable": true,
+                                    "placeholder": "Search for a group or leave empty to clear namespace"
+                                }
+                            }) -}}
+                            <button class="btn btn-warning mt-3" type="submit">Change group namespace</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <h3>Delete</h3>
+                <hr>
+                <div class="row">
+                    <div class="col">
+                        <p>A group can only be deleted by its owner.</p>
+                        <p><strong>Deleted groups cannot be restored! Proceed with caution.</strong></p>
+                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete group</a>
+                    </div>
+                </div>
             </div>
         </div>
         {% endif %}

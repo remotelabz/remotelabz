@@ -9,7 +9,6 @@ framework:
             worker: 
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
-                    queue_name: worker
                     exchange:
                             name: worker
                     queues:
@@ -28,7 +27,6 @@ framework:
             front: 
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
-                    queue_name: front
                     exchange:
                         name: front
                     queues:

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Button, OverlayTrigger, Tooltip, Accordion, Card } from 'react-bootstrap';
+import React, {useState} from 'react';
+import { Modal, Button, Accordion, Card, Form } from 'react-bootstrap';
 import Menu from './Menu/Menu';
 import ContextualMenu from './Menu/ContextualMenu';
 import Canvas from './Display/Canvas';
@@ -8,23 +8,18 @@ import { jsPlumb } from 'jsplumb';
 import SVG from '../Display/SVG';
 import API from '../../api';
 import DeviceTemplateSelect from './Form/DeviceTemplateSelect';
-import DeviceForm from './Form/DeviceForm';
-import EdiText from 'react-editext';
 import Skeleton from 'react-loading-skeleton';
-import update from 'immutability-helper';
 import SimpleMDE from "react-simplemde-editor";
 import ReactMarkdown from 'react-markdown';
 import Remotelabz, { Device } from '../API';
-import Select from 'react-select';
-import Noty from 'noty';
-import AsideMenuContainer from './Menu/AsideMenuContainer';
 import DeviceAsideMenu from './Menu/DeviceAsideMenu';
 import LabAsideMenu from './Menu/LabAsideMenu';
+import LabEditorHeader from './Elements/LabEditorHeader';
 
 export default class Editor extends React.Component {
     jsPlumb = null;
     /** @var {number} labId */
-    labId = document.getElementById("labEditor").dataset.id;
+    labId = this.props.id;
     api = API.getInstance({
         beforeSend: () => this.setState({ isLoading: true }),
         responseCallback: () => this.setState({ isLoading: false }),
@@ -62,67 +57,55 @@ export default class Editor extends React.Component {
                 y: 0,
                 target: null,
             },
-            asideMenu: {
-                show: false,
-                type: null
-            },
             lab: {
-                name: null
+                name: null,
+                id: this.props.id
             },
             /** @type {import('../API').Device[]} devices */
             devices: [],
             isLoading: false,
+            asideMenu: null,
         }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            this.labId = document.getElementById("labEditor").dataset.id;
-
-            Remotelabz.labs.get(this.labId).then(response => this.setState({
-                devices: response.data.devices,
-                lab: {
-                    ...response.data,
-                },
-                ready: true
-            }));
-        });
     }
 
-    getLabDeviceRequest = id => {
-        return this.api.get('/api/devices/' + id);
+    componentDidMount() {
+        this.labId = this.props.id;
+
+        this.reloadLab(this.labId);
     }
 
-    updateLabRequest = (id, params) => {
-        return this.api.put('/api/labs/' + id, params);
+    reloadLab = async id => {
+        const lab = (await Remotelabz.labs.get(id)).data
+        let devices = []
+        for (const _device of lab.devices) {
+            const device = await Remotelabz.devices.get(_device.id)
+            devices.push(device.data)
+        }
+        console.log(devices)
+
+        this.setState({ devices, lab, ready: true })
     }
 
     /** @param {Device} device */
     addDeviceRequest = device => {
         device.networkInterfaces = null
-        this.api.post('/api/labs/' + this.labId + '/devices', device)
-            .then(response => this.addDevice(response.data))
-            ;
-    }
-
-    updateDeviceRequest = device => {
-        return this.api.put('/api/devices/' + device.id, device);
+        device.lab = this.labId
+        Remotelabz.devices.create(device).then(response => {
+            this.addDevice(response.data)
+        })
     }
 
     updateDevicePositionRequest = device => {
-        this.api.put('/api/devices/' + device.props.id + '/editor-data', {
-            x: device.state.left,
-            y: device.state.top
-        });
+        Remotelabz.devices.updatePosition(device.props.id, device.state.left, device.state.top)
     }
 
     deleteDeviceRequest = () => {
-        this.api.delete('/api/devices/' + this.state.contextualMenu.target.id)
-            .then(() => {
-                const devices = this.state.devices.filter((device) => {
-                    return device.id != this.state.contextualMenu.target.id;
-                });
-                this.setState({ devices });
-            })
-            ;
+        Remotelabz.devices.delete(this.state.contextualMenu.target.id).then(() => {
+            const devices = this.state.devices.filter((device) => {
+                return device.id != this.state.contextualMenu.target.id;
+            });
+            this.setState({ devices });
+        })
     }
 
     addDevice = (device) => {
@@ -146,36 +129,12 @@ export default class Editor extends React.Component {
                 device: device.id,
                 show: true,
             },
-            asideMenu: {
-                show: true,
-                type: 'device'
-            }
         });
+        this.getAsideMenuChildren('device', device.id);
     }
 
-    handleEditDescription = () => this.setState({ editDescription: true });
-    handleCancelEditDescription = () => this.setState({ editDescription: false });
-    handleSaveEditDescription = () => {
-        this.updateLabRequest(this.labId, {
-            description: this.state.mdeValue,
-        })
-            .then(response => {
-                this.setState({ lab: { ...this.state.lab, description: this.state.mdeValue }, editDescription: false });
-            })
-    }
-    handleChangeDescription = mdeValue => {
-        this.setState({ mdeValue });
-    }
-
-    onSubmitEditDevice = device => {
-        this.updateDeviceRequest(device)
-            .then(response => {
-                this.hideAsideMenu();
-                const updatedDeviceIndex = this.state.devices.findIndex(value => { return device.id == value.id });
-                this.setState({
-                    devices: update(this.state.devices, { [updatedDeviceIndex]: { $set: response.data } })
-                });
-            });
+    onSubmitDeviceForm = () => {
+        this.reloadLab(this.labId);
     }
 
     onSubmitLabForm = lab => {
@@ -301,18 +260,11 @@ export default class Editor extends React.Component {
         });
     }
 
-    onLabEdit = () => {
-        this.setState({
-            asideMenu: {
-                show: true,
-                type: 'lab'
-            }
-        });
-    }
+    onLabEdit = lab => this.getAsideMenuChildren('lab', lab.id);
 
     onNameSave = val => {
         if (val != this.state.lab.name) {
-            this.updateLabRequest(this.labId, { name: val })
+            Remotelabz.devices.update(this.labId, { name: val })
             .then(() => this.setState({ lab: { ...this.state.lab, name: val } }))
         }
     }
@@ -339,198 +291,210 @@ export default class Editor extends React.Component {
         }
     }
 
-    getAsideMenuChildren = (type) => {
-        const id = this.state.editDeviceForm.device;
-        const device = this.state.devices.find(d => d.id == id);
-
+    getAsideMenuChildren = async (type, id = 0) => {
         switch (type) {
             case 'lab':
                 const lab = this.state.lab;
-                return (<LabAsideMenu onClose={this.hideAsideMenu} onSubmitLabForm={this.onSubmitLabForm} lab={lab}></LabAsideMenu>);
+                this.setState({
+                    asideMenu: (
+                        <LabAsideMenu
+                            lab={lab}
+                            onClose={this.hideAsideMenu}
+                            onSubmitLabForm={this.onSubmitLabForm}
+                        />
+                    )
+                });
+                break;
 
             case 'device':
-                const id = this.state.editDeviceForm.device;
-                const device = this.state.devices.find(d => d.id == id);
-
-                return <DeviceAsideMenu
-                    onClose={this.hideAsideMenu}
-                    device={device}
-                    onSubmitEditDevice={this.onSubmitEditDevice}
-                    onNetworkInterfaceProtocolChange={this.onNetworkInterfaceProtocolChange}
-                    onNetworkInterfaceCreate={this.onNetworkInterfaceCreate}
-                    onNetworkInterfaceRemove={this.onNetworkInterfaceRemove}
-                ></DeviceAsideMenu>;
+                this.setState({
+                    asideMenu: (
+                        <DeviceAsideMenu
+                            device={id}
+                            onClose={this.hideAsideMenu}
+                            onSubmitDeviceForm={this.onSubmitDeviceForm}
+                        />
+                    )
+                });
+                break;
             
             default:
-                return (<></>);
+                this.setState({ asideMenu: null });
+                break;
         }
     }
 
-    /**
-     * @param {number} id ID of the device
-     */
-    onNetworkInterfaceCreate = (id) => {
-        Remotelabz.networkInterfaces.create({ device: id })
-        .then(response => {
-            const devices = this.state.devices;
-            devices.find(d => d.id == id).networkInterfaces.push(response.data);
-            this.setState({devices});
-        });
-    }
-
-    /** @param {{value: string, label: string, id: number}} option */
-    onNetworkInterfaceProtocolChange = (option) => {
-        Remotelabz.networkInterfaces.update(option.id, {
-            accessType: option.value != '' ? option.value : null
-        })
-        .then(response => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.find(nic => nic.id == option.id).accessType = response.data.accessType;
-            this.setState({devices}, () => new Noty({type: 'success', text: 'NIC access type has been changed.'}).show())
-        })
-    }
-
-    /** @param {number} id ID of the NIC */
-    onNetworkInterfaceRemove = (id) => {
-        Remotelabz.networkInterfaces.delete(id)
-        .then(() => {
-            let devices = this.state.devices;
-            devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces = devices.find(d => d.id == this.state.editDeviceForm.device).networkInterfaces.filter(nic => nic.id != id);
-            this.setState({devices}, () => new Noty ({type: 'success', text: 'NIC has been removed from device.'}).show());
-        })
-    }
-
-    hideAsideMenu = () => this.setState({ asideMenu: { show: false, type: null } });
+    hideAsideMenu = () => this.getAsideMenuChildren(null);
 
     render() {
         return (<>
-            <div className="editor-lab-name mb-3 mt-3">
+            {this.state.ready ?
                 <div>
-                    {this.state.lab.name ?
-                        <EdiText
-                            type='text'
-                            value={this.state.lab.name}
-                            onSave={this.onNameSave}
-                            showButtonsOnHover={true}
-                            editOnViewClick={true}
-                            mainContainerClassName="editor-title"
-                            editButtonContent="✎"
-                            editButtonClassName="editor-title-edit-button"
-                            submitOnEnter
-                        />
-                        :
-                        <Skeleton height={24} />}</div>
-            </div>
-            {this.state.ready ?
-                <div className="mb-3">
-                    {this.state.editDescription ?
-                        <div>
-                            <SimpleMDE value={this.state.lab.description} onChange={this.handleChangeDescription} />
-                            <div className="d-flex">
-                                <Button variant="success" onClick={this.handleSaveEditDescription}>Save</Button>
-                                <div className="flex-grow-1" />
-                                <Button variant="default" onClick={this.handleCancelEditDescription}>Cancel</Button>
+                    <div className="editor-lab-name mb-3">
+                        <LabEditorHeader id={this.state.lab.id} initialName={this.state.lab.name} />
+                    </div>
+                    <div className="mb-3">
+                        <div className="mb-3">
+                            <ShortDescriptionEditor id={this.state.lab.id} initialValue={this.state.lab.shortDescription} onChange={(isLoading) => this.setState({isLoading})} />
+                        </div>
+
+                        <DescriptionEditor id={this.state.lab.id} initialValue={this.state.lab.description} />
+                    </div>
+                    <div className="editor-wrapper mb-3">
+                        <div id="editor" className={this.getEditorClassNames()}>
+                            {/* ADD DEVICE MODAL */}
+                            <Modal size="lg" show={this.state.addDeviceModal.show} onHide={this.onHideAddDeviceModal}>
+                                <Modal.Header closeButton>
+                                    <Modal.Title>Add a new device</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <DeviceTemplateSelect onChange={this.onChangeDeviceSelect} />
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <Button variant="success" onClick={this.onValidateAddDeviceModal} disabled={!this.state.addDeviceModal.selectedOption ? true : false}>Add</Button>
+                                </Modal.Footer>
+                            </Modal>
+
+                            {/* CONTEXTUAL MENU */}
+                            <ContextualMenu
+                                id="editorContextualMenu"
+                                x={this.state.contextualMenu.x}
+                                y={this.state.contextualMenu.y}
+                                show={this.state.contextualMenu.show}
+                            >
+                                {this.getContextualMenuItems()}
+                            </ContextualMenu>
+
+                            {/* TOP MENU */}
+                            <Menu
+                                onCreateDeviceRequest={this.handleCreateDevice}
+                                onToggleFullscreen={this.toggleFullscreen}
+                                onZoomIn={this.onZoomIn}
+                                onZoomOut={this.onZoomOut}
+                                onLabEditClick={this.onLabEdit}
+                                className="editor-menu"
+                            />
+
+                            {/* CANVAS */}
+                            <div className="editor-canvas-wrapper overflow-hidden">
+                                <Canvas onContextMenu={this.onContextMenu} onZoomIn={this.onZoomIn} onZoomOut={this.onZoomOut} zoom={this.state.canvasZoom}>
+                                    {this.state.devices.map((device) => (
+                                        <DeviceNode
+                                            key={device.id}
+                                            name={device.name}
+                                            id={device.id}
+                                            x={device.editorData.x}
+                                            y={device.editorData.y}
+                                            scale={this.state.canvasZoom}
+                                            onMoved={this.onDeviceMoved}
+                                            onDrag={this.onDeviceDrag}
+                                            onContextMenu={this.onContextMenu}
+                                        />
+                                    ))}
+                                </Canvas>
+
+                                {/* SIDE MENU */}
+                                {this.state.asideMenu}
                             </div>
-                        </div>
-                        :
-                        <Accordion className="lab-description">
-                            <Card>
-                                <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
-                                    <div>
-                                        <SVG name="text-description" className="v-sub s18 mr-2" /> Description
+
+                            {/* TOOLBAR */}
+                            <div className="editor-toolbar-wrapper">
+                                <div className="text-muted">Zoom : {Math.round(this.state.canvasZoom * 100)}%</div>
+                                <div className="flex-separator"></div>
+                                <div className="toolbar-loading-wrapper text-muted">
+                                    {
+                                        this.state.isLoading ?
+                                            <><SVG name="spinner" className="image-sm v-sub"></SVG> Loading...</>
+                                            :
+                                            <>Saved!</>
+                                    }
                                 </div>
-                                    <div>
-                                        <Button variant="default" onClick={(e) => { e.stopPropagation(); this.handleEditDescription(); }}><SVG name="pencil" /></Button>
-                                    </div>
-                                </Accordion.Toggle>
-                                <Accordion.Collapse eventKey="0">
-                                    <Card.Body>
-                                        <div className="text-muted">
-                                            <ReactMarkdown source={this.state.lab.description || "No description"} />
-                                        </div>
-                                    </Card.Body>
-                                </Accordion.Collapse>
-                            </Card>
-                        </Accordion>
-
-                    }
-                </div>
-                :
-                <Skeleton count={6} />
-            }
-            {this.state.ready ?
-                <div className="editor-wrapper mb-3">
-                    <div id="editor" className={this.getEditorClassNames()}>
-                        {/* ADD DEVICE MODAL */}
-                        <Modal size="lg" show={this.state.addDeviceModal.show} onHide={this.onHideAddDeviceModal}>
-                            <Modal.Header closeButton>
-                                <Modal.Title>Add a new device</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                <DeviceTemplateSelect onChange={this.onChangeDeviceSelect} />
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="success" onClick={this.onValidateAddDeviceModal} disabled={!this.state.addDeviceModal.selectedOption ? true : false}>Add</Button>
-                            </Modal.Footer>
-                        </Modal>
-
-                        {/* CONTEXTUAL MENU */}
-                        <ContextualMenu
-                            id="editorContextualMenu"
-                            x={this.state.contextualMenu.x}
-                            y={this.state.contextualMenu.y}
-                            show={this.state.contextualMenu.show}
-                        >
-                            {this.getContextualMenuItems()}
-                        </ContextualMenu>
-
-                        {/* TOP MENU */}
-                        <Menu
-                            onCreateDeviceRequest={this.handleCreateDevice}
-                            onToggleFullscreen={this.toggleFullscreen}
-                            onZoomIn={this.onZoomIn}
-                            onZoomOut={this.onZoomOut}
-                            onLabEditClick={this.onLabEdit}
-                            className="editor-menu"
-                        />
-
-                        {/* CANVAS */}
-                        <div className="editor-canvas-wrapper overflow-hidden">
-                            <Canvas onContextMenu={this.onContextMenu} onZoomIn={this.onZoomIn} onZoomOut={this.onZoomOut} zoom={this.state.canvasZoom}>
-                                {this.state.devices.map((device) => (
-                                    <DeviceNode
-                                        key={device.id}
-                                        name={device.name}
-                                        id={device.id}
-                                        x={device.editorData.x}
-                                        y={device.editorData.y}
-                                        scale={this.state.canvasZoom}
-                                        onMoved={this.onDeviceMoved}
-                                        onDrag={this.onDeviceDrag}
-                                        onContextMenu={this.onContextMenu}
-                                    />
-                                ))}
-                            </Canvas>
-
-                            {/* SIDE MENU */}
-                            {this.state.asideMenu.show && this.getAsideMenuChildren(this.state.asideMenu.type)}
-                        </div>
-
-                        {/* TOOLBAR */}
-                        <div className="editor-toolbar-wrapper">
-                            <div className="text-muted">Zoom : {Math.round(this.state.canvasZoom * 100)}%</div>
-                            <div className="flex-separator"></div>
-                            <div className="toolbar-loading-wrapper text-muted">
-                                {
-                                    this.state.isLoading ?
-                                        <><SVG name="spinner" className="image-sm v-sub"></SVG> Loading...</>
-                                        :
-                                        <>Saved!</>
-                                }
                             </div>
                         </div>
                     </div>
-                </div> : <Skeleton height={800} />}
+                </div>
+            :
+                <Skeleton height={800} />
+            }
         </>)
     }
+}
+
+function ShortDescriptionEditor({ id, initialValue, onChange }) {
+    const handleChange = (e) => {
+        e.persist();
+
+        const fields = {
+            shortDescription: e.target.value
+        }
+
+        setTimeout(() => {
+            onChange && onChange(true);
+            Remotelabz.labs.update({ id, fields })
+                .finally(() => onChange && onChange(false));
+        }, 100);
+    }
+
+    return (<Form.Control name="shortDescription" type="text" placeholder="Write a small description about your lab (255 characters max.)" maxLength={255} onChange={handleChange} defaultValue={initialValue} />)
+}
+
+function DescriptionEditor({ id, initialValue }) {
+    const [description, setDescription] = useState(initialValue);
+    const [isEditing, setEditing] = useState(false);
+
+    const onSave = () => {
+        const params = {
+            id,
+            fields: {
+                description
+            }
+        }
+        Remotelabz.labs.update(params)
+        .then(() => setEditing(false));
+    }
+
+    return (
+        <div>
+            { isEditing ?
+                <div>
+                    <DescriptionMarkdownEditor description={description} onChange={setDescription} />
+                    <div className="d-flex">
+                        <Button variant="success" onClick={onSave}>Save</Button>
+                        <div className="flex-grow-1" />
+                        <Button variant="default" onClick={() => setEditing(false)}>Cancel</Button>
+                    </div>
+                </div>
+            :
+                <DescriptionDisplayer description={description} onEdit={() => setEditing(true)} />
+            }
+        </div>
+    )
+}
+
+function DescriptionMarkdownEditor({ description, onChange }) {
+    return <SimpleMDE value={description} onChange={onChange} />
+}
+
+function DescriptionDisplayer({ description, onEdit }) {
+    return (
+        <Accordion className="lab-description">
+            <Card>
+                <Accordion.Toggle as={Card.Header} variant="link" eventKey="0">
+                    <div>
+                        <SVG name="text-description" className="v-sub s18 mr-2" /> Content
+                </div>
+                    <div>
+                        <Button variant="default" onClick={onEdit}><SVG name="pencil" /></Button>
+                    </div>
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="0">
+                    <Card.Body>
+                        <div className="text-muted">
+                            <ReactMarkdown source={description || "Content is empty"} />
+                        </div>
+                    </Card.Body>
+                </Accordion.Collapse>
+            </Card>
+        </Accordion>
+    )
 }

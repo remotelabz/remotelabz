@@ -20,7 +20,7 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key", "group_users", "group_tree", "group_explore", "instances", "user"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker"})
      *
      * @var int
      */
@@ -28,7 +28,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user", "groups", "group_users"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_groups", "api_get_group", "worker"})
      *
      * @var string
      */
@@ -37,7 +37,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
-     * @Serializer\Groups({"details", "user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var array|string[]
      */
@@ -53,7 +53,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var string
      */
@@ -61,7 +61,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var string
      */
@@ -69,7 +69,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var bool
      */
@@ -77,7 +77,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({"user_instances", "instances"})
+     * @Serializer\Groups({})
      *
      * @var Collection|LabInstance[]
      */
@@ -100,26 +100,35 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"user"})
+     * @Serializer\Groups({"api_users", "api_get_user"})
      */
     private $lastActivity;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
+     * @Serializer\Exclude
      */
     private $_groups;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"user", "lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker"})
      */
     private $uuid;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"api_get_user"})
+     *
+     * @var bool
+     */
+    private $isShibbolethUser = false;
 
     public function __construct()
     {
@@ -188,6 +197,11 @@ class User implements UserInterface, InstancierInterface
         return $this;
     }
 
+    public function isAdministrator(): bool
+    {
+        return in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles) || in_array('ROLE_ADMINISTRATOR', $this->roles);
+    }
+
     public function hasRole(string $role): bool
     {
         return in_array($role, $this->getRoles());
@@ -252,7 +266,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users", "user", "groups", "api_users", "api_get_user", "api_groups", "api_get_group", "api_get_lab"})
      */
     public function getName(): string
     {
@@ -278,7 +292,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "user_instances", "details"})
+     * @Serializer\Groups({"user_instances", "details"})
      * @Serializer\XmlList(inline=false, entry="instances")
      */
     public function getInstances()
@@ -364,10 +378,6 @@ class User implements UserInterface, InstancierInterface
     {
         if (null == $this->getProfilePictureFilename() || '' === $this->getProfilePictureFilename()) {
             return null;
-
-            // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
-
-            // return $package->getUrl('build/images/faces/default-user-image.png');
         }
 
         $imagePath = 'uploads/user/avatar/'.$this->getId().'/'.$this->getProfilePictureFilename();
@@ -401,10 +411,9 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @return Collection|Group[]
-     *
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"group_details", "user"})
+     * @Serializer\Groups({"group_details", "user", "api_users", "api_get_user"})
      */
     public function getGroups()
     {
@@ -419,6 +428,16 @@ class User implements UserInterface, InstancierInterface
         return $this->_groups->map(function ($groupUser) {
             return $groupUser->getGroup();
         });
+    }
+
+    /** 
+     * @return int[]
+     */
+    public function getGroupsId(): array
+    {
+        return $this->_groups->map(function ($groupUser) {
+            return $groupUser->getGroup()->getId();
+        })->toArray();
     }
 
     /**
@@ -486,5 +505,17 @@ class User implements UserInterface, InstancierInterface
     public function getType(): string
     {
         return 'user';
+    }
+
+    public function isShibbolethUser(): ?bool
+    {
+        return $this->isShibbolethUser;
+    }
+
+    public function setIsShibbolethUser(bool $isShibbolethUser): self
+    {
+        $this->isShibbolethUser = $isShibbolethUser;
+
+        return $this;
     }
 }

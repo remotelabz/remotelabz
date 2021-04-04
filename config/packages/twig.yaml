@@ -8,4 +8,5 @@ twig:
         'templates/layouts': 'layouts'
     exception_controller: null
     globals:
-        enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
+        enable_shibboleth: '%app.shibboleth.enable%'
+        contact_mail: '%app.general.contact_mail%'

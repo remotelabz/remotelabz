@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Button } from 'react-bootstrap';
 import AsyncSelect from 'react-select/async';
 import API from '../../../api';
-import { Formik } from 'formik';
+import { Formik, Field } from 'formik';
 import * as Yup from 'yup';
 
 export default class DeviceForm extends React.Component
@@ -24,7 +24,8 @@ export default class DeviceForm extends React.Component
             flavor: Yup.object().shape({
                 label: Yup.string().required(),
                 value: Yup.number().required()
-            })
+            }),
+            vnc: Yup.boolean()
         });
 
         this.state = {
@@ -115,16 +116,14 @@ export default class DeviceForm extends React.Component
             <Formik
                 validationSchema={this.schema}
                 onSubmit={values => {
-                    // let device = values;
-                    // device.operatingSystem = device.operatingSystem.value;
-                    // device.flavor = device.flavor.value;
                     this.props.onSubmit({
                         id: values.id,
                         name: values.name,
                         brand: values.brand || '',
                         model: values.model || '',
                         operatingSystem: values.operatingSystem.value,
-                        flavor: values.flavor.value
+                        flavor: values.flavor.value,
+                        vnc: values.vnc
                     });
                 }}
                 enableReinitialize
@@ -141,6 +140,7 @@ export default class DeviceForm extends React.Component
                         value: this.props.device.flavor.id,
                         label: this.props.device.flavor.name
                     },
+                    vnc: this.props.device.vnc,
                 }}
             >
                 {({
@@ -220,7 +220,11 @@ export default class DeviceForm extends React.Component
                                 placeholder="Select an flavor..."
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
-                        </Form.Group>
+                            </Form.Group>
+                            <label>
+                                <Field type="checkbox" name="vnc" />
+                                VNC Access
+                            </label>
                         <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>
                             Submit
                         </Button>

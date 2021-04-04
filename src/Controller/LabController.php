@@ -34,14 +34,22 @@ use App\Exception\AlreadyInstancedException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
+use App\Service\Lab\LabImporter;
+use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Doctrine\ORM\ORMException;
+use Exception;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class LabController extends Controller
 {
@@ -81,6 +89,55 @@ class LabController extends Controller
         $author = $request->query->get('author', 0);
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
+        $orderBy = $request->query->get('order_by', 'lastUpdated');
+        $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
+
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->contains('name', $search));
+
+        if ($author > 0) {
+            $criteria->andWhere(Criteria::expr()->eq('author', $userRepository->find($author)));
+        }
+
+        $criteria
+            ->orderBy([
+                $orderBy => $sortDirection
+            ])
+        ;
+
+        $labs = $this->labRepository->matching($criteria);
+        $count = $labs->count();
+
+        // paging results
+        try {
+            $labs = $labs->slice($page * $limit - $limit, $limit);
+        } catch (ORMException $e) {
+            throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($labs, 200, [], ["api_get_lab"]);
+        }
+
+        return $this->render('lab/index.html.twig', [
+            'labs' => $labs,
+            'count' => $count,
+            'search' => $search,
+            'limit' => $limit,
+            'page' => $page,
+            'author' => $author,
+        ]);
+    }
+
+    /**
+     * @Route("/dashboard/labs", name="dashboard_labs")
+     */
+    public function dashboardIndexAction(Request $request, UserRepository $userRepository)
+    {
+        $search = $request->query->get('search', '');
+        $author = $request->query->get('author', 0);
+        $limit = $request->query->get('limit', 10);
+        $page = $request->query->get('page', 1);
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search));
@@ -93,18 +150,12 @@ class LabController extends Controller
             ->orderBy([
                 'id' => Criteria::DESC
             ])
-            // ->setMaxResults($limit)
-            // ->setFirstResult($page * $limit - $limit)
         ;
 
         $labs = $this->labRepository->matching($criteria);
         $count = $labs->count();
 
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($labs->slice($page * $limit - $limit, $limit), 200, [], ["lab"]);
-        }
-
-        return $this->render('lab/index.html.twig', [
+        return $this->render('lab/dashboard_index.html.twig', [
             'labs' => $labs->slice($page * $limit - $limit, $limit),
             'count' => $count,
             'search' => $search,
@@ -129,7 +180,7 @@ class LabController extends Controller
 
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
-        $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
+        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
         $deviceStarted = [];
 
         foreach ($lab->getDevices()->getValues() as $device) {
@@ -141,16 +192,7 @@ class LabController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            $context = [
-                "primary_key",
-                "lab",
-                "author" => [
-                    "primary_key"
-                ],
-                "editor"
-            ];
-
-            return $this->json($lab, 200, [], $context);
+            return $this->json($lab, 200, [], [$request->get('_route')]);
         }
 
         $instanceManagerProps = [
@@ -168,7 +210,7 @@ class LabController extends Controller
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details', 'instances'])
+                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
             )
         ]);
     }
@@ -199,15 +241,7 @@ class LabController extends Controller
         $entityManager->flush();
 
         if ('json' === $request->getRequestFormat()) {
-            $context = [
-                "primary_key",
-                "lab",
-                "author" => [
-                    "primary_key"
-                ]
-            ];
-
-            return $this->json($lab, 200, [], $context);
+            return $this->json($lab, 200, [], ['api_get_lab']);
         }
 
         return $this->redirectToRoute('edit_lab', [
@@ -235,12 +269,6 @@ class LabController extends Controller
             /** @var Device $device */
             $device = $deviceForm->getData();
             $entityManager = $this->getDoctrine()->getManager();
-            // copy network interfaces
-            // foreach ($networkInterfaces as $networkInterface) {
-            //     $copy = $copier->copy($networkInterfaceRepository->find($networkInterface));
-            //     $device->addNetworkInterface($copy);
-            //     $entityManager->persist($copy);
-            // }
             $lab = $this->labRepository->find($id);
             $lab->setLastUpdated(new \DateTime());
 
@@ -249,20 +277,10 @@ class LabController extends Controller
             $entityManager->persist($lab);
             $entityManager->flush();
 
-            // $view->setLocation($this->generateUrl('devices'));
-            // $view->setStatusCode(201);
-            // $view->setData($device);
-            // $context = new Context();
-            // $context
-            //     ->addGroup("lab")
-            //     ->addGroup("primary_key")
-            //     ->addGroup("editor");
-            // $view->setContext($context);
-
-            return $this->json($device, 201, [], ['lab', 'primary_key', 'editor']);
+            return $this->json($device, 201, [], ['api_get_device']);
         }
 
-        return $this->json($deviceForm);
+        return $this->json($deviceForm, 200, [], ['api_get_device']);
     }
 
     /**
@@ -292,21 +310,15 @@ class LabController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-        $lab = $this->labRepository->find($id);
-
-        if (!$lab) {
+        if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
         $labForm = $this->createForm(LabType::class, $lab);
         $labForm->handleRequest($request);
 
-        if ($request->getContentType() === 'json') {
-            $lab = json_decode($request->getContent(), true);
-            $labForm->submit($lab, false);
-        }
-
-        $view = $this->view($labForm);
+        $lab = json_decode($request->getContent(), true);
+        $labForm->submit($lab, false);
 
         if ($labForm->isSubmitted() && $labForm->isValid()) {
             /** @var Lab $lab */
@@ -317,20 +329,10 @@ class LabController extends Controller
             $entityManager->persist($lab);
             $entityManager->flush();
 
-            $context = [
-                "primary_key",
-                "lab",
-                "author" => [
-                    "primary_key"
-                ]
-            ];
-
-            return $this->json($lab, 200, [], $context);
+            return $this->json($lab, 200, [], ['api_get_lab']);
         }
 
-        $this->render('lab/editor.html.twig');
-
-        return $this->json($labForm);
+        return $this->json($labForm, 200, [], ['api_get_lab']);
     }
 
     /**
@@ -360,41 +362,87 @@ class LabController extends Controller
     }
 
     /**
-     * Return a string representing an available subnetwork in the specified CIDR.
-     *
-     * @param string $cidr
-     * @param integer $maxSize
-     * @return string|null CIDR notation of the subnet
+     * @Route("/admin/labs/import", name="import_lab", methods="POST")
+     * 
+     * @Rest\Post("/api/labs/import", name="api_import_lab")
      */
-    private function getAvailableNetwork(string $cidr, int $maxSize): ?string
+    public function importAction(Request $request, LabImporter $labImporter)
     {
-        $networkRepository = $this->getDoctrine()->getRepository(Network::class);
+        $json = $request->request->get('json');
 
-        $network = IPTools\Network::parse($cidr);
+        $data = $labImporter->import($json);
 
-        // Get all possible subnetworks from specified config
-        $subnets = $network->moveTo(32 - log((float) $maxSize, 2));
+        return $this->redirectToRoute('show_lab', ['id' => $data]);
+    }
 
-        // If $subnets is empty, it means that user's config has a problem
-        if (empty($subnets)) {
-            throw new BadRequestHttpException('Your network configuration is wrong, please check the dotenv file.');
+    /**
+     * @Route("/admin/labs/{id<\d+>}/export", name="export_lab", methods="GET")
+     */
+    public function exportAction(int $id, LabImporter $labImporter)
+    {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
+        }
+        
+        $data = $labImporter->export($lab);
+
+        $response = new Response($data);
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'lab_'.$lab->getUuid().'.json'
+        );
+
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    /**
+     * @Route("/labs/{id<\d+>}/banner", name="get_lab_banner", methods="GET")
+     * @Rest\Get("/labs/{id<\d+>}/banner", name="api_get_lab_banner")
+     */
+    public function getBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader)
+    {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
         }
 
-        // Exclude all reserved subnetworks from the list
-        foreach ($networkRepository->findAll() as $reservedNetwork) {
-            $subnets->exclude(IPTools\Network::parse($reservedNetwork->CIDR));
+        if (null === $lab->getBanner()) {
+            $fileName = 'default_banner.png';
+            $file = $this->getParameter('directory.public.images').'/'.$fileName;
+            return $this->file($file, $lab->getId(), ResponseHeaderBag::DISPOSITION_INLINE);
+        } else {
+            $fileName = $lab->getBanner();
+            $file = $this->getParameter('directory.public.upload.lab.banner').'/'.$lab->getId().'/'.$fileName;
+            return $this->file($file, $lab->getId(), ResponseHeaderBag::DISPOSITION_INLINE);
+        }
+    }
+
+    /**
+     * @Rest\Post("/api/labs/{id<\d+>}/banner", name="api_upload_lab_banner")
+     */
+    public function uploadBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader, UrlGeneratorInterface $router)
+    {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
         }
 
-        // If subnets list is empty now, it means that every subnet is already allocated
-        if (empty($subnets)) {
-            // TODO: Create an new exception class
-            throw new BadRequestHttpException(
-                'No available subnetwork.' .
-                    'Please delete some networks or check your config and try again.'
-            );
+        $pictureFile = $request->files->get('banner');
+        if ($pictureFile) {
+            $fileUploader->setLab($lab);
+            $pictureFileName = $fileUploader->upload($pictureFile);
+            $lab->setBanner($pictureFileName);
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($lab);
+            $entityManager->flush();
+
+            return new JsonResponse(['url' => $router->generate('api_get_lab_banner', ['id' => $id], UrlGeneratorInterface::ABSOLUTE_URL)]);
         }
 
-        return (string) $subnets[0];
+        return new JsonResponse(null, 400);
     }
 
     /**

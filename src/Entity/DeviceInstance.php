@@ -23,34 +23,46 @@ class DeviceInstance extends Instance
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"api_get_device_instance"})
      */
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="instances")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\Device")
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      */
     protected $device;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="CASCADE")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_device_instance"})
      */
     protected $labInstance;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      */
     protected $networkInterfaceInstances;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      */
     private $state;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     */
+    private $remotePort;
+
+    /**
+     * @ORM\OneToMany(targetEntity=DeviceInstanceLog::class, mappedBy="deviceInstance", cascade={"persist"})
+     * @Serializer\Exclude
+     */
+    private $logs;
 
     public function __construct()
     {
@@ -78,12 +90,24 @@ class DeviceInstance extends Instance
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab"})
+     * @Serializer\SerializedName("owner")
+     * @Serializer\Groups({"api_get_device_instance"})
      * @Serializer\XmlAttribute
      */
-    public function getUserId(): ?int
+    public function getOwnerId()
     {
-        return $this->user->getId();
+        $id = null;
+        // TODO: refractor to "getOwnerId"
+        switch ($this->ownedBy) {
+            case self::OWNED_BY_USER:
+                $id = $this->user;
+            break;
+            case self::OWNED_BY_GROUP:
+                $id = $this->_group;
+            break;
+        }
+
+        return $id;
     }
 
     public function getLab(): ?Lab
@@ -168,6 +192,57 @@ class DeviceInstance extends Instance
         return $this->state === InstanceState::STARTED;
     }
 
+    public function getRemotePort(): ?int
+    {
+        return $this->remotePort;
+    }
+
+    public function setRemotePort(?int $remotePort): self
+    {
+        $this->remotePort = $remotePort;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DeviceInstanceLog[]
+     */
+    public function getLogs()
+    {
+        return $this->logs;
+    }
+
+    /**
+     * @return Collection|DeviceInstanceLog[]
+     */
+    public function getPublicLogs()
+    {
+        return \array_filter($this->logs, function ($log) { return $log->getScope() === DeviceInstanceLog::SCOPE_PUBLIC; });
+    }
+
+    public function addLog(DeviceInstanceLog $log): DeviceInstance
+    {
+        if (!$this->logs->contains($log)) {
+            $this->logs[] = $log;
+            $log->setDeviceInstance($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLog(DeviceInstanceLog $log): DeviceInstance
+    {
+        if ($this->logs->contains($log)) {
+            $this->logs->removeElement($log);
+            // set the owning side to null (unless already changed)
+            if ($log->getDeviceInstance() === $this) {
+                $log->setDeviceInstance(null);
+            }
+        }
+
+        return $this;
+    }
+
     /**
      * Creates all sub-instances from device descriptor. This does not record them in the database.
      */
@@ -182,7 +257,6 @@ class DeviceInstance extends Instance
             $networkInterfaceInstance = NetworkInterfaceInstance::create()
                 ->setNetworkInterface($networkInterface)
                 ->setDeviceInstance($this)
-                ->setRemotePort(0)
                 ->setMacAddress(MacAddress::generate(['52', '54', '00']))
                 ->setOwnedBy($this->ownedBy);
 
@@ -198,7 +272,7 @@ class DeviceInstance extends Instance
 
             $networkInterfaceInstance->populate();
 
-            $networkInterface->addInstance($networkInterfaceInstance);
+            // $networkInterface->addInstance($networkInterfaceInstance);
             $this->addNetworkInterfaceInstance($networkInterfaceInstance);
         }
     }

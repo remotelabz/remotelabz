@@ -41,7 +41,21 @@ if (array_key_exists('WEBSOCKET_PROXY_SSL_CERT', $_ENV)) {
     $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_CERT'];
 }
 
+$cmd[] = '--proxy-timeout';
+if (array_key_exists('WEBSOCKET_PROXY_TIMEOUT', $_ENV)) {
+    $cmd[] = $_ENV['WEBSOCKET_PROXY_TIMEOUT'];
+} else {
+    $cmd[] = 86400000;
+}
+
+$cmd[] = '--ip';
+$cmd[] = '0.0.0.0';
+
+$cmd[] = '--api-ip';
+$cmd[] = '0.0.0.0';
+
 $process = new Process($cmd);
+$process->setTimeout(null);
 
 $process->run(function ($type, $buffer) {
     echo $buffer;

@@ -22,13 +22,13 @@ class NetworkInterfaceInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"api_get_device_instance"})
      */
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface", inversedBy="instances")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface")
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      */
     protected $networkInterface;
 
@@ -39,14 +39,8 @@ class NetworkInterfaceInstance extends Instance
     private $deviceInstance;
 
     /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
-    private $remotePort;
-
-    /**
      * @ORM\Column(type="string", length=17)
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
     private $macAddress;
@@ -69,18 +63,6 @@ class NetworkInterfaceInstance extends Instance
     public function setNetworkInterface(?NetworkInterface $networkInterface): self
     {
         $this->networkInterface = $networkInterface;
-
-        return $this;
-    }
-
-    public function getRemotePort(): ?int
-    {
-        return $this->remotePort;
-    }
-
-    public function setRemotePort(int $remotePort): self
-    {
-        $this->remotePort = $remotePort;
 
         return $this;
     }

@@ -10,28 +10,36 @@
     {{ parent() }}
 {% endblock %}
 
-{% block wrapper %}
+{% block wrapper_xl %}
 <div class="content-title">
     <div class="content-title-infos">
         <h1>{{ device.name }}</h1>
     </div>
     <div class="content-title-actions">
         
-        <a href="{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}" class="btn btn-primary" role="button" target="OpenVNCFullscreen.{{device.name}}" onclick="openFullscreen(); return false;">
+        <button class="btn btn-primary" id="openFullscreenButton">
             {{ svg('external-link') }}
-        </a>
+        </button>
     </div>
 </div>
 <div class="content-body">
-    <div class="text-muted">UUID: {{ deviceInstance.uuid }}</div>
     <div class="alert alert-info mt-2" role="alert">
+        Gateway : <strong>{{ deviceInstance.getLabInstance().getNetwork().getLastAddress() }}</strong>
+        <br>
         Attributed network : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
     </div>
     <div class="card stretch-card">
         <div class="card-body">
-            <input type="button" value="CtrlAltDel" src="" id="noVNC_button">
-            <div id="noVNC_screen" style="height:768px;"></div>
-            <div class="js-user-rating" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"> </div>
+            <div class="row mb-2">
+                <div class="col">
+                    <button class="btn btn-primary" id="ReconnectButton" disabled>Reconnect</button>
+                    <button class="btn btn-default" id="CtrlAltDelButton">Send CTRL+ALT+DEL</button>
+                </div>
+            </div>
+            <div id="noVNCScreen" style="height:768px;"></div>
+            <div class="row">
+                <div class="js-user-rating" data-protocol="{{protocol}}" data-host="{{host}}" data-port="{{port}}" data-path="{{path}}"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -40,31 +48,4 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('vnc') }}
-
-    <script type="text/javascript">
-        var WindowObjectReference = null; // variable globale
-        
-        function openFullscreen() {
-          if (WindowObjectReference == null || WindowObjectReference.closed) {
-            /* si le pointeur vers l'objet window n'existe pas, ou s'il existe
-               mais que la fenêtre a été fermée */
-            WindowObjectReference = window.open("{{ path('view_instance', {'uuid': uuid, 'size': 'fullscreen'}) }}",
-                   "OpenVNCFullscreen"+"{{device.name}}", "resizable=yes,scrollbars=no,status=no,location=no,menubar=no,toolbar=no");
-            /* alors, création du pointeur. La nouvelle fenêtre sera créée par dessus
-               toute autre fenêtre existante. */
-          }
-          else {
-            WindowObjectReference.focus();
-            /* sinon, la référence à la fenêtre existe et la fenêtre n'a pas été 
-               fermée: la fenêtre est peut-être minimisée ou derrière la fenêtre 
-               principale. Par conséquent, on peut l'amener par dessus les autres à
-               l'aide de la méthode focus(). Il n'est pas nécessaire de recréer la fenêtre
-               ou de recharger la ressource référencée. */
-          };
-        }
-        
-        
-
-
-        </script>
 {% endblock %}
