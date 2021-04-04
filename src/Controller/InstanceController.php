@@ -388,15 +388,6 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Post("/api/instances/{uuid}/internet/connect", name="connect_lab_instance_to_internet", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    public function connectLabInstanceToInternet(string $uuid, InstanceManager $instanceManager)
-    {
-        $instanceManager->connectLabInstanceToInternet($uuid);
-        return $this->json();
-    }
-    
-    /**
      * @Rest\Get("/api/instances/{uuid}/logs", name="api_get_instance_logs", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)

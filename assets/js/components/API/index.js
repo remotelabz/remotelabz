@@ -559,19 +559,6 @@ export class RemotelabzAPI {
              */
             delete(uuid) {
                 return axios.delete(`/instances/${uuid}`);
-            },
-
-            /**
-             * Connect a lab instance to internet by UUID.
-             * 
-             * Implements POST `/api/instances/{uuid}/internet/connect`
-             * 
-             * @param {string} uuid 
-             * 
-             * @returns {Promise<import('axios').AxiosResponse<void>>}
-             */
-            connectToInternet(uuid) {
-                return axios.post(`/instances/${uuid}/internet/connect`);
             }
         },
 

@@ -136,26 +136,6 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     function onJitsiCallStarted() {
         let labInstance = {...labInstance};
         labInstance.jitsiCall.state = 'started';
-        this.setState({labInstance});
-    }
-
-    connectToInternet = () => {
-        Remotelabz.instances.lab.connectToInternet(this.state.labInstance.uuid);
-    }
-
-    render() {
-        return (<>
-            <div className="d-flex align-items-center mb-2">
-                <div>View as : </div>
-                <div className="flex-grow-1 ml-2">
-                    <InstanceOwnerSelect
-                        options={this.viewAsOptions}
-                        defaultValue={this.viewAsOptions[1].options[0]}
-                        onChange={this.onViewAsChange}
-                        isDisabled={this.state.isLoadingInstanceState}
-                        value={this.state.viewAs}
-                    />
-                </div>
         setLabInstance(labInstance)
     }
 
@@ -201,37 +181,6 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 {labInstance.state === "creating" &&
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
                         <Spinner animation="border" size="lg" className="text-muted" />
-            {this.state.labInstance ?
-                <ListGroup>
-                    <ListGroupItem className="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h4 className="mb-0">Instances</h4>
-                        </div>
-                        <div>
-                        {this.state.labInstance.state === "created" &&
-                            <Button href="/profile/vpn" variant="primary">
-                                <SVG name="download" className="v-sub image-sm"></SVG>
-                                <span className="ml-1">OpenVPN file</span>
-                            </Button>
-                        }
-                        {(this.state.labInstance.state === "created" && this.state.lab.isInternetAuthorized) &&
-                            <Button onClick={this.connectToInternet} variant="primary" className="ml-2">
-                                <SVG name="earth" className="v-sub image-sm"></SVG>
-                                <span className="ml-1">Connect to Internet</span>
-                            </Button>
-                        }
-                        {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
-                            <JitsiCallButton
-                                className="ml-2"
-                                isOwnedByGroup={this.isOwnedByGroup()}
-                                isCurrentUserGroupAdmin={this.isCurrentUserGroupAdmin(this.state.viewAs)}
-                                onStartCall={this.onStartedCall}
-                                {...this.state}
-                            />
-                        }
-                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
-                            <Button variant="danger" className="ml-2" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
-                        }
 
                         <div className="mt-3">
                             Creating your instance... This operation may take a moment.
