@@ -20,7 +20,7 @@ class User implements UserInterface, InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker"})
+     * @Serializer\Groups({"primary_key", "group_users", "group_tree", "group_explore", "instances", "user"})
      *
      * @var int
      */
@@ -28,7 +28,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_groups", "api_get_group", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "group_tree", "group_explore", "instance_manager", "instances", "user", "groups", "group_users"})
      *
      * @var string
      */
@@ -37,7 +37,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @ORM\Column(type="json")
      * @Serializer\Accessor(getter="getRoles")
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"details", "user"})
      *
      * @var array|string[]
      */
@@ -53,7 +53,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      *
      * @var string
      */
@@ -61,7 +61,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "user"})
      *
      * @var string
      */
@@ -69,7 +69,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"lab", "details", "instance_manager", "user"})
      *
      * @var bool
      */
@@ -77,7 +77,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"user_instances", "instances"})
      *
      * @var Collection|LabInstance[]
      */
@@ -100,31 +100,30 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"user"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_users", "api_get_user"})
+     * @Serializer\Groups({"user"})
      */
     private $lastActivity;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
-     * @Serializer\Exclude
      */
     private $_groups;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker"})
+     * @Serializer\Groups({"user", "lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_user"})
+     * @Serializer\Groups({"details", "user"})
      *
      * @var bool
      */
@@ -197,11 +196,6 @@ class User implements UserInterface, InstancierInterface
         return $this;
     }
 
-    public function isAdministrator(): bool
-    {
-        return in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles) || in_array('ROLE_ADMINISTRATOR', $this->roles);
-    }
-
     public function hasRole(string $role): bool
     {
         return in_array($role, $this->getRoles());
@@ -266,7 +260,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users", "user", "groups", "api_users", "api_get_user", "api_groups", "api_get_group", "api_get_lab"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users"})
      */
     public function getName(): string
     {
@@ -378,6 +372,10 @@ class User implements UserInterface, InstancierInterface
     {
         if (null == $this->getProfilePictureFilename() || '' === $this->getProfilePictureFilename()) {
             return null;
+
+            // $package = new Package(new JsonManifestVersionStrategy(__DIR__.'/../../public/build/manifest.json'));
+
+            // return $package->getUrl('build/images/faces/default-user-image.png');
         }
 
         $imagePath = 'uploads/user/avatar/'.$this->getId().'/'.$this->getProfilePictureFilename();
@@ -411,9 +409,10 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @return Collection|Group[]
+     *
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"group_details", "user", "api_users", "api_get_user"})
+     * @Serializer\Groups({"group_details", "user"})
      */
     public function getGroups()
     {
@@ -428,16 +427,6 @@ class User implements UserInterface, InstancierInterface
         return $this->_groups->map(function ($groupUser) {
             return $groupUser->getGroup();
         });
-    }
-
-    /** 
-     * @return int[]
-     */
-    public function getGroupsId(): array
-    {
-        return $this->_groups->map(function ($groupUser) {
-            return $groupUser->getGroup()->getId();
-        })->toArray();
     }
 
     /**

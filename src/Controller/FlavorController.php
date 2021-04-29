@@ -38,25 +38,13 @@ class FlavorController extends Controller
         $flavors = $this->flavorRepository->matching($criteria)->getValues();
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($flavors, 200, [], ['api_get_flavor']);
+            return $this->json($flavors);
         }
 
         return $this->render('flavor/index.html.twig', [
             'flavors' => $flavors,
             'search' => $search
         ]);
-    }
-
-    /**
-     * @Rest\Get("/api/flavors/{id<\d+>}", name="api_get_flavor")
-     */
-    public function showAction(Request $request, int $id)
-    {
-        if (!$flavor = $this->flavorRepository->find($id)) {
-            throw new NotFoundHttpException("Flavor " . $id . " does not exist.");
-        }
-
-        return $this->json($flavor, 200, [], [$request->get("_route")]);
     }
 
     /**
@@ -84,7 +72,7 @@ class FlavorController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($flavor, 201, [], ['api_get_flavor']);
+                return $this->json($flavor, 201);
             }
 
             $this->addFlash('success', 'Flavor has been created.');
@@ -93,7 +81,7 @@ class FlavorController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($flavorForm, 200, [], ['api_get_flavor']);
+            return $this->json($flavorForm);
         }
 
         return $this->render('flavor/new.html.twig', [
@@ -102,23 +90,16 @@ class FlavorController extends Controller
     }
 
     /**
-     * @Route("/admin/flavors/{id<\d+>}/edit", name="edit_flavor")
-     * 
-     * @Rest\Put("/api/flavors/{id<\d+>}", name="api_edit_flavor")
+     * @Route("/admin/flavors/{id<\d+>}/edit", name="edit_flavor", methods={"GET", "POST"})
      */
     public function editAction(Request $request, int $id)
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
-            throw new NotFoundHttpException("Flavor " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         $flavorForm = $this->createForm(FlavorType::class, $flavor);
         $flavorForm->handleRequest($request);
-
-        if ($request->getContentType() === 'json') {
-            $flavor = json_decode($request->getContent(), true);
-            $flavorForm->submit($flavor, false);
-        }
 
         if ($flavorForm->isSubmitted() && $flavorForm->isValid()) {
             /** @var Flavor $flavor */
@@ -128,17 +109,9 @@ class FlavorController extends Controller
             $entityManager->persist($flavor);
             $entityManager->flush();
 
-            if ('json' === $request->getRequestFormat()) {
-                return $this->json($flavor, 200, [], ['api_get_flavor']);
-            }
-
             $this->addFlash('success', 'Flavor has been edited.');
 
             return $this->redirectToRoute('flavors');
-        }
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($flavorForm, 200, [], ['api_get_flavor']);
         }
 
         return $this->render('flavor/new.html.twig', [
@@ -155,7 +128,7 @@ class FlavorController extends Controller
     public function deleteAction(Request $request, int $id)
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
-            throw new NotFoundHttpException("Flavor " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         $entityManager = $this->getDoctrine()->getManager();

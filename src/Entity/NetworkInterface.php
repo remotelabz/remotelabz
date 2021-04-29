@@ -18,19 +18,19 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance"})
+     * @Serializer\Groups({"network_interfaces", "primary_key", "device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255, options={"default": "tap"})
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $type = 'tap';
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
      */
     private $name;
 
@@ -42,25 +42,25 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist"})
      * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"api_get_network_interface"})
+     * @Serializer\Groups({"network_interfaces", "lab"})
      */
     private $device;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "worker"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $vlan;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface"})
+     * @Serializer\Groups({"lab"})
      * @Assert\NotNull
      * @Assert\Type(type="boolean")
      */
@@ -118,7 +118,7 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      */
     public function getAccessType(): ?string
     {

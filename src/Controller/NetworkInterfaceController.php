@@ -6,7 +6,6 @@ use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterface;
 use App\Form\NetworkInterfaceType;
 use FOS\RestBundle\Context\Context;
-use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use Symfony\Component\Routing\Annotation\Route;
@@ -26,27 +25,9 @@ class NetworkInterfaceController extends Controller
 
     /**
      * @Route("/admin/network-interfaces", name="network_interfaces")
-     * 
-     * @Rest\Get("/api/network-interfaces", name="api_get_network_interfaces")
      */
     public function indexAction(Request $request)
     {
-        if ('json' === $request->getRequestFormat()) {
-            $search = $request->query->get('search', '');
-            $template = $request->query->get('template', true);
-
-            $criteria = Criteria::create()
-                ->where(Criteria::expr()->contains('name', $search))
-                ->andWhere(Criteria::expr()->eq('isTemplate', $template))
-                ->orderBy([
-                    'id' => Criteria::DESC
-                ]);
-
-            $networkInterfaces = $this->networkInterfaceRepository->matching($criteria);
-
-            return $this->json($networkInterfaces->getValues(), 200, [], ['api_get_network_interface']);
-        }
-
         $networkInterface = new NetworkInterface();
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
         $networkInterfaceForm->handleRequest($request);
@@ -69,12 +50,12 @@ class NetworkInterfaceController extends Controller
     /**
      * @Rest\Get("/api/network-interfaces/{id<\d+>}", name="api_get_network_interface")
      */
-    public function showAction(Request $request, int $id)
+    public function getAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id))
-            throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
+            throw new NotFoundHttpException();
 
-        return $this->json($networkInterface, 200, [], [$request->get('_route')]);
+        return $this->json($networkInterface, 200, [], ['network_interfaces']);
     }
 
     /**
@@ -106,7 +87,7 @@ class NetworkInterfaceController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($networkInterface, 201, [], ['api_get_network_interface']);
+                return $this->json($networkInterface, 201, [], ['network_interfaces']);
             }
 
             $this->addFlash('success', 'Network interface has been created.');
@@ -115,7 +96,7 @@ class NetworkInterfaceController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($networkInterfaceForm, 400, [], ['api_get_network_interface']);
+            return $this->json($networkInterfaceForm, 400, [], ['network_interfaces']);
         }
 
         return $this->render('network_interface/new.html.twig', [
@@ -133,7 +114,7 @@ class NetworkInterfaceController extends Controller
         $networkInterface = $this->networkInterfaceRepository->find($id);
 
         if (null === $networkInterface) {
-            throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
@@ -156,7 +137,7 @@ class NetworkInterfaceController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($networkInterface, 200, [], ['api_get_network_interface']);
+                return $this->json($networkInterface, 200, [], ['network_interfaces']);
             }
 
             $this->addFlash('success', 'Network interface has been edited.');
@@ -165,13 +146,21 @@ class NetworkInterfaceController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($networkInterfaceForm, 400, [], ['api_get_network_interface']);
+            return $this->json($networkInterfaceForm, 400, [], ['network_interfaces']);
         }
 
         return $this->render('network_interface/new.html.twig', [
             'networkInterfaceForm' => $networkInterfaceForm->createView(),
             'networkInterface' => $networkInterface
         ]);
+    }
+
+    /**
+     * @Route("/network-interfaces", name="get_network_interface", methods="GET")
+     */
+    public function cgetAction()
+    {
+        return $this->json($this->networkInterfaceRepository->findAll());
     }
 
     /**
@@ -182,7 +171,7 @@ class NetworkInterfaceController extends Controller
     public function deleteAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id)) {
-            throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -197,4 +186,30 @@ class NetworkInterfaceController extends Controller
 
         return $this->redirectToRoute('network_interfaces');
     }
+
+    // /**
+    //  * @Route("/admin/network-interface/{id<\d+>}", name="delete_network_interface", methods="DELETE")
+    //  */
+    // public function deleteAction($id)
+    // {
+    //     $status = 200;
+    //     $data = [];
+
+    //     $networkInterface = $this->networkInterfaceRepository->find($id);
+
+    //     if ($networkInterface == null) {
+    //         $status = 404;
+    //     } elseif ($networkInterface->getDevice() !== null && $networkInterface->getDevice()->getInstances()->count() > 0) {
+    //         $status = 403;
+    //         $data['message'] = "This interface is attached to a running device. Please stop all devices instances before you delete it.";
+    //     } else {
+    //         $em = $this->getDoctrine()->getManager();
+    //         $em->remove($networkInterface);
+    //         $em->flush();
+
+    //         $data['message'] = 'Interface has been deleted.';
+    //     }
+
+    //     return $this->renderJson($data, $status);
+    // }
 }

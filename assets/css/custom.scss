@@ -524,49 +524,6 @@ img.rounded-circle {
   }
 }
 
-.nav-tabs {
-  li {
-    a {
-      color: #707070;
-      transition: color $action-transition-duration $action-transition-timing-function, border-bottom $action-transition-duration $action-transition-timing-function;
-      color: inherit;
-      text-decoration: none;
-      padding: 10px;
-      padding-bottom: 11px;
-      line-height: 28px;
-      display: inline-block;
-
-      &:hover {
-        color: #2e2e2e;
-        border-bottom: 2px solid #c4c4c4;
-      }
-
-      &.active {
-        color: #2e2e2e;
-        border-bottom: 2px solid lighten($color: theme-color(primary), $amount: 20%);
-        color: inherit;
-        font-weight: 600;
-        
-        .badge.badge-pill {
-          color: inherit;
-          font-weight: 600;
-        }
-      }
-
-      .badge.badge-pill {
-        background-color: rgba(0,0,0,0.07);
-        color: inherit;
-        vertical-align: baseline;
-      }
-    }
-  }
-}
-
-// fix react components in tabs
-.tab-pane.fade:not(.active) {
-  display:none;
-}
-
 .search-field {
   position: relative;
   color: inherit;
@@ -768,7 +725,6 @@ img.rounded-circle {
   font-size: 12px;
   line-height: 20px;
   color: #707070;
-  max-height: 24px;
 }
 
 .flex-basis-0 {
@@ -801,67 +757,6 @@ $bg-number: 8;
 @for $i from 1 through $bg-number {
   .bg-#{$i} {
     background-color: hsl($i * (360 / $bg-number + 32), 60%, 90%);
-  }
-}
-
-$grid-number: 12;
-
-@for $i from 1 through $grid-number {
-  .grid-#{$i} {
-    display: grid;
-    grid-template-columns: repeat($i, 1fr);
-  }
-}
-
-@include media-breakpoint-up(xs) {
-  @for $i from 1 through $grid-number {
-    .grid-xs-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
-  }
-}
-
-@include media-breakpoint-up(sm) {
-  @for $i from 1 through $grid-number {
-    .grid-sm-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
-  }
-}
-
-@include media-breakpoint-up(md) {
-  @for $i from 1 through $grid-number {
-    .grid-md-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
-  }
-}
-@include media-breakpoint-up(lg) {
-  @for $i from 1 through $grid-number {
-    .grid-lg-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
-  }
-}
-@include media-breakpoint-up(xl) {
-  @for $i from 1 through $grid-number {
-    .grid-xl-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
-  }
-}
-
-@media (min-width: 1600px) {
-  @for $i from 1 through $grid-number {
-    .grid-xxl-#{$i} {
-      display: grid;
-      grid-template-columns: repeat($i, 1fr) !important;
-    }
   }
 }
 
@@ -1127,18 +1022,6 @@ $grid-number: 12;
     }
   }
 
-  .border-left {
-    border-left-color: lighten(theme-color("dark-lighter"), 7.5%) !important;
-  }
-
-  .border-right {
-    border-right-color: lighten(theme-color("dark-lighter"), 7.5%) !important;
-  }
-
-  .border-top {
-    border-top-color: lighten(theme-color("dark-lighter"), 7.5%) !important;
-  }
-
   .border-bottom {
     border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%) !important;
   }
@@ -1156,69 +1039,4 @@ $grid-number: 12;
       background-color: lighten(theme-color("dark-lighter"), 7.5%);
     }
   }
-
-  .jumbotron {
-    background-color: theme-color("dark-lighter");
-  }
-}
-
-// error
-@mixin boxShadow($colour, $length){
-  $value: ();
-  @for $i from 1 through $length{
-    $px: $i + px;
-    $shadow: $px $px $colour;
-    $value: append($value, $shadow, comma)
-
-  }
-  text-shadow: $value;
-}
-
-.error-code-container {
-  position: absolute;
-  top: 0%;
-  left: 0%;
-  width: 100%;
-  height: 30%;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  z-index: 1000;
-}
-
-.error-code-container-left {
-  font-size: 10rem;
-  font-weight: bold;
-  color: #c9e5d9;
-  text-align: center;
-  @include boxShadow(#a10532, 10);
-}
-
-.error-code-container-right {
-  font-size: 7rem;
-  font-weight: bold;
-  color: #c9e5d9;
-  text-align: center;
-  @include boxShadow(#a10532, 8);
-}
-
-.error-code-container-bottom {
-  position: absolute;
-  bottom: 0%;
-  left: 0%;
-  width: 100%;
-  height: 30%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 1000;
-}
-
-.error-code-container-descriptive {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #c9e5d9;
-  text-align: center;
-  @include boxShadow(#a10532, 3);
 }

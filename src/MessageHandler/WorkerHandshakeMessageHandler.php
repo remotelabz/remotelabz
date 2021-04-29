@@ -42,12 +42,12 @@ class WorkerHandshakeMessageHandler implements MessageHandlerInterface
         ]);
 
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
-
+        
         foreach ($deviceInstances as $deviceInstance) {
             $deviceInstance->setState(InstanceState::STARTING);
             $this->entityManager->flush();
             $uuid = $deviceInstance->getUuid();
-            $context = SerializationContext::create()->setGroups('worker');
+            $context = SerializationContext::create()->setGroups('start_lab');
             $deviceJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
             $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
             $this->bus->dispatch(

@@ -15,13 +15,13 @@ class EditorData
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"primary_key", "device", "editor"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)
@@ -30,7 +30,7 @@ class EditorData
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)
@@ -40,7 +40,7 @@ class EditorData
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\Device", cascade={"persist", "remove"})
      * @ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"device", "editor"})
      */
     private $device;
 

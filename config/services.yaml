@@ -8,11 +8,6 @@ parameters:
     launch_scripts_directory: '%kernel.project_dir%/public/uploads/launch_scripts'
     profile_picture_directory: '%kernel.project_dir%/public/uploads/user/avatar'
     group_image_directory: '%kernel.project_dir%/public/uploads/group/avatar'
-    directory.public: '%kernel.project_dir%/public'
-    directory.public.images: '%directory.public%/build/images'
-    directory.public.upload: '%directory.public%/uploads'
-    directory.public.upload.lab: '%directory.public.upload%/lab'
-    directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
     image_directory: '%kernel.project_dir%/public/uploads/images'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
@@ -96,10 +91,6 @@ services:
     App\Service\GroupPictureFileUploader:
         arguments:
             $targetDirectory: '%group_image_directory%'
-
-    App\Service\LabBannerFileUploader:
-        arguments:
-            $targetDirectory: '%directory.public.upload.lab.banner%'
 
     App\Service\ProfilePictureFileUploader:
         arguments:

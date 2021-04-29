@@ -20,49 +20,49 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance"})
+     * @Serializer\Groups({"primary_key", "instances"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $lab;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $deviceInstances;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $isInterconnected;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $isInternetConnected;
 
     /**
      * @ORM\OneToOne(targetEntity="Remotelabz\NetworkBundle\Entity\Network", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     private $network;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $state;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance"})
+     * @Serializer\Groups({"lab", "instance_manager"})
      */
     private $jitsiCall;
 
@@ -98,7 +98,7 @@ class LabInstance extends Instance
      * Generate a bridge name with instance UUID.
      *
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      * @Serializer\XmlAttribute
      */
     public function getBridgeName(): string

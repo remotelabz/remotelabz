@@ -2,12 +2,13 @@
 
 namespace App\Entity;
 
-use App\Utils\Uuid;
-use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
-use Doctrine\Common\Collections\Collection;
-use JMS\Serializer\Annotation as Serializer;
+use App\Utils\Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -19,13 +20,15 @@ class Device implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"network_interfaces", "primary_key", "device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "network_interfaces", "lab", "start_lab", "stop_lab", "instance_manager"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -33,21 +36,24 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "lab"})
      * @Assert\Type(type="string")
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "lab"})
      * @Assert\Type(type="string")
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab"})
      * @Assert\Type(type="integer")
      */
     private $launchOrder;
@@ -61,19 +67,21 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\XmlList(inline=true, entry="network_interface")
+     * @Serializer\Groups({"device", "lab", "instance_manager"})
      */
     private $networkInterfaces;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"details"})
      */
     private $labs;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      * @Assert\NotNull
      * @Assert\Choice({"vm"})
      */
@@ -81,19 +89,22 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $virtuality;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlList(entry="operating_system")
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -101,13 +112,15 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
-     * @Serializer\Groups({})
+     * @Serializer\XmlList(inline=true, entry="control_interface")
+     * @Serializer\Groups({"lab"})
      */
     private $controlInterface;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\XmlList(entry="flavor")
+     * @Serializer\Groups({"device", "lab", "start_lab", "stop_lab"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -115,39 +128,40 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "worker"})
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"lab"})
      * @Assert\Type(type="\DateTime")
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"lab"})
      */
     private $lastUpdated;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 1})
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     private $vnc;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="SET NULL")
+     * @Serializer\Groups({"device", "editor", "instance_manager"})
      */
     private $editorData;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"lab"})
      * @Assert\NotNull
      * @Assert\Type(type="boolean")
      */

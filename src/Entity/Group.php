@@ -28,89 +28,82 @@ class Group implements InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_create_group", "api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "instance_manager", "api_users", "api_get_user"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "groups", "group_tree", "group_explore", "user", "instance_manager"})
      */
     private $name;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="group", cascade={"persist", "remove"}, orphanRemoval=true)
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_users", "group_tree", "group_explore"})
      */
     private $users;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $updatedAt;
 
     /**
      * @ORM\Column(type="smallint")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $visibility;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $pictureFilename;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $slug;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree"})
      */
     private $description;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="children")
-     * @Serializer\MaxDepth(1)
-     * @Serializer\Groups({"api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"group_parent", "group_explore", "group_details", "instance_manager"})
      */
     private $parent;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Group", mappedBy="parent")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_children", "group_tree", "group_explore", "group_details"})
      */
     private $children;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="_group")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"instances"})
      * @var Collection|LabInstance[]
      */
     private $labInstances;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "groups", "group_tree", "user", "instance_manager"})
      */
     private $uuid;
-
-    /**
-     * @ORM\OneToMany(targetEntity=Lab::class, mappedBy="_group")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
-     */
-    private $labs;
 
     public const VISIBILITY_PRIVATE  = 0;
     public const VISIBILITY_INTERNAL = 1;
@@ -127,7 +120,6 @@ class Group implements InstancierInterface
         $this->children = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->labInstances = new ArrayCollection();
-        $this->labs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -176,7 +168,7 @@ class Group implements InstancierInterface
      * 
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_tree", "group_explore", "group_details", "user"})
      */
     public function getOwner(): User
     {
@@ -234,21 +226,6 @@ class Group implements InstancierInterface
         return $this;
     }
 
-    public function isPublic(): bool
-    {
-        return $this->visibility === self::VISIBILITY_PUBLIC;
-    }
-
-    public function isInternal(): bool
-    {
-        return $this->visibility === self::VISIBILITY_INTERNAL;
-    }
-
-    public function isPrivate(): bool
-    {
-        return $this->visibility === self::VISIBILITY_PRIVATE;
-    }
-
     public function getPictureFilename(): ?string
     {
         return $this->pictureFilename;
@@ -263,7 +240,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user"})
      */
     public function getPicture(): ?string
     {
@@ -283,7 +260,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"groups", "group_tree", "group_explore", "user", "instance_manager"})
      */
     public function getPath(): ?string
     {
@@ -297,24 +274,6 @@ class Group implements InstancierInterface
         }
 
         return $path;
-    }
-
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_groups", "api_get_group"})
-     */
-    public function getFullyQualifiedName(): array
-    {
-        $name = [ $this->name ];
-        $group = $this;
-
-        while ($group->getParent() !== null) {
-            $group = $group->getParent();
-
-            array_push($name, $group->getName());
-        }
-
-        return array_reverse($name);
     }
 
     public function setSlug(string $slug): self
@@ -339,7 +298,7 @@ class Group implements InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("users")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"group_details"})
      *
      * @return Collection|User[]
      */
@@ -352,7 +311,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_details"})
      *
      * @return integer
      */
@@ -478,13 +437,6 @@ class Group implements InstancierInterface
         return $this;
     }
 
-    public function setChildren(Collection $children): self
-    {
-        $this->children = $children;
-
-        return $this;
-    }
-
     public function getUuid(): string
     {
         return $this->uuid;
@@ -531,36 +483,5 @@ class Group implements InstancierInterface
     public function getType(): string
     {
         return 'group';
-    }
-
-    /**
-     * @return Collection|Lab[]
-     */
-    public function getLabs(): Collection
-    {
-        return $this->labs;
-    }
-
-    public function addLab(Lab $lab): self
-    {
-        if (!$this->labs->contains($lab)) {
-            $this->labs[] = $lab;
-            $lab->setGroup($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLab(Lab $lab): self
-    {
-        if ($this->labs->contains($lab)) {
-            $this->labs->removeElement($lab);
-            // set the owning side to null (unless already changed)
-            if ($lab->getGroup() === $this) {
-                $lab->setGroup(null);
-            }
-        }
-
-        return $this;
     }
 }

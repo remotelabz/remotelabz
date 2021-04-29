@@ -1,17 +1,3 @@
-.card-img-top {
-    object-fit: cover;
-    width: 100%;
-    height: 150px;
-}
-
-.see-more-card {
-    background: #f6f6f6;
-    color: #979797;
-    border-radius: 5px;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
 [theme="dark"] {
     .card {
         background-color: theme-color("dark");
@@ -26,10 +12,6 @@
     .card-footer {
         background-color: theme-color("dark-lighter");
         fill: currentColor;
-    }
-
-    .see-more-card {
-        background: theme-color("dark-lighter");
     }
 
     //         border-color: lighten(theme-color("dark-lighter"), 7.5%);

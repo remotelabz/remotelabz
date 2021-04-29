@@ -17,13 +17,13 @@ class Instance implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $uuid;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     protected $ownedBy = self::OWNED_BY_USER;
 
@@ -67,7 +67,7 @@ class Instance implements InstanciableInterface
         return $context->getAttribute('user') == $this->user;
     }
 
-    public function belongsTo($user): bool
+    public static function belongsTo($user): bool
     {
         return $this->user == $user;
     }
@@ -100,7 +100,7 @@ class Instance implements InstanciableInterface
      * @return InstancierInterface
      * 
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "api_get_user", "api_get_instance_by_uuid", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     public function getOwner(): InstancierInterface
     {

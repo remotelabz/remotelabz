@@ -2,7 +2,6 @@
 
 namespace App\EventListener;
 
-use App\Entity\User;
 use JMS\Serializer\EventDispatcher\PreSerializeEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use JMS\Serializer\EventDispatcher\EventSubscriberInterface as JMSEventSubscriberInterface;
@@ -28,12 +27,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
                 'event' => 'serializer.pre_serialize',
                 'class' => OperatingSystem::class,
                 'method' => 'onOperatingSystemPreSerialize'
-            ],
-            // [
-            //     'event' => 'serializer.pre_serialize',
-            //     'class' => User::class,
-            //     'method' => 'onUserPreSerialize'
-            // ]
+            ]
         ];
     }
 
@@ -55,15 +49,4 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
             $operatingSystem->setImage("");
         }
     }
-
-    // public function onUserPreSerialize(PreSerializeEvent $event)
-    // {
-    //     /** @var User $user */
-    //     $user = $event->getObject();
-    //     $user->getCreatedLabs()->map(function ($lab) use ($user) {
-    //         $user->removeCreatedLab($lab);
-    //         $user->add
-    //     })
-    //     $event->getVisitor()->prepare($user);
-    // }
 }

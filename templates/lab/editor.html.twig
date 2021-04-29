@@ -12,10 +12,11 @@
 
 {%- set edit = app.request.uri ends with 'edit' -%}
 
-{% block wrapper_xl %}
-    {{- react_component('Editor', {'props': {"id": lab.id}}) -}}
+{% block wrapper %}
+    <div id="labEditor" data-id="{{ lab.id }}"></div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    {{ encore_entry_script_tags('editor-react') }}
 {% endblock %}

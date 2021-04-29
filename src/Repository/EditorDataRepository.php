@@ -19,7 +19,7 @@ class EditorDataRepository extends ServiceEntityRepository
         parent::__construct($registry, EditorData::class);
     }
 
-    public function findByDeviceId(int $id): ?EditorData
+    public function findByDeviceId(int $id)
     {
         return $this->createQueryBuilder('e')
             ->andWhere('e.device = :val')

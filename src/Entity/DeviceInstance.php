@@ -23,38 +23,38 @@ class DeviceInstance extends Instance
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"primary_key"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
      */
     protected $device;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"lab"})
      */
     protected $labInstance;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
      */
     protected $networkInterfaceInstances;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $state;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager", "instances"})
      */
     private $remotePort;
 
@@ -90,20 +90,19 @@ class DeviceInstance extends Instance
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"lab"})
      * @Serializer\XmlAttribute
      */
-    public function getOwnerId()
+    public function getUserId(): ?int
     {
         $id = null;
         // TODO: refractor to "getOwnerId"
         switch ($this->ownedBy) {
             case self::OWNED_BY_USER:
-                $id = $this->user;
+                $id = $this->user->getId();
             break;
             case self::OWNED_BY_GROUP:
-                $id = $this->_group;
+                $id = $this->_group->getId();
             break;
         }
 

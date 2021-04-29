@@ -12,29 +12,35 @@ use App\Repository\UserRepository;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
 use App\Service\ProfilePictureFileUploader;
+use App\Service\VPN\VPNConfiguratorGeneratorInterface;
+use Doctrine\Common\Collections\Expr\Comparison;
 use Symfony\Component\Validator\Validation;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use Doctrine\Common\Collections\Expr\Expression;
 use Symfony\Component\Validator\Constraints\Email;
-use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class UserController extends Controller
 {
-    protected $passwordEncoder;
-    protected $userRepository;
-    protected $mailer;
-    protected $serializer;
+    public $passwordEncoder;
+
+    public $userRepository;
+
+    public $mailer;
+
+    public $serializer;
 
     public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer, SerializerInterface $serializer)
     {
@@ -53,6 +59,7 @@ class UserController extends Controller
     {
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
+        $groupDetails = $request->query->has('group_details');
         $page = $request->query->get('page', 1);
         $role = $request->query->get('role');
         $orderBy = $request->query->get('orderBy', 'lastName');
@@ -149,8 +156,21 @@ class UserController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], [$request->get('_route')]);
+            return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], []);
         }
+
+        // $context = new Context();
+        // $context->addGroup("user");
+        // if ($groupDetails) {
+        //     $context->addGroup("group_details");
+        // }
+
+        // if ('json' === $request->getRequestFormat()) {
+        //     $view = $this->view($users->getValues())
+        //         ->setContext($context);
+
+        //     return $this->handleView($view);
+        // }
 
         return $this->render('user/index.html.twig', [
             'users' => $users->slice($page * $limit - $limit, $limit),
@@ -179,7 +199,7 @@ class UserController extends Controller
             throw new NotFoundHttpException();
         }
 
-        return $this->json($user, 200, [], [$request->get('_route')]);
+        return $this->json($user, 200, [], []);
     }
 
     /**
@@ -509,6 +529,17 @@ class UserController extends Controller
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
+        // $pictureFile = $request->files->get('picture');
+        // if ($pictureFile) {
+        //     $pictureFileName = $fileUploader->upload($pictureFile);
+        //     $user->setProfilePictureFilename($pictureFileName);
+        // }
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $entityManager->persist($user);
+        // $entityManager->flush();
+
+        // return $this->redirectToRoute('user_profile');
     }
 
     /**
@@ -574,6 +605,17 @@ class UserController extends Controller
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
+        // $pictureFile = $request->files->get('picture');
+        // if ($pictureFile) {
+        //     $pictureFileName = $fileUploader->upload($pictureFile);
+        //     $user->setProfilePictureFilename($pictureFileName);
+        // }
+
+        // $entityManager = $this->getDoctrine()->getManager();
+        // $entityManager->persist($user);
+        // $entityManager->flush();
+
+        // return $this->redirectToRoute('user_profile');
     }
 
     /**
@@ -581,7 +623,7 @@ class UserController extends Controller
      */
     public function meAction()
     {
-        return $this->redirectToRoute('api_get_user', ['id' => $this->getUser()->getId()]);
+        return $this->json($this->getUser());
     }
 
     /** 

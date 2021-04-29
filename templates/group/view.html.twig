@@ -15,7 +15,7 @@
             <h3>{{ _self.groupParent(group) }} {{ group.name }}</h3>
         </div>
         <div class="content-title-actions">
-            <a href="{{ path('dashboard_edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
+            <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-secondary"><i class="far fa-edit"></i> {{ 'Edit'|trans }}</a>
         </div>
     </div>
 

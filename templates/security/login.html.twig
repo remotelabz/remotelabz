@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Sign in - RemoteLabz{% endblock %}
+{% block title %}Log in!{% endblock %}
 
 {% block body %}
 <div>
@@ -11,23 +11,16 @@
                     {% for label, messages in app.flashes %}
                         {% for message in messages %}
                         <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                            <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            {{ message }}
+                        <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        {{ message }}
                         </div>
                         {% endfor %}
                     {% endfor %}
                 </div>
                 <div class="auto-form-wrapper">
-                    <div class="my-3">
-                        {% set theme = app.request.cookies.get('theme') %}
-                        {% if theme == 'light' %}
-                            <img src="{{ asset('build/images/RemoteLabz_logo_black.png') }}" alt="RemoteLabz logo" style="filter: invert(14%) sepia(26%) saturate(4773%) hue-rotate(236deg) brightness(96%) contrast(91%);" />
-                        {% else %}
-                            <img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" alt="RemoteLabz logo" />
-                        {% endif %}
-                    </div>
+                <h1>Sign in</h1>
                     {% if error %}
                 <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
                 {% endif %}
@@ -59,7 +52,7 @@
                                     Sign in
                                 {% endif %}
                             </button>
-                            <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
+                            <p class="footer-text text-right"><a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
                         </div>
                         {# Add remember_me and forgot_password #}
                         {# <div class="form-group d-flex justify-content-between">

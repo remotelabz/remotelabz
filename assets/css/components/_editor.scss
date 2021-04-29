@@ -44,53 +44,10 @@
     font-weight: bold;
 }
 
-.editor-title-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: inherit !important;
-    color: inherit;
-    font-weight: inherit;
-    text-shadow: inherit;
-    padding: 0;
-}
-
 .editor-title-edit-button {
     font-size: 14px;
     border: none;
     background: none;
-}
-
-.editor-save-button {
-    padding: 0;
-    border-radius: 1px;
-    outline: none;
-    min-width: 30px;
-    height: 100%;
-    color: white;
-    border: none;
-    background: transparent;
-
-    &::before {
-        content: "\2713";
-        margin: 3px;
-    }
-}
-
-.editor-cancel-button {
-    padding: 0;
-    border-radius: 1px;
-    outline: none;
-    min-width: 30px;
-    height: 100%;
-    color: white;
-    border: none;
-    background: transparent;
-
-    &::before {
-        content: "\2715";
-        margin: 3px;
-    }
 }
 
 .editor-menu {
@@ -294,9 +251,5 @@
         &:hover {
             background-color: theme-color("dark-lighter");
         }
-    }
-
-    .editor-title-input {
-        background-color: transparent !important;
     }
 }

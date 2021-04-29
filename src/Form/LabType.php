@@ -22,7 +22,6 @@ class LabType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('shortDescription')
             ->add('description', TextareaType::class, [
                 'attr' => [
                     'class' => 'mde'

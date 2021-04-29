@@ -6,16 +6,22 @@ use App\Entity\OperatingSystem;
 
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
+use FOS\RestBundle\Context\Context;
+use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\OperatingSystemRepository;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 
 class OperatingSystemController extends Controller
 {
@@ -47,7 +53,7 @@ class OperatingSystemController extends Controller
         $operatingSystems = $this->operatingSystemRepository->matching($criteria)->getValues();
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($operatingSystems, 200, [], ['api_get_operating_system']);
+            return $this->json($operatingSystems);
         }
 
         return $this->render('operating_system/index.html.twig', [
@@ -58,17 +64,15 @@ class OperatingSystemController extends Controller
 
     /**
      * @Route("/admin/operating-systems/{id<\d+>}", name="show_operating_system")
-     * 
-     * @Rest\Get("/api/operating-systems/{id<\d+>}", name="api_get_operating_system")
      */
     public function showAction(Request $request, int $id)
     {
         if (!$operatingSystem = $this->operatingSystemRepository->find($id)) {
-            throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($operatingSystem, 200, [], [$request->get('_route')]);
+            return $this->json($operatingSystem);
         }
 
         return $this->render('operating_system/view.html.twig', [
@@ -126,7 +130,7 @@ class OperatingSystemController extends Controller
         $operatingSystem = $this->operatingSystemRepository->find($id);
 
         if (null === $operatingSystem) {
-            throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         $operatingSystemFilename = $operatingSystem->getImageFilename();
@@ -204,7 +208,7 @@ class OperatingSystemController extends Controller
         $filesystem = new Filesystem();
 
         if (null === $operatingSystem) {
-            throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+            throw new NotFoundHttpException();
         }
 
         if (null !== $operatingSystem->getImageFilename()) {

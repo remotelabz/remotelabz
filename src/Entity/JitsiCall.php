@@ -18,13 +18,12 @@ class JitsiCall
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance"})
+     * @Serializer\Groups({"lab", "instance_manager"})
      */
     private $state;
 

@@ -41,7 +41,7 @@
                 {% endblock %}
             {% endembed %}
         </div>
-        {{- react_component('GroupExplorer', {'props': {"endpoint": path('api_groups'), "user": app.user.email}}) -}}
+        {{- react_component('GroupExplorer', {'props': {"endpoint": path('api_groups'), "user": app.user.email}, 'trace': true}) -}}
         {# <ul>
             {% for group in groups %}
                 <li>
