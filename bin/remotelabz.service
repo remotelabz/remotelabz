@@ -7,6 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
+ExecStartPre=/usr/bin/env php /opt/remotelabz/bin/remotelabz-network-up
 ExecStart=/usr/bin/env php /opt/remotelabz/bin/console messenger:consume front --memory-limit=128M
 ExecStop=/usr/bin/env php /opt/remotelabz/bin/console messenger:stop-workers
 MemoryAccounting=true
