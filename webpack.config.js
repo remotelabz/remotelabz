@@ -34,6 +34,7 @@ Encore
     .addEntry('timeago', './assets/js/timeago.js')
     .addEntry('users-select', './assets/js/SelectUser.jsx')
     .addEntry('groups', './assets/js/groups.js')
+    .addEntry('dashboard', './assets/js/dashboard.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

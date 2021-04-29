@@ -8,5 +8,6 @@ import GroupRoleSelect from './Form/GroupRoleSelect';
 import GroupExplorer from './Groups/GroupExplorer';
 import InstanceManager from './Instances/InstanceManager';
 import LabImporter from './Lab/LabImporter';
+import Editor from './Editor/Editor';
 
-ReactOnRails.register({ InstanceOwnerSelect, UserSelect, GroupExplorer, GroupImport, GroupSelect, GroupRoleSelect, InstanceManager, LabImporter });
+ReactOnRails.register({ InstanceOwnerSelect, UserSelect, GroupExplorer, GroupImport, GroupSelect, GroupRoleSelect, InstanceManager, LabImporter, Editor });

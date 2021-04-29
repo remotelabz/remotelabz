@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Group;
 use App\Entity\User;
+use App\Form\GroupParentType;
 use App\Form\GroupType;
 use App\Repository\GroupRepository;
 use App\Repository\UserRepository;
@@ -51,17 +52,10 @@ class GroupController extends Controller
             ->orderBy([
                 'id' => Criteria::DESC,
             ])
-            // ->setMaxResults($limit)
-            // ->setFirstResult($page * $limit - $limit)
         ;
 
         $groups = $this->groupRepository->matching($criteria);
         $count = $groups->count();
-
-        // $context = new Context();
-        // $context
-        //     ->addGroup("lab")
-        // ;
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($groups->getValues());
@@ -87,11 +81,12 @@ class GroupController extends Controller
         $search = $request->query->get('search', '');
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
+        $rootOnly = (bool) $request->query->get('root_only', false);
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search));
 
-        if ($request->query->has('root_only')) {
+        if ($rootOnly) {
             $criteria->andWhere(Criteria::expr()->isNull('parent'));
         }
 
@@ -103,24 +98,29 @@ class GroupController extends Controller
         /** @param Group $value */
         $groups = $this->groupRepository->matching($criteria);
 
+        // filter groups if user does not have access to them
+        $groups = $this->filterAccessDeniedGroups($groups);
+
         $matchedRoute = $request->get('_route');
 
         if ('dashboard_groups' == $matchedRoute) {
-            /** @param Group $value */
-            $groups = $groups->filter(function ($value) {
-                return $value->getUsers()->contains($this->getUser());
+            /** @var User $user */
+            $user = $this->getUser();
+            /** @param Group $group */
+            $groups = $groups->filter(function ($group) use ($user) {
+                return $user->isMemberOf($group);
             });
         } elseif ('dashboard_explore_groups' == $matchedRoute) {
-            /** @param Group $value */
-            $groups = $groups->filter(function ($value) {
-                return Group::VISIBILITY_PUBLIC === $value->getVisibility();
+            /** @param Group $group */
+            $groups = $groups->filter(function ($group) {
+                return Group::VISIBILITY_PUBLIC === $group->getVisibility();
             });
         }
 
         $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groups->getValues(), 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
+            return $this->json($groups->getValues(), 200, [], [$request->get('_route')]);
         }
 
         return $this->render('group/dashboard_index.html.twig', [
@@ -129,6 +129,21 @@ class GroupController extends Controller
             'limit' => $limit,
             'page' => $page,
         ]);
+    }
+
+    private function filterAccessDeniedGroups($groups) {
+        return $groups->filter(function ($group) {
+            if (count($group->getChildren()) > 0) {
+                $group->setChildren($this->filterAccessDeniedGroups($group->getChildren()));
+            }
+
+            // check again to let parent in the list if there's still at least 1 child
+            if (count($group->getChildren()) > 0) {
+                return true;
+            }
+
+            return $this->isGranted(GroupVoter::VIEW, $group);
+        });
     }
 
     /**
@@ -175,7 +190,7 @@ class GroupController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($group, 201, [], ['groups']);
+                return $this->json($group, 201, [], ['api_get_group']);
             }
 
             $this->addFlash('success', 'Group has been created.');
@@ -184,7 +199,7 @@ class GroupController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groupForm, 200, [], []);
+            return $this->json($groupForm, 200);
         }
 
         return $this->render('group/new.html.twig', $data);
@@ -281,7 +296,7 @@ class GroupController extends Controller
         $entityManager->flush();
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json('', 200, [], []);
+            return $this->json(null, 200, [], ['api_get_group']);
         }
 
         return new Response();
@@ -316,7 +331,7 @@ class GroupController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($group, 200, [], ['groups']);
+                return $this->json($group, 200, [], ['api_get_group']);
             }
 
             $this->addFlash('info', 'Group has been edited.');
@@ -325,13 +340,45 @@ class GroupController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groupForm, 200, [], []);
+            return $this->json($groupForm);
         }
 
         return $this->render('group/dashboard_settings.html.twig', [
             'form' => $groupForm->createView(),
             'group' => $group,
         ]);
+    }
+
+    /**
+     * @Route("/groups/{slug}/edit/parent", name="dashboard_edit_group_parent", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function updateParentAction(Request $request, string $slug)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        $parentId = $request->request->get('parent');
+
+        if ($parentId !== null) {
+            $parent = $this->groupRepository->find($parentId);
+        } else {
+            $parent = null;
+        }
+
+
+        if ($parent === null || $parent->getId() !== $group->getId()) {
+            $group->setParent($parent);
+            $group->setUpdatedAt(new \DateTime());
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($group);
+            $entityManager->flush();
+
+            $this->addFlash('info', 'Group namespace has been changed.');
+        }
+
+        return $this->redirectToRoute('dashboard_show_group', ['slug' => $group->getPath()]);
     }
 
     /**
@@ -360,14 +407,14 @@ class GroupController extends Controller
             $this->addFlash('warning', $message);
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($message, 400, [], []);
+                return $this->json($message, 400);
             }
 
             return $this->redirectToRoute('dashboard_edit_group', ['slug' => $slug]);
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json(null, 200, [], []);
+            return $this->json();
         }
 
         return $this->redirectToRoute('dashboard_groups');
@@ -387,7 +434,7 @@ class GroupController extends Controller
             'props' => $serializer->serialize(
                 $group,
                 'json',
-                SerializationContext::create()->setGroups(['groups', 'group_users', 'group_details'])
+                SerializationContext::create()->setGroups(['api_groups'])
             ),
         ]);
     }
@@ -453,6 +500,8 @@ class GroupController extends Controller
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
 
+        $this->denyAccessUnlessGranted(GroupVoter::VIEW, $group);
+
         return $this->render('group/view.html.twig', [
             'group' => $group,
         ]);
@@ -473,10 +522,12 @@ class GroupController extends Controller
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
 
+        $this->denyAccessUnlessGranted(GroupVoter::VIEW, $group);
+
         $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($group, 200, [], $context ? (is_array($context) ? $context : [$context]) : ['groups']);
+            return $this->json($group, 200, [], [$request->get('_route')]);
         }
 
         return $this->render('group/dashboard_view.html.twig', [

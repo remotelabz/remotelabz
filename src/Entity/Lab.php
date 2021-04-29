@@ -6,7 +6,6 @@ use App\Utils\Uuid;
 use App\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -20,57 +19,78 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker"})
      */
     private $name;
 
     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $shortDescription;
+
+    /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
     private $description;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
-     * @Serializer\Groups({"lab"})
+     * @ORM\JoinTable(name="lab_device",
+     *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
+     * ))
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
     private $devices;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\Groups({"lab", "lab_author"})
+     * @Serializer\Groups({"api_get_lab"})
      */
     private $author;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "instance_manager"})
+     * @Serializer\Groups({"api_get_lab", "worker"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_lab"})
      */
     private $createdAt;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({"api_get_lab"})
      */
     private $lastUpdated;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"lab"})
+     * @Serializer\Groups({})
      */
     private $isInternetAuthorized = false;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Group::class, inversedBy="labs")
+     */
+    private $_group;
+
+    /**
+     * @ORM\Column(type="string", nullable=true)
+     * @Serializer\Exclude
+     */
+    private $banner;
 
     public function __construct()
     {
@@ -105,6 +125,18 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
+    public function getShortDescription(): ?string
+    {
+        return $this->shortDescription;
+    }
+
+    public function setShortDescription(?string $shortDescription): self
+    {
+        $this->shortDescription = $shortDescription;
+
+        return $this;
+    }
+
     public function getDescription(): ?string
     {
         return $this->description;
@@ -129,6 +161,7 @@ class Lab implements InstanciableInterface
     {
         if (!$this->devices->contains($device)) {
             $this->devices[] = $device;
+            $device->addLab($this);
         }
 
         return $this;
@@ -138,6 +171,7 @@ class Lab implements InstanciableInterface
     {
         if ($this->devices->contains($device)) {
             $this->devices->removeElement($device);
+            $device->removeLab($this);
         }
 
         return $this;
@@ -199,6 +233,30 @@ class Lab implements InstanciableInterface
     public function setIsInternetAuthorized(bool $isInternetAuthorized): self
     {
         $this->isInternetAuthorized = $isInternetAuthorized;
+
+        return $this;
+    }
+
+    public function getGroup(): ?Group
+    {
+        return $this->_group;
+    }
+
+    public function setGroup(?Group $_group): self
+    {
+        $this->_group = $_group;
+
+        return $this;
+    }
+
+    public function getBanner(): ?string
+    {
+        return $this->banner;
+    }
+
+    public function setBanner(?string $banner): self
+    {
+        $this->banner = $banner;
 
         return $this;
     }

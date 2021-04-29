@@ -7,7 +7,11 @@
 
 {% block breadcrumbs %}
     {% set breadcrumbs = breadcrumbs|merge({ 'Members': path('dashboard_group_members', {'slug': group.path}) }) %}
-    {% set breadcrumbs = breadcrumbs|merge({ (group.name): path('dashboard_show_group', {'slug': group.path}) }) %}
+    {% set currentGroup = group %}
+    {% for parent in group.getFullyQualifiedName()|reverse %}
+        {% set breadcrumbs = breadcrumbs|merge({ (parent): path('dashboard_show_group', {'slug': currentGroup.getPath()}) }) %}
+        {% set currentGroup = currentGroup.parent %}
+    {% endfor %}
     {{ parent() }}
 {% endblock %}
 
