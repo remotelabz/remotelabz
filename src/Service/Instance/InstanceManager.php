@@ -2,17 +2,21 @@
 
 namespace App\Service\Instance;
 
+use App\Entity\Device;
 use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
 use App\Entity\Lab;
 use App\Entity\LabInstance;
 use App\Entity\NetworkInterfaceInstance;
+use App\Entity\OperatingSystem;
 use App\Instance\InstanceState;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
+use App\Repository\DeviceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use App\Repository\OperatingSystemRepository;
 use App\Service\Network\NetworkManager;
 use App\Service\Proxy\ProxyManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -194,10 +198,32 @@ class InstanceManager
         $context = SerializationContext::create()->setGroups('stop_lab');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
-        $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
+        $this->logger->info('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP)
         );
+    }
+
+    /**
+     * Export a device instance to template.
+     */
+    public function export(DeviceInstance $deviceInstance)
+    {
+        $uuid = $deviceInstance->getUuid();
+
+        $deviceInstance->setState(InstanceState::EXPORTING);
+        $this->entityManager->persist($deviceInstance);
+        $this->entityManager->flush();
+
+        $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
+
+        // TODO: 
+        //  - Send Export message to Worker
+        //  - Transform into device + os
+        /*
+        $newOS = $this->copyOperatingSystem($operatingSystem);
+        $newDevice = $this->copyDevice($deviceInstance->getDevice());
+        */
     }
 
     public function setStopped(DeviceInstance $deviceInstance)
@@ -239,4 +265,17 @@ class InstanceManager
 
         return (int) $response->getBody()->getContents();
     }
+
+    /*
+    public function copyDevice(Device device): Device
+    {
+        $newDevice = Device::create();
+        $newDevice->setName($device->getName() . "_test");
+        $newDevice->setBrand($device->getBrand());
+        $newDevice->setModel($device->getModel());
+        $newDevice->setFlavor($device->getFlavor());
+        //$newDevice->setOperatingSystem();
+        $newDevice->setIsTemplate(true);
+    }
+    */
 }

@@ -16,7 +16,8 @@ class InstanceListItem extends Component {
         this.state = {
             isLoading: this.isLoading(props.instance),
             logs: [],
-            showLogs: false
+            showLogs: false,
+            isExporting: this.isExporting(props.instance)
         }
 
         this.fetchLogs();
@@ -50,6 +51,10 @@ class InstanceListItem extends Component {
      */
     isLoading = (deviceInstance) => {
         return deviceInstance.state === 'starting' || deviceInstance.state === 'stopping';
+    }
+
+    isExporting = (deviceInstance) => {
+        return deviceInstance.state === 'exporting';
     }
 
     startDevice = (deviceInstance) => {
@@ -100,6 +105,30 @@ class InstanceListItem extends Component {
             })
     }
 
+    exportDeviceTemplate = (deviceInstance) => {
+        this.setState({ isExporting: true});
+
+        api.get(Routing.generate('api_export_instance_by_uuid', { uuid: deviceInstance.uuid}))
+            .then(() => {
+                new Noty({
+                    type: 'success',
+                    text: 'Instance export requested.',
+                    timeout: 5000
+                }).show();
+
+            this.props.onStateUpdate();
+            })
+            .catch(() => {
+                new Noty({
+                    type: 'error',
+                    text: 'Error while requesting instance export. Please try again later.',
+                    timeout: 5000
+                }).show();
+
+                this.setState({ isExporting: false});
+            })
+    }
+
     render() {
         /** @type {DeviceInstance} deviceInstance */
         const deviceInstance = this.props.instance;
@@ -120,6 +149,12 @@ class InstanceListItem extends Component {
 
             case 'stopping':
                 controls = (<Button className="ml-3" variant="dark" title="Stop device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
+                    <Spinner animation="border" size="sm" />
+                </Button>);
+                break;
+            
+            case 'exporting':
+                controls = (<Button className="ml-3" variant="dark" title="Start device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
                     <Spinner animation="border" size="sm" />
                 </Button>);
                 break;
@@ -155,7 +190,17 @@ class InstanceListItem extends Component {
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {deviceInstance.state !== 'stopped' && 
+                        {((deviceInstance.state == 'stopped' || deviceInstance.state == 'exporting') && this.props.isSandbox) &&
+                            <div onClick={() => this.exportDeviceTemplate(deviceInstance)}>
+                            {this.isExporting(deviceInstance) ?
+                                <Button variant="primary" disabled> Exporting </Button>
+                                :
+                                <Button variant="primary"> Export Device</Button>
+                            }
+                            </div>
+                        }
+
+                        {(deviceInstance.state !== 'stopped'  && deviceInstance.state !== 'exporting') && 
                             <div onClick={() => this.toggleShowLogs()}>
                                 {this.state.showLogs ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Hide logs</Button>

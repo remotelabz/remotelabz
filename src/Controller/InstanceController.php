@@ -149,6 +149,22 @@ class InstanceController extends Controller
         return $this->json();
     }
 
+    /**
+     * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        // TODO:
+        //  - Check if instance come from Sandbox
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->export($deviceInstance);
+
+        return $this->json();
+    }
+
     // /**
     //  * @Rest\Get("/api/instances/state/by-uuid/{uuid}", name="api_get_instance_state_by_uuid")
     //  */

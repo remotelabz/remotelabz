@@ -1,0 +1,39 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ ("Sandbox"): path('devices_sandbox') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'devices_sandbox' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>{{ 'Device Sandbox'|trans }}</h1>
+    </div>
+    <div class="content-title-actions">
+        {%if labInstance is empty %}
+            {% if is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER") %}
+                <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i>
+                    {{ 'Edit'|trans }}
+                </a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+<div class="content-body">
+    <!-- <h1 class="mb-4">{{ lab.name }}</h1> -->
+
+    <div class="row">
+        <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

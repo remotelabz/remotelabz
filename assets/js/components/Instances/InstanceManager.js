@@ -331,7 +331,7 @@ export class InstanceManager extends Component {
                         </ListGroupItem>
                     }
                     {this.state.labInstance.state === "created" &&
-                        <InstanceList instances={this.state.labInstance.deviceInstances} lab={this.state.lab} onStateUpdate={this.onStateUpdate} showControls={this.isCurrentUserGroupAdmin(this.state.viewAs)}>
+                        <InstanceList instances={this.state.labInstance.deviceInstances} lab={this.state.lab} onStateUpdate={this.onStateUpdate} showControls={this.isCurrentUserGroupAdmin(this.state.viewAs)} isSandbox={this.props.isSandbox} >
                         </InstanceList>
                     }
                 </ListGroup>
