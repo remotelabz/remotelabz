@@ -156,11 +156,17 @@ class InstanceController extends Controller
     {
         // TODO:
         //  - Check if instance come from Sandbox
+        $name = $request->query->get('name', '');
+
+        if($name == '') {
+            throw new BadRequestHttpException('Name must not be empty.');
+        }
+        
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
 
-        $instanceManager->export($deviceInstance);
+        $instanceManager->export($deviceInstance, $name);
 
         return $this->json();
     }

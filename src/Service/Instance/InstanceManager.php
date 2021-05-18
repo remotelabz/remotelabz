@@ -207,10 +207,9 @@ class InstanceManager
     /**
      * Export a device instance to template.
      */
-    public function export(DeviceInstance $deviceInstance)
+    public function export(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
-
         $deviceInstance->setState(InstanceState::EXPORTING);
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
@@ -218,12 +217,17 @@ class InstanceManager
         $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
 
         // TODO: 
-        //  - Send Export message to Worker
-        //  - Transform into device + os
-        /*
-        $newOS = $this->copyOperatingSystem($operatingSystem);
-        $newDevice = $this->copyDevice($deviceInstance->getDevice());
-        */
+        //  - Send Export message to Worker or ask API ?
+
+        $device = $deviceInstance->getDevice();
+        $operatingSystem = $device->getOperatingSystem();
+        $newOS = $this->copyOperatingSystem($operatingSystem, $name);
+        $newDevice = $this->copyDevice($device, $newOS, $name);
+
+        $this->entityManager->persist($newOS);
+        $this->entityManager->persist($newDevice);
+        $this->entityManager->flush();
+
     }
 
     public function setStopped(DeviceInstance $deviceInstance)
@@ -266,16 +270,26 @@ class InstanceManager
         return (int) $response->getBody()->getContents();
     }
 
-    /*
-    public function copyDevice(Device device): Device
+    public function copyOperatingSystem(OperatingSystem $operatingSystem, string $name): OperatingSystem
     {
-        $newDevice = Device::create();
-        $newDevice->setName($device->getName() . "_test");
+        $newOS = new OperatingSystem();
+        $newOS->setName($name);
+        $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
+        $newOS->setImageFilename($safeFilename . '_' . uniqid() . '.img');
+
+        return $newOS;
+    }
+
+    public function copyDevice(Device $device, OperatingSystem $os, string $name): Device
+    {
+        $newDevice = new Device();
+        $newDevice->setName($name);
         $newDevice->setBrand($device->getBrand());
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
-        //$newDevice->setOperatingSystem();
+        $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+
+        return $newDevice;
     }
-    */
 }

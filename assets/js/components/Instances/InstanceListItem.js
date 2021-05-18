@@ -5,6 +5,7 @@ import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
+import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
@@ -17,7 +18,8 @@ class InstanceListItem extends Component {
             isLoading: this.isLoading(props.instance),
             logs: [],
             showLogs: false,
-            isExporting: this.isExporting(props.instance)
+            showExport: false,
+            isExporting: this.isExporting(props.instance),
         }
 
         this.fetchLogs();
@@ -44,6 +46,10 @@ class InstanceListItem extends Component {
 
     toggleShowLogs = () => {
         this.setState({ showLogs: !this.state.showLogs });
+    }
+
+    toggleShowExport = () => {
+        this.setState({ showExport: !this.state.showExport });
     }
 
     /**
@@ -105,10 +111,10 @@ class InstanceListItem extends Component {
             })
     }
 
-    exportDeviceTemplate = (deviceInstance) => {
+    exportDeviceTemplate = (deviceInstance, name) => {
         this.setState({ isExporting: true});
 
-        api.get(Routing.generate('api_export_instance_by_uuid', { uuid: deviceInstance.uuid}))
+        api.get(Routing.generate('api_export_instance_by_uuid', { uuid: deviceInstance.uuid, name: name}))
             .then(() => {
                 new Noty({
                     type: 'success',
@@ -190,12 +196,12 @@ class InstanceListItem extends Component {
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {((deviceInstance.state == 'stopped' || deviceInstance.state == 'exporting') && this.props.isSandbox) &&
-                            <div onClick={() => this.exportDeviceTemplate(deviceInstance)}>
-                            {this.isExporting(deviceInstance) ?
-                                <Button variant="primary" disabled> Exporting </Button>
+                        {(deviceInstance.state == 'stopped' && this.props.isSandbox) &&
+                            <div onClick={() => this.toggleShowExport()}>
+                            {this.state.showExport ?
+                                <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
                                 :
-                                <Button variant="primary"> Export Device</Button>
+                                <Button variant="default"><SVG name="chevron-right"></SVG> Export</Button>
                             }
                             </div>
                         }
@@ -235,6 +241,9 @@ class InstanceListItem extends Component {
                             return <code className="p-1" key={log.id}>[{log.createdAt}] {log.content}</code>;
                         })}
                     </pre>
+                }
+                {(deviceInstance.state == 'stopped' && this.state.showExport) &&
+                    <InstanceExport deviceInstance={deviceInstance} exportDeviceTemplate={this.exportDeviceTemplate} ></InstanceExport>
                 }
             </ListGroupItem>
         )
