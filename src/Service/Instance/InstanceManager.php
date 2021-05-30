@@ -2,6 +2,7 @@
 
 namespace App\Service\Instance;
 
+use DateTime;
 use App\Entity\Device;
 use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
@@ -215,13 +216,27 @@ class InstanceManager
         $this->entityManager->flush();
 
         $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
+        
+        $now = new DateTime();
+        $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
+        $id = uniqid();
+        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1) . '.img';
 
-        // TODO: 
-        //  - Send Export message to Worker or ask API ?
+        $context = SerializationContext::create()->setGroups('stop_lab');
+        $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+        
+        $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+        $tmp['new_os_name'] = $imageName;
+        $labJson = json_encode($tmp, 0, 4096);
+
+        $this->logger->info('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
+        $this->bus->dispatch(
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
+        );
 
         $device = $deviceInstance->getDevice();
         $operatingSystem = $device->getOperatingSystem();
-        $newOS = $this->copyOperatingSystem($operatingSystem, $name);
+        $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
         $newDevice = $this->copyDevice($device, $newOS, $name);
 
         $this->entityManager->persist($newOS);
@@ -270,12 +285,11 @@ class InstanceManager
         return (int) $response->getBody()->getContents();
     }
 
-    public function copyOperatingSystem(OperatingSystem $operatingSystem, string $name): OperatingSystem
+    public function copyOperatingSystem(OperatingSystem $operatingSystem, string $name, string $imageName): OperatingSystem
     {
         $newOS = new OperatingSystem();
         $newOS->setName($name);
-        $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
-        $newOS->setImageFilename($safeFilename . '_' . uniqid() . '.img');
+        $newOS->setImageFilename($imageName);
 
         return $newOS;
     }

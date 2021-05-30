@@ -11,6 +11,8 @@ use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use Psr\Log\LoggerInterface;
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,37 +22,24 @@ class DeviceSandboxController extends Controller
 {
     /** @var LabRepository $labRepository */
     private $labRepository;
+    private $deviceRepository;
+
+    private $logger;
 
     private $serializer;
 
-    public function __construct(LabRepository $labRepository, SerializerInterface $serializerInterface)
+    public function __construct(LoggerInterface $logger, LabRepository $labRepository, DeviceRepository $deviceRepository, SerializerInterface $serializerInterface)
     {
+        $this->logger = $logger;
         $this->labRepository = $labRepository;
         $this->serializer = $serializerInterface;
-        /*
         $this->deviceRepository = $deviceRepository;
-        $this->instanceRepository = $instanceRepository;
-        $this->fakelab = '{
-            "name": "Sandbox Lab",
-            "devices": [],
-            "author": {
-                "name": "Florent Administrator",
-                "email": "root@localhost",
-                "lastName": "Administrator",
-                "firstName": "Florent",
-                "enabled": true,
-                "uuid": "e1eb8089-2523-4cd2-8df6-2731cc70bff7"
-            },
-            "uuid": "b532f955-d308-4aa5-8d31-a8b2b395c87a",
-            "createdAt": "2021-05-07T13:21:03+00:00",
-            "lastUpdated": "2021-05-07T13:21:18+00:00",
-            "isInternetAuthorized": false
-        }';
-        */
     }
 
-    /*
-     public function indexAction(Request $request)
+    /**
+     * @Route("/admin/devices_sandbox", name="devices_sandbox")
+     */
+     public function indexAction(Request $request, SerializerInterface $serializer)
     {
         $search = $request->query->get('search', '');
         $template = $request->query->get('template', true);
@@ -63,30 +52,34 @@ class DeviceSandboxController extends Controller
             ]);
 
         $devices = $this->deviceRepository->matching($criteria);
+        $deviceArray = array();
+
+        foreach ($devices as $device) {
+            array_push($deviceArray, $device);
+        }
 
         $deviceProps = [
             'user' => $this->getUser(),
-            'devices' => $devices
+            'devices' => $deviceArray
         ];
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($devices->getValues());
-        }
 
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $devices,
-            'search' => $search
+            'search' => $search,
+            'props' => $serializer->serialize(
+                $deviceProps,
+                'json',
+                SerializationContext::create()->setGroups(['user', 'device', 'lab'])
+            )
         ]);
     }
-    */
 
     /**
-     * @Route("/admin/devices_sandbox", name="devices_sandbox")
+     * @Route("/admin/devices_sandbox/{id<\d+>}", name="devices_sandbox_view")
      */
-    public function indexAction(Request $request, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
+    public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {
-        // Search for Sandbox Lab (id should be 0)
-        $lab = $labRepository->find(0);
+        $lab = $labRepository->find($id);
 
         if (!$lab) {
             throw new NotFoundHttpException("Sandbox Lab does not exist.");
@@ -110,7 +103,7 @@ class DeviceSandboxController extends Controller
             'isSandbox' => true
         ];
 
-        return $this->render('device_sandbox/index.html.twig', [
+        return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
             'deviceStarted' => $deviceStarted,
