@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Button, Spinner } from 'react-bootstrap';
 import API from '../../api';
 import Remotelabz from '../API';
+import SVG from '../Display/SVG';
 
 class SandboxListItem extends Component {
 
@@ -11,8 +12,25 @@ class SandboxListItem extends Component {
         super(props);
 
         this.state = {
+            lab: {},
             isLoading: false,
+            exist: false
         }
+
+        this.fetchLabInstance();
+    }
+
+    fetchLabInstance = () => {
+        var labName = "Sandbox_" + this.props.user.uuid + "_" + this.props.device.id;
+        let lab;
+
+        this.api.get("/api/labs?search=" + labName + "&author=" + this.props.user.id).then(response => {
+            lab = response.data;
+
+            if(lab) {
+                this.setState({exist: true, lab: lab[0]});
+            }
+        })
     }
 
     async onModifyClick(device) {
@@ -23,6 +41,10 @@ class SandboxListItem extends Component {
         await this.api.post("/api/labs").then(response => {
             lab = response.data
         });
+
+        var labName = "Sandbox_" + this.props.user.uuid + "_" + device.id;
+        var labObj = { id: lab.id, fields: {name: labName}};
+        Remotelabz.labs.update(labObj);
         // Add device to lab
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
@@ -34,8 +56,8 @@ class SandboxListItem extends Component {
 
         // Create and start a lab instance
         await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-        // Redirect to "sandbox"        
-        window.location.href = "/admin/devices_sandbox/" + lab.id;
+  
+        this.setState({ isLoading: false, exist: true, lab: lab});    
     }
 
     render() {
@@ -56,14 +78,38 @@ class SandboxListItem extends Component {
             divBorder = (
             <div className="wrapper d-flex justify-content-between align-items-center py-2 border-bottom">
                 {this.props.device.name}
-                {button}
+                { this.state.exist ?
+                    <a 
+                        href={"/admin/devices_sandbox/" + this.state.lab.id}
+                        className="btn btn-primary ml-3"
+                        title="Open Device Sandbox"
+                        data-toggle="tooltip"
+                        data-placement="top"
+                    >
+                        <SVG name="external-link" />
+                    </a>
+                :
+                    button
+                }
             </div>)
         }
         else {
             divBorder = (
                 <div className="wrapper d-flex justify-content-between align-items-center py-2">
                     {this.props.device.name}
-                    {button}
+                    { this.state.exist ?
+                        <a 
+                            href={"/admin/devices_sandbox/" + this.state.lab.id}
+                            className="btn btn-primary ml-3"
+                            title="Open Device Sandbox"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                        >
+                            <SVG name="external-link" />
+                        </a>
+                    :
+                        button
+                    }
                 </div>)
         }
 
