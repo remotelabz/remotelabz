@@ -272,6 +272,7 @@ export class InstanceManager extends Component {
 
     render() {
         return (<>
+            {!this.props.isSandbox &&
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -284,6 +285,7 @@ export class InstanceManager extends Component {
                     />
                 </div>
             </div>
+            }
 
             {this.state.labInstance ?
                 <ListGroup>
