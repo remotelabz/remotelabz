@@ -336,7 +336,7 @@ class GroupController extends Controller
 
             $this->addFlash('info', 'Group has been edited.');
 
-            return $this->redirectToRoute('dashboard_show_group', ['slug' => $group->getSlug()]);
+            return $this->redirectToRoute('dashboard_show_group', ['slug' => $group->getPath()]);
         }
 
         if ('json' === $request->getRequestFormat()) {
