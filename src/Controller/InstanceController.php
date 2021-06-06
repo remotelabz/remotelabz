@@ -153,6 +153,42 @@ class InstanceController extends Controller
     }
 
     /**
+     * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        // TODO:
+        //  - Check if instance come from Sandbox
+        $name = $request->query->get('name', '');
+
+        if($name == '') {
+            throw new BadRequestHttpException('Name must not be empty.');
+        }
+        
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->export($deviceInstance, $name);
+
+        return $this->json();
+    }
+
+    // /**
+    //  * @Rest\Get("/api/instances/state/by-uuid/{uuid}", name="api_get_instance_state_by_uuid")
+    //  */
+    // public function fetchStateByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    // {
+    //     if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+    //         throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+    //     }
+
+    //     $state = $instanceManager->state($deviceInstance);
+
+    //     return $this->json($state);
+    // }
+
+    /**
      * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchByUuidAction(Request $request, string $uuid)

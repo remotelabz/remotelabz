@@ -136,51 +136,25 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     function onJitsiCallStarted() {
         let labInstance = {...labInstance};
         labInstance.jitsiCall.state = 'started';
-        setLabInstance(labInstance)
+        this.setState({labInstance});
     }
 
-    return (<>
-        <div className="d-flex align-items-center mb-2">
-            <div>View as : </div>
-            <div className="flex-grow-1 ml-2">
-                <InstanceOwnerSelect
-                    user={props.user.id}
-                    onChange={onViewAsChange}
-                    isDisabled={isLoadingInstanceState}
-                    value={viewAs}
-                />
+    render() {
+        return (<>
+            {!this.props.isSandbox &&
+            <div className="d-flex align-items-center mb-2">
+                <div>View as : </div>
+                <div className="flex-grow-1 ml-2">
+                    <InstanceOwnerSelect
+                        options={this.viewAsOptions}
+                        defaultValue={this.viewAsOptions[1].options[0]}
+                        onChange={this.onViewAsChange}
+                        isDisabled={this.state.isLoadingInstanceState}
+                        value={this.state.viewAs}
+                    />
+                </div>
             </div>
-        </div>
-
-        {labInstance ?
-            <ListGroup>
-                <ListGroupItem className="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h4 className="mb-0">Instances</h4>
-                    </div>
-                    <div>
-                    {labInstance.state === "created" &&
-                        <Button href="/profile/vpn" variant="primary">
-                            <SVG name="download" className="v-sub image-sm"></SVG>
-                            <span className="ml-1">OpenVPN file</span>
-                        </Button>
-                    }
-                    {(props.isJitsiCallEnabled && isOwnedByGroup()) &&
-                        <JitsiCallButton
-                            className="mr-2"
-                            isOwnedByGroup={isOwnedByGroup()}
-                            isCurrentUserGroupAdmin={isCurrentUserGroupAdmin(viewAs)}
-                            onStartCall={onJitsiCallStarted}
-                        />
-                    }
-                    {isCurrentUserGroupAdmin(viewAs) &&
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
-                    }
-                    </div>
-                </ListGroupItem>
-                {labInstance.state === "creating" &&
-                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        <Spinner animation="border" size="lg" className="text-muted" />
+            }
 
                         <div className="mt-3">
                             Creating your instance... This operation may take a moment.
@@ -191,26 +165,18 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
                         <Spinner animation="border" size="lg" className="text-muted" />
 
-                        <div className="mt-3">
-                            Deleting your instance... This operation may take a moment.
-                        </div>
-                    </ListGroupItem>
-                }
-                {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
-                    </InstanceList>
-                }
-            </ListGroup>
-            :
-            <ListGroup>
-                {isLoadingInstanceState ?
-                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        <div className="my-3">
-                            <div className="dot-bricks"></div>
-                        </div>
-                        Loading...
-                    </ListGroupItem>
-                    :
+                            <div className="mt-3">
+                                Deleting your instance... This operation may take a moment.
+                            </div>
+                        </ListGroupItem>
+                    }
+                    {this.state.labInstance.state === "created" &&
+                        <InstanceList instances={this.state.labInstance.deviceInstances} lab={this.state.lab} onStateUpdate={this.onStateUpdate} showControls={this.isCurrentUserGroupAdmin(this.state.viewAs)} isSandbox={this.props.isSandbox} >
+                        </InstanceList>
+                    }
+                </ListGroup>
+                :
+                <ListGroup>
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
                         {viewAs.type === 'user' ?
                             <div className="d-flex align-items-center justify-content-center flex-column">

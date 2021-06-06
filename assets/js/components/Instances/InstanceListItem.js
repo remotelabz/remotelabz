@@ -5,26 +5,21 @@ import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
+import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, showControls, onStateUpdate }) {
-    const [isLoading, setLoading] = useState(true)
-    const [isComputing, setComputing] = useState(false)
-    const [logs, setLogs] = useState([])
-    const [showLogs, setShowLogs] = useState(false)
-    const [device, setDevice] = useState({ name: '' })
-    
-    useEffect(() => {
-        fetchLogs()
-        const interval = setInterval(fetchLogs, 5000)
-        Remotelabz.devices.get(instance.device.id).then(response => {
-            setDevice(response.data)
-            setLoading(false)
-        })
-        return () => {
-            clearInterval(interval)
+class InstanceListItem extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            isLoading: this.isLoading(props.instance),
+            logs: [],
+            showLogs: false,
+            showExport: false,
+            isExporting: this.isExporting(props.instance),
         }
     }, [instance])
 
@@ -47,27 +42,23 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
     function startDevice(deviceInstance) {
         setComputing(true)
 
-        Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
-            new Noty({
-                type: 'success',
-                text: 'Instance start requested.',
-                timeout: 5000
-            }).show();
-
-            onStateUpdate();
-        }).catch(() => {
-            new Noty({
-                type: 'error',
-                text: 'Error while requesting instance start. Please try again later.',
-                timeout: 5000
-            }).show();
-
-            setComputing(false)
-        })
+    toggleShowExport = () => {
+        this.setState({ showExport: !this.state.showExport });
     }
 
-    function stopDevice(deviceInstance) {
-        setComputing(true)
+    /**
+     * @param {DeviceInstance} deviceInstance
+     */
+    isLoading = (deviceInstance) => {
+        return deviceInstance.state === 'starting' || deviceInstance.state === 'stopping';
+    }
+
+    isExporting = (deviceInstance) => {
+        return deviceInstance.state === 'exporting';
+    }
+
+    startDevice = (deviceInstance) => {
+        this.setState({ isLoading: true });
 
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
             new Noty({
@@ -107,28 +98,77 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
             </Button>);
             break;
 
-        case 'stopping':
-            controls = (<Button className="ml-3" variant="dark" title="Stop device" data-toggle="tooltip" data-placement="top" disabled>
-                <Spinner animation="border" size="sm" />
-            </Button>);
-            break;
+    exportDeviceTemplate = (deviceInstance, name) => {
+        this.setState({ isExporting: true});
 
-        case 'started':
-            controls = (
-                <Button
-                    className="ml-3"
-                    variant="danger"
-                    title="Stop device"
-                    data-toggle="tooltip"
-                    data-placement="top"
-                    onClick={() => stopDevice(instance)}
-                    disabled={isComputingState(instance)}
-                >
-                    <SVG name="stop" />
-                </Button>
-            );
-            break;
+        api.get(Routing.generate('api_export_instance_by_uuid', { uuid: deviceInstance.uuid, name: name}))
+            .then(() => {
+                new Noty({
+                    type: 'success',
+                    text: 'Instance export requested.',
+                    timeout: 5000
+                }).show();
+
+            this.props.onStateUpdate();
+            })
+            .catch(() => {
+                new Noty({
+                    type: 'error',
+                    text: 'Error while requesting instance export. Please try again later.',
+                    timeout: 5000
+                }).show();
+
+                this.setState({ isExporting: false});
+            })
     }
+
+    render() {
+        /** @type {DeviceInstance} deviceInstance */
+        const deviceInstance = this.props.instance;
+        let controls;
+
+        switch (deviceInstance.state) {
+            case 'stopped':
+                controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => this.startDevice(deviceInstance)} ref={deviceInstance.uuid} disabled={this.isLoading(deviceInstance)}>
+                    <SVG name="play" />
+                </Button>);
+                break;
+
+            case 'starting':
+                controls = (<Button className="ml-3" variant="dark" title="Start device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
+                    <Spinner animation="border" size="sm" />
+                </Button>);
+                break;
+
+            case 'stopping':
+                controls = (<Button className="ml-3" variant="dark" title="Stop device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
+                    <Spinner animation="border" size="sm" />
+                </Button>);
+                break;
+            
+            case 'exporting':
+                controls = (<Button className="ml-3" variant="dark" title="Start device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
+                    <Spinner animation="border" size="sm" />
+                </Button>);
+                break;
+
+            case 'started':
+                controls = (
+                    <Button
+                        className="ml-3"
+                        variant="danger"
+                        title="Stop device"
+                        data-toggle="tooltip"
+                        data-placement="top"
+                        onClick={() => this.stopDevice(deviceInstance)}
+                        ref={deviceInstance.uuid}
+                        disabled={this.isLoading(this.props.instance)}
+                    >
+                        <SVG name="stop" />
+                    </Button>
+                );
+                break;
+        }
 
     return (
         <ListGroupItem>
@@ -154,9 +194,19 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {instance.state !== 'stopped' && 
-                            <div onClick={() => setShowLogs(!showLogs)}>
-                                {showLogs ?
+                        {(deviceInstance.state == 'stopped' && this.props.isSandbox) &&
+                            <div onClick={() => this.toggleShowExport()}>
+                            {this.state.showExport ?
+                                <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
+                                :
+                                <Button variant="default"><SVG name="chevron-right"></SVG> Export</Button>
+                            }
+                            </div>
+                        }
+
+                        {(deviceInstance.state !== 'stopped'  && deviceInstance.state !== 'exporting') && 
+                            <div onClick={() => this.toggleShowLogs()}>
+                                {this.state.showLogs ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Hide logs</Button>
                                 :
                                     <Button variant="default"><SVG name="chevron-right"></SVG> Show logs</Button>
@@ -190,10 +240,12 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
                         })}
                     </pre>
                 }
-            </div>
-            }
-        </ListGroupItem>
-    )
+                {(deviceInstance.state == 'stopped' && this.state.showExport) &&
+                    <InstanceExport deviceInstance={deviceInstance} exportDeviceTemplate={this.exportDeviceTemplate} ></InstanceExport>
+                }
+            </ListGroupItem>
+        )
+    }
 }
 // class InstanceListItem extends Component {
 //     constructor(props) {
