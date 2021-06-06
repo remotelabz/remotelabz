@@ -116,7 +116,7 @@ class LabController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($labs->slice($page * $limit - $limit, $limit), 200, [], ["lab", "primary_key"]);
+            return $this->json($labs, 200, [], ["api_get_lab"]);
         }
 
         return $this->render('lab/index.html.twig', [
