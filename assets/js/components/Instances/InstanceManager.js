@@ -1,271 +1,140 @@
 import Noty from 'noty';
-import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
-import Routing from 'fos-jsrouting';
-import React, { Component } from 'react';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
+import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
-const api = API.getInstance();
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false}) {
 
-/**
- * @typedef {Object} Instancier
- * @property {string} uuid
- * 
- * @typedef {"user"} GroupUserRoles
- * @typedef {"admin"|"owner"} GroupAdministrativeRoles
- * 
- * @typedef {Object} DeviceInstance
- * @property {string} name
- * @property {string} uuid
- * @property {string} state
- * @property {"user"|"group"} ownedBy
- * 
- * @typedef {Object} LabInstance
- * @property {DeviceInstance[]} deviceInstances
- * 
- * @typedef {Object} InstanceManagerProps
- * @property {Object} Lab
- * 
- * 
- * @typedef {Object} ViewAsOption
- * @property {Instancier} [owner]
- */
+    // console.log(props);
+    const [labInstance, setLabInstance] = useState(props.labInstance)
+    const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
+    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
 
-/**
- * @extends {Component<InstanceManagerProps, DeviceInstance>}
- */
-export class InstanceManager extends Component {
-    constructor(props) {
-        super(props);
+    useEffect(() => {
+        setLoadingInstanceState(true)
+        refreshInstance()
+        const interval = setInterval(refreshInstance, 5000)
+        return () => {
+            clearInterval(interval)
+            setLabInstance(null)
+            setLoadingInstanceState(true)
+        }
+    }, [viewAs])
 
-        /** @type {ViewAsOption|User} */
-        let viewAsUserOptions = {
-            owner: null,
-            type: 'user',
-            children: [],
-            value: props.user.id,
-            label: props.user.name,
-            hasLabInstance: props.labInstance ? props.labInstance.state : null,
-            ...props.user
-        };
+    function refreshInstance() {
+        let request
 
-        this.state = {
-            lab: this.props.lab,
-            user: this.props.user,
-            showLeaveLabModal: false,
-            viewAs: viewAsUserOptions,
-            isLoadingInstanceState: false,
-            /** @type {LabInstance} */
-            labInstance: this.props.labInstance,
+        if (viewAs.type === 'user') {
+            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
+        } else {
+            request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
         }
 
-        const viewAsGroupsOptions = this.props.user.groups.map((group) => {
-            return {
-                value: group.uuid,
-                label: group.name,
-                type: 'group',
-                owner: group.role === 'owner' ? props.user : {
-                    id: group.owner.id,
-                    name: group.owner.name
-                },
-                parent: group.parent,
-                hasLabInstance: group.labInstances.find(instance => instance.lab.uuid == props.lab.uuid) || null,
-                ...group
-            };
-        }).filter(value => value !== null);
-
-        this.viewAsOptions = [{
-            label: 'User',
-            options: [viewAsUserOptions]
-        }, {
-            label: 'Groups',
-            options: viewAsGroupsOptions
-        }];
-
-        this.interval = setInterval(() => {
-            this.fetchInstance(this.state.labInstance.uuid, 'lab')
-            .then(response => {
-                this.setState({ labInstance: response.data });
-            })
-            .catch(error => {
-                if (error.response.status === 404) {
-                    this.setState({ labInstance: null });
-                } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show();
-                    clearInterval(this.interval);
-                }
-            });
-        }, 5000);
-    }
-
-    /**
-     * @param {GroupUserRoles|GroupAdministrativeRoles} role
-     * @returns Wether the role is an administrative role or not.
-     * @memberof InstanceManager
-     */
-    isGroupElevatedRole(role) {
-        return role === GroupRoles.Owner || role === GroupRoles.Admin;
-    }
-
-    isCurrentUserGroupAdmin(group) {
-        if (group.type === 'user') {
-            return true;
-        }
-
-        const _group = this.state.user.groups.find(g => g.uuid === group.uuid);
-        return _group ? (_group.role == 'admin' || _group.role == 'owner') : false;
-    }
-
-    isCurrentUser = (user) => {
-        return this.state.user.id === user.id;
-    }
-
-    isOwnedByGroup() {
-        return this.state.labInstance.ownedBy == "group";
-    }
-
-    hasInstancesStillRunning = () => {
-        return this.state.labInstance.deviceInstances.some(i => i.state != 'stopped');
-    }
-
-    filterViewAsOptions = (input) => {
-        return this.viewAsOptions[1].options.filter(i => i.name.toLowerCase().includes(input.toLowerCase()));
-    }
-
-    loadImpersonationOptions = (input) => {
-        return new Promise(resolve => {
-            const value = this.filterViewAsOptions(input);
-            console.log('value', value);
-            resolve(value);
-        });
-    }
-
-    createInstance = (labUuid, ownerUuid, ownerType = 'group') => {
-        return Remotelabz.instances.lab.create(labUuid, ownerUuid, ownerType);
-    }
-
-    fetchInstance = (uuid, type = 'lab') => {
-        const response = Remotelabz.instances.get(uuid, type);
-        response.then(response => this.setState({ labInstance: response.data }));
-        return response;
-    }
-
-    /**
-     * Get device instance state by UUID.
-     *
-     * @memberof InstanceManager
-     */
-    fetchInstanceState = (uuid) => {
-        return api.get(Routing.generate('api_get_instance_state_by_uuid', { uuid }));
-    }
-
-    fetchInstancesByOwner(uuid, ownerType = 'group', instanceType = 'device') {
-        return api.get(Routing.generate('api_get_instance_by_' + ownerType, { uuid, type: instanceType }), { validateStatus: function (status) { return status < 500 } });
-    }
-
-    deleteInstance = (uuid) => {
-        return api.delete(Routing.generate('api_delete_instance', { uuid }))
-            .then(response => { this.setState({ labInstance: null }); return response; });
-    }
-
-    onStateUpdate = () => {
-        this.fetchInstance(this.state.labInstance.uuid);
-    }
-
-    onViewAsChange = option => {
-        if (option != this.state.viewAs) {
-            clearInterval(this.interval);
-            this.setState({ isLoadingInstanceState: true });
-
-            let request;
-
-            if (option.type === 'user') {
-                request = Remotelabz.instances.lab.getByLabAndUser(this.state.lab.uuid, option.uuid);
-            } else {
-                request = Remotelabz.instances.lab.getByLabAndGroup(this.state.lab.uuid, option.uuid);
+        request.then(response => {
+            let promises = []
+            for (const deviceInstance of response.data.deviceInstances) {
+                promises.push(Remotelabz.instances.get(deviceInstance.uuid));
             }
 
-            request.then(response => {
-                this.setState({ viewAs: option, labInstance: response.data });
-
-                this.interval = setInterval(() => {
-                    this.fetchInstance(this.state.labInstance.uuid, 'lab')
-                        .then(response => {
-                            this.setState({ labInstance: response.data });
-                        })
-                        .catch(error => {
-                            console.error(error);
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show();
-                            clearInterval(this.interval);
-                        })
-                }, 5000);
+            Promise.all(promises).then(responses => {
+                setLabInstance({
+                    ...response.data,
+                    deviceInstances: responses.map(response => response.data)
+                })
+                setLoadingInstanceState(false)
+            }).catch(error => {
+                new Noty({
+                    text: 'An error happened while fetching instances state. Please try refreshing this page. If this error persist, please contact an administrator.',
+                    type: 'error'
+                }).show()
             })
-            .catch(error => {
-                if (status <= 500) {
-                    this.setState({ viewAs: option, labInstance: null });
+        }).catch(error => {
+            if (error.response) {
+                if (error.response.status <= 500) {
+                    setLabInstance(null)
+                    setLoadingInstanceState(false)
                 } else {
-                    console.error('fetchInstanceByOwner returned an error :', error.response);
                     new Noty({
                         text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
                         type: 'error'
-                    }).show();
+                    }).show()
                 }
-            })
-            .finally(() => this.setState({ isLoadingInstanceState: false }));
+            }
+        })
+    }
+
+    function isGroupElevatedRole(role) {
+        return role === GroupRoles.Owner || role === GroupRoles.Admin
+    }
+
+    function isCurrentUserGroupAdmin(group) {
+        if (group.type === 'user') {
+            return true
+        }
+
+        const _group = props.user.groups.find(g => g.uuid === group.uuid);
+        return _group ? (_group.role == 'admin' || _group.role == 'owner') : false
+    }
+
+    function isOwnedByGroup() {
+        return labInstance.ownedBy == "group"
+    }
+
+    function hasInstancesStillRunning() {
+        return labInstance.deviceInstances.some(i => i.state != 'stopped')
+    }
+
+    async function onInstanceStateUpdate() {
+        // const response = await Remotelabz.instances.get(labInstance.uuid, 'lab')
+        // setLabInstance(response.data)
+    }
+
+    function onViewAsChange(option) {
+        setViewAs(option);
+    }
+
+    async function onJoinLab() {
+        setLoadingInstanceState(true)
+
+        try {
+            const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type)
+            setLoadingInstanceState(false)
+            setLabInstance(response.data)
+        } catch (error) {
+            console.error(error)
+            new Noty({
+                text: 'There was an error creating an instance. Please try again later.',
+                type: 'error'
+            }).show()
+            setLoadingInstanceState(false)
         }
     }
 
-    onJoinLab = () => {
-        const viewAs = this.state.viewAs;
-        this.setState({ isLoadingInstanceState: true });
-        this.createInstance(this.state.lab.uuid, viewAs.uuid, viewAs.type)
-            .then(response => {
-                this.setState({
-                    isLoadingInstanceState: false,
-                    labInstance: response.data
-                });
-            })
-            .catch(() => {
-                new Noty({
-                    text: 'There was an error creating an instance. Please try again later.',
-                    type: 'error'
-                }).show();
-            });
+    async function onLeaveLab() {
+        setShowLeaveLabModal(false)
+        setLoadingInstanceState(true)
+
+        try {
+            await Remotelabz.instances.lab.delete(labInstance.uuid)
+            setLabInstance({ ...labInstance, state: "deleting" })
+        } catch (error) {
+            console.error(error)
+            new Noty({
+                text: 'An error happened while leaving the lab. Please try again later.',
+                type: 'error'
+            }).show()
+            setLoadingInstanceState(false)
+        }
     }
 
-    onLeaveLab = () => {
-        this.setState({ showLeaveLabModal: false, isLoadingInstanceState: true });
-
-        Remotelabz.instances.lab.delete(this.state.labInstance.uuid)
-            .then(() => this.setState({ labInstance: { ...this.state.labInstance, state: "deleting" } }))
-            .catch(() => {
-                new Noty({
-                    text: 'An error happened while leaving the lab. Please try again later.',
-                    type: 'error'
-                }).show();
-            })
-            .finally(() => {
-                this.setState({ isLoadingInstanceState: false });
-            })
-    }
-
-    onLeaveLabButtonClick = () => this.setState({ showLeaveLabModal: true });
-
-    onLeaveLabModalClose = () => this.setState({ showLeaveLabModal: false });
-
-    onStartedCall = () => {
-        let labInstance = {...this.state.labInstance};
+    function onJitsiCallStarted() {
+        let labInstance = {...labInstance};
         labInstance.jitsiCall.state = 'started';
         this.setState({labInstance});
     }
@@ -287,45 +156,14 @@ export class InstanceManager extends Component {
             </div>
             }
 
-            {this.state.labInstance ?
-                <ListGroup>
-                    <ListGroupItem className="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h4 className="mb-0">Instances</h4>
-                        </div>
-                        <div>
-                        {this.state.labInstance.state === "created" &&
-                            <Button href="/profile/vpn" variant="primary">
-                                <SVG name="download" className="v-sub image-sm"></SVG>
-                                <span className="ml-1">OpenVPN file</span>
-                            </Button>
-                        }
-                        {(this.props.isJitsiCallEnabled && this.isOwnedByGroup()) &&
-                            <JitsiCallButton
-                                className="mr-2"
-                                isOwnedByGroup={this.isOwnedByGroup()}
-                                isCurrentUserGroupAdmin={this.isCurrentUserGroupAdmin(this.state.viewAs)}
-                                onStartCall={this.onStartedCall}
-                                {...this.state}
-                            />
-                        }
-                        {this.isCurrentUserGroupAdmin(this.state.viewAs) &&
-                            <Button variant="danger" className="ml-2" onClick={this.onLeaveLabButtonClick} disabled={this.hasInstancesStillRunning() || this.state.labInstance.state === "creating" || this.state.labInstance.state === "deleting"}>Leave lab</Button>
-                        }
+                        <div className="mt-3">
+                            Creating your instance... This operation may take a moment.
                         </div>
                     </ListGroupItem>
-                    {this.state.labInstance.state === "creating" &&
-                        <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                            <Spinner animation="border" size="lg" className="text-muted" />
-
-                            <div className="mt-3">
-                                Creating your instance... This operation may take a moment.
-                            </div>
-                        </ListGroupItem>
-                    }
-                    {this.state.labInstance.state === "deleting" &&
-                        <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                            <Spinner animation="border" size="lg" className="text-muted" />
+                }
+                {labInstance.state === "deleting" &&
+                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
+                        <Spinner animation="border" size="lg" className="text-muted" />
 
                             <div className="mt-3">
                                 Deleting your instance... This operation may take a moment.
@@ -340,42 +178,42 @@ export class InstanceManager extends Component {
                 :
                 <ListGroup>
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {this.state.viewAs.type === 'user' ?
+                        {viewAs.type === 'user' ?
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You haven&apos;t joined this lab yet.
 
                                 <div className="mt-3">
-                                    <Button onClick={this.onJoinLab} disabled={this.state.isLoadingInstanceState}>Join this lab</Button>
+                                    <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                 </div>
                             </div>
                             :
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 This group hasn&apos;t joined this lab yet.
 
-                                {this.isGroupElevatedRole(this.state.viewAs.role) &&
+                                {isGroupElevatedRole(viewAs.role) &&
                                     <div className="mt-3">
-                                        <Button onClick={this.onJoinLab} disabled={this.state.isLoadingInstanceState}>Join this lab</Button>
+                                        <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                     </div>
                                 }
                             </div>
                         }
                     </ListGroupItem>
-                </ListGroup>
-            }
-            <Modal show={this.state.showLeaveLabModal} onHide={this.onLeaveLabModalClose}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Leave lab</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    If you leave the lab, <strong>all your instances will be deleted and all virtual machines associed will be destroyed.</strong> Are you sure you want to leave this lab ?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="default" onClick={this.onLeaveLabModalClose}>Close</Button>
-                    <Button variant="danger" onClick={this.onLeaveLab}>Leave</Button>
-                </Modal.Footer>
-            </Modal>
-        </>)
-    }
+                }
+            </ListGroup>
+        }
+        <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Leave lab</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                If you leave the lab, <strong>all your instances will be deleted and all virtual machines associed will be destroyed.</strong> Are you sure you want to leave this lab ?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
+                <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+            </Modal.Footer>
+        </Modal>
+    </>)
 }
 
 export default InstanceManager;

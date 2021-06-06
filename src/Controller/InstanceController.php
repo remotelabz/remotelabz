@@ -2,16 +2,14 @@
 
 namespace App\Controller;
 
-use App\Entity\DeviceInstanceLog;
 use Exception;
 use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
+use App\Entity\DeviceInstanceLog;
 use App\Repository\UserRepository;
 use App\Entity\InstancierInterface;
 use App\Service\Proxy\ProxyManager;
 use App\Repository\GroupRepository;
-use App\Entity\NetworkInterfaceInstance;
-use App\Repository\DeviceInstanceLogRepository;
 use App\Repository\LabInstanceRepository;
 use App\Service\Instance\InstanceManager;
 use GuzzleHttp\Exception\ServerException;
@@ -20,8 +18,10 @@ use GuzzleHttp\Exception\RequestException;
 use App\Repository\DeviceInstanceRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\DeviceInstanceLogRepository;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -65,10 +65,12 @@ class InstanceController extends Controller
         switch ($type) {
             case 'lab':
                 $data = $this->labInstanceRepository->findAll();
+                $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
                 $data = $this->deviceInstanceRepository->findAll();
+                $groups = ['api_get_device_instance'];
                 break;
 
             default:
@@ -76,7 +78,7 @@ class InstanceController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($data, 200, [], ["instances"]);
+            return $this->json($data, 200, [], $groups);
         }
 
         return $this->render('instance/index.html.twig', [
@@ -118,7 +120,7 @@ class InstanceController extends Controller
             throw $e;
         }
 
-        return $this->json($instance, 200, [], ["instances", "instance_manager", "user"]);
+        return $this->json($instance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -130,9 +132,10 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
 
-        $instanceManager->start($deviceInstance);
+        $json = $instanceManager->start($deviceInstance);
+        $status = empty($json) ? 204 : 200;
 
-        return $this->json();
+        return $this->json($json, $status, [], [], true);
     }
 
     /**
@@ -191,12 +194,19 @@ class InstanceController extends Controller
     public function fetchByUuidAction(Request $request, string $uuid)
     {
         $data = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
+        $groups = ['api_get_lab_instance'];
 
-        if (!$data) $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+        if (!$data) {
+            $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+            $groups = ['api_get_device_instance'];
+        }
+
         // uuid not found
-        if (!$data) throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        if (!$data) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
 
-        return $this->json($data, 200, [], ["instances", "instance_manager"]);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -221,7 +231,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
-        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
+        return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -246,7 +256,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
-        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
+        return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -262,10 +272,12 @@ class InstanceController extends Controller
         switch ($type) {
             case 'lab':
                 $data = $this->labInstanceRepository->findOneBy(['user' => $user]);
+                $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['user' => $user]);
+                $groups = ['api_get_device_instance'];
                 break;
 
             default:
@@ -274,7 +286,7 @@ class InstanceController extends Controller
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], ['instance_manager', 'user']);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -290,10 +302,12 @@ class InstanceController extends Controller
         switch ($type) {
             case 'lab':
                 $data = $this->labInstanceRepository->findOneBy(['_group' => $group]);
+                $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['_group' => $group]);
+                $groups = ['api_get_device_instance'];
                 break;
 
             default:
@@ -302,7 +316,7 @@ class InstanceController extends Controller
 
         if (!$data) throw new NotFoundHttpException();
 
-        return $this->json($data, 200, [], ['instance_manager']);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -414,8 +428,6 @@ class InstanceController extends Controller
      */
     public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)
     {
-        //$uuid = $request->query->get('uuid');
-
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }

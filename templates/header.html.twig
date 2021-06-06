@@ -1,9 +1,9 @@
 {% import "dashboard.base.html.twig" as dashboard %}
 
 {% macro navlink(name, link, expandable, c, variables) %}
-  <li class="nav-item">
+  <li class="nav-item ml-2">
     <a class="nav-link d-flex align-items-center {%- if c == variables.category %} active{%endif%}" href="{{ path(link) }}">
-      <span class="menu-title mr-1">{{name}} </span>
+      <span class="menu-title mr-1">{{name}}</span>
       {%- if expandable == true %}{{- svg('angle-down', 's11') -}}{% endif -%}
     </a>
   </li>
@@ -16,12 +16,13 @@
       <div class="navbar-menu-element">
         <a class="nav-link" href="/"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a>
       </div>
-      <div class="navbar-menu-element ml-2">
-        <ul class="navbar-nav navbar-expand-lg mr-1">
+      <div class="navbar-menu-element">
+        <ul class="navbar-nav navbar-expand mr-1">
+          {{ _self.navlink("Labs", 'labs', false, 'labs', _context) }}
           {{ _self.navlink("Groups", 'dashboard_groups', false, 'dashboard_groups', _context) }}
         </ul>
         {% if is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link {% if '/admin' in app.request.uri %}active{% endif %}" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+          <a class="nav-link ml-2 {% if '/admin' in app.request.uri %}active{% endif %}" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
             {{ svg('admin', 's18') }}
           </a>
         {% endif %}
