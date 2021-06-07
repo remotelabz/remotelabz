@@ -57,7 +57,9 @@ class SandboxListItem extends Component {
         // Create and start a lab instance
         await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
   
-        this.setState({ isLoading: false, exist: true, lab: lab});    
+        this.setState({ isLoading: false, exist: true, lab: lab});   
+        // Redirect to Sandbox
+        window.location.href = "/admin/devices_sandbox/" + lab.id; 
     }
 
     render() {
