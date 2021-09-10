@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8dd9eccff0cfa903e0652ad0491959a1",
+    "content-hash": "ed49341a892bfc131191e7940021717d",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -135,16 +135,16 @@
         },
         {
             "name": "crestic-urca/remotelabz-message-bundle",
-            "version": "dev-master",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
-                "reference": "468bd004c59b9ea5727cb512107ad5fae069a003"
+                "reference": "cb1f6a81468f8fb517ed3c6e019d3a770057dd02"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/468bd004c59b9ea5727cb512107ad5fae069a003",
-                "reference": "468bd004c59b9ea5727cb512107ad5fae069a003",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/cb1f6a81468f8fb517ed3c6e019d3a770057dd02",
+                "reference": "cb1f6a81468f8fb517ed3c6e019d3a770057dd02",
                 "shasum": ""
             },
             "require": {
@@ -154,7 +154,6 @@
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/phpunit-bridge": "^5.1"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -191,7 +190,7 @@
                 "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
                 "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
             },
-            "time": "2020-11-16T08:31:02+00:00"
+            "time": "2021-06-07T16:46:38+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1716,6 +1715,7 @@
                 "issues": "https://github.com/doctrine/reflection/issues",
                 "source": "https://github.com/doctrine/reflection/tree/1.2.x"
             },
+            "abandoned": "roave/better-reflection",
             "time": "2020-03-27T11:06:43+00:00"
         },
         {
@@ -3438,10 +3438,6 @@
                 "proxy pattern",
                 "service proxies"
             ],
-            "support": {
-                "issues": "https://github.com/Ocramius/ProxyManager/issues",
-                "source": "https://github.com/Ocramius/ProxyManager/tree/2.2.x"
-            },
             "time": "2019-08-10T08:37:15+00:00"
         },
         {
@@ -9781,12 +9777,12 @@
             "version": "1.9.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/webmozart/assert.git",
+                "url": "https://github.com/webmozarts/assert.git",
                 "reference": "bafc69caeb4d49c39fd0779086c03a3738cbb389"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozart/assert/zipball/bafc69caeb4d49c39fd0779086c03a3738cbb389",
+                "url": "https://api.github.com/repos/webmozarts/assert/zipball/bafc69caeb4d49c39fd0779086c03a3738cbb389",
                 "reference": "bafc69caeb4d49c39fd0779086c03a3738cbb389",
                 "shasum": ""
             },
@@ -10946,9 +10942,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "crestic-urca/remotelabz-message-bundle": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -10957,5 +10951,5 @@
         "ext-iconv": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "1.1.0"
 }

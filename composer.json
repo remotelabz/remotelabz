@@ -8,7 +8,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "crestic-urca/network-bundle": "^1.0",
-        "crestic-urca/remotelabz-message-bundle": "dev-master",
+        "crestic-urca/remotelabz-message-bundle": "^1.0.1",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
         "friendsofsymfony/rest-bundle": "^3.0",
