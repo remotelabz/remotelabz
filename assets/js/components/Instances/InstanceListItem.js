@@ -142,11 +142,12 @@ class InstanceListItem extends Component {
 
         switch (deviceInstance.state) {
             case 'stopped':
+            case 'error':
                 controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => this.startDevice(deviceInstance)} ref={deviceInstance.uuid} disabled={this.isLoading(deviceInstance)}>
                     <SVG name="play" />
                 </Button>);
                 break;
-
+                
             case 'starting':
                 controls = (<Button className="ml-3" variant="dark" title="Start device" data-toggle="tooltip" data-placement="top" ref={deviceInstance.uuid} disabled>
                     <Spinner animation="border" size="sm" />
@@ -196,7 +197,7 @@ class InstanceListItem extends Component {
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {(deviceInstance.state == 'stopped' && this.props.isSandbox) &&
+                        {( (deviceInstance.state == 'stopped' || deviceInstance.state == 'exported')&& this.props.isSandbox) &&
                             <div onClick={() => this.toggleShowExport()}>
                             {this.state.showExport ?
                                 <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>

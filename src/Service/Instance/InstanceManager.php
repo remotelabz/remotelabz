@@ -53,6 +53,8 @@ class InstanceManager
     protected $workerServer;
     protected $workerPort;
     protected $proxyManager;
+    protected $OperatingSystemRepository;
+    protected $DeviceRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -64,6 +66,8 @@ class InstanceManager
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        DeviceRepository $DeviceRepository,
+        OperatingSystemRepository $OperatingSystemRepository,
         string $workerServer,
         string $workerPort,
         ProxyManager $proxyManager
@@ -77,6 +81,8 @@ class InstanceManager
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
+        $this->DeviceRepository=$DeviceRepository;
+        $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
         $this->proxyManager = $proxyManager;
@@ -220,13 +226,25 @@ class InstanceManager
         $now = new DateTime();
         $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
         $id = uniqid();
-        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1) . '.img';
+        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1) . '.img';      
+
+        $device = $deviceInstance->getDevice();
+        $operatingSystem = $device->getOperatingSystem();
+                
+        $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
+        $newDevice = $this->copyDevice($device, $newOS, $name);
+        $this->entityManager->persist($newOS);
+        $this->entityManager->persist($newDevice);
+        $this->entityManager->flush();
 
         $context = SerializationContext::create()->setGroups('stop_lab');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         
         $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-        $tmp['new_os_name'] = $imageName;
+        $tmp['new_os_name'] = $name;
+        $tmp['new_os_imagename'] = $imageName;
+        $tmp['newOS_id'] = $newOS->getId();
+        $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
         $this->logger->info('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
@@ -234,14 +252,7 @@ class InstanceManager
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
         );
 
-        $device = $deviceInstance->getDevice();
-        $operatingSystem = $device->getOperatingSystem();
-        $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
-        $newDevice = $this->copyDevice($device, $newOS, $name);
-
-        $this->entityManager->persist($newOS);
-        $this->entityManager->persist($newDevice);
-        $this->entityManager->flush();
+        
 
     }
 
@@ -305,5 +316,35 @@ class InstanceManager
         $newDevice->setIsTemplate(true);
 
         return $newDevice;
+    }
+
+    /**
+     * Delete a device form a DeviceInstance.
+     *
+     * @param DeviceInstance $device the device to delete
+     *
+     * @return void
+     */
+    public function deleteDev(string $stringcomposite)
+    {
+        
+        $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');
+        
+        $return_array = explode(",",$stringcomposite);
+        $context = SerializationContext::create()->setGroups('del_dev');
+        $labJson = $this->serializer->serialize($return_array, 'json', $context);
+
+        $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
+
+        //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
+        
+        $os = $this->OperatingSystemRepository->find($return_array[2]);
+        $device = $this->DeviceRepository->find($return_array[3]);
+        
+
+        $this->entityManager->remove($os);
+        $this->entityManager->remove($device);
+        $this->entityManager->flush();
+        
     }
 }

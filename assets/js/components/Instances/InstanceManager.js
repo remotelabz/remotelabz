@@ -133,7 +133,7 @@ export class InstanceManager extends Component {
     }
 
     hasInstancesStillRunning = () => {
-        return this.state.labInstance.deviceInstances.some(i => i.state != 'stopped');
+        return this.state.labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
     }
 
     filterViewAsOptions = (input) => {

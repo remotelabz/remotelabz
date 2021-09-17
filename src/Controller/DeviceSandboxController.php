@@ -62,7 +62,7 @@ class DeviceSandboxController extends Controller
             'user' => $this->getUser(),
             'devices' => $deviceArray
         ];
-
+        
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $devices,
             'search' => $search,
