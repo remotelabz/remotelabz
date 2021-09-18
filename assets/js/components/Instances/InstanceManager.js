@@ -133,7 +133,7 @@ export class InstanceManager extends Component {
     }
 
     hasInstancesStillRunning = () => {
-        return this.state.labInstance.deviceInstances.some(i => i.state != 'stopped');
+        return this.state.labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
     }
 
     filterViewAsOptions = (input) => {
@@ -272,6 +272,7 @@ export class InstanceManager extends Component {
 
     render() {
         return (<>
+            {!this.props.isSandbox &&
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -284,6 +285,7 @@ export class InstanceManager extends Component {
                     />
                 </div>
             </div>
+            }
 
             {this.state.labInstance ?
                 <ListGroup>
@@ -331,7 +333,7 @@ export class InstanceManager extends Component {
                         </ListGroupItem>
                     }
                     {this.state.labInstance.state === "created" &&
-                        <InstanceList instances={this.state.labInstance.deviceInstances} lab={this.state.lab} onStateUpdate={this.onStateUpdate} showControls={this.isCurrentUserGroupAdmin(this.state.viewAs)}>
+                        <InstanceList instances={this.state.labInstance.deviceInstances} lab={this.state.lab} onStateUpdate={this.onStateUpdate} showControls={this.isCurrentUserGroupAdmin(this.state.viewAs)} isSandbox={this.props.isSandbox} >
                         </InstanceList>
                     }
                 </ListGroup>

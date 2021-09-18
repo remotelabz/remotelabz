@@ -105,7 +105,7 @@ class LabController extends Controller
         $count = $labs->count();
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($labs->slice($page * $limit - $limit, $limit), 200, [], ["lab"]);
+            return $this->json($labs->slice($page * $limit - $limit, $limit), 200, [], ["lab", "primary_key"]);
         }
 
         return $this->render('lab/index.html.twig', [

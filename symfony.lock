@@ -38,6 +38,9 @@
     "doctrine/dbal": {
         "version": "v2.8.0"
     },
+    "doctrine/deprecations": {
+        "version": "v0.5.3"
+    },
     "doctrine/doctrine-bundle": {
         "version": "2.0",
         "recipe": {
@@ -191,6 +194,9 @@
     "laminas/laminas-zendframework-bridge": {
         "version": "1.1.1"
     },
+    "lcobucci/clock": {
+        "version": "2.0.0"
+    },
     "lcobucci/jwt": {
         "version": "3.2.5"
     },
@@ -234,7 +240,7 @@
         "version": "2.1.1"
     },
     "php": {
-        "version": "7.3"
+        "version": "7.4"
     },
     "php-cs-fixer/diff": {
         "version": "v1.3.0"
@@ -247,6 +253,9 @@
     },
     "phpdocumentor/type-resolver": {
         "version": "0.4.0"
+    },
+    "phpstan/phpdoc-parser": {
+        "version": "0.5.7"
     },
     "psr/cache": {
         "version": "1.0.1"
@@ -337,9 +346,6 @@
             "version": "4.1",
             "ref": "f8863cbad2f2e58c4b65fa1eac892ab189971bea"
         }
-    },
-    "symfony/debug-pack": {
-        "version": "v1.0.6"
     },
     "symfony/dependency-injection": {
         "version": "v4.1.7"
@@ -469,9 +475,6 @@
     "symfony/options-resolver": {
         "version": "v4.1.7"
     },
-    "symfony/orm-pack": {
-        "version": "v1.0.5"
-    },
     "symfony/phpunit-bridge": {
         "version": "4.3",
         "recipe": {
@@ -513,9 +516,6 @@
     },
     "symfony/process": {
         "version": "v4.1.7"
-    },
-    "symfony/profiler-pack": {
-        "version": "v1.0.3"
     },
     "symfony/property-access": {
         "version": "v4.1.7"
@@ -567,9 +567,6 @@
     "symfony/serializer": {
         "version": "v4.1.7"
     },
-    "symfony/serializer-pack": {
-        "version": "v1.0.1"
-    },
     "symfony/service-contracts": {
         "version": "v1.1.5"
     },
@@ -595,9 +592,6 @@
     },
     "symfony/templating": {
         "version": "v4.3.5"
-    },
-    "symfony/test-pack": {
-        "version": "v1.0.4"
     },
     "symfony/translation": {
         "version": "3.3",

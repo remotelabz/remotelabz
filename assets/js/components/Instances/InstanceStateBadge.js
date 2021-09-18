@@ -15,16 +15,24 @@ class InstanceStateBadge extends Component {
 
         switch (this.props.state) {
             case 'stopped':
-                badge = <Badge variant="default" {...this.props}>Stopped</Badge>;
+                badge = <Badge variant="default" {...this.props}>Stopped</Badge>
                 break;
 
             case 'starting':
-                badge = <Badge variant="warning" {...this.props}>Starting</Badge>;
+                badge = <Badge variant="warning" {...this.props}>Starting</Badge>
                 break;
 
             case 'stopping':
                 badge = <Badge variant="warning" {...this.props}>Stopping</Badge>
                 break;
+
+            case 'exporting':
+                badge = <Badge variant="warning" {...this.props}>Exporting</Badge>
+                break;
+            
+            case 'exported':
+                    badge = <Badge variant="success" {...this.props}>Exported</Badge>
+                    break;
 
             case 'started':
                 badge = <Badge variant="success" {...this.props}>Started</Badge>

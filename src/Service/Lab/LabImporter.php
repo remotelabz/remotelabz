@@ -76,11 +76,19 @@ class LabImporter
         }
 
         $lab = new Lab();
+        if (array_key_exists("description",$labJson)) {
+            $this->logger->debug("Lab description found");
+            $lab->setDescription($labJson['description']);
+        }
 
+            else {
+            $this->logger->debug("No lab description found");
+            $lab->setDescription("");
+            
+            }
         $lab
             ->setName($labJson['name'])
             ->setAuthor($this->tokenStorage->getToken()->getUser())
-            ->setDescription($labJson['description'])
             ->setIsInternetAuthorized(true)
         ;
 

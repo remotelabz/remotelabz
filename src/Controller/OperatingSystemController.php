@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\OperatingSystem;
-
+use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
 use FOS\RestBundle\Context\Context;
@@ -29,9 +29,11 @@ class OperatingSystemController extends Controller
      * @var OperatingSystemRepository
      */
     private $operatingSystemRepository;
+    private $logger;
 
-    public function __construct(OperatingSystemRepository $operatingSystemRepository)
+    public function __construct(LoggerInterface $logger, OperatingSystemRepository $operatingSystemRepository)
     {
+        $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
     }
 
@@ -229,6 +231,7 @@ class OperatingSystemController extends Controller
 
             return $this->redirectToRoute('operating_systems');
         } catch (ForeignKeyConstraintViolationException $e) {
+            $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
             $this->addFlash('danger', 'This operating system is still used in some device templates or device instances. Please delete them first.');
 
             return $this->redirectToRoute('show_operating_system', [
