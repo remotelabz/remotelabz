@@ -30,6 +30,7 @@ parameters:
 
     app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
+    app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
 
     app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
@@ -168,6 +169,10 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+
+    App\Controller\SecurityController:
+        arguments:
+            $maintenance: '%app.general.maintenance%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
