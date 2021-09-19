@@ -9,12 +9,17 @@
 {% block body %}
   <div class="page-body-wrapper">
     {% block sidebar %}
-      {% if '/admin' in app.request.uri %}
-        {# Admin zone #}
+    {% if is_granted('ROLE_ADMINISTRATOR') %}
+      {% include "sidebar.admin.html.twig" %}
+    {% else %}
+        {% include "sidebar.html.twig" %}
+    {% endif %}
+    {#  {% if '/admin' in app.request.uri %}
         {% include "sidebar.admin.html.twig" %}
       {% else %}
         {% include "sidebar.html.twig" %}
       {% endif %}
+    #}
     {% endblock %}
 
     {% set wrapper = block('wrapper_xl') is defined %}
