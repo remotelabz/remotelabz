@@ -2,12 +2,16 @@
 
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ 'Labs': path('labs') }) -%}
-    {{ parent() }}
+    {% if is_granted('ROLE_ADMINISTRATOR') %}
+        {{ parent() }}
+    {% endif %}
 {% endblock %}
 
 {% block sidebar %}
     {% set category = 'labs' %}
-    {{ parent() }}
+    
+        {{ parent() }}
+    
 {% endblock %}
 
 {% block wrapper %}
@@ -48,13 +52,14 @@
                     </a>
                 </div>
                 <div class="lab-item-infos text-muted">
-                    !{{ lab.id }} · created
+                    {# !{{ lab.id }} · created
                     <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span>
                     by
                     <a href="{{ path('labs', app.request.query|merge({author: lab.author.id})) }}" data-toggle="tooltip" data-placement="top" title="See all labs by {{lab.author.name}}">
                         <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" />
                         <span class="lab-item-author" >{{ lab.author.name }}</span>
                     </a>
+                    #}
                 </div>
             </div>
             <div class="separator flex-grow-1"></div>

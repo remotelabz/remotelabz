@@ -80,5 +80,6 @@ security:
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/labs, roles: ['ROLE_USER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
+        - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }
