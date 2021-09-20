@@ -44,12 +44,15 @@ class SecurityController extends AbstractController
      */
     public $passwordEncoder;
 
-    public function __construct(UrlGeneratorInterface $urlGenerator, UserRepository $userRepository, PasswordResetRequestRepository $passwordResetRequestRepository, UserPasswordEncoderInterface $passwordEncoder)
+    protected $maintenance; 
+
+    public function __construct(UrlGeneratorInterface $urlGenerator, UserRepository $userRepository, PasswordResetRequestRepository $passwordResetRequestRepository, UserPasswordEncoderInterface $passwordEncoder,bool $maintenance)
     {
         $this->urlGenerator = $urlGenerator;
         $this->userRepository = $userRepository;
         $this->passwordResetRequestRepository = $passwordResetRequestRepository;
         $this->passwordEncoder = $passwordEncoder;
+        $this->maintenance = $maintenance;
     }
 
     /**
@@ -64,12 +67,14 @@ class SecurityController extends AbstractController
         if ($lastUsername === null) $lastUsername = "";
         
         $version = file_get_contents($kernel->getProjectDir() . '/version');
- 
+        
+        $maintenance = (boolean) getenv('APP_MAINTENANCE');
         return $this->render('security/login.html.twig', 
         [
             'last_username' => $lastUsername,
             'error' => $error,
-            'version' => $version
+            'version' => $version,
+            'maintenance' => $this->maintenance
         ]);
     }
 

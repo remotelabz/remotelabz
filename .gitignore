@@ -48,3 +48,8 @@ vagrant/provision_prod.sh
 ###< friendsofphp/php-cs-fixer ###
 
 /database/
+
+###> phpunit/phpunit ###
+/phpunit.xml
+.phpunit.result.cache
+###< phpunit/phpunit ###
