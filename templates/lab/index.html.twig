@@ -53,7 +53,7 @@
             <div class="mr-3">
                 labs per page
             </div>
-            <div class="dropdown mr-3">
+         {#  <div class="dropdown mr-3">
                 <button class="dropdown-menu-toggle btn btn-default" id="sort-projects-dropdown" type="button" data-toggle="dropdown" data-display="static" aria-expanded="true"><span class="dropdown-toggle-text ">Last updated</span>{{ svg('chevron-down') }}</button>
                 <ul class="dropdown-menu">
                     <h6 class="dropdown-header">
@@ -81,7 +81,7 @@
                     <a class="dropdown-item" href="/dashboard/projects?sort=created_asc">Oldest created
                     </a></li>
                 </ul>
-            </div>
+            </div> #}
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
@@ -96,13 +96,13 @@
                     </a>
                 </div>
                 <div class="lab-item-infos text-muted">
-                    !{{ lab.id }} · created
+                    {# !{{ lab.id }} · created
                     <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span>
                     by
                     <a href="{{ path('labs', app.request.query|merge({author: lab.author.id})) }}" data-toggle="tooltip" data-placement="top" title="See all labs by {{lab.author.name}}">
                         <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" />
                         <span class="lab-item-author" >{{ lab.author.name }}</span>
-                    </a>
+                    </a> #}
                 </div>
             </div>
             <div class="separator flex-grow-1"></div>

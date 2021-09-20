@@ -9,10 +9,9 @@
 {% block body %}
   <div class="page-body-wrapper">
     {% block sidebar %}
-      {% if '/admin' in app.request.uri %}
-        {# Admin zone #}
-        {% include "sidebar.admin.html.twig" %}
-      {% else %}
+    {% if is_granted('ROLE_ADMINISTRATOR') %}
+      {% include "sidebar.admin.html.twig" %}
+    {% else %}
         {% include "sidebar.html.twig" %}
       {% endif %}
     {% endblock %}
