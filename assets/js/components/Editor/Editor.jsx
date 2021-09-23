@@ -119,6 +119,7 @@ export default class Editor extends React.Component {
 
     handleCreateDevice = () => this.setState({ addDeviceModal: { ...this.state.addDeviceModal, show: true } });
     handleEditDevice = () => {
+        console.log("handleEditDevice")
         // this.hideAsideMenu();
         let device = this.state.devices.find(device => {
             return device.id == this.state.contextualMenu.target.id;
@@ -134,6 +135,7 @@ export default class Editor extends React.Component {
     }
 
     onSubmitDeviceForm = () => {
+        console.log("onSubmitDeviceForm")
         this.reloadLab(this.labId);
     }
 
