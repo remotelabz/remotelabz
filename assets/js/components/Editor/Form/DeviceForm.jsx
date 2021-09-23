@@ -17,26 +17,27 @@ export default class DeviceForm extends React.Component
             name: Yup.string().required("Name is required."),
             brand: Yup.string(),
             model: Yup.string(),
-            operatingSystem: Yup.object().shape({
+            /*operatingSystem: Yup.object().shape({
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
             flavor: Yup.object().shape({
                 label: Yup.string().required(),
                 value: Yup.number().required()
-            }),
+            }),*/
             vnc: Yup.boolean()
         });
 
         this.state = {
-            operatingSystemOptions: null,
-            flavorOptions: null,
             device: this.props.device,
+            operatingSystemOptions: null,
+            flavorOptions: null
         };
     }
 
     componentDidMount()
     {
+        console.log("componentDidMount",this.props.device)
         this.api.get('/api/operating-systems')
             .then(response => {
                 let operatingSystemOptions = [];
@@ -71,6 +72,8 @@ export default class DeviceForm extends React.Component
                 device: this.props.device
             });
         }
+        console.log("componentDidUpdate state",this.state.device)
+
     }
 
     loadFlavorOptions = (inputValue) => {
@@ -167,7 +170,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                    <Form.Group>
                             <Form.Label>Brand</Form.Label>
                             <Form.Control
                                 type="text"
@@ -191,25 +194,26 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.model}</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                       {/*<Form.Group>
                             <Form.Label>Operating system</Form.Label>
                             <AsyncSelect
+                                placeholder="Select an operating system..."
                                 value={values.operatingSystem}
-                                onChange={value => setFieldValue("operatingSystem", value)}
-                                onBlur={setFieldTouched}
+                       //         onChange={value => setFieldValue("operatingSystem", value )}
+                       //         onBlur={setFieldTouched}
                                 error={errors.operatingSystem}
                                 className='react-select-container'
                                 classNamePrefix="react-select"
                                 loadOptions={this.loadOperatingSystemOptions}
                                 defaultOptions={this.state.operatingSystemOptions}
-                                placeholder="Select an operating system..."
                             />
                             <Form.Control.Feedback type="invalid">{errors.operatingSystem}</Form.Control.Feedback>
                         </Form.Group>
+                        
                         <Form.Group>
                             <Form.Label>Flavor</Form.Label>
                             <AsyncSelect
-                                value={values.flavor}
+                                value={values.flavor.label}
                                 onChange={value => setFieldValue("flavor", value)}
                                 onBlur={setFieldTouched}
                                 error={errors.flavor}
@@ -221,6 +225,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
                             </Form.Group>
+                        */}
                             <label>
                                 <Field type="checkbox" name="vnc" />
                                 VNC Access

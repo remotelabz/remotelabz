@@ -12,6 +12,7 @@ const api = API.getInstance();
 function InstanceListItem({ instance, showControls, onStateUpdate }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
+    const [isExporting, setExporting] = useState(true)
     const [logs, setLogs] = useState([])
     const [showLogs, setShowLogs] = useState(false)
     const [device, setDevice] = useState({ name: '' })
@@ -92,6 +93,28 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
         return deviceInstance.state === 'starting' || deviceInstance.state === 'stopping';
     }
 
+    function exportDevice(deviceInstance) {
+        setComputing(true)
+
+        Remotelabz.instances.device.export(deviceInstance.uuid).then(() => {
+            new Noty({
+                type: 'success',
+                text: 'Instance export requested.',
+                timeout: 5000
+            }).show();
+
+            onStateUpdate();
+        }).catch(() => {
+            new Noty({
+                type: 'error',
+                text: 'Error while requesting instance export. Please try again later.',
+                timeout: 5000
+            }).show();
+
+            setExporting(false)
+        })
+    }
+
     let controls;
 
     switch (instance.state) {
@@ -112,6 +135,13 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
                 <Spinner animation="border" size="sm" />
             </Button>);
             break;
+
+        case 'exporting':
+            controls = (<Button className="ml-3" variant="dark" title="Export device" data-toggle="tooltip" data-placement="top" disabled>
+                <Spinner animation="border" size="sm" />
+            </Button>);
+            break;
+
 
         case 'started':
             controls = (
