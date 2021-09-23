@@ -115,6 +115,7 @@ export default class DeviceForm extends React.Component
     }
 
     render() {
+        console.log("render DeviceForm",this.props)
         return (
             <Formik
                 validationSchema={this.schema}

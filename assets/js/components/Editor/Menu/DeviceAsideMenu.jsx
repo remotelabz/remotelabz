@@ -21,6 +21,7 @@ export default function DeviceAsideMenu(props) {
     useEffect(() => {
         async function getDevice() {
             const data = (await Remotelabz.devices.get(props.device)).data;
+            console.log("useEffect DeviceAsideMenu", data);
             setDevice(data);
             setNetworkInterfaces(data.networkInterfaces);
         }

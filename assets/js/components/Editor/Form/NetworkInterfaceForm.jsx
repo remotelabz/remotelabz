@@ -21,6 +21,7 @@ export default class NetworkInterfaceForm extends React.Component
         this.state = {
             networkInterface: this.props.networkInterface,
         };
+        console.log("constructor state",this.state.networkInterface)
     }
 
     componentDidUpdate(prevProps) {
@@ -32,6 +33,7 @@ export default class NetworkInterfaceForm extends React.Component
     }
 
     render() {
+        console.log("render NetworkInterfaceForm",this.props)
         return (
             <Formik
                 validationSchema={this.schema}
@@ -78,6 +80,7 @@ export default class NetworkInterfaceForm extends React.Component
                             <Form.Control
                                 required
                                 type="number"
+                                name="vlan"
                                 max="4095"
                                 value={values.vlan}
                                 onChange={handleChange}
