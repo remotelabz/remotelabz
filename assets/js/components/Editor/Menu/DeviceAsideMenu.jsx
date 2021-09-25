@@ -21,9 +21,8 @@ export default function DeviceAsideMenu(props) {
     useEffect(() => {
         async function getDevice() {
             const data = (await Remotelabz.devices.get(props.device)).data;
-            console.log("useEffect DeviceAsideMenu", data);
+//            console.log("useEffect devices data",data)
             setDevice(data);
-            setNetworkInterfaces(data.networkInterfaces);
         }
         getDevice();
     }, [props.device]);
@@ -57,7 +56,7 @@ export default function DeviceAsideMenu(props) {
         <hr />
         <h2 className="mb-3">Network interfaces</h2>
         {networkInterfaces.map((networkInterface, index) =>
-            <NetworkInterfaceItem key={networkInterface.uuid} index={index} networkInterface={networkInterface} onNetworkInterfaceDelete={onNetworkInterfaceDelete} />
+            <NetworkInterfaceItem key={networkInterface.uuid} index={index} networkInterface={networkInterfaces} onNetworkInterfaceDelete={onNetworkInterfaceDelete} />
         )}
         <Button variant="success" onClick={() => onNetworkInterfaceCreate(device.id)} block>
             <SVG name="plus-square" className="image-sm v-sub" /> Add network interface

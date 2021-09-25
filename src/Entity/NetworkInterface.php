@@ -18,7 +18,7 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance","api_get_device"})
      */
     private $id;
 
