@@ -14,16 +14,17 @@ export default function DeviceAsideMenu(props) {
         brand: '',
         model: '',
         operatingSystem: {},
-        flavor: {}
+        flavor: {},
     });
     const [networkInterfaces, setNetworkInterfaces] = useState([]);
 
     useEffect(() => {
         async function getDevice() {
             const data = (await Remotelabz.devices.get(props.device)).data;
-//            console.log("useEffect devices data",data)
+            //console.log("useEffect devices data",data.networkInterfaces)
             setDevice(data);
-        }
+            setNetworkInterfaces(data.networkInterfaces);
+        }      
         getDevice();
     }, [props.device]);
 
@@ -50,13 +51,19 @@ export default function DeviceAsideMenu(props) {
         new Noty({type: 'success', text: 'NIC has been removed from device.'}).show();
     }
 
+    
+    {networkInterfaces.map((networkInterface, index) =>
+        console.log("DeviceAsideMenu",networkInterface.uuid, index, networkInterface)
+    )}
+    
+
     return (<AsideMenu onClose={props.onClose}>
         <h2>Edit device</h2>
         <DeviceForm onSubmit={onSubmitDeviceForm} device={device} />
         <hr />
         <h2 className="mb-3">Network interfaces</h2>
         {networkInterfaces.map((networkInterface, index) =>
-            <NetworkInterfaceItem key={networkInterface.uuid} index={index} networkInterface={networkInterfaces} onNetworkInterfaceDelete={onNetworkInterfaceDelete} />
+            <NetworkInterfaceItem key={networkInterface.uuid} index={index} networkInterface={networkInterface} onNetworkInterfaceDelete={onNetworkInterfaceDelete} />
         )}
         <Button variant="success" onClick={() => onNetworkInterfaceCreate(device.id)} block>
             <SVG name="plus-square" className="image-sm v-sub" /> Add network interface

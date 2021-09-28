@@ -30,7 +30,7 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
      */
     private $name;
 
@@ -48,13 +48,13 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device","worker"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
      */
     private $vlan;
 

@@ -10,10 +10,13 @@ export default function NetworkInterfaceItem(props) {
 
     /** @param {{value: string, label: string, id: number}} option */
     const onNetworkInterfaceUpdate = async networkInterface => {
+        //console.log("onNetworkInterfaceUpdate in file NetworkInterfaceItem", networkInterface);
         const response = await Remotelabz.networkInterfaces.update(networkInterface.id, networkInterface);
         setNetworkInterface(response.data);
         new Noty({ type: 'success', text: 'NIC has been updated.' }).show();
     }
+    //console.log("NetworkInterfaceItem props.networkInterface", props.networkInterface);
+    //console.log("NetworkInterfaceItem networkInterface variable", networkInterface);
 
     return (
         <div key={networkInterface.uuid} className="device-network-interface-item px-3 py-3 mb-3">

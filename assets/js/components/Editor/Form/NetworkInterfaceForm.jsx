@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Button } from 'react-bootstrap';
 import AsyncSelect from 'react-select/async';
 import API from '../../../api';
-import { Formik, Field } from 'formik';
+import { Formik, Field, FormikProps, FieldProps} from 'formik';
 import * as Yup from 'yup';
 
 export default class NetworkInterfaceForm extends React.Component
@@ -21,7 +21,8 @@ export default class NetworkInterfaceForm extends React.Component
         this.state = {
             networkInterface: this.props.networkInterface,
         };
-        console.log("constructor state",this.state.networkInterface)
+        //console.log("constructor state",this.state.networkInterface)
+        //console.log("constructor props",this.props.networkInterface)
     }
 
     componentDidUpdate(prevProps) {
@@ -47,8 +48,8 @@ export default class NetworkInterfaceForm extends React.Component
                 enableReinitialize
                 initialValues={{
                     id: this.props.networkInterface.id,
-                    name: this.props.networkInterface.name,
-                    vlan: this.props.networkInterface.vlan,
+                    name: (this.props.networkInterface.name || ''),
+                    vlan: (this.props.networkInterface.vlan || ''),
                 }}
             >
                 {({
