@@ -237,10 +237,10 @@ class LabController extends Controller
             ->setAuthor($this->getUser());
 
         foreach($this->getUser()->getGroups() as $group) {
-            
-
             $group->getGroup()->addLab($lab);
         }
+
+        $this->logger->info($user->getUsername() . " creates lab named " . $lab->getName());
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
