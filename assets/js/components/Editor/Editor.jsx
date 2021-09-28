@@ -81,7 +81,7 @@ export default class Editor extends React.Component {
             const device = await Remotelabz.devices.get(_device.id)
             devices.push(device.data)
         }
-        console.log(devices)
+        //console.log(devices)
 
         this.setState({ devices, lab, ready: true })
     }
@@ -133,7 +133,7 @@ export default class Editor extends React.Component {
     }
 
     onSubmitDeviceForm = () => {
-        console.log("onSubmitDeviceForm")
+        //console.log("onSubmitDeviceForm")
         this.reloadLab(this.labId);
     }
 
@@ -166,7 +166,7 @@ export default class Editor extends React.Component {
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
         device.isTemplate = false;
-        console.log(device);
+        //console.log(device);
 
         this.addDeviceRequest(device);
         this.onHideAddDeviceModal();

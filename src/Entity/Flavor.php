@@ -23,7 +23,7 @@ class Flavor
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_flavor", "export_lab"})
+     * @Serializer\Groups({"api_get_flavor", "export_lab", "api_get_device"})
      * @Assert\NotBlank
      */
     private $name;

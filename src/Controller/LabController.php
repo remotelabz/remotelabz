@@ -236,6 +236,12 @@ class LabController extends Controller
         $lab->setName($name)
             ->setAuthor($this->getUser());
 
+        foreach($this->getUser()->getGroups() as $group) {
+            
+
+            $group->getGroup()->addLab($lab);
+        }
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
         $entityManager->flush();

@@ -34,7 +34,7 @@ export default class NetworkInterfaceForm extends React.Component
     }
 
     render() {
-        console.log("render NetworkInterfaceForm",this.props)
+        //console.log("render NetworkInterfaceForm",this.props)
         return (
             <Formik
                 validationSchema={this.schema}
@@ -49,7 +49,7 @@ export default class NetworkInterfaceForm extends React.Component
                 initialValues={{
                     id: this.props.networkInterface.id,
                     name: (this.props.networkInterface.name || ''),
-                    vlan: (this.props.networkInterface.vlan || ''),
+                    vlan: (this.props.networkInterface.vlan || '0'),
                 }}
             >
                 {({

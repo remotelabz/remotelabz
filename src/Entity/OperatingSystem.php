@@ -29,7 +29,7 @@ class OperatingSystem
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_operating_system", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_operating_system", "api_get_device", "export_lab", "worker"})
      * @var string
      */
     private $name;

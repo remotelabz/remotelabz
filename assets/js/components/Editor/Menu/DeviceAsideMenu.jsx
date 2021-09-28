@@ -51,12 +51,6 @@ export default function DeviceAsideMenu(props) {
         new Noty({type: 'success', text: 'NIC has been removed from device.'}).show();
     }
 
-    
-    {networkInterfaces.map((networkInterface, index) =>
-        console.log("DeviceAsideMenu",networkInterface.uuid, index, networkInterface)
-    )}
-    
-
     return (<AsideMenu onClose={props.onClose}>
         <h2>Edit device</h2>
         <DeviceForm onSubmit={onSubmitDeviceForm} device={device} />
