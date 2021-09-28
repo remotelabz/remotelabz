@@ -9,5 +9,6 @@ import GroupExplorer from './Groups/GroupExplorer';
 import InstanceManager from './Instances/InstanceManager';
 import LabImporter from './Lab/LabImporter';
 import Editor from './Editor/Editor';
+import SandboxManager from './Sandbox/SandboxManager';
 
-ReactOnRails.register({ InstanceOwnerSelect, UserSelect, GroupExplorer, GroupImport, GroupSelect, GroupRoleSelect, InstanceManager, LabImporter, Editor });
+ReactOnRails.register({ InstanceOwnerSelect, UserSelect, GroupExplorer, GroupImport, GroupSelect, GroupRoleSelect, InstanceManager, LabImporter, Editor, SandboxManager });
