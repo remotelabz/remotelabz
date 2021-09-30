@@ -609,6 +609,19 @@ export class RemotelabzAPI {
 
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
+            },
+            
+            /**
+             * Request an async device instance stop by UUID.
+             * 
+             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            export(uuid) {
+                return axios.get(`/instances/export/by-uuid/${uuid}`);
             }
         },
     }

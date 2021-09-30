@@ -5,6 +5,7 @@ import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
+import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
@@ -12,13 +13,14 @@ const api = API.getInstance();
 function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
-    const [isExporting, setExporting] = useState(isSandbox)
+    const [isExporting, setExporting] = useState(false)
     const [logs, setLogs] = useState([])
     const [showLogs, setShowLogs] = useState(false)
+    //const [showExport, setShowExport] = useState(isSandbox)
+    const [showExport, setShowExport] = useState(false)
     const [device, setDevice] = useState({ name: '' })
     
-    console.log("isExporting ?: ",isExporting)
-    
+   
     useEffect(() => {
         fetchLogs()
         const interval = setInterval(fetchLogs, 5000)
@@ -222,6 +224,11 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                         })}
                     </pre>
                 }
+
+                {(instance.state == 'stopped' && showExport) &&
+                    <InstanceExport deviceInstance={instance} exportDeviceTemplate={exportDevice(instance)} ></InstanceExport>
+                }
+
             </div>
             }
         </ListGroupItem>
