@@ -11,11 +11,12 @@ const url = require('url');
  * @property {string} shortDescription
  * @property {string} description
  * @property {[{id: number}]} devices
+ * @property {Instance[]} instances
  * @property {{id: number}} author
  * @property {string} uuid
  * @property {string} createdAt
  * @property {string} lastUpdated
- * 
+ *
  * @typedef {Object} Device
  * @property {number} id
  * @property {string} name
@@ -65,6 +66,7 @@ const url = require('url');
  * @property {number} disk Amount of disk space in GB.
  * 
  * @typedef {Object} EditorData
+ * @property {number} id
  * @property {number} x
  * @property {number} y
  * 
@@ -369,7 +371,7 @@ export class RemotelabzAPI {
         /**
          * Updates a lab from a JSON string.
          * 
-         * Implements PUT `/api/labs/import`
+         * Implements POST `/api/labs/import`
          * 
          * @param {string} json 
          * 

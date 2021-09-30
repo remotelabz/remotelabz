@@ -34,19 +34,29 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
     public function __invoke(InstanceStateMessage $message)
     {
-        $this->logger->info("Received InstanceState message !", [
+        $this->logger->info("Received InstanceState message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
             'state' => $message->getState()
         ]);
 
+        // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
+        // So if it's an error, in all case, we have to return, from the worker
+        // the uuid in the first place of the first string.
+        
+        if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
+            $return_array = explode(",",$message->getUuid());
+            $uuid=$return_array[1];
+        } else {
+            $uuid=$message->getUuid();    
+        }
+
         if ($message->getType() === InstanceStateMessage::TYPE_LAB)
-            $instance = $this->labInstanceRepository->findOneBy(['uuid' => $message->getUuid()]);
+            $instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
         else if ($message->getType() === InstanceStateMessage::TYPE_DEVICE)
-            $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $message->getUuid()]);
+            $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
 
         // if an error happened, set device instance in its previous state
-        // TODO: handle error
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
             switch ($instance->getState()) {
                 case InstanceStateMessage::STATE_STARTING:
@@ -61,8 +71,28 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $instance->setState(InstanceStateMessage::STATE_DELETED);
                     break;
 
+                case InstanceStateMessage::STATE_CREATED:
+                    $instance->setState(InstanceStateMessage::STATE_DELETED);
+                    break;
+
                 case InstanceStateMessage::STATE_DELETING:
                     $instance->setState(InstanceStateMessage::STATE_CREATED);
+                    break;
+
+                case InstanceStateMessage::STATE_EXPORTING:
+                    $instance->setState(InstanceStateMessage::STATE_ERROR);
+                    $this->logger->debug('Error received during exporting');
+
+                    /* Remove newdevice template and OS created
+                    As the worker doesn't send message with some informations like name choosen by the user for the new device template created,
+                    if we have an error, we have to delete creation done as soon as we click on Export button.
+                    The solution to execute the new template creation only if the worker doesn't report an error, need to pass the name choosen
+                    by the user. But this action is driven by message state receive and the worker doesn't send information in their message. It's only 
+                    state message.
+                    */
+                    //Uuid of the device created but to delete because an error occurs
+                    //$message->getUuid();
+                    $this->instanceManager->deleteDev($message->getUuid());
                     break;
 
                 default:

@@ -29,14 +29,14 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
      */
     protected $device;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
      * @ORM\JoinColumn(onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance"})
      */
     protected $labInstance;
 
@@ -48,13 +48,13 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
      */
     private $state;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
      */
     private $remotePort;
 

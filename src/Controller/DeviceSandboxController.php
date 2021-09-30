@@ -69,7 +69,7 @@ class DeviceSandboxController extends Controller
             'props' => $serializer->serialize(
                 $deviceProps,
                 'json',
-                SerializationContext::create()->setGroups(['user', 'device', 'lab'])
+                SerializationContext::create()->setGroups(['api_get_user', 'api_get_device', 'api_get_lab'])
             )
         ]);
     }
@@ -79,6 +79,8 @@ class DeviceSandboxController extends Controller
      */
     public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {
+        $this->logger->debug("Request in DeviceSandboxCtrl viewAction: ".$request);
+
         $lab = $labRepository->find($id);
 
         if (!$lab) {
@@ -102,6 +104,7 @@ class DeviceSandboxController extends Controller
             'lab' => $lab,
             'isSandbox' => true
         ];
+        $this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
@@ -111,7 +114,8 @@ class DeviceSandboxController extends Controller
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['instance_manager', 'user', 'group_details', 'instances'])
+                //SerializationContext::create()->setGroups(['api_get_device_instance','api_get_lab_instance', 'api_get_user', 'group_details', 'instances'])
+                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
             )
         ]);
     }

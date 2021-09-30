@@ -9,13 +9,15 @@ import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, showControls, onStateUpdate }) {
+function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
-    const [isExporting, setExporting] = useState(true)
+    const [isExporting, setExporting] = useState(isSandbox)
     const [logs, setLogs] = useState([])
     const [showLogs, setShowLogs] = useState(false)
     const [device, setDevice] = useState({ name: '' })
+    
+    console.log("isExporting ?: ",isExporting)
     
     useEffect(() => {
         fetchLogs()

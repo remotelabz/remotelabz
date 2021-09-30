@@ -505,6 +505,7 @@ class UserController extends Controller
 
             return $response;
         } else {
+            //TODO #644
             $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
