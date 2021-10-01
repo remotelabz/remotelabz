@@ -8,14 +8,13 @@ import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
-function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false}) {
-
-    // console.log(props);
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
-
+    const isSandbox=props.isSandbox
+    
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -87,8 +86,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function hasInstancesStillRunning() {
-        return labInstance.deviceInstances.some(i => i.state != 'stopped')
-    }
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));    }
 
     async function onInstanceStateUpdate() {
         // const response = await Remotelabz.instances.get(labInstance.uuid, 'lab')
@@ -140,17 +138,19 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     return (<>
-        <div className="d-flex align-items-center mb-2">
-            <div>View as : </div>
-            <div className="flex-grow-1 ml-2">
-                <InstanceOwnerSelect
+        {!isSandbox &&
+            <div className="d-flex align-items-center mb-2">
+                <div>View as : </div>
+                <div className="flex-grow-1 ml-2">
+                    <InstanceOwnerSelect
                     user={props.user.id}
                     onChange={onViewAsChange}
                     isDisabled={isLoadingInstanceState}
                     value={viewAs}
-                />
+                    />
+                </div>
             </div>
-        </div>
+        }
 
         {labInstance ?
             <ListGroup>
@@ -197,8 +197,17 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
+                    <InstanceList instances={labInstance.deviceInstances} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
                     </InstanceList>
+                }
+                {labInstance.state === "exporting" &&
+                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
+                        <Spinner animation="border" size="lg" className="text-muted" />
+
+                        <div className="mt-3">
+                            Exporting your instance... This operation may take a moment.
+                        </div>
+                    </ListGroupItem>
                 }
             </ListGroup>
             :

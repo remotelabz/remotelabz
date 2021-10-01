@@ -199,7 +199,8 @@ class LabController extends Controller
             'user' => $this->getUser(),
             'labInstance' => $userLabInstance,
             'lab' => $lab,
-            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call')
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
+            'isSandbox' => false
         ];
 
         return $this->render('lab/view.html.twig', [
@@ -240,7 +241,7 @@ class LabController extends Controller
             $group->getGroup()->addLab($lab);
         }
 
-        $this->logger->info($user->getUsername() . " creates lab named " . $lab->getName());
+        $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);

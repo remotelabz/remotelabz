@@ -5,18 +5,22 @@ import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
+import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, showControls, onStateUpdate }) {
+function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
-    const [isExporting, setExporting] = useState(true)
+    const [isExporting, setExporting] = useState(false)
     const [logs, setLogs] = useState([])
     const [showLogs, setShowLogs] = useState(false)
+    const [showExport, setShowExport] = useState(false)
+    //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' })
     
+   
     useEffect(() => {
         fetchLogs()
         const interval = setInterval(fetchLogs, 5000)
@@ -93,10 +97,10 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
         return deviceInstance.state === 'starting' || deviceInstance.state === 'stopping';
     }
 
-    function exportDevice(deviceInstance) {
-        setComputing(true)
-
-        Remotelabz.instances.device.export(deviceInstance.uuid).then(() => {
+    function exportDeviceTemplate(deviceInstance, name) {
+        setExporting(true)
+        
+        Remotelabz.instances.device.export(deviceInstance.uuid, name).then(() => {
             new Noty({
                 type: 'success',
                 text: 'Instance export requested.',
@@ -184,6 +188,15 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
                     </div>
 
                     <div className="d-flex align-items-center">
+                        {( (instance.state == 'stopped' || instance.state == 'exported')&& isSandbox) &&
+                            <div onClick={() => setShowExport(!showExport)}>
+                                {showExport ?
+                                    <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
+                                    :
+                                    <Button variant="default"><SVG name="chevron-right"></SVG> Export</Button>
+                                }
+                            </div>
+                        }
                         {instance.state !== 'stopped' && 
                             <div onClick={() => setShowLogs(!showLogs)}>
                                 {showLogs ?
@@ -220,6 +233,11 @@ function InstanceListItem({ instance, showControls, onStateUpdate }) {
                         })}
                     </pre>
                 }
+
+                {(instance.state == 'stopped' && showExport) &&
+                    <InstanceExport deviceInstance={instance} exportDeviceTemplate={exportDeviceTemplate} ></InstanceExport>
+                }
+
             </div>
             }
         </ListGroupItem>

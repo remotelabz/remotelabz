@@ -10,6 +10,7 @@ class InstanceState
     public const STOPPING = "stopping";
     public const CREATING = "creating";
     public const DELETING = "deleting";
+    public const EXPORTING = "exporting";
     public const CREATED = "created";
     public const DELETED = "deleted";
     public const ERROR = "error";

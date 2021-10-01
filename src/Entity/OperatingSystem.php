@@ -51,7 +51,7 @@ class OperatingSystem
 
     /**
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_operating_system", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_operating_system", "export_lab", "api_get_lab_instance", "worker"})
      * @var string
      */
     private $image;

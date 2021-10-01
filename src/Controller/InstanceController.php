@@ -95,6 +95,7 @@ class InstanceController extends Controller
      */
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
+        $this->logger->debug("Request in createAction: ".$request);
         $labUuid = $request->request->get('lab');
         $instancierUuid = $request->request->get('instancier');
         $instancierType = $request->request->get('instancierType');
@@ -115,7 +116,9 @@ class InstanceController extends Controller
         $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
 
         try {
+            $this->logger->debug("Lab creation: ".$lab->getName());
             $instance = $instanceManager->create($lab, $instancier);
+            $this->logger->debug("Lab instance created: ".$instance->getUuid());
         } catch (Exception $e) {
             throw $e;
         }
@@ -152,6 +155,29 @@ class InstanceController extends Controller
         return $this->json();
     }
 
+    /**
+     * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        // TODO:
+        //  - Check if instance come from Sandbox
+        $name = $request->query->get('name', '');
+
+        if($name == '') {
+            throw new BadRequestHttpException('Name must not be empty.');
+        }
+        
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->export($deviceInstance, $name);
+
+        return $this->json();
+    }
+
+    
     /**
      * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
