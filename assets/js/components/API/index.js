@@ -616,12 +616,13 @@ export class RemotelabzAPI {
              * 
              * Implements GET `/api/instances/export/by-uuid/{uuid}`
              * 
-             * @param {string} uuid 
+             * @param {string} uuid
+             * @param {string} name
              * 
              * @returns {Promise<import('axios').AxiosResponse<void>>}
              */
-            export(uuid) {
-                return axios.get(`/instances/export/by-uuid/${uuid}`);
+            export(uuid,new_device_name) {
+                return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_device_name}});
             }
         },
     }

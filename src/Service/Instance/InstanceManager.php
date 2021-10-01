@@ -219,7 +219,7 @@ class InstanceManager
     /**
      * Export a device instance to template.
      */
-    public function export(DeviceInstance $deviceInstance)
+    public function export(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
         $deviceInstance->setState(InstanceState::EXPORTING);
@@ -242,17 +242,18 @@ class InstanceManager
         $this->entityManager->persist($newDevice);
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-        
+        $this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
+
         $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-        $tmp['new_os_name'] = $name;
+        $tmp['new_os_name']=$name;
         $tmp['new_os_imagename'] = $imageName;
         $tmp['newOS_id'] = $newOS->getId();
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $this->logger->info('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
+        $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
         );
