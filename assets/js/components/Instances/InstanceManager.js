@@ -69,6 +69,8 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function isGroupElevatedRole(role) {
+        //Chercher le rôle du user dans le groupe
+        
         return role === GroupRoles.Owner || role === GroupRoles.Admin
     }
 
@@ -234,7 +236,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 This group hasn&apos;t joined this lab yet.
 
-                                {isGroupElevatedRole(viewAs.role) &&
+                                {isCurrentUserGroupAdmin(viewAs) &&
                                     <div className="mt-3">
                                         <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                     </div>
