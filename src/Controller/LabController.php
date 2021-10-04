@@ -67,7 +67,10 @@ class LabController extends Controller
 
     private $serializer;
 
-    public function __construct(LoggerInterface $logger, LabRepository $labRepository, SerializerInterface $serializerInterface)
+    public function __construct(
+        LoggerInterface $logger,
+        LabRepository $labRepository,
+        SerializerInterface $serializerInterface)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -170,7 +173,13 @@ class LabController extends Controller
      * 
      * @Rest\Get("/api/labs/{id<\d+>}", name="api_get_lab")
      */
-    public function showAction(int $id, Request $request, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
+    public function showAction(
+        int $id,
+        Request $request,
+        UserInterface $user,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
     {
         $lab = $labRepository->find($id);
 

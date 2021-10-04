@@ -266,7 +266,7 @@ class User implements UserInterface, InstancierInterface
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users", "user", "groups", "api_users", "api_get_user", "api_groups", "api_get_group", "api_get_lab"})
+     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users", "user", "groups", "api_users", "api_get_user", "api_groups", "api_get_group", "api_get_lab", "api_get_lab_instance"})
      */
     public function getName(): string
     {
