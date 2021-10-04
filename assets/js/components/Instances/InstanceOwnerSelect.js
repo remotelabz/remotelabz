@@ -40,7 +40,7 @@ const Option = props => {
                 <div className="mr-2">
                     {props.data.type && props.data.type == 'user' ?
                         <div className="s36 mr-2">
-                            <img src={"/users/" + 12 + "/picture?size=36"} className="rounded-circle"></img>
+                            <img src={"/users/" + props.data.id + "/picture?size=36"} className="rounded-circle"></img>
                         </div>
                         :
                         <div className={`avatar identicon s36 rounded mr-2 ${getGroupIdenticonClass(props.data)}`}>{props.data.name.charAt(0).toUpperCase()}</div>
@@ -132,7 +132,6 @@ export default function InstanceOwnerSelect(props = {user: {}, className: '', pl
                             label: 'Groups',
                             options: groupOptions
                             }];
-
                         resolve(data)
                     });
                 })
