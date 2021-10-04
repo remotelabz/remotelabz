@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% set filter = filter|default('all') %}
-{% if filter not in ['all', 'labs', 'devices', 'networkInterfaces'] %}{% set filter = 'all' %}{% endif %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
 
 {% block wrapper %}
     <div class="top-panel">
@@ -24,22 +24,13 @@
             <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
             <li {% if filter == "all" %}class="active"{% endif %}>
                 <a href="?filter=all">
-                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>
+                    {#<span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>#}
+                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length}}</span>
                 </a>
             </li>
             <li {% if filter == "labs" %}class="active"{% endif %}>
                 <a href="?filter=labs">
                     <span>Labs</span> <span class="badge badge-pill">{{ labInstances|length }}</span>
-                </a>
-            </li>
-            <li {% if filter == "devices" %}class="active"{% endif %}>
-                <a href="?filter=devices">
-                    <span>Devices</span> <span class="badge badge-pill">{{ deviceInstances|length }}</span>
-                </a>
-            </li>
-            <li {% if filter == "networkInterfaces" %}class="active"{% endif %}>
-                <a href="?filter=networkInterfaces">
-                    <span>Network Interfaces</span> <span class="badge badge-pill">{{ networkInterfaceInstances|length }}</span>
                 </a>
             </li>
         </ul>
@@ -116,8 +107,8 @@
         {% endfor %}
     {% endif %}
 
-    {% if filter == "all" or filter == "devices" %}
-        {#- Devices instances -#}
+    {# {% if filter == "all" or filter == "devices" %}
+        
 
         <h4 class="p-3 border-bottom">Device instances</h4>
         {% if deviceInstances is empty %}
@@ -157,7 +148,7 @@
     {% endif %}
 
     {% if filter == "all" or filter == "networkInterfaces" %}
-        {#- Network interface instances -#}
+        
 
         <h4 class="p-3 border-bottom">Network interface instances</h4>
         {% if networkInterfaceInstances is empty %}
@@ -169,14 +160,6 @@
         {% endif %}
         {% for instance in networkInterfaceInstances %}
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
-            <div class="float-right">
-                {# {% if not instance.state == 'started' %}
-                <a href="{{ path('delete_instance', {'id': instance.id, 'type': 'network-interface'}) }}" class="btn btn-danger" role="button" title="Delete instance" data-toggle="tooltip" data-placement="top">
-                        {{ svg('close') }}
-                </a>
-                {% endif %} #}
-            </div>
-
             <div>
                 <div>
                     <a href="{{- path('network_interfaces', {'id': instance.networkInterface.id}) -}}" class="lab-item-name">
@@ -196,6 +179,7 @@
         </div>
         {% endfor %}
     {% endif %}
+    #}
     </div>
     
 {% endblock %}

@@ -119,17 +119,15 @@ class InstanceController extends Controller
             //$this->logger->debug("From InstanceController instance in foreach ".$instance->getUuid());
 
             $instanceManagerProps = [
-                'user' => $this->getUser(),
                 'labInstance' => $instance,
-                'lab' => $this->labRepository->find($instance->getLab()->getId())
             ];
 
             $tmp_json=$serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+                SerializationContext::create()->setGroups(['api_get_lab_instance', 'api_get_device_instance'])
             );
-            
+            //$this->logger->debug('tmp_json:'.$tmp_json);
             array_push($labInstances, [
                 'instance' => $instance,
                 'props' => $tmp_json
@@ -138,8 +136,6 @@ class InstanceController extends Controller
         
         //$this->logger->debug("From InstanceController labInstances ",$labInstances);
 
-        // Faire un InstanceList par Instances de lab et donc afficher chaque device dans le lab, comme quand on lance un lab
-        //
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
             'deviceInstances' => $AllDeviceInstances,

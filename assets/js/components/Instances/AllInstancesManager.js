@@ -11,12 +11,12 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
+    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
     
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 5000)
+        const interval = setInterval(refreshInstance, 20000)
         return () => {
             clearInterval(interval)
             setLabInstance(null)
@@ -28,9 +28,9 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
         let request
 
         if (viewAs.type === 'user') {
-            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
+            request = Remotelabz.instances.lab.getByLabAndUser(props.labInstance.lab.uuid, viewAs.uuid)
         } else {
-            request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
+            request = Remotelabz.instances.lab.getByLabAndGroup(props.labInstance.lab.uuid, viewAs.uuid)
         }
 
         request.then(response => {
@@ -99,7 +99,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
         setLoadingInstanceState(true)
 
         try {
-            const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type)
+            const response = await Remotelabz.instances.lab.create(props.labInstance.lab.uuid, viewAs.uuid, viewAs.type)
             setLoadingInstanceState(false)
             setLabInstance(response.data)
         } catch (error) {
@@ -117,8 +117,9 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
         setLoadingInstanceState(true)
 
         try {
-            await Remotelabz.instances.lab.delete(labInstance.uuid)
+            Remotelabz.instances.lab.delete(labInstance.uuid)
             setLabInstance({ ...labInstance, state: "deleting" })
+            window.location.reload(false);
         } catch (error) {
             console.error(error)
             new Noty({
@@ -176,36 +177,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
             </ListGroup>
             :
             <ListGroup>
-                {isLoadingInstanceState ?
-                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        <div className="my-3">
-                            <div className="dot-bricks"></div>
-                        </div>
-                        Loading...
-                    </ListGroupItem>
-                    :
-                    <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {viewAs.type === 'user' ?
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                You haven&apos;t joined this lab yet.
-
-                                <div className="mt-3">
-                                    <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
-                                </div>
-                            </div>
-                            :
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                This group hasn&apos;t joined this lab yet.
-
-                                {isGroupElevatedRole(viewAs.role) &&
-                                    <div className="mt-3">
-                                        <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </ListGroupItem>
-                }
+                           {window.location.reload(false)}
             </ListGroup>
         }
         <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>

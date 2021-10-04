@@ -59,7 +59,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "worker"})
+     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance"})
      */
     private $uuid;
 
