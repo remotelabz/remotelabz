@@ -94,6 +94,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function onViewAsChange(option) {
+        //console.log(option);
         setViewAs(option);
     }
 

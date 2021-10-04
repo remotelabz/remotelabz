@@ -9,6 +9,7 @@ use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
 use App\Repository\UserRepository;
+use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
 use App\Service\ProfilePictureFileUploader;
@@ -21,13 +22,14 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\Validator\Constraints\Email;
-use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Psr\Log\LoggerInterface;
+
 
 class UserController extends Controller
 {
@@ -35,13 +37,23 @@ class UserController extends Controller
     protected $userRepository;
     protected $mailer;
     protected $serializer;
+     
+    /** @var LoggerInterface $logger */
+     private $logger;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder, UserRepository $userRepository, \Swift_Mailer $mailer, SerializerInterface $serializer)
+    public function __construct(
+        UserPasswordEncoderInterface $passwordEncoder,
+        UserRepository $userRepository,
+        \Swift_Mailer $mailer,
+        SerializerInterface $serializer,
+        LoggerInterface $logger)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
         $this->mailer = $mailer;
         $this->serializer = $serializer;
+        $this->logger = $logger;
+        
     }
 
     /**
@@ -515,7 +527,11 @@ class UserController extends Controller
     /**
      * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
-    public function getUserProfilePictureAction(Request $request, int $id, KernelInterface $kernel)
+    public function getUserProfilePictureAction(
+        Request $request,
+        int $id,
+        KernelInterface $kernel
+        )
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
