@@ -26,6 +26,8 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         }
     }, [viewAs])
 
+    console.log("ViewAs",viewAs)
+
     function refreshInstance() {
         let request
 
@@ -94,7 +96,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function onViewAsChange(option) {
-        //console.log(option);
+        console.log(option);
         setViewAs(option);
     }
 
@@ -234,7 +236,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 This group hasn&apos;t joined this lab yet.
 
-                                {isGroupElevatedRole(viewAs.role) &&
+                                {isGroupElevatedRole(viewAs.owner.role) &&
                                     <div className="mt-3">
                                         <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                     </div>
