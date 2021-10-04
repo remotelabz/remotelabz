@@ -155,14 +155,16 @@ axios.interceptors.response.use(
     (response) => response,
     /** @param {import('axios').AxiosError} error */
     (error) => {
-        // Unauthentified
-        console.error(error);
-        if (error.response.status === 401) {
-            window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
-        } else if (error.response.status >= 500) {
-            // TODO
+        switch (error.response.status) {
+            case 401:
+                window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
+                break;
+            case 404:
+                
+                break;
+            default:
+                console.error(error);
         }
-
         return Promise.reject(error);
     }
 );

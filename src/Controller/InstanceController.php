@@ -4,26 +4,34 @@ namespace App\Controller;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use App\Repository\LabRepository;
 use App\Entity\DeviceInstanceLog;
-use App\Repository\UserRepository;
 use App\Entity\InstancierInterface;
-use App\Service\Proxy\ProxyManager;
+
+use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use App\Repository\LabInstanceRepository;
+use App\Repository\DeviceInstanceLogRepository;
+use App\Repository\LabRepository;
+use App\Repository\NetworkInterfaceInstanceRepository;
+use App\Repository\DeviceInstanceRepository;
+
+use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
+
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use App\Repository\DeviceInstanceRepository;
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Repository\DeviceInstanceLogRepository;
-use FOS\RestBundle\Controller\Annotations as Rest;
-use App\Repository\NetworkInterfaceInstanceRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
+use FOS\RestBundle\Controller\Annotations as Rest;
+
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 
 class InstanceController extends Controller
 {
@@ -32,19 +40,27 @@ class InstanceController extends Controller
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
+    private $serializer;
+    
+    /** @var LabRepository $labRepository */
+    private $labRepository;
 
     public function __construct(
         LoggerInterface $logger,
         ProxyManager $proxyManager,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
-        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
+        LabRepository $labRepository,
+        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        SerializerInterface $serializerInterface
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->labRepository = $labRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->proxyManager = $proxyManager;
+        $this->serializer = $serializerInterface;
     }
 
     /**
@@ -52,7 +68,9 @@ class InstanceController extends Controller
      * 
      * @Rest\Get("/api/instances", name="api_get_instances")
      */
-    public function indexAction(Request $request)
+    public function indexAction(
+        Request $request,
+        SerializerInterface $serializer)
     {
         if ($request->query->has('uuid')) {
             return $this->redirectToRoute('api_get_instance_by_uuid', ['uuid' => $request->query->get('uuid')]);
@@ -62,14 +80,17 @@ class InstanceController extends Controller
         $filter = $request->query->get('filter', '');
         $type = $request->query->get('type', 'lab');
 
+        $AllLabInstances=$this->labInstanceRepository->findAll();
+        $AllDeviceInstances=$this->deviceInstanceRepository->findAll();
+
         switch ($type) {
             case 'lab':
-                $data = $this->labInstanceRepository->findAll();
+                $data = $AllLabInstances;
                 $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
-                $data = $this->deviceInstanceRepository->findAll();
+                $data = $AllDeviceInstances;
                 $groups = ['api_get_device_instance'];
                 break;
 
@@ -81,12 +102,48 @@ class InstanceController extends Controller
             return $this->json($data, 200, [], $groups);
         }
 
+        /*
+        $instanceListProps = [
+            'user' => $this->getUser(),
+            'instance' => $this->labInstanceRepository->findAll(),
+            'showControls' => null,
+            'onStateUpdate' => null,
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
+            'isSandbox' => false
+        ];
+        */
+        
+        $labInstances=[];
+
+        foreach ( $AllLabInstances as $instance){
+            //$this->logger->debug("From InstanceController instance in foreach ".$instance->getUuid());
+
+            $instanceManagerProps = [
+                'user' => $this->getUser(),
+                'labInstance' => $instance,
+                'lab' => $this->labRepository->find($instance->getLab()->getId())
+            ];
+
+            $tmp_json=$serializer->serialize(
+                $instanceManagerProps,
+                'json',
+                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            );
+            
+            array_push($labInstances, [
+                'instance' => $instance,
+                'props' => $tmp_json
+            ]);
+        }
+        
+        //$this->logger->debug("From InstanceController labInstances ",$labInstances);
+
+        // Faire un InstanceList par Instances de lab et donc afficher chaque device dans le lab, comme quand on lance un lab
+        //
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $this->labInstanceRepository->findAll(),
-            'deviceInstances' => $this->deviceInstanceRepository->findAll(),
-            'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll(),
-            'search' => $search,
-            'filter' => $filter
+            'labInstances' => $labInstances,
+            'deviceInstances' => $AllDeviceInstances,
+            'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll()
         ]);
     }
 
