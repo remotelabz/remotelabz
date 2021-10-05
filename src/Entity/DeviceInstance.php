@@ -91,7 +91,7 @@ class DeviceInstance extends Instance
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"api_get_device_instance","worker"})
      * @Serializer\XmlAttribute
      */
     public function getOwnerId()

@@ -26,7 +26,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         }
     }, [viewAs])
 
-    console.log("ViewAs",viewAs)
+    
 
     function refreshInstance() {
         let request
@@ -98,7 +98,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function onViewAsChange(option) {
-        console.log(option);
+        
         setViewAs(option);
     }
 

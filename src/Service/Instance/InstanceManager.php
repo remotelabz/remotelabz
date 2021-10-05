@@ -185,6 +185,7 @@ class InstanceManager
 
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+        //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
 
         $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
         $this->bus->dispatch(
