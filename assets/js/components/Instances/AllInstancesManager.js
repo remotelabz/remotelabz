@@ -11,7 +11,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
+    const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
     
     useEffect(() => {
         setLoadingInstanceState(true)
@@ -32,12 +32,13 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
         } else {
             request = Remotelabz.instances.lab.getByLabAndGroup(props.labInstance.lab.uuid, viewAs.uuid)
         }
-
+        
         request.then(response => {
             let promises = []
             for (const deviceInstance of response.data.deviceInstances) {
                 promises.push(Remotelabz.instances.get(deviceInstance.uuid));
             }
+            
 
             Promise.all(promises).then(responses => {
                 setLabInstance({
@@ -71,13 +72,17 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     }
 
     function isCurrentUserGroupAdmin(group) {
+        // Have to test if connected user is admin (root) or other.
+        // If the current user is not root, show only the instance of the user and of its group in which he is admin or owner
+        //TODO: make the code
         if (group.type === 'user') {
             return true
         }
+        else return false
 
-        const _group = props.user.groups.find(g => g.uuid === group.uuid);
-        return _group ? (_group.role == 'admin' || _group.role == 'owner') : false
-    }
+       /* const _group = props.user.groups.find(g => g.uuid === group.uuid);
+        return _group ? (_group.role == 'admin' || _group.role == 'owner') : false */
+    } 
 
     function isOwnedByGroup() {
         return labInstance.ownedBy == "group"
@@ -138,7 +143,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                         <h4 className="mb-0">Instances</h4>
                     </div>
                     <div>
-                    {isCurrentUserGroupAdmin(viewAs) &&
+                    {//isCurrentUserGroupAdmin(viewAs) &&
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
                     }
                     </div>
@@ -185,7 +190,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                 <Modal.Title>Leave lab</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                If you leave the lab, <strong>all your instances will be deleted and all virtual machines associed will be destroyed.</strong> Are you sure you want to leave this lab ?
+                If you leave the lab, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave this lab ?
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>

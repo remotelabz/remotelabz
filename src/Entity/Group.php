@@ -34,7 +34,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "instance_manager", "api_users", "api_get_user"})
+     * @Serializer\Groups({"api_get_lab_instance","api_groups", "api_get_group", "instance_manager", "api_users", "api_get_user"})
      */
     private $name;
 
@@ -102,7 +102,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_users", "api_get_user", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance", "api_groups", "api_get_group", "api_users", "api_get_user", "worker"})
      */
     private $uuid;
 

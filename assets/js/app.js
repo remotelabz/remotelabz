@@ -57,6 +57,7 @@ if (theme !== undefined) {
     window.addEventListener("onwheel", { passive: false });
 
     // Switch themes
+    //TODO: On login page, this element is empty and generate error
     document.getElementById("themeSwitcher").addEventListener('change', () => {
         if (document.getElementById("themeSwitcher").checked) {
             Cookies.set('theme', 'dark', {
@@ -160,7 +161,7 @@ if (theme !== undefined) {
     */
 
     /**
-    * Dynamically attrubutes the active link in sidebar
+    * Dynamically attributes the active link in sidebar
     */
     $(function() {
         let sidebar = $('.sidebar');

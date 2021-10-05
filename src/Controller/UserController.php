@@ -518,8 +518,10 @@ class UserController extends Controller
             return $response;
         } else {
             //TODO #644
-            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
-
+            // When the internet connexion is down, this function generate an error and take time
+            // app.ERROR: Warning: file_get_contents(): php_network_getaddresses: getaddrinfo failed: Temporary failure in name resolution
+            //$picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+            $picture = null;
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
@@ -558,7 +560,9 @@ class UserController extends Controller
 
             return $response;
         } else {
-            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+            //TODO : without internet, this function take time
+            //$picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+            $picture = null;
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }

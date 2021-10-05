@@ -122,6 +122,8 @@ class InstanceController extends Controller
                 'labInstance' => $instance,
             ];
 
+            //TODO: Verify if we can delete the api_get_device_instance in the following serialization
+            // because we display only lab instance which include all devices instances
             $tmp_json=$serializer->serialize(
                 $instanceManagerProps,
                 'json',
