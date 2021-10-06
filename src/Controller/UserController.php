@@ -560,7 +560,7 @@ class UserController extends Controller
 
             return $response;
         } else {
-            //TODO : without internet, this function take time
+            //TODO #661 : without internet, this function take time
             //$picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
             $picture = null;
 
