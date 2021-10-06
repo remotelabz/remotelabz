@@ -517,10 +517,23 @@ class UserController extends Controller
 
             return $response;
         } else {
-            //TODO #644
-            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+            //TODO #661 #644
+            $url=Gravatar::getGravatar($user->getEmail(), $size);
+            set_error_handler(
+                function ($severity, $message, $file, $line) {
+                    throw new ErrorException($message, $severity, $severity, $file, $line);
+                }
+            );
+            
+            try {
+            $picture = file_get_contents($url);
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+            }
+            catch (Exception $e){
+                $this->logger->error("Impossible to connect to ".$url);
+                $this->logger->error($e->getMessage());
+            }
         }
     }
 
@@ -535,7 +548,7 @@ class UserController extends Controller
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
-        // TODO #655 : error app.ERROR: Call to a member function getProfilePicture() on null
+        // TODO #661 #655 : error app.ERROR: Call to a member function getProfilePicture() on null
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -558,9 +571,23 @@ class UserController extends Controller
 
             return $response;
         } else {
-            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
+
+        set_error_handler(
+            function ($severity, $message, $file, $line) {
+                throw new ErrorException($message, $severity, $severity, $file, $line);
+            }
+        );
+
+        $url=Gravatar::getGravatar($user->getEmail(), $size);
+        try {
+            $picture = file_get_contents($url);
 
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+            }
+        catch (Exception $e){
+            $this->logger->error("Impossible to connect to ".$url);
+            $this->logger->error($e->getMessage());
+            }
         }
     }
 
@@ -587,9 +614,22 @@ class UserController extends Controller
 
             return $response;
         } else {
-            $picture = file_get_contents(Gravatar::getGravatar($user->getEmail(), $size));
-
-            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+            set_error_handler(
+                function ($severity, $message, $file, $line) {
+                    throw new ErrorException($message, $severity, $severity, $file, $line);
+                }
+            );
+    
+            $url=Gravatar::getGravatar($user->getEmail(), $size);
+            try {
+                $picture = file_get_contents($url);
+    
+                return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+                }
+            catch (Exception $e){
+                $this->logger->error("Impossible to connect to ".$url);
+                $this->logger->error($e->getMessage());
+                }
         }
     }
 
