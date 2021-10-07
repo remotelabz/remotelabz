@@ -64,36 +64,37 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Route("/admin/instances", name="instances")
+     * @Route("/instances", name="instances")
      * 
      * @Rest\Get("/api/instances", name="api_get_instances")
      */
     public function indexAction(
         Request $request,
-        SerializerInterface $serializer)
+        SerializerInterface $serializer,
+        UserRepository $userRepository)
     {
         if ($request->query->has('uuid')) {
             return $this->redirectToRoute('api_get_instance_by_uuid', ['uuid' => $request->query->get('uuid')]);
         }
+        $user=$this->getUser();
 
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', '');
         $type = $request->query->get('type', 'lab');
 
-        $AllLabInstances=$this->labInstanceRepository->findAll();
-        $AllDeviceInstances=$this->deviceInstanceRepository->findAll();
-
+        //Only fetch the instance of the user and in which it is group admin or group owner
+        if ($user->isAdministrator()) {
+            $AllLabInstances=$this->labInstanceRepository->findAll();
+        }
+        else {
+            $AllLabInstances=$this->labInstanceRepository->findByUserWithGroup($user);
+        }
+        
         switch ($type) {
             case 'lab':
                 $data = $AllLabInstances;
                 $groups = ['api_get_lab_instance'];
                 break;
-
-            case 'device':
-                $data = $AllDeviceInstances;
-                $groups = ['api_get_device_instance'];
-                break;
-
             default:
                 throw new BadRequestHttpException('Unknown instance type.');
         }
@@ -102,34 +103,21 @@ class InstanceController extends Controller
             return $this->json($data, 200, [], $groups);
         }
 
-        /*
-        $instanceListProps = [
-            'user' => $this->getUser(),
-            'instance' => $this->labInstanceRepository->findAll(),
-            'showControls' => null,
-            'onStateUpdate' => null,
-            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
-        ];
-        */
-        
         $labInstances=[];
-
+        
         foreach ( $AllLabInstances as $instance){
-            //$this->logger->debug("From InstanceController instance in foreach ".$instance->getUuid());
-
             $instanceManagerProps = [
                 'labInstance' => $instance,
             ];
 
-            //TODO: Verify if we can delete the api_get_device_instance in the following serialization
+            //TODO: #664 Verify if we can delete the api_get_device_instance in the following serialization
             // because we display only lab instance which include all devices instances
             $tmp_json=$serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                SerializationContext::create()->setGroups(['api_get_lab_instance', 'api_get_device_instance'])
+                SerializationContext::create()->setGroups(['api_get_lab_instance'])
             );
-            //$this->logger->debug('tmp_json:'.$tmp_json);
+
             array_push($labInstances, [
                 'instance' => $instance,
                 'props' => $tmp_json
@@ -140,8 +128,8 @@ class InstanceController extends Controller
 
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
-            'deviceInstances' => $AllDeviceInstances,
-            'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll()
+            //'deviceInstances' => $AllDeviceInstances,
+            //'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll()
         ]);
     }
 

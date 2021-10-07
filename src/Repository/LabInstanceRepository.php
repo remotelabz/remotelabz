@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\Lab;
 use App\Entity\User;
 use App\Entity\LabInstance;
+use App\Entity\Group;
+use App\Entity\GroupUser;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
@@ -34,6 +36,41 @@ class LabInstanceRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByUser(User $user)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.user = :user')
+             ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function findByUserWithGroup(User $user)
+    {
+        //$result=$this->findByUser($user);
+        $result=$this->findByUser($user);
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            
+            if ($group->isElevatedUser($user))
+                foreach ($group->getLabInstances() as $labinstance)
+                    array_push($result,$labinstance);
+        }
+        return $result;
+    }
+
+    public function findGroupByUserElevated(User $user) {
+        $ElevatedUserOfGroups=[];
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();         
+            if ($group->isElevatedUser($user)) {
+                array_push($ElevatedUserOfGroups,$group);
+            }
+        }
+        return $ElevatedUserOfGroups;
+
+    }
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects
     //  */
