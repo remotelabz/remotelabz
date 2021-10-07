@@ -45,7 +45,6 @@ class Gravatar
      * @source https://gravatar.com/site/implement/images/php/
      */
 
-     //TODO #644 if the internet connection failed, the getGravatar fails and generate latence to render pages
     static function getGravatar( $email, $s = 128, $d = 'identicon', $r = 'r', $img = false, $atts = array() ) {
         $url = 'https://www.gravatar.com/avatar/';
         $url .= md5( strtolower( trim( $email ) ) );
