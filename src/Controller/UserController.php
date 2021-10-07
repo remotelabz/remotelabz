@@ -517,6 +517,7 @@ class UserController extends Controller
 
             return $response;
         } else {
+
             //TODO #661 #644
             $url=Gravatar::getGravatar($user->getEmail(), $size);
             set_error_handler(
@@ -528,7 +529,7 @@ class UserController extends Controller
             try {
             $picture = file_get_contents($url);
 
-            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+              return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
             }
             catch (Exception $e){
                 $this->logger->error("Impossible to connect to ".$url);
@@ -571,7 +572,6 @@ class UserController extends Controller
 
             return $response;
         } else {
-
         set_error_handler(
             function ($severity, $message, $file, $line) {
                 throw new ErrorException($message, $severity, $severity, $file, $line);
@@ -581,7 +581,6 @@ class UserController extends Controller
         $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
             $picture = file_get_contents($url);
-
             return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
             }
         catch (Exception $e){

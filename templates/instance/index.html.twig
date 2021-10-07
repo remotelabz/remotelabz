@@ -58,6 +58,7 @@
         {% for element in labInstances %}
         {#{{dump(element.instance.id)}}#}
             
+        {#TODO: #666 Create a component for this element to manage all the instance in React and avoid to refresh the page when we have to delete an instance or to detect a new instance #} 
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             {# <div class="float-right">
                 {% if not instance.state == 'started' %}
@@ -76,11 +77,18 @@
 
             <div>
                 <div>
-                    {# N'affiche pas une instance mais le lab donc celui du user courant #}
                      <a href="{{- path('show_lab', {'id': element.instance.id}) -}}" class="lab-item-name" title="{{ element.instance.lab.name }}" data-toggle="tooltip" data-placement="top">
                     </a>
-                    Lab:&nbsp; {{- element.instance.lab.name -}}<br/>
-                    UUID:&nbsp; {{- element.instance.uuid -}} 
+                    Lab&nbsp; {{- element.instance.lab.name -}}&nbsp;started by
+                    {% if not element is null %}
+                    {# In some cases, one instance can stay up but it is empty. It's an issue to solve #}
+                        {% if element.instance.isOwnedByUser() %}
+                            user {{ element.instance.user.name }}
+                        {% else %}
+                            group {{ element.instance.group.name }}
+                        {% endif %}
+                    {% endif %}<br/>
+                    {# UUID:&nbsp; {{- element.instance.uuid -}} #}
                 </div>
                 {# <span>
                     {% if instance.isStarted %}
@@ -91,16 +99,7 @@
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
                 </span> #}
-                <p class="text-muted d-inline">
-                    {% if not element is null %}
-                    {# In some cases, one instance can stay up but it is empty. It's an issue to solve #}
-                        {% if element.instance.isOwnedByUser() %}
-                            Owned by user {{ element.instance.user.name }}
-                        {% else %}
-                            Owner by group {{ element.instance.group.name }}
-                        {% endif %}
-                    {% endif %}
-                </p>
+                
                 <div class="col">{{ react_component('AllInstancesManager', {'props': element.props}) }}</div>
             </div>
         </div>
