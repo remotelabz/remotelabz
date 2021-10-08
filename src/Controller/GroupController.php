@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Psr\Log\LoggerInterface;
 use App\Entity\Group;
 use App\Entity\User;
 use App\Form\GroupParentType;
@@ -28,12 +29,19 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class GroupController extends Controller
 {
+    private $logger;
+
+
     /** @var GroupRepository */
     protected $groupRepository;
 
-    public function __construct(GroupRepository $groupRepository)
+    public function __construct(
+        GroupRepository $groupRepository,
+        LoggerInterface $logger
+    )
     {
         $this->groupRepository = $groupRepository;
+        $this->logger = $logger;
     }
 
     /**
@@ -508,6 +516,30 @@ class GroupController extends Controller
     }
 
     /**
+     * @Route("/groups/{slug}/addlab",
+     * name="dashboard_addlab_group",
+     * methods="GET",
+     * requirements={"slug"="[\w\-\/]+"})
+     *
+     * @Rest\Put("/api/groups/{slug}/addlab/{lab_id}", name="api_lab_group", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function addlabsAction(Request $request, string $slug, SerializerInterface $serializer)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        return $this->render('group/dashboard_addlab.html.twig', [
+            'group' => $group,
+            'props' => $serializer->serialize(
+                $group,
+                'json',
+                SerializationContext::create()->setGroups(['api_groups'])
+            ),
+        ]);
+    }
+
+    /**
      * @Route("/groups/{slug}",
      *  name="dashboard_show_group",
      *  methods="GET",
@@ -534,4 +566,7 @@ class GroupController extends Controller
             'group' => $group,
         ]);
     }
+
+
+    
 }

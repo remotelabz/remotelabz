@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Exception;
 use App\Utils\Uuid;
 use App\Entity\User;
 use App\Form\UserType;
@@ -520,11 +521,7 @@ class UserController extends Controller
 
             //TODO #661 #644
             $url=Gravatar::getGravatar($user->getEmail(), $size);
-            set_error_handler(
-                function ($severity, $message, $file, $line) {
-                    throw new ErrorException($message, $severity, $severity, $file, $line);
-                }
-            );
+            
             
             try {
             $picture = file_get_contents($url);
@@ -572,11 +569,7 @@ class UserController extends Controller
 
             return $response;
         } else {
-        set_error_handler(
-            function ($severity, $message, $file, $line) {
-                throw new ErrorException($message, $severity, $severity, $file, $line);
-            }
-        );
+        
 
         $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
@@ -613,11 +606,7 @@ class UserController extends Controller
 
             return $response;
         } else {
-            set_error_handler(
-                function ($severity, $message, $file, $line) {
-                    throw new ErrorException($message, $severity, $severity, $file, $line);
-                }
-            );
+            
     
             $url=Gravatar::getGravatar($user->getEmail(), $size);
             try {

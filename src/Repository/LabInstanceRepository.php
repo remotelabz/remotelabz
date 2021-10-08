@@ -36,6 +36,8 @@ class LabInstanceRepository extends ServiceEntityRepository
         ;
     }
 
+
+    // Return all instances started by the $user
     public function findByUser(User $user)
     {
         return $this->createQueryBuilder('l')
@@ -46,7 +48,10 @@ class LabInstanceRepository extends ServiceEntityRepository
         ;
     }
 
-    public function findByUserWithGroup(User $user)
+    /* Return all instances started by the $user and groups for which
+    the $user is the owner or the admin
+    */
+    public function findByUserAndGroups(User $user)
     {
         //$result=$this->findByUser($user);
         $result=$this->findByUser($user);
@@ -59,18 +64,28 @@ class LabInstanceRepository extends ServiceEntityRepository
         }
         return $result;
     }
-
-    public function findGroupByUserElevated(User $user) {
-        $ElevatedUserOfGroups=[];
+    
+    /* Return all instances started by the $user and groups for which
+    the $user is the owner or the admin
+    */
+    public function findByUserAndAllMembersGroups(User $user)
+    {
+        $result=$this->findByUser($user);
         foreach ($user->getGroups() as $groupuser) {
-            $group=$groupuser->getGroup();         
+            $group=$groupuser->getGroup();
             if ($group->isElevatedUser($user)) {
-                array_push($ElevatedUserOfGroups,$group);
+                foreach ($group->getUsers() as $user_member)
+                    if ($user_member != $user)
+                        foreach ($this->findByUser($user_member) as $labinstance)
+                            array_push($result,$labinstance);
+                foreach ($group->getLabInstances() as $labinstance)
+                    array_push($result,$labinstance);
             }
         }
-        return $ElevatedUserOfGroups;
-
+        return $result;
     }
+
+    
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects
     //  */

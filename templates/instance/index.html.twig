@@ -47,7 +47,9 @@
     {% if filter == "all" or filter == "labs" %}
         {#- Lab instances -#}
 
-        <h4 class="p-3 border-bottom">Lab instances</h4>
+        <h4 class="p-3 border-bottom">Lab instances
+        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+            {{ svg('question') }} </span>
         {% if labInstances is empty %}
         <div class="wrapper align-items-center p-3 border-bottom lab-item">
             <span class="lab-item-name">

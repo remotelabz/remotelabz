@@ -67,7 +67,8 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     }
 
     function hasInstancesStillRunning() {
-        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
+        //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
+        return false;
     }
 
     async function onInstanceStateUpdate() {

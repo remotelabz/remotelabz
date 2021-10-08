@@ -87,7 +87,9 @@ class InstanceController extends Controller
             $AllLabInstances=$this->labInstanceRepository->findAll();
         }
         else {
-            $AllLabInstances=$this->labInstanceRepository->findByUserWithGroup($user);
+            //Return all instances of the 
+            //$AllLabInstances=$this->labInstanceRepository->findByUserAndGroups($user);
+            $AllLabInstances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
         }
         
         switch ($type) {
