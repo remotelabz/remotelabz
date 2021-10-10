@@ -397,7 +397,22 @@ export class RemotelabzAPI {
             var formData = new FormData();
             formData.append("banner", image);
             return axios.post(`/labs/${id}/banner`, formData, { headers : { 'Content-Type': 'multipart/form-data' } });
+        },
+
+        /**
+         * 
+         * Add device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}/devices`
+         * @param {int} id
+         * @param {device} options
+         * @returns 
+         */
+
+        addDeviceInLab(id,options) {
+            return axios.post(`/labs/${id}/devices`,options);
         }
+
     }
 
     /**

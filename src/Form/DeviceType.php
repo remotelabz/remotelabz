@@ -43,12 +43,13 @@ class DeviceType extends AbstractType
             //     'help' => 'Hypervisor used. Only QEMU is supported for now.',
             //     'empty_data' => 'qemu'
             // ])
-            ->add('labs', EntityType::class, [
+          /*  ->add('labs', EntityType::class, [
                 'class' => Lab::class,
                 'choice_label' => 'name',
                 'by_reference' => false,
                 'multiple' => true
             ])
+            */
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'choice_label' => 'name',
