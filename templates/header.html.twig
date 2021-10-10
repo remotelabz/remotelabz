@@ -29,11 +29,11 @@
           </a>
         </ul>
         {% if is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2 {% if '/admin' in app.request.uri %}active{% endif %}" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+          <a class="nav-link ml-2" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
             {{ svg('admin', 's18') }}
           </a>
           {% else %}
-          <a class="nav-link ml-2 {% if '/instances' in app.request.uri %}active{% endif %}" href="{{ path('instances') }}" data-toggle="tooltip" data-placement="bottom" title="Instances list">
+          <a class="nav-link ml-2" href="{{ path('instances') }}" data-toggle="tooltip" data-placement="bottom" title="Instances list">
             {{ svg('list-bulleted', 's16') }}
           </a>
         {% endif %}

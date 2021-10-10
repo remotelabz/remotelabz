@@ -9,6 +9,7 @@ use App\Form\GroupParentType;
 use App\Form\GroupType;
 use App\Repository\GroupRepository;
 use App\Repository\UserRepository;
+use App\Repository\LabRepository;
 use App\Security\ACL\GroupVoter;
 use App\Service\GroupPictureFileUploader;
 use App\Utils\Uuid;
@@ -30,18 +31,21 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class GroupController extends Controller
 {
     private $logger;
-
+    private $labRepository;
 
     /** @var GroupRepository */
     protected $groupRepository;
 
     public function __construct(
         GroupRepository $groupRepository,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        LabRepository $labRepository
     )
     {
         $this->groupRepository = $groupRepository;
         $this->logger = $logger;
+        $this->labRepository = $labRepository;
+
     }
 
     /**
@@ -528,14 +532,21 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+        //$lab= Fetch all laboratories of privileged user of this group
+        $labs=$this->labRepository->findAll();
 
-        return $this->render('group/dashboard_addlab.html.twig', [
+        foreach ($labs as $lab)
+            $this->logger->debug("Lab ?:".$lab->getName());
+        
+            return $this->render('group/dashboard_addlab.html.twig', [
             'group' => $group,
-            'props' => $serializer->serialize(
+            'lab' => $lab,
+            /*'props' => $serializer->serialize(
                 $group,
                 'json',
-                SerializationContext::create()->setGroups(['api_groups'])
-            ),
+                SerializationContext::create()->setGroups(['api_addlab'])
+            ),*/
+            'props' => json_encode($lab)
         ]);
     }
 

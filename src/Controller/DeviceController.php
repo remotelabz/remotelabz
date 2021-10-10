@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Psr\Log\LoggerInterface;
+use JMS\Serializer\SerializerInterface;
+
 
 class DeviceController extends Controller
 {
@@ -28,12 +30,16 @@ class DeviceController extends Controller
     /** @var LoggerInterface $logger */
     private $logger;
 
-    public function __construct(LoggerInterface $logger,LabRepository $labRepository,DeviceRepository $deviceRepository)
+    public function __construct(
+        LoggerInterface $logger,
+        LabRepository $labRepository,
+        DeviceRepository $deviceRepository,
+        SerializerInterface $serializerInterface)
     {
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
         $this->logger = $logger;
-
+        $this->serializer = $serializerInterface;
     }
 
     /**
@@ -91,32 +97,46 @@ class DeviceController extends Controller
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
      */
-    public function newAction(Request $request)
+    public function newAction(Request $request, SerializerInterface $serializer)
     {
         $entityManager = $this->getDoctrine()->getManager();
 
         $device = new Device();
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
+        
         if ($request->getContentType() === 'json') {
-            $device_json = json_decode($request->getContent(), true);
-            $this->logger->debug("New device added",$device_json);
-
-            $deviceForm->submit($device_json);
+            //$device_json = json_decode($request->getContent(), true);
+            $this->logger->debug("New device added with json request: ",json_decode($request->getContent(),true));
+            //$deviceForm->submit($device_json);
+            $device=$serializer->deserialize($request->getContent(), Device::class, 'json');
+            
+            $entityManager->persist($device);
+            $entityManager->flush();
+            return $this->json($device, 201, [], ['api_get_device']);
         }
 
+        if ($deviceForm->isValid())
+            $this->logger->debug("Valid");
+            else $this->logger->debug("Not valid");
+
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
-            $this->logger->debug("New device added - Form submitted",$device_json);
+            
+            
+            /*$this->logger->debug("New device added - Form submitted",$device_json);
             if ($device_json["lab"]) {
                 $this->logger->debug("New device added - Form submitted - lab of the device: ".$device_json["lab"]);
                 $lab=$this->labRepository->find($device_json["lab"]);
                 $device->addLab($lab);
-            }
+            }*/
+
             /** @var Device $device */
             $device = $deviceForm->getData();
 
+            $this->logger->debug("New device added - Form submitted ".json_encode($device));
+
             $entityManager->persist($device);
-            $entityManager->flush();
+            $entityManager->flush();       
 
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 201, [], ['api_get_device']);
@@ -125,10 +145,11 @@ class DeviceController extends Controller
             $this->addFlash('success', 'Device has been created.');
 
             return $this->redirectToRoute('devices');
-        }
+        } else 
+            $this->logger->debug("New device added - Not in submit !".json_encode($device));
 
         if ('json' === $request->getRequestFormat()) {
-            $this->logger->debug("New device added - json request",$request);
+            $this->logger->debug("New device added - json request".$request);
 
             return $this->json($deviceForm, 200, [], ['api_get_device']);
         }

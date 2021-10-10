@@ -5,6 +5,11 @@
     {{ parent() }}
 {% endblock %}
 
+{% block header %}
+    {% set category = 'admin' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block sidebar %}
     {% set category = 'users' %}
     {{ parent() }}

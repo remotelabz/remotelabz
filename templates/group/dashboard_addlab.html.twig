@@ -20,7 +20,7 @@
 {% endmacro %}
 
 {% block sidebar %}
-    {% set category = 'dashboard_group_members' %}
+    {% set category = 'dashboard_addlab_group' %}
     {% include "group.sidebar.html.twig" %}
 {% endblock %}
 
@@ -50,7 +50,7 @@
                         <form action="{{ path('add_user_group', {slug: group.path}) }}" method="POST">
                             <div class="d-flex">
                                 <div class="flex-grow-1 mr-2">
-                                    <div>{{ react_component('UserSelect') }}</div>
+                                    <div>{{ react_component('LabSelect', {'props': props}) }}</div>
                                     <div class="form-text text-muted">
                                         Search for laboratory by name.
                                     </div>
