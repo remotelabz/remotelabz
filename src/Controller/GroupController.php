@@ -244,6 +244,7 @@ class GroupController extends Controller
 
             foreach ($users as $user) {
                 $group->addUser($user, $role);
+                $this->logger->info("User ".$user->getName()." added in group ".$group->getPath()." by ".$this->getUser()->getName());
             }
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -252,6 +253,7 @@ class GroupController extends Controller
 
             $this->addFlash('success', sizeof($users).' users has been added to the group '.$group->getName().'.');
         }
+        
 
         return $this->redirectToRoute('dashboard_group_members', ['slug' => $group->getPath()]);
     }
@@ -519,36 +521,68 @@ class GroupController extends Controller
         ]);
     }
 
+     /**
+     * @Route("/groups/{slug}/addlab", name="add_lab_group", methods="POST",
+     * requirements={"slug"="[\w\-\/]+"})
+     */
+    public function addLabAction(Request $request, string $slug, LabRepository $labRepository)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
+        
+        $labs = $request->request->get('labs');
+        
+        $labs = array_filter(array_map('trim', $labs), 'strlen');
+
+        if (0 === sizeof($labs)) {
+            if ('html' === $request->getRequestFormat()) {
+                $this->addFlash('warning', 'No laboratory selected.');
+            } else {
+                throw new BadRequestHttpException();
+            }
+        } else {
+            $labs = $labRepository->findBy(['id' => $labs]);
+
+            foreach ($labs as $lab) {
+                $group->addLab($lab);
+                $this->logger->info("Laboratory ".$lab->getName()." added in group ".$group->getPath()." by ".$this->getUser()->getName());
+            }
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($group);
+            $entityManager->flush();
+
+            $this->addFlash('success', sizeof($labs).' laboratory(ies) has been added to the group '.$group->getName().'.');
+        }
+
+        return $this->redirectToRoute('dashboard_add_lab_group', [
+            'slug' => $slug,
+        ]);
+    }
+
     /**
-     * @Route("/groups/{slug}/addlab",
-     * name="dashboard_addlab_group",
-     * methods="GET",
+     * @Route("/groups/{slug}/labs", name="dashboard_add_lab_group", methods="GET",
      * requirements={"slug"="[\w\-\/]+"})
      *
-     * @Rest\Put("/api/groups/{slug}/addlab/{lab_id}", name="api_lab_group", requirements={"slug"="[\w\-\/]+"})
      */
-    public function addlabsAction(Request $request, string $slug, SerializerInterface $serializer)
+    public function showaddlabAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
         //$lab= Fetch all laboratories of privileged user of this group
-        $labs=$this->labRepository->findAll();
-
-        foreach ($labs as $lab)
-            $this->logger->debug("Lab ?:".$lab->getName());
+        $labs=$group->getLabs();
         
-            return $this->render('group/dashboard_addlab.html.twig', [
+        return $this->render('group/dashboard_add_lab.html.twig', [
             'group' => $group,
-            'lab' => $lab,
-            /*'props' => $serializer->serialize(
-                $group,
-                'json',
-                SerializationContext::create()->setGroups(['api_addlab'])
-            ),*/
-            'props' => json_encode($lab)
-        ]);
+            'labs' => $labs,
+            ]);
     }
+
+    
 
     /**
      * @Route("/groups/{slug}",

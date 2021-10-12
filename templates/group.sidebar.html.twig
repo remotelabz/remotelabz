@@ -24,7 +24,7 @@
             {{ sidebar.link("Overview", 'dashboard_show_group', {slug: group.path}, 'home', 'dashboard_show_group', _context) }}
             {{ sidebar.link("Members", 'dashboard_group_members', {slug: group.path}, 'users', 'dashboard_group_members', _context) }}
             {% if group.isElevatedUser(app.user) %}
-                {{ sidebar.link("Labs", 'dashboard_addlab_group', {slug: group.path}, 'monitor', 'dashboard_addlab_group', _context) }}
+                {{ sidebar.link("Labs", 'dashboard_add_lab_group', {slug: group.path}, 'monitor', 'dashboard_add_lab_group', _context) }}
                 {{ sidebar.link("Settings", 'dashboard_edit_group', {slug: group.path}, 'settings', 'dashboard_edit_group', _context) }}
             {% endif %}
 
