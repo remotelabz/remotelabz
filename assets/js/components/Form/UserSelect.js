@@ -31,6 +31,7 @@ export default class UserSelect extends Component {
     loadOptions = async (inputValue) => (await Remotelabz.users.all(inputValue)).data;
 
     render() {
+        //console.log(this.props)
         return (
             <AsyncSelect
                 isMulti

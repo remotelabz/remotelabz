@@ -160,8 +160,6 @@ axios.interceptors.response.use(
                 window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
                 break;
             case 404:
-                
-                break;
             default:
                 console.error(error);
         }
@@ -327,15 +325,16 @@ export class RemotelabzAPI {
          * Get a collection of labs.
          * 
          * Implements GET `/api/labs`
-         * 
-         * @param {number} limit Limit number of labs fetched.
+         * @param {string} search Search string. Can contain anything in lab's name.
+         * @param {number} limit Limit number of groups fetched.
          * 
          * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
          */
-        all(limit = 10) {
+        all(search = '', limit = 10) {
             return axios.get('/labs', {
                 params: {
-                    limit
+                    limit,
+                    search
                 }
             })
         },

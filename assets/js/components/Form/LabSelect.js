@@ -1,49 +1,48 @@
-import React, { useState,Component, useEffect } from 'react';
+import React, { Component } from 'react';
 import { components } from 'react-select';
-import ASyncSelect from 'react-select/async';
-import Select from "react-select";
+import AsyncSelect from 'react-select/async';
 import Remotelabz from '../API';
 
+export const ValueContainer = ({ children, ...props }) => (
+  <components.ValueContainer {...props}>{children}</components.ValueContainer>
+);
 
-function LabSelect(props) {
-  /*const options = [
-      { value: "The Crownlands" },
-      { value: "Iron Islands" },
-      { value: "The North" },
-      { value: "The Reach" },
-      { value: "The Riverlands" },
-      { value: "The Vale" },
-      { value: "The Westerlands" },
-      { value: "The Stormlands" }
-  ];*/
-  const options = useState(props);
-  const [region, setRegion] = useState();
-  const [currentCountry, setCurrentCountry] = useState(null);
-  const onchangeSelect = (item) => {
-  setCurrentCountry(null);
-  setRegion(item);
-  };
+export const Option = props => {
+    return (
+        <components.Option {...props}>
+            <div className="d-flex">
+                <div className="d-flex flex-column">
+                    <div>{props.label}</div>
+                </div>
+            </div>
+        </components.Option>
+    );
+};
 
-  useEffect( () => {
-    console.log("options".options)
-  }
+export default class LabSelect extends Component {
+    constructor(props) {
+        super(props);
+    }
 
-  )
+    loadOptions = async (inputValue) => (await Remotelabz.labs.all(inputValue)).data;
 
-   return (
-    <div className="d-flex flex-column">
-      <Select
-        className='react-select-container'
-        classNamePrefix="react-select"
-        isMulti
-          value={region}
-          onChange={onchangeSelect}
-          options={options}
-          getOptionValue={(option) => option.value}
-          getOptionLabel={(option) => option.value}
-       /> 
-     </div>
-   );
- };
-
- export default LabSelect;
+    render() {
+        return (
+            <AsyncSelect
+                isMulti
+                closeMenuOnSelect={false}
+                loadOptions={this.loadOptions}
+                getOptionLabel={o => o.name}
+                getOptionValue={o => o.id}
+                className='react-select-container'
+                classNamePrefix="react-select"
+                cacheOptions
+                defaultOptions
+                placeholder="Search for a lab"
+                components={{ ValueContainer, Option }}
+                isSearchable
+                name="labs[]"
+            />
+        );
+    }
+}
