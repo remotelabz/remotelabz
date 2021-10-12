@@ -4,6 +4,7 @@ import InstanceOwnerSelect from './Instances/InstanceOwnerSelect';
 import UserSelect from './Form/UserSelect';
 import GroupImport from './Form/GroupImport';
 import GroupSelect from './Form/GroupSelect';
+import LabSelect from './Form/LabSelect';
 import GroupRoleSelect from './Form/GroupRoleSelect';
 import GroupExplorer from './Groups/GroupExplorer';
 import InstanceManager from './Instances/InstanceManager';
@@ -25,5 +26,6 @@ ReactOnRails.register({
     LabImporter,
     Editor,
     SandboxManager,
-    AllInstancesManager
+    AllInstancesManager,
+    LabSelect
 });

@@ -90,7 +90,7 @@ export default class Editor extends React.Component {
     addDeviceRequest = device => {
         device.networkInterfaces = null
         device.lab = this.labId
-        Remotelabz.devices.create(device).then(response => {
+        Remotelabz.labs.addDeviceInLab(this.labId,device).then(response => {
             this.addDevice(response.data)
         })
     }

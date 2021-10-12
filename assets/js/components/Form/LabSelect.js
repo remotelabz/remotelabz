@@ -11,27 +11,22 @@ export const Option = props => {
     return (
         <components.Option {...props}>
             <div className="d-flex">
-                <div className="mr-2">
-                    <img src={"/users/" + props.data.id + "/picture?size=32"} className="rounded-circle"></img>
-                </div>
                 <div className="d-flex flex-column">
-                    <div style={{lineHeight: 16 + 'px'}}>{props.label}</div>
-                    <div className="text-muted">{props.data.email}</div>
+                    <div>{props.label}</div>
                 </div>
             </div>
         </components.Option>
     );
 };
 
-export default class UserSelect extends Component {
+export default class LabSelect extends Component {
     constructor(props) {
         super(props);
     }
 
-    loadOptions = async (inputValue) => (await Remotelabz.users.all(inputValue)).data;
+    loadOptions = async (inputValue) => (await Remotelabz.labs.all(inputValue)).data;
 
     render() {
-        //console.log(this.props)
         return (
             <AsyncSelect
                 isMulti
@@ -43,11 +38,10 @@ export default class UserSelect extends Component {
                 classNamePrefix="react-select"
                 cacheOptions
                 defaultOptions
-                placeholder="Search for a user"
+                placeholder="Search for a lab"
                 components={{ ValueContainer, Option }}
                 isSearchable
-                name="users[]"
-                {...this.props}
+                name="labs[]"
             />
         );
     }
