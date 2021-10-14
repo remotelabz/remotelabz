@@ -518,15 +518,13 @@ class UserController extends Controller
 
             return $response;
         } else {
-
             //TODO #661 #644
             $url=Gravatar::getGravatar($user->getEmail(), $size);
             
-            
             try {
-            $picture = file_get_contents($url);
+                $picture = file_get_contents($url);
 
-              return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+                return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
             }
             catch (Exception $e){
                 $this->logger->error("Impossible to connect to ".$url);

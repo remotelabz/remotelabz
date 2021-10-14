@@ -25,7 +25,9 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface, Fixtur
             ->setDescription('The default group.')
             ->addUser($this->getReference('root'), Group::ROLE_OWNER)
             ->setVisibility(2);
-        ;
+        for ($i=1; $i <=self::COUNT; $i++)
+            $group->addLab($this->getReference('lab'.$i));
+
 
         $manager->persist($group);
 
@@ -38,6 +40,7 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface, Fixtur
     {
         return [
             UserFixtures::class,
+            LabFixtures::class
         ];
     }
 

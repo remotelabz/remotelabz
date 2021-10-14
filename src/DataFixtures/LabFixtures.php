@@ -73,7 +73,7 @@ EOF;
     {
         return [
             UserFixtures::class,
-            DeviceFixtures::class,
+            DeviceFixtures::class
         ];
     }
 
