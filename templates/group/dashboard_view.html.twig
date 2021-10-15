@@ -105,7 +105,11 @@
                         <img src="{{ path('get_lab_banner', {'id': lab.id}) }}" class="card-img-top" alt="Banner">
                         {% endif %}
                         <div class="card-body d-flex flex-column">
-                            <h6 class="card-subtitle mb-2 text-muted">{{ _self.groupParent(lab.group) }} <a href="{{ path('dashboard_show_group', {'slug': lab.group.path}) }}">{{ lab.group.name }}</a> /</h6>
+                           <h6 class="card-subtitle mb-2 text-muted">{{ _self.groupParent(group) }}<a href="{{ path('dashboard_show_group', {'slug': group.path}) }}">{{ group.name }}</a>
+                                {% if _self.groupParent(group) is null %}
+                                    /
+                                {% endif %}
+                            </h6>
                             <h4 class="card-title"><a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a></h4>
                             <p class="card-text flex-grow-1">
                                 {%- if lab.shortDescription is not null -%}

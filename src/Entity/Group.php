@@ -107,7 +107,7 @@ class Group implements InstancierInterface
     private $uuid;
 
     /**
-     * @ORM\OneToMany(targetEntity=Lab::class, mappedBy="_group")
+     * @ORM\ManyToMany(targetEntity=Lab::class, mappedBy="groups")
      * @Serializer\Groups({"api_groups", "api_get_group"})
      */
     private $labs;
@@ -545,7 +545,7 @@ class Group implements InstancierInterface
     {
         if (!$this->labs->contains($lab)) {
             $this->labs[] = $lab;
-            $lab->setGroup($this);
+            $lab->addGroup($this);
         }
 
         return $this;
@@ -555,10 +555,7 @@ class Group implements InstancierInterface
     {
         if ($this->labs->contains($lab)) {
             $this->labs->removeElement($lab);
-            // set the owning side to null (unless already changed)
-            if ($lab->getGroup() === $this) {
-                $lab->setGroup(null);
-            }
+            $lab->removeGroup($this);
         }
 
         return $this;
