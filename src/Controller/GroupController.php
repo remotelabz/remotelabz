@@ -563,6 +563,36 @@ class GroupController extends Controller
         ]);
     }
 
+     /**
+     * @Route("/groups/{slug}/removelab/{id<\d+>}", name="rem_lab_group", methods="GET",
+     * requirements={"slug"="[\w\-\/]+"})
+     */
+    public function removeLabAction(Request $request, string $slug, int $id, LabRepository $labRepository)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
+            
+        $lab = $labRepository->findBy(['id' => $id]);
+
+        $group->removeLab($lab[0]);
+        $this->logger->info("Laboratory ".$lab[0]->getName()." remove from group ".$group->getPath()." by ".$this->getUser()->getName());
+
+        $this->addFlash('success', 'Laboratory '.$lab[0]->getName().' has been added to the group '.$group->getName().'.');
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($group);
+        $entityManager->flush();
+
+        
+
+        return $this->redirectToRoute('dashboard_add_lab_group', [
+            'slug' => $slug,
+        ]);
+    }
+
     /**
      * @Route("/groups/{slug}/labs", name="dashboard_add_lab_group", methods="GET",
      * requirements={"slug"="[\w\-\/]+"})

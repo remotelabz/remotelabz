@@ -82,9 +82,9 @@ class Lab implements InstanciableInterface
     private $isInternetAuthorized = false;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Group::class, inversedBy="labs")
+     * @ORM\ManyToMany(targetEntity=Group::class, inversedBy="labs")
      */
-    private $_group;
+    private $groups;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -97,6 +97,7 @@ class Lab implements InstanciableInterface
         $this->devices = new ArrayCollection();
         $this->connexions = new ArrayCollection();
         $this->activities = new ArrayCollection();
+        $this->groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdAt = new \DateTime();
@@ -237,7 +238,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function getGroup(): ?Group
+    /*public function getGroup(): ?Group
     {
         return $this->_group;
     }
@@ -245,6 +246,32 @@ class Lab implements InstanciableInterface
     public function setGroup(?Group $_group): self
     {
         $this->_group = $_group;
+
+        return $this;
+    }*/
+
+    /**
+     * @return Collection|Group[]
+     */
+    public function getGroups(): Collection
+    {
+        return $this->groups;
+    }
+
+    public function addGroup(Group $group): self
+    {
+        if (!$this->groups->contains($group)) {
+            $this->groups[] = $group;
+            $group->addLab($this);
+        }
+        return $this;
+    }
+
+    public function removeGroup(Group $group): self
+    {
+        if ($this->groups->contains($group)) {
+            $this->groups->removeElement($group);
+        }
 
         return $this;
     }
