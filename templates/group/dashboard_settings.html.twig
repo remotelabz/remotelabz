@@ -69,7 +69,7 @@
                 {{ form_row(form.description) }}
                 <div class="form-group">
                         {# pattern="[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-]|[a-zA-Z0-9_]" #}
-                    {{- form_label(form.visibility) -}}
+                    {{- form_label(form.visibility) -}} (Not yet implemented)
                     <div class="mb-3">
                         {{- form_help(form.visibility, {attr: {class: 'mb-3'}}) -}}
                     </div>
@@ -131,8 +131,8 @@
                 </div>
                 {{ form_widget(form.parent) }}
                 <div class="form-actions">
-                    {{ form_widget(form.submit) }}
                     {{ form_widget(form.reset) }}
+                    {{ form_widget(form.submit) }}
                 </div>
                 
                 {{ form_end(form, {render_rest: false}) }}
