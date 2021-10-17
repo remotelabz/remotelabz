@@ -50,6 +50,9 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Asset\Package;
+use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+
 
 class LabController extends Controller
 {
@@ -242,9 +245,14 @@ class LabController extends Controller
             $name .= ' (' . $untitledLabsCount . ')';
         }
 
+        
+        $package = new Package(new EmptyVersionStrategy());
+
         $lab = new Lab();
         $lab->setName($name)
             ->setAuthor($this->getUser());
+
+        $this->logger->debug($package->getUrl('/public/images/logo/nopic.jpg'));
 
         foreach($this->getUser()->getGroups() as $group) {
             $group->getGroup()->addLab($lab);
