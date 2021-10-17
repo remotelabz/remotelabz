@@ -183,10 +183,6 @@ services:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
 
-    App\Controller\SecurityController:
-        arguments:
-            $maintenance: '%app.general.maintenance%'
-
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'
