@@ -6,6 +6,10 @@ namespace DoctrineMigrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use App\Repository\LabRepository;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
  * Auto-generated Migration: Please modify to your needs!
@@ -28,7 +32,11 @@ final class Version20211014100807 extends AbstractMigration
         $this->addSql('ALTER TABLE lab DROP FOREIGN KEY FK_61D6B1C4D0949C27');
         $this->addSql('DROP INDEX IDX_61D6B1C4D0949C27 ON lab');
         $this->addSql('ALTER TABLE lab DROP _group_id');
+        $this->addSql('UPDATE lab SET banner = \'nopic.jpg\'');
     }
+// Execute in shell
+// sudo yarn encore prod
+// sudo find /opt/remotelabz/public/uploads/lab/banner/* -type d -exec cp /opt/remotelabz/public/build/images/logo/nopic.jpg {}/nopic.jpg \;
 
     public function down(Schema $schema) : void
     {
