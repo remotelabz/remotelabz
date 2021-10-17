@@ -2,28 +2,36 @@
 
 namespace App\Controller;
 
-use App\Entity\DeviceInstanceLog;
 use Exception;
 use Psr\Log\LoggerInterface;
-use App\Repository\LabRepository;
-use App\Repository\UserRepository;
+use App\Entity\DeviceInstanceLog;
 use App\Entity\InstancierInterface;
-use App\Service\Proxy\ProxyManager;
+
+use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
-use App\Entity\NetworkInterfaceInstance;
-use App\Repository\DeviceInstanceLogRepository;
 use App\Repository\LabInstanceRepository;
+use App\Repository\DeviceInstanceLogRepository;
+use App\Repository\LabRepository;
+use App\Repository\NetworkInterfaceInstanceRepository;
+use App\Repository\DeviceInstanceRepository;
+
+use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
+
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use App\Repository\DeviceInstanceRepository;
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
-use App\Repository\NetworkInterfaceInstanceRepository;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
+use FOS\RestBundle\Controller\Annotations as Rest;
+
+use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 
 class InstanceController extends Controller
 {
@@ -32,59 +40,98 @@ class InstanceController extends Controller
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
+    private $serializer;
+    
+    /** @var LabRepository $labRepository */
+    private $labRepository;
 
     public function __construct(
         LoggerInterface $logger,
         ProxyManager $proxyManager,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
-        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository
+        LabRepository $labRepository,
+        NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        SerializerInterface $serializerInterface
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->labRepository = $labRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->proxyManager = $proxyManager;
+        $this->serializer = $serializerInterface;
     }
 
     /**
-     * @Route("/admin/instances", name="instances")
+     * @Route("/instances", name="instances")
      * 
      * @Rest\Get("/api/instances", name="api_get_instances")
      */
-    public function indexAction(Request $request)
+    public function indexAction(
+        Request $request,
+        SerializerInterface $serializer,
+        UserRepository $userRepository)
     {
         if ($request->query->has('uuid')) {
             return $this->redirectToRoute('api_get_instance_by_uuid', ['uuid' => $request->query->get('uuid')]);
         }
+        $user=$this->getUser();
 
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', '');
         $type = $request->query->get('type', 'lab');
 
+        //Only fetch the instance of the user and in which it is group admin or group owner
+        if ($user->isAdministrator()) {
+            $AllLabInstances=$this->labInstanceRepository->findAll();
+        }
+        else {
+            //Return all instances of the 
+            //$AllLabInstances=$this->labInstanceRepository->findByUserAndGroups($user);
+            $AllLabInstances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+        }
+        
         switch ($type) {
             case 'lab':
-                $data = $this->labInstanceRepository->findAll();
+                $data = $AllLabInstances;
+                $groups = ['api_get_lab_instance'];
                 break;
-
-            case 'device':
-                $data = $this->deviceInstanceRepository->findAll();
-                break;
-
             default:
                 throw new BadRequestHttpException('Unknown instance type.');
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($data, 200, [], ["instances"]);
+            return $this->json($data, 200, [], $groups);
         }
 
+        $labInstances=[];
+        
+        foreach ( $AllLabInstances as $instance){
+            $instanceManagerProps = [
+                'labInstance' => $instance,
+            ];
+
+            //TODO: #664 Verify if we can delete the api_get_device_instance in the following serialization
+            // because we display only lab instance which include all devices instances
+            $tmp_json=$serializer->serialize(
+                $instanceManagerProps,
+                'json',
+                SerializationContext::create()->setGroups(['api_get_lab_instance'])
+            );
+
+            array_push($labInstances, [
+                'instance' => $instance,
+                'props' => $tmp_json
+            ]);
+        }
+        
+        //$this->logger->debug("From InstanceController labInstances ",$labInstances);
+
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $this->labInstanceRepository->findAll(),
-            'deviceInstances' => $this->deviceInstanceRepository->findAll(),
-            'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll(),
-            'search' => $search,
-            'filter' => $filter
+            'labInstances' => $labInstances,
+            //'deviceInstances' => $AllDeviceInstances,
+            //'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll()
         ]);
     }
 
@@ -93,6 +140,7 @@ class InstanceController extends Controller
      */
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
+        $this->logger->debug("Request in createAction: ".$request);
         $labUuid = $request->request->get('lab');
         $instancierUuid = $request->request->get('instancier');
         $instancierType = $request->request->get('instancierType');
@@ -113,12 +161,14 @@ class InstanceController extends Controller
         $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
 
         try {
+            $this->logger->debug("Lab creation: ".$lab->getName());
             $instance = $instanceManager->create($lab, $instancier);
+            $this->logger->debug("Lab instance created: ".$instance->getUuid());
         } catch (Exception $e) {
             throw $e;
         }
 
-        return $this->json($instance, 200, [], ["instances", "instance_manager", "user"]);
+        return $this->json($instance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -130,9 +180,10 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
 
-        $instanceManager->start($deviceInstance);
+        $json = $instanceManager->start($deviceInstance);
+        $status = empty($json) ? 204 : 200;
 
-        return $this->json();
+        return $this->json($json, $status, [], [], true);
     }
 
     /**
@@ -171,32 +222,26 @@ class InstanceController extends Controller
         return $this->json();
     }
 
-    // /**
-    //  * @Rest\Get("/api/instances/state/by-uuid/{uuid}", name="api_get_instance_state_by_uuid")
-    //  */
-    // public function fetchStateByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
-    // {
-    //     if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
-    //         throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
-    //     }
-
-    //     $state = $instanceManager->state($deviceInstance);
-
-    //     return $this->json($state);
-    // }
-
+    
     /**
      * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchByUuidAction(Request $request, string $uuid)
     {
         $data = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
+        $groups = ['api_get_lab_instance'];
 
-        if (!$data) $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+        if (!$data) {
+            $data = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+            $groups = ['api_get_device_instance'];
+        }
+
         // uuid not found
-        if (!$data) throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        if (!$data) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
 
-        return $this->json($data, 200, [], ["instances", "instance_manager"]);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -221,7 +266,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
-        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
+        return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -246,7 +291,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
-        return $this->json($labInstance, 200, [], ['instance_manager', 'user']);
+        return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
@@ -262,10 +307,12 @@ class InstanceController extends Controller
         switch ($type) {
             case 'lab':
                 $data = $this->labInstanceRepository->findOneBy(['user' => $user]);
+                $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['user' => $user]);
+                $groups = ['api_get_device_instance'];
                 break;
 
             default:
@@ -274,7 +321,7 @@ class InstanceController extends Controller
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], ['instance_manager', 'user']);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -290,10 +337,12 @@ class InstanceController extends Controller
         switch ($type) {
             case 'lab':
                 $data = $this->labInstanceRepository->findOneBy(['_group' => $group]);
+                $groups = ['api_get_lab_instance'];
                 break;
 
             case 'device':
                 $data = $this->deviceInstanceRepository->findBy(['_group' => $group]);
+                $groups = ['api_get_device_instance'];
                 break;
 
             default:
@@ -302,7 +351,7 @@ class InstanceController extends Controller
 
         if (!$data) throw new NotFoundHttpException();
 
-        return $this->json($data, 200, [], ['instance_manager']);
+        return $this->json($data, 200, [], $groups);
     }
 
     /**
@@ -414,8 +463,6 @@ class InstanceController extends Controller
      */
     public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)
     {
-        //$uuid = $request->query->get('uuid');
-
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }

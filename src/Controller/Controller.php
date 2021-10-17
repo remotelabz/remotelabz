@@ -25,9 +25,13 @@ class Controller extends AbstractFOSRestController
     /**
      * Returns a JsonResponse that uses JMSSerializer component.
      */
-    protected function json($data = '', int $status = 200, array $headers = [], array $context = []): JsonResponse
+    protected function json($data = '', int $status = 200, array $headers = [], array $context = [], bool $json = false): JsonResponse
     {
         $serializationContext = SerializationContext::create();
+        
+        if (null === $data) {
+            $data = '';
+        }
 
         if (empty($data) && $status < 300) {
             $status = 204;
@@ -37,7 +41,9 @@ class Controller extends AbstractFOSRestController
             $serializationContext->setGroups($context);
         }
 
-        $data = $this->container->get('jms_serializer')->serialize($data, 'json', $serializationContext);
+        if (!$json) {
+            $data = $this->container->get('jms_serializer')->serialize($data, 'json', $serializationContext);
+        }
 
         return new JsonResponse($data, $status, $headers, true);
     }
@@ -47,7 +53,7 @@ class Controller extends AbstractFOSRestController
      */
     public function defaultAction()
     {
-        return $this->redirectToRoute('labs');
+        return $this->render('dashboard/index.html.twig');
     }
 
     /**

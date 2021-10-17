@@ -11,10 +11,10 @@
                     {% for label, messages in app.flashes %}
                         {% for message in messages %}
                         <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                        <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        {{ message }}
+                            <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            {{ message }}
                         </div>
                         {% endfor %}
                     {% endfor %}
@@ -31,14 +31,10 @@
                     {% if error %}
                 <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
                 {% endif %}
-                
+
                 {% if ( maintenance == 1) %}
-                
-                
                 {{ svg('warning', 'image-lm') }}
-                
                 <div class="text-center">In maintenance</div>
-                
                 {% else %}
                     <form role="form" method="POST">
                         <div class="form-group">
@@ -68,7 +64,7 @@
                                     Sign in
                                 {% endif %}
                             </button>
-                            <p class="footer-text text-right"><a href="{{ path('reset_password') }}" class="text-muted">Reset password</a></p>
+                            <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
                         </div>
                         {# Add remember_me and forgot_password #}
                         {# <div class="form-group d-flex justify-content-between">
@@ -80,13 +76,12 @@
                             <a href="#" class="text-small forgot-password text-black">Forgot Password</a>
                         </div> #}
                     </form>
-
+                
                     {% if enable_shibboleth %}
                         <hr>
                         <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
                     {% endif %}
                 </div>
-
                 {% endif %}
                 <ul class="auth-footer">
                     {# <li>

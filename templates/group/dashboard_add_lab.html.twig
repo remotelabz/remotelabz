@@ -1,0 +1,94 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'dashboard_groups' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Labs': path('dashboard_add_lab_group', {'slug': group.path}) }) %}
+    {% set currentGroup = group %}
+    {% for parent in group.getFullyQualifiedName()|reverse %}
+        {% set breadcrumbs = breadcrumbs|merge({ (parent): path('dashboard_show_group', {'slug': currentGroup.getPath()}) }) %}
+        {% set currentGroup = currentGroup.parent %}
+    {% endfor %}
+    {{ parent() }}
+{% endblock %}
+
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} {{ group.parent.name }} /{% endif %}
+{% endmacro %}
+
+{% block sidebar %}
+    {% set category = 'dashboard_add_lab_group' %}
+    {% include "group.sidebar.html.twig" %}
+{% endblock %}
+
+{% block wrapper %}
+    {% macro groupParent(group) %}
+       {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
+    {% endmacro %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h3>Laboratories</h3>
+        </div>
+    </div>
+    <div class="content-body">
+        <div class="row">
+            <div class="col">
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="add-labs" role="tabpanel" aria-labelledby="add-labs-tab">
+                        <p>
+                            Add new laboratory(s) to group: <strong>{{group.name}}</strong>
+                        </p>
+                        <form action="{{ path('add_lab_group', {slug: group.path}) }}" method="POST">
+                            <div class="d-flex">
+                                <div class="flex-grow-1 mr-2">
+                                    <div>{{ react_component('LabSelect') }}</div>
+                                    <div class="form-text text-muted">
+                                        Search for laboratory by name.
+                                    </div>
+                                </div>
+                                <div>
+                                   <button type="submit" class="btn btn-success">Add selected laboratory(s)</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                {# <div class="search-panel">
+                    <form action="{{ path('labs') }}" method="GET">
+                        <input type="search" class="form-control input-sm" name="search"
+                        placeholder="Search by name"
+                        spellcheck="false" value="{{ search|default('') }}" type="search">
+                    </form>
+                </div> #}
+                <div class="labs-panel">
+                    <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                    {% for lab in labs %}
+                    <div class="card m-4">
+                        {% if lab.banner is not null %}
+                        <img src="{{ path('get_lab_banner', {'id': lab.id}) }}" class="card-img-top" alt="Banner">
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h4 class="card-title"><a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a></h4>
+                            <p class="card-text flex-grow-1">
+                                {%- if lab.shortDescription is not null -%}
+                                {{- lab.shortDescription -}}
+                                {%- else -%}
+                                    No description
+                                {%- endif -%}
+                            </p>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <a href="{{ path('rem_lab_group', {slug: group.path, 'id': lab.id}) }}">Delete</a>
+                        </div>
+                    </div>
+                         {#  <span class="fw600">{{ lab.name }} </span><span class="text-muted">Created by {{ lab.getAuthor().name }}, last modification {{lab.getLastUpdated()|date("m F Y H:i") }}</span>#}
+                    {% endfor %}
+                    </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

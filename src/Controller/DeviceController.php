@@ -7,8 +7,9 @@ use App\Entity\Device;
 
 use App\Form\DeviceType;
 use App\Entity\EditorData;
-use FOS\RestBundle\Context\Context;
+use App\Form\EditorDataType;
 use App\Repository\DeviceRepository;
+use App\Repository\LabRepository;
 use App\Repository\EditorDataRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,14 +18,28 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Psr\Log\LoggerInterface;
+use JMS\Serializer\SerializerInterface;
+
 
 class DeviceController extends Controller
 {
     private $deviceRepository;
+    private $labRepository;
 
-    public function __construct(DeviceRepository $deviceRepository)
+    /** @var LoggerInterface $logger */
+    private $logger;
+
+    public function __construct(
+        LoggerInterface $logger,
+        LabRepository $labRepository,
+        DeviceRepository $deviceRepository,
+        SerializerInterface $serializerInterface)
     {
         $this->deviceRepository = $deviceRepository;
+        $this->labRepository = $labRepository;
+        $this->logger = $logger;
+        $this->serializer = $serializerInterface;
     }
 
     /**
@@ -47,7 +62,7 @@ class DeviceController extends Controller
         $devices = $this->deviceRepository->matching($criteria);
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($devices->getValues());
+            return $this->json($devices->getValues(), 200, [], ['api_get_device']);
         }
 
         return $this->render('device/index.html.twig', [
@@ -67,11 +82,11 @@ class DeviceController extends Controller
         $device = $this->deviceRepository->find($id);
 
         if (!$device) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($device);
+            return $this->json($device, 200, [], ['api_get_device']);
         }
 
         return $this->render('device/view.html.twig', ['device' => $device]);
@@ -102,7 +117,7 @@ class DeviceController extends Controller
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($device, 201, [], ['device']);
+                return $this->json($device, 201, [], ['api_get_device']);
             }
 
             $this->addFlash('success', 'Device has been created.');
@@ -111,7 +126,7 @@ class DeviceController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($deviceForm, 200, [], ['device']);
+            return $this->json($deviceForm, 200, [], ['api_get_device']);
         }
 
         return $this->render('device/new.html.twig', [
@@ -127,6 +142,7 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
+
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
@@ -135,21 +151,20 @@ class DeviceController extends Controller
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
-            $device = json_decode($request->getContent(), true);
-            $deviceForm->submit($device, false);
+            $device_json = json_decode($request->getContent(), true);
+            $deviceForm->submit($device_json, false);
         }
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
             $device->setLastUpdated(new DateTime());
-
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($device);
+                return $this->json($device, 200, [], ['api_get_device']);
             }
 
             $this->addFlash('success', 'Device has been updated.');
@@ -158,7 +173,7 @@ class DeviceController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($deviceForm, 200, [], ['device']);
+            return $this->json($device, 200, [], ['api_get_device']);
         }
 
         return $this->render('device/new.html.twig', [
@@ -170,7 +185,7 @@ class DeviceController extends Controller
     /**
      * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
      */
-    public function updateEditorDataAction(Request $request, int $id)
+    public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
     {
         /** @var EditorDataRepository $editorDataRepository */
         $editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);

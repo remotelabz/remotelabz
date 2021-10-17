@@ -38,6 +38,12 @@ if (array_key_exists('REMOTELABZ_PROXY_USE_WSS', $_ENV) && ($_ENV['REMOTELABZ_PR
         $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_KEY'];
     }
 
+if (array_key_exists('REMOTELABZ_PROXY_USE_WSS', $_ENV) && ($_ENV['REMOTELABZ_PROXY_USE_WSS']==1)) {
+    echo "WSS activated in .env file\n";
+    if (array_key_exists('WEBSOCKET_PROXY_SSL_KEY', $_ENV)) {
+        $cmd[] = '--ssl-key';
+        $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_KEY'];
+    }
     if (array_key_exists('WEBSOCKET_PROXY_SSL_CERT', $_ENV)) {
         $cmd[] = '--ssl-cert';
         $cmd[] = $_ENV['WEBSOCKET_PROXY_SSL_CERT'];

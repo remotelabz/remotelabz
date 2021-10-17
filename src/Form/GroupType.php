@@ -56,7 +56,10 @@ class GroupType extends AbstractType
                 'class' => Group::class,
                 'choice_label' => 'name',
                 'required' => false,
-                'help' => "Leave empty for no parent group."
+                'help' => "Leave empty for no parent group.",
+                'attr' => [
+                    'class' => 'd-none'
+                ],
             ])
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)

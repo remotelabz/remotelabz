@@ -8,41 +8,46 @@ const url = require('url');
  * @typedef {Object} Lab
  * @property {number} id
  * @property {string} name
+ * @property {string} shortDescription
  * @property {string} description
- * @property {Device[]} devices
+ * @property {[{id: number}]} devices
  * @property {Instance[]} instances
  * @property {{id: number}} author
  * @property {string} uuid
  * @property {string} createdAt
  * @property {string} lastUpdated
- * 
+ *
  * @typedef {Object} Device
  * @property {number} id
  * @property {string} name
  * @property {string} brand
  * @property {string} model
- * @property {number} launchOrder
- * @property {NetworkInterface[]} networkInterfaces
+ * @property {[{id: number}]} networkInterfaces
+ * @property {[{id: number}]} labs
  * @property {string} type
  * @property {number} virtuality
- * @property {Hypervisor} [hypervisor]
- * @property {OperatingSystem} operatingSystem
- * @property {Flavor} flavor
+ * @property {string} hypervisor
+ * @property {{id: number}} operatingSystem
+ * @property {{id: number}} flavor
  * @property {string} uuid
  * @property {string} createdAt
- * @property {string} lastUpdated
+ * @property {string|null} lastUpdated
  * @property {EditorData} editorData
  * @property {boolean} isTemplate
  * @property {boolean} vnc
+ * 
+ * @typedef {Object} Network
+ * @property {{addr: string}} ip
+ * @property {{addr: string}} netmask
  * 
  * @typedef {Object} NetworkInterface
  * @property {number} id
  * @property {NetworkInterfaceType} type
  * @property {string} name
- * @property {{name: string}} device
- * @property {string} macAddress
- * @property {NetworkInterfaceAccess} accessType
+ * @property {{id: number}} device
  * @property {string} uuid
+ * @property {number} vlan
+ * @property {boolean} isTemplate
  * 
  * @typedef {Object} NetworkInterfaceOptions
  * @property {string} name
@@ -58,26 +63,45 @@ const url = require('url');
  * @property {number} id
  * @property {string} name
  * @property {number} memory Amount of RAM in MB.
- * @property {number} disk
+ * @property {number} disk Amount of disk space in GB.
  * 
  * @typedef {Object} EditorData
  * @property {number} id
  * @property {number} x
  * @property {number} y
  * 
- * @typedef {Object} DeviceInstance
- * @property {InstanceOwnerInterface} owner
+ * @typedef {Object} InstanceOwner
+ * @property {number} id
  * @property {string} uuid
+ * 
+ * @typedef {Object} Instance
+ * @property {number} id
+ * @property {string} uuid
+ * @property {InstanceOwner} owner
  * @property {InstanceOwnerType} ownedBy
- * @property {Device} device
+ * 
+ * @typedef {Object} DeviceInstance
+ * @property {string} uuid
+ * @property {InstanceOwner} owner
+ * @property {number} id
+ * @property {InstanceOwnerType} ownedBy
+ * @property {{id: number}} device
+ * @property {Instance} labInstance
+ * @property {[{id: number, ownedBy: InstanceOwnerType, uuid: string, owner: InstanceOwner, networkInterface: {id: number}, macAddress: string}]} networkInterfaceInstances
  * @property {InstanceStateType} state
  * 
  * @typedef {Object} LabInstance
- * @property {InstanceOwnerInterface} owner
+ * @property {InstanceOwner} owner
  * @property {string} uuid
  * @property {InstanceOwnerType} ownedBy
- * @property {{name: string, uuid: string}} lab
- * @property {DeviceInstance[]} deviceInstances
+ * @property {string} bridgeName
+ * @property {number} id
+ * @property {{id: number}} lab
+ * @property {Instance[]} deviceInstances
+ * @property {boolean} isInterconnected
+ * @property {boolean} isInternetConnected
+ * @property {Network} network
+ * @property {InstanceStateType} state
  * 
  * @typedef {Object} User
  * @property {number} id
@@ -89,7 +113,9 @@ const url = require('url');
  * @property {string} createdAt Datetime format.
  * @property {string} lastActivity Datetime format.
  * @property {string} uuid
- * @property {string[]} roles
+ * @property {boolean} isShibbolethUser 
+ * @property {Role[]} roles
+ * @property {[{id: number, name: string, slug: string, uuid: string, role: UserGroupRole}]} groups
  * 
  * @typedef {Object} Group
  * @property {number} id
@@ -99,7 +125,10 @@ const url = require('url');
  * @property {string} description
  * @property {string} createdAt Datetime format.
  * @property {string} updatedAt Datetime format.
+ * @property {number} visibility
  * @property {string} uuid
+ * @property {{id: number, name: string, role: UserGroupRole}} users
+ * @property {Group[]} children
  * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
@@ -108,6 +137,8 @@ const url = require('url');
  * @typedef {"qemu"} Hypervisor
  * @typedef {"tap"} NetworkInterfaceType
  * @typedef {"VNC"|null} NetworkInterfaceAccess
+ * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
+ * @typedef {"user"|"admin"|"owner"} UserGroupRole
  */
 
 Noty.overrideDefaults({
@@ -124,14 +155,14 @@ axios.interceptors.response.use(
     (response) => response,
     /** @param {import('axios').AxiosError} error */
     (error) => {
-        // Unauthentified
-        console.error(error);
-        if (error.response.status === 401) {
-            window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
-        } else if (error.response.status >= 500) {
-            // TODO
+        switch (error.response.status) {
+            case 401:
+                window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
+                break;
+            case 404:
+            default:
+                console.error(error);
         }
-
         return Promise.reject(error);
     }
 );
@@ -159,6 +190,19 @@ export class RemotelabzAPI {
                 }
             })
         },
+
+        /**
+         * Get an user by its ID.
+         * 
+         * Implements GET `/api/users/{id}`
+         * 
+         * @param {number} id ID of the user
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User>>}
+         */
+        get(id) {
+            return axios.get(`/users/${id}`);
+        }
     }
 
     /**
@@ -175,16 +219,29 @@ export class RemotelabzAPI {
          * 
          * @returns {Promise<import('axios').AxiosResponse<Group[]>>}
          */
-        all(search = '', limit = 10, page = 1, withUsers = true) {
+        all(search = '', limit = 10, page = 1, rootOnly = true) {
             return axios.get('/groups', {
                 params: {
                     limit,
                     search,
                     page,
-                    context: withUsers ? ["group_users", "groups"] : "groups"
+                    root_only: rootOnly ? 1 : 0
                 }
             })
         },
+
+        /**
+         * Get a group by its path.
+         * 
+         * Implements GET `/api/groups/{path}`
+         * 
+         * @param {string} path Complete path of the device
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Group>>}
+         */
+        get(path) {
+            return axios.get(`/groups/${path}`);
+        }
     }
 
     /**
@@ -192,7 +249,7 @@ export class RemotelabzAPI {
      */
     devices = {
         /**
-         * Get a collection of labs.
+         * Get a collection of devices.
          * 
          * Implements GET `/api/devices/{id}`
          * 
@@ -202,6 +259,19 @@ export class RemotelabzAPI {
          */
         get(id) {
             return axios.get(`/devices/${id}`);
+        },
+
+        /**
+         * Create a new device.
+         * 
+         * Implements POST `/api/devices`
+         * 
+         * @param {Device} options Fields to set and their values
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Device>>}
+         */
+        create(options) {
+            return axios.post('/devices', options)
         },
 
         /**
@@ -216,6 +286,34 @@ export class RemotelabzAPI {
          */
         update(id, options) {
             return axios.put(`/devices/${id}`, options)
+        },
+
+        /**
+         * Updates a device position in editor by ID.
+         * 
+         * Implements PUT `/api/devices/{id}/editor-data`
+         * 
+         * @param {number} id
+         * @param {number} x 
+         * @param {number} y 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{x: number, y: number}>>}
+         */
+        updatePosition(id, x, y) {
+            return axios.put(`/devices/${id}/editor-data`, {x, y})
+        },
+
+        /**
+         * Delete a device by ID.
+         * 
+         * Implements DELETE `/api/devices/{id}`
+         * 
+         * @param {number} id ID of the device to delete
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<null>>}
+         */
+        delete(id) {
+            return axios.delete(`/devices/${id}`)
         }
     }
 
@@ -227,15 +325,16 @@ export class RemotelabzAPI {
          * Get a collection of labs.
          * 
          * Implements GET `/api/labs`
-         * 
-         * @param {number} limit Limit number of labs fetched.
+         * @param {string} search Search string. Can contain anything in lab's name.
+         * @param {number} limit Limit number of groups fetched.
          * 
          * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
          */
-        all(limit = 10) {
+        all(search = '', limit = 10) {
             return axios.get('/labs', {
                 params: {
-                    limit
+                    limit,
+                    search
                 }
             })
         },
@@ -273,7 +372,7 @@ export class RemotelabzAPI {
         /**
          * Updates a lab from a JSON string.
          * 
-         * Implements PUT `/api/labs/import`
+         * Implements POST `/api/labs/import`
          * 
          * @param {string} json 
          * 
@@ -281,7 +380,38 @@ export class RemotelabzAPI {
          */
         import(json) {
             return axios.post(`/labs/import`, { json });
+        },
+
+        /**
+         * Updates a banner for a lab by ID.
+         * 
+         * Implements PUT `/api/labs/{id}/banner`
+         * 
+         * @param {number} id 
+         * @param {File} image 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{url: string}>>}
+         */
+        uploadBanner(id, image) {
+            var formData = new FormData();
+            formData.append("banner", image);
+            return axios.post(`/labs/${id}/banner`, formData, { headers : { 'Content-Type': 'multipart/form-data' } });
+        },
+
+        /**
+         * 
+         * Add device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}/devices`
+         * @param {int} id
+         * @param {device} options
+         * @returns 
+         */
+
+        addDeviceInLab(id,options) {
+            return axios.post(`/labs/${id}/devices`,options);
         }
+
     }
 
     /**
@@ -360,12 +490,11 @@ export class RemotelabzAPI {
          * Implements GET `/api/instances/by-uuid/{uuid}`
          * 
          * @param {string} uuid 
-         * @param {InstanceType} type
          * 
          * @returns {Promise<import('axios').AxiosResponse<LabInstance|DeviceInstance>>}
          */
-        get(uuid, type) {
-            return axios.get(`/instances/by-uuid/${uuid}`, { params: { type } });
+        get(uuid) {
+            return axios.get(`/instances/by-uuid/${uuid}`);
         },
         /**
          * Lab instances methods
@@ -468,12 +597,55 @@ export class RemotelabzAPI {
                 return axios.get(`/instances/${uuid}`, { params: { type: 'device' } });
             },
 
+            /**
+             * Request an async device instance start by UUID.
+             * 
+             * Implements GET `/api/instances/start/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            start(uuid) {
+                return axios.get(`/instances/start/by-uuid/${uuid}`);
+            },
+
+            /**
+             * Request an async device instance stop by UUID.
+             * 
+             * Implements GET `/api/instances/stop/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            stop(uuid) {
+                return axios.get(`/instances/stop/by-uuid/${uuid}`);
+            },
+
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
+            },
+            
+            /**
+             * Request an async device instance stop by UUID.
+             * 
+             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid
+             * @param {string} name
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            export(uuid,new_device_name) {
+                return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_device_name}});
             }
         },
     }
 
+    /**
+     * JitsiCall endpoint.
+     */
     jitsiCall = {
         /**
          * Start a Call in lab instance by UUID.

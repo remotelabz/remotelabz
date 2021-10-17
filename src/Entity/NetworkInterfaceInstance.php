@@ -22,13 +22,13 @@ class NetworkInterfaceInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
+     * @Serializer\Groups({"api_get_device_instance"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface")
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      */
     protected $networkInterface;
 
@@ -40,7 +40,7 @@ class NetworkInterfaceInstance extends Instance
 
     /**
      * @ORM\Column(type="string", length=17)
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
+     * @Serializer\Groups({"api_get_device_instance", "worker"})
      * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
      */
     private $macAddress;

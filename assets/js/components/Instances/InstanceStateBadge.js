@@ -38,6 +38,14 @@ class InstanceStateBadge extends Component {
                 badge = <Badge variant="success" {...this.props}>Started</Badge>
                 break;
 
+            case 'exporting':
+                badge = <Badge variant="warning" {...this.props}>Exporting</Badge>
+                break;
+
+            case 'exported':
+                    badge = <Badge variant="success" {...this.props}>Exported</Badge>
+                    break;
+
             case 'error':
                 badge = <Badge variant="danger" {...this.props}>Error</Badge>
                 break;

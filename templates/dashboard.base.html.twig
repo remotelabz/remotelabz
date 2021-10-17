@@ -13,24 +13,34 @@
       {% include "sidebar.admin.html.twig" %}
     {% else %}
         {% include "sidebar.html.twig" %}
-    {% endif %}
-    {#  {% if '/admin' in app.request.uri %}
-        {% include "sidebar.admin.html.twig" %}
-      {% else %}
-        {% include "sidebar.html.twig" %}
       {% endif %}
     #}
     {% endblock %}
 
+    {% set wrapper_fluid = block('wrapper_fluid') is defined %}
     {% set wrapper = block('wrapper_xl') is defined %}
-    {% if wrapper is not empty %}
-      {% set xl = true %}
+    {% if wrapper_fluid is not empty %}
+      {% set fluid = true %}
     {% else %}
-      {% set xl = false %}
+      {% set fluid = false %}
+      {% if wrapper is not empty %}
+        {% set xl = true %}
+      {% else %}
+        {% set xl = false %}
+      {% endif %}
     {% endif %}
     
+    {% set jumbotron = block('jumbotron') is defined %}
+    
     <div class="content-wrapper">
-      {% if xl %}
+      {% if jumbotron is not empty %}
+      <div class="jumbotron jumbotron-fluid">
+        {{- block('jumbotron') -}}
+      </div>
+      {% endif %}
+      {% if fluid %}
+      <div class="container-fluid">
+      {% elseif xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -58,7 +68,9 @@
           {% endblock %}
         </div>
       </div>
-      {% if xl %}
+      {% if fluid %}
+      <div class="container-fluid">
+      {% elseif xl %}
       <div class="container-fluid container-limited-xl">
       {% else %}
       <div class="container-fluid container-limited">
@@ -75,7 +87,9 @@
             {%- endfor -%}
           {%- endfor -%}
         </div>
-        {% if xl %}
+        {% if fluid %}
+          {{- block('wrapper_fluid') -}}
+        {% elseif xl %}
           {{- block('wrapper_xl') -}}
         {% else %}
           {{- block('wrapper') -}}

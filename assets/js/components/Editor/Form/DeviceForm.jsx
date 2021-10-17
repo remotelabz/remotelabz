@@ -21,6 +21,7 @@ export default class DeviceForm extends React.Component
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
+            
             flavor: Yup.object().shape({
                 label: Yup.string().required(),
                 value: Yup.number().required()
@@ -29,9 +30,9 @@ export default class DeviceForm extends React.Component
         });
 
         this.state = {
-            operatingSystemOptions: null,
-            flavorOptions: null,
             device: this.props.device,
+            operatingSystemOptions: this.props.device.operatingSystem,
+            flavorOptions: this.props.device.flavor
         };
     }
 
@@ -71,6 +72,8 @@ export default class DeviceForm extends React.Component
                 device: this.props.device
             });
         }
+        //console.log("componentDidUpdate state",this.state.device)
+
     }
 
     loadFlavorOptions = (inputValue) => {
@@ -112,6 +115,7 @@ export default class DeviceForm extends React.Component
     }
 
     render() {
+        //console.log("render DeviceForm",this.props)
         return (
             <Formik
                 validationSchema={this.schema}
@@ -133,8 +137,8 @@ export default class DeviceForm extends React.Component
                     brand: this.props.device.brand,
                     model: this.props.device.model,
                     operatingSystem: {
-                        value: this.props.device.operatingSystem.id,
-                        label: this.props.device.operatingSystem.name
+                        value: this.props.device.operatingSystem.id || '',
+                        label: this.props.device.operatingSystem.name || ''
                     },
                     flavor: {
                         value: this.props.device.flavor.id,
@@ -167,7 +171,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                    <Form.Group>
                             <Form.Label>Brand</Form.Label>
                             <Form.Control
                                 type="text"
@@ -191,24 +195,26 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.model}</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                       <Form.Group>
                             <Form.Label>Operating system</Form.Label>
                             <AsyncSelect
+                                placeholder="Select an operating system..."
                                 value={values.operatingSystem}
-                                onChange={value => setFieldValue("operatingSystem", value)}
+                                onChange={value => setFieldValue("operatingSystem", value )}
                                 onBlur={setFieldTouched}
                                 error={errors.operatingSystem}
                                 className='react-select-container'
                                 classNamePrefix="react-select"
                                 loadOptions={this.loadOperatingSystemOptions}
                                 defaultOptions={this.state.operatingSystemOptions}
-                                placeholder="Select an operating system..."
                             />
                             <Form.Control.Feedback type="invalid">{errors.operatingSystem}</Form.Control.Feedback>
                         </Form.Group>
+                       
                         <Form.Group>
                             <Form.Label>Flavor</Form.Label>
                             <AsyncSelect
+                                placeholder="Select an flavor..."
                                 value={values.flavor}
                                 onChange={value => setFieldValue("flavor", value)}
                                 onBlur={setFieldTouched}
@@ -217,7 +223,6 @@ export default class DeviceForm extends React.Component
                                 classNamePrefix="react-select"
                                 loadOptions={this.loadFlavorOptions}
                                 defaultOptions={this.state.flavorOptions}
-                                placeholder="Select an flavor..."
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
                             </Form.Group>

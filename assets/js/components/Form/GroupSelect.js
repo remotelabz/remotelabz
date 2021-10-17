@@ -5,19 +5,9 @@ import API from '../../api';
 import SVG from '../Display/SVG';
 import Routing from 'fos-jsrouting';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
+import Remotelabz from '../API';
 
 const api = API.getInstance();
-
-const getPath = (group) => {
-    /** @var {String} path */
-    let path = '';
-    while (undefined !== group.parent) {
-        path = group.parent.name + ' / ' + path;
-        group = group.parent;
-    }
-
-    return path;
-};
 
 const ValueContainer = ({ children, ...props }) => (
   <components.ValueContainer {...props}>{children}</components.ValueContainer>
@@ -28,31 +18,22 @@ const Option = props => {
         <components.Option {...props}>
             <div className="d-flex">
                 <div className="mr-2">
-                    {props.data.type && props.data.type == 'user' ?
-                        <div className="s36 mr-2">
-                            <img src={"/users/" + props.data.value + "/picture?size=36"} className="rounded-circle"></img>
-                        </div>
-                        :
-                        <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s36 rounded mr-2"}>{props.data.name.charAt(0).toUpperCase()}</div>
-                    }
+                    <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s36 rounded mr-2"}>{props.data.label.charAt(0).toUpperCase()}</div>
                 </div>
                 <div className="d-flex flex-column">
-                    <div style={{lineHeight: 16 + 'px'}}>{getPath(props.data)} <span className="fw600">{props.data.name}</span></div>
+                    <div style={{lineHeight: 16 + 'px'}}>{props.data.fullyQualifiedName} <span className="fw600">{props.data.label}</span></div>
                     {props.data.owner != undefined &&
                         <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
                     }
                 </div>
                 <div className="d-flex flex-grow-1"></div>
-                {(props.data.type && props.data.type == 'group') &&
+                {(props.data.children && props.data.users) &&
                     <div className="d-flex align-items-center">
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Subgroups</Tooltip>}>
                             <div className="mr-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
                         </OverlayTrigger>
-                        {/* <OverlayTrigger placement="bottom" overlay={<Tooltip>Activities</Tooltip>}>
-                            <div className="mr-2"><SVG name="bookmark"></SVG> {props.data.activities.length}</div>
-                        </OverlayTrigger> */}
                         <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
-                            <div><SVG name="users"></SVG> {props.data.usersCount}</div>
+                            <div><SVG name="users"></SVG> {props.data.users.length}</div>
                         </OverlayTrigger>
                     </div>
                 }
@@ -63,16 +44,9 @@ const Option = props => {
 
 const SingleValue = ({ children, ...props }) => (
     <components.SingleValue {...props} className="d-flex align-items-center">
-        {props.data.type && props.data.type == 'user' ?
-            <div className="s24 mr-2">
-                <img src={"/users/" + props.data.value + "/picture?size=24"} className="rounded-circle"></img>
-            </div>
-            :
-            <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.name.charAt(0).toUpperCase()}</div>
-        }
-        {/* <div className={"avatar identicon bg-" + (props.data.id % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.name.charAt(0).toUpperCase()}</div> */}
+        <div className={"avatar identicon bg-" + (props.data.value % 8 + 1) + " s24 rounded mr-2"} style={{fontSize: 12 + 'px'}}>{props.data.label.charAt(0).toUpperCase()}</div>
         <div>
-            {getPath(props.data)} <span className="fw600">{props.data.name}</span>
+            {props.data.fullyQualifiedName} <span className="fw600">{props.data.label}</span>
         </div>
     </components.SingleValue>
 );
@@ -82,17 +56,24 @@ export default class GroupSelect extends Component {
         super(props);
     }
 
-    loadOptions = (inputValue) => {
-        return api.get(Routing.generate('api_groups'), {
-            params: {
-                search: inputValue,
-                context: 'group_explore'
-            }
-        })
+    loadOptions = (input) => {
+        return Remotelabz.groups.all(input, 10, 1, false)
         .then(response => {
-            return response.data.map(group => {
-                return {...group, value: group.id, label: group.name};
-            });
+            const data = []
+            console.log(response.data)
+            for (let group of response.data) {
+                group.fullyQualifiedName.pop()
+                group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
+                if (this.props.exclude && Array.isArray(this.props.exclude)) {
+                    if (this.props.exclude.indexOf(group.id) === -1) {
+                        data.push({...group, value: group.id, label: group.name});
+                    }
+                } else {
+                    data.push({...group, value: group.id, label: group.name});
+                }
+            }
+
+            return data;
         });
     }
 

@@ -48,7 +48,8 @@ fi
 COMPOSER=$(which composer || echo "$PHP $PWD/bin/composer")
 
 echo "Checking for new updates..."
-LATEST_TAG=$(git describe --tags)
+LATEST_REV=$(git rev-list --tags --max-count=1)
+LATEST_TAG=$(git describe --tags $LATEST_REV)
 # compare current version
 CURRENT_VERSION=$(cat $PWD/version | tr -d '\n')
 

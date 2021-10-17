@@ -67,6 +67,7 @@ class SecurityController extends AbstractController
         if ($lastUsername === null) $lastUsername = "";
         
         $version = file_get_contents($kernel->getProjectDir() . '/version');
+        
         $maintenance = (boolean) getenv('APP_MAINTENANCE');
         return $this->render('security/login.html.twig', 
         [

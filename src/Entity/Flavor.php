@@ -16,14 +16,14 @@ class Flavor
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"primary_key", "device"})
+     * @Serializer\Groups({"api_get_flavor", "api_get_device"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Serializer\Groups({"api_get_flavor", "export_lab", "api_get_device"})
      * @Assert\NotBlank
      */
     private $name;
@@ -31,7 +31,7 @@ class Flavor
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Serializer\Groups({"api_get_flavor", "export_lab", "worker"})
      * @Assert\NotBlank
      * @Assert\GreaterThan(
      *     value = 0
@@ -42,7 +42,7 @@ class Flavor
     /**
      * @ORM\Column(type="bigint")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api"})
+     * @Serializer\Groups({"api_get_flavor", "export_lab", "worker"})
      * @Assert\NotBlank
      * @Assert\GreaterThan(
      *     value = 0

@@ -55,7 +55,7 @@ class LabImporter
     public function export(Lab $lab)
     {
         $context = SerializationContext::create();
-        $context->setGroups(['lab', 'start_lab', 'stop_lab', 'instance_manager']);
+        $context->setGroups(['export_lab']);
         return $this->serializer->serialize($lab, 'json', $context);
     }
 
@@ -89,6 +89,8 @@ class LabImporter
         $lab
             ->setName($labJson['name'])
             ->setAuthor($this->tokenStorage->getToken()->getUser())
+            ->setDescription($labJson['description'])
+            ->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
         ;
 
@@ -190,6 +192,9 @@ class LabImporter
 
             $lab->addDevice($device);
             $this->entityManager->persist($device);
+
+            $editorData->setDevice($device);
+            $this->entityManager->persist($editorData);
         }
 
         $this->entityManager->persist($lab);

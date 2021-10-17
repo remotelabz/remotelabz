@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% set filter = filter|default('all') %}
-{% if filter not in ['all', 'labs', 'devices', 'networkInterfaces'] %}{% set filter = 'all' %}{% endif %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
 
 {% block wrapper %}
     <div class="top-panel">
@@ -24,22 +24,13 @@
             <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
             <li {% if filter == "all" %}class="active"{% endif %}>
                 <a href="?filter=all">
-                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>
+                    {#<span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>#}
+                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length}}</span>
                 </a>
             </li>
             <li {% if filter == "labs" %}class="active"{% endif %}>
                 <a href="?filter=labs">
                     <span>Labs</span> <span class="badge badge-pill">{{ labInstances|length }}</span>
-                </a>
-            </li>
-            <li {% if filter == "devices" %}class="active"{% endif %}>
-                <a href="?filter=devices">
-                    <span>Devices</span> <span class="badge badge-pill">{{ deviceInstances|length }}</span>
-                </a>
-            </li>
-            <li {% if filter == "networkInterfaces" %}class="active"{% endif %}>
-                <a href="?filter=networkInterfaces">
-                    <span>Network Interfaces</span> <span class="badge badge-pill">{{ networkInterfaceInstances|length }}</span>
                 </a>
             </li>
         </ul>
@@ -56,7 +47,9 @@
     {% if filter == "all" or filter == "labs" %}
         {#- Lab instances -#}
 
-        <h4 class="p-3 border-bottom">Lab instances</h4>
+        <h4 class="p-3 border-bottom">Lab instances
+        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+            {{ svg('question') }} </span>
         {% if labInstances is empty %}
         <div class="wrapper align-items-center p-3 border-bottom lab-item">
             <span class="lab-item-name">
@@ -64,7 +57,10 @@
             </span>
         </div>
         {% endif %}
-        {% for instance in labInstances %}
+        {% for element in labInstances %}
+        {#{{dump(element.instance.id)}}#}
+            
+        {#TODO: #666 Create a component for this element to manage all the instance in React and avoid to refresh the page when we have to delete an instance or to detect a new instance #} 
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             {# <div class="float-right">
                 {% if not instance.state == 'started' %}
@@ -78,14 +74,23 @@
                 <a href="{{ path('stop_lab', {'id': instance.lab.id}) }}" class="btn btn-danger" role="button" title="Stop lab" data-toggle="tooltip" data-placement="top">
                     {{ svg('stop') }}
                 </a>
-                {% endif %} 
+                {% endif %}
             </div> #}
 
             <div>
                 <div>
-                    <a href="{{- path('show_lab', {'id': instance.lab.id}) -}}" class="lab-item-name" title="{{ instance.lab.name }}" data-toggle="tooltip" data-placement="top">
-                        {{- instance.uuid -}}
+                     <a href="{{- path('show_lab', {'id': element.instance.id}) -}}" class="lab-item-name" title="{{ element.instance.lab.name }}" data-toggle="tooltip" data-placement="top">
                     </a>
+                    Lab&nbsp; {{- element.instance.lab.name -}}&nbsp;started by
+                    {% if not element is null %}
+                    {# In some cases, one instance can stay up but it is empty. It's an issue to solve #}
+                        {% if element.instance.isOwnedByUser() %}
+                            user {{ element.instance.user.name }}
+                        {% else %}
+                            group {{ element.instance.group.name }}
+                        {% endif %}
+                    {% endif %}<br/>
+                    {# UUID:&nbsp; {{- element.instance.uuid -}} #}
                 </div>
                 {# <span>
                     {% if instance.isStarted %}
@@ -96,22 +101,15 @@
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
                 </span> #}
-                <p class="text-muted d-inline">
-                    {% if not instance is null %} {# In some cases, one instance can stay up but it is empty. It's an issue to solve #}
-                        {% if instance.isOwnedByUser() %}
-                            Owned by user {{ instance.user.name }}
-                        {% else %}
-                            Owner by group {{ instance.group.name }}
-                        {% endif %}
-                    {% endif %}
-                </p>
+                
+                <div class="col">{{ react_component('AllInstancesManager', {'props': element.props}) }}</div>
             </div>
         </div>
         {% endfor %}
     {% endif %}
 
-    {% if filter == "all" or filter == "devices" %}
-        {#- Devices instances -#}
+    {# {% if filter == "all" or filter == "devices" %}
+        
 
         <h4 class="p-3 border-bottom">Device instances</h4>
         {% if deviceInstances is empty %}
@@ -132,6 +130,7 @@
                 <span>
                     {% if instance.isStarted %}
                         <label class="badge badge-success">Started</label>
+                       
                     {% else %}
                         <label class="badge badge-danger">Not started</label>
                     {% endif %}
@@ -150,7 +149,7 @@
     {% endif %}
 
     {% if filter == "all" or filter == "networkInterfaces" %}
-        {#- Network interface instances -#}
+        
 
         <h4 class="p-3 border-bottom">Network interface instances</h4>
         {% if networkInterfaceInstances is empty %}
@@ -162,14 +161,6 @@
         {% endif %}
         {% for instance in networkInterfaceInstances %}
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
-            <div class="float-right">
-                {# {% if not instance.state == 'started' %}
-                <a href="{{ path('delete_instance', {'id': instance.id, 'type': 'network-interface'}) }}" class="btn btn-danger" role="button" title="Delete instance" data-toggle="tooltip" data-placement="top">
-                        {{ svg('close') }}
-                </a>
-                {% endif %} #}
-            </div>
-
             <div>
                 <div>
                     <a href="{{- path('network_interfaces', {'id': instance.networkInterface.id}) -}}" class="lab-item-name">
@@ -189,6 +180,7 @@
         </div>
         {% endfor %}
     {% endif %}
+    #}
     </div>
     
 {% endblock %}

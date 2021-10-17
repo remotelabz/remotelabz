@@ -55,6 +55,9 @@ class InstanceManager
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
+    protected $workerSerializationGroups = [
+        'worker'
+    ];
 
     public function __construct(
         LoggerInterface $logger,
@@ -131,7 +134,7 @@ class InstanceManager
         $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('start_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE)
@@ -149,7 +152,7 @@ class InstanceManager
      */
     public function delete(LabInstance $labInstance)
     {
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
         $labInstance->setState(InstanceStateMessage::STATE_DELETING);
         $this->entityManager->persist($labInstance);
@@ -162,7 +165,7 @@ class InstanceManager
     /**
      * Start a device instance.
      *
-     * @return void
+     * @return string The lab instance JSON string
      */
     public function start(DeviceInstance $deviceInstance)
     {
@@ -180,13 +183,16 @@ class InstanceManager
         $deviceInstance->setState(InstanceState::STARTING);
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('start_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+        //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
 
         $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
         );
+
+        return $labJson;
     }
 
     /**
@@ -202,7 +208,7 @@ class InstanceManager
 
         $this->logger->debug('Stopping device instance with UUID '.$uuid.'.');
 
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
         $this->logger->info('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
@@ -237,24 +243,24 @@ class InstanceManager
         $this->entityManager->persist($newDevice);
         $this->entityManager->flush();
 
-        $context = SerializationContext::create()->setGroups('stop_lab');
+        $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-        
+        $this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
+
         $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-        $tmp['new_os_name'] = $name;
+        $tmp['new_os_name']=$name;
         $tmp['new_os_imagename'] = $imageName;
         $tmp['newOS_id'] = $newOS->getId();
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $this->logger->info('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
+        $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
         );
 
-        
-
     }
+
 
     public function setStopped(DeviceInstance $deviceInstance)
     {

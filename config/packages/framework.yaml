@@ -11,7 +11,6 @@ framework:
         handler_id: null
         cookie_secure: auto
         cookie_samesite: lax
-
     #esi: true
     #fragments: true
     php_errors:
