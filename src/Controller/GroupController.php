@@ -594,7 +594,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @Route("/groups/{slug}/labs", name="dashboard_add_lab_group", methods="GET",
+     * @Route("/groups/{slug}/group_labs", name="dashboard_add_lab_group", methods="GET",
      * requirements={"slug"="[\w\-\/]+"})
      *
      */

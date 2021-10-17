@@ -56,7 +56,7 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
         if (in_array($kernel->getEnvironment(), ["dev", "test"])) {
             $faker = RandomDataFactory::create('fr_FR');
 
-            for ($i = 0; $i < 10; $i++) {
+            for ($i = 0; $i < 5; $i++) {
                 $user = new User();
 
                 $user->setFirstName($faker->firstName)

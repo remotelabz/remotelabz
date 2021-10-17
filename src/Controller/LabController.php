@@ -50,8 +50,8 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Asset\Package;
-use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 
 class LabController extends Controller
@@ -245,14 +245,25 @@ class LabController extends Controller
             $name .= ' (' . $untitledLabsCount . ')';
         }
 
-        
-        $package = new Package(new EmptyVersionStrategy());
-
         $lab = new Lab();
         $lab->setName($name)
             ->setAuthor($this->getUser());
 
-        $this->logger->debug($package->getUrl('/public/images/logo/nopic.jpg'));
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+        $filesystem = new Filesystem();
+            try {
+                $src=$this->getParameter('directory.public.images').'/logo/nopic.jpg';
+                $dst=$this->getParameter('directory.public.upload.lab.banner').'/'.$lab->getId().'/nopic.jpg';
+            $filesystem->copy($src,$dst);
+            $this->logger->debug("Copy from ".$src." to ".$dst);
+            $lab->setBanner('nopic.jpg');
+            }
+            catch (IOExceptionInterface $exception) {
+                $this->logger->error("An error occurred while creating your directory at ".$exception->getPath());
+            }
 
         foreach($this->getUser()->getGroups() as $group) {
             $group->getGroup()->addLab($lab);
@@ -260,9 +271,9 @@ class LabController extends Controller
 
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
 
-        $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
         $entityManager->flush();
+      
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
@@ -454,9 +465,12 @@ class LabController extends Controller
         }
 
         $pictureFile = $request->files->get('banner');
+        
+        
         if ($pictureFile) {
             $fileUploader->setLab($lab);
             $pictureFileName = $fileUploader->upload($pictureFile);
+            //$this->logger->debug("Add banner with picture file: ".$pictureFileName);
             $lab->setBanner($pictureFileName);
 
             $entityManager = $this->getDoctrine()->getManager();

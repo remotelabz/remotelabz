@@ -61,8 +61,8 @@ class GroupType extends AbstractType
                     'class' => 'd-none'
                 ],
             ])
-            ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class)
+            ->add('submit', SubmitType::class)
         ;
     }
 

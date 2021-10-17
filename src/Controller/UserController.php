@@ -10,6 +10,7 @@ use App\Utils\Gravatar;
 use App\Form\UserProfileType;
 use App\Form\UserPasswordType;
 use App\Repository\UserRepository;
+use App\Repository\GroupRepository;
 use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use JMS\Serializer\SerializerInterface;
 use Doctrine\Common\Collections\Criteria;
@@ -45,12 +46,14 @@ class UserController extends Controller
     public function __construct(
         UserPasswordEncoderInterface $passwordEncoder,
         UserRepository $userRepository,
+        GroupRepository $groupRepository,
         \Swift_Mailer $mailer,
         SerializerInterface $serializer,
         LoggerInterface $logger)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
+        $this->groupRepository = $groupRepository;
         $this->mailer = $mailer;
         $this->serializer = $serializer;
         $this->logger = $logger;
@@ -209,6 +212,11 @@ class UserController extends Controller
             $user = $userForm->getData();
 
             $user->setRoles([$userForm->get('roles')->getData()]);
+            
+            $default_group=$this->groupRepository->findOneByName('Default group');
+
+            $default_group->addUser($user);
+                
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
