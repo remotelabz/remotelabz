@@ -265,10 +265,12 @@ class LabController extends Controller
                 $this->logger->error("An error occurred while creating your directory at ".$exception->getPath());
             }
 
-        foreach($this->getUser()->getGroups() as $group) {
-            $group->getGroup()->addLab($lab);
+        /* foreach($this->getUser()->getGroups() as $group) {
+            if ($group->getGroup()->getName() !== "Default group")
+                $group->getGroup()->addLab($lab);
         }
-
+        */
+        
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
 
         $entityManager->persist($lab);
