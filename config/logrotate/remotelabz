@@ -1,0 +1,10 @@
+/opt/remotelabz/var/log/*.log {
+        daily
+        missingok
+        rotate 52
+        size 10M
+        compress
+        notifempty
+        create 664 remotelabz www-data
+        su remotelabz www-data
+}
