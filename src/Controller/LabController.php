@@ -274,6 +274,11 @@ class LabController extends Controller
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
 
         $entityManager->persist($lab);
+        
+        // Add Service container LXC for each new lab
+        // This creation is transparent 
+        // TODO: Add this device in the lab editor
+
         $entityManager->flush();
       
 
