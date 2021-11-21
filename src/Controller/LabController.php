@@ -32,9 +32,11 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
 use App\Repository\DeviceInstanceRepository;
+use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
+use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -67,12 +69,16 @@ class LabController extends Controller
 
     /** @var LabRepository $labRepository */
     private $labRepository;
+    private $operatingSystemRepository;
+    private $flavorRepository;
 
     private $serializer;
 
     public function __construct(
         LoggerInterface $logger,
         LabRepository $labRepository,
+        operatingSystemRepository $operatingSystemRepository,
+        FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
@@ -80,6 +86,8 @@ class LabController extends Controller
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
+        $this->operatingSystemRepository=$operatingSystemRepository;
+        $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
     }
 
@@ -274,8 +282,28 @@ class LabController extends Controller
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
 
         $entityManager->persist($lab);
+        
+        // Add Service container LXC for each new lab
+        // This creation is transparent 
+        // TODO: Add this device in the lab editor
+        $svc_device=new Device();
+        $svc_device->setName('svc');
+        $svc_device->setIsTemplate(true);
+        $svc_device->setType("container");
+        // TODO: find an operating system to the svc service but not used
+        $operating=$this->operatingSystemRepository->findAll();
+        $svc_device->setOperatingSystem($operating[0]);
+
+        // TODO: same than Operating System, it's not used for container
+        $flavor=$this->flavorRepository->findAll();
+        $svc_device->setFlavor($flavor[0]);
+
+        $svc_device->setHypervisor('lxc');
+        $svc_device->setVnc(false);
+
+        $entityManager->persist($svc_device);
+        $lab->addDevice($svc_device);
         $entityManager->flush();
-      
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);

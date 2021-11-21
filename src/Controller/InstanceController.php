@@ -205,8 +205,7 @@ class InstanceController extends Controller
      */
     public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
-        // TODO:
-        //  - Check if instance come from Sandbox
+        // TODO: Check if instance come from Sandbox
         $name = $request->query->get('name', '');
 
         if($name == '') {
