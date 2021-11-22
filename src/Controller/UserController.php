@@ -332,26 +332,40 @@ class UserController extends Controller
     public function deleteAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
-
-        if (!$user) {
-            throw new NotFoundHttpException('This user does not exist.');
-        } elseif ($user == $this->getUser()) {
-            throw new UnauthorizedHttpException('You cannot delete your own account.');
-        } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            throw new UnauthorizedHttpException('You cannot delete root account.');
-        } elseif ($user->getInstances()->count() > 0) {
-            throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($user);
-            $em->flush();
+        try {
+            if (!$user) {
+                $this->addFlash('danger', "This user does not exist.");
+                throw new NotFoundHttpException('This user does not exist.');
+            } elseif ($user == $this->getUser()) {
+                $this->addFlash('danger', "You cannot delete your own account.");
+                throw new UnauthorizedHttpException('You cannot delete your own account.');
+            } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+                $this->addFlash('danger', "You cannot delete root account.");
+                throw new UnauthorizedHttpException('You cannot delete root account.');
+            } elseif ($user->getInstances()->count() > 0) {
+                $this->addFlash('danger', "You cannot delete an user who still has instances. Please stop them and try again.");
+                throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
+            } elseif ($user->getGroups()->count() > 0) {
+                $this->addFlash('danger', "You cannot delete a user which is in a group");
+                return $this->redirectToRoute('users');
+            }
+            
+            else {
+                $em = $this->getDoctrine()->getManager();
+                $em->remove($user);
+                $em->flush();
+                $this->addFlash('success', $user->getName() . "'s account has been deleted.");
+            }
+        }
+        catch (Exception $e) {
+            $this->logger->debug("Exception".$e);
+            return $this->redirectToRoute('users');
         }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json();
         }
 
-        $this->addFlash('success', $user->getName() . "'s account has been deleted.");
 
         return $this->redirectToRoute('users');
     }
