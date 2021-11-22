@@ -63,7 +63,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
             switch ($instance->getState()) {
                 case InstanceStateMessage::STATE_STARTING:
-                    $instance->setState(InstanceStateMessage::STATE_STOPPED);
+                    $instance->setState(InstanceStateMessage::STATE_ERROR);
                     break;
 
                 case InstanceStateMessage::STATE_STOPPING:
