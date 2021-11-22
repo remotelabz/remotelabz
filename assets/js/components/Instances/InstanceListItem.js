@@ -122,6 +122,12 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     let controls;
 
     switch (instance.state) {
+        case 'error':
+            controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
+                <SVG name="play" />
+            </Button>);
+            break;
+
         case 'stopped':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
                 <SVG name="play" />
