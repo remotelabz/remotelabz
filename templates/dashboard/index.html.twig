@@ -11,7 +11,7 @@
 
 {% block jumbotron %}
 <div class="container">
-    <div class="float-left"><img src="/profile/picture?size=96" alt="profile-img" class="rounded-circle mr-4"></div>
+    <div class="float-left"><img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle mr-4"></div>
     <div>
         <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
         <p class="lead">Welcome to RemoteLabz!</p>
@@ -70,7 +70,7 @@
                 </div>
                 {% else %}
                     <div class="d-flex justify-content-center">
-                       <div class="jumbotron-fluid">You don't have access to any lab yet in this group. Come back later!</div>
+                       <div class="jumbotron-fluid">You don't have access to any lab yet in this group.</div>
                     </div>
                 {% endif %}
             

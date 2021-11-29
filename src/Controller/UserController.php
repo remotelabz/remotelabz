@@ -31,6 +31,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Psr\Log\LoggerInterface;
+use App\Service\Network\NetworkManager;
 
 
 class UserController extends Controller
@@ -358,7 +359,7 @@ class UserController extends Controller
             }
         }
         catch (Exception $e) {
-            $this->logger->debug("Exception".$e);
+            $this->logger->error("deleteAction Exception: ".$e);
             return $this->redirectToRoute('users');
         }
 
@@ -371,8 +372,8 @@ class UserController extends Controller
     }
 
     /**
-     * Format du tableau :
-     * Nom,Prénom,Mail,Pass
+     * The CSV must be in the following format :
+     * Name, firstname,email,password
      * @return array The number of elements added
      */
     public function createUserFromCSV($file)
@@ -523,9 +524,10 @@ class UserController extends Controller
     public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
-        $size = $request->query->get('size', 128);
+        $size = $request->query->get('size', 96);
 
         $profilePicture = $user->getProfilePicture();
+        $response="";
 
         if ($profilePicture && is_file($profilePicture)) {
             $image = file_get_contents($profilePicture);
@@ -533,26 +535,36 @@ class UserController extends Controller
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
             $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
-
+            $this->logger->debug("function getProfilePictureAction profilePicture ok");
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
-
-            return $response;
         } else {
-            //TODO #661 #644
             $url=Gravatar::getGravatar($user->getEmail(), $size);
+            $picture=""; $file="";
             
-            try {
-                $picture = file_get_contents($url);
-
-                return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+            if (NetworkManager::checkInternet()){
+                try {
+                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '4.0']] ));
+                }
+                catch (Exception $e){
+                    $this->logger->debug("exception");
+                    $this->logger->error("No access to www.gravatar.com");
+                    $this->logger->error($e->getMessage());
+                    $this->logger->debug("function getProfilePictureAction profilePicture ko and exception");
+                }
             }
-            catch (Exception $e){
-                $this->logger->error("Impossible to connect to ".$url);
-                $this->logger->error($e->getMessage());
+            else
+            {
+                $this->logger->error("No internet access");
+                $fileName = $this->getParameter('image_default_profile');
+                $file=$this->getParameter('directory.public.images').'/'.$fileName;
+                $picture = file_get_contents($file);
             }
+            $response=new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
+        $this->logger->debug("No profile picture saved in user profile");
+        return $response;
     }
 
     /**
@@ -566,7 +578,7 @@ class UserController extends Controller
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
-        // TODO #661 #655 : error app.ERROR: Call to a member function getProfilePicture() on null
+        // TODO #661 : error app.ERROR: Call to a member function getProfilePicture() on null
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -590,16 +602,20 @@ class UserController extends Controller
             return $response;
         } else {
         
-
+        $picture="";
         $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
             $picture = file_get_contents($url);
-            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
             }
         catch (Exception $e){
-            $this->logger->error("Impossible to connect to ".$url);
+            $this->logger->error("getUserProfilePictureAction: Impossible to connect to ".$url);
             $this->logger->error($e->getMessage());
-            }
+            $fileName = $this->getParameter('image_default_profile');
+            $file=$this->getParameter('directory.public.images').'/'.$fileName;
+            $picture=file_get_contents($file);
+        }
+        $this->logger->debug("fonction getUserProfilePictureAction");
+        return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
 
