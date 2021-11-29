@@ -7,6 +7,8 @@ use JMS\Serializer\SerializationContext;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
+use App\Service\Network\NetworkManager;
+
 
 /**
  * Provides custom JSON handling using JMSSerializer.

@@ -14,6 +14,7 @@ parameters:
     directory.public.upload.lab: '%directory.public.upload%/lab'
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
     image_directory: '%kernel.project_dir%/public/uploads/images'
+    image_default_profile: 'Circle-icons-profile.png'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
     api_key_cookie_name: 'bearer'

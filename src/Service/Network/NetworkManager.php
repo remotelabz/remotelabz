@@ -2,6 +2,7 @@
 
 namespace App\Service\Network;
 
+use Exception;
 use App\Repository\NetworkRepository;
 use Remotelabz\NetworkBundle\Entity\IP;
 use Remotelabz\NetworkBundle\Entity\Network;
@@ -51,7 +52,26 @@ class NetworkManager
                 $selected = $next;
             }
         }
-
         return $selected;
     }
+
+    public function checkInternet()
+    {
+        $response="";
+            try {
+                //Test if internet access
+                // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
+                $fp= stream_socket_client("tcp://8.8.8.8:80",$errno,$errstr,2);
+            
+                if ($fp) // If no exception
+                {
+                    $response=true;
+                }
+            }
+            catch (Exception $e){
+                $response=false;
+            }
+        return $response;
+    }
+
 }
