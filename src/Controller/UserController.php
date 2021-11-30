@@ -31,8 +31,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Psr\Log\LoggerInterface;
-use App\Service\Network\NetworkManager;
-
 
 class UserController extends Controller
 {
@@ -50,7 +48,8 @@ class UserController extends Controller
         GroupRepository $groupRepository,
         \Swift_Mailer $mailer,
         SerializerInterface $serializer,
-        LoggerInterface $logger)
+        LoggerInterface $logger,
+        string $ip_check_internet)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
@@ -58,7 +57,7 @@ class UserController extends Controller
         $this->mailer = $mailer;
         $this->serializer = $serializer;
         $this->logger = $logger;
-        
+        $this->ip_check_internet = $ip_check_internet;
     }
 
     /**
@@ -542,21 +541,19 @@ class UserController extends Controller
         } else {
             $url=Gravatar::getGravatar($user->getEmail(), $size);
             $picture=""; $file="";
-            
-            if (NetworkManager::checkInternet()){
+
+            if ($this->checkInternet()){
                 try {
                     $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '4.0']] ));
                 }
                 catch (Exception $e){
                     $this->logger->debug("exception");
-                    $this->logger->error("No access to www.gravatar.com");
+                    $this->logger->error("No access to internet");
                     $this->logger->error($e->getMessage());
-                    $this->logger->debug("function getProfilePictureAction profilePicture ko and exception");
                 }
             }
             else
             {
-                $this->logger->error("No internet access");
                 $fileName = $this->getParameter('image_default_profile');
                 $file=$this->getParameter('directory.public.images').'/'.$fileName;
                 $picture = file_get_contents($file);
@@ -703,5 +700,25 @@ class UserController extends Controller
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
+    }
+
+    function checkInternet()
+    {
+        $response="";
+            try {
+                //Test if internet access
+                // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
+                $fp= stream_socket_client("tcp://".$this->ip_check_internet.":80",$errno,$errstr,2);
+            
+                if ($fp) // If no exception
+                {
+                    $response=true;
+                }
+            }
+            catch (Exception $e){
+                $response=false;
+            }
+        return $response;
+        //return $this->ip_check_internet;
     }
 }

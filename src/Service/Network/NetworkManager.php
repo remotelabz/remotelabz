@@ -55,23 +55,4 @@ class NetworkManager
         return $selected;
     }
 
-    public function checkInternet()
-    {
-        $response="";
-            try {
-                //Test if internet access
-                // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
-                $fp= stream_socket_client("tcp://8.8.8.8:80",$errno,$errstr,2);
-            
-                if ($fp) // If no exception
-                {
-                    $response=true;
-                }
-            }
-            catch (Exception $e){
-                $response=false;
-            }
-        return $response;
-    }
-
 }

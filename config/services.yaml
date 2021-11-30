@@ -44,6 +44,8 @@ parameters:
     app.network.base_network_netmask: '%env(resolve:BASE_NETWORK_NETMASK)%'
     app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
 
+    app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
+
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
     app.ssl.ca.key.passphrase: '%env(resolve:SSL_CA_KEY_PASSPHRASE)%'
@@ -183,6 +185,10 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+
+    App\Controller\UserController:
+        arguments:
+            $ip_check_internet: '%app.user.ip_check_internet%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
