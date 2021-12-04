@@ -719,6 +719,5 @@ class UserController extends Controller
                 $response=false;
             }
         return $response;
-        //return $this->ip_check_internet;
     }
 }

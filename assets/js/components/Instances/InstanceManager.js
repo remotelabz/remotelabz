@@ -106,7 +106,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         setLoadingInstanceState(true)
 
         try {
-            const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type)
+            const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false)
             setLoadingInstanceState(false)
             setLabInstance(response.data)
         } catch (error) {

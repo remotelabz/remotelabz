@@ -41,6 +41,19 @@ class DeviceRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByNameByTemplate($name, $template = true)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.isTemplate = :val')
+            ->andWhere('l.name = :name')
+            ->setParameter('val', $template ? 1 : 0)
+            ->setParameter('name', $name)
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     // /**
     //  * @return Device[] Returns an array of Device objects
     //  */
