@@ -140,7 +140,6 @@ class InstanceController extends Controller
      */
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
-        $this->logger->debug("Request in createAction: ".$request);
         $labUuid = $request->request->get('lab');
         $instancierUuid = $request->request->get('instancier');
         $instancierType = $request->request->get('instancierType');
@@ -159,9 +158,12 @@ class InstanceController extends Controller
         /** @var InstancierInterface $instancier */
         $instancier = $repository->findOneBy(['uuid' => $instancierUuid]);
         $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
-
+        //$this->logger->debug("Request in createAction: ".$request->headers->get('referer'));
+        /*foreach ($request->headers as $key => $part) {
+            $this->logger->debug("Key: ".$key);
+        }*/
         try {
-            $this->logger->debug("Lab creation: ".$lab->getName());
+            $this->logger->debug("Lab instance creation: ".$lab->getName());
             $instance = $instanceManager->create($lab, $instancier);
             $this->logger->debug("Lab instance created: ".$instance->getUuid());
         } catch (Exception $e) {
