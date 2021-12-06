@@ -380,6 +380,12 @@ class LabController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
+            $this->logger->debug("hypervisor device: ".$device->getHypervisor());
+            if ($device->getHypervisor() == 'lxc') {
+                $device->setType('container');
+            }
+            else 
+                $device->setType('vm');
             $entityManager = $this->getDoctrine()->getManager();
             $lab = $this->labRepository->find($id);
             $lab->setLastUpdated(new \DateTime());

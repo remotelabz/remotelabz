@@ -79,7 +79,7 @@ class DeviceSandboxController extends Controller
      */
     public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {
-        $this->logger->debug("Request in DeviceSandboxCtrl viewAction: ".$request);
+        //$this->logger->debug("Request in DeviceSandboxCtrl viewAction: ".$request);
 
         $lab = $labRepository->find($id);
 
@@ -104,7 +104,7 @@ class DeviceSandboxController extends Controller
             'lab' => $lab,
             'isSandbox' => true
         ];
-        $this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
+        //$this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,

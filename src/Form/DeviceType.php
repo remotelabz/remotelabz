@@ -14,6 +14,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class DeviceType extends AbstractType
 {
@@ -38,11 +39,11 @@ class DeviceType extends AbstractType
             //     'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
             //     'empty_data' => 'vm'
             // ])
-            // ->add('hypervisor', ChoiceType::class, [
-            //     'choices' => ['QEMU' => 'qemu'],
-            //     'help' => 'Hypervisor used. Only QEMU is supported for now.',
-            //     'empty_data' => 'qemu'
-            // ])
+            ->add('hypervisor', ChoiceType::class, [
+                 'choices' => ['QEMU' => 'qemu', 'LXC' => 'lxc'],
+                 'help' => 'Hypervisor used. Only QEMU is supported for now.',
+                 'empty_data' => 'qemu'
+             ])
           /*  ->add('labs', EntityType::class, [
                 'class' => Lab::class,
                 'choice_label' => 'name',
