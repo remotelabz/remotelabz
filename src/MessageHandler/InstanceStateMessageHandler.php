@@ -62,6 +62,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         // if an error happened, set device instance in its previous state
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
             $this->logger->debug("Error state received:". $message->getUuid());
+            $this->logger->debug('Show options of message received : ', $message->getOptions());
+
+            
             switch ($instance->getState()) {
                 case InstanceStateMessage::STATE_STARTING:
                     $instance->setState(InstanceStateMessage::STATE_ERROR);
@@ -85,7 +88,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                 case InstanceStateMessage::STATE_EXPORTING:
                     $instance->setState(InstanceStateMessage::STATE_ERROR);
-                    $this->logger->debug('Error received during exporting');
+                    $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
 
                     /* Remove newdevice template and OS created
                     As the worker doesn't send message with some information like name chosen by the user for the new device template created,
@@ -106,9 +109,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     //$message->getUuid();
                     // Test using options
                     // For transition, all uuid are copy in options
-                    $this->logger->debug('Show options of message received : '. $message->getOptions());
-
-                    $this->instanceManager->deleteDev($message->getUuid());
+                    $this->instanceManager->deleteDev($message->getUuid(),$message->getOptions());
                     break;
 
                 default:

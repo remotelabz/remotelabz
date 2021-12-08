@@ -331,26 +331,24 @@ class InstanceManager
      *
      * @return void
      */
-    public function deleteDev(string $stringcomposite)
+    public function deleteDev(string $uuid, array $options = null )
     {
         
         $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');
         
-        $return_array = explode(",",$stringcomposite);
-        $context = SerializationContext::create()->setGroups('del_dev');
+        /*$context = SerializationContext::create()->setGroups('del_dev');
         $labJson = $this->serializer->serialize($return_array, 'json', $context);
 
         $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
-
+*/
         //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
+        if ($options) {
+        $os = $this->OperatingSystemRepository->find($options["newOS_id"]);
+        $device = $this->DeviceRepository->find($options["newDevice_id"]);
         
-        $os = $this->OperatingSystemRepository->find($return_array[2]);
-        $device = $this->DeviceRepository->find($return_array[3]);
-        
-
         $this->entityManager->remove($os);
         $this->entityManager->remove($device);
         $this->entityManager->flush();
-        
+        }
     }
 }
