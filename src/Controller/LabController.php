@@ -31,7 +31,6 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
-use App\Repository\DeviceInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
@@ -72,7 +71,6 @@ class LabController extends Controller
     private $deviceRepository;
     private $operatingSystemRepository;
     private $flavorRepository;
-
     private $serializer;
 
     public function __construct(
@@ -289,7 +287,7 @@ class LabController extends Controller
 
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
         $entityManager->persist($lab);
-//        $this->logger->debug($request);
+        //$this->logger->debug($request);
         
         // Check if the creation is from export process or not
         $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
@@ -299,7 +297,7 @@ class LabController extends Controller
         $data['from_export']=$fromexport;
         $labJson=json_encode($data);
         */
-        if (!$from_export) {
+        /* if (!$from_export) {
             // Add Service container LXC for each new lab
             // This creation is transparent
             // TODO: protect the name svc because it's become now an internal name
@@ -347,10 +345,10 @@ class LabController extends Controller
             }
 
             $entityManager->flush();        
-        }
+        } 
         else
             $this->logger->debug("Creation from export process - not svc creation");
-
+        */
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
@@ -390,6 +388,7 @@ class LabController extends Controller
             $lab = $this->labRepository->find($id);
             $lab->setLastUpdated(new \DateTime());
 
+            
             $entityManager->persist($device);
             $lab->addDevice($device);
             $entityManager->persist($lab);
@@ -458,25 +457,34 @@ class LabController extends Controller
      * 
      * @Rest\Delete("/api/labs/{id<\d+>}", name="api_delete_lab")
      */
-    public function deleteAction(Request $request, int $id, UserInterface $user)
+    public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)
     {
-        if (!$lab = $this->labRepository->find($id)) {
-            throw new NotFoundHttpException();
+
+        if ($labInstanceRepository->findByLab($this->labRepository->find($id))){
+            $this->logger->error('This lab is used by an instance');
+            return $this->redirectToRoute('labs', [
+                'id' => $id
+            ]);
+        } 
+        else {
+
+            if (!$lab = $this->labRepository->find($id)) {
+                throw new NotFoundHttpException();
+            }
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->remove($lab);
+            $entityManager->flush();
+
+            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
+
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json();
+            }
+
+            $this->addFlash('success','"'. $lab->getName() . '" has been deleted.');
+            return $this->redirectToRoute('labs');
         }
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->remove($lab);
-        $entityManager->flush();
-
-        $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json();
-        }
-
-        $this->addFlash('success\"', $lab->getName() . '\" has been deleted.');
-
-        return $this->redirectToRoute('labs');
     }
 
     /**

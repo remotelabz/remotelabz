@@ -115,7 +115,8 @@ class DeviceSandboxController extends Controller
                 $instanceManagerProps,
                 'json',
                 //SerializationContext::create()->setGroups(['api_get_device_instance','api_get_lab_instance', 'api_get_user', 'group_details', 'instances'])
-                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+                //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance','sandbox'])
+                SerializationContext::create()->setGroups(['sandbox'])
             )
         ]);
     }

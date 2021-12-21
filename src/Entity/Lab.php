@@ -19,13 +19,13 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab"})
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 
@@ -47,7 +47,7 @@ class Lab implements InstanciableInterface
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
      * ))
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "export_lab","sandbox"})
      */
     private $devices;
 
@@ -59,7 +59,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance","sandbox"})
      */
     private $uuid;
 

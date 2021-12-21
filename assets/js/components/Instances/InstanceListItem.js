@@ -20,6 +20,8 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' })
     
+    //console.log("instanceListItem");
+    //console.log(instance.device.name);
    
     useEffect(() => {
         fetchLogs()

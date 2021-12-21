@@ -258,7 +258,6 @@ class InstanceManager
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
         );
-
     }
 
 
@@ -318,6 +317,8 @@ class InstanceManager
         $newDevice->setBrand($device->getBrand());
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
+        $newDevice->setType($device->getType());
+        $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
 
@@ -325,7 +326,8 @@ class InstanceManager
     }
 
     /**
-     * Delete a device form a DeviceInstance.
+     * Delete a device form a DeviceInstance, with its os defined in options.
+     * This function is used when an error occurs in export process
      *
      * @param DeviceInstance $device the device to delete
      *
@@ -342,7 +344,9 @@ class InstanceManager
         $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
 */
         //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
+        
         if ($options) {
+        $this->logger->debug('Options received ', $options);
         $os = $this->OperatingSystemRepository->find($options["newOS_id"]);
         $device = $this->DeviceRepository->find($options["newDevice_id"]);
         

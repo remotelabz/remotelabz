@@ -158,7 +158,7 @@ class InstanceController extends Controller
         /** @var InstancierInterface $instancier */
         $instancier = $repository->findOneBy(['uuid' => $instancierUuid]);
         $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
-        //$this->logger->debug("Request in createAction: ".$request->headers->get('referer'));
+        
         /*foreach ($request->headers as $key => $part) {
             $this->logger->debug("Key: ".$key);
         }*/

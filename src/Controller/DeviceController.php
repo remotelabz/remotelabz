@@ -142,7 +142,7 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-
+        $this->logger->info("Device modification asked by user ");
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
@@ -157,6 +157,7 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
+            
             $device = $deviceForm->getData();
             $device->setLastUpdated(new DateTime());
             $entityManager = $this->getDoctrine()->getManager();
@@ -170,7 +171,10 @@ class DeviceController extends Controller
             $this->addFlash('success', 'Device has been updated.');
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
-        }
+        } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
+            $this->logger->info("Device modification submitted");
+            else
+            $this->logger->info("Device modification aborted, form not valid");
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
@@ -240,6 +244,11 @@ class DeviceController extends Controller
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             $entityManager->remove($networkInterface);
+        }
+
+// TODO : if hypervisor === LXC -> send a delete msg to worker to delete the container
+        if ($device->getHypervisor() === "LXC") {
+            $this->logger->info("Delete the device ".$device->getId());
         }
 
         $entityManager->flush();

@@ -20,19 +20,19 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance"})
+     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance", "worker","sandbox"})
      */
     protected $lab;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance", "worker","sandbox"})
      */
     private $deviceInstances;
 
@@ -59,6 +59,12 @@ class LabInstance extends Instance
      * @Serializer\Groups({"api_get_lab_instance", "worker"})
      */
     private $state;
+
+
+    //TODO add hypervisor IP to manage cluster of hypervisor
+    //@ORM\Column(type=.., length=)
+    //private $hypervisor_address
+
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})

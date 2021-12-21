@@ -32,7 +32,7 @@
     </div>
 </div>
 <div class="content-body">
-    <h1 class="mb-4">{{ lab.name }}</h1>
+    <h1 class="mb-4"><a href="{{path('show_lab',{'id': lab.id}) }}">{{ lab.name }}</a></h1>
 
     <div class="row">
         {# Call to assets/js/components/Instances/InstanceManager.js to check if the lab is instantiated
