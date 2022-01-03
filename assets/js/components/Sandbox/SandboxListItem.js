@@ -47,12 +47,12 @@ class SandboxListItem extends Component {
         var labObj = { id: lab.id, fields: {name: labName}};
         Remotelabz.labs.update(labObj);
         // Add device to lab
+        
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
         device.isTemplate = false;
         device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
         device.networkInterfaces = networkInterfaces;
-        
 
         await this.api.post('/api/labs/' + lab.id + '/devices', device);
 

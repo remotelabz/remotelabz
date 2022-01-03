@@ -4,16 +4,17 @@ namespace App\Controller;
 
 use IPTools;
 use App\Entity\Lab;
-use GuzzleHttp\Psr7;
-use App\Form\LabType;
 use App\Entity\Device;
-use GuzzleHttp\Client;
 use App\Entity\Network;
 use App\Entity\Activity;
-use App\Form\DeviceType;
 use App\Entity\LabInstance;
-use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
+use App\Entity\NetworkInterfaceInstance;
+use GuzzleHttp\Psr7;
+use App\Form\LabType;
+use GuzzleHttp\Client;
+use App\Form\DeviceType;
+use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
@@ -22,7 +23,6 @@ use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use App\Repository\ActivityRepository;
 use JMS\Serializer\SerializerInterface;
-use App\Entity\NetworkInterfaceInstance;
 use App\Exception\NotInstancedException;
 use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
@@ -290,7 +290,7 @@ class LabController extends Controller
         //$this->logger->debug($request);
         
         // Check if the creation is from export process or not
-        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        //$from_export=strstr($request->headers->get('referer'),"devices_sandbox");
         
         /*
         $data=json_decode($labJson,true);
@@ -364,6 +364,9 @@ class LabController extends Controller
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
+        $this->logger->debug("Add a device to lab. Request received: ".$request);
+        //$this->logger->debug("Add a device to lab id: ".$id);
+
         $device = new Device();
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
@@ -374,27 +377,33 @@ class LabController extends Controller
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
         }
+        
+        if ($deviceForm->isSubmitted()) {
+            $this->logger->debug("Add device form submitted");
+            if ($deviceForm->isValid()) {
+                $this->logger->debug("Add device form submitted is valid");
+                /** @var Device $device */
+                $device = $deviceForm->getData();
+                $this->logger->debug("hypervisor device: ".$device->getHypervisor());
+                if ($device->getHypervisor() == 'lxc') {
+                    $device->setType('container');
+                }
+                else 
+                    $device->setType('vm');
+                $entityManager = $this->getDoctrine()->getManager();
+                $lab = $this->labRepository->find($id);
+                $lab->setLastUpdated(new \DateTime());
 
-        if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
-            /** @var Device $device */
-            $device = $deviceForm->getData();
-            $this->logger->debug("hypervisor device: ".$device->getHypervisor());
-            if ($device->getHypervisor() == 'lxc') {
-                $device->setType('container');
-            }
-            else 
-                $device->setType('vm');
-            $entityManager = $this->getDoctrine()->getManager();
-            $lab = $this->labRepository->find($id);
-            $lab->setLastUpdated(new \DateTime());
+                
+                $entityManager->persist($device);
+                $lab->addDevice($device);
+                $entityManager->persist($lab);
+                $entityManager->flush();
 
-            
-            $entityManager->persist($device);
-            $lab->addDevice($device);
-            $entityManager->persist($lab);
-            $entityManager->flush();
+                return $this->json($device, 201, [], ['api_get_device']);
+            } else 
+                $this->logger->debug("Add device form submitted is not valid");
 
-            return $this->json($device, 201, [], ['api_get_device']);
         }
 
         return $this->json($deviceForm, 200, [], ['api_get_device']);
@@ -459,31 +468,40 @@ class LabController extends Controller
      */
     public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)
     {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
+        }
 
-        if ($labInstanceRepository->findByLab($this->labRepository->find($id))){
+        $return=$this->delete_lab($lab);
+        if ($return > 0) {
             $this->logger->error('This lab is used by an instance');
             return $this->redirectToRoute('labs', [
                 'id' => $id
             ]);
-        } 
+        }
         else {
-
-            if (!$lab = $this->labRepository->find($id)) {
-                throw new NotFoundHttpException();
-            }
-
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->remove($lab);
-            $entityManager->flush();
-
-            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
-
             if ('json' === $request->getRequestFormat()) {
                 return $this->json();
             }
+            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
 
-            $this->addFlash('success','"'. $lab->getName() . '" has been deleted.');
+            $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');
+        }
+    }
+
+    public function delete_lab(Lab $lab){
+        $entityManager = $this->getDoctrine()->getManager();
+        $labInstanceRepository=$entityManager->getRepository(LabInstance::class);
+
+        if ($labInstanceRepository->findByLab($this->labRepository->find($lab->getId()))){
+            // The lab is used by an instance
+            return $id;
+        }
+        else {
+            $entityManager->remove($lab);
+            $entityManager->flush();
+            return 0;
         }
     }
 

@@ -693,7 +693,7 @@ class UserController extends Controller
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            $user->getUsername().'.ovpn'
+            'RemoteLabz-'.$user->getUsername().'.ovpn'
         );
 
         $response->headers->set('Content-Type', 'application/x-openvpn-profile');

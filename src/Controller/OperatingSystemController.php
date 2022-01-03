@@ -16,6 +16,10 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Remotelabz\Message\Message\InstanceActionMessage;
 
 class OperatingSystemController extends Controller
 {
@@ -24,11 +28,19 @@ class OperatingSystemController extends Controller
      */
     private $operatingSystemRepository;
     private $logger;
+    private $serializer;
+    protected $bus;
 
-    public function __construct(LoggerInterface $logger, OperatingSystemRepository $operatingSystemRepository)
+    public function __construct(LoggerInterface $logger,
+        OperatingSystemRepository $operatingSystemRepository,
+        SerializerInterface $serializerInterface,
+        MessageBusInterface $bus)
     {
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
+        $this->serializer = $serializerInterface;
+        $this->bus = $bus;
+
     }
 
     /**
@@ -96,22 +108,20 @@ class OperatingSystemController extends Controller
             } else {
                 /** @var UploadedFile|null $imageFile */
                 $imageFile = $operatingSystemForm['imageFilename']->getData();
-                if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img') {
-                    $this->addFlash('danger', "Only .img files are accepted.");
-                } else {
-                    if ($imageFile) {
-                        $imageFileName = $imageFileUploader->upload($imageFile);
-                        $operatingSystem->setImageFilename($imageFileName);
+                    if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img') {
+                        $this->addFlash('danger', "Only .img files are accepted.");
+                    } else {
+                        if ($imageFile) {
+                            $imageFileName = $imageFileUploader->upload($imageFile);
+                            $operatingSystem->setImageFilename("file://".$imageFileName);
+                        }
+                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager->persist($operatingSystem);
+                        $entityManager->flush();
+
+                        $this->addFlash('success', 'Operating system has been created.');
                     }
-
-                    $entityManager = $this->getDoctrine()->getManager();
-                    $entityManager->persist($operatingSystem);
-                    $entityManager->flush();
-
-                    $this->addFlash('success', 'Operating system has been created.');
-
-                    return $this->redirectToRoute('operating_systems');
-                }
+                return $this->redirectToRoute('operating_systems');
             }
         }
 
@@ -210,12 +220,24 @@ class OperatingSystemController extends Controller
         }
 
         if (null !== $operatingSystem->getImageFilename()) {
+
+
             try {
                 $filesystem->remove($imageFileUploader->getTargetDirectory() . '/' . $operatingSystem->getImageFilename());
             } catch (IOExceptionInterface $exception) {
                 throw $exception;
             }
+            $context = SerializationContext::create()->setGroups('api_delete_os');
+            $labJson = $this->serializer->serialize($operatingSystem, 'json', $context);
+            $this->logger->debug('Param of operating system to delete; uuid:'.$id);
+            
+            $this->logger->debug('Sending delete OS id '.$id.' export message.', json_decode($labJson, true));
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $id, InstanceActionMessage::ACTION_DELETEOS)
+            );
         }
+        //Send message to worker to delete the system
+        
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($operatingSystem);

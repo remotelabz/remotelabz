@@ -146,7 +146,7 @@ class InstanceManager
     /**
      * Deletes a lab instance.
      *
-     * @param LabInstance $lab the lab instance to delete
+     * @param LabInstance $labInstance the lab instance to delete
      *
      * @return void
      */
@@ -218,7 +218,7 @@ class InstanceManager
     }
 
     /**
-     * Export a device instance to template.
+     * Export a device template to new device template.
      */
     public function export(DeviceInstance $deviceInstance, string $name)
     {
@@ -229,14 +229,28 @@ class InstanceManager
 
         $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
         
+        $device = $deviceInstance->getDevice();
+        $hypervisor=$device->getHypervisor();
+        $operatingSystem = $device->getOperatingSystem();
+
         $now = new DateTime();
         $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
         $id = uniqid();
-        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1) . '.img';      
+        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+        
 
-        $device = $deviceInstance->getDevice();
-        $operatingSystem = $device->getOperatingSystem();
-                
+        switch ($hypervisor) {
+            case "lxc":
+                $imageName="lxc://".$imageName;
+                break;
+            case "qemu":
+                $imageName="qemu://".$imageName.'.img';
+                break;
+            default:
+                $imageName="qemu://".$imageName.'.img';
+        }
+        $this->logger->debug('Export process. New name will be :'.$imageName);
+
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
         $newDevice = $this->copyDevice($device, $newOS, $name);
         $this->entityManager->persist($newOS);
@@ -271,7 +285,9 @@ class InstanceManager
         if (true === $device->getVnc()) {
             $this->logger->info('Deleting proxy route');
             try {
-                $this->proxyManager->deleteDeviceInstanceProxyRoute($deviceInstance->getUuid());
+                $uuid=$deviceInstance->getUuid();
+                $this->proxyManager->deleteDeviceInstanceProxyRoute($uuid);
+                $this->logger->info('Route has been deleted for device uuid:'.$uuid , ['exception' => $exception]);
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
                 throw $exception;
@@ -333,7 +349,7 @@ class InstanceManager
      *
      * @return void
      */
-    public function deleteDev(string $uuid, array $options = null )
+    public function deleteDev_fromexport(string $uuid, array $options = null )
     {
         
         $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');

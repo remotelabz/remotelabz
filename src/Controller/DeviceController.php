@@ -234,9 +234,25 @@ class DeviceController extends Controller
      */
     public function deleteAction(Request $request, int $id)
     {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $username=$user->getUsername();
         $device = $this->deviceRepository->find($id);
 
-        if (!$device = $this->deviceRepository->find($id)) {
+        $this->delete_device($device);
+        $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
+        }
+
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
+
+        return $this->redirectToRoute('devices');
+    }
+
+    public function delete_device(Device $device) {
+
+        if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
 
@@ -254,13 +270,5 @@ class DeviceController extends Controller
         $entityManager->flush();
         $entityManager->remove($device);
         $entityManager->flush();
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json();
-        }
-
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
-
-        return $this->redirectToRoute('devices');
     }
 }

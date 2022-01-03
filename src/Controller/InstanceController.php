@@ -364,7 +364,16 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }
 
-        $instanceManager->delete($instance);
+        $lab=$instance->getLab();
+        $device=$lab->getDevices();
+        
+        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        
+            $instanceManager->delete($instance);
+            $this->logger->debug("Delete from export");
+            /*$instanceManager->entityManager->remove($lab);
+            $instanceManager->entityManager->persist($lab);
+            $instanceManager->entityManager->flush();*/
 
         return $this->json();
     }

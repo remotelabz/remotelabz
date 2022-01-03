@@ -139,12 +139,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
-                "reference": "f5f44233675c17cb8b7d2afd0275e42f2991e53e"
+                "reference": "a963521dfc629d663107c4da74eca91d01c3c0e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/f5f44233675c17cb8b7d2afd0275e42f2991e53e",
-                "reference": "f5f44233675c17cb8b7d2afd0275e42f2991e53e",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/a963521dfc629d663107c4da74eca91d01c3c0e6",
+                "reference": "a963521dfc629d663107c4da74eca91d01c3c0e6",
                 "shasum": ""
             },
             "require": {
@@ -191,7 +191,7 @@
                 "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
                 "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
             },
-            "time": "2021-12-04T13:00:48+00:00"
+            "time": "2022-01-03T13:33:23+00:00"
         },
         {
             "name": "doctrine/annotations",
