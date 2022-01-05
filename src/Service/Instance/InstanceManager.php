@@ -287,7 +287,7 @@ class InstanceManager
             try {
                 $uuid=$deviceInstance->getUuid();
                 $this->proxyManager->deleteDeviceInstanceProxyRoute($uuid);
-                $this->logger->info('Route has been deleted for device uuid:'.$uuid , ['exception' => $exception]);
+                $this->logger->info('Route has been deleted for device uuid:'.$uuid);
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
                 throw $exception;

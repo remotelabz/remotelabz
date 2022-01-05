@@ -364,7 +364,7 @@ class LabController extends Controller
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
-        $this->logger->debug("Add a device to lab. Request received: ".$request);
+        //$this->logger->debug("Add a device to lab. Request received: ".$request);
         //$this->logger->debug("Add a device to lab id: ".$id);
 
         $device = new Device();
@@ -373,34 +373,50 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
+            $this->logger->debug("Add a device to lab.",$device);
             // fetch network interfaces to copy them later
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
         }
-        
+
         if ($deviceForm->isSubmitted()) {
             $this->logger->debug("Add device form submitted");
             if ($deviceForm->isValid()) {
                 $this->logger->debug("Add device form submitted is valid");
                 /** @var Device $device */
-                $device = $deviceForm->getData();
-                $this->logger->debug("hypervisor device: ".$device->getHypervisor());
-                if ($device->getHypervisor() == 'lxc') {
-                    $device->setType('container');
+                $this->logger->debug("Add a device to lab after valid ".json_encode($device, true));
+
+                $new_device = $deviceForm->getData();
+
+                $this->logger->debug("device form after getData: ".json_encode($new_device, true));
+                $this->logger->debug("name device: ".$new_device->getName());
+                $this->logger->debug("flavor device: ".$new_device->getFlavor());
+                $this->logger->debug("OperatingSystem: ".$new_device->getOperatingSystem());
+
+
+                $this->logger->debug("hypervisor device: ".$new_device->getHypervisor());
+                if ($new_device->getHypervisor() === 'lxc') {
+                    $new_device->setType('container');
                 }
                 else 
-                    $device->setType('vm');
+                    $new_device->setType('vm');
+
                 $entityManager = $this->getDoctrine()->getManager();
                 $lab = $this->labRepository->find($id);
                 $lab->setLastUpdated(new \DateTime());
-
                 
-                $entityManager->persist($device);
-                $lab->addDevice($device);
+                //TODO the network interface is not add ! Example : device 47 Alpine has a network interface id 32
+                // In lab sandbox of device 47, device 416 is created and don't have network interface
+                $this->logger->debug("network interface: ".json_encode($new_device->getNetworkInterfaces(), true));
+
+                $this->logger->debug("network interface: ".json_encode($deviceForm->getData()->getNetworkInterfaces(), true));
+
+                $entityManager->persist($new_device);
+                $lab->addDevice($new_device);
                 $entityManager->persist($lab);
                 $entityManager->flush();
 
-                return $this->json($device, 201, [], ['api_get_device']);
+                return $this->json($new_device, 201, [], ['api_get_device']);
             } else 
                 $this->logger->debug("Add device form submitted is not valid");
 

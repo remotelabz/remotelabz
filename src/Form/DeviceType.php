@@ -67,7 +67,7 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'row_attr' => ['class' => 'd-none'],
                 'label_attr' => ['class' => 'd-none'],
-                'attr' => ['class' => 'd-none'],
+                'attr' => ['class' => 'd-none']
             ])
             ->add('vnc', CheckboxType::class, [
                 'required' => false,

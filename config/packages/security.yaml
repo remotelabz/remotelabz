@@ -62,7 +62,8 @@ security:
 
             logout:
                 path: logout
-
+            
+            access_denied_handler: App\Security\AccessDeniedHandler
             # activate different ways to authenticate
 
             # http_basic: true
@@ -78,7 +79,8 @@ security:
         - { path: ^/password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/labs, roles: ['ROLE_USER'] }
+        - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
+        - { path: ^/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
