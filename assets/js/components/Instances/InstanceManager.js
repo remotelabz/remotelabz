@@ -8,13 +8,17 @@ import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 
-function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox}) { 
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
     const isSandbox=props.isSandbox
     
+    //console.log("instancemanage");
+    //console.log(props.labInstance);
+    //console.log("instancemanage labinstance after function");
+    //console.log(labInstance);
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -254,7 +258,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 <Modal.Title>Leave lab</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                If you leave the lab, <strong>all your instances will be deleted and all virtual machines associed will be destroyed.</strong> Are you sure you want to leave this lab ?
+                If you leave the lab, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave this lab ?
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "514ca627cc732d49342562cfc835445b",
+    "content-hash": "002cfd95e20031852daca1ef180f79e0",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -135,16 +135,16 @@
         },
         {
             "name": "crestic-urca/remotelabz-message-bundle",
-            "version": "dev-fnolot/issue3",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
-                "reference": "16bd40b1be11a9088ab859e224169e1d34c63a14"
+                "reference": "a963521dfc629d663107c4da74eca91d01c3c0e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/16bd40b1be11a9088ab859e224169e1d34c63a14",
-                "reference": "16bd40b1be11a9088ab859e224169e1d34c63a14",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/a963521dfc629d663107c4da74eca91d01c3c0e6",
+                "reference": "a963521dfc629d663107c4da74eca91d01c3c0e6",
                 "shasum": ""
             },
             "require": {
@@ -154,6 +154,7 @@
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/phpunit-bridge": "^5.1"
             },
+            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -187,10 +188,10 @@
             ],
             "description": "Shared messages between remotelabz components.",
             "support": {
-                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/fnolot/issue3",
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
                 "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
             },
-            "time": "2021-12-04T10:23:15+00:00"
+            "time": "2022-01-03T13:33:23+00:00"
         },
         {
             "name": "doctrine/annotations",

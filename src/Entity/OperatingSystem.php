@@ -21,7 +21,7 @@ class OperatingSystem
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_operating_system", "api_get_device"})
+     * @Serializer\Groups({"api_get_operating_system", "api_get_device","api_delete_os"})
      * @var int
      */
     private $id;
@@ -29,7 +29,7 @@ class OperatingSystem
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_operating_system", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_operating_system", "api_get_device", "export_lab", "worker","sandbox"})
      * @var string
      */
     private $name;
@@ -44,14 +44,14 @@ class OperatingSystem
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Exclude
+     * @Serializer\Groups({"api_delete_os"})
      * @var string
      */
     private $imageFilename;
 
     /**
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_operating_system", "export_lab", "api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"api_get_operating_system", "export_lab", "api_get_lab_instance", "worker","sandbox"})
      * @var string
      */
     private $image;

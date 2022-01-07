@@ -34,6 +34,7 @@ class SandboxListItem extends Component {
     }
 
     async onModifyClick(device) {
+        
         this.setState({ isLoading: true});
         let lab;
         let networkInterfaces = [];
@@ -50,12 +51,13 @@ class SandboxListItem extends Component {
         device.operatingSystem = device.operatingSystem.id;
         device.isTemplate = false;
         device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
+        device.networkInterfaces.forEach(element => console.log(element.id));
         device.networkInterfaces = networkInterfaces;
 
         await this.api.post('/api/labs/' + lab.id + '/devices', device);
 
         // Create and start a lab instance
-        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user',true);
+        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
   
         this.setState({ isLoading: false, exist: true, lab: lab});
         // Redirect to Sandbox

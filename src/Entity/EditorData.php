@@ -38,7 +38,7 @@ class EditorData
     private $y;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Device", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\Device", cascade={"persist"})
      * @ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")
      * @Serializer\Groups({})
      */

@@ -88,7 +88,7 @@ export default class Editor extends React.Component {
 
     /** @param {Device} device */
     addDeviceRequest = device => {
-        device.networkInterfaces = null
+        //device.networkInterfaces = null
         device.lab = this.labId
         Remotelabz.labs.addDeviceInLab(this.labId,device).then(response => {
             this.addDevice(response.data)
@@ -163,10 +163,17 @@ export default class Editor extends React.Component {
 
     onValidateAddDeviceModal = () => {
         let device = this.state.addDeviceModal.selectedOption;
+        console.log(device);
+        let networkInterfaces = [];
+
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
         device.isTemplate = false;
-        //console.log(device);
+        device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
+        device.networkInterfaces.forEach(element => console.log(element.id));
+        device.networkInterfaces = networkInterfaces;
+
+        console.log(device);
 
         this.addDeviceRequest(device);
         this.onHideAddDeviceModal();

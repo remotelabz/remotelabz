@@ -560,7 +560,7 @@ class UserController extends Controller
             }
             $response=new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
-        $this->logger->debug("No profile picture saved in user profile");
+        //$this->logger->debug("No profile picture saved in user profile");
         return $response;
     }
 
@@ -611,7 +611,7 @@ class UserController extends Controller
             $file=$this->getParameter('directory.public.images').'/'.$fileName;
             $picture=file_get_contents($file);
         }
-        $this->logger->debug("fonction getUserProfilePictureAction");
+        //$this->logger->debug("fonction getUserProfilePictureAction");
         return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
@@ -693,7 +693,7 @@ class UserController extends Controller
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            $user->getUsername().'.ovpn'
+            'RemoteLabz-'.$user->getUsername().'.ovpn'
         );
 
         $response->headers->set('Content-Type', 'application/x-openvpn-profile');
