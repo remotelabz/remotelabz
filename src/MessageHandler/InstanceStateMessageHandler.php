@@ -116,9 +116,12 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $instance->setState($message->getState());
             }
         } else {
-            $this->logger->debug("No error received:". $message->getUuid() ." ".$message->getState());
+            $this->logger->debug("No error received from : ". $message->getUuid() ." ".$message->getState());
             if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
-            $instance->setState($message->getState());}
+                $this->logger->debug("InstanceStateMessageHandler Instance is not null");
+                $instance->setState($message->getState());}
+            else 
+                $this->logger->debug("InstanceStateMessageHandler Instance is null");
 
             switch ($message->getState()) {
                 case InstanceStateMessage::STATE_STOPPED:
@@ -140,19 +143,31 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         }
 
         if (!is_null($instance) && $instance->getState() === InstanceStateMessage::STATE_DELETED) {
-            $this->entityManager->remove($instance);
+            $this->logger->debug("Instance state deleted received");
             //When the instance is from a sandbox, we can delete the lab and its devices.
+            $lab=$instance->getLab();
+            $this->entityManager->remove($instance);
+            $this->entityManager->flush();
+
             if (strstr($instance->getLab()->getName(),"Sandbox_")) {
-                $this->logger->debug("Instance Sandbox deleted");
-                $this->entityManager->remove($instance->getLab());
-                foreach ($instance->getLab()->getDevices() as $device)
+                foreach ($lab->getDevices() as $device) {
+                    foreach($device->getNetworkInterfaces() as $net_int) {
+                        $this->entityManager->remove($net_int);
+                    }
+                    $this->entityManager->flush();
+
+                    $this->logger->debug("Delete device name: ".$device->getName());
                     $this->entityManager->remove($device);
+                }
+                $this->entityManager->remove($lab);
             }
+            
         } else {
+            $this->logger->debug("Instance state received:".$instance->getState());
+
             if (!is_null($instance))
                 $this->entityManager->persist($instance);
         }
-        
 
         $this->entityManager->flush();
     }

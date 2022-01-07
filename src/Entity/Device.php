@@ -140,7 +140,7 @@ class Device implements InstanciableInterface
     private $vnc;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
      * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
      * @Serializer\Groups({"api_get_device", "export_lab"})
      */

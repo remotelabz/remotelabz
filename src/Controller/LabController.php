@@ -10,6 +10,8 @@ use App\Entity\Activity;
 use App\Entity\LabInstance;
 use App\Entity\DeviceInstance;
 use App\Entity\NetworkInterfaceInstance;
+use App\Entity\NetworkInterface;
+use App\Entity\NetworkSettings;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use GuzzleHttp\Client;
@@ -368,6 +370,10 @@ class LabController extends Controller
         //$this->logger->debug("Add a device to lab id: ".$id);
 
         $device = new Device();
+        //Only to debug 
+        $serializer = $this->container->get('jms_serializer');
+        //
+
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
@@ -384,17 +390,9 @@ class LabController extends Controller
             if ($deviceForm->isValid()) {
                 $this->logger->debug("Add device form submitted is valid");
                 /** @var Device $device */
-                $this->logger->debug("Add a device to lab after valid ".json_encode($device, true));
-
+                
                 $new_device = $deviceForm->getData();
 
-                $this->logger->debug("device form after getData: ".json_encode($new_device, true));
-                $this->logger->debug("name device: ".$new_device->getName());
-                $this->logger->debug("flavor device: ".$new_device->getFlavor());
-                $this->logger->debug("OperatingSystem: ".$new_device->getOperatingSystem());
-
-
-                $this->logger->debug("hypervisor device: ".$new_device->getHypervisor());
                 if ($new_device->getHypervisor() === 'lxc') {
                     $new_device->setType('container');
                 }
@@ -404,22 +402,27 @@ class LabController extends Controller
                 $entityManager = $this->getDoctrine()->getManager();
                 $lab = $this->labRepository->find($id);
                 $lab->setLastUpdated(new \DateTime());
-                
-                //TODO the network interface is not add ! Example : device 47 Alpine has a network interface id 32
-                // In lab sandbox of device 47, device 416 is created and don't have network interface
-                $this->logger->debug("network interface: ".json_encode($new_device->getNetworkInterfaces(), true));
-
-                $this->logger->debug("network interface: ".json_encode($deviceForm->getData()->getNetworkInterfaces(), true));
-
                 $entityManager->persist($new_device);
+                foreach ($new_device->getNetworkInterfaces() as $network_int) {
+                    $new_network_inter=new NetworkInterface();
+                    $new_setting=new NetworkSettings();
+                    $new_setting=clone $network_int->getSettings();
+                    $entityManager->persist($new_setting);
+                    $new_network_inter->setSettings($new_setting);
+                    $new_network_inter->setName($new_device->getName());
+                    $new_network_inter->setIsTemplate(true);
+                    $new_device->addNetworkInterface($new_network_inter);
+                    $entityManager->persist($new_network_inter);
+                }
+                $entityManager->flush();
                 $lab->addDevice($new_device);
                 $entityManager->persist($lab);
                 $entityManager->flush();
+                $this->logger->debug("Add device in lab done");
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
             } else 
                 $this->logger->debug("Add device form submitted is not valid");
-
         }
 
         return $this->json($deviceForm, 200, [], ['api_get_device']);

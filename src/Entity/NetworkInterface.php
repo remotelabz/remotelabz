@@ -73,6 +73,7 @@ class NetworkInterface implements InstanciableInterface
     {
         $this->uuid = (string) new Uuid();
         $this->vlan = 0;
+        $this->isTemplate=false;
     }
 
     public function getId(): ?int

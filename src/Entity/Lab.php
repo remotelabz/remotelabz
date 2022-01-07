@@ -42,7 +42,7 @@ class Lab implements InstanciableInterface
     private $description;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
      * @ORM\JoinTable(name="lab_device",
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
@@ -99,7 +99,6 @@ class Lab implements InstanciableInterface
         $this->activities = new ArrayCollection();
         $this->groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
-        $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
     }
