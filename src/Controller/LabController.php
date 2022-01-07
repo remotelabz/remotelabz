@@ -404,6 +404,7 @@ class LabController extends Controller
                 $lab->setLastUpdated(new \DateTime());
                 $entityManager->persist($new_device);
                 foreach ($new_device->getNetworkInterfaces() as $network_int) {
+                    $this->logger->debug("Add Network interface".$network_int->getName());
                     $new_network_inter=new NetworkInterface();
                     $new_setting=new NetworkSettings();
                     $new_setting=clone $network_int->getSettings();
@@ -494,9 +495,9 @@ class LabController extends Controller
         $return=$this->delete_lab($lab);
         if ($return > 0) {
             $this->logger->error('This lab is used by an instance');
-            return $this->redirectToRoute('labs', [
-                'id' => $id
-            ]);
+            $this->addFlash('danger','This lab '.$lab->getName().' is used by an instance');
+            //return $this->redirectToRoute('labs', array('id' => $id));
+            return $this->redirectToRoute('labs');
         }
         else {
             if ('json' === $request->getRequestFormat()) {
@@ -512,10 +513,11 @@ class LabController extends Controller
     public function delete_lab(Lab $lab){
         $entityManager = $this->getDoctrine()->getManager();
         $labInstanceRepository=$entityManager->getRepository(LabInstance::class);
-
-        if ($labInstanceRepository->findByLab($this->labRepository->find($lab->getId()))){
+        
+        
+        if ($labInstanceRepository->findByLab($this->labRepository->find($lab->getId()))) {
             // The lab is used by an instance
-            return $id;
+            return true;
         }
         else {
             $entityManager->remove($lab);

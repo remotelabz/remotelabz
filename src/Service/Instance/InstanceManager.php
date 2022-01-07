@@ -8,6 +8,8 @@ use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
 use App\Entity\Lab;
 use App\Entity\LabInstance;
+use App\Entity\NetworkInterface;
+use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\OperatingSystem;
 use App\Instance\InstanceState;
@@ -337,6 +339,19 @@ class InstanceManager
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+
+        $i=0;
+        foreach ($device->getNetworkInterfaces() as $network_int) {
+            $new_network_inter=new NetworkInterface();
+            $new_setting=new NetworkSettings();
+            $new_setting=clone $network_int->getSettings();
+            
+            $new_network_inter->setSettings($new_setting);
+            $new_network_inter->setName("int".$i."_".$name);
+            $i=$i+1;
+            $new_network_inter->setIsTemplate(true);
+            $newDevice->addNetworkInterface($new_network_inter);
+        }
 
         return $newDevice;
     }
