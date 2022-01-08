@@ -16,7 +16,8 @@ export const Option = props => {
                 </div>
                 <div className="d-flex flex-column">
                     <div style={{lineHeight: 16 + 'px'}}>{props.label}</div>
-                    <div className="text-muted">{props.data.email}</div>
+                    {/* <div className="text-muted">{props.data.email}</div> */}
+
                 </div>
             </div>
         </components.Option>

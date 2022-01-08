@@ -250,7 +250,7 @@ class OperatingSystemController extends Controller
             return $this->redirectToRoute('operating_systems');
         } catch (ForeignKeyConstraintViolationException $e) {
             $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
-            $this->addFlash('danger', 'This operating system is still used in some device templates or device instances. Please delete them first.');
+            $this->addFlash('danger', 'This operating system is still used in some device templates or lab. Please delete them first.');
 
             return $this->redirectToRoute('show_operating_system', [
                 'id' => $id

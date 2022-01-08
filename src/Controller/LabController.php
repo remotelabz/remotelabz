@@ -520,6 +520,15 @@ class LabController extends Controller
             return true;
         }
         else {
+            foreach ($lab->getDevices() as $device) {
+                foreach($device->getNetworkInterfaces() as $net_int) {
+                    $entityManager->remove($net_int);
+                }
+                $entityManager->flush();
+
+                $this->logger->debug("Delete device name: ".$device->getName());
+                $entityManager->remove($device);
+            }
             $entityManager->remove($lab);
             $entityManager->flush();
             return 0;

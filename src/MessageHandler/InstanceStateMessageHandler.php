@@ -10,6 +10,9 @@ use App\Repository\DeviceInstanceRepository;
 use App\Service\Instance\InstanceManager;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 
+//use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
+
 class InstanceStateMessageHandler implements MessageHandlerInterface
 {
     private $deviceInstanceRepository;
@@ -17,6 +20,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     private $instanceManager;
     private $entityManager;
     private $logger;
+    //private $router;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
@@ -24,12 +28,14 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
         LoggerInterface $logger
+        //UrlGeneratorInterface $router
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->instanceManager = $instanceManager;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
+        //$this->router = $router;
     }
 
     public function __invoke(InstanceStateMessage $message)
@@ -133,11 +139,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $device=$instance->getDevice();
                     $lab=$instance->getLab();
                     $this->instanceManager->delete($instance->getLabInstance());
-                    //Wait the message DELETED is received and so, the instance is deleted
-//                    \App\Controller\Labcontroller::getdelete_lab($lab);
-                    //TODO : define labController
-                    //$this->labcontroler->delete_lab($lab);
-                    //return $this->redirectToRoute('devices_sandbox');
+
+                    //TODO redirect to route labs
+                    //$signUpPage = $this->router->generate('labs');
                 break;
             }
         }
@@ -160,6 +164,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $this->entityManager->remove($device);
                 }
                 $this->entityManager->remove($lab);
+
             }
             
         } else {

@@ -166,12 +166,12 @@
                                         {% if not user.enabled %}
                                             <label class="badge badge-warning">Blocked</label>
                                         {% endif %}
-                                        {% if user.email == app.user.email %}It's you!{% endif %}
+                                        {# {% if user.email == app.user.email %}It's you!{% endif %} #}
                                     </div>
                                     <div>
-                                        <a href="mailto:{{user.email}}" class="item-user-email">
+                                        {# <a href="mailto:{{user.email}}" class="item-user-email">
                                             {{- user.email -}}
-                                        </a>
+                                        </a> #}
                                     </div>
                                 </div>
                                 <div class="item-right d-flex flex-column text-right">

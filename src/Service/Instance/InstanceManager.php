@@ -35,6 +35,7 @@ use Remotelabz\NetworkBundle\Exception\NoNetworkAvailableException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+
 /**
  * @since Remotelabz v2.2.0
  */
