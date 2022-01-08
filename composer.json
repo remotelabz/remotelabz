@@ -9,7 +9,7 @@
         "ext-iconv": "*",
         "composer/package-versions-deprecated": "1.11.99.4",
         "crestic-urca/network-bundle": "^1.0",
-        "crestic-urca/remotelabz-message-bundle": "dev-master",
+        "crestic-urca/remotelabz-message-bundle": "^1.0.3",
         "doctrine/annotations": "^1.0",
         "doctrine/common": "^2",
         "doctrine/doctrine-bundle": "^2",

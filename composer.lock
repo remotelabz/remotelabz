@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "002cfd95e20031852daca1ef180f79e0",
+    "content-hash": "2c614fc3dc3030822689607ca58c07f0",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -135,7 +135,7 @@
         },
         {
             "name": "crestic-urca/remotelabz-message-bundle",
-            "version": "dev-master",
+            "version": "1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
@@ -154,7 +154,6 @@
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/phpunit-bridge": "^5.1"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -188,7 +187,7 @@
             ],
             "description": "Shared messages between remotelabz components.",
             "support": {
-                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/master",
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/1.0.3",
                 "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
             },
             "time": "2022-01-03T13:33:23+00:00"
@@ -12381,9 +12380,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "crestic-urca/remotelabz-message-bundle": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
