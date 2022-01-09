@@ -136,8 +136,8 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                 case InstanceStateMessage::STATE_EXPORTED:
                     $this->logger->debug("Instance state exported received");
                     //In export process, the instance is a device
-                    $device=$instance->getDevice();
-                    $lab=$instance->getLab();
+//                    $device=$instance->getDevice();
+//                    $lab=$instance->getLab();
                     $this->instanceManager->delete($instance->getLabInstance());
 
                     //TODO redirect to route labs
