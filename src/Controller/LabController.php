@@ -4,16 +4,19 @@ namespace App\Controller;
 
 use IPTools;
 use App\Entity\Lab;
-use GuzzleHttp\Psr7;
-use App\Form\LabType;
 use App\Entity\Device;
-use GuzzleHttp\Client;
 use App\Entity\Network;
 use App\Entity\Activity;
-use App\Form\DeviceType;
 use App\Entity\LabInstance;
-use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstance;
+use App\Entity\NetworkInterfaceInstance;
+use App\Entity\NetworkInterface;
+use App\Entity\NetworkSettings;
+use GuzzleHttp\Psr7;
+use App\Form\LabType;
+use GuzzleHttp\Client;
+use App\Form\DeviceType;
+use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
@@ -22,7 +25,6 @@ use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use App\Repository\ActivityRepository;
 use JMS\Serializer\SerializerInterface;
-use App\Entity\NetworkInterfaceInstance;
 use App\Exception\NotInstancedException;
 use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
@@ -31,10 +33,11 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
-use App\Repository\DeviceInstanceRepository;
+use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
+use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -67,12 +70,17 @@ class LabController extends Controller
 
     /** @var LabRepository $labRepository */
     private $labRepository;
-
+    private $deviceRepository;
+    private $operatingSystemRepository;
+    private $flavorRepository;
     private $serializer;
 
     public function __construct(
         LoggerInterface $logger,
         LabRepository $labRepository,
+        DeviceRepository $deviceRepository,
+        operatingSystemRepository $operatingSystemRepository,
+        FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
@@ -80,6 +88,9 @@ class LabController extends Controller
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
+        $this->deviceRepository = $deviceRepository;
+        $this->operatingSystemRepository=$operatingSystemRepository;
+        $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
     }
 
@@ -235,6 +246,11 @@ class LabController extends Controller
      */
     public function newAction(Request $request)
     {
+
+        $lab = json_decode($request->getContent(), true);
+
+        $this->logger->debug($lab);
+
         $criteria = Criteria::create()
             ->where(Criteria::expr()->startsWith('name', 'Untitled Lab'));
 
@@ -270,17 +286,71 @@ class LabController extends Controller
                 $group->getGroup()->addLab($lab);
         }
         */
-        
+
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
-
         $entityManager->persist($lab);
+        //$this->logger->debug($request);
         
-        // Add Service container LXC for each new lab
-        // This creation is transparent 
-        // TODO: Add this device in the lab editor
+        // Check if the creation is from export process or not
+        //$from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        
+        /*
+        $data=json_decode($labJson,true);
+        $data['from_export']=$fromexport;
+        $labJson=json_encode($data);
+        */
+        /* if (!$from_export) {
+            // Add Service container LXC for each new lab
+            // This creation is transparent
+            // TODO: protect the name svc because it's become now an internal name
+            // Check in the device creation if the name is svc and template true      
+            $svc_device=$this->deviceRepository->findByNameByTemplate('svc',true);
+            if (!$svc_device) {
+                $this->logger->debug("Creation not from export process");
+                $this->logger->debug("svc template doesn't exist");
 
-        $entityManager->flush();
-      
+                //The svc device doesn't exist
+                $svc_device=new Device();
+                $svc_device->setName('svc');
+                $svc_device->setIsTemplate(true);
+                $svc_device->setType("container");
+                // TODO: find an operating system to the svc service but not used
+                $operating=$this->operatingSystemRepository->findAll();
+                $svc_device->setOperatingSystem($operating[0]);
+
+                // TODO: same than Operating System, it's not used for container
+                $flavor=$this->flavorRepository->findAll();
+                $svc_device->setFlavor($flavor[0]);
+
+                $svc_device->setHypervisor('lxc');
+                $svc_device->setVnc(false);
+                $lab->addDevice($svc_device);
+                $entityManager->persist($svc_device);
+            }
+            else {
+                $svc_new_device=new Device();
+                $svc_new_device->setName('svc');
+                $svc_new_device->setIsTemplate(false);
+                $svc_new_device->setType("container");
+                // TODO: find an operating system to the svc service but not used
+                $operating=$this->operatingSystemRepository->findAll();
+                $svc_new_device->setOperatingSystem($operating[0]);
+
+                // TODO: same than Operating System, it's not used for container
+                $flavor=$this->flavorRepository->findAll();
+                $svc_new_device->setFlavor($flavor[0]);
+
+                $svc_new_device->setHypervisor('lxc');
+                $svc_new_device->setVnc(false);
+                $lab->addDevice($svc_new_device);
+                $entityManager->persist($svc_new_device);
+            }
+
+            $entityManager->flush();        
+        } 
+        else
+            $this->logger->debug("Creation from export process - not svc creation");
+        */
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
@@ -296,30 +366,64 @@ class LabController extends Controller
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
+        //$this->logger->debug("Add a device to lab. Request received: ".$request);
+        //$this->logger->debug("Add a device to lab id: ".$id);
+
         $device = new Device();
+        //Only to debug 
+        $serializer = $this->container->get('jms_serializer');
+        //
+
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
+            $this->logger->debug("Add a device to lab.",$device);
             // fetch network interfaces to copy them later
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
         }
 
-        if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
-            /** @var Device $device */
-            $device = $deviceForm->getData();
-            $entityManager = $this->getDoctrine()->getManager();
-            $lab = $this->labRepository->find($id);
-            $lab->setLastUpdated(new \DateTime());
+        if ($deviceForm->isSubmitted()) {
+            $this->logger->debug("Add device form submitted");
+            if ($deviceForm->isValid()) {
+                $this->logger->debug("Add device form submitted is valid");
+                /** @var Device $device */
+                
+                $new_device = $deviceForm->getData();
 
-            $entityManager->persist($device);
-            $lab->addDevice($device);
-            $entityManager->persist($lab);
-            $entityManager->flush();
+                if ($new_device->getHypervisor() === 'lxc') {
+                    $new_device->setType('container');
+                }
+                else 
+                    $new_device->setType('vm');
 
-            return $this->json($device, 201, [], ['api_get_device']);
+                $entityManager = $this->getDoctrine()->getManager();
+                $lab = $this->labRepository->find($id);
+                $lab->setLastUpdated(new \DateTime());
+                $entityManager->persist($new_device);
+                foreach ($new_device->getNetworkInterfaces() as $network_int) {
+                    $this->logger->debug("Add Network interface".$network_int->getName());
+                    $new_network_inter=new NetworkInterface();
+                    $new_setting=new NetworkSettings();
+                    $new_setting=clone $network_int->getSettings();
+                    $entityManager->persist($new_setting);
+                    $new_network_inter->setSettings($new_setting);
+                    $new_network_inter->setName($new_device->getName());
+                    $new_network_inter->setIsTemplate(true);
+                    $new_device->addNetworkInterface($new_network_inter);
+                    $entityManager->persist($new_network_inter);
+                }
+                $entityManager->flush();
+                $lab->addDevice($new_device);
+                $entityManager->persist($lab);
+                $entityManager->flush();
+                $this->logger->debug("Add device in lab done");
+
+                return $this->json($new_device, 201, [], ['api_get_device']);
+            } else 
+                $this->logger->debug("Add device form submitted is not valid");
         }
 
         return $this->json($deviceForm, 200, [], ['api_get_device']);
@@ -382,25 +486,53 @@ class LabController extends Controller
      * 
      * @Rest\Delete("/api/labs/{id<\d+>}", name="api_delete_lab")
      */
-    public function deleteAction(Request $request, int $id, UserInterface $user)
+    public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)
     {
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->remove($lab);
-        $entityManager->flush();
-
-        $this->logger->info($user->getUsername() . " deleted lab " . $lab->getName());
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json();
+        $return=$this->delete_lab($lab);
+        if ($return > 0) {
+            $this->logger->error('This lab is used by an instance');
+            $this->addFlash('danger','This lab '.$lab->getName().' is used by an instance');
+            //return $this->redirectToRoute('labs', array('id' => $id));
+            return $this->redirectToRoute('labs');
         }
+        else {
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json();
+            }
+            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
 
-        $this->addFlash('success', $lab->getName() . ' has been deleted.');
+            $this->addFlash('success',$lab->getName() . ' has been deleted.');
+            return $this->redirectToRoute('labs');
+        }
+    }
 
-        return $this->redirectToRoute('labs');
+    public function delete_lab(Lab $lab){
+        $entityManager = $this->getDoctrine()->getManager();
+        $labInstanceRepository=$entityManager->getRepository(LabInstance::class);
+        
+        
+        if ($labInstanceRepository->findByLab($this->labRepository->find($lab->getId()))) {
+            // The lab is used by an instance
+            return true;
+        }
+        else {
+            foreach ($lab->getDevices() as $device) {
+                foreach($device->getNetworkInterfaces() as $net_int) {
+                    $entityManager->remove($net_int);
+                }
+                $entityManager->flush();
+
+                $this->logger->debug("Delete device name: ".$device->getName());
+                $entityManager->remove($device);
+            }
+            $entityManager->remove($lab);
+            $entityManager->flush();
+            return 0;
+        }
     }
 
     /**

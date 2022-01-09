@@ -45,10 +45,10 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
             $operatingSystem->setImage($operatingSystem->getImageUrl());
         } elseif ($operatingSystem->getImageFilename()) {
             $operatingSystem->setImage(
-                $this->router->getContext()->getScheme() .
+            /*  $this->router->getContext()->getScheme() .
                 '://' .
                 $this->router->getContext()->getHost() .
-                '/uploads/images/' .
+                '/uploads/images/' .*/
                 $operatingSystem->getImageFilename()
             );
         } else {

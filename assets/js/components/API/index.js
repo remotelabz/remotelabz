@@ -508,11 +508,11 @@ export class RemotelabzAPI {
              * @param {string} labUuid 
              * @param {string} instancierUuid 
              * @param {"user"|"group"} instancierType 
-             * 
+             * @param {true|false} boolean // From export or not
              * @returns {Promise<import('axios').AxiosResponse<void>>}
              */
-            create(lab, instancier, instancierType) {
-                var myDataObj = { lab, instancier, instancierType };
+            create(lab, instancier, instancierType, fromexport) {
+                var myDataObj = { lab, instancier, instancierType, fromexport };
                 var formData = new FormData();
 
                 for (var key in myDataObj) {

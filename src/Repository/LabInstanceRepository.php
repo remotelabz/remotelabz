@@ -42,7 +42,7 @@ class LabInstanceRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('l')
             ->andWhere('l.user = :user')
-             ->setParameter('user', $user)
+            ->setParameter('user', $user)
             ->getQuery()
             ->getResult()
         ;
@@ -85,6 +85,16 @@ class LabInstanceRepository extends ServiceEntityRepository
         return $result;
     }
 
+    // Return all instances started by the $user
+    public function findByLab(Lab $lab)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.lab = :lab')
+            ->setParameter('lab', $lab)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
     
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects

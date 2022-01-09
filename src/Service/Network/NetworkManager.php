@@ -2,6 +2,7 @@
 
 namespace App\Service\Network;
 
+use Exception;
 use App\Repository\NetworkRepository;
 use Remotelabz\NetworkBundle\Entity\IP;
 use Remotelabz\NetworkBundle\Entity\Network;
@@ -51,7 +52,7 @@ class NetworkManager
                 $selected = $next;
             }
         }
-
         return $selected;
     }
+
 }

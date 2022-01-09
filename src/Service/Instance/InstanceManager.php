@@ -8,6 +8,8 @@ use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
 use App\Entity\Lab;
 use App\Entity\LabInstance;
+use App\Entity\NetworkInterface;
+use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\OperatingSystem;
 use App\Instance\InstanceState;
@@ -32,6 +34,7 @@ use Psr\Log\LoggerInterface;
 use Remotelabz\NetworkBundle\Exception\NoNetworkAvailableException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Messenger\MessageBusInterface;
+
 
 /**
  * @since Remotelabz v2.2.0
@@ -146,7 +149,7 @@ class InstanceManager
     /**
      * Deletes a lab instance.
      *
-     * @param LabInstance $lab the lab instance to delete
+     * @param LabInstance $labInstance the lab instance to delete
      *
      * @return void
      */
@@ -218,7 +221,7 @@ class InstanceManager
     }
 
     /**
-     * Export a device instance to template.
+     * Export a device template to new device template.
      */
     public function export(DeviceInstance $deviceInstance, string $name)
     {
@@ -229,14 +232,28 @@ class InstanceManager
 
         $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
         
+        $device = $deviceInstance->getDevice();
+        $hypervisor=$device->getHypervisor();
+        $operatingSystem = $device->getOperatingSystem();
+
         $now = new DateTime();
         $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
         $id = uniqid();
-        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1) . '.img';      
+        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+        
 
-        $device = $deviceInstance->getDevice();
-        $operatingSystem = $device->getOperatingSystem();
-                
+        switch ($hypervisor) {
+            case "lxc":
+                $imageName="lxc://".$imageName;
+                break;
+            case "qemu":
+                $imageName="qemu://".$imageName.'.img';
+                break;
+            default:
+                $imageName="qemu://".$imageName.'.img';
+        }
+        $this->logger->debug('Export process. New name will be :'.$imageName);
+
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
         $newDevice = $this->copyDevice($device, $newOS, $name);
         $this->entityManager->persist($newOS);
@@ -258,7 +275,6 @@ class InstanceManager
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
         );
-
     }
 
 
@@ -272,7 +288,9 @@ class InstanceManager
         if (true === $device->getVnc()) {
             $this->logger->info('Deleting proxy route');
             try {
-                $this->proxyManager->deleteDeviceInstanceProxyRoute($deviceInstance->getUuid());
+                $uuid=$deviceInstance->getUuid();
+                $this->proxyManager->deleteDeviceInstanceProxyRoute($uuid);
+                $this->logger->info('Route has been deleted for device uuid:'.$uuid);
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
                 throw $exception;
@@ -318,39 +336,55 @@ class InstanceManager
         $newDevice->setBrand($device->getBrand());
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
+        $newDevice->setType($device->getType());
+        $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+
+        $i=0;
+        foreach ($device->getNetworkInterfaces() as $network_int) {
+            $new_network_inter=new NetworkInterface();
+            $new_setting=new NetworkSettings();
+            $new_setting=clone $network_int->getSettings();
+            
+            $new_network_inter->setSettings($new_setting);
+            $new_network_inter->setName("int".$i."_".$name);
+            $i=$i+1;
+            $new_network_inter->setIsTemplate(true);
+            $newDevice->addNetworkInterface($new_network_inter);
+        }
 
         return $newDevice;
     }
 
     /**
-     * Delete a device form a DeviceInstance.
+     * Delete a device form a DeviceInstance, with its os defined in options.
+     * This function is used when an error occurs in export process
      *
      * @param DeviceInstance $device the device to delete
      *
      * @return void
      */
-    public function deleteDev(string $stringcomposite)
+    public function deleteDev_fromexport(string $uuid, array $options = null )
     {
         
         $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');
         
-        $return_array = explode(",",$stringcomposite);
-        $context = SerializationContext::create()->setGroups('del_dev');
+        /*$context = SerializationContext::create()->setGroups('del_dev');
         $labJson = $this->serializer->serialize($return_array, 'json', $context);
 
         $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
-
+*/
         //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
         
-        $os = $this->OperatingSystemRepository->find($return_array[2]);
-        $device = $this->DeviceRepository->find($return_array[3]);
+        if ($options) {
+        $this->logger->debug('Options received ', $options);
+        $os = $this->OperatingSystemRepository->find($options["newOS_id"]);
+        $device = $this->DeviceRepository->find($options["newDevice_id"]);
         
-
         $this->entityManager->remove($os);
         $this->entityManager->remove($device);
         $this->entityManager->flush();
-        
+        }
     }
 }

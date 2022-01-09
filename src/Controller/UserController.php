@@ -32,7 +32,6 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Psr\Log\LoggerInterface;
 
-
 class UserController extends Controller
 {
     protected $passwordEncoder;
@@ -49,7 +48,8 @@ class UserController extends Controller
         GroupRepository $groupRepository,
         \Swift_Mailer $mailer,
         SerializerInterface $serializer,
-        LoggerInterface $logger)
+        LoggerInterface $logger,
+        string $ip_check_internet)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
@@ -57,7 +57,7 @@ class UserController extends Controller
         $this->mailer = $mailer;
         $this->serializer = $serializer;
         $this->logger = $logger;
-        
+        $this->ip_check_internet = $ip_check_internet;
     }
 
     /**
@@ -332,33 +332,47 @@ class UserController extends Controller
     public function deleteAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
-
-        if (!$user) {
-            throw new NotFoundHttpException('This user does not exist.');
-        } elseif ($user == $this->getUser()) {
-            throw new UnauthorizedHttpException('You cannot delete your own account.');
-        } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
-            throw new UnauthorizedHttpException('You cannot delete root account.');
-        } elseif ($user->getInstances()->count() > 0) {
-            throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
-        } else {
-            $em = $this->getDoctrine()->getManager();
-            $em->remove($user);
-            $em->flush();
+        try {
+            if (!$user) {
+                $this->addFlash('danger', "This user does not exist.");
+                throw new NotFoundHttpException('This user does not exist.');
+            } elseif ($user == $this->getUser()) {
+                $this->addFlash('danger', "You cannot delete your own account.");
+                throw new UnauthorizedHttpException('You cannot delete your own account.');
+            } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
+                $this->addFlash('danger', "You cannot delete root account.");
+                throw new UnauthorizedHttpException('You cannot delete root account.');
+            } elseif ($user->getInstances()->count() > 0) {
+                $this->addFlash('danger', "You cannot delete an user who still has instances. Please stop them and try again.");
+                throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
+            } elseif ($user->getGroups()->count() > 0) {
+                $this->addFlash('danger', "You cannot delete a user which is in a group");
+                return $this->redirectToRoute('users');
+            }
+            
+            else {
+                $em = $this->getDoctrine()->getManager();
+                $em->remove($user);
+                $em->flush();
+                $this->addFlash('success', $user->getName() . "'s account has been deleted.");
+            }
+        }
+        catch (Exception $e) {
+            $this->logger->error("deleteAction Exception: ".$e);
+            return $this->redirectToRoute('users');
         }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json();
         }
 
-        $this->addFlash('success', $user->getName() . "'s account has been deleted.");
 
         return $this->redirectToRoute('users');
     }
 
     /**
-     * Format du tableau :
-     * Nom,Prénom,Mail,Pass
+     * The CSV must be in the following format :
+     * Name, firstname,email,password
      * @return array The number of elements added
      */
     public function createUserFromCSV($file)
@@ -509,9 +523,10 @@ class UserController extends Controller
     public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
-        $size = $request->query->get('size', 128);
+        $size = $request->query->get('size', 96);
 
         $profilePicture = $user->getProfilePicture();
+        $response="";
 
         if ($profilePicture && is_file($profilePicture)) {
             $image = file_get_contents($profilePicture);
@@ -519,26 +534,34 @@ class UserController extends Controller
             $image = imagescale($image, $size, $size, IMG_GAUSSIAN);
             $imageTmp = $kernel->getCacheDir() . "/" . new Uuid();
             $image = imagepng($image, $imageTmp, 9);
-
+            $this->logger->debug("function getProfilePictureAction profilePicture ok");
             $response = new Response(file_get_contents($imageTmp), 200);
             $response->headers->set('Content-Type', 'image/png');
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
-
-            return $response;
         } else {
-            //TODO #661 #644
             $url=Gravatar::getGravatar($user->getEmail(), $size);
-            
-            try {
-                $picture = file_get_contents($url);
+            $picture=""; $file="";
 
-                return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
+            if ($this->checkInternet()){
+                try {
+                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '4.0']] ));
+                }
+                catch (Exception $e){
+                    $this->logger->debug("exception");
+                    $this->logger->error("No access to internet");
+                    $this->logger->error($e->getMessage());
+                }
             }
-            catch (Exception $e){
-                $this->logger->error("Impossible to connect to ".$url);
-                $this->logger->error($e->getMessage());
+            else
+            {
+                $fileName = $this->getParameter('image_default_profile');
+                $file=$this->getParameter('directory.public.images').'/'.$fileName;
+                $picture = file_get_contents($file);
             }
+            $response=new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
+        //$this->logger->debug("No profile picture saved in user profile");
+        return $response;
     }
 
     /**
@@ -552,7 +575,7 @@ class UserController extends Controller
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
-        // TODO #661 #655 : error app.ERROR: Call to a member function getProfilePicture() on null
+        // TODO #661 : error app.ERROR: Call to a member function getProfilePicture() on null
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -576,16 +599,20 @@ class UserController extends Controller
             return $response;
         } else {
         
-
+        $picture="";
         $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
             $picture = file_get_contents($url);
-            return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
             }
         catch (Exception $e){
-            $this->logger->error("Impossible to connect to ".$url);
+            $this->logger->error("getUserProfilePictureAction: Impossible to connect to ".$url);
             $this->logger->error($e->getMessage());
-            }
+            $fileName = $this->getParameter('image_default_profile');
+            $file=$this->getParameter('directory.public.images').'/'.$fileName;
+            $picture=file_get_contents($file);
+        }
+        //$this->logger->debug("fonction getUserProfilePictureAction");
+        return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
 
@@ -666,12 +693,31 @@ class UserController extends Controller
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            $user->getUsername().'.ovpn'
+            'RemoteLabz-'.$user->getUsername().'.ovpn'
         );
 
         $response->headers->set('Content-Type', 'application/x-openvpn-profile');
         $response->headers->set('Content-Disposition', $disposition);
 
+        return $response;
+    }
+
+    function checkInternet()
+    {
+        $response="";
+            try {
+                //Test if internet access
+                // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
+                $fp= stream_socket_client("tcp://".$this->ip_check_internet.":80",$errno,$errstr,2);
+            
+                if ($fp) // If no exception
+                {
+                    $response=true;
+                }
+            }
+            catch (Exception $e){
+                $response=false;
+            }
         return $response;
     }
 }

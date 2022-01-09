@@ -142,7 +142,7 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-
+        $this->logger->info("Device modification asked by user ");
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
@@ -157,6 +157,7 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
+            
             $device = $deviceForm->getData();
             $device->setLastUpdated(new DateTime());
             $entityManager = $this->getDoctrine()->getManager();
@@ -170,7 +171,10 @@ class DeviceController extends Controller
             $this->addFlash('success', 'Device has been updated.');
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
-        }
+        } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
+            $this->logger->info("Device modification submitted");
+            else
+            $this->logger->info("Device modification aborted, form not valid");
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
@@ -230,9 +234,25 @@ class DeviceController extends Controller
      */
     public function deleteAction(Request $request, int $id)
     {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $username=$user->getUsername();
         $device = $this->deviceRepository->find($id);
 
-        if (!$device = $this->deviceRepository->find($id)) {
+        $this->delete_device($device);
+        $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
+        }
+
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
+
+        return $this->redirectToRoute('devices');
+    }
+
+    public function delete_device(Device $device) {
+
+        if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
 
@@ -242,16 +262,13 @@ class DeviceController extends Controller
             $entityManager->remove($networkInterface);
         }
 
+// TODO : if hypervisor === LXC -> send a delete msg to worker to delete the container
+        if ($device->getHypervisor() === "LXC") {
+            $this->logger->info("Delete the device ".$device->getId());
+        }
+
         $entityManager->flush();
         $entityManager->remove($device);
         $entityManager->flush();
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json();
-        }
-
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
-
-        return $this->redirectToRoute('devices');
     }
 }

@@ -23,13 +23,13 @@ class DeviceInstance extends Instance
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_device_instance"})
+     * @Serializer\Groups({"api_get_device_instance","sandbox"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     protected $device;
 
@@ -42,13 +42,13 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox"})
      */
     protected $networkInterfaceInstances;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     private $state;
 

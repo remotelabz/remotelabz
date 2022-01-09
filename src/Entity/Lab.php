@@ -19,13 +19,13 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab"})
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 
@@ -42,12 +42,12 @@ class Lab implements InstanciableInterface
     private $description;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
      * @ORM\JoinTable(name="lab_device",
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
      * ))
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "export_lab","sandbox"})
      */
     private $devices;
 
@@ -59,7 +59,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance","sandbox"})
      */
     private $uuid;
 
@@ -99,7 +99,6 @@ class Lab implements InstanciableInterface
         $this->activities = new ArrayCollection();
         $this->groups = new ArrayCollection();
         $this->uuid = (string) new Uuid();
-        $this->networkInterfaceInstances = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
     }

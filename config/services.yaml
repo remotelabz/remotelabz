@@ -14,6 +14,7 @@ parameters:
     directory.public.upload.lab: '%directory.public.upload%/lab'
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
     image_directory: '%kernel.project_dir%/public/uploads/images'
+    image_default_profile: 'Circle-icons-profile.png'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
     api_key_cookie_name: 'bearer'
@@ -42,6 +43,8 @@ parameters:
     app.network.base_network: '%env(resolve:BASE_NETWORK)%'
     app.network.base_network_netmask: '%env(resolve:BASE_NETWORK_NETMASK)%'
     app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
+
+    app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
 
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
@@ -85,6 +88,10 @@ services:
             - { name: doctrine.event_listener, event: prePersist }
             - { name: doctrine.event_listener, event: preUpdate }
             - { name: doctrine.event_listener, event: postLoad }
+
+    App\EventListener\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
 
     App\Service\FileUploader:
         arguments:
@@ -182,6 +189,10 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+
+    App\Controller\UserController:
+        arguments:
+            $ip_check_internet: '%app.user.ip_check_internet%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'

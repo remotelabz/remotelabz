@@ -120,7 +120,7 @@
                                             <label class="badge badge-warning ml-2 mb-0">Admin</label>
                                         {% endif %}
                                     </div>
-                                    <div class="text-muted">{{ user.email }}</div>
+                                    {# <div class="text-muted">{{ user.email }}</div> #}
                                 </div>
                                 <div class="flex-grow-1"></div>
                                 {% if not (group.isOwner(user) or user.id == app.user.id) and (group.isAdmin(app.user) or group.isOwner(app.user)) %}
