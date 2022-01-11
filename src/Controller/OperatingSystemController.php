@@ -156,18 +156,32 @@ class OperatingSystemController extends Controller
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystemEdited */
             $operatingSystemEdited = $operatingSystemForm->getData();
+            $this->logger->debug("operatingSystemEdited Url:".$operatingSystemEdited->getImageUrl());
+            $this->logger->debug("operatingSystemEdited filename:".$operatingSystemEdited->getName());
+            $this->logger->debug("operatingSystemEdited upload_filename:".$operatingSystemEdited->getImageFilename());
 
             /** @var UploadedFile|null $imageFile */
-            $imageFile = $operatingSystemForm['imageFilename']->getData();
+            //$imageFile = $operatingSystemForm['upload_image_filename']->getData();
+            $upload_image_filename = $operatingSystemForm['upload_image_filename']->getData();
+            $image_filename = $operatingSystemForm['image_filename']->getData();
+            $imageUrl = $operatingSystemForm['imageUrl']->getData();
 
             if ($operatingSystemEdited->getImageUrl() !== null && $imageFile !== null) {
+                $this->logger->debug("url and file empty");
                 $this->addFlash('danger', "You can't provide an image URL and an image file. Please provide only one.");
             } else {
-                if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img') {
+                $this->logger->debug("url or file not empty");
+                if (is_null($upload_image_filename))
+                    $this->logger->debug("imagefile null");
+                    else
+                    $this->logger->debug("imagefile not null");
+
+                if ($upload_image_filename && strtolower($upload_image_filename->getClientOriginalExtension()) != 'img') {
+                    $this->logger->debug("imagefile not empty and not img");
                     $this->addFlash('danger', "Only .img files are accepted.");
                 } else {
-                    if ($imageFile) {
-                        $imageFileName = $imageFileUploader->upload($imageFile);
+                    if ($upload_image_filename) {
+                        $imageFileName = $imageFileUploader->upload($upload_image_filename);
                         $operatingSystemEdited->setImageFilename($imageFileName);
                     } else {
                         if ($operatingSystemEdited->getImageUrl()) {

@@ -26,7 +26,8 @@ class OperatingSystemType extends AbstractType
                 'help' => 'You can provide either an image URL or a file, but not both.',
                 'required' => false
             ])
-            ->add('imageFilename', FileType::class, [
+            ->add('image_filename', TextType::class)
+            ->add('upload_image_filename', FileType::class, [
                 'label' => 'Upload an image file',
                 'help' => 'The maximum size allowed is 3GB. Accepted files : .img',
                 'required' => false,
