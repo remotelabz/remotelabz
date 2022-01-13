@@ -107,13 +107,13 @@ class OperatingSystemController extends Controller
                 $this->addFlash('danger', "You can't provide an image url and an image file. Please provide only one.");
             } else {
                 /** @var UploadedFile|null $imageFile */
-                $imageFile = $operatingSystemForm['imageFilename']->getData();
+                $imageFile = $operatingSystemForm->get('imageFilename')->getData();
                     if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img') {
                         $this->addFlash('danger', "Only .img files are accepted.");
                     } else {
                         if ($imageFile) {
                             $imageFileName = $imageFileUploader->upload($imageFile);
-                            $operatingSystem->setImageFilename("file://".$imageFileName);
+                            $operatingSystem->setImageFilename("qemu://".$imageFileName);
                         }
                         $entityManager = $this->getDoctrine()->getManager();
                         $entityManager->persist($operatingSystem);
@@ -145,28 +145,46 @@ class OperatingSystemController extends Controller
         $operatingSystemEdited = $operatingSystem;
 
         if ($operatingSystemFilename !== null) {
-            $operatingSystemEdited->setImageFilename(
-                $this->getParameter('image_directory') . '/' . $operatingSystem->getImageFilename()
-            );
+            $result=explode("://",$operatingSystem->getImageFilename());
+            $hypervisor=$result[0];
+            $imagefilename=$result[1];
+
+            $operatingSystemEdited->setImageFilename($imagefilename);
+                //$this->getParameter('image_directory') . '/' . $operatingSystem->getImageFilename());
         }
 
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
         $operatingSystemForm->handleRequest($request);
 
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
+            $image_filename = $operatingSystemForm->get('imageFilename')->getData();
+            
+            if ($image_filename) {
+                $originalImageFileName = $imageFileUploader->upload($image_filename);
+
+            }
+
+        return $this->redirectToRoute('show_operating_system', [
+                        'id' => $id
+            ]);
+
             /** @var OperatingSystem $operatingSystemEdited */
-            $operatingSystemEdited = $operatingSystemForm->getData();
+/*            $operatingSystemEdited = $operatingSystemForm->getData();
             $this->logger->debug("operatingSystemEdited Url:".$operatingSystemEdited->getImageUrl());
             $this->logger->debug("operatingSystemEdited filename:".$operatingSystemEdited->getName());
             $this->logger->debug("operatingSystemEdited upload_filename:".$operatingSystemEdited->getImageFilename());
-
-            /** @var UploadedFile|null $imageFile */
-            //$imageFile = $operatingSystemForm['upload_image_filename']->getData();
             $upload_image_filename = $operatingSystemForm['upload_image_filename']->getData();
             $image_filename = $operatingSystemForm['image_filename']->getData();
             $imageUrl = $operatingSystemForm['imageUrl']->getData();
+            $this->logger->debug("upload:".$upload_image_filename);
+            $this->logger->debug("image_filename:".$image_filename);
+            $this->logger->debug("imageUrl".$imageUrl);
+*/
+            /** @var UploadedFile|null $imageFile */
+            //$imageFile = $operatingSystemForm['upload_image_filename']->getData();
+            
 
-            if ($operatingSystemEdited->getImageUrl() !== null && $imageFile !== null) {
+          /*  if (!is_null($imageUrl) && !is_null($upload_image_filename)) {
                 $this->logger->debug("url and file empty");
                 $this->addFlash('danger', "You can't provide an image URL and an image file. Please provide only one.");
             } else {
@@ -175,14 +193,19 @@ class OperatingSystemController extends Controller
                     $this->logger->debug("imagefile null");
                     else
                     $this->logger->debug("imagefile not null");
+                if (is_null($imageUrl))
+                    $this->logger->debug("imageUrl null");
+                    else
+                    $this->logger->debug("imageUrl not null");
 
+                    
                 if ($upload_image_filename && strtolower($upload_image_filename->getClientOriginalExtension()) != 'img') {
                     $this->logger->debug("imagefile not empty and not img");
                     $this->addFlash('danger', "Only .img files are accepted.");
                 } else {
-                    if ($upload_image_filename) {
-                        $imageFileName = $imageFileUploader->upload($upload_image_filename);
-                        $operatingSystemEdited->setImageFilename($imageFileName);
+                    if ($upload_image_filename) { */
+                        //$imageFileName = $imageFileUploader->upload($upload_image_filename);
+                /*        $operatingSystemEdited->setImageFilename($upload_image_filename);
                     } else {
                         if ($operatingSystemEdited->getImageUrl()) {
                             if ($operatingSystemFilename) {
@@ -212,7 +235,7 @@ class OperatingSystemController extends Controller
                         'id' => $id
                     ]);
                 }
-            }
+            }*/
         }
 
         return $this->render('operating_system/new.html.twig', [

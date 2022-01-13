@@ -8,6 +8,17 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ExceptionListener
 {
+    
+    /**
+     * @var string
+     */
+    private $environment;
+
+    public function __construct(string $environment)
+    {
+        $this->environment = $environment;
+    }
+
     public function onKernelException(ExceptionEvent $event)
     {
         // You get the exception object from the received event
@@ -22,7 +33,10 @@ class ExceptionListener
         $message = 'Error';
         // Customize your response object to display the exception details
         $response = new Response();
-        $response->setContent($message);
+        if ($this->environment ==="dev")
+            $response->setContent($exception->getMessage());
+        else
+            $response->setContent($message);
 
         // HttpExceptionInterface is a special type of exception that
         // holds status code and header details
