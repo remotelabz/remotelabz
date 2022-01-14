@@ -34,7 +34,7 @@ class ExceptionListener
         // Customize your response object to display the exception details
         $response = new Response();
         if ($this->environment ==="dev")
-            $response->setContent($exception->getMessage());
+            $response->setContent($exception->getMessage(),$exception);
         else
             $response->setContent($message);
 
