@@ -194,7 +194,16 @@ class OperatingSystemController extends Controller
             $this->addFlash('success', 'Operating system has been edited.');
             //Send a message to change the name of the image on the worker filesystem
             
+            
+            //(Old name, New name) name in format : hypervisor://name
+            $new_name_os=array(
+                "old_name" => $operatingSystemFilename,
+                "new_name" => $operatingSystemEdited->getImageFilename()
+            );
 
+            $this->bus->dispatch(
+                new InstanceActionMessage(json_encode($new_name_os), $operatingSystemEdited->getId(), InstanceActionMessage::ACTION_RENAMEOS)
+            );
 
             return $this->redirectToRoute('show_operating_system', [
                         'id' => $id
@@ -326,4 +335,11 @@ class OperatingSystemController extends Controller
             ]);
         }
     }
+
+
+    public function cancel_renameos($names) {
+
+
+    }
+
 }
