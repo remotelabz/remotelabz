@@ -26,11 +26,15 @@ class OperatingSystemType extends AbstractType
                 'help' => 'You can provide either an image URL or a file, but not both.',
                 'required' => false
             ])
+            ->add('image_Filename', TextType::class, [
+                'required' => false
+            ])
             ->add('imageFilename', FileType::class, [
                 'label' => 'Upload an image file',
-                'help' => 'The maximum size allowed is 3GB. Accepted files : .img',
+                'help' => 'The maximum size allowed is 3GB. Accepted QEMU only files (qcow2 format) : .img',
                 'required' => false,
                 'mapped' => false,
+                'attr' => ['placeholder' => 'Choose file'],
                 'constraints' => [
                     new File([
                         'maxSize' => '3000M',
