@@ -24,6 +24,8 @@ final class Version20220109170619 extends AbstractMigration
 
          $this->addSql('UPDATE operating_system SET image_filename = CONCAT(\'qemu://\',image_filename) WHERE image_filename LIKE \'%.img%\'');
          $this->addSql('UPDATE operating_system SET image_filename = CONCAT(\'lxc://\',image_filename) WHERE image_filename NOT LIKE \'%.img%\'');
+         $this->addSql('INSERT INTO operating_system (name,image_url,image_filename) VALUES (\'Migration\',NULL,\'lxc://Migration\')');
+
     }
 
     public function down(Schema $schema) : void

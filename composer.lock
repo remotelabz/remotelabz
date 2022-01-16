@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4f1baa6fc1857d156e8c837dd425b7a",
+    "content-hash": "ba14de04b8a9d0642decada48f296782",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -135,16 +135,16 @@
         },
         {
             "name": "crestic-urca/remotelabz-message-bundle",
-            "version": "dev-dev",
+            "version": "1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git",
-                "reference": "95e9e3381d6e42398f5d7115804d11e35a750156"
+                "reference": "75f9fa7e8f4a2149ffacfa01ae74cbf8de5f6481"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/95e9e3381d6e42398f5d7115804d11e35a750156",
-                "reference": "95e9e3381d6e42398f5d7115804d11e35a750156",
+                "url": "https://api.github.com/repos/crestic-urca/remotelabz-message-bundle/zipball/75f9fa7e8f4a2149ffacfa01ae74cbf8de5f6481",
+                "reference": "75f9fa7e8f4a2149ffacfa01ae74cbf8de5f6481",
                 "shasum": ""
             },
             "require": {
@@ -187,10 +187,10 @@
             ],
             "description": "Shared messages between remotelabz components.",
             "support": {
-                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/dev",
+                "source": "https://github.com/crestic-urca/remotelabz-message-bundle/tree/1.0.4",
                 "issues": "https://github.com/crestic-urca/remotelabz-message-bundle/issues"
             },
-            "time": "2022-01-14T13:12:22+00:00"
+            "time": "2022-01-14T15:40:35+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -3247,29 +3247,29 @@
         },
         {
             "name": "limenius/react-renderer",
-            "version": "v5.0.3",
+            "version": "v5.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Limenius/ReactRenderer.git",
-                "reference": "2ced65b299c8c630c056bc47be55da5c7324229c"
+                "reference": "be255b169ed854622b8f2a6305d63ca0482660b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Limenius/ReactRenderer/zipball/2ced65b299c8c630c056bc47be55da5c7324229c",
-                "reference": "2ced65b299c8c630c056bc47be55da5c7324229c",
+                "url": "https://api.github.com/repos/Limenius/ReactRenderer/zipball/be255b169ed854622b8f2a6305d63ca0482660b3",
+                "reference": "be255b169ed854622b8f2a6305d63ca0482660b3",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
                 "nacmartin/phpexecjs": "^3.0",
-                "php": ">=5.5.0",
+                "php": ">=7.2.0",
                 "twig/twig": "^2.4|^3.0"
             },
             "require-dev": {
-                "escapestudios/symfony2-coding-standard": "^2.9",
-                "phpstan/phpstan": "^0.11.19",
-                "squizlabs/php_codesniffer": "^2.5",
-                "wimg/php-compatibility": "^7.0"
+                "dealerdirect/phpcodesniffer-composer-installer": "^0.7",
+                "escapestudios/symfony2-coding-standard": "^3.0",
+                "phpcompatibility/php-compatibility": "^9.0",
+                "phpstan/phpstan": "^0.11.19"
             },
             "type": "library",
             "autoload": {
@@ -3296,9 +3296,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Limenius/ReactRenderer/issues",
-                "source": "https://github.com/Limenius/ReactRenderer/tree/v5.0.3"
+                "source": "https://github.com/Limenius/ReactRenderer/tree/v5.0.4"
             },
-            "time": "2020-10-01T07:44:25+00:00"
+            "time": "2020-10-20T15:33:57+00:00"
         },
         {
             "name": "michelf/php-markdown",
@@ -12453,9 +12453,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "crestic-urca/remotelabz-message-bundle": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
