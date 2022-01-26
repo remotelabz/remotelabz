@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use DateTime;
 use App\Entity\Device;
+use App\Entity\NetworkInterface;
+use App\Entity\NetworkSettings;
 
 use App\Form\DeviceType;
 use App\Entity\EditorData;
@@ -111,6 +113,14 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
+
+            $networkInterface = new NetworkInterface();
+            $networkInterface->setName($device->getName()."_net");
+            $networkInterface->setIsTemplate(true);
+            $networkSettings = new NetworkSettings();
+            $networkSettings->setName($networkInterface->getName()."_set");
+            $networkInterface->setSettings($networkSettings);
+            $device->addNetworkInterface($networkInterface);
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);

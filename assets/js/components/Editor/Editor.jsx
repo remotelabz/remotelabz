@@ -173,8 +173,6 @@ export default class Editor extends React.Component {
         device.networkInterfaces.forEach(element => console.log(element.id));
         device.networkInterfaces = networkInterfaces;
 
-        console.log(device);
-
         this.addDeviceRequest(device);
         this.onHideAddDeviceModal();
     }

@@ -392,7 +392,19 @@ class LabController extends Controller
                 /** @var Device $device */
                 
                 $new_device = $deviceForm->getData();
+                $lab = $this->labRepository->find($id);
+                $this->adddeviceinlab($new_device, $lab);
 
+                return $this->json($new_device, 201, [], ['api_get_device']);
+            } else 
+                $this->logger->debug("Add device form submitted is not valid");
+        }
+
+        return $this->json($deviceForm, 200, [], ['api_get_device']);
+    }
+
+    private function adddeviceinlab(Device $new_device, Lab $lab) {
+        
                 if ($new_device->getHypervisor() === 'lxc') {
                     $new_device->setType('container');
                 }
@@ -400,7 +412,6 @@ class LabController extends Controller
                     $new_device->setType('vm');
 
                 $entityManager = $this->getDoctrine()->getManager();
-                $lab = $this->labRepository->find($id);
                 $lab->setLastUpdated(new \DateTime());
                 $entityManager->persist($new_device);
                 foreach ($new_device->getNetworkInterfaces() as $network_int) {
@@ -420,13 +431,6 @@ class LabController extends Controller
                 $entityManager->persist($lab);
                 $entityManager->flush();
                 $this->logger->debug("Add device in lab done");
-
-                return $this->json($new_device, 201, [], ['api_get_device']);
-            } else 
-                $this->logger->debug("Add device form submitted is not valid");
-        }
-
-        return $this->json($deviceForm, 200, [], ['api_get_device']);
     }
 
     /**
@@ -467,11 +471,23 @@ class LabController extends Controller
         $labForm->submit($lab, false);
 
         if ($labForm->isSubmitted() && $labForm->isValid()) {
+            $entityManager = $this->getDoctrine()->getManager();
             /** @var Lab $lab */
             $lab = $labForm->getData();
             $lab->setLastUpdated(new \DateTime());
+            $lab_name=$lab->getName();
+            $this->logger->debug("Lab updated: ".$lab_name);
+            if (strstr($lab_name,"Sandbox_")) 
+            { // Add Service container to provide IP address with DHCP
+                $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
+                $srv_device=new Device();
+                $device=$this->deviceRepository->findBy(['name' => 'Service']);
+                $srv_device=$device;
+                $srv_device->IsTemplate(false);
+                $entityManager->persist($srv_device);
+                $this->adddeviceinlab($srv_device,$lab);
+            }
 
-            $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($lab);
             $entityManager->flush();
 
