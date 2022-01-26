@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Utils\Uuid;
+use App\Entity\OperatingSystem;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -436,4 +437,6 @@ class Device implements InstanciableInterface
 
         return $this;
     }
+
+    
 }

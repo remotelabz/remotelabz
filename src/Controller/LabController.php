@@ -475,8 +475,38 @@ class LabController extends Controller
             /** @var Lab $lab */
             $lab = $labForm->getData();
             $lab->setLastUpdated(new \DateTime());
+            $entityManager->persist($lab);
+            $entityManager->flush();
+
             $lab_name=$lab->getName();
             $this->logger->debug("Lab updated: ".$lab_name);
+            if (strstr($lab_name,"Sandbox_")) 
+            { // Add Service container to provide IP address with DHCP
+                $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
+                $srv_device=new Device();
+                $device=$this->deviceRepository->findBy(['name' => 'Service', 'isTemplate' => true]);
+                if (!is_null($device)) {
+                    $srv_device=$this->copyDevice($device[0],'Service_sandbox');
+                    $srv_device->setIsTemplate(false);
+                    $entityManager->persist($srv_device);
+                }
+
+                $this->logger->debug("Add additionnal device to lab ".$srv_device->getName());
+                $this->adddeviceinlab($srv_device,$lab);
+                $entityManager->persist($lab);
+                $entityManager->flush();
+            }
+
+
+            return $this->json($lab, 200, [], ['api_get_lab']);
+        }
+
+        /*if ($labForm->isSubmitted() && $labForm->isValid()) {
+            $entityManager = $this->getDoctrine()->getManager();
+           
+            $lab = $labForm->getData();
+            $lab->setLastUpdated(new \DateTime());
+            
             if (strstr($lab_name,"Sandbox_")) 
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
@@ -492,11 +522,38 @@ class LabController extends Controller
             $entityManager->flush();
 
             return $this->json($lab, 200, [], ['api_get_lab']);
-        }
+        }*/
 
         return $this->json($labForm, 200, [], ['api_get_lab']);
     }
 
+    public function copyDevice(Device $device,string $name): Device
+    {
+        $newDevice = new Device();
+        $newDevice->setName($name);
+        $newDevice->setBrand($device->getBrand());
+        $newDevice->setModel($device->getModel());
+        $newDevice->setFlavor($device->getFlavor());
+        $newDevice->setType($device->getType());
+        $newDevice->setHypervisor($device->getHypervisor());
+        $newDevice->setOperatingSystem($device->getOperatingSystem());
+        $newDevice->setIsTemplate(true);
+
+        $i=0;
+        foreach ($device->getNetworkInterfaces() as $network_int) {
+            $new_network_inter=new NetworkInterface();
+            $new_setting=new NetworkSettings();
+            $new_setting=clone $network_int->getSettings();
+            
+            $new_network_inter->setSettings($new_setting);
+            $new_network_inter->setName("int".$i."_".$name);
+            $i=$i+1;
+            $new_network_inter->setIsTemplate(true);
+            $newDevice->addNetworkInterface($new_network_inter);
+        }
+
+        return $newDevice;
+    }
     /**
      * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
      * 
@@ -846,4 +903,5 @@ class LabController extends Controller
             dd($exception->getResponse()->getBody()->getContents());
         }
     }
+
 }
