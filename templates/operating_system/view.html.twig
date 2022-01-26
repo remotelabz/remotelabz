@@ -18,9 +18,13 @@
     <div class="content-body">
         <p>Image : 
         {% if operatingSystem.imageUrl is not null %}
-            <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
+                <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
         {% else %}
-            <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.imageFilename) }}">{{ operatingSystem.imageFilename }}</a>
+            {% if hypervisor == "qemu" %}
+                <a href="{{ absolute_url('/uploads/images/' ~ filename) }}">{{ filename }}</a>
+            {% else %}
+                {{ filename }}
+            {% endif %}
         {% endif %}
         </p>
     </div>

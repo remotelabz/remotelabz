@@ -75,35 +75,24 @@
         </div>
 {%- endblock fieldset_form_row %}
 
-
-
-
-{# {% block file_widget -%}
-    <{{ element|default('div') }} class="custom-file">
+ {#{% block file_widget -%}
+    <div class="custom-file">
         {%- set type = type|default('file') -%}
-        {# {{- block('form_widget_simple') -}}
+        {{- block('form_widget_simple') -}}
         <input type="file" class="custom-file-input" id="customFile" {%- if attr.accepted is defined -%} accept="{{ attr.accepted }}" {%- endif -%}>
         <label class="custom-file-label" for="customFile">
             {%- if attr.placeholder is defined -%}
                 {{- translation_domain is same as(false) ? attr.placeholder : attr.placeholder|trans({}, translation_domain) -}}
             {%- endif -%}
         </label>
-        {# <div class="input-group col-xs-12">
-            <input type="text" class="form-control file-upload-info" disabled="" placeholder="{%- if attr.placeholder is defined -%}
-            {{- translation_domain is same as(false) ? attr.placeholder : attr.placeholder|trans({}, translation_domain) -}}
-        {%- endif -%}" {%- if attr.accepted is defined -%} accept="{{ attr.accepted }}" {%- endif -%}>
-            <span class="input-group-append">
-                <button class="file-upload-browse btn btn-info" type="button"><i class="fa fa-folder"></i></button>
-            </span>
-        </div>
-    </{{ element|default('div') }}>
-{% endblock %} #}
+    </div>
+{% endblock %}#}
 
 {% block form_widget -%}
     {% if type is not defined or type != 'hidden' %}
         {%- set attr = attr|merge({class: (attr.class|default('') ~ (type|default('') == 'file' ? ' file-upload-default' : ' form-control'))|trim}) -%}
     {% endif %}
-    {%- if type is defined and (type == 'range' or type == 'color') %}
+    {%- if type is defined and (type == 'range' or type == 'color') %} #}
         {# Attribute "required" is not supported #}
         {%- set required = false -%}
     {% endif %}
