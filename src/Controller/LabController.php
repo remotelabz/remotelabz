@@ -287,7 +287,7 @@ class LabController extends Controller
         }
         */
 
-        $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
+        $this->logger->info($this->getUser()->getUserIdentifier() . " creates lab named " . $lab->getName());
         $entityManager->persist($lab);
         //$this->logger->debug($request);
         
@@ -576,7 +576,7 @@ class LabController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json();
             }
-            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
+            $this->logger->info($user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
 
             $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');

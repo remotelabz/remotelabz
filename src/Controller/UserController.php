@@ -671,8 +671,8 @@ class UserController extends Controller
         $x509 = null;
         $privateKey = null;
         $certsDir = $VPNConfigurationGenerator->getExportPath();
-        $certPath = $certsDir.'/'.$user->getUsername().'.crt';
-        $pkeyPath = $certsDir.'/'.$user->getUsername().'.key';
+        $certPath = $certsDir.'/'.$user->getUserIdentifier().'.crt';
+        $pkeyPath = $certsDir.'/'.$user->getUserIdentifier().'.key';
         $filesystem = new Filesystem();
 
         if (!$filesystem->exists($certPath))
@@ -693,7 +693,7 @@ class UserController extends Controller
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'RemoteLabz-'.$user->getUsername().'.ovpn'
+            'RemoteLabz-'.$user->getUgetUserIdentifiersername().'.ovpn'
         );
 
         $response->headers->set('Content-Type', 'application/x-openvpn-profile');

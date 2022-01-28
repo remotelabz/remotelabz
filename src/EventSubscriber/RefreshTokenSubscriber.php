@@ -35,7 +35,7 @@ class RefreshTokenSubscriber implements EventSubscriberInterface
     //         $refreshTokenCookie = $event->getRequest()->cookies->get('rt');
     //         $refreshToken = $this->refreshTokenManager->get($refreshTokenCookie);
     //         if ($refreshToken && $refreshToken->isValid()) {
-    //             $userEmail = $refreshToken->getUsername();
+    //             $userEmail = $refreshToken->getUserIdentifier();
     //             $user = $this->userRepository->findOneBy(['email' => $userEmail]);
     //             $this->updatedJWTToken = $this->JWTManager->create($user);
     //             $event->getRequest()->cookies->set('bearer', $this->updatedJWTToken);

@@ -75,9 +75,9 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS  }
+        - { path: ^/password, roles: PUBLIC_ACCESS  }
+        - { path: ^/api/auth, roles: PUBLIC_ACCESS  }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
