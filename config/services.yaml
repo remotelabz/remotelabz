@@ -22,8 +22,8 @@ parameters:
     app.worker_server: '%env(resolve:WORKER_SERVER)%'
     app.worker_port: '%env(resolve:WORKER_PORT)%'
 
-    app.websocket_proxy_port: '%env(resolve:WEBSOCKET_PROXY_PORT)%'
-    app.websocket_proxy_api_port: '%env(resolve:WEBSOCKET_PROXY_API_PORT)%'
+    app.websocket_proxy_port: '%env(resolve:REMOTELABZ_PROXY_PORT)%'
+    app.websocket_proxy_api_port: '%env(resolve:REMOTELABZ_PROXY_API_PORT)%'
     app.services.proxy.server: '%env(resolve:REMOTELABZ_PROXY_SERVER)%'
     app.services.proxy.port: '%env(int:REMOTELABZ_PROXY_PORT)%'
     app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'

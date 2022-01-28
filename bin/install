@@ -26,8 +26,8 @@ const REMOTELABZ_DATABASE_NAME      = "symfony";
 const REMOTELABZ_WORKER_SERVER      = "localhost";
 const REMOTELABZ_WORKER_PORT        = 8080;
 const WEBSOCKET_PROXY_SERVER        = "localhost";
-const WEBSOCKET_PROXY_PORT          = 8888;
-const WEBSOCKET_PROXY_API_PORT      = 8889;
+const REMOTELABZ_PROXY_PORT          = 8888;
+const REMOTELABZ_PROXY_API_PORT      = 8889;
 const INSTALL_LOG_PATH              = "/var/log/remotelabz/install.log";
 const MAILER_URL                    = "smtp://localhost:25?encryption=&auth_mode=";
 
@@ -68,12 +68,12 @@ $getopt = new GetOpt([
         ->setArgument(new Argument(WEBSOCKET_PROXY_SERVER, 'is_string', 'address')),
 
     Option::create(null, 'proxy-port', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy. Default : " . WEBSOCKET_PROXY_PORT)
-        ->setArgument(new Argument(WEBSOCKET_PROXY_PORT, 'is_numeric', 'port')),
+        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy. Default : " . REMOTELABZ_PROXY_PORT)
+        ->setArgument(new Argument(REMOTELABZ_PROXY_PORT, 'is_numeric', 'port')),
 
     Option::create(null, 'proxy-api-port', GetOpt::REQUIRED_ARGUMENT)
-        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy internal API. Default : " . WEBSOCKET_PROXY_API_PORT)
-        ->setArgument(new Argument(WEBSOCKET_PROXY_API_PORT, 'is_numeric', 'port')),
+        ->setDescription("Set the port used by RemoteLabz to connect to configurable-http-proxy internal API. Default : " . REMOTELABZ_PROXY_API_PORT)
+        ->setArgument(new Argument(REMOTELABZ_PROXY_API_PORT, 'is_numeric', 'port')),
 
     Option::create(null, 'database-server', GetOpt::REQUIRED_ARGUMENT)
         ->setDescription("Set the address of the SQL server. Default : " . REMOTELABZ_DATABASE_SERVER)

@@ -5,7 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\NetworkSettings;
 use Faker\Factory as RandomDataFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 
 class NetworkSettingsFixtures extends Fixture
 {

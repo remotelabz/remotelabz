@@ -16,14 +16,14 @@ if (!`which configurable-http-proxy`) {
 
 $cmd = ['configurable-http-proxy'];
 
-if (array_key_exists('WEBSOCKET_PROXY_PORT', $_ENV)) {
+if (array_key_exists('REMOTELABZ_PROXY_PORT', $_ENV)) {
     $cmd[] = '--port';
-    $cmd[] = $_ENV['WEBSOCKET_PROXY_PORT'];
+    $cmd[] = $_ENV['REMOTELABZ_PROXY_PORT'];
 }
 
-if (array_key_exists('WEBSOCKET_PROXY_API_PORT', $_ENV)) {
+if (array_key_exists('REMOTELABZ_PROXY_API_PORT', $_ENV)) {
     $cmd[] = '--api-port';
-    $cmd[] = $_ENV['WEBSOCKET_PROXY_API_PORT'];
+    $cmd[] = $_ENV['REMOTELABZ_PROXY_API_PORT'];
 }
 
 if (array_key_exists('WEBSOCKET_PROXY_LOG_LEVEL', $_ENV)) {

@@ -16,8 +16,6 @@ deploy:staging:
     - openssl pkey -passin pass:$JWT_PASSPHRASE -in config/jwt/private.pem -out config/jwt/public.pem -pubout
     - cp .env .env.local
     - echo JWT_PASSPHRASE=$JWT_PASSPHRASE | tee -a .env.local
-    - echo WEBSOCKET_PROXY_PORT=8000 | tee -a .env.local
-    - echo WEBSOCKET_PROXY_API_PORT=8001 | tee -a .env.local
     - . ./.env.local
     - php composer.phar install --no-progress --no-suggest
     - yarn install
