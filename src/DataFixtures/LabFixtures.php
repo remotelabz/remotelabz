@@ -27,7 +27,7 @@ class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureG
         /** @var KernelInterface $kernel */
         $kernel = $this->container->get('kernel');
 
-   /*     if (in_array($kernel->getEnvironment(), ['dev', 'test'])) {
+        if (in_array($kernel->getEnvironment(), ['dev', 'test'])) {
             $faker = Factory::create();
 
             $description = <<<EOF
@@ -67,7 +67,6 @@ EOF;
 
             $manager->flush();
         }
-        */
     }
 
     public function getDependencies()
