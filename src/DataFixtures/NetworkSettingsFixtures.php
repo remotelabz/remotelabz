@@ -40,34 +40,6 @@ class NetworkSettingsFixtures extends Fixture
 
         $networkSettings = new NetworkSettings();
         $networkSettings
-            ->setName("172.16.0.0/21")
-            ->setIp("172.16.0.0")
-            ->setIpv6(NULL)
-            ->setPrefix4(21)
-            ->setPrefix6(NULL)
-            ->setGateway(NULL)
-            ->setProtocol(NULL)
-            ->setPort(NULL)
-        ;
-        $manager->persist($networkSettings);
-        $this->addReference('network_settings1', $networkSettings);
-
-        $networkSettings = new NetworkSettings();
-        $networkSettings
-            ->setName("172.16.8.0/21")
-            ->setIp("172.16.8.0")
-            ->setIpv6(NULL)
-            ->setPrefix4(21)
-            ->setPrefix6(NULL)
-            ->setGateway(NULL)
-            ->setProtocol(NULL)
-            ->setPort(NULL)
-        ;
-        $manager->persist($networkSettings);
-        $this->addReference('network_settings2', $networkSettings);
-
-        $networkSettings = new NetworkSettings();
-        $networkSettings
             ->setName('ToAlpineDevice')
             ->setIp(NULL)
             ->setIpv6(NULL)

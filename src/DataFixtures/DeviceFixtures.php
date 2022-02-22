@@ -74,20 +74,20 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
         $device = new Device();
         $device
-            ->setName('Linux Ubuntu with X')
+            ->setName('Linux Ubuntu 14 with X')
             ->setBrand('Test')
             ->setModel('Test model')
             ->setLaunchOrder($faker->numberBetween(0, 999))
             ->setVirtuality($faker->numberBetween(0, 2))
             ->setFlavor($this->getReference('flavor-x-large'))
-            ->setOperatingSystem($this->getReference('operating-system-Ubuntu'))
+            ->setOperatingSystem($this->getReference('operating-system-Ubuntu14'))
             ->setType($faker->randomElement(['vm']))
             ->setHypervisor('qemu')
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
         ;
         $manager->persist($device);
-        $this->addReference('device-ubuntu', $device);
+        $this->addReference('device-ubuntu14X', $device);
 
         $manager->flush();
     }

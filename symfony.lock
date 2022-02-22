@@ -1,4 +1,10 @@
 {
+    "composer/package-versions-deprecated": {
+        "version": "1.11.99.4"
+    },
+    "composer/pcre": {
+        "version": "1.0.1"
+    },
     "composer/semver": {
         "version": "1.7.0"
     },
@@ -123,6 +129,9 @@
             ".php_cs.dist"
         ]
     },
+    "friendsofphp/proxy-manager-lts": {
+        "version": "v1.0.1"
+    },
     "friendsofsymfony/jsrouting-bundle": {
         "version": "2.3",
         "recipe": {
@@ -236,17 +245,11 @@
     "nikic/php-parser": {
         "version": "v4.1.0"
     },
-    "ocramius/proxy-manager": {
-        "version": "2.1.1"
-    },
     "phar-io/manifest": {
         "version": "2.0.3"
     },
     "phar-io/version": {
         "version": "3.1.0"
-    },
-    "php": {
-        "version": "7.4"
     },
     "php-cs-fixer/diff": {
         "version": "v1.3.0"
@@ -262,6 +265,9 @@
     },
     "phpspec/prophecy": {
         "version": "1.14.0"
+    },
+    "phpstan/phpdoc-parser": {
+        "version": "1.2.0"
     },
     "phpunit/php-code-coverage": {
         "version": "9.2.7"
