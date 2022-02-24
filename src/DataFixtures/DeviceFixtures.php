@@ -80,7 +80,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setLaunchOrder($faker->numberBetween(0, 999))
             ->setVirtuality($faker->numberBetween(0, 2))
             ->setFlavor($this->getReference('flavor-x-large'))
-            ->setOperatingSystem($this->getReference('operating-system-Ubuntu14'))
+            ->setOperatingSystem($this->getReference('operating-system-Ubuntu14X'))
             ->setType($faker->randomElement(['vm']))
             ->setHypervisor('qemu')
             ->setCreatedAt(new \DateTime())
