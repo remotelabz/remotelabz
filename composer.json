@@ -8,7 +8,6 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "composer/package-versions-deprecated": "1.11.99.4",
-        "composer-plugin-api": "^2.0",
         "crestic-urca/network-bundle": "^1.0",
         "crestic-urca/remotelabz-message-bundle": "1.0.4",
         "doctrine/annotations": "^1.0",
