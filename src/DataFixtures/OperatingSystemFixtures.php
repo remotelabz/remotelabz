@@ -30,17 +30,6 @@ class OperatingSystemFixtures extends Fixture
         $operatingSystem = new OperatingSystem();
 
         $operatingSystem
-            ->setName('CirrOS')
-            ->setImageUrl('http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img')
-        ;
-
-        $manager->persist($operatingSystem);
-
-        $this->setReference('operating-system-CirrOS', $operatingSystem);
-
-        $operatingSystem = new OperatingSystem();
-
-        $operatingSystem
             ->setName('Alpine')
             ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.img')
         ;
@@ -63,15 +52,15 @@ class OperatingSystemFixtures extends Fixture
             ->setImageUrl('http://194.57.105.124/~fnolot/Ubuntu-server-14-X.img')
         ;
         $manager->persist($operatingSystem);
-        $this->setReference('operating-system-Ubuntu', $operatingSystem);
+        $this->setReference('operating-system-Ubuntu14X', $operatingSystem);
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Ubuntu LXDE')
+            ->setName('Ubuntu 18 LXDE')
             ->setImageUrl('http://194.57.105.124/~fnolot/ubuntu-18-SrvLxde.img')
         ;
         $manager->persist($operatingSystem);
-        $this->setReference('operating-system-UbuntuLXDE', $operatingSystem);
+        $this->setReference('operating-system-Ubuntu18LXDE', $operatingSystem);
 
         $manager->flush();
     }

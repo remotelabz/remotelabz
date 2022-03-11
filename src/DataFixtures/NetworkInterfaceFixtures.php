@@ -95,7 +95,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
             )
             ->setDevice(
                 $this->getReference(
-                    'device-ubuntu'
+                    'device-ubuntu14X'
                 )
             )
             //->setMacAddress('52:54:00:00:00:03')
