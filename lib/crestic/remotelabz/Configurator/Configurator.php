@@ -52,7 +52,7 @@ class Configurator
             Logger::println("Command terminated with errors! See logs at " . $log->getLogPath() . " to get more information.", Logger::COLOR_RED);
         } else {
             $log->debug("Command ended without error.");
-            Logger::println("Command \"" . $action . "\" terminated succesfully.");
+            Logger::println("Command \"" . $action . "\" terminated successfully.");
         }
     }
 }

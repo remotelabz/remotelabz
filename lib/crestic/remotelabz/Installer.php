@@ -309,7 +309,7 @@ class Installer
         chdir($this->installPath);
         $returnCode = 0;
         $output = [];
-        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress --no-suggest 2>&1", $output, $returnCode);
+        exec("COMPOSER_ALLOW_SUPERUSER=1 composer install --no-progress --no-suggest", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             return false;
