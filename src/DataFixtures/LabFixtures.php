@@ -52,7 +52,7 @@ Taciti ad quisque litora duis viverra erat volutpat arcu vestibulum, leo himenae
 Odio penatibus commodo bibendum nullam pellentesque arcu, consequat per nibh fames turpis dignissim lectus, primis sagittis fermentum at laoreet. Interdum magnis sociosqu ut quis semper platea commodo taciti vulputate, leo neque proin nulla ad vestibulum posuere faucibus lectus, inceptos cras per integer pulvinar nunc accumsan ligula. Inceptos justo velit metus mattis eleifend himenaeos neque quam a leo, est et vivamus sapien curabitur duis iaculis tellus.
 EOF;
 
-            /*foreach (range(1, self::COUNT) as $number) {
+            foreach (range(1, self::COUNT) as $number) {
                 $lab = Lab::create()
                     ->setName($faker->words(2, true))
                     ->setDescription($description)
@@ -63,11 +63,10 @@ EOF;
                 $manager->persist($lab);
 
                 $this->addReference('lab' . $number, $lab);
-            }*/
+            }
 
             $manager->flush();
-        }
-        */
+        }*/
     }
 
     public function getDependencies()
