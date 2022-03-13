@@ -357,7 +357,7 @@ class Installer
         }
 
         // Handle PHP max upload filesize
-        $phpPath = str_replace(["cli", ",", "\n"], ["apache2", "", ""], shell_exec("php --ini | grep fileinfo"));
+        $phpPath = str_replace(["cli", ",", "\n"], ["mods-available", "", ""], shell_exec("php --ini | grep fileinfo"));
         $postMaxSize = intval(intval(substr($uploadMaxFilesize, 0, -1)) * 1.25);
         $ini = parse_ini_file($phpPath);
         // If keys already exists
@@ -394,7 +394,7 @@ class Installer
         chdir($this->installPath);
         $output = [];
         $returnCode = 0;
-        exec("yarn install 2>&1", $output, $returnCode);
+        exec("yarn install", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not restart install Yarn packages correctly.");
