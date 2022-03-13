@@ -400,7 +400,7 @@ class Installer
             throw new Exception("Could not restart install Yarn packages correctly.");
         }
         unset($output);
-        exec("yarn encore dev 2>&1", $output, $returnCode);
+        exec("yarn encore dev", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not compile Yarn packages correctly.");
