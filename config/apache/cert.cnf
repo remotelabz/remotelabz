@@ -1,0 +1,19 @@
+[req]
+default_bits  = 2048
+distinguished_name = req_distinguished_name
+req_extensions = req_ext
+x509_extensions = v3_req
+prompt = no
+[req_distinguished_name]
+countryName = FR
+stateOrProvinceName = Marne
+localityName = Reims
+organizationName = RemoteLabz
+commonName = 192.168.11.131
+#commonName = mydomain.com
+[req_ext]
+subjectAltName = @alt_names
+[v3_req]
+subjectAltName = @alt_names
+[alt_names]
+IP.1 = 192.168.11.131

@@ -42,6 +42,10 @@ if (array_key_exists('REMOTELABZ_PROXY_USE_WSS', $_ENV) && ($_ENV['REMOTELABZ_PR
         $cmd[] = '--ssl-cert';
         $cmd[] = $_ENV['REMOTELABZ_PROXY_SSL_CERT'];
     }
+    if (array_key_exists('REMOTELABZ_PROXY_SSL_CERT_SELFSIGNED', $_ENV)) {
+        $cmd[] = '--insecure';
+        $cmd[] = $_ENV['REMOTELABZ_PROXY_SSL_CERT_SELFSIGNED'];
+    }
 } else {
     echo "WSS didn't activate in .env file\n";
 }
