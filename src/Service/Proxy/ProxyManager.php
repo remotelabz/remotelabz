@@ -88,14 +88,14 @@ class ProxyManager
     {
         $client = new Client();
 
-        $url = ($this->remotelabzProxyUseHttps ? 'http' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Create route in proxy', [
             'url' => $url
         ]);
 
         $client->post($url, [
             'body' => json_encode([
-                'target' => ($this->remotelabzProxyUseWss ? 'http' : 'http').'://'.$this->workerServer.':'.($remotePort + 1000).'',
+                'target' => ($this->remotelabzProxyUseWss ? 'http' : 'http').'://'.$this->workerServer.':'.($remotePort).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',
