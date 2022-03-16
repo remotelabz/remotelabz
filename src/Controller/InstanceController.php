@@ -431,7 +431,12 @@ class InstanceController extends Controller
 
         if (true === $device->getVnc()) {
             try {
+                if ($deviceInstance->getDevice()->getType()=="vm")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
+                    $deviceInstance->getUuid(),
+                    $deviceInstance->getRemotePort()
+                );
+                else $this->proxyManager->createContainerInstanceProxyRoute(
                     $deviceInstance->getUuid(),
                     $deviceInstance->getRemotePort()
                 );
