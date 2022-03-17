@@ -28,6 +28,19 @@
         <br>
         Attributed network : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
     </div>
+    {#{{dump(deviceInstance)}}#}
+    {% if (deviceInstance.device.type == "container") %}
+    <div class="card stretch-card">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col">
+                    <button class="btn btn-default"><a href="https://{{host}}:{{port}}/device/{{deviceInstance.uuid}}" target="_blank">Open terminal</a></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        
     <div class="card stretch-card">
         <div class="card-body">
             <div class="row mb-2">
@@ -42,6 +55,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 

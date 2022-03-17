@@ -79,6 +79,32 @@ class ProxyManager
     }
 
     /**
+     * Create a new route in remotelabz-proxy service.
+     * 
+     * @param string $uuid UUID of the device instance
+     * @param int $remotePort Port used by websockify
+     */
+    public function createContainerInstanceProxyRoute(string $uuid, int $remotePort)
+    {
+        $client = new Client();
+
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
+        $this->logger->debug('Create route in proxy', [
+            'url' => $url
+        ]);
+
+        $client->post($url, [
+            'body' => json_encode([
+                'target' => ($this->remotelabzProxyUseWss ? 'http' : 'http').'://'.$this->workerServer.':'.($remotePort).'',
+            ]),
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+        ]);
+    }
+
+
+    /**
      * Delete a route in remotelabz-proxy service.
      * 
      * @param string $uuid UUID of the device instance
