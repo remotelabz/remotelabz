@@ -14,6 +14,8 @@ use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+
 
 class OperatingSystemType extends AbstractType
 {
@@ -28,6 +30,10 @@ class OperatingSystemType extends AbstractType
             ])
             ->add('image_Filename', TextType::class, [
                 'required' => false
+            ])
+            ->add('hypervisor', EntityType::class, [
+                'class' => Hypervisor::class,
+                'choice_label' => 'name'
             ])
             ->add('imageFilename', FileType::class, [
                 'label' => 'Upload an image file',
