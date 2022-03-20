@@ -368,36 +368,38 @@ class LabController extends Controller
     {
         //$this->logger->debug("Add a device to lab. Request received: ".$request);
         //$this->logger->debug("Add a device to lab id: ".$id);
-
         $device = new Device();
         //Only to debug 
         $serializer = $this->container->get('jms_serializer');
         //
-
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
-            $this->logger->debug("Add a device to lab.",$device);
+            $this->logger->debug("Add a device to lab via API. json:",$device);
             // fetch network interfaces to copy them later
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
         }
 
         if ($deviceForm->isSubmitted()) {
-            $this->logger->debug("Add device form submitted");
             if ($deviceForm->isValid()) {
                 $this->logger->debug("Add device form submitted is valid");
                 /** @var Device $device */
-                
                 $new_device = $deviceForm->getData();
+                $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor());
+
                 $lab = $this->labRepository->find($id);
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
-            } else 
+            } else {
                 $this->logger->debug("Add device form submitted is not valid");
+                foreach ($deviceForm->getErrors() as $error) {
+                    $this->logger->debug("Error validating :".$error->getMessage());
+                }
+            }
         }
 
         return $this->json($deviceForm, 200, [], ['api_get_device']);
@@ -406,6 +408,7 @@ class LabController extends Controller
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
                 if ($new_device->getHypervisor() === 'lxc') {
+                    $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
                     $new_device->setType('container');
                 }
                 else 

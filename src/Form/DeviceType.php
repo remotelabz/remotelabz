@@ -35,15 +35,16 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'empty_data' => ''
             ])
-/*             ->add('type', ChoiceType::class, [
+             ->add('type', ChoiceType::class, [
                  'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container'],
                  'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
                  'empty_data' => 'vm'
-             ])*/
-  /*          ->add('hypervisor', EntityType::class, [
-                'class' => Hypervisor::class,
-                'choice_label' => 'name'
-            ])*/
+             ])
+             ->add('hypervisor', ChoiceType::class, [
+                'choices' => ['QEMU' => 'qemu', 'LXC' => 'lxc'],
+                'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
+                'empty_data' => 'lxc'
+            ])
           /*  ->add('labs', EntityType::class, [
                 'class' => Lab::class,
                 'choice_label' => 'name',
