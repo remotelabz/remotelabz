@@ -77,8 +77,6 @@ class OperatingSystemController extends Controller
      */
     public function showAction(Request $request, int $id)
     {
-        $imagefilename="";
-        $hypervisor="";
         if (!$operatingSystem = $this->operatingSystemRepository->find($id)) {
             throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
         }
@@ -88,16 +86,9 @@ class OperatingSystemController extends Controller
         }
 
         $filename=$operatingSystem->getImageFilename();
-        if (!is_null($filename)) {
-            $result=explode("://",$operatingSystem->getImageFilename());
-            $hypervisor=$result[0];
-            $imagefilename=$result[1];
-        }
 
         return $this->render('operating_system/view.html.twig', [
             'operatingSystem' => $operatingSystem,
-            'filename' => $imagefilename,
-            'hypervisor' => $hypervisor
         ]);
     }
 
@@ -147,22 +138,12 @@ class OperatingSystemController extends Controller
     public function editAction(Request $request, int $id, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
-
         if (null === $operatingSystem) {
             throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
         }
 
         $operatingSystemFilename = $operatingSystem->getImageFilename();
         $operatingSystemEdited = $operatingSystem;
-
-        if ($operatingSystemFilename !== null) {
-            $result=explode("://",$operatingSystem->getImageFilename());
-            $hypervisor=$result[0];
-            $imagefilename=$result[1];
-
-            $operatingSystemEdited->setImageFilename($imagefilename);
-                //$this->getParameter('image_directory') . '/' . $operatingSystem->getImageFilename());
-        }
 
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
         $operatingSystemForm->handleRequest($request);
@@ -171,40 +152,39 @@ class OperatingSystemController extends Controller
             $operatingSystemEdited = $operatingSystemForm->getData();
             $image_filename_upload = $operatingSystemForm->get('imageFilename')->getData();
             $image_filename_modified=$operatingSystemForm->get('image_Filename')->getData();
-
+//            $hypervisor=$operatingSystemForm->get('hypervisor')->getData();
             if ($image_filename_upload) {
                 //Upload function return a modified image filename for security reason
                 $new_ImageFileName = $imageFileUploader->upload($image_filename_upload);
 
                 if (is_null($operatingSystemForm->get('image_Filename')->getData()) )
                 //No custom filename is given
-                    $operatingSystemEdited->setImageFilename($hypervisor."://".$new_ImageFileName);
+                    $operatingSystemEdited->setImageFilename($new_ImageFileName);
                 else
                 //Custom filename is given
-                    $operatingSystemEdited->setImageFilename($hypervisor."://".$image_filename_modified);
+                    $operatingSystemEdited->setImageFilename($image_filename_modified);
             }
             else {
-                $operatingSystemEdited->setImageFilename($hypervisor."://".$image_filename_modified);
+                $operatingSystemEdited->setImageFilename($image_filename_modified);
             }
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($operatingSystemEdited);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Operating system has been edited.');
             //Send a message to change the name of the image on the worker filesystem
-            
-            
-            //(Old name, New name) name in format : hypervisor://name
+
+
             $new_name_os=array(
                 "old_name" => $operatingSystemFilename,
-                "new_name" => $operatingSystemEdited->getImageFilename()
+                "new_name" => $operatingSystemEdited->getImageFilename(),
+                "hypervisor" => $operatingSystemEdited->getHypervisor()->getName()
             );
 
             $this->bus->dispatch(
                 new InstanceActionMessage(json_encode($new_name_os), $operatingSystemEdited->getId(), InstanceActionMessage::ACTION_RENAMEOS)
             );
-
+            $this->addFlash('success', 'Operating system has been edited.');
             return $this->redirectToRoute('show_operating_system', [
                         'id' => $id
             ]);

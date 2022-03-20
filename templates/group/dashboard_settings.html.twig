@@ -138,7 +138,7 @@
                 {{ form_end(form, {render_rest: false}) }}
             </div>
         </div>
-        {% if group.isOwner(app.user) %}
+        {% if (group.isOwner(app.user) or is_granted('ROLE_ADMINISTRATOR')) %}
         <div class="row">
             <div class="col">
                 <h3>Change namespace</h3>

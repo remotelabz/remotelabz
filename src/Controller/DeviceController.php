@@ -121,6 +121,15 @@ class DeviceController extends Controller
             $networkSettings->setName($networkInterface->getName()."_set");
             $networkInterface->setSettings($networkSettings);
             $device->addNetworkInterface($networkInterface);
+            $device->setHypervisor($device->getOperatingSystem()->getHypervisor()->getName());
+            switch($device->getOperatingSystem()->getHypervisor()->getName()) {
+                case 'lxc':
+                    $device->setType('container');
+                break;
+                case 'qemu':
+                    $device->setType('vm');
+                break;
+            }
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -272,7 +281,6 @@ class DeviceController extends Controller
             $entityManager->remove($networkInterface);
         }
 
-// TODO : if hypervisor === LXC -> send a delete msg to worker to delete the container
         if ($device->getHypervisor() === "LXC") {
             $this->logger->info("Delete the device ".$device->getId());
         }

@@ -242,7 +242,7 @@ class InstanceManager
         $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
         
 
-        switch ($hypervisor) {
+       /* switch ($hypervisor) {
             case "lxc":
                 $imageName="lxc://".$imageName;
                 break;
@@ -251,7 +251,7 @@ class InstanceManager
                 break;
             default:
                 $imageName="qemu://".$imageName.'.img';
-        }
+        }*/
         $this->logger->debug('Export process. New name will be :'.$imageName);
 
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
@@ -325,6 +325,7 @@ class InstanceManager
         $newOS = new OperatingSystem();
         $newOS->setName($name);
         $newOS->setImageFilename($imageName);
+        $newOS->setHypervisor($operatingSystem->getHypervisor());
 
         return $newOS;
     }

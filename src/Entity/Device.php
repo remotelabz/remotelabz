@@ -163,8 +163,8 @@ class Device implements InstanciableInterface
         $this->labs = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
-        $this->type = 'vm';
-        $this->hypervisor = 'qemu';
+        /*$this->type = 'vm';
+        $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
         $this->vnc = true;

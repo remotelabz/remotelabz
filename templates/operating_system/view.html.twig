@@ -20,13 +20,16 @@
         {% if operatingSystem.imageUrl is not null %}
                 <a href="{{ operatingSystem.imageUrl }}">{{ operatingSystem.imageUrl }}</a>
         {% else %}
-            {% if hypervisor == "qemu" %}
-                <a href="{{ absolute_url('/uploads/images/' ~ filename) }}">{{ filename }}</a>
+            {% if operatingSystem.hypervisor.name == "qemu" %}
+                <a href="{{ absolute_url('/uploads/images/' ~ operatingSystem.ImageFilename) }}">{{ operatingSystem.ImageFilename }}</a>
             {% else %}
-                {{ filename }}
+                {{ operatingSystem.ImageFilename }}
             {% endif %}
         {% endif %}
         </p>
+        <p>Hypervisor : 
+            {{ operatingSystem.hypervisor.name}}
+            </p>
     </div>
 {% endblock %}
 

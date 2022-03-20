@@ -56,6 +56,14 @@ class OperatingSystem
      */
     private $image;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
+     * @Serializer\Groups({"api_get_device", "api_delete_os","export_lab", "api_get_lab_instance", "worker"})
+     * @Assert\NotNull
+     * @Assert\Valid
+     */
+    private $hypervisor;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -108,4 +116,18 @@ class OperatingSystem
 
         return $this;
     }
+
+    public function getHypervisor(): ?Hypervisor
+    {
+        return $this->hypervisor;
+    }
+
+    public function setHypervisor(?Hypervisor $hypervisor): self
+    {
+        $this->hypervisor = $hypervisor;
+
+        return $this;
+    }
+
+    
 }
