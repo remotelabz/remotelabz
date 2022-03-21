@@ -277,7 +277,6 @@ class InstanceManager
         );
     }
 
-
     public function setStopped(DeviceInstance $deviceInstance)
     {
         $this->logger->info('Device instance has been stopped correctly by worker. Performing state change.', [
