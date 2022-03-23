@@ -27,9 +27,10 @@ $(function () {
                 data: 'name'
             }, {
                 data: 'memory'
-            }, {
-                data: 'disk'
-        }]
+            },// {
+              //  data: 'disk'
+        //}
+    ]
     });
 })
   
