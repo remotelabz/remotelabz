@@ -163,15 +163,20 @@ export default class Editor extends React.Component {
 
     onValidateAddDeviceModal = () => {
         let device = this.state.addDeviceModal.selectedOption;
-        console.log(device);
+        //console.log("Before");
+        //console.log(device);
+        
         let networkInterfaces = [];
 
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
+        device.hypervisor = device.hypervisor.id;
         device.isTemplate = false;
         device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-        device.networkInterfaces.forEach(element => console.log(element.id));
+        //device.networkInterfaces.forEach(element => console.log(element.id));
         device.networkInterfaces = networkInterfaces;
+        //console.log("After");
+        //console.log(device);
 
         this.addDeviceRequest(device);
         this.onHideAddDeviceModal();

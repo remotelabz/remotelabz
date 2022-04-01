@@ -355,6 +355,7 @@ class LabController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
         }
+        $entityManager->flush();
 
         return $this->redirectToRoute('edit_lab', [
             'id' => $lab->getId()
@@ -388,7 +389,7 @@ class LabController extends Controller
                 $this->logger->debug("Add device form submitted is valid");
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
-                $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor());
+                $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor()->getName());
 
                 $lab = $this->labRepository->find($id);
                 $this->adddeviceinlab($new_device, $lab);

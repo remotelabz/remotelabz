@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
+use App\Entity\Hypervisor;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -320,12 +321,12 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getHypervisor(): ?string
+    public function getHypervisor(): ?Hypervisor
     {
         return $this->hypervisor;
     }
 
-    public function setHypervisor(string $hypervisor): self
+    public function setHypervisor(?Hypervisor $hypervisor): self
     {
         $this->hypervisor = $hypervisor;
 

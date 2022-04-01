@@ -48,9 +48,7 @@ class DeviceType extends AbstractType
             ->add('hypervisor', EntityType::class, [
                 'class' => Hypervisor::class,
                 'choice_label' => 'name',
-                'by_reference' => false,
-                'multiple' => false,
-                'help' => 'Nature of the device.',
+                'help' => 'Type of hypervisor.',
             ])
           /*  ->add('labs', EntityType::class, [
                 'class' => Lab::class,

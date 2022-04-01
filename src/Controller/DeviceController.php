@@ -121,7 +121,7 @@ class DeviceController extends Controller
             $networkSettings->setName($networkInterface->getName()."_set");
             $networkInterface->setSettings($networkSettings);
             $device->addNetworkInterface($networkInterface);
-            $device->setHypervisor($device->getOperatingSystem()->getHypervisor()->getName());
+            $device->setHypervisor($device->getOperatingSystem()->getHypervisor());
             switch($device->getOperatingSystem()->getHypervisor()->getName()) {
                 case 'lxc':
                     $device->setType('container');
@@ -281,7 +281,7 @@ class DeviceController extends Controller
             $entityManager->remove($networkInterface);
         }
 
-        if ($device->getHypervisor() === "LXC") {
+        if ($device->getHypervisor()->getName() === "lxc") {
             $this->logger->info("Delete the device ".$device->getId());
         }
 

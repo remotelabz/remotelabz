@@ -59,6 +59,10 @@ const url = require('url');
  * @property {string} name
  * @property {string} image URL form of the image used to create instances.
  * 
+ * @typedef {Object} Hypervisor
+ * @property {number} id
+ * @property {string} name
+ * 
  * @typedef {Object} Flavor
  * @property {number} id
  * @property {string} name
