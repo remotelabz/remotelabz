@@ -47,7 +47,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setFlavor($this->getReference('flavor-x-small'))
             ->setOperatingSystem($this->getReference('operating-system-Alpine'))
             ->setType($faker->randomElement(['vm']))
-            ->setHypervisor('qemu')
+            ->setHypervisor($this->getReference('qemu'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
         ;
@@ -65,7 +65,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setFlavor($this->getReference('flavor-x-small'))
             ->setOperatingSystem($this->getReference('operating-system-Debian'))
             ->setType($faker->randomElement(['vm']))
-            ->setHypervisor('qemu')
+            ->setHypervisor($this->getReference('qemu'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
         ;
@@ -82,7 +82,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setFlavor($this->getReference('flavor-x-large'))
             ->setOperatingSystem($this->getReference('operating-system-Ubuntu14X'))
             ->setType($faker->randomElement(['vm']))
-            ->setHypervisor('qemu')
+            ->setHypervisor($this->getReference('qemu'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
         ;
@@ -96,7 +96,9 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             FlavorFixtures::class,
-            OperatingSystemFixtures::class
+            OperatingSystemFixtures::class,
+            HypervisorFixtures::class
+
         ];
     }
 }

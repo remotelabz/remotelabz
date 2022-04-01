@@ -87,9 +87,11 @@ class Device implements InstanciableInterface
     private $virtuality;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     *
+     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
      * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
-     * @Assert\Choice({"qemu","lxc"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
     private $hypervisor;
 
