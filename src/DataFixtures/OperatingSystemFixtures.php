@@ -67,6 +67,16 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $manager->persist($operatingSystem);
         $this->setReference('operating-system-Ubuntu18LXDE', $operatingSystem);
 
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Migration')
+            ->setImageFilename('Migration')
+            ->setHypervisor($this->getReference('lxc'))
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('MigrationOS', $operatingSystem);
+
+
         $manager->flush();
     }
     public function getDependencies()

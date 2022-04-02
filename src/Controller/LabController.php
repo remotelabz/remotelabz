@@ -378,7 +378,7 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
-            $this->logger->debug("Add a device to lab via API. json:",$device);
+            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:".$request,$device);
             // fetch network interfaces to copy them later
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
@@ -408,7 +408,7 @@ class LabController extends Controller
 
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
-                if ($new_device->getHypervisor() === 'lxc') {
+                if ($new_device->getHypervisor()->getName() === 'lxc') {
                     $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
                     $new_device->setType('container');
                 }
@@ -464,6 +464,7 @@ class LabController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
+        $device=null;
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
@@ -489,19 +490,17 @@ class LabController extends Controller
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
                 $device=$this->deviceRepository->findBy(['name' => 'Service', 'isTemplate' => true]);
-                if (!is_null($device)) {
+                $this->logger->debug("Device Service find ? : ",$device);
+                if (!is_null($device) && count($device)>0 ) {
                     $srv_device=$this->copyDevice($device[0],'Service_sandbox');
                     $srv_device->setIsTemplate(false);
                     $entityManager->persist($srv_device);
+                    $this->logger->debug("Add additional device to lab ".$srv_device->getName());
+                    $this->adddeviceinlab($srv_device,$lab);
                 }
-
-                $this->logger->debug("Add additionnal device to lab ".$srv_device->getName());
-                $this->adddeviceinlab($srv_device,$lab);
-                $entityManager->persist($lab);
-                $entityManager->flush();
+            $entityManager->persist($lab);
+            $entityManager->flush();
             }
-
-
             return $this->json($lab, 200, [], ['api_get_lab']);
         }
 
