@@ -76,6 +76,24 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $manager->persist($operatingSystem);
         $this->setReference('MigrationOS', $operatingSystem);
 
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Ubuntu20LTS')
+            ->setImageFilename('Ubuntu20LTS')
+            ->setHypervisor($this->getReference('lxc'))
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('Ubuntu20LTSOS', $operatingSystem);
+
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
+            ->setName('Alpine3.15')
+            ->setImageFilename('Alpine3.15')
+            ->setHypervisor($this->getReference('lxc'))
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('Alpine3.15OS', $operatingSystem);
+
 
         $manager->flush();
     }

@@ -107,6 +107,42 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         $manager->persist($device);
         $this->addReference('Migration', $device);
 
+        $device = new Device();
+        $device
+            ->setName('Ubuntu20LTS-cnt')
+            ->setBrand('Ubuntu')
+            ->setModel('Version Focal 20 LTS')
+            ->setLaunchOrder(0)
+            ->setVirtuality(0)
+            ->setFlavor($this->getReference('flavor-xx-small'))
+            ->setOperatingSystem($this->getReference('Ubuntu20LTSOS'))
+            ->setType($faker->randomElement(['container']))
+            ->setHypervisor($this->getReference('lxc'))
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
+            ->setVnc(true)
+        ;
+        $manager->persist($device);
+        $this->addReference('Ubuntu20LTS-cnt', $device);
+
+        $device = new Device();
+        $device
+            ->setName('Alpine3.15-cnt')
+            ->setBrand('Alpine')
+            ->setModel('Version 3.15')
+            ->setLaunchOrder(0)
+            ->setVirtuality(0)
+            ->setFlavor($this->getReference('flavor-xx-small'))
+            ->setOperatingSystem($this->getReference('Alpine3.15OS'))
+            ->setType($faker->randomElement(['container']))
+            ->setHypervisor($this->getReference('lxc'))
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
+            ->setVnc(true)
+        ;
+        $manager->persist($device);
+        $this->addReference('Alpine3.15-cnt', $device);
+        
         $manager->flush();
     }
 
