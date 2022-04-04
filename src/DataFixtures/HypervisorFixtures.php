@@ -17,11 +17,14 @@ class HypervisorFixtures extends Fixture
             ->setName('qemu')
         ;
         $manager->persist($hypervisor);
+        $this->addReference('qemu', $hypervisor);
         $hypervisor = new Hypervisor();
         $hypervisor
             ->setName('lxc')
         ;
+
         $manager->persist($hypervisor);
+        $this->addReference('lxc', $hypervisor);
         $manager->flush();
     }
 
