@@ -142,6 +142,25 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         ;
         $manager->persist($device);
         $this->addReference('Alpine3.15-cnt', $device);
+
+        $device = new Device();
+        $device
+            ->setName('Debian-cnt')
+            ->setBrand('Debian')
+            ->setModel('Stable')
+            ->setLaunchOrder(0)
+            ->setVirtuality(0)
+            ->setFlavor($this->getReference('flavor-xx-small'))
+            ->setOperatingSystem($this->getReference('DebianOS'))
+            ->setType($faker->randomElement(['container']))
+            ->setHypervisor($this->getReference('lxc'))
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
+            ->setVnc(true)
+        ;
+        $manager->persist($device);
+        $this->addReference('Debian-cnt', $device);
+
         
         $manager->flush();
     }

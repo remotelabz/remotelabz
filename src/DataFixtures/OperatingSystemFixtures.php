@@ -87,6 +87,16 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
+            ->setName('Debian')
+            ->setImageFilename('Debian')
+            ->setHypervisor($this->getReference('lxc'))
+        ;
+        $manager->persist($operatingSystem);
+        $this->setReference('DebianOS', $operatingSystem);
+
+
+        $operatingSystem = new OperatingSystem();
+        $operatingSystem
             ->setName('Alpine3.15')
             ->setImageFilename('Alpine3.15')
             ->setHypervisor($this->getReference('lxc'))
