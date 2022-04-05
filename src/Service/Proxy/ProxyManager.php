@@ -10,6 +10,7 @@ class ProxyManager
     protected $logger;
     protected $workerServer;
     protected $remotelabzProxyServer;
+    protected $remotelabzProxyServerAPI;
     protected $remotelabzProxyPort;
     protected $remotelabzProxyApiPort;
     protected $remotelabzProxyUseHttps;
@@ -18,6 +19,7 @@ class ProxyManager
     public function __construct(
         string $workerServer,
         string $remotelabzProxyServer,
+        string $remotelabzProxyServerAPI,
         int $remotelabzProxyPort,
         int $remotelabzProxyApiPort,
         bool $remotelabzProxyUseHttps,
@@ -27,6 +29,7 @@ class ProxyManager
         $this->logger = $logger;
         $this->workerServer = $workerServer;
         $this->remotelabzProxyServer = $remotelabzProxyServer;
+        $this->remotelabzProxyServerAPI = $remotelabzProxyServerAPI;
         $this->remotelabzProxyPort = $remotelabzProxyPort;
         $this->remotelabzProxyApiPort = $remotelabzProxyApiPort;
         $this->remotelabzProxyUseHttps = $remotelabzProxyUseHttps;
@@ -36,6 +39,11 @@ class ProxyManager
     public function getRemotelabzProxyServer(): string
     {
         return $this->remotelabzProxyServer;
+    }
+
+    public function getRemotelabzProxyServerAPI(): string
+    {
+        return $this->remotelabzProxyServerAPI;
     }
 
     public function getRemotelabzProxyPort(): int
@@ -63,7 +71,7 @@ class ProxyManager
     {
         $client = new Client();
 
-        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServerAPI.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Create route in proxy', [
             'url' => $url
         ]);
@@ -88,7 +96,7 @@ class ProxyManager
     {
         $client = new Client();
 
-        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServerAPI.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Create route in proxy', [
             'url' => $url
         ]);
@@ -113,7 +121,7 @@ class ProxyManager
     {
         $client = new Client();
 
-        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServer.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServerAPI.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
         $this->logger->debug('Delete route in proxy', [
             'url' => $url
         ]);

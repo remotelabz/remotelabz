@@ -25,6 +25,7 @@ parameters:
     app.websocket_proxy_port: '%env(resolve:WEBSOCKET_PROXY_PORT)%'
     app.websocket_proxy_api_port: '%env(resolve:WEBSOCKET_PROXY_API_PORT)%'
     app.services.proxy.server: '%env(resolve:REMOTELABZ_PROXY_SERVER)%'
+    app.services.proxy.server.api: '%env(resolve:REMOTELABZ_PROXY_SERVER_API)%'
     app.services.proxy.port: '%env(int:REMOTELABZ_PROXY_PORT)%'
     app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'
     app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
@@ -184,6 +185,7 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $remotelabzProxyServer: '%app.services.proxy.server%'
+            $remotelabzProxyServerAPI: '%app.services.proxy.server.api%'
             $remotelabzProxyPort: '%app.services.proxy.port%'
             $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
             $remotelabzProxyUseHttps: '%app.services.proxy.https%'
