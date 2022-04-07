@@ -49,7 +49,8 @@ class UserController extends Controller
         \Swift_Mailer $mailer,
         SerializerInterface $serializer,
         LoggerInterface $logger,
-        string $ip_check_internet)
+        string $ip_check_internet,
+        string $remotevpn_addr)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
@@ -58,6 +59,7 @@ class UserController extends Controller
         $this->serializer = $serializer;
         $this->logger = $logger;
         $this->ip_check_internet = $ip_check_internet;
+        $this->remotevpn_addr = $remotevpn_addr;
     }
 
     /**
@@ -690,10 +692,11 @@ class UserController extends Controller
         $config = $VPNConfigurationGenerator->generateConfig($privateKey, $x509);
 
         $response = new Response($config);
+        $filename=$this->remotevpn_addr.'-'.$user->getUsername().'.ovpn';
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'RemoteLabz-'.$user->getUsername().'.ovpn'
+            $filename
         );
 
         $response->headers->set('Content-Type', 'application/x-openvpn-profile');

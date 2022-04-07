@@ -35,7 +35,7 @@ parameters:
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
 
-    app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
+    app.general.public_address: '%env(resolve:PUBLIC_ADDRESS)%'
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
 
@@ -162,7 +162,7 @@ services:
             $TLSKey: '%app.ssl.tls.key%'
             $exportPath: '%app.ssl.certs.dir%'
             $validity: '%app.ssl.certs.validity%'
-            $remote: '%app.general.public_adress%'
+            $remote: '%app.general.public_address%'
     
     App\Service\VPN\VPNConfiguratorGeneratorInterface: '@openvpn_configuration_generator'
 
@@ -199,6 +199,7 @@ services:
     App\Controller\UserController:
         arguments:
             $ip_check_internet: '%app.user.ip_check_internet%'
+            $remotevpn_addr: '%app.general.public_address%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
