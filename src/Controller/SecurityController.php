@@ -146,9 +146,11 @@ class SecurityController extends AbstractController
 
                 $mailer->send($message);
 
-                $this->addFlash('info', 'A link has been sent. Please check your emails (please do not forget to check spams).');
+                //$this->addFlash('info', 'A link has been sent. Please check your emails (please do not forget to check spams).');
+                $this->addFlash('info', 'If your account exists, you will receive a link. Please check your emails (please do not forget to check spams).');
             } else {
-                $this->addFlash('danger', 'There is no account registered with this email.');
+                //$this->addFlash('danger', 'There is no account registered with this email.');
+                $this->addFlash('info', 'If your account exists, you will receive a link. Please check your emails (please do not forget to check spams).');
             }
         }
 
