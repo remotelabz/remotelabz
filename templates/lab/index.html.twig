@@ -16,7 +16,7 @@
     </div>
     <div class="top-panel">
         <div class="quick-actions">
-            {% if is_granted('ROLE_ADMINISTRATOR') %}
+            {% if (is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')) %}
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importLabModal">
                     {{ svg('upload') }} {{ 'Import Lab'|trans }}
                 </button>

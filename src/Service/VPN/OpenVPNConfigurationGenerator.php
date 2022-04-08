@@ -85,6 +85,7 @@ verb 1
 keepalive 10 120
 port 1194
 proto udp
+allow-compression yes
 compress lz4
 <ca>
 $CACert

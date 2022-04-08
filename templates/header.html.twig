@@ -19,7 +19,7 @@
       <div class="navbar-menu-element">
         <ul class="navbar-nav navbar-expand mr-1">
           {#{{ _self.navlink("Labs", 'labs', false, 'labs', _context) }}#}
-          {% if is_granted('ROLE_ADMINISTRATOR') %}
+          {% if (is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')) %}
           <a class="nav-link ml-2 {% if '/labs' in app.request.uri %}active{% endif %}" href="{{ path('labs') }}" data-toggle="tooltip" data-placement="bottom" title="Labs">
             {{ svg('monitor', 's16') }}
           </a>
