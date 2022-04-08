@@ -123,14 +123,18 @@
                                     {# <div class="text-muted">{{ user.email }}</div> #}
                                 </div>
                                 <div class="flex-grow-1"></div>
-                                {% if not (group.isOwner(user) or user.id == app.user.id) and (group.isAdmin(app.user) or group.isOwner(app.user)) %}
-                                    <div style="min-width: 150px">
+                               {% if (( 'ROLE_ADMINISTRATOR' in app.user.roles
+                                     or 'ROLE_SUPER_ADMINISTRATOR' in app.user.roles
+                                     or (group.isOwner(app.user) )
+                                     or ( group.isAdmin(app.user)) ) and ( not group.isOwner(user) ))
+                                %}
+                                    <div style="min-width: 150px"> 
                                         {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
                                     </div>
                                     <div class="ml-2">
                                         <a href="{{ path('remove_user_group', {slug: group.path, userId: user.id}) }}" class="btn btn-danger">{{ svg('remove') }}</a>
                                     </div>
-                                {% endif %} 
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
