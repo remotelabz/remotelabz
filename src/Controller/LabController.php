@@ -109,7 +109,7 @@ class LabController extends Controller
             $author = $request->query->get('author', 0);
         else 
             $author = $request->query->get('author', $this->getUser()->getId());
-        $this->logger->debug("Author :".$author);
+        //$this->logger->debug("Author :".$author);
         
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
