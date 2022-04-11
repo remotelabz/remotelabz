@@ -449,7 +449,13 @@ class LabController extends Controller
      */
     public function editAction(Request $request, int $id)
     {
+
         $lab = $this->labRepository->find($id);
+        $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        if ( $lab->getAuthor()->getId() == $this->getUser()->getId() )
+        {
+            $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        
 
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -464,6 +470,12 @@ class LabController extends Controller
         }
 
         return $this->render('lab/editor.html.twig', ['lab' => $lab]);
+    }
+    else
+        { 
+            $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            return $this->redirectToRoute('index');
+        }
     }
 
     /**

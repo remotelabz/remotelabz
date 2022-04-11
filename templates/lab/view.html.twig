@@ -16,7 +16,7 @@
         {% endif %}
 
         {% if labInstance is empty %} 
-            {% if is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER") %}
+            {% if is_granted("ROLE_ADMINISTRATOR") or (is_granted("ROLE_TEACHER") and user.id == lab.author.id) %}
                 <a href="{{ path('edit_lab', {'id': lab.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> 
                     {{ 'Edit'|trans }}
                 </a>
