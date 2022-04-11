@@ -376,6 +376,12 @@ class LabController extends Controller
     {
         //$this->logger->debug("Add a device to lab. Request received: ".$request);
         //$this->logger->debug("Add a device to lab id: ".$id);
+        $lab = $this->labRepository->find($id);
+
+        if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
+        {
+            $this->logger->debug("Add device from API by : ".$this->getUser()->getUsername());
+        
         $device = new Device();
         //Only to debug 
         $serializer = $this->container->get('jms_serializer');
@@ -385,7 +391,7 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
-            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:".$request,$device);
+            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device);
             // fetch network interfaces to copy them later
             $networkInterfaces = $device['networkInterfaces'];
             $deviceForm->submit($device);
@@ -398,7 +404,6 @@ class LabController extends Controller
                 $new_device = $deviceForm->getData();
                 $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor()->getName());
 
-                $lab = $this->labRepository->find($id);
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
@@ -409,39 +414,43 @@ class LabController extends Controller
                 }
             }
         }
-
         return $this->json($deviceForm, 200, [], ['api_get_device']);
+    }
+        else {
+            $this->logger->warning("User ".$this->getUser()->getUsername()." has tried, via API, to add a device to lab".$lab->getName());
+            return $this->redirectToRoute('index');
+        }
     }
 
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
-                if ($new_device->getHypervisor()->getName() === 'lxc') {
-                    $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
-                    $new_device->setType('container');
-                }
-                else 
-                    $new_device->setType('vm');
+        if ($new_device->getHypervisor()->getName() === 'lxc') {
+            $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
+            $new_device->setType('container');
+        }
+        else 
+            $new_device->setType('vm');
 
-                $entityManager = $this->getDoctrine()->getManager();
-                $lab->setLastUpdated(new \DateTime());
-                $entityManager->persist($new_device);
-                foreach ($new_device->getNetworkInterfaces() as $network_int) {
-                    $this->logger->debug("Add Network interface".$network_int->getName());
-                    $new_network_inter=new NetworkInterface();
-                    $new_setting=new NetworkSettings();
-                    $new_setting=clone $network_int->getSettings();
-                    $entityManager->persist($new_setting);
-                    $new_network_inter->setSettings($new_setting);
-                    $new_network_inter->setName($new_device->getName());
-                    $new_network_inter->setIsTemplate(true);
-                    $new_device->addNetworkInterface($new_network_inter);
-                    $entityManager->persist($new_network_inter);
-                }
-                $entityManager->flush();
-                $lab->addDevice($new_device);
-                $entityManager->persist($lab);
-                $entityManager->flush();
-                $this->logger->debug("Add device in lab done");
+        $entityManager = $this->getDoctrine()->getManager();
+        $lab->setLastUpdated(new \DateTime());
+        $entityManager->persist($new_device);
+        foreach ($new_device->getNetworkInterfaces() as $network_int) {
+            $this->logger->debug("Add Network interface".$network_int->getName());
+            $new_network_inter=new NetworkInterface();
+            $new_setting=new NetworkSettings();
+            $new_setting=clone $network_int->getSettings();
+            $entityManager->persist($new_setting);
+            $new_network_inter->setSettings($new_setting);
+            $new_network_inter->setName($new_device->getName());
+            $new_network_inter->setIsTemplate(true);
+            $new_device->addNetworkInterface($new_network_inter);
+            $entityManager->persist($new_network_inter);
+        }
+        $entityManager->flush();
+        $lab->addDevice($new_device);
+        $entityManager->persist($lab);
+        $entityManager->flush();
+        $this->logger->debug("Add device in lab done");
     }
 
     /**
@@ -449,7 +458,13 @@ class LabController extends Controller
      */
     public function editAction(Request $request, int $id)
     {
+
         $lab = $this->labRepository->find($id);
+        $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
+        {
+            $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        
 
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -464,6 +479,12 @@ class LabController extends Controller
         }
 
         return $this->render('lab/editor.html.twig', ['lab' => $lab]);
+    }
+    else
+        { 
+            $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            return $this->redirectToRoute('index');
+        }
     }
 
     /**
@@ -491,7 +512,7 @@ class LabController extends Controller
             $entityManager->flush();
 
             $lab_name=$lab->getName();
-            $this->logger->debug("Lab updated: ".$lab_name);
+            $this->logger->debug("API Lab updated: ".$lab_name);
             if (strstr($lab_name,"Sandbox_")) 
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
@@ -575,6 +596,12 @@ class LabController extends Controller
             throw new NotFoundHttpException();
         }
 
+        $lab = $this->labRepository->find($id);
+        
+        if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
+        {
+            $this->logger->debug("Lab deletes by : ".$this->getUser()->getUsername());
+
         $return=$this->delete_lab($lab);
         if ($return > 0) {
             $this->logger->error('This lab is used by an instance');
@@ -591,6 +618,12 @@ class LabController extends Controller
             $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');
         }
+    }
+    else 
+    { 
+        $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to delete the lab".$lab->getName());
+        return $this->redirectToRoute('index');
+    }
     }
 
     public function delete_lab(Lab $lab){
