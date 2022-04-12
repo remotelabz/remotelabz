@@ -139,7 +139,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         if (!$user->isEnabled()) {
             throw new DisabledException();
         }
-
+        $this->logger->debug("Check credential in getUser, affiliation: ".$credentials['email']);
         return $user;
     }
 
@@ -153,6 +153,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function checkCredentials($credentials, UserInterface $user)
     {
+        
+        $this->logger->debug("Check credential, affiliation: ".$credentials['email']);
         return true;
     }
 
