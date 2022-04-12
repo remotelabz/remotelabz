@@ -461,7 +461,8 @@ class LabController extends Controller
 
         $lab = $this->labRepository->find($id);
         $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
-        if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
+
+        if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
             $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
         
@@ -482,7 +483,10 @@ class LabController extends Controller
     }
     else
         { 
-            $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            if (!is_null($lab))
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            else 
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
             return $this->redirectToRoute('index');
         }
     }
