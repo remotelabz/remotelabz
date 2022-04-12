@@ -91,9 +91,11 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             'eppn' => $request->server->get($this->remoteUserVar),
             'email' => $request->server->get('mail'),
             'firstName' => $request->server->get('givenName'),
-            'lastName' => $request->server->get('sn')
+            'lastName' => $request->server->get('sn'),
+            'affiliation' => $request->server->get('o'),
+            'statut' => $request->server->get('eduPersonPrimaryAffiliation')
         ];
-
+        $this->logger->debug("User authentification with shibboleth :".$request->server->get('mail'));
         return $credentials;
     }
 
