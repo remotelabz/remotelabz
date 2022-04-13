@@ -46,6 +46,7 @@ parameters:
     app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
 
     app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
+    app.user.authorized_affiliation: '%env(resolve:AUTHORIZED_SHIBBOLETH_DOMAIN)%'
 
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
@@ -125,10 +126,7 @@ services:
 
     App\Security\ShibbolethAuthenticator:
         arguments:
-            - "@router"
-            - "%shibboleth_idp_url%"
-            - "%shibboleth_remote_user_var%"
-            - "@security.token_storage"
+            $authorized_affiliation: '%app.user.authorized_affiliation%'
 
     App\EventSubscriber\RenderExceptionSubscriber:
         arguments:

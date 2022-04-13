@@ -23,6 +23,7 @@ class AuthenticationSuccessHandler extends \Lexik\Bundle\JWTAuthenticationBundle
         if (null === $jwt) {
             $jwt = $this->jwtManager->create($user);
         }
+
         $response = new JWTAuthenticationSuccessResponse($jwt);
         $response->headers->setCookie(new Cookie('bearer', $jwt));
         $event    = new AuthenticationSuccessEvent(['token' => $jwt], $user, $response);
