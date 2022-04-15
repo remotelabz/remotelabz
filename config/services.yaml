@@ -38,6 +38,7 @@ parameters:
     app.general.public_address: '%env(resolve:PUBLIC_ADDRESS)%'
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
+    app.general.message: '%env(resolve:GENERAL_MESSAGE)%'
 
     app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
@@ -178,6 +179,7 @@ services:
     App\Controller\SecurityController:
         arguments:
             $maintenance: '%app.general.maintenance%'
+            $general_message: '%app.general.message%'
 
     App\Service\Proxy\ProxyManager:
         arguments:

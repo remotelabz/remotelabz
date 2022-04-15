@@ -31,6 +31,13 @@
                             {% endfor %}
                         {% endfor %}
                     </div>
+                    {% if ( general_message != "") %}
+                    <div class="flashbag-container col-lg-12">
+                        <div class="flash-notice alert alert-warning alert-dismissible fade show">
+                            {{ general_message }}
+                        </div>
+                    </div>
+                    {% endif %}
                     {% if ( maintenance == 1) %}
                         {{ svg('warning', 'image-lm') }}
                         <div class="text-center">In maintenance</div>
