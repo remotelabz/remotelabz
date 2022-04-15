@@ -83,6 +83,6 @@ security:
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
-        - { path: ^/admin/device_sandbox, roles: ['ROLE_TEACHER'] }
+        - { path: ^/admin/devices_sandbox, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }

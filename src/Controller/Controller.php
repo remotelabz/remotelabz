@@ -59,6 +59,16 @@ class Controller extends AbstractFOSRestController
     }
 
     /**
+     * @Route("/admin", name="admin")
+     */
+    public function adminAction()
+    {
+        return $this->render('dashboard/index.html.twig');
+    }
+    
+
+
+    /**
      * @Route("/react/{reactRouting}", name="index_react", defaults={"reactRouting": null})
      */
     public function defaultReactAction()

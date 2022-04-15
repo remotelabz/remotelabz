@@ -29,6 +29,11 @@
             {{ svg('users', 's16') }}
           </a>
         </ul>
+        {% if is_granted('ROLE_TEACHER') %}
+          <a class="nav-link ml-2 {% if '/devices_sandbox' in app.request.uri %}active{% endif %}" href="{{ path('devices_sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">
+            {{ svg('monitor-o', 's16') }}
+          </a>
+          {% endif %}
         {% if is_granted('ROLE_ADMINISTRATOR') %}
           <a class="nav-link ml-2" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
             {{ svg('admin', 's18') }}
