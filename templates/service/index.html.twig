@@ -26,7 +26,7 @@
                         {% if serviceStarted['remotelabz'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
                         {% if serviceStarted['remotelabz'] %}
@@ -41,7 +41,7 @@
                         {% if serviceStarted['remotelabz-proxy'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                        <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
                         {% if serviceStarted['remotelabz-proxy'] %}
@@ -68,25 +68,17 @@
             <div class="card">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <span class="fw600">Worker server</span>
+                        <span class="fw600">Worker Service</span>
                         {% if serviceStarted['remotelabz-worker'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
-                        {% endif %}
-                    </li>
-                    <li class="list-group-item">
-                        <span class="fw600">Worker Messaging service</span>
-                        {% if serviceStarted['remotelabz-worker-message'] %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
-                        {% else %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: lightgray"></i>
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
-                        {% if serviceStarted['remotelabz-worker-message'] %}
-                            <a href="{{ path('stop_service', {'service': 'remotelabz-worker-message'}) }}" class="btn btn-danger">Stop</a>
+                        {% if serviceStarted['remotelabz-worker'] %}
+                            <a href="{{ path('stop_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-danger">Stop</a>
                         {% else %}
-                            <a href="{{ path('start_service', {'service': 'remotelabz-worker-message'}) }}" class="btn btn-success">Start</a>
+                            <a href="{{ path('start_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-success">Start</a>
                         {% endif %}
                         </div>
                     </li>
