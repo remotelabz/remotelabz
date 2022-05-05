@@ -64,10 +64,10 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
         // if an error happened, set device instance in its previous state
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
-            $this->logger->debug("Error 2 state received from instance uuid ". $message->getUuid());
+            $this->logger->debug("Error state received from instance uuid ". $message->getUuid());
             $options=$message->getOptions();
             if (!is_null($options)) {
-                $this->logger->debug('Show options of message received : ', $options);
+                $this->logger->debug('Show options of error message received : ', $options);
                 if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
                     $this->cancel_renameos($message->getUuid(),$options["old_name"],$options["new_name"]);
                 }
@@ -192,13 +192,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     }
 
     public function cancel_renameos($id,$old_name,$new_name){
+        $this->logger->debug("Cancel rename OS id ".$id. "from name ".$old_name." to name ".$new_name);
         $operatingsystem = $this->operatingSystemRepository->find($id);
-        
-            $result=explode("://",$operatingsystem->getImageFilename());
-            $hypervisor=$result[0];
-            $imagefilename=$result[1];
-        $operatingsystem->setImageFilename($hypervisor."://".$old_name);
-        
+        $operatingsystem->setImageFilename($old_name);
         $this->entityManager->persist($operatingsystem);
         $this->entityManager->flush();
     }

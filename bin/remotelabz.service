@@ -1,8 +1,6 @@
 [Unit]
 Description=Remotelabz Messages Consumer Service
 After=network.target
-StartLimitIntervalSec=500
-StartLimitBurst=5
 
 [Service]
 Type=simple
