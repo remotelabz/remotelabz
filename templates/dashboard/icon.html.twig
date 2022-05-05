@@ -1,0 +1,47 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'dashboard_index' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block jumbotron %}
+<div class="container">
+    <div class="float-left"><img src="/profile/picture?size=96" width="96px" alt="profile-img" class="rounded-circle mr-4"></div>
+    <div>
+        <h1 class="display-4">Hello, {{ app.user.firstname }}.</h1>
+        <p class="lead">Welcome to RemoteLabz!</p>
+    </div>
+</div>
+{% endblock %}
+
+{% macro groupParent(group) %}
+    {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('dashboard_show_group', {'slug': group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
+{% endmacro %}
+
+{% block wrapper_fluid %}
+
+{%- set user = app.user %}
+{% set groups = user.groupsInfo %}
+
+<div class="row">
+    <div class="col-xl-8 col-lg-12 border-right">
+        <h1 class="ml-3">Icons list</h1>
+        {% for name in list %}
+           {{ svg(name,'s16')}} {{name}}
+        {% endfor %}
+    </div>
+  
+</div>
+    
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('timeago') }}
+    {{ encore_entry_script_tags('dashboard') }}
+{% endblock %}
