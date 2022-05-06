@@ -347,13 +347,15 @@ class UserController extends Controller
             } elseif ($user->getInstances()->count() > 0) {
                 $this->addFlash('danger', "You cannot delete an user who still has instances. Please stop them and try again.");
                 throw new UnauthorizedHttpException('You cannot delete an user who still has instances. Please stop them and try again.');
-            } elseif ($user->getGroups()->count() > 0) {
-                $this->addFlash('danger', "You cannot delete a user which is in a group");
-                return $this->redirectToRoute('users');
             }
             
             else {
                 $em = $this->getDoctrine()->getManager();
+                if ($user->getGroups()->count() > 0) {
+                    foreach ($user->getGroups() as $group)
+                        $group->getGroup()->removeUser($user);
+                }
+                
                 $em->remove($user);
                 $em->flush();
                 $this->addFlash('success', $user->getName() . "'s account has been deleted.");

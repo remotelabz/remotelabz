@@ -38,11 +38,21 @@
         </form>
     </div>
     {% for device in devices %}
-        <div class="wrapper d-flex align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+
+    <div class="content-list row align-items-center p-2 {% if not loop.last %}border-bottom{% endif %} lab-item">
+        <div class="col-6">
             <a href="{{ path('show_device', {'id': device.id}) }}">
                 {{ device.name }}
             </a>
         </div>
+        <div class="col-9">
+            Type: {{ device.type }}; OS: {{ device.operatingsystem.name }}
+        </div>
+</div>
+
+
+
+        
     {% endfor %}
 {% endblock %}
 

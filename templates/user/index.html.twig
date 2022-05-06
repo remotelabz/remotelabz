@@ -15,6 +15,7 @@
     {{ parent() }}
 {% endblock %}
 
+
 {% block wrapper %}
     {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
         {% block body %}
@@ -33,6 +34,7 @@
               </div> #}
         {% endblock %}
     {% endembed %}
+   
 
     <div class="top-panel">
         <div class="quick-actions">
@@ -147,6 +149,9 @@
             </thead>
             <tbody>
                 {% for user in users %}
+                        {% embed 'modal-delete-user.html.twig' with {'title': 'Delete user'|trans, 'class': 'delete-user-modal'~loop.index} %}
+                            {% block content %}Do you confirm to delete this user ?{% endblock %}
+                        {% endembed %}
                     <tr>
                         <td>
                             <div class="wrapper d-flex align-items-center item">
@@ -169,9 +174,11 @@
                                         {# {% if user.email == app.user.email %}It's you!{% endif %} #}
                                     </div>
                                     <div>
-                                        {# <a href="mailto:{{user.email}}" class="item-user-email">
+                                        {% if is_granted('ROLE_ADMINISTRATOR') %}
+                                        <a href="mailto:{{user.email}}" class="item-user-email">
                                             {{- user.email -}}
-                                        </a> #}
+                                        </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="item-right d-flex flex-column text-right">
@@ -190,15 +197,27 @@
                         </td>
                         <td class="text-right">
                             <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
+                            
+                            {% if 'ROLE_SUPER_ADMINISTRATOR' not in user.roles %}
+
                             <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa fa-user-cog"></i>
                                 <i class="fa fa-caret-down"></i>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
-                            <a class="dropdown-item text-warning" href="{{ path('toggle_user', {id: user.id}) }}">Block</a>
+                            <a class="text-warning" href="{{ path('toggle_user', {id: user.id}) }}">
+                                {% if user.enabled %}
+                                <button class="btn btn-warning">Block</button>
+                                {% else %}
+                                Unblock
+                            {% endif %}
+                            </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-danger" href="{{ path('delete_user', {id: user.id}) }}">Delete user</a>
+                            <button class="btn btn-danger" data-target={{'.delete-user-modal'~loop.index}} data-toggle="modal" type="button">
+                               {{ 'Delete'|trans }}
+                            </button>                         
                             </div>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
