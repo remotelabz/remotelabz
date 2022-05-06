@@ -25,8 +25,12 @@ final class Version20220401134516 extends AbstractMigration
         $this->addSql('ALTER TABLE device ADD hypervisor_id INT DEFAULT NULL, DROP hypervisor');
         $this->addSql('ALTER TABLE device ADD CONSTRAINT FK_92FB68E4F2DF8A7 FOREIGN KEY (hypervisor_id) REFERENCES hypervisor (id)');
         $this->addSql('CREATE INDEX IDX_92FB68E4F2DF8A7 ON device (hypervisor_id)');
-        $this->addSql('UPDATE device SET hypervisor_id = 3 WHERE type=\'vm\'');
-        $this->addSql('UPDATE device SET hypervisor_id = 4 WHERE type=\'container\'');
+        $this->addSql('UPDATE device SET hypervisor_id = 1 WHERE type=\'vm\'');
+        $this->addSql('UPDATE device SET hypervisor_id = 2 WHERE type=\'container\'');
+        $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Debian cnt\', NULL, \'Debian\', \'2\')');
+        $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Alpine3.15 cnt\', NULL, \'Alpine3.15\', \'2\')');
+        $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Ubuntu20LTS cnt\', NULL, \'Ubuntu20LTS\', \'2\')');
+
 
     }
 
@@ -40,5 +44,9 @@ final class Version20220401134516 extends AbstractMigration
         $this->addSql('ALTER TABLE device ADD hypervisor VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL COLLATE `utf8mb4_unicode_ci`, DROP hypervisor_id');
         $this->addSql('UPDATE device SET hypervisor = \'qemu\' WHERE type=\'vm\'');
         $this->addSql('UPDATE device SET hypervisor = \'lxc\' WHERE type=\'container\'');
+        $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Ubuntu20LTS cnt\' AND operating_system.image_filename=\'Ubuntu20LTS\'');
+        $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Alpine3.15 cnt\' AND operating_system.image_filename=\'Alpine3.15\'');
+        $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Debian cnt\' AND operating_system.image_filename=\'Debian\'');
+
     }
 }
