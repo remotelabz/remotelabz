@@ -138,6 +138,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }).show()
             setLoadingInstanceState(false)
         }
+        
     }
 
     function onJitsiCallStarted() {
