@@ -25,6 +25,7 @@ parameters:
     app.websocket_proxy_port: '%env(resolve:WEBSOCKET_PROXY_PORT)%'
     app.websocket_proxy_api_port: '%env(resolve:WEBSOCKET_PROXY_API_PORT)%'
     app.services.proxy.server: '%env(resolve:REMOTELABZ_PROXY_SERVER)%'
+    app.services.proxy.server.api: '%env(resolve:REMOTELABZ_PROXY_SERVER_API)%'
     app.services.proxy.port: '%env(int:REMOTELABZ_PROXY_PORT)%'
     app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'
     app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
@@ -34,9 +35,10 @@ parameters:
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
     app.jitsi_call_secret: '%env(resolve:JITSI_CALL_SECRET)%'
 
-    app.general.public_adress: '%env(resolve:PUBLIC_ADDRESS)%'
+    app.general.public_address: '%env(resolve:PUBLIC_ADDRESS)%'
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
+    app.general.message: '%env(resolve:GENERAL_MESSAGE)%'
 
     app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
@@ -45,6 +47,7 @@ parameters:
     app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
 
     app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
+    app.user.authorized_affiliation: '%env(resolve:AUTHORIZED_SHIBBOLETH_DOMAIN)%'
 
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
@@ -124,10 +127,7 @@ services:
 
     App\Security\ShibbolethAuthenticator:
         arguments:
-            - "@router"
-            - "%shibboleth_idp_url%"
-            - "%shibboleth_remote_user_var%"
-            - "@security.token_storage"
+            $authorized_affiliation: '%app.user.authorized_affiliation%'
 
     App\EventSubscriber\RenderExceptionSubscriber:
         arguments:
@@ -161,7 +161,7 @@ services:
             $TLSKey: '%app.ssl.tls.key%'
             $exportPath: '%app.ssl.certs.dir%'
             $validity: '%app.ssl.certs.validity%'
-            $remote: '%app.general.public_adress%'
+            $remote: '%app.general.public_address%'
     
     App\Service\VPN\VPNConfiguratorGeneratorInterface: '@openvpn_configuration_generator'
 
@@ -179,11 +179,13 @@ services:
     App\Controller\SecurityController:
         arguments:
             $maintenance: '%app.general.maintenance%'
+            $general_message: '%app.general.message%'
 
     App\Service\Proxy\ProxyManager:
         arguments:
             $workerServer: '%app.worker_server%'
             $remotelabzProxyServer: '%app.services.proxy.server%'
+            $remotelabzProxyServerAPI: '%app.services.proxy.server.api%'
             $remotelabzProxyPort: '%app.services.proxy.port%'
             $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
             $remotelabzProxyUseHttps: '%app.services.proxy.https%'
@@ -197,6 +199,7 @@ services:
     App\Controller\UserController:
         arguments:
             $ip_check_internet: '%app.user.ip_check_internet%'
+            $remotevpn_addr: '%app.general.public_address%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'

@@ -25,11 +25,35 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
 
     public function start()
     {
+        $client = new Client();
+        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
+        try {
+            $response = $client->get($url, [
+                'query' => [
+                    'action' => 'start'
+                ]
+            ]);
+        } catch (Exception $exception) {
+            return false;
+        }
+
         return true;
     }
 
     public function stop()
     {
+        $client = new Client();
+        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
+        try {
+            $response = $client->get($url, [
+                'query' => [
+                    'action' => 'stop'
+                ]
+            ]);
+        } catch (Exception $exception) {
+            return false;
+        }
+
         return true;
     }
 
@@ -43,6 +67,8 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
             return false;
         }
 
-        return $response->getStatusCode() < 400;
+        $health = json_decode($response->getBody()->getContents(), true);
+
+        return $health['remotelabz-worker']['isStarted'];
     }
 }

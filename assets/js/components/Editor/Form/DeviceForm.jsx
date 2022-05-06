@@ -51,6 +51,19 @@ export default class DeviceForm extends React.Component
                 this.setState({operatingSystemOptions});
                 return null;
             })
+        this.api.get('/api/hypervisor')
+            .then(response => {
+                let hypervisorOptions = [];
+                response.data.forEach(hypervisor => {
+                    hypervisorOptions.push({
+                        ...hypervisor,
+                        value: hypervisor.id,
+                        label: hypervisor.name,
+                    })
+                });
+                this.setState({hypervisorOptions});
+                return null;
+            })
             .then(() => { return this.api.get('/api/flavors') })
             .then(response => {
                 let flavorOptions = [];
@@ -95,7 +108,7 @@ export default class DeviceForm extends React.Component
         });
     }
 
-    loadOperatingSystemOptions = (inputValue) => {
+   loadOperatingSystemOptions = (inputValue) => {
         return this.api.get('/api/operating-systems', {
             params: {
                 search: inputValue
@@ -114,6 +127,25 @@ export default class DeviceForm extends React.Component
         });
     }
 
+    loadHypervisorOptions = (inputValue) => {
+        return this.api.get('/api/hypervisor', {
+            params: {
+                search: inputValue
+            }
+        })
+        .then(response => {
+            let options = [];
+            response.data.forEach(hypervisor => {
+                options.push({
+                    ...hypervisor,
+                    value: hypervisor.id,
+                    label: hypervisor.name,
+                })
+            });
+            return options;
+        });
+    }
+
     render() {
         //console.log("render DeviceForm",this.props)
         return (
@@ -126,6 +158,7 @@ export default class DeviceForm extends React.Component
                         brand: values.brand || '',
                         model: values.model || '',
                         operatingSystem: values.operatingSystem.value,
+                        hypervisor: values.hypervisor.value,
                         flavor: values.flavor.value,
                         vnc: values.vnc
                     });
@@ -139,6 +172,10 @@ export default class DeviceForm extends React.Component
                     operatingSystem: {
                         value: this.props.device.operatingSystem.id || '',
                         label: this.props.device.operatingSystem.name || ''
+                    },
+                    hypervisor: {
+                        value: this.props.device.hypervisor.id || '',
+                        label: this.props.device.hypervisor.name || ''
                     },
                     flavor: {
                         value: this.props.device.flavor.id,
@@ -209,6 +246,21 @@ export default class DeviceForm extends React.Component
                                 defaultOptions={this.state.operatingSystemOptions}
                             />
                             <Form.Control.Feedback type="invalid">{errors.operatingSystem}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Hypervisor</Form.Label>
+                            <AsyncSelect
+                                placeholder="Select a hypervisor..."
+                                value={values.hypervisor}
+                                onChange={value => setFieldValue("hypervisor", value )}
+                                onBlur={setFieldTouched}
+                                error={errors.hypervisor}
+                                className='react-select-container'
+                                classNamePrefix="react-select"
+                                loadOptions={this.loadHypervisorOptions}
+                                defaultOptions={this.state.hypervisorOptions}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.hypervisor}</Form.Control.Feedback>
                         </Form.Group>
                        
                         <Form.Group>

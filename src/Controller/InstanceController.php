@@ -207,7 +207,6 @@ class InstanceController extends Controller
      */
     public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
-        // TODO: Check if instance come from Sandbox
         $name = $request->query->get('name', '');
 
         if($name == '') {
@@ -431,7 +430,12 @@ class InstanceController extends Controller
 
         if (true === $device->getVnc()) {
             try {
+                if ($deviceInstance->getDevice()->getType()=="vm")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
+                    $deviceInstance->getUuid(),
+                    $deviceInstance->getRemotePort()
+                );
+                else $this->proxyManager->createContainerInstanceProxyRoute(
                     $deviceInstance->getUuid(),
                     $deviceInstance->getRemotePort()
                 );

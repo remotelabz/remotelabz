@@ -47,6 +47,7 @@ class UserType extends AbstractType
                 'label' => 'Access level'
             ])
             ->add('enabled', CheckboxType::class, [
+                'required' => false,
                 'help' => 'If the user is disabled, he can\'t log in.'
             ])
             ->add('submit', SubmitType::class)

@@ -49,11 +49,12 @@ class SandboxListItem extends Component {
         // Add device to lab
         device.flavor = device.flavor.id;
         device.operatingSystem = device.operatingSystem.id;
+        device.hypervisor = device.hypervisor.id;
         device.isTemplate = false;
         device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
         device.networkInterfaces.forEach(element => console.log(element.id));
         device.networkInterfaces = networkInterfaces;
-
+        console.log(device);
         await this.api.post('/api/labs/' + lab.id + '/devices', device);
 
         // Create and start a lab instance

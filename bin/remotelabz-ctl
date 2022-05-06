@@ -14,7 +14,7 @@ require dirname(__DIR__).'/lib/autoload.php';
 
 // Default values
 const REMOTELABZ_LOG                    = "/var/log/remotelabz/remotelabz.log";
-const CONFIGURABLE_HTTP_PROXY_PORT      = 8888;
+const CONFIGURABLE_HTTP_PROXY_PORT      = 8000;
 
 $getopt = new GetOpt([
     Option::create('h', 'help', GetOpt::NO_ARGUMENT)
@@ -42,7 +42,7 @@ $getopt->addCommands([
         ),
     Command::create('service', 'RemoteLabz\Service\Service::handle', [
         Option::create('p', 'port', GetOpt::REQUIRED_ARGUMENT)
-            ->setDescription("Set the port used by configurable-http-proxy. Default : 8888")
+            ->setDescription("Set the port used by configurable-http-proxy. Default : 8000")
             ->setArgument(new Argument(CONFIGURABLE_HTTP_PROXY_PORT, 'is_numeric', 'port')),
     ])
         ->setDescription("Control all necessary services of RemoteLabz.")

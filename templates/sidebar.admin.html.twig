@@ -10,16 +10,18 @@
         {% endblock %}
 
         <ul class="nav">
-            {{ sidebar.link("Users", 'users', null, 'user', 'users', _context) }}
+            {{ sidebar.link("User", 'users', null, 'user', 'users', _context) }}
             {# {{ sidebar.link("Groups", 'groups', null, 'group', 'groups', _context) }} #}
-            {{ sidebar.link("Flavors", 'flavors', null, 'disk', 'flavors', _context) }}
+            {{ sidebar.link("Flavor", 'flavors', null, 'tachometer', 'flavors', _context) }}
             {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
             {# {{ sidebar.link("Network interfaces", 'network_interfaces', null, 'issue-parent', 'network_interfaces', _context) }} #}
-            {{ sidebar.link("Operating Systems", 'operating_systems', null, 'file-tree', 'operating_systems', _context) }}
-            {{ sidebar.link("Device Templates", 'devices', null, 'monitor', 'devices', _context) }}
-            {{ sidebar.link("Device Sandbox", 'devices_sandbox', null, 'monitor-o', 'devices_sandbox', _context) }}
-            {{ sidebar.link("Services", 'services', null, 'clock', 'services', _context) }}
-            {{ sidebar.link("Instances", 'instances', null, 'terminal', 'instances', _context) }}
+            {{ sidebar.link("Hypervisor", 'hypervisor', null, 'cloud-gear', 'hypervisor', _context) }}
+            {{ sidebar.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
+            {{ sidebar.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
+            {{ sidebar.link("Device Sandbox", 'devices_sandbox', null, 'documents', 'devices_sandbox', _context) }}
+            {{ sidebar.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
+            {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
+
 
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">

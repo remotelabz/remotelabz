@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
+use App\Entity\Hypervisor;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -87,9 +88,11 @@ class Device implements InstanciableInterface
     private $virtuality;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     *
+     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
      * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
-     * @Assert\Choice({"qemu","lxc"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
     private $hypervisor;
 
@@ -163,8 +166,8 @@ class Device implements InstanciableInterface
         $this->labs = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
-        $this->type = 'vm';
-        $this->hypervisor = 'qemu';
+        /*$this->type = 'vm';
+        $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
         $this->vnc = true;
@@ -318,12 +321,12 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getHypervisor(): ?string
+    public function getHypervisor(): ?Hypervisor
     {
         return $this->hypervisor;
     }
 
-    public function setHypervisor(string $hypervisor): self
+    public function setHypervisor(?Hypervisor $hypervisor): self
     {
         $this->hypervisor = $hypervisor;
 

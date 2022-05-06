@@ -71,11 +71,11 @@
       </trans-unit>
       <trans-unit id="pH1VdNG" resname="Network Settings">
         <source>Network Settings</source>
-        <target>__Network Settings</target>
+        <target>Configuration réseaux</target>
       </trans-unit>
       <trans-unit id="HSljslu" resname="New network settings">
         <source>New network settings</source>
-        <target>__New network settings</target>
+        <target>Configuration nouveau réseau</target>
       </trans-unit>
       <trans-unit id="sStRC9C" resname="IPv4">
         <source>IPv4</source>
@@ -99,15 +99,15 @@
       </trans-unit>
       <trans-unit id="ZJQL3Ba" resname="New hypervisor">
         <source>New hypervisor</source>
-        <target>__New hypervisor</target>
+        <target>Nouveau hyperviseur</target>
       </trans-unit>
       <trans-unit id="UrK7TB8" resname="Hypervisors">
         <source>Hypervisors</source>
-        <target>__Hypervisors</target>
+        <target>Hyperviseur</target>
       </trans-unit>
       <trans-unit id="GP3VSbL" resname="New">
         <source>New</source>
-        <target>__New</target>
+        <target>Nouveau</target>
       </trans-unit>
       <trans-unit id="cTFmlx1" resname="Command">
         <source>Command</source>
@@ -119,15 +119,15 @@
       </trans-unit>
       <trans-unit id="FUBfiFA" resname="Import from file">
         <source>Import from file</source>
-        <target>__Import from file</target>
+        <target>Importation depuis fichier</target>
       </trans-unit>
       <trans-unit id="awzJBNC" resname="Users">
         <source>Users</source>
-        <target>__Users</target>
+        <target>Utilisateurs</target>
       </trans-unit>
       <trans-unit id="Y4T.p3E" resname="New user">
         <source>New user</source>
-        <target>__New user</target>
+        <target>Nouvel utilisateur</target>
       </trans-unit>
       <trans-unit id="kg5BPH1" resname="Status">
         <source>Status</source>

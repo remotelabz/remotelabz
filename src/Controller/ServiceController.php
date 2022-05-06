@@ -2,15 +2,17 @@
 
 namespace App\Controller;
 
+use App\Service\Monitor\ServiceMonitorInterface;
+
 use App\Service\Monitor\MessageServiceMonitor;
 use App\Service\Monitor\ProxyServiceMonitor;
-use App\Service\Monitor\ServiceMonitorInterface;
 use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
 
 /**
  * @Route("/admin")
@@ -19,13 +21,19 @@ class ServiceController extends Controller
 {
     protected $workerPort;
     protected $workerServer;
+    private $logger;
 
     public function __construct(
         string $workerPort,
-        string $workerServer
+        string $workerServer,
+        LoggerInterface $logger=null
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
+        $this->logger = $logger;
+        if ($logger == null) {
+            $this->logger = new Logger();
+        }
     }
 
     /**
@@ -36,8 +44,7 @@ class ServiceController extends Controller
         return [
             MessageServiceMonitor::class => 'local',
             ProxyServiceMonitor::class => 'local',
-            WorkerServiceMonitor::class => 'distant',
-            WorkerMessageServiceMonitor::class => 'distant',
+            WorkerServiceMonitor::class => 'distant'
         ];
     }
 
@@ -53,15 +60,19 @@ class ServiceController extends Controller
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService();
                 $serviceStatus[$service::getServiceName()] = $service->isStarted();
+
             }
             if ($type === 'distant') {
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService($this->workerPort, $this->workerServer);
                 $serviceStatus[$service::getServiceName()] = $service->isStarted();
             }
+            $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+
         }
 
         return $this->render('service/index.html.twig', [
+            'serviceName' => $service::getServiceName(),
             'serviceStarted' => $serviceStatus,
         ]);
     }
@@ -81,21 +92,23 @@ class ServiceController extends Controller
                     if ($type === 'local') {
                         $service = new $registredService();
                         $service->start();
-                        $this->addFlash('success', 'Service succesfully started.');
+                        $this->addFlash('success', 'Service successfully started.');
                     }
                     if ($type === 'distant') {
                         $service = new $registredService($this->workerPort, $this->workerServer);
                         $service->start();
-                        $this->addFlash('success', 'Service succesfully started.');
+                        $this->addFlash('success', 'Service successfully started.');
                     }
                 }
             }
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to start.');
+            $this->logger->error("Error starting service ".$service::getServiceName(). "Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         } catch (Exception $e) {
             $this->addFlash('danger', 'Service failed to start.');
+            $this->logger->error("Error starting service ".$service::getServiceName(). "Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         }
@@ -109,30 +122,37 @@ class ServiceController extends Controller
     public function stopServiceAction(Request $request)
     {
         $requestedService = $request->query->get('service');
+        //$this->logger->debug($requestedService);
 
         try {
             foreach ($this->getRegistredServices() as $registredService => $type) {
                 $serviceName = call_user_func($registredService.'::getServiceName');
+               
 
                 if ($requestedService === $serviceName) {
+                    $this->logger->debug("Service name to stop: ".$serviceName);
+                    $this->logger->debug("Requested Service to stop: ".$requestedService);
                     if ($type === 'local') {
                         $service = new $registredService();
                         $service->stop();
-                        $this->addFlash('success', 'Service succesfully stopped.');
+                        $this->addFlash('success', 'Service successfully stopped.');
                     }
                     if ($type === 'distant') {
                         $service = new $registredService($this->workerPort, $this->workerServer);
                         $service->stop();
-                        $this->addFlash('success', 'Service succesfully stopped.');
+                        $this->addFlash('success', 'Service successfully stopped.');
                     }
+                $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted()); 
                 }
             }
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to stop.');
+            $this->logger->error("Error stop service ".$service::getServiceName(). "Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         } catch (Exception $e) {
             $this->addFlash('danger', 'Service failed to stop.');
+            $this->logger->error("Error stop service ".$service::getServiceName(). "Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         }

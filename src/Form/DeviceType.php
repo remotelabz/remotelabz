@@ -6,6 +6,7 @@ use App\Entity\Lab;
 use App\Entity\Device;
 use App\Entity\Flavor;
 use App\Entity\OperatingSystem;
+use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -36,14 +37,19 @@ class DeviceType extends AbstractType
             ])
              ->add('type', ChoiceType::class, [
                  'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container'],
-                 'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
+                 'help' => 'Nature of the device.',
                  'empty_data' => 'vm'
              ])
-            ->add('hypervisor', ChoiceType::class, [
-                 'choices' => ['QEMU' => 'qemu', 'LXC' => 'lxc'],
-                 'help' => 'Hypervisor used. Only QEMU is supported for now.',
-                 'empty_data' => 'qemu'
-             ])
+/*             ->add('hypervisor', ChoiceType::class, [
+                'choices' => ['QEMU' => 'qemu', 'LXC' => 'lxc'],
+                'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
+                'empty_data' => 'qemu'
+            ])*/
+            ->add('hypervisor', EntityType::class, [
+                'class' => Hypervisor::class,
+                'choice_label' => 'name',
+                'help' => 'Type of hypervisor.',
+            ])
           /*  ->add('labs', EntityType::class, [
                 'class' => Lab::class,
                 'choice_label' => 'name',

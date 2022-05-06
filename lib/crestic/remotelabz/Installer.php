@@ -211,7 +211,15 @@ class Installer
             throw new Exception("Error while configuring Remotelabz services.", 0, $e);
         }
 
-        // TODO Copy sudo config
+        echo "🔨 Configure sudoers file... ";
+        
+        try{
+            $line=file_get_contents("system/sudoers");
+            file_put_contents("/etc/sudoers", $line, FILE_APPEND);
+            echo "sudoers modified ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring sudoers.", 0, $e);
+        }
 
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";

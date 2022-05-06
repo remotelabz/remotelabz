@@ -48,7 +48,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         $this->logger->info("Received InstanceState message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
-            'state' => $message->getState()
+            'state_message' => $message->getState()
         ]);
 
         // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
@@ -67,12 +67,13 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             $this->logger->debug("Error state received from instance uuid ". $message->getUuid());
             $options=$message->getOptions();
             if (!is_null($options)) {
-                $this->logger->debug('Show options of message received : ', $options);
+                $this->logger->debug('Show options of error message received : ', $options);
                 if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
                     $this->cancel_renameos($message->getUuid(),$options["old_name"],$options["new_name"]);
                 }
             }
             if (!is_null($instance)) {
+                $this->logger->debug("Instance not null and Error received from : ". $message->getUuid() ." message state ".$message->getState()." instance state :".$instance->getState());
                 switch ($instance->getState()) {
                     case InstanceStateMessage::STATE_STARTING:
                         $this->logger->debug('Instance in '.$instance->getState());
@@ -130,7 +131,11 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                         $this->logger->debug('Instance in '.$instance->getState());
                         $instance->setState($message->getState());
                 }
+            } else {
+                $this->logger->debug("Instance null and Error received from : ". $message->getUuid() ." ".$message->getState());
             }
+            $this->logger->debug("Test message : ". $message->getUuid() ." ".$message->getState());
+
         } else {
             $this->logger->debug("No error received from : ". $message->getUuid() ." ".$message->getState());
             if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
@@ -187,13 +192,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     }
 
     public function cancel_renameos($id,$old_name,$new_name){
+        $this->logger->debug("Cancel rename OS id ".$id. "from name ".$old_name." to name ".$new_name);
         $operatingsystem = $this->operatingSystemRepository->find($id);
-        
-            $result=explode("://",$operatingsystem->getImageFilename());
-            $hypervisor=$result[0];
-            $imagefilename=$result[1];
-        $operatingsystem->setImageFilename($hypervisor."://".$old_name);
-        
+        $operatingsystem->setImageFilename($old_name);
         $this->entityManager->persist($operatingsystem);
         $this->entityManager->flush();
     }

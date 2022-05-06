@@ -22,6 +22,8 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+
 
 use Psr\Log\LoggerInterface;
 
@@ -51,6 +53,10 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     private $JWTManager;
     private $params;
     private $tokenStorage;
+    /**
+     * @var string (format "domain1, domain2, ... ")
+     */
+    private $authorized_affiliation;
 
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
@@ -61,8 +67,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         UserPasswordEncoderInterface $passwordEncoder = null,
         JWTTokenManagerInterface $JWTManager,
         LoggerInterface $logger,
-        ParameterBagInterface $params
-        
+        ParameterBagInterface $params,
+        $authorized_affiliation
     ) {
         $this->idpUrl = $idpUrl ?: 'unknown';
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
@@ -73,6 +79,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $this->logger = $logger;
         $this->params = $params;
         $this->tokenStorage = $tokenStorage;
+        $this->authorized_affiliation = $authorized_affiliation;
     }
 
     protected function getRedirectUrl()
@@ -91,9 +98,11 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
             'eppn' => $request->server->get($this->remoteUserVar),
             'email' => $request->server->get('mail'),
             'firstName' => $request->server->get('givenName'),
-            'lastName' => $request->server->get('sn')
+            'lastName' => $request->server->get('sn'),
+            'affiliation' => $request->server->get('o'),
+            'statut' => $request->server->get('eduPersonPrimaryAffiliation')
         ];
-
+        $this->logger->info("User information from getCredentials of shibboleth :", $credentials);
         return $credentials;
     }
 
@@ -111,33 +120,42 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
 
-        if (!$user) {
-            $user = new User();
-            $role = array("ROLE_USER");
-            $user
-                ->setEmail($credentials['email'])
-                ->setPassword($this->passwordEncoder->encodePassword(
-                    $user,
-                    random_bytes(32)
-                ))
-                ->setFirstName(ucfirst(strtolower($credentials['firstName'])))
-                ->setLastName($credentials['lastName'])
-                ->setIsShibbolethUser(true)
-                ->setRoles($role);
+        if (! (is_null($credentials['eppn']) or $credentials['eppn']==="")) {
+            $this->logger->debug("Shibboleth eppn not null: ".$credentials['eppn']);
+            if (!$user) {
+                $this->logger->debug("Shibboleth user doesn't exist in local user base: ".$credentials['email']);
+                $user = new User();
+                $email=$credentials['email'];
+                $firstName=$credentials['firstName'];
+                $lastName=$credentials['lastName'];
+                $role = array("ROLE_USER");
+                $user
+                    ->setEmail($email)
+                    ->setPassword($this->passwordEncoder->encodePassword(
+                        $user,
+                        random_bytes(32)
+                    ))
+                    ->setFirstName(ucfirst(strtolower($firstName)))
+                    ->setLastName($lastName)
+                    ->setIsShibbolethUser(true)
+                    ->setRoles($role);
+            
+                $this->entityManager->persist($user);
+                $this->entityManager->flush();
+            
+            }
+            if (!$user->isShibbolethUser()) {
+                // backward compatibility to already created shib users
+                $user->setIsShibbolethUser(true);
+            }
 
-            # TODO: Add user's firstname and lastname fetching
-
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-        } else if (!$user->isShibbolethUser()) {
-            // backward compatibility to already created shib users
-            $user->setIsShibbolethUser(true);
+            if (!$user->isEnabled()) {
+                throw new DisabledException();
+            }
         }
 
-        if (!$user->isEnabled()) {
-            throw new DisabledException();
-        }
-
+        $this->logger->info("All shibboleth credentials from getUser: ",$credentials);
+        
         return $user;
     }
 
@@ -147,11 +165,22 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      *
      * @return bool
      *
-     * @throws AuthenticationException
+     *
      */
     public function checkCredentials($credentials, UserInterface $user)
     {
-        return true;
+        $this->logger->debug("Check credentials",$credentials);
+        $authorized=explode(",",$this->authorized_affiliation);
+        //Looking for affiliation in the string and before, delete all spaces and tab
+        if (in_array($credentials['affiliation'],preg_replace('/\s+/', '', $authorized))) {
+            $this->logger->info("This user is from an authorized shibboleth affiliation : ",$credentials);
+            return true;
+        }
+        else {
+            $this->logger->warning("This user is not in an authorized shibboleth affiliation : ",$credentials);
+            throw new CustomUserMessageAuthenticationException();
+            return false;
+        }
     }
 
     /**
@@ -162,6 +191,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
+        $this->logger->debug("authentification shibboleth failure");
+
         $redirectTo = $this->getRedirectUrl();
         if (in_array('application/json', $request->getAcceptableContentTypes())) {
             return new JsonResponse(array(
@@ -174,6 +205,11 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 /** @var FlashBagInterface $flashbag */
                 $flashbag = $request->getSession()->getBag('flashes');
                 $flashbag->add('danger', 'This university account has been locked by a RemoteLabz administrator. Please try again later.');
+            }
+            if ($exception instanceof CustomUserMessageAuthenticationException) {
+                /** @var FlashBagInterface $flashbag */
+                $flashbag = $request->getSession()->getBag('flashes');
+                $flashbag->add('danger', 'Your affiliation is not allowed to use this application.');
             }
 
             return null;
@@ -189,6 +225,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
+            $this->logger->debug("authentification shibboleth success");
         if (!$request->cookies->has('bearer')) {
             $response = new RedirectResponse($this->urlGenerator->generate('index'));
             /** @var User $user */
@@ -256,6 +293,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
      */
     public function onLogoutSuccess(Request $request)
     {
+        $this->logger->debug("logout shibboleth success");
+
         $redirectTo = $this->urlGenerator->generate('shib_logout', array(
             'return'  => $this->idpUrl . '/profile/Logout'
         ));

@@ -61,7 +61,7 @@ security:
                 entry_point: App\Security\LoginFormAuthenticator
 
             logout:
-                path: logout
+                path: /logout
             
             access_denied_handler: App\Security\AccessDeniedHandler
             # activate different ways to authenticate
@@ -83,5 +83,6 @@ security:
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
+        - { path: ^/admin/devices_sandbox, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }

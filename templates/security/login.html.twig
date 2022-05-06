@@ -7,18 +7,6 @@
     <div class="align-items-center mt-5 container-fluid container-limited">
         <div class="row">
             <div class="col-lg-4 mx-auto">
-                <div class="flashbag-container col-lg-12">
-                    {% for label, messages in app.flashes %}
-                        {% for message in messages %}
-                        <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
-                            <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            {{ message }}
-                        </div>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
                 <div class="auto-form-wrapper">
                     <div class="my-3">
                         {% set theme = app.request.cookies.get('theme') %}
@@ -29,71 +17,78 @@
                         {% endif %}
                     </div>
                     {% if error %}
-                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-                {% endif %}
-
-                {% if ( maintenance == 1) %}
-                {{ svg('warning', 'image-lm') }}
-                <div class="text-center">In maintenance</div>
-                {% else %}
-                    <form role="form" method="POST">
-                        <div class="form-group">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">{{ svg('mail', 'image-sm') }}</span>
+                        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                    {% endif %}
+                    <div class="flashbag-container col-lg-12">
+                        {% for label, messages in app.flashes %}
+                            {% for message in messages %}
+                            <div class="flash-notice alert alert-{{ label }} alert-dismissible fade show">
+                                <button aria-label="Close" class="close" data-dismiss="alert" type="dismiss">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% if ( general_message != "") %}
+                    <div class="flashbag-container col-lg-12">
+                        <div class="flash-notice alert alert-warning alert-dismissible fade show">
+                            {{ general_message }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if ( maintenance == 1) %}
+                        {{ svg('warning', 'image-lm') }}
+                        <div class="text-center">In maintenance</div>
+                    {% else %}
+                        <form role="form" method="POST">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ svg('mail', 'image-sm') }}</span>
+                                    </div>
+                                    <input class="form-control" placeholder="user@domain.com" name="email" type="email" value="{{ last_username }}" required autofocus>
                                 </div>
-                                <input class="form-control" placeholder="user@domain.com" name="email" type="email" value="{{ last_username }}" required autofocus>
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">{{ svg('key', 'image-sm') }}</span>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ svg('key', 'image-sm') }}</span>
+                                    </div>
+                                    <input type="password" class="form-control" placeholder="*********" name="password" value="" required autofocus>
                                 </div>
-                                <input type="password" class="form-control" placeholder="*********" name="password" value="" required autofocus>
                             </div>
-                        </div>
 
-                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                        <div class="form-group">
-                            <button class="btn btn-success submit-btn btn-block" name="submit">
-                                {% if enable_shibboleth %}
-                                    Local sign in
-                                {% else %}
-                                    Sign in
-                                {% endif %}
-                            </button>
-                            <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
-                        </div>
-                        {# Add remember_me and forgot_password #}
-                        {# <div class="form-group d-flex justify-content-between">
-                            <div class="form-check form-check-flat mt-0">
-                                <label class="form-check-label">
-                                    <input type="checkbox" class="form-check-input" checked> Keep me signed in
-                                </label>
+                            <div class="form-group">
+                                <button class="btn btn-success submit-btn btn-block" name="submit">
+                                    {% if enable_shibboleth %}
+                                        Local sign in
+                                    {% else %}
+                                        Sign in
+                                    {% endif %}
+                                </button>
+                                <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
                             </div>
-                            <a href="#" class="text-small forgot-password text-black">Forgot Password</a>
-                        </div> #}
-                    </form>
+                            {# Add remember_me and forgot_password #}
+                            {# <div class="form-group d-flex justify-content-between">
+                                <div class="form-check form-check-flat mt-0">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input" checked> Keep me signed in
+                                    </label>
+                                </div>
+                                <a href="#" class="text-small forgot-password text-black">Forgot Password</a>
+                            </div> #}
+                        </form>
                 
-                    {% if enable_shibboleth %}
-                        <hr>
-                        <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
+                        {% if enable_shibboleth %}
+                            <hr>
+                            <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
+                        {% endif %}
                     {% endif %}
                 </div>
-                {% endif %}
-                <ul class="auth-footer">
-                    {# <li>
-                        <a href="#">Conditions</a>
-                    </li>
-                    <li>
-                        <a href="#">Help</a>
-                    </li>
-                    <li>
-                        <a href="#">Terms</a>
-                    </li> #}
-                </ul>
                 <hr>
                 <p class="footer-text text-left">Authors: F. Nolot, J. Hubert & O. Flauzac.<br/>Version {{ version }}</p>
             </div>

@@ -121,6 +121,15 @@ class DeviceController extends Controller
             $networkSettings->setName($networkInterface->getName()."_set");
             $networkInterface->setSettings($networkSettings);
             $device->addNetworkInterface($networkInterface);
+            $device->setHypervisor($device->getOperatingSystem()->getHypervisor());
+            switch($device->getOperatingSystem()->getHypervisor()->getName()) {
+                case 'lxc':
+                    $device->setType('container');
+                break;
+                case 'qemu':
+                    $device->setType('vm');
+                break;
+            }
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -255,7 +264,6 @@ class DeviceController extends Controller
             return $this->json();
         }
 
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
 
         return $this->redirectToRoute('devices');
     }
@@ -272,13 +280,25 @@ class DeviceController extends Controller
             $entityManager->remove($networkInterface);
         }
 
-// TODO : if hypervisor === LXC -> send a delete msg to worker to delete the container
-        if ($device->getHypervisor() === "LXC") {
+        if ($device->getHypervisor()->getName() === "lxc") {
             $this->logger->info("Delete the device ".$device->getId());
         }
+        $entityManager->flush();
+        try {
+            $entityManager->remove($device);
+            $entityManager->flush();        
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
 
-        $entityManager->flush();
-        $entityManager->remove($device);
-        $entityManager->flush();
+        }
+        catch (ForeignKeyConstraintViolationException $e) {
+            $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
+            $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
+
+        }
+
+
+
+
+
     }
 }

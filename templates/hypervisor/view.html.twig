@@ -1,0 +1,22 @@
+{% extends 'hypervisor/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {#{%- set breadcrumbs = breadcrumbs|merge({ (hypervisor.name): path('show_hypervisor', {'id': hypervisor.id}) }) -%}#}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ hypervisor.name }}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('edit_hypervisor', {'id': hypervisor.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> Edit</a>
+            <a href="{{ path('delete_hypervisor', {'id': hypervisor.id}) }}" class="btn btn-danger" role="button">Delete</a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
