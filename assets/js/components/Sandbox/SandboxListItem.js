@@ -81,27 +81,20 @@ class SandboxListItem extends Component {
 
         if(this.props.devicesLength != (this.props.index +1)) {
             divBorder = (
-            <div className="wrapper d-flex justify-content-between align-items-center py-2 border-bottom">
-                {this.props.device.name}
-                { this.state.exist ?
-                    <a 
-                        href={"/admin/devices_sandbox/" + this.state.lab.id}
-                        className="btn btn-primary ml-3"
-                        title="Open Device Sandbox"
-                        data-toggle="tooltip"
-                        data-placement="top"
-                    >
-                        <SVG name="external-link" />
-                    </a>
-                :
-                    button
-                }
-            </div>)
-        }
-        else {
-            divBorder = (
-                <div className="wrapper d-flex justify-content-between align-items-center py-2">
-                    {this.props.device.name}
+            
+            <div class="wrapper d-flex align-items-center lab-item border-bottom">
+                <div class="lab-item-left d-flex flex-column">
+                    <div>
+                        {this.props.device.name}
+                    </div>
+                    <div class="lab-item-infos text-muted">
+                        (Type: {this.props.device.type}, OS: {this.props.device.operatingSystem.name})
+                    </div>
+                </div>
+                <div class="separator flex-grow-1"></div>
+
+                <div class="lab-item-right d-flex flex-column text-right">
+                    <div>
                     { this.state.exist ?
                         <a 
                             href={"/admin/devices_sandbox/" + this.state.lab.id}
@@ -115,7 +108,43 @@ class SandboxListItem extends Component {
                     :
                         button
                     }
-                </div>)
+                    </div>
+                </div>
+            </div>
+            )
+        }
+        else {
+            divBorder = (
+                <div class="wrapper d-flex align-items-center lab-item">
+                <div class="lab-item-left d-flex flex-column">
+                    <div>
+                        {this.props.device.name}
+                    </div>
+                    <div class="lab-item-infos text-muted">
+                        (Type: {this.props.device.type}, OS: {this.props.device.operatingSystem.name})
+                    </div>
+                </div>
+                <div class="separator flex-grow-1"></div>
+
+                <div class="lab-item-right d-flex flex-column text-right">
+                    <div>
+                    { this.state.exist ?
+                        <a 
+                            href={"/admin/devices_sandbox/" + this.state.lab.id}
+                            className="btn btn-primary ml-3"
+                            title="Open Device Sandbox"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                        >
+                            <SVG name="external-link" />
+                        </a>
+                    :
+                        button
+                    }
+                    </div>
+                </div>
+            </div>
+            )
         }
 
         return (
