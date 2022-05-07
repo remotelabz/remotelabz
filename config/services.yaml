@@ -180,6 +180,7 @@ services:
         arguments:
             $maintenance: '%app.general.maintenance%'
             $general_message: '%app.general.message%'
+            $contact_mail: '%app.general.contact_mail%'
 
     App\Service\Proxy\ProxyManager:
         arguments:
@@ -200,6 +201,7 @@ services:
         arguments:
             $ip_check_internet: '%app.user.ip_check_internet%'
             $remotevpn_addr: '%app.general.public_address%'
+            $contact_mail: '%app.general.contact_mail%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'

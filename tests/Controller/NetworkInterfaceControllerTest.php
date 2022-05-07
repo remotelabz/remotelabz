@@ -2,22 +2,18 @@
 
 namespace App\Tests\Controller;
 
-use Faker\Factory;
-
 class NetworkInterfaceControllerTest extends AuthenticatedWebTestCase
 {
     public function testInvalidDataOnNewAction()
     {
-        /** @var \Faker\Generator $faker */
-        $faker = Factory::create();
         $crawler = $this->client->request('GET', '/admin/network-interfaces/new');
         $this->assertResponseIsSuccessful();
 
         $this->client->enableProfiler();
 
         $form = $crawler->selectButton('network_interface[submit]')->form();
-        $macAddress = $faker->macAddress;
-        $form['network_interface[name]'] = $faker->name;
+        $macAddress = "00:12:45:78:45:65";
+        $form['network_interface[name]'] = 'eth';
         $form['network_interface[macAddress]'] = 'hello-world';
 
         $crawler = $this->client->submit($form);

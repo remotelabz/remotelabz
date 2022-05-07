@@ -56,7 +56,9 @@
     </div>
 </div>
 {% if lab.description is defined %}
-    {{ lab.description|markdown }}
+    {% apply markdown_to_html %}
+        {{lab.description}}
+    {% endapply %}
 {% else %}
     <p class="text-muted">No description</p>
 {% endif %}
