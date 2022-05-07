@@ -21,6 +21,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 class SecurityController extends AbstractController
 {
@@ -52,7 +54,9 @@ class SecurityController extends AbstractController
         PasswordResetRequestRepository $passwordResetRequestRepository,
         UserPasswordEncoderInterface $passwordEncoder,
         bool $maintenance,
-        string $general_message = null)
+        string $general_message = null,
+        string $contact_mail
+    )
     {
         $this->urlGenerator = $urlGenerator;
         $this->userRepository = $userRepository;
@@ -60,6 +64,7 @@ class SecurityController extends AbstractController
         $this->passwordEncoder = $passwordEncoder;
         $this->maintenance = $maintenance;
         $this->general_message=$general_message;
+        $this->contact_mail = $contact_mail;
     }
 
     /**
@@ -106,7 +111,7 @@ class SecurityController extends AbstractController
     /**
      * @Route("/password/reset", name="reset_password", methods={"GET", "POST"})
      */
-    public function resetPasswordAction(Request $request, \Swift_Mailer $mailer): Response
+    public function resetPasswordAction(Request $request, MailerInterface $mailer): Response
     {
         $resetPasswordForm = $this->createFormBuilder([])
             ->add('email', EmailType::class)
@@ -136,10 +141,11 @@ class SecurityController extends AbstractController
                 $entityManager->persist($passwordResetRequest);
                 $entityManager->flush();
 
-                $message = (new \Swift_Message('Password reset'))
-                    ->setFrom('remotelabz@remotelabz.univ-reims.fr')
-                    ->setTo($user->getEmail())
-                    ->setBody(
+                $message = (new Email())
+                    ->from($this->contact_mail)
+                    ->to($user->getEmail())
+                    ->subject('Password reset')
+                    ->html(
                         $this->renderView(
                             'emails/reset.html.twig',
                             [

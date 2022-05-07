@@ -23,7 +23,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -31,6 +30,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 class UserController extends Controller
 {
@@ -46,11 +47,12 @@ class UserController extends Controller
         UserPasswordEncoderInterface $passwordEncoder,
         UserRepository $userRepository,
         GroupRepository $groupRepository,
-        \Swift_Mailer $mailer,
+        MailerInterface $mailer,
         SerializerInterface $serializer,
         LoggerInterface $logger,
         string $ip_check_internet,
-        string $remotevpn_addr)
+        string $remotevpn_addr,
+        string $contact_mail)
     {
         $this->passwordEncoder = $passwordEncoder;
         $this->userRepository = $userRepository;
@@ -60,6 +62,7 @@ class UserController extends Controller
         $this->logger = $logger;
         $this->ip_check_internet = $ip_check_internet;
         $this->remotevpn_addr = $remotevpn_addr;
+        $this->contact_mail = $contact_mail;
     }
 
     /**
@@ -431,10 +434,11 @@ class UserController extends Controller
      */
     private function sendNewAccountEmail($user, $password)
     {
-        $message = (new \Swift_Message('Your RemoteLabz account'))
-            ->setFrom('remotelabz@remotelabz.univ-reims.fr')
-            ->setTo($user->getEmail())
-            ->setBody(
+        $message = (new Email())
+            ->from($this->contact_mail)
+            ->to($user->getEmail())
+            ->subject('Your RemoteLabz account')
+            ->html(
                 $this->renderView(
                     'emails/new_user.html.twig',
                     [
@@ -442,8 +446,7 @@ class UserController extends Controller
                         'link' => $this->generateUrl('login', [],  UrlGeneratorInterface::ABSOLUTE_URL),
                         'password' => $password
                     ]
-                ),
-                'text/html'
+                )
             );
 
         $this->mailer->send($message);

@@ -27,7 +27,7 @@ class SecurityControllerTest extends WebTestCase
         
         $this->assertSame(1, $crawler->filter('.flash-notice.alert-info')->count());
 
-        $mailCollector = $this->client->getProfile()->getCollector('swiftmailer');
+        $mailCollector = $this->client->getProfile()->getCollector('mailer');
 
         // checks that an email was sent
         $this->assertSame(1, $mailCollector->getMessageCount());

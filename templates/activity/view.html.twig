@@ -34,7 +34,7 @@
     {{ react_component('InstanceManager', {props: {user: app.user.email}}) }}
 
     <div class="content-body">     
-        {{ activity.description|markdown }}
+        {{ activity.description|markdown_to_html }}
     </div>
 {% endblock %}
 
