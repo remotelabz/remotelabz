@@ -28,13 +28,13 @@ class Group implements InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_create_group", "api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker"})
+     * @Serializer\Groups({"group_tree", "api_groups", "api_get_group", "api_create_group", "api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance","api_groups", "api_get_group", "instance_manager", "api_users", "api_get_user"})
+     * @Serializer\Groups({"group_tree","api_get_lab","api_get_lab_instance","api_groups", "api_get_group", "instance_manager", "api_users", "api_get_user"})
      */
     private $name;
 
@@ -58,7 +58,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="smallint")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group"})
      */
     private $visibility;
 
@@ -70,7 +70,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_groups", "api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group", "api_users", "api_get_user"})
      */
     private $slug;
 
@@ -89,7 +89,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Group", mappedBy="parent")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group"})
      */
     private $children;
 
@@ -102,7 +102,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance", "api_groups", "api_get_group", "api_users", "api_get_user", "worker"})
+     * @Serializer\Groups({"api_get_lab","api_get_lab_instance", "api_groups", "api_get_group", "api_users", "api_get_user", "worker"})
      */
     private $uuid;
 
@@ -176,7 +176,7 @@ class Group implements InstancierInterface
      * 
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group"})
      */
     public function getOwner(): User
     {
@@ -283,7 +283,7 @@ class Group implements InstancierInterface
 
     /**
      * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group"})
      */
     public function getPath(): ?string
     {

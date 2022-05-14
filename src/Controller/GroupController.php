@@ -122,6 +122,8 @@ class GroupController extends Controller
             $groups = $groups->filter(function ($group) use ($user) {
                 return $user->isMemberOf($group);
             });
+            //$groups=$user->getGroups();
+
         } elseif ('dashboard_explore_groups' == $matchedRoute) {
             /** @param Group $group */
             $groups = $groups->filter(function ($group) {
@@ -132,7 +134,21 @@ class GroupController extends Controller
         $context = $request->query->get('context');
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($groups->getValues(), 200, [], [$request->get('_route')]);
+            /*$groups_secured=array();
+            foreach($groups->getValues() as $group) {
+                $groups_secured[]=[ "path" => $group->getPath(), "id" => $group->getId(), "uuid" => $group->getUuid(), "name" => $group->getName(), "children" => $group->getChildren(), "users" => $group->getUsers(), "labs" => $group->getLabs(), "owner" => $group->getOwner(), "visilibity" => $group->getVisibility()];
+                //$this->logger->debug("data from json groupcontroller ".$group->getId()." ".$group->getUuid()." ".$group->getName());
+            }
+            
+
+            
+            $result=$this->json($groups_secured, 200, [], [$request->get('_route')]);*/
+            $this->logger->debug("data from json groupcontroller ".$request->get('_route'). " context ". $context);
+            if (is_null($context))
+                $result=$this->json($groups->getValues(), 200, [], [$request->get('_route')]);
+            else
+                $result=$this->json($groups->getValues(), 200, [], [$context]);
+            return $result;
         }
 
         return $this->render('group/dashboard_index.html.twig', [

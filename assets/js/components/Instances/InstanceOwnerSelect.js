@@ -53,19 +53,11 @@ const Option = props => {
                         }
                     </span>{ props.data.hasLabInstance && <Badge variant="success" className="ml-2">Joined</Badge> }</div>
 
-                    {props.data.owner &&
-                        <div>Owned by <img src={"/users/" + props.data.owner.id + "/picture?size=16"} className="rounded-circle"></img> {props.data.owner.name}</div>
-                    }
                 </div>
                 <div className="d-flex flex-grow-1"></div>
                 {(props.data.type && props.data.type == 'group') &&
                     <div className="d-flex align-items-center">
-                        <OverlayTrigger placement="bottom" overlay={<Tooltip>Subgroups</Tooltip>}>
-                            <div className="mr-2"><SVG name="folder-o"></SVG> {props.data.children.length}</div>
-                        </OverlayTrigger>
-                        <OverlayTrigger placement="bottom" overlay={<Tooltip>Members</Tooltip>}>
-                            <div><SVG name="users"></SVG> {props.data.users.length}</div>
-                        </OverlayTrigger>
+                     
                     </div>
                 }
             </div>
@@ -105,7 +97,6 @@ export default function InstanceOwnerSelect(props = {user: {}, className: '', pl
             Remotelabz.users.get(props.user)
                 .then(response => {
                     const user = { ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: [] }
-                    // setUser(user)
                     Remotelabz.groups.all(input, 10, 1, false)
                     .then(response => {
                         const groups = response.data;

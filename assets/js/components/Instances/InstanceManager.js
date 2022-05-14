@@ -36,9 +36,9 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         let request
 
         if (viewAs.type === 'user') {
-            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
+           request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
         } else {
-            request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
+           request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
         }
 
         request.then(response => {
