@@ -30,6 +30,7 @@ parameters:
     app.services.proxy.port.api: '%env(int:REMOTELABZ_PROXY_API_PORT)%'
     app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
     app.services.proxy.wss: '%env(bool:REMOTELABZ_PROXY_USE_WSS)%'
+    app.services.vpn: '%env(resolve:VPN_ADDRESS)%'
 
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
@@ -48,6 +49,7 @@ parameters:
 
     app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
     app.user.authorized_affiliation: '%env(resolve:AUTHORIZED_SHIBBOLETH_DOMAIN)%'
+
 
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
@@ -161,7 +163,7 @@ services:
             $TLSKey: '%app.ssl.tls.key%'
             $exportPath: '%app.ssl.certs.dir%'
             $validity: '%app.ssl.certs.validity%'
-            $remote: '%app.general.public_address%'
+            $vpn_address: '%app.services.vpn%'
     
     App\Service\VPN\VPNConfiguratorGeneratorInterface: '@openvpn_configuration_generator'
 

@@ -26,7 +26,7 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
 
     protected $TLSKey;
 
-    protected $remote;
+    protected $vpn_address;
 
     protected $validity;
 
@@ -43,7 +43,7 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         string $TLSKey,
         string $exportPath,
         int $validity,
-        string $remote
+        string $vpn_address
     ) {
         $this->country = $country;
         $this->province = $province;
@@ -56,7 +56,7 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         $this->CAKey = $CAKey;
         $this->CAKeyPassphrase = $CAKeyPassphrase;
         $this->TLSKey = $TLSKey;
-        $this->remote = $remote;
+        $this->vpn_address = $vpn_address;
         $this->validity = $validity;
     }
 
@@ -223,17 +223,17 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
     /**
      * @inheritdoc
      */
-    public function getRemote(): string
+    public function getVpnAddress(): string
     {
-        return $this->remote;
+        return $this->vpn_address;
     }
 
     /**
      * @inheritdoc
      */
-    public function setRemote(string $remote): VPNConfiguratorGeneratorInterface
+    public function setVpnAddress(string $remote): VPNConfiguratorGeneratorInterface
     {
-        $this->remote = $remote;
+        $this->vpn_address = $vpn_address;
 
         return $this;
     }
