@@ -239,7 +239,7 @@ class LabController extends Controller
             $instanceManagerProps,
             'json',
             //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            SerializationContext::create()->setGroups(['api_get_lab'])
+            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
         );
         $this->logger->debug("show_lab props".$props);
         return $this->render('lab/view.html.twig', [
