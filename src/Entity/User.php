@@ -28,7 +28,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_groups", "api_get_group", "worker"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_group", "worker"})
      *
      * @var string
      */
@@ -118,7 +118,7 @@ class User implements UserInterface, InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_lab","api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker","sandbox"})
      */
     private $uuid;
 
@@ -413,7 +413,7 @@ class User implements UserInterface, InstancierInterface
      * @return Collection|Group[]
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"group_details", "user", "api_users", "api_get_user"})
+     * @Serializer\Groups({"api_get_lab","group_details", "user", "api_users", "api_get_user"})
      */
     public function getGroups()
     {

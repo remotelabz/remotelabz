@@ -66,7 +66,7 @@ class OpenVPNConfigurationGenerator extends AbstractVPNConfigurationGenerator im
      */
     public function generateConfig(string $privateKey, string $certificate): string
     {
-        $hostname = $this->getRemote();
+        $vpn_address = $this->getVpnAddress();
         $CACert = file_get_contents($this->getCACert());
         $TLSKeyContent = file_get_contents($this->getTLSKey());
         $config = <<<END
@@ -75,7 +75,7 @@ dev tun
 dev-type tun
 tun-mtu 1500
 cipher AES-256-GCM
-remote $hostname
+remote $vpn_address
 resolv-retry infinite
 key-direction 1
 nobind

@@ -222,7 +222,9 @@ class LabController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($lab, 200, [], [$request->get('_route')]);
+            $context=$request->get('_route');
+            //Change the context value to limit the return information
+            return $this->json($lab, 200, [], [$context]);
         }
 
         $instanceManagerProps = [
@@ -233,16 +235,19 @@ class LabController extends Controller
             'isSandbox' => false
         ];
 
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+        );
+        $this->logger->debug("show_lab props".$props);
         return $this->render('lab/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
             'deviceStarted' => $deviceStarted,
             'user' => $user,
-            'props' => $serializer->serialize(
-                $instanceManagerProps,
-                'json',
-                SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            )
+            'props' => $props,
         ]);
     }
 
@@ -464,7 +469,7 @@ class LabController extends Controller
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab edit by : ".$this->getUser()->getUsername());
         
 
         if (!$lab) {

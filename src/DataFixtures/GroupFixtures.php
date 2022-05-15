@@ -2,7 +2,6 @@
 
 namespace App\DataFixtures;
 
-use Faker\Factory;
 use App\Entity\Lab;
 use App\Entity\Group;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -16,7 +15,6 @@ class GroupFixtures extends Fixture implements DependentFixtureInterface, Fixtur
 
     public function load(ObjectManager $manager)
     {
-        $faker = Factory::create();
 
         $group = new Group();
         $group

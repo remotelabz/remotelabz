@@ -87,12 +87,12 @@ interface VPNConfiguratorGeneratorInterface
     /**
      * Get the remote addr to use in OVPN files.
      */
-    public function getRemote(): string;
+    public function getVpnAddress(): string;
 
     /**
      * Set the remote addr to use in OVPN files.
      */
-    public function setRemote(string $remote): self;
+    public function setVpnAddress(string $remote): self;
 
     /**
      * Get the certificate validity (in days).

@@ -3,7 +3,6 @@
 namespace App\DataFixtures;
 
 use App\Entity\User;
-use Faker\Factory as RandomDataFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -52,28 +51,6 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
         /* Other data, test purpose */
         /** @var KernelInterface $kernel */
         $kernel = $this->container->get('kernel');
-
-        /*if (in_array($kernel->getEnvironment(), ["dev", "test"])) {
-            $faker = RandomDataFactory::create('fr_FR');
-
-            for ($i = 0; $i < 5; $i++) {
-                $user = new User();
-
-                $user->setFirstName($faker->firstName)
-                    ->setLastName($faker->lastName)
-                    ->setEmail($faker->safeEmail)
-                    ->setRoles(['ROLE_USER'])
-                    ->setPassword($this->passwordEncoder->encodePassword(
-                        $user,
-                        'user'
-                    ));
-
-                $manager->persist($user);
-
-                $this->addReference('user' . $i, $user);
-            }
-        } */
-
         $manager->flush();
     }
 
