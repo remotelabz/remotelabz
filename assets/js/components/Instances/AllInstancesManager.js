@@ -101,7 +101,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                     </div>
                     <div>
                     {
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
+                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }
                     </div>
                 </ListGroupItem>
