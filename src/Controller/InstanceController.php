@@ -112,8 +112,6 @@ class InstanceController extends Controller
                 'labInstance' => $instance,
             ];
 
-            //TODO: #664 Verify if we can delete the api_get_device_instance in the following serialization
-            // because we display only lab instance which include all devices instances
             $tmp_json=$serializer->serialize(
                 $instanceManagerProps,
                 'json',
@@ -126,12 +124,8 @@ class InstanceController extends Controller
             ]);
         }
         
-        //$this->logger->debug("From InstanceController labInstances ",$labInstances);
-
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $labInstances,
-            //'deviceInstances' => $AllDeviceInstances,
-            //'networkInterfaceInstances' => $this->networkInterfaceInstanceRepository->findAll()
+            'labInstances' => $labInstances
         ]);
     }
 
