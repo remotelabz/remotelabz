@@ -682,10 +682,12 @@ class UserController extends Controller
         $pkeyPath = $certsDir.'/'.$user->getUsername().'.key';
         $filesystem = new Filesystem();
 
-        if (!$this->IsCertValid($certPath)) {
-            $this->logger->debug("Certificate of ".$user->getUsername()." is expired ");
-            unlink($certPath);
-            unlink($pkeyPath);
+        if ($filesystem->exists($certPath)) {
+            if (!$this->IsCertValid($certPath)) {
+                $this->logger->debug("Certificate of ".$user->getUsername()." is expired ");
+                unlink($certPath);
+                unlink($pkeyPath);
+            }
         }
 
         if (!$filesystem->exists($certPath))
