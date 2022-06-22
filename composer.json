@@ -48,7 +48,7 @@
         "symfony/mailer": "5.4.*",
         "symfony/messenger": "5.2.*",
         "symfony/mime": "5.2.*",
-        "symfony/monolog-bundle": "^3.1",
+        "symfony/monolog-bundle": "^3.8",
         "symfony/process": "5.2.*",
         "symfony/property-access": "5.2.*",
         "symfony/property-info": "5.2.*",

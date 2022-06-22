@@ -173,7 +173,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $authorized=explode(",",$this->authorized_affiliation);
         //Looking for affiliation in the string and before, delete all spaces and tab
 
-        $affiliation=explode("@",$credentials['eppn']);//Looking for the domain of the mail
+        $affiliation=explode("@",$credentials['email']);//Looking for the domain of the mail
         $this->logger->debug("Your affiliation: ".$affiliation[1]);
         if (in_array($affiliation[1],preg_replace('/\s+/', '', $authorized))) {
             $this->logger->info("This user is from an authorized shibboleth affiliation : ",$credentials);
