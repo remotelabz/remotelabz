@@ -2,7 +2,7 @@ monolog:
     handlers:
         main:
             type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%-toto.log"
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: info
             channels: ["!request", "!event", "!doctrine", "!security"]
         security:
