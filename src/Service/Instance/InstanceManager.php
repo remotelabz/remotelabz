@@ -239,19 +239,16 @@ class InstanceManager
         $now = new DateTime();
         $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $name);
         $id = uniqid();
-        $imageName .= '_' . $now->format('Y-m-d-H:i:s') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+        $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
         
 
-       /* switch ($hypervisor) {
-            case "lxc":
-                $imageName="lxc://".$imageName;
-                break;
+        switch ($hypervisor) {
             case "qemu":
-                $imageName="qemu://".$imageName.'.img';
+                $imageName=$imageName.'.img';
                 break;
             default:
-                $imageName="qemu://".$imageName.'.img';
-        }*/
+                $imageName=$imageName.'.img';
+        }
         $this->logger->debug('Export process. New name will be :'.$imageName);
 
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
