@@ -35,8 +35,6 @@
     <div class="col-xl-8 col-lg-12 border-right">
         <h1 class="ml-3">Your labs</h1>
         {% for group in groups %}
-        <hr/>
-            
                 {% set labs = [] %}
                 {% set labs = labs|merge(group.labs) %}
                 {# {% set labs = labs|sort((a, b) => a.lastUpdated < b.lastUpdated) %} #}
