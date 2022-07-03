@@ -27,18 +27,22 @@
 
 {%- set user = app.user %}
 {% set groups = user.groupsInfo %}
-
+{% set started_instances =  [] %}
+{% for instances in user.labinstances %}
+    {% set started_instances = started_instances|merge([instances.lab.id]) %}
+{% endfor %}
 <div class="row">
     <div class="col-xl-8 col-lg-12 border-right">
         <h1 class="ml-3">Your labs</h1>
         {% for group in groups %}
         <hr/>
-            <h6 class="ml-3 card-footer text-muted">In group {{group.name}}</h6>
             
                 {% set labs = [] %}
                 {% set labs = labs|merge(group.labs) %}
                 {# {% set labs = labs|sort((a, b) => a.lastUpdated < b.lastUpdated) %} #}
                 {% if labs|length > 0 %}           
+                <h6 class="ml-3 card-footer text-muted">In group {{group.name}}</h6>
+
                 <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                     {% for lab in group.labs %}
                         <div class="card m-4">
@@ -51,7 +55,11 @@
                                         /
                                     {% endif %}
                                 </h6> #}
-                                <h4 class="card-title"><a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a></h4>
+                                <h4 class="card-title"><a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a>{% if lab.id in started_instances %}
+                                &#128994;
+                                {% else %}
+                                &#128308;
+                                {% endif %}</h4>
                                 <p class="card-text flex-grow-1">
                                     {%- if lab.shortDescription is not null -%}
                                     {{- lab.shortDescription -}}
@@ -68,10 +76,10 @@
                         </div>
                     {% endfor %}
                 </div>
-                {% else %}
+              {#  {% else %}
                     <div class="d-flex justify-content-center">
                        <div class="jumbotron-fluid">You don't have access to any lab yet in this group.</div>
-                    </div>
+                    </div> #}
                 {% endif %}
             
         {% endfor -%}
