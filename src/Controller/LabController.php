@@ -103,10 +103,10 @@ class LabController extends Controller
     public function indexAction(Request $request, UserRepository $userRepository)
     {
         $search = $request->query->get('search', '');
-
-//        $this->logger->debug("User id:".$this->getUser()->getId());
+        //$this->logger->debug("Search:".$search);
+        //$this->logger->debug("User id:".$this->getUser()->getId());
         if  ($this->getUser()->isAdministrator())
-            $author = $request->query->get('author', 0);
+            $author = $request->query->get('author', 1);
         else 
             $author = $request->query->get('author', $this->getUser()->getId());
         //$this->logger->debug("Author :".$author);
@@ -116,10 +116,18 @@ class LabController extends Controller
         $orderBy = $request->query->get('order_by', 'lastUpdated');
         $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
 
-        $criteria = Criteria::create()
-            ->where(Criteria::expr()->contains('name', $search));
+        //Have to distinguish exact request from Sandbox and other request
+        if (strpos($search,"Sandbox_") === false ) {
+            $criteria = Criteria::create()
+                ->where(Criteria::expr()->contains('name', $search));
+        }
+        else {$criteria = Criteria::create()
+            ->where(Criteria::expr()->eq('name', $search));
+            //$this->logger->debug("Sandbox search detected");
+            
+        }
 
-        if ($author > 0) {
+        if ($author > 1) {
             $criteria->andWhere(Criteria::expr()->eq('author', $userRepository->find($author)));
         }
 

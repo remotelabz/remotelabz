@@ -175,7 +175,7 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
-        $this->logger->debug('Starting device instance with UUID '.$uuid.'.');
+        $this->logger->info($this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()."is starting device instance with UUID ".$uuid.".");
 
         if (true === $device->getVnc()) {
             $remotePort = $this->getRemoteAvailablePort();

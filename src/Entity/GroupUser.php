@@ -26,7 +26,7 @@ class GroupUser
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="users")
      * @ORM\JoinColumn(name="group_id", referencedColumnName="id")
      * 
-     * @Serializer\Groups({"user", "api_get_user", "api_users"})
+     * @Serializer\Groups({"user", "api_get_user", "api_users","api_get_lab"})
      * @Serializer\Inline
      */
     private $group;
@@ -47,7 +47,7 @@ class GroupUser
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"group_users", "group_tree", "user", "api_groups", "api_get_group", "api_get_user", "api_users"})
+     * @Serializer\Groups({"group_users", "group_tree", "user", "api_groups", "api_get_group", "api_get_user", "api_users","api_get_lab"})
      */
     private $role;
 

@@ -68,6 +68,7 @@
                 <div>
                     {% set userRole = group.getUserRole(app.user) %}
                     {% if userRole is not null and (userRole == 'admin' or userRole == 'owner') %}
+                    {#{% if userRole is not null %}#}
                         <a href="{{ path('new_group', {parent_id: group.id}) }}" class="btn btn-success">New subgroup</a>
                     {% endif %}
                 </div>
