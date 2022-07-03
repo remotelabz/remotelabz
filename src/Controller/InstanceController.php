@@ -158,8 +158,9 @@ class InstanceController extends Controller
         }*/
         try {
             $this->logger->debug("Lab instance creation: ".$lab->getName());
+            $this->logger->info($this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             $instance = $instanceManager->create($lab, $instancier);
-            $this->logger->debug("Lab instance created: ".$instance->getUuid());
+            $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." Wait ack created message");
         } catch (Exception $e) {
             throw $e;
         }

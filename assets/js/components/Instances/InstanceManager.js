@@ -84,8 +84,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         if (group.type === 'user') {
             return true
         }
-
+        /*console.log("props.user:")
+        console.log(props.user)
+        console.log("group:")
+        console.log(group)*/
         const _group = props.user.groups.find(g => g.uuid === group.uuid);
+        /*console.log("_group")
+        console.log(_group)*/
         return _group ? (_group.role == 'admin' || _group.role == 'owner') : false
     }
 
