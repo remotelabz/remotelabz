@@ -214,7 +214,7 @@ class Installer
         echo "🔨 Configure sudoers file... ";
         
         try{
-            $line=file_get_contents("system/sudoers");
+            $line=file_get_contents("config/system/sudoers");
             file_put_contents("/etc/sudoers", $line, FILE_APPEND);
             echo "sudoers modified ✔️\n";
         } catch (Exception $e) {
@@ -295,15 +295,15 @@ class Installer
             ->parse()
             ->set("WORKER_SERVER", $options['worker-server'])
             ->set("WORKER_PORT", $options['worker-port'])
-            ->set("WEBSOCKET_PROXY_SERVER", $options['proxy-server'])
-            ->set("WEBSOCKET_PROXY_PORT", $options['proxy-port'])
-            ->set("WEBSOCKET_PROXY_API_PORT", $options['proxy-api-port'])
+            ->set("REMOTELABZ_PROXY_SERVER", $options['proxy-server'])
+            ->set("REMOTELABZ_PROXY_PORT", $options['proxy-port'])
+            ->set("REMOTELABZq_PROXY_API_PORT", $options['proxy-api-port'])
             ->set("APP_ENV", $options['environment'])
             ->set("MYSQL_SERVER", $options['database-server'])
             ->set("MYSQL_USER", $options['database-user'])
             ->set("MYSQL_PASSWORD", $options['database-password'])
             ->set("MYSQL_DATABASE", $options['database-name'])
-            ->set("MAILER_URL", $options['mailer-url'])
+            ->set("MAILER_DSN", $options['mailer-dsn'])
             ->save();
     }
 
@@ -408,7 +408,7 @@ class Installer
             throw new Exception("Could not restart install Yarn packages correctly.");
         }
         unset($output);
-        exec("yarn encore dev", $output, $returnCode);
+        exec("yarn encore prod", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not compile Yarn packages correctly.");
