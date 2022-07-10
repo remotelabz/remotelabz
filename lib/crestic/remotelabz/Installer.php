@@ -126,7 +126,7 @@ class Installer
         }
 
         // Configure environment
-        $this->logger->debug("Setting environment variables");
+/*        $this->logger->debug("Setting environment variables");
         echo "📜 Setting environment variables... ";
         try {
             $this->configureEnvironment($this->options);
@@ -135,7 +135,7 @@ class Installer
         } catch (Exception $e) {
             throw new Exception("Error setting environment variables.", 0, $e);
         }
-
+*/
         // Install composer packages
         $this->logger->debug("Downloading Composer packages");
         echo "🎶 Downloading Composer packages... ";

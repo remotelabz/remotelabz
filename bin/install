@@ -16,7 +16,7 @@ require dirname(__DIR__) . '/lib/autoload.php';
 // Default values
 const REMOTELABZ_PATH               = "/opt/remotelabz";
 /*
-const REMOTELABZ_SERVER_NAME        = "remotelabz.com";
+
 const REMOTELABZ_DATABASE_SERVER    = "localhost";
 const REMOTELABZ_DATABASE_USER      = "symfony";
 const REMOTELABZ_DATABASE_PASSWORD  = "symfony";
@@ -26,8 +26,9 @@ const REMOTELABZ_WORKER_PORT        = 8080;
 const WEBSOCKET_PROXY_SERVER        = "localhost";
 const WEBSOCKET_PROXY_PORT          = 8888;
 const WEBSOCKET_PROXY_API_PORT      = 8889;
-const INSTALL_LOG_PATH              = "/var/log/remotelabz/install.log";
 */
+const REMOTELABZ_SERVER_NAME        = "remotelabz.com";
+const INSTALL_LOG_PATH              = "/var/log/remotelabz/install.log";
 const REMOTELABZ_ENV                = "prod";
 const REMOTELABZ_MAX_FILESIZE       = "3000M";
 const REMOTELABZ_PORT               = 80;
@@ -96,11 +97,11 @@ $getopt = new GetOpt([
     Option::create(null, 'mailer-url', GetOpt::REQUIRED_ARGUMENT)
         ->setDescription("Set the URL used to contact mail server. Default : " . MAILER_URL)
         ->setArgument(new Argument(MAILER_URL, 'is_string', 'url')),
-
+*/
     Option::create(null, 'server-name', GetOpt::REQUIRED_ARGUMENT)
         ->setDescription("Set the server name of RemoteLabz VirtualHost. Default : " . REMOTELABZ_SERVER_NAME)
         ->setArgument(new Argument(REMOTELABZ_SERVER_NAME, 'is_string', 'name')),
-
+/*
     Option::create(null, 'no-permission', GetOpt::NO_ARGUMENT)
         ->setDescription("Skip file permissions step."),
 
