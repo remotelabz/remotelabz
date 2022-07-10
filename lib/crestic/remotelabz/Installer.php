@@ -221,6 +221,15 @@ class Installer
             throw new Exception("Error while configuring sudoers.", 0, $e);
         }
 
+        echo "🔨 Configure right on directories... ";
+        
+        try{
+            $this->rchown($this->installPath."/var", "www-data", "www-data"); 
+            echo "Right modified ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring right on directories.", 0, $e);
+        }
+
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
