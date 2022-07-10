@@ -27,7 +27,7 @@ class NetworkSettingsFixtures extends Fixture
         $manager->persist($networkSettings);
         $this->addReference('network_settings3', $networkSettings);
 
-        $networkSettings = new NetworkSettings();
+/*        $networkSettings = new NetworkSettings();
         $networkSettings
             ->setName('ToDebianDevice')
             ->setIp(NULL)
@@ -54,7 +54,7 @@ class NetworkSettingsFixtures extends Fixture
         ;
         $manager->persist($networkSettings);
         $this->addReference('network_settings5', $networkSettings);
-
+*/
 
         $manager->flush();
     }
