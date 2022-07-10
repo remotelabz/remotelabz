@@ -27,7 +27,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $this->setReference('operating-system-Alpine', $operatingSystem);
 
-        $operatingSystem = new OperatingSystem();
+/*        $operatingSystem = new OperatingSystem();
         $operatingSystem
             ->setName('Debian 10')
             ->setImageUrl('http://194.57.105.124/~fnolot/debian10-20190905.img')
@@ -53,7 +53,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         ;
         $manager->persist($operatingSystem);
         $this->setReference('operating-system-Ubuntu18LXDE', $operatingSystem);
-
+*/
         $operatingSystem = new OperatingSystem();
         $operatingSystem
             ->setName('Migration')

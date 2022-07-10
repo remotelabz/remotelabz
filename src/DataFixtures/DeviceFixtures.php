@@ -33,7 +33,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         $manager->persist($device);
         $this->addReference('device-alpine', $device);
 
-        $device = new Device();
+/*        $device = new Device();
         $device
             ->setName('Linux Debian')
             ->setBrand('Test')
@@ -66,7 +66,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         ;
         $manager->persist($device);
         $this->addReference('device-ubuntu14X', $device);
-
+*/
         $device = new Device();
         $device
             ->setName('Migration')
