@@ -41,7 +41,7 @@ class InstanceController extends Controller
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
     private $serializer;
-    protected $remotelabzProxyUseHttps;
+    protected $remotelabzProxyUseWss;
     
     /** @var LabRepository $labRepository */
     private $labRepository;
@@ -54,7 +54,7 @@ class InstanceController extends Controller
         LabRepository $labRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         SerializerInterface $serializerInterface,
-        bool $remotelabzProxyUseHttps
+        bool $remotelabzProxyUseWss
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -63,7 +63,7 @@ class InstanceController extends Controller
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->proxyManager = $proxyManager;
         $this->serializer = $serializerInterface;
-        $this->remotelabzProxyUseHttps = $remotelabzProxyUseHttps;
+        $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
     }
 
     /**
@@ -459,7 +459,7 @@ class InstanceController extends Controller
         }
         
         $this->logger->debug("Fullscreen ?". $fullscreen );
-        $ssl=($this->remotelabzProxyUseHttps ? 'https' : 'http');
+        $ssl=($this->remotelabzProxyUseWss ? 'https' : 'http');
         $this->logger->debug("Proxy in SSL ?". $ssl);
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
