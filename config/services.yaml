@@ -207,7 +207,7 @@ services:
 
     App\Controller\InstanceController:
         arguments:
-            $remotelabzProxyUseHttps: '%app.services.proxy.https%'
+            $remotelabzProxyUseHttps: '%app.services.proxy.wss%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
