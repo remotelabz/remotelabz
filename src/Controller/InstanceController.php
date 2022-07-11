@@ -457,14 +457,16 @@ class InstanceController extends Controller
         } else {
             $fullscreen = false;
         }
-        $this->logger->debug("Proxy in SSL ?". $this->remotelabzProxyUseHttps );
+        
         $this->logger->debug("Fullscreen ?". $fullscreen );
+        $ssl=($this->remotelabzProxyUseHttps ? 'https' : 'http');
+        $this->logger->debug("Proxy in SSL ?". $ssl);
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'uuid' => $uuid,
             'device' => $device,
             'deviceInstance' => $deviceInstance,
-            'ssl' => ($this->remotelabzProxyUseHttps ? 'https' : 'http'),
+            'ssl' => $ssl,
             'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
             'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
             'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
