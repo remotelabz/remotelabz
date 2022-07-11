@@ -26,7 +26,7 @@
     <div class="alert alert-info mt-2" role="alert">
         Gateway : <strong>{{ deviceInstance.getLabInstance().getNetwork().getLastAddress() }}</strong>
         <br>
-        Attributed network your laboratory : <strong>{{ deviceInstance.getLabInstance().getNetwork() }} TOTO {{ssl}}</strong>
+        Attributed network your laboratory : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
     </div>
     {#{{dump(deviceInstance)}}#}
     {% if (deviceInstance.device.type == "container") %}
