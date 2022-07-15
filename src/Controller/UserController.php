@@ -217,29 +217,40 @@ class UserController extends Controller
             $user = $userForm->getData();
 
             $user->setRoles([$userForm->get('roles')->getData()]);
-            
+
             $default_group=$this->groupRepository->findOneByName('Default group');
 
             $default_group->addUser($user);
-                
 
             $password = $userForm->get('password')->getData();
             $confirmPassword = $userForm->get('confirmPassword')->getData();
-
-
             if (!$password) {
                 $this->addFlash('danger', "You must provide a password.");
             } elseif ($password === $confirmPassword) {
                 $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
                 $entityManager = $this->getDoctrine()->getManager();
+            try {
                 $entityManager->persist($user);
                 $entityManager->flush();
-
-                $this->sendNewAccountEmail($user, $password);
-
-                $this->addFlash('success', 'User has been created.');
+            
+                try {
+                    $this->sendNewAccountEmail($user, $password);
+                    $this->addFlash('success', 'User has been created.');
+                }
+                catch (Exception $e) {
+                    $this->logger->debug("Mail error :".$e);
+                    $this->logger->info("Mail error :".$e->getMessage());
+                    $this->addFlash('danger', 'No mail send - Error in mailer configuration');
+                }
 
                 return $this->redirectToRoute('users');
+            }
+            catch (Exception $e) {
+                $this->logger->debug("Creation user is impossible :".$e);
+                $this->logger->info("Creation user is impossible.".$e->getMessage());
+                $this->addFlash('danger', 'User is not created');
+
+            }
             } else {
                 $this->addFlash('danger', "Passwords doesn't match.");
             }
@@ -358,7 +369,15 @@ class UserController extends Controller
                     foreach ($user->getGroups() as $group)
                         $group->getGroup()->removeUser($user);
                 }
-                
+                $labs=$user->getCreatedLabs();
+                if ($labs->count() > 0) {
+                    foreach ($labs as $lab) {
+                        $this->logger->debug("Modify lab's author: ".$lab->getName());
+                        $this->addFlash('success', "The author of laboratory ".$lab->getName()." is modified to ".$this->getUser()->getName());
+                        $lab->setAuthor($this->getUser());
+                    }
+                }
+                $this->logger->info("User ".$user->getName()." is deleted by user ".$this->getUser()->getName());
                 $em->remove($user);
                 $em->flush();
                 $this->addFlash('success', $user->getName() . "'s account has been deleted.");
