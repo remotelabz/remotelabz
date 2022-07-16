@@ -164,5 +164,7 @@ try {
     Logger::print("Please check the install logs in " . INSTALL_LOG_PATH . " to get more information.\n", Logger::COLOR_RED);
     exit(1);
 }
+echo "🔥 Change in your .env.local the value of parameter APP_MAINTENANCE to 0 to give access to the RemoteLabz Application 🔥\n";
+
 
 exit(0);

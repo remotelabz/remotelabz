@@ -211,7 +211,29 @@ class Installer
             throw new Exception("Error while configuring Remotelabz services.", 0, $e);
         }
 
-        echo "🔨 Configure sudoers file... ";
+        echo "🔨 Enable Remotelabz services... ";
+        try {
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Service.");
+            }
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz-proxy",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Proxy Service.");
+            }
+            
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while enable Remotelabz services.", 0, $e);
+        }
+
+        echo "👮 Configure sudoers file... ";
         
         try{
             copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");          
@@ -220,7 +242,7 @@ class Installer
             throw new Exception("Error while configuring sudoers.", 0, $e);
         }
 
-        echo "🔨 Configure right on directories... ";
+        echo "👮 Configure right on directories... ";
         
         try{
             $this->rchown($this->installPath."/var", "www-data", "www-data"); 
