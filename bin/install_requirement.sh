@@ -26,6 +26,7 @@ EOF
 mysql -sfu root < mysql_secure_sql.sql
 rm ./mysql_secure_sql.sql
 
+echo "The MySQL is configured with user \"user\" and the password \"Mysql-Pa33wrd$\""
 apt-get install -y rabbitmq-server php-amqp
 if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
     rabbitmqctl add_user 'remotelabz-amqp' 'password-amqp'
@@ -60,9 +61,9 @@ EOF
 sed -i "s/RANDFILE/#RANDFILE/g" openssl-easyrsa.cnf
 
 ./easyrsa init-pki
-echo "In the documentation, the password used to secure the CA certificate is 'R3mot3!abz-0penVPN-CA2020'"
+echo "🔥 In the documentation, the password used to secure the CA certificate is 'R3mot3!abz-0penVPN-CA2020'"
 echo "You can use the same password for the next question"
-echo "This password will be add in you .env file. It is used to sign all users VPN certificate"
+echo "This password have to be added in you .env file. It is used to sign all users VPN certificate"
 ./easyrsa build-ca
 
 cp ./vars ./vars-ca
@@ -115,6 +116,7 @@ sysctl -w net.ipv4.ip_forward=1
 sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
 
-echo "The root password for your MySQL database is set to RemoteLabz-2022$"
-echo "The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"
+echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
+echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"
+echo "Your .env.local will be configured with this default password. If you choose to change it, don't forget to modify your .env.local file"
 echo "To change it, you can read the documentation online httsp://docs.remotelabz.com"
