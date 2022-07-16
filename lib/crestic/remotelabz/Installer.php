@@ -230,6 +230,21 @@ class Installer
             throw new Exception("Error while configuring right on directories.", 0, $e);
         }
 
+        echo "🔨 Configure JWT... ";
+        try{
+            @mkdir('config/jwt');
+            echo "You can use the password 'JWTok3n' for example";
+            $this->genkey_jwt($pass);
+            // Add at the end of the .env.local the JWT token
+            echo "JWT configured ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring JWT.", 0, $e);
+        }
+
+        echo "🔨 Set the right permission to directory... ";
+        $this->rchown($this->installPath."/config/jwt","www-data","www-data");
+        $this->rchown($this->installPath."/var","www-data","www-data");
+
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
@@ -559,5 +574,16 @@ class Installer
         $this->installPath = $installPath;
 
         return $this;
+    }
+
+    private function genkey_jwt($pass) {
+        $returnCode = 0;
+        $output = [];
+        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
+        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
+        if ($returnCode) {
+            return false;
+        }
+        return true;
     }
 }
