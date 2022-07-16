@@ -214,8 +214,7 @@ class Installer
         echo "🔨 Configure sudoers file... ";
         
         try{
-            $line=file_get_contents("config/system/sudoers");
-            file_put_contents("/etc/sudoers", $line, FILE_APPEND);
+            copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");          
             echo "sudoers modified ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring sudoers.", 0, $e);
@@ -230,20 +229,22 @@ class Installer
             throw new Exception("Error while configuring right on directories.", 0, $e);
         }
 
-        echo "🔨 Configure JWT... ";
+        echo "🔨 Configure JWT... \n";
         try{
             @mkdir('config/jwt');
-            echo "You can use the password 'JWTok3n' for example";
-            $this->genkey_jwt($pass);
+            $this->genkey_jwt("JWTok3n");
+            $file=$this->installPath."/.env.local";
+            $current_file=file_get_contents($file);
+            $current_file .= "JWT_PASSPHRASE=\"JWTTok3n\"";
+            file_put_contents($file,$current_file);
+
             // Add at the end of the .env.local the JWT token
+            $this->rchown($this->installPath."/config/jwt","www-data","www-data");
             echo "JWT configured ✔️\n";
+            echo "🔥 The password for JWT used during the installation is 'JWTok3n' 🔥\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring JWT.", 0, $e);
         }
-
-        echo "🔨 Set the right permission to directory... ";
-        $this->rchown($this->installPath."/config/jwt","www-data","www-data");
-        $this->rchown($this->installPath."/var","www-data","www-data");
 
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
@@ -514,8 +515,15 @@ class Installer
                 $path = $dir . "/" . $file;
 
                 if (is_dir($path)) {
+                    if (!chown($path, $user)) {
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
+                    }
+                    if (!chgrp($path, $group)) {
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exists..");
+                    }
                     $this->rchown($path, $user, $group);
                 } else {
+                    chown($path,$user);
                     if (!chown($path, $user)) {
                         throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
                     }
@@ -579,8 +587,8 @@ class Installer
     private function genkey_jwt($pass) {
         $returnCode = 0;
         $output = [];
-        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
-        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
+        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:$pass", $output, $returnCode);
+        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout -passin pass:$pass", $output, $returnCode);
         if ($returnCode) {
             return false;
         }
