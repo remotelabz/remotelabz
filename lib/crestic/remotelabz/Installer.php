@@ -251,10 +251,11 @@ class Installer
             throw new Exception("Error while configuring right on directories.", 0, $e);
         }
 
-        echo "🔨 Configure JWT... \n";
+        /* echo "🔨 Configure JWT... \n";
         try{
             @mkdir('config/jwt');
-            $this->genkey_jwt("JWTok3n");
+            echo "You have to use the token JWTok3n because it will be use in the local configuration file\n";
+            $this->genkey_jwt();
             $file=$this->installPath."/.env.local";
             $current_file=file_get_contents($file);
             $current_file .= "JWT_PASSPHRASE=\"JWTTok3n\"";
@@ -267,7 +268,7 @@ class Installer
         } catch (Exception $e) {
             throw new Exception("Error while configuring JWT.", 0, $e);
         }
-
+*/
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
@@ -606,11 +607,11 @@ class Installer
         return $this;
     }
 
-    private function genkey_jwt($pass) {
+    private function genkey_jwt() {
         $returnCode = 0;
         $output = [];
-        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096 -pass pass:$pass", $output, $returnCode);
-        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout -passin pass:$pass", $output, $returnCode);
+        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
+        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
         if ($returnCode) {
             return false;
         }
