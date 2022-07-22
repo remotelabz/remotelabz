@@ -34,6 +34,9 @@ fi
 rabbitmqctl set_permissions -p '/' 'remotelabz-amqp' '.*' '.*' '.*'
 service rabbitmq-server restart
 
+#To test if the connexion to the RabbitMQ works fine
+#rabbitmqctl authenticate_user 'remotelabz-amqp' "password-amqp"
+
 cd ~
 wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz 
 tar -xzf EasyRSA-3.0.8.tgz
