@@ -30,6 +30,7 @@ cp /home/${SUDO_USER}/remotelabz/config/apache/cert.cnf .
 
 sed -i "s/commonName = 192.168.11.131/commonName = ${PUBLIC_ADDRESS}/g" cert.cnf
 sed -i "s/IP.1 = 192.168.11.131/IP.1 = ${PUBLIC_ADDRESS}/g" cert.cnf
+sed -i "s/ServerName remotelabz.com/ServerName ${PUBLIC_ADDRESS}/g" /etc/apache2/sites-available/100-remotelabz.conf
 
 echo "🔥 Configuration of your certificate with IP or hostname ${PUBLIC_ADDRESS} .."
 openssl req -x509 -nodes -days 365 -sha512 -newkey rsa:2048 -keyout RemoteLabz-WebServer.key -out RemoteLabz-WebServer.crt -config /home/${SUDO_USER}/EasyRSA/cert.cnf
@@ -60,6 +61,7 @@ echo "🔥 Secure Apache configuration .."
 sed -i "s/ServerTokens OS/ServerTokens Prod/g" /etc/apache2/conf-enabled/security.conf
 sed -i "s/ServerSignature On/ServerSignature Off/g" /etc/apache2/conf-enabled/security.conf
 
+
 service apache2 restart
 service remotelabz-proxy restart
 
@@ -74,3 +76,4 @@ echo "sudo mv RemoteLabz-WebServer.* /opt/remotelabz-worker/config/certs/"
 echo "sed -i \"s/REMOTELABZ_PROXY_USE_WSS=0/REMOTELABZ_PROXY_USE_WSS=1/g\" /opt/remotelabz/.env.local"
 echo "-----------------------------------------------------"
 echo "🔥 You have to change the parameter of REMOTELABZ_PROXY_USE_WSS to 1 in file /opt/remotelabz-worker/.env.local"
+echo "🔥 Don't forget to restart your remotelabz-worker service"
