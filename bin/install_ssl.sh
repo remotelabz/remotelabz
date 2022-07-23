@@ -61,7 +61,6 @@ echo "🔥 Secure Apache configuration .."
 sed -i "s/ServerTokens OS/ServerTokens Prod/g" /etc/apache2/conf-enabled/security.conf
 sed -i "s/ServerSignature On/ServerSignature Off/g" /etc/apache2/conf-enabled/security.conf
 
-
 service apache2 restart
 service remotelabz-proxy restart
 
