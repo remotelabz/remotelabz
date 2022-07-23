@@ -32,8 +32,8 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
         /* Static data, for super-admin */
         $user = new User();
 
-        $user->setLastName("Administrator")
-            ->setFirstName("Florent")
+        $user->setLastName("Doe")
+            ->setFirstName("John")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
             ->setPassword($this->passwordEncoder->encodePassword(
