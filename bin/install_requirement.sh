@@ -84,10 +84,12 @@ cp pki/private/RemoteLabz-VPNServer.key /etc/openvpn/server
 cp pki/ca.crt /etc/openvpn/server
 cp pki/private/ca.key /etc/openvpn/server
 
+
 openvpn --genkey --secret ta.key
 cp ta.key /etc/openvpn/server
 openssl dhparam -out dh2048.pem 2048
 mv dh2048.pem /etc/openvpn/server
+chown www-data: /etc/openvpn/server -R
 
 cat > /etc/openvpn/server/server.conf << EOF
 port 1194
