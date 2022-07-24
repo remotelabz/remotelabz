@@ -18,7 +18,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem = new OperatingSystem();
 
         $operatingSystem
-            ->setName('Alpine')
+            ->setName('Alpine3.10')
             ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.img')
             ->setHypervisor($this->getReference('qemu'))
         ;
@@ -65,7 +65,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Ubuntu20LTS')
+            ->setName('Ubuntu20.04SrvLTS')
             ->setImageFilename('Ubuntu20LTS')
             ->setHypervisor($this->getReference('lxc'))
         ;
@@ -74,7 +74,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Debian')
+            ->setName('Debian11.4')
             ->setImageFilename('Debian')
             ->setHypervisor($this->getReference('lxc'))
         ;
