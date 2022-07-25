@@ -112,6 +112,7 @@ class Installer
                 $this->copyFiles();
                 $this->logger->debug("Files have been moved to " . $this->installPath);
                 echo "OK ✔️\n";
+                
             } catch (AlreadyExistException $e) {
                 $this->logger->warning("Install directory already exists. Not copying files.");
                 Logger::print("Warning: Target directory exists. Files will not be copied.\n", Logger::COLOR_YELLOW);
@@ -245,7 +246,9 @@ class Installer
         echo "👮 Configure right on directories... ";
         
         try{
-            $this->rchown($this->installPath."/var", "www-data", "www-data"); 
+            @mkdir($this->installPath."/public/uploads");
+            $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
+            $this->rchown($this->installPath."/var", "www-data", "www-data");
             echo "Right modified ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring right on directories.", 0, $e);
