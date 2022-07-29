@@ -13,6 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
+use GuzzleHttp\Client;
+
 
 /**
  * @Route("/admin")
@@ -158,5 +160,23 @@ class ServiceController extends Controller
         }
 
         return $this->redirectToRoute('services');
+    }
+         /**
+     * @Route("/ressources", name="ressources", methods="GET")
+     */
+    public function RessourceAction(Request $request)
+    {
+        $client = new Client();
+        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+        try {
+            $response = $client->get($url);
+        } catch (Exception $exception) {
+            return false;
+        }
+        $usage = json_decode($response->getBody()->getContents(), true);
+
+        return $this->render('service/ressources.html.twig', [
+            'value' => $usage
+        ]);
     }
 }

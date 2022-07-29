@@ -115,7 +115,7 @@ class OperatingSystemController extends Controller
                     } else {
                         if ($imageFile) {
                             $imageFileName = $imageFileUploader->upload($imageFile);
-                            $operatingSystem->setImageFilename("qemu://".$imageFileName);
+                            $operatingSystem->setImageFilename($imageFileName);
                         }
                         $entityManager = $this->getDoctrine()->getManager();
                         $entityManager->persist($operatingSystem);
