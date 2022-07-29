@@ -5,7 +5,7 @@ namespace App\Repository;
 use App\Entity\User;
 use App\Entity\Device;
 use App\Entity\DeviceInstance;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**

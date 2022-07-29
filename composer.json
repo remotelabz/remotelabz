@@ -11,14 +11,14 @@
         "crestic-urca/network-bundle": "^1.0",
         "crestic-urca/remotelabz-message-bundle": "^1.0.4",
         "doctrine/annotations": "^1.0",
-        "doctrine/common": "^2",
+        "doctrine/common": "^3",
         "doctrine/doctrine-bundle": "^2",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "doctrine/doctrine-migrations-bundle": "^2",
         "doctrine/orm": "^2",
         "friendsofsymfony/jsrouting-bundle": "^2.5",
         "friendsofsymfony/rest-bundle": "^3.0",
-        "gesdinet/jwt-refresh-token-bundle": "^0.9",
+        "gesdinet/jwt-refresh-token-bundle": "^0.12",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer-bundle": "^3.1",
         "laminas/laminas-code": "^3.4",
@@ -125,7 +125,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "5.1.*"
+            "require": "5.2.*"
         }
     },
     "repositories": [
