@@ -3,7 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\EditorData;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**

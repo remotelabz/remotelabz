@@ -5,7 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
 class OperatingSystemFixtures extends Fixture implements DependentFixtureInterface

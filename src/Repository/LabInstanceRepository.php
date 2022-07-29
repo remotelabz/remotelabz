@@ -7,7 +7,7 @@ use App\Entity\User;
 use App\Entity\LabInstance;
 use App\Entity\Group;
 use App\Entity\GroupUser;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**

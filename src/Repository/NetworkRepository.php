@@ -3,7 +3,7 @@
 namespace App\Repository;
 
 use Remotelabz\NetworkBundle\Entity\Network;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
