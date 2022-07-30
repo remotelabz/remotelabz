@@ -247,6 +247,7 @@ class Installer
         
         try{
             @mkdir($this->installPath."/public/uploads");
+            @mkdir($this->installPath."/public/uploads/lab");
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
             echo "Right modified ✔️\n";
