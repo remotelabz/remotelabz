@@ -1,19 +1,19 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ 'Ressources': path('ressources') }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Resources': path('resources') }) -%}
     {{ parent() }}
 {% endblock %}
 
 {% block sidebar %}
-    {% set category = 'ressources' %}
+    {% set category = 'resources' %}
     {{ parent() }}
 {% endblock %}
 
 {% block wrapper %}
 <div class="content-title">
     <div class="content-title-infos">
-        <h1>Ressources usages</h1>
+        <h1>Resources usages</h1>
     </div>
 </div>
 <div class="content-body">
@@ -27,8 +27,8 @@
                         <h4 class="card-title">
                         CPU
                         </h4>
-                        <p class="card-text flex-grow-1 center">
-                            {{ value['cpu'] }}%
+                        <p class="card-text flex-grow-1 text-center">
+                            {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
                         </p>
                     </div>
                 </div>
@@ -37,8 +37,9 @@
                         <h4 class="card-title">
                         Memory
                         </h4>
-                        <p class="card-text flex-grow-1 center">
-                            {{ value['memory'] }}%
+                        <p class="card-text flex-grow-1 text-center">
+                        {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
+
                         </p>
                     </div>
                 </div>
@@ -47,8 +48,9 @@
                         <h4 class="card-title">
                         Disk
                         </h4>
-                        <p class="card-text flex-grow-1 center">
-                            {{ value['disk'] }}%
+                        <p class="card-text flex-grow-1 text-center">
+                        {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
+
                         </p>
                     </div>
                 </div>

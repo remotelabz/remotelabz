@@ -162,7 +162,7 @@ class ServiceController extends Controller
         return $this->redirectToRoute('services');
     }
          /**
-     * @Route("/ressources", name="ressources", methods="GET")
+     * @Route("/resources", name="resources", methods="GET")
      */
     public function RessourceAction(Request $request)
     {
@@ -170,12 +170,14 @@ class ServiceController extends Controller
         $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
         try {
             $response = $client->get($url);
+            $usage = json_decode($response->getBody()->getContents(), true);
         } catch (Exception $exception) {
-            return false;
+            $this->addFlash('danger', 'Worker is not available');
+            $this->logger->error('Usage resources error - Web service or Worker is not available');
+            $usage=null;
         }
-        $usage = json_decode($response->getBody()->getContents(), true);
 
-        return $this->render('service/ressources.html.twig', [
+        return $this->render('service/resources.html.twig', [
             'value' => $usage
         ]);
     }
