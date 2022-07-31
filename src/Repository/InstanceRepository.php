@@ -6,7 +6,7 @@ use App\Entity\Lab;
 use App\Entity\User;
 use App\Entity\Instance;
 use App\Entity\LabInstance;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**

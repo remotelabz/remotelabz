@@ -4,7 +4,8 @@ namespace App\DataFixtures;
 
 use App\Entity\NetworkSettings;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
+
 
 class NetworkSettingsFixtures extends Fixture
 {
@@ -27,7 +28,7 @@ class NetworkSettingsFixtures extends Fixture
         $manager->persist($networkSettings);
         $this->addReference('network_settings3', $networkSettings);
 
-        $networkSettings = new NetworkSettings();
+/*        $networkSettings = new NetworkSettings();
         $networkSettings
             ->setName('ToDebianDevice')
             ->setIp(NULL)
@@ -54,7 +55,7 @@ class NetworkSettingsFixtures extends Fixture
         ;
         $manager->persist($networkSettings);
         $this->addReference('network_settings5', $networkSettings);
-
+*/
 
         $manager->flush();
     }

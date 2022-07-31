@@ -4,7 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Device;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
 class DeviceFixtures extends Fixture implements DependentFixtureInterface
@@ -33,7 +33,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         $manager->persist($device);
         $this->addReference('device-alpine', $device);
 
-        $device = new Device();
+/*        $device = new Device();
         $device
             ->setName('Linux Debian')
             ->setBrand('Test')
@@ -66,7 +66,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         ;
         $manager->persist($device);
         $this->addReference('device-ubuntu14X', $device);
-
+*/
         $device = new Device();
         $device
             ->setName('Migration')

@@ -5,7 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
 class OperatingSystemFixtures extends Fixture implements DependentFixtureInterface
@@ -18,7 +18,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem = new OperatingSystem();
 
         $operatingSystem
-            ->setName('Alpine')
+            ->setName('Alpine3.10')
             ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.img')
             ->setHypervisor($this->getReference('qemu'))
         ;
@@ -27,7 +27,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $this->setReference('operating-system-Alpine', $operatingSystem);
 
-        $operatingSystem = new OperatingSystem();
+/*        $operatingSystem = new OperatingSystem();
         $operatingSystem
             ->setName('Debian 10')
             ->setImageUrl('http://194.57.105.124/~fnolot/debian10-20190905.img')
@@ -53,7 +53,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         ;
         $manager->persist($operatingSystem);
         $this->setReference('operating-system-Ubuntu18LXDE', $operatingSystem);
-
+*/
         $operatingSystem = new OperatingSystem();
         $operatingSystem
             ->setName('Migration')
@@ -65,7 +65,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Ubuntu20LTS')
+            ->setName('Ubuntu20.04SrvLTS')
             ->setImageFilename('Ubuntu20LTS')
             ->setHypervisor($this->getReference('lxc'))
         ;
@@ -74,7 +74,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Debian')
+            ->setName('Debian11.4')
             ->setImageFilename('Debian')
             ->setHypervisor($this->getReference('lxc'))
         ;

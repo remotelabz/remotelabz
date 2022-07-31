@@ -1,0 +1,62 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Resources': path('resources') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'resources' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>Resources usages</h1>
+    </div>
+</div>
+<div class="content-body">
+<div class="row">
+</div>
+    <div class="row">
+        <div class="col-xl-8 col-lg-12">
+            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        CPU
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center">
+                            {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Memory
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center">
+                        {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
+
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Disk
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center">
+                        {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

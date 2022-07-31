@@ -6,7 +6,7 @@ use App\Entity\NetworkInterface;
 use App\DataFixtures\DeviceFixtures;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use App\DataFixtures\NetworkSettingsFixtures;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
 class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterface
@@ -35,7 +35,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
 
         $manager->persist($networkInterface);
 
-        $networkInterface = new NetworkInterface();
+/*        $networkInterface = new NetworkInterface();
         $networkInterface
             ->setName('ToDebian')
             ->setType("tap")
@@ -71,7 +71,7 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
             ->setIsTemplate(true);
 
         $manager->persist($networkInterface);
-
+*/
         $manager->flush();
     }
 

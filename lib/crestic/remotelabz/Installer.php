@@ -112,6 +112,7 @@ class Installer
                 $this->copyFiles();
                 $this->logger->debug("Files have been moved to " . $this->installPath);
                 echo "OK ✔️\n";
+                
             } catch (AlreadyExistException $e) {
                 $this->logger->warning("Install directory already exists. Not copying files.");
                 Logger::print("Warning: Target directory exists. Files will not be copied.\n", Logger::COLOR_YELLOW);
@@ -126,7 +127,7 @@ class Installer
         }
 
         // Configure environment
-        $this->logger->debug("Setting environment variables");
+/*        $this->logger->debug("Setting environment variables");
         echo "📜 Setting environment variables... ";
         try {
             $this->configureEnvironment($this->options);
@@ -135,7 +136,7 @@ class Installer
         } catch (Exception $e) {
             throw new Exception("Error setting environment variables.", 0, $e);
         }
-
+*/
         // Install composer packages
         $this->logger->debug("Downloading Composer packages");
         echo "🎶 Downloading Composer packages... ";
@@ -211,16 +212,67 @@ class Installer
             throw new Exception("Error while configuring Remotelabz services.", 0, $e);
         }
 
-        echo "🔨 Configure sudoers file... ";
+        echo "🔨 Enable Remotelabz services... ";
+        try {
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Service.");
+            }
+            $returnCode = 0;
+            $output = [];
+            exec("systemctl enable remotelabz-proxy",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not enable RemoteLabz Proxy Service.");
+            }
+            
+            echo "OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while enable Remotelabz services.", 0, $e);
+        }
+
+        echo "👮 Configure sudoers file... ";
         
         try{
-            $line=file_get_contents("system/sudoers");
-            file_put_contents("/etc/sudoers", $line, FILE_APPEND);
+            copy("config/system/sudoers", "/etc/sudoers.d/remotelabz");          
             echo "sudoers modified ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring sudoers.", 0, $e);
         }
 
+        echo "👮 Configure right on directories... ";
+        
+        try{
+            @mkdir($this->installPath."/public/uploads");
+            @mkdir($this->installPath."/public/uploads/lab");
+            $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
+            $this->rchown($this->installPath."/var", "www-data", "www-data");
+            echo "Right modified ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring right on directories.", 0, $e);
+        }
+
+        /* echo "🔨 Configure JWT... \n";
+        try{
+            @mkdir('config/jwt');
+            echo "You have to use the token JWTok3n because it will be use in the local configuration file\n";
+            $this->genkey_jwt();
+            $file=$this->installPath."/.env.local";
+            $current_file=file_get_contents($file);
+            $current_file .= "JWT_PASSPHRASE=\"JWTTok3n\"";
+            file_put_contents($file,$current_file);
+
+            // Add at the end of the .env.local the JWT token
+            $this->rchown($this->installPath."/config/jwt","www-data","www-data");
+            echo "JWT configured ✔️\n";
+            echo "🔥 The password for JWT used during the installation is 'JWTok3n' 🔥\n";
+        } catch (Exception $e) {
+            throw new Exception("Error while configuring JWT.", 0, $e);
+        }
+*/
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
@@ -295,15 +347,15 @@ class Installer
             ->parse()
             ->set("WORKER_SERVER", $options['worker-server'])
             ->set("WORKER_PORT", $options['worker-port'])
-            ->set("WEBSOCKET_PROXY_SERVER", $options['proxy-server'])
-            ->set("WEBSOCKET_PROXY_PORT", $options['proxy-port'])
-            ->set("WEBSOCKET_PROXY_API_PORT", $options['proxy-api-port'])
+            ->set("REMOTELABZ_PROXY_SERVER", $options['proxy-server'])
+            ->set("REMOTELABZ_PROXY_PORT", $options['proxy-port'])
+            ->set("REMOTELABZq_PROXY_API_PORT", $options['proxy-api-port'])
             ->set("APP_ENV", $options['environment'])
             ->set("MYSQL_SERVER", $options['database-server'])
             ->set("MYSQL_USER", $options['database-user'])
             ->set("MYSQL_PASSWORD", $options['database-password'])
             ->set("MYSQL_DATABASE", $options['database-name'])
-            ->set("MAILER_URL", $options['mailer-url'])
+            ->set("MAILER_DSN", $options['mailer-dsn'])
             ->save();
     }
 
@@ -356,6 +408,7 @@ class Installer
         }
         copy($this->installPath . "/config/apache/100-remotelabz.conf", "/etc/apache2/sites-available/100-remotelabz.conf");
         copy($this->installPath . "/config/apache/200-remotelabz-ssl.conf", "/etc/apache2/sites-available/200-remotelabz-ssl.conf");
+        copy($this->installPath . "/config/apache/remotelabz-git.conf", "/etc/apache2/conf-enabled/");
         $configFileContent = file_get_contents("/etc/apache2/sites-available/100-remotelabz.conf");
         $configFileContent = preg_replace("/^<VirtualHost *:80>$/", "<VirtualHost *:${port}>", $configFileContent);
         $configFileContent = preg_replace("/ServerName remotelabz.com/", "ServerName ${serverName}", $configFileContent);
@@ -408,7 +461,7 @@ class Installer
             throw new Exception("Could not restart install Yarn packages correctly.");
         }
         unset($output);
-        exec("yarn encore dev", $output, $returnCode);
+        exec("yarn encore prod", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not compile Yarn packages correctly.");
@@ -490,8 +543,15 @@ class Installer
                 $path = $dir . "/" . $file;
 
                 if (is_dir($path)) {
+                    if (!chown($path, $user)) {
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
+                    }
+                    if (!chgrp($path, $group)) {
+                        throw new Exception("Can't set permission of file ${path}: Permission refused or group does not exists..");
+                    }
                     $this->rchown($path, $user, $group);
                 } else {
+                    chown($path,$user);
                     if (!chown($path, $user)) {
                         throw new Exception("Can't set permission of file ${path}: Permission refused or user does not exists.");
                     }
@@ -550,5 +610,16 @@ class Installer
         $this->installPath = $installPath;
 
         return $this;
+    }
+
+    private function genkey_jwt() {
+        $returnCode = 0;
+        $output = [];
+        exec("openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096", $output, $returnCode);
+        exec("openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout", $output, $returnCode);
+        if ($returnCode) {
+            return false;
+        }
+        return true;
     }
 }

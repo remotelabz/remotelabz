@@ -11,14 +11,14 @@
         "crestic-urca/network-bundle": "^1.0",
         "crestic-urca/remotelabz-message-bundle": "^1.0.4",
         "doctrine/annotations": "^1.0",
-        "doctrine/common": "^2",
+        "doctrine/common": "^3",
         "doctrine/doctrine-bundle": "^2",
         "doctrine/doctrine-fixtures-bundle": "^3.0",
         "doctrine/doctrine-migrations-bundle": "^2",
         "doctrine/orm": "^2",
-        "friendsofsymfony/jsrouting-bundle": "^2.5",
+        "friendsofsymfony/jsrouting-bundle": "^2.8",
         "friendsofsymfony/rest-bundle": "^3.0",
-        "gesdinet/jwt-refresh-token-bundle": "^0.9",
+        "gesdinet/jwt-refresh-token-bundle": "^0.12",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer-bundle": "^3.1",
         "laminas/laminas-code": "^3.4",
@@ -63,7 +63,7 @@
         "symfony/twig-bundle": "5.2.*",
         "symfony/validator": "5.2.*",
         "symfony/web-link": "5.2.*",
-        "symfony/webpack-encore-bundle": "^1.0",
+        "symfony/webpack-encore-bundle": "^1.15",
         "symfony/yaml": "5.2.*",
         "twig/extra-bundle": "^3.3",
         "twig/markdown-extra": "^3.3"
@@ -125,7 +125,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "5.1.*"
+            "require": "5.2.*"
         }
     },
     "repositories": [

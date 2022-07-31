@@ -13,6 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
+use GuzzleHttp\Client;
+
 
 /**
  * @Route("/admin")
@@ -158,5 +160,25 @@ class ServiceController extends Controller
         }
 
         return $this->redirectToRoute('services');
+    }
+         /**
+     * @Route("/resources", name="resources", methods="GET")
+     */
+    public function RessourceAction(Request $request)
+    {
+        $client = new Client();
+        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+        try {
+            $response = $client->get($url);
+            $usage = json_decode($response->getBody()->getContents(), true);
+        } catch (Exception $exception) {
+            $this->addFlash('danger', 'Worker is not available');
+            $this->logger->error('Usage resources error - Web service or Worker is not available');
+            $usage=null;
+        }
+
+        return $this->render('service/resources.html.twig', [
+            'value' => $usage
+        ]);
     }
 }

@@ -205,6 +205,10 @@ services:
             $remotevpn_addr: '%app.general.public_address%'
             $contact_mail: '%app.general.contact_mail%'
 
+    App\Controller\InstanceController:
+        arguments:
+            $remotelabzProxyUseWss: '%app.services.proxy.wss%'
+
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'

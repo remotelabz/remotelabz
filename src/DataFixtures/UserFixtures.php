@@ -4,7 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -32,8 +32,8 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
         /* Static data, for super-admin */
         $user = new User();
 
-        $user->setLastName("Administrator")
-            ->setFirstName("Florent")
+        $user->setLastName("Doe")
+            ->setFirstName("John")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
             ->setPassword($this->passwordEncoder->encodePassword(
