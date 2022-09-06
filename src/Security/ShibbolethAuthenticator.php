@@ -120,8 +120,8 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         /** @var User $user */
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
 
-        if (! (is_null($credentials['eppn']) or $credentials['eppn']==="")) {
-            $this->logger->debug("Shibboleth eppn not null: ".$credentials['eppn']);
+        if (! (is_null($credentials['email']) or $credentials['email']==="")) {
+            $this->logger->debug("Shibboleth email not null: ".$credentials['email']);
             if (!$user) {
                 $this->logger->debug("Shibboleth user doesn't exist in local user base: ".$credentials['email']);
                 $user = new User();
