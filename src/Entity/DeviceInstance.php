@@ -59,6 +59,12 @@ class DeviceInstance extends Instance
     private $remotePort;
 
     /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
+     */
+    private $serialPort;
+
+    /**
      * @ORM\OneToMany(targetEntity=DeviceInstanceLog::class, mappedBy="deviceInstance", cascade={"persist"})
      * @Serializer\Exclude
      */
@@ -200,6 +206,18 @@ class DeviceInstance extends Instance
     public function setRemotePort(?int $remotePort): self
     {
         $this->remotePort = $remotePort;
+
+        return $this;
+    }
+
+    public function getSerialPort(): ?int
+    {
+        return $this->serialPort;
+    }
+
+    public function setSerialPort(?int $serialPort): self
+    {
+        $this->serialPort = $serialPort;
 
         return $this;
     }

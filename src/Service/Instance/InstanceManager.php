@@ -183,6 +183,11 @@ class InstanceManager
             $this->entityManager->persist($deviceInstance);
         }
 
+        //Add telnet port for serial
+        $remoteSerialPort = $this->getRemoteAvailablePort();
+        $deviceInstance->setSerialPort($remoteSerialPort);
+        $this->entityManager->persist($deviceInstance);
+
         $deviceInstance->setState(InstanceState::STARTING);
         $this->entityManager->flush();
 
