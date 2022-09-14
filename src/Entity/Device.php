@@ -138,10 +138,10 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
-     * @ORM\Column(type="boolean", options={"default": 1})
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="device", cascade={"persist"})
+     * @Serializer\Groups({"api_get_device", "export_lab"})
      */
-    private $vnc;
+    private $controlProtocols;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
@@ -170,7 +170,6 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
-        $this->vnc = true;
     }
 
     public function getId(): ?int
