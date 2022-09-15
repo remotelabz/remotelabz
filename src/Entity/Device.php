@@ -139,7 +139,7 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="device", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="device", cascade={"persist"})
      * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $controlProtocols;

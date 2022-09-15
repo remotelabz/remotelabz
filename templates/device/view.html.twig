@@ -47,7 +47,7 @@
         <p>Network interfaces :</p>
         <ul>
             {% for networkInterface in device.networkInterfaces %}
-                <li>{{ networkInterface.name }} ({{ networkInterface.type }}, {{ networkInterface.settings.protocol }} access)</li>
+                <li>{{ networkInterface.name }} ({{ networkInterface.type }}{#, {{ networkInterface.settings.protocol }} access#})</li>
             {% else %}
                 None
             {% endfor %}

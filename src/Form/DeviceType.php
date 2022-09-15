@@ -79,7 +79,7 @@ class DeviceType extends AbstractType
             ->add('controlProtocols', EntityType::class, [
                 'class' => ControlProtocol::class,
                 'choice_label' => 'name',
-                'mapped' => false,
+                //'mapped' => true,
                 'multiple' => true,
                 'required' => false/*
                 'row_attr' => ['class' => 'd-none'],

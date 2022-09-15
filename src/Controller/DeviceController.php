@@ -90,8 +90,7 @@ class DeviceController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
         }
-        $device_array= (array) $device->getControlProtocols();
-        $this->logger->debug("device:",$device_array);
+        
         return $this->render('device/view.html.twig', ['device' => $device]);
     }
 
@@ -162,10 +161,10 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-        $this->logger->info("Device modification asked by user ");
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
+        $this->logger->info("Device ".$device->getName()." modification asked by user ");
 
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
@@ -179,6 +178,10 @@ class DeviceController extends Controller
             /** @var Device $device */
             
             $device = $deviceForm->getData();
+            foreach ($device->getControlProtocols() as $proto) {
+                $device->addControlProtocol($proto);
+            }
+
             $device->setLastUpdated(new DateTime());
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -187,14 +190,15 @@ class DeviceController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 200, [], ['api_get_device']);
             }
+            $this->logger->info("Device ".$device->getName()." modification submitted");
 
             $this->addFlash('success', 'Device has been updated.');
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
         } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
-            $this->logger->info("Device modification submitted");
+            $this->logger->info("Device ".$device->getName()."modification submitted");
             else
-            $this->logger->info("Device modification aborted, form not valid");
+            $this->logger->info("Device ".$device->getName()." modification aborted, form not valid");
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);

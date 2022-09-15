@@ -30,8 +30,7 @@ class ControlProtocol
     private $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="controlProtocols", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=true)
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="controlProtocols", cascade={"persist"})
      * @Serializer\Groups({"api_get_control_protocol"})
      */
     private $device;
