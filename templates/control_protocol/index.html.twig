@@ -1,24 +1,24 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ 'Control Protocol': path('controlprotocol') }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Control Protocol': path('controlProtocol') }) -%}
     {{ parent() }}
 {% endblock %}
 
 {% block sidebar %}
-    {% set category = 'controlprotocol' %}
+    {% set category = 'controlProtocol' %}
     {{ parent() }}
 {% endblock %}
 
 {% block wrapper %}
 <div class="top-panel">
     <div class="quick-actions">
-        <a class="btn btn-success" role="button" href="{{ path('new_controlprotocol') }}">
+        <a class="btn btn-success" role="button" href="{{ path('new_controlProtocol') }}">
             New Control Protocol
         </a>
     </div>
     <ul class="nav-links nav nav-tabs">
-        <li class="active"><a href="#"><span>All</span> <span class="badge badge-pill">{{ controlprotocol|length }}</span></a></li>
+        <li class="active"><a href="#"><span>All</span> <span class="badge badge-pill">{{ controlProtocol|length }}</span></a></li>
         {# <li><a href="#"><span>Images</span> <span class="badge badge-pill">0</span></a></li>
         <li><a href="#"><span>Links</span> <span class="badge badge-pill">0</span></a></li> #}
     </ul>
@@ -31,11 +31,11 @@
     </form>
 </div> #}
 <div class="labs-panel">
-    {% for controlprotocol in controlprotocol %}
+    {% for controlProtocol in controlProtocol %}
     <div class="content-list row align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
             <div class="col-11">
-                <a href="{{ path('show_controlprotocol', {'id': controlprotocol.id}) }}" class="lab-item-name">
-                {{- controlprotocol.name -}}
+                <a href="{{ path('show_controlProtocol', {'id': controlProtocol.id}) }}" class="lab-item-name">
+                {{- controlProtocol.name -}}
             </a>
             </div>
             

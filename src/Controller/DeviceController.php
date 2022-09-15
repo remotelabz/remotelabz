@@ -90,7 +90,8 @@ class DeviceController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
         }
-
+        $device_array= (array) $device->getControlProtocols();
+        $this->logger->debug("device:",$device_array);
         return $this->render('device/view.html.twig', ['device' => $device]);
     }
 

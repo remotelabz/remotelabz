@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
+use App\Entity\ControlProtocol;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -164,6 +165,7 @@ class Device implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
+        $this->controlProtocols = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
         /*$this->type = 'vm';
@@ -296,6 +298,32 @@ class Device implements InstanciableInterface
         return $this;
     }
 
+    /**
+     * @return Collection|controlProtocol[]
+     */
+    public function getControlProtocols()
+    {
+        return $this->controlProtocols;
+    }
+
+    public function addControlProtocol(ControlProtocol $controlProtocol): self
+    {
+        if (!$this->controlProtocols->contains($controlProtocol)) {
+            $this->controlProtocols[] = $controlProtocol;
+        }
+        return $this;
+    }
+
+    public function removeControlProtocol(ControlProtocol $controlProtocol): self
+    {
+        if ($this->controlProtocols->contains($controlProtocol)) {
+            $this->controlProtocols->removeElement($controlProtocol);
+        }
+
+        return $this;
+    }
+
+
     public function getType(): ?string
     {
         return $this->type;
@@ -400,18 +428,6 @@ class Device implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
-
-        return $this;
-    }
-
-    public function getVnc(): bool
-    {
-        return $this->vnc;
-    }
-
-    public function setVnc(bool $vnc): self
-    {
-        $this->vnc = $vnc;
 
         return $this;
     }

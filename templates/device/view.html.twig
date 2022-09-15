@@ -17,6 +17,7 @@
         {% endblock %}
 {% endembed %}
 
+
     <div class="content-title">
         <div class="content-title-infos">
             <h1>
@@ -32,7 +33,7 @@
             {% endif %}
         </div>
     </div>
-    <div class="content-body">     
+    <div class="content-body">
         <p>Brand : {{ device.brand }}</p>
         <hr>
         <p>Model : {{ device.model }}</p>
@@ -42,7 +43,7 @@
             {{ device.flavor.name }}
             {# </a> #}
         </p>
-        {# <hr>
+        <hr>
         <p>Network interfaces :</p>
         <ul>
             {% for networkInterface in device.networkInterfaces %}
@@ -50,11 +51,20 @@
             {% else %}
                 None
             {% endfor %}
-        </ul> #}
+        </ul>
         <hr>
         <p>Operating system : {{ device.operatingSystem.name }}</p>
         <hr>
         <p>Hypervisor : {{ device.hypervisor.name }}</p>
+        <hr>
+        <p>Control protocols :</p>
+        <ul>
+        {% for controlProtocol in device.controlProtocols %}
+                <li>{{ controlProtocol.name }}</li>
+            {% else %}
+                None
+        {% endfor %}
+        </ul>
     </div>
 {% endblock %}
 

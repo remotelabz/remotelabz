@@ -8,6 +8,7 @@ use App\Entity\Flavor;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
+use App\Entity\ControlProtocol;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -66,7 +67,7 @@ class DeviceType extends AbstractType
                 'class' => Flavor::class,
                 'choice_label' => 'name'
             ])
-            ->add('networkInterfaces', EntityType::class, [
+          /*  ->add('networkInterfaces', EntityType::class, [
                 'class' => NetworkInterface::class,
                 'choice_label' => 'name',
                 'multiple' => true,
@@ -74,11 +75,16 @@ class DeviceType extends AbstractType
                 'row_attr' => ['class' => 'd-none'],
                 'label_attr' => ['class' => 'd-none'],
                 'attr' => ['class' => 'd-none']
-            ])
-            ->add('vnc', CheckboxType::class, [
-                'required' => false,
-                'label' => 'VNC Access',
-                'help' => "If checked, this device will provide an online VNC console."
+            ])*/
+            ->add('controlProtocols', EntityType::class, [
+                'class' => ControlProtocol::class,
+                'choice_label' => 'name',
+                'mapped' => false,
+                'multiple' => true,
+                'required' => false/*
+                'row_attr' => ['class' => 'd-none'],
+                'label_attr' => ['class' => 'd-none'],
+                'attr' => ['class' => 'd-none']*/
             ])
             ->add('isTemplate', CheckboxType::class, [
                 'required' => false,

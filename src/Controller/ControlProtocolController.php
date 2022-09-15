@@ -62,7 +62,7 @@ class ControlProtocolController extends Controller
             return $this->json($controlProtocol, 200, [], ['api_get_controlProtocol']);
         }
 
-        return $this->render('controlProtocol/index.html.twig', [
+        return $this->render('control_protocol/index.html.twig', [
             'controlProtocol' => $controlProtocol,
             'search' => $search
         ]);
@@ -87,7 +87,7 @@ class ControlProtocolController extends Controller
         $name=$controlProtocol->getName();
         
 
-        return $this->render('controlProtocol/view.html.twig', [         
+        return $this->render('control_protocol/view.html.twig', [         
             'controlProtocol' => $controlProtocol
         ]);
     }
@@ -119,7 +119,7 @@ class ControlProtocolController extends Controller
 
         }
 
-        return $this->render('controlProtocol/new.html.twig', [
+        return $this->render('control_protocol/new.html.twig', [
             'controlProtocolForm' => $controlProtocolForm->createView(),
         ]);
     }
@@ -152,7 +152,7 @@ class ControlProtocolController extends Controller
 
         }
 
-        return $this->render('controlProtocol/new.html.twig', [
+        return $this->render('control_protocol/new.html.twig', [
             'controlProtocol' => $controlProtocol,
             'controlProtocolForm' => $controlProtocolForm->createView()
         ]);
