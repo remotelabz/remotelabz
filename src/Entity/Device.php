@@ -107,7 +107,6 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
-     * @Serializer\Groups({})
      */
     private $controlInterface;
 
@@ -139,7 +138,7 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="device", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="devices", cascade={"persist"})
      * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $controlProtocols;
@@ -310,6 +309,7 @@ class Device implements InstanciableInterface
     {
         if (!$this->controlProtocols->contains($controlProtocol)) {
             $this->controlProtocols[] = $controlProtocol;
+            $controlProtocol->addDevice($this);
         }
         return $this;
     }
@@ -318,8 +318,8 @@ class Device implements InstanciableInterface
     {
         if ($this->controlProtocols->contains($controlProtocol)) {
             $this->controlProtocols->removeElement($controlProtocol);
+            $controlProtocol->removeDevice($this);
         }
-
         return $this;
     }
 

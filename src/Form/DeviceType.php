@@ -79,12 +79,8 @@ class DeviceType extends AbstractType
             ->add('controlProtocols', EntityType::class, [
                 'class' => ControlProtocol::class,
                 'choice_label' => 'name',
-                //'mapped' => true,
                 'multiple' => true,
-                'required' => false/*
-                'row_attr' => ['class' => 'd-none'],
-                'label_attr' => ['class' => 'd-none'],
-                'attr' => ['class' => 'd-none']*/
+                'required' => false,
             ])
             ->add('isTemplate', CheckboxType::class, [
                 'required' => false,

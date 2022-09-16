@@ -113,7 +113,10 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-
+            foreach ($device->getControlProtocols() as $proto) {
+                $proto->addDevice($device);
+                $this->logger->debug($proto->getName());
+            }
             $networkInterface = new NetworkInterface();
             $networkInterface->setName($device->getName()."_net");
             $networkInterface->setIsTemplate(true);
@@ -164,10 +167,18 @@ class DeviceController extends Controller
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
+
         $this->logger->info("Device ".$device->getName()." modification asked by user ");
 
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
+        foreach ($device->getControlProtocols() as $proto) {
+            $proto->removeDevice($device);
+            //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
+        }
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($device);
+        $entityManager->flush();
 
         if ($request->getContentType() === 'json') {
             $device_json = json_decode($request->getContent(), true);
@@ -177,11 +188,13 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             
-            $device = $deviceForm->getData();
+            $modified_device = $deviceForm->getData();
             foreach ($device->getControlProtocols() as $proto) {
-                $device->addControlProtocol($proto);
+                $proto->addDevice($device);
+                $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
+                //$this->logger->debug($device->getName()." has control protocol ".$proto->getName());
             }
-
+            
             $device->setLastUpdated(new DateTime());
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -196,9 +209,7 @@ class DeviceController extends Controller
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
         } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
-            $this->logger->info("Device ".$device->getName()."modification submitted");
-            else
-            $this->logger->info("Device ".$device->getName()." modification aborted, form not valid");
+            $this->logger->info("Device ".$device->getName()."modification submitted but form not valid");
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);

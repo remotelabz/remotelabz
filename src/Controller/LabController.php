@@ -405,14 +405,13 @@ class LabController extends Controller
         if ($request->getContentType() === 'json') {
             $device = json_decode($request->getContent(), true);
             $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device);
-            // fetch network interfaces to copy them later
-            $networkInterfaces = $device['networkInterfaces'];
+
             $deviceForm->submit($device);
         }
 
         if ($deviceForm->isSubmitted()) {
-            if ($deviceForm->isValid()) {
-                $this->logger->debug("Add device form submitted is valid");
+            //if ($deviceForm->isValid()) {
+                $this->logger->debug("Add device in lab form submitted is valid");
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
                 $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor()->getName());
@@ -420,12 +419,13 @@ class LabController extends Controller
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
-            } else {
-                $this->logger->debug("Add device form submitted is not valid");
+            /*} else {
+                $this->logger->debug("Add device in lab form submitted is not valid");
+                $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors() as $error) {
                     $this->logger->debug("Error validating :".$error->getMessage());
                 }
-            }
+            }*/
         }
         return $this->json($deviceForm, 200, [], ['api_get_device']);
     }
@@ -473,11 +473,11 @@ class LabController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
-        $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->info("Lab edit by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
         
 
         if (!$lab) {

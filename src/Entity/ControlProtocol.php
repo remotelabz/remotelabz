@@ -6,7 +6,7 @@ use App\Repository\ControlProtocolRepository;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-
+use App\Entity\Device;
 
 /**
  * @ORM\Entity(repositoryClass=ControlProtocolRepository::class)
@@ -31,9 +31,14 @@ class ControlProtocol
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="controlProtocols", cascade={"persist"})
-     * @Serializer\Groups({"api_get_control_protocol"})
      */
-    private $device;
+    private $devices;
+
+    public function __construct()
+    {
+        $this->devices = new ArrayCollection();
+    }
+
 
     public function getId(): ?int
     {
@@ -52,16 +57,30 @@ class ControlProtocol
         return $this;
     }
 
-    public function getDevice(): ?Device
+    /**
+     * @return Collection|Device[]
+     */
+    public function getDevices(): ?Device
     {
-        return $this->device;
+        return $this->devices;
     }
 
-    public function setDevice(?Device $device): self
+    public function addDevice(?Device $device): self
     {
-        $this->device = $device;
-
+        if (!$this->devices->contains($device)) {
+            $this->devices[] = $device;
+            $device->addControlProtocol($this);
+        }
         return $this;
     }
 
+    public function removeDevice(?Device $device): self
+    {
+        if ($this->devices->contains($device)) {
+            $this->devices->removeElement($device);
+            $device->removeControlProtocol($this);
+        }
+
+        return $this;
+    }
 }

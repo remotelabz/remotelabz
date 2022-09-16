@@ -29,6 +29,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
         Remotelabz.devices.get(instance.device.id).then(response => {
             setDevice(response.data)
             setLoading(false)
+        //console.log(response.data)
         })
         return () => {
             clearInterval(interval)
@@ -122,7 +123,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     }
 
     let controls;
-
+    console.log(device);
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -214,8 +215,8 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                                 }
                             </div>
                         }
-
-                        {(instance.state == 'started' && device.vnc) &&
+                        
+                        {(instance.state == 'started' && device.controlProtocols) &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
