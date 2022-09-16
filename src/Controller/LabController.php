@@ -410,7 +410,7 @@ class LabController extends Controller
         }
 
         if ($deviceForm->isSubmitted()) {
-            //if ($deviceForm->isValid()) {
+            if ($deviceForm->isValid()) {
                 $this->logger->debug("Add device in lab form submitted is valid");
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
@@ -419,13 +419,13 @@ class LabController extends Controller
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
-            /*} else {
+            } else {
                 $this->logger->debug("Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors() as $error) {
                     $this->logger->debug("Error validating :".$error->getMessage());
                 }
-            }*/
+            }
         }
         return $this->json($deviceForm, 200, [], ['api_get_device']);
     }
