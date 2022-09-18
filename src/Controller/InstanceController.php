@@ -426,7 +426,7 @@ class InstanceController extends Controller
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
 
-        if (true === $device->getVnc()) {
+        if ($this->isVNC($device)) {
             try {
                 if ($deviceInstance->getDevice()->getType()=="vm")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
@@ -491,5 +491,21 @@ class InstanceController extends Controller
         ]);
 
         return $this->json($logs);
+    }
+
+    //$device : a device entity
+    private function isVNC($device) {
+        $result=false;
+        $this->logger->debug("VNC test ".$device->getName()." ".$device->getUUID());
+
+        foreach ($device->getControlProtocols() as $control_protocol) {
+            if (strtolower($control_protocol->getName())==="vnc") {
+                $this->logger->debug("VNC detected in ".$device->getName()." ".$device->getUUID());
+                $result=($result || true);
+            } else {
+                $this->logger->debug("VNC not found : ".$device->getName()." ".$device->getUUID()." ".$control_protocol->getName());
+            }
+        }
+        return $result;
     }
 }

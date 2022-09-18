@@ -175,18 +175,20 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
-        
-
-        if (true === $device->getVnc()) {
+        foreach ($device->getControlProtocols() as $control_protocol) {
+            if (strtolower($control_protocol->getName())==="vnc") {
             $remotePort = $this->getRemoteAvailablePort();
             $deviceInstance->setRemotePort($remotePort);
             $this->entityManager->persist($deviceInstance);
+            }
+            
+            if (strtolower($control_protocol->getName())==="serial") {
+            //Add telnet port for serial
+            $remoteSerialPort = $this->getRemoteAvailablePort();
+            $deviceInstance->setSerialPort($remoteSerialPort);
+            $this->entityManager->persist($deviceInstance);
+            }
         }
-
-        //Add telnet port for serial
-        $remoteSerialPort = $this->getRemoteAvailablePort();
-        $deviceInstance->setSerialPort($remoteSerialPort);
-        $this->entityManager->persist($deviceInstance);
 
         $deviceInstance->setState(InstanceState::STARTING);
         $this->entityManager->flush();
@@ -285,8 +287,14 @@ class InstanceManager
             'instance' => $deviceInstance
         ]);
         $device = $deviceInstance->getDevice();
+        
+        $vnc=false;
+        foreach($device->getControlProtocols() as $controlProtocol){
+            if ($controlProtocol->getName()==="vnc")
+                $vnc=($vnc || true);
+        }
 
-        if (true === $device->getVnc()) {
+        if ($vnc) {
             $this->logger->info('Deleting proxy route');
             try {
                 $uuid=$deviceInstance->getUuid();

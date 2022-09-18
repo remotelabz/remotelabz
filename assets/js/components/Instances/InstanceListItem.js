@@ -123,7 +123,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     }
 
     let controls;
-    console.log(device);
+    //console.log(device.controlProtocols);
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -216,7 +216,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                             </div>
                         }
                         
-                        {(instance.state == 'started' && device.controlProtocols) &&
+                        {(instance.state == 'started' && device.controlProtocols.includes('vnc')) &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
