@@ -387,26 +387,48 @@ class LabController extends Controller
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
-        //$this->logger->debug("Add a device to lab. Request received: ".$request);
-        //$this->logger->debug("Add a device to lab id: ".$id);
         $lab = $this->labRepository->find($id);
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("Add device from API by : ".$this->getUser()->getUsername());
+            $this->logger->debug("Add device to a lab from API by : ".$this->getUser()->getUsername());
         
         $device = new Device();
-        //Only to debug 
-        $serializer = $this->container->get('jms_serializer');
-        //
+        
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
-            $device = json_decode($request->getContent(), true);
-            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device);
-
-            $deviceForm->submit($device);
+            $device_array = json_decode($request->getContent(), true);
+            /*$json_example='{
+                "id": 121,
+                "name": "FortiGate-v7.2.0",
+                "brand": "",
+                "model": "",
+                "launchOrder": 0,
+                "launchScript": null,
+                "type": "vm",
+                "virtuality": 1,
+                "hypervisor": 7,
+                "operatingSystem": 34,
+                "controlInterface": null,
+                "flavor": 8,
+                "uuid": "a697b0da-1427-46a7-9dc5-34e3435060c3",
+                "createdAt": "2022-09-16T22:16:36+02:00",
+                "lastUpdated": "2022-09-18T12:01:23+02:00",
+                "controlProtocols": [{ "id": 3 }],
+                "editorData": {
+                    "id": 119,
+                    "x": 0,
+                    "y": 0
+                },
+                "isTemplate": true
+            }';*/
+            //$device_array = json_decode($json_example, true);
+            //Delete this key otherwise the validation doesn't work.
+            unset($device_array['controlProtocols']);
+            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            $deviceForm->submit($device_array);
         }
 
         if ($deviceForm->isSubmitted()) {
@@ -414,7 +436,34 @@ class LabController extends Controller
                 $this->logger->debug("Add device in lab form submitted is valid");
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
-                $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor()->getName());
+                $this->logger->debug("Device added : ".$new_device->getName());
+                
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($new_device);
+                $entityManager->flush();
+                $device = $this->deviceRepository->find($device_array['id']);
+                $this->logger->debug("Source device id adds is :".$device_array['id']);
+                $i=0;
+                foreach ($device->getNetworkInterfaces() as $network_int) {
+                    $new_network_inter=new NetworkInterface();
+                    $new_setting=new NetworkSettings();
+                    $new_setting=clone $network_int->getSettings();
+                    $new_network_inter->setSettings($new_setting);
+                    $new_network_inter->setName($device->getName()."_"."int".$i);
+                    $i=$i+1;
+                    $new_network_inter->setIsTemplate(true);
+                    $new_device->addNetworkInterface($new_network_inter);
+                    $new_setting->setName($new_network_inter->getName());
+                    $entityManager->persist($new_network_inter);
+                    $entityManager->persist($new_setting);
+                }
+
+                foreach ($device->getControlProtocols() as $control_protocol) {
+                    $new_device->addControlProtocol($control_protocol);        
+
+                }
+                $entityManager->persist($new_device);
+                $entityManager->flush();
 
                 $this->adddeviceinlab($new_device, $lab);
 
@@ -422,7 +471,7 @@ class LabController extends Controller
             } else {
                 $this->logger->debug("Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
-                foreach ($deviceForm->getErrors() as $error) {
+                foreach ($deviceForm->getErrors(true) as $error) {
                     $this->logger->debug("Error validating :".$error->getMessage());
                 }
             }
@@ -447,7 +496,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
-        foreach ($new_device->getNetworkInterfaces() as $network_int) {
+/*        foreach ($new_device->getNetworkInterfaces() as $network_int) {
             $this->logger->debug("Add Network interface".$network_int->getName());
             $new_network_inter=new NetworkInterface();
             $new_setting=new NetworkSettings();
@@ -458,7 +507,9 @@ class LabController extends Controller
             $new_network_inter->setIsTemplate(true);
             $new_device->addNetworkInterface($new_network_inter);
             $entityManager->persist($new_network_inter);
-        }
+        }*/
+
+
         $entityManager->flush();
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
@@ -598,6 +649,10 @@ class LabController extends Controller
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);
+        }
+
+        foreach ($device->getControlProtocols() as $control_protocol) {
+            $newDevice->addControlProtocol($control_protocol);        
         }
 
         return $newDevice;

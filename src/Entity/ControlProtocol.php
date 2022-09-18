@@ -25,7 +25,6 @@ class ControlProtocol
      * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank
      * @Assert\Type(type="string")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $name;
 

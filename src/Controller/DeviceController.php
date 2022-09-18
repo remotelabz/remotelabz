@@ -189,6 +189,8 @@ class DeviceController extends Controller
             /** @var Device $device */
             
             $modified_device = $deviceForm->getData();
+            $this->logger->debug("json:". $this->serializer->serialize($deviceForm->getData(), 'json'));
+            
             foreach ($device->getControlProtocols() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());

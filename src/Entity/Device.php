@@ -57,7 +57,6 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     *
      * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
      */
     private $launchScript;
@@ -140,6 +139,8 @@ class Device implements InstanciableInterface
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="devices", cascade={"persist"})
      * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
     private $controlProtocols;
 
