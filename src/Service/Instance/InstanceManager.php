@@ -364,6 +364,10 @@ class InstanceManager
             $newDevice->addNetworkInterface($new_network_inter);
         }
 
+        foreach ($device->getControlProtocols() as $control_protocol) {
+            $newDevice->addControlProtocol($control_protocol);
+        }
+
         return $newDevice;
     }
 
