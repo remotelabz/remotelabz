@@ -309,68 +309,6 @@ class LabController extends Controller
 
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
         $entityManager->persist($lab);
-        //$this->logger->debug($request);
-        
-        // Check if the creation is from export process or not
-        //$from_export=strstr($request->headers->get('referer'),"devices_sandbox");
-        
-        /*
-        $data=json_decode($labJson,true);
-        $data['from_export']=$fromexport;
-        $labJson=json_encode($data);
-        */
-        /* if (!$from_export) {
-            // Add Service container LXC for each new lab
-            // This creation is transparent
-            // TODO: protect the name svc because it's become now an internal name
-            // Check in the device creation if the name is svc and template true      
-            $svc_device=$this->deviceRepository->findByNameByTemplate('svc',true);
-            if (!$svc_device) {
-                $this->logger->debug("Creation not from export process");
-                $this->logger->debug("svc template doesn't exist");
-
-                //The svc device doesn't exist
-                $svc_device=new Device();
-                $svc_device->setName('svc');
-                $svc_device->setIsTemplate(true);
-                $svc_device->setType("container");
-                // TODO: find an operating system to the svc service but not used
-                $operating=$this->operatingSystemRepository->findAll();
-                $svc_device->setOperatingSystem($operating[0]);
-
-                // TODO: same than Operating System, it's not used for container
-                $flavor=$this->flavorRepository->findAll();
-                $svc_device->setFlavor($flavor[0]);
-
-                $svc_device->setHypervisor('lxc');
-                $svc_device->setVnc(false);
-                $lab->addDevice($svc_device);
-                $entityManager->persist($svc_device);
-            }
-            else {
-                $svc_new_device=new Device();
-                $svc_new_device->setName('svc');
-                $svc_new_device->setIsTemplate(false);
-                $svc_new_device->setType("container");
-                // TODO: find an operating system to the svc service but not used
-                $operating=$this->operatingSystemRepository->findAll();
-                $svc_new_device->setOperatingSystem($operating[0]);
-
-                // TODO: same than Operating System, it's not used for container
-                $flavor=$this->flavorRepository->findAll();
-                $svc_new_device->setFlavor($flavor[0]);
-
-                $svc_new_device->setHypervisor('lxc');
-                $svc_new_device->setVnc(false);
-                $lab->addDevice($svc_new_device);
-                $entityManager->persist($svc_new_device);
-            }
-
-            $entityManager->flush();        
-        } 
-        else
-            $this->logger->debug("Creation from export process - not svc creation");
-        */
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
@@ -652,7 +590,7 @@ class LabController extends Controller
         }
 
         foreach ($device->getControlProtocols() as $control_protocol) {
-            $newDevice->addControlProtocol($control_protocol);        
+            $newDevice->addControlProtocol($control_protocol);
         }
 
         return $newDevice;

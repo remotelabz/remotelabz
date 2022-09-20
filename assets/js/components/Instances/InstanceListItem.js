@@ -121,9 +121,22 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
             setExporting(false)
         })
     }
+    
+    function is_vnc() {
+        let result=false;
+        if (instance.device.controlProtocols.length > 0 ) {
+            instance.device.controlProtocols.forEach((element,index) => {
+              if (element.name === 'vnc') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
+    
 
     let controls;
-    //console.log(device.controlProtocols);
+    
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -170,6 +183,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                     <SVG name="stop" />
                 </Button>
             );
+            
             break;
     }
 
@@ -216,7 +230,10 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                             </div>
                         }
                         
-                        {(instance.state == 'started' && device.controlProtocols.includes('vnc')) &&
+                        {(instance.state == 'started' && (instance.device.controlProtocols.length>0
+                         && is_vnc())
+                         )
+                         &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"

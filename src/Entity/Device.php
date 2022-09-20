@@ -138,7 +138,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="devices", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device", "export_lab","worker"})
+     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
      * @Assert\NotNull
      * @Assert\Valid
      */
