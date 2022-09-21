@@ -338,6 +338,7 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_array = json_decode($request->getContent(), true);
+            //$this->logger->debug("json:",$device_array);
             /*$json_example='{
                 "id": 121,
                 "name": "FortiGate-v7.2.0",
@@ -351,6 +352,7 @@ class LabController extends Controller
                 "operatingSystem": 34,
                 "controlInterface": null,
                 "flavor": 8,
+                "networkInterfaces":2,
                 "uuid": "a697b0da-1427-46a7-9dc5-34e3435060c3",
                 "createdAt": "2022-09-16T22:16:36+02:00",
                 "lastUpdated": "2022-09-18T12:01:23+02:00",
@@ -361,10 +363,11 @@ class LabController extends Controller
                     "y": 0
                 },
                 "isTemplate": true
-            }';*/
-            //$device_array = json_decode($json_example, true);
+            }';
+            $device_array = json_decode($json_example, true);*/
             //Delete this key otherwise the validation doesn't work.
             unset($device_array['controlProtocols']);
+            $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
             $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             $deviceForm->submit($device_array);
         }
@@ -382,18 +385,20 @@ class LabController extends Controller
                 $device = $this->deviceRepository->find($device_array['id']);
                 $this->logger->debug("Source device id adds is :".$device_array['id']);
                 $i=0;
-                foreach ($device->getNetworkInterfaces() as $network_int) {
-                    $new_network_inter=new NetworkInterface();
-                    $new_setting=new NetworkSettings();
-                    $new_setting=clone $network_int->getSettings();
-                    $new_network_inter->setSettings($new_setting);
-                    $new_network_inter->setName($device->getName()."_"."int".$i);
-                    $i=$i+1;
-                    $new_network_inter->setIsTemplate(true);
-                    $new_device->addNetworkInterface($new_network_inter);
-                    $new_setting->setName($new_network_inter->getName());
-                    $entityManager->persist($new_network_inter);
-                    $entityManager->persist($new_setting);
+                if ($device_array['networkInterfaces'] > 0) {
+                    foreach ($device->getNetworkInterfaces() as $network_int) {
+                        $new_network_inter=new NetworkInterface();
+                        $new_setting=new NetworkSettings();
+                        $new_setting=clone $network_int->getSettings();
+                        $new_network_inter->setSettings($new_setting);
+                        $new_network_inter->setName($device->getName()."_"."int".$i);
+                        $i=$i+1;
+                        $new_network_inter->setIsTemplate(true);
+                        $new_device->addNetworkInterface($new_network_inter);
+                        $new_setting->setName($new_network_inter->getName());
+                        $entityManager->persist($new_network_inter);
+                        $entityManager->persist($new_setting);
+                    }
                 }
 
                 foreach ($device->getControlProtocols() as $control_protocol) {

@@ -17,6 +17,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
 class DeviceType extends AbstractType
 {
@@ -41,23 +42,12 @@ class DeviceType extends AbstractType
                  'help' => 'Nature of the device.',
                  'empty_data' => 'vm'
              ])
-             ->add('hypervisor', ChoiceType::class, [
-                'choices' => ['QEMU' => 'qemu', 'LXC' => 'lxc'],
-                'help' => 'Nature of the device. Only Virtual Machine is supported for now.',
-                'empty_data' => 'qemu'
-            ])
             ->add('hypervisor', EntityType::class, [
                 'class' => Hypervisor::class,
                 'choice_label' => 'name',
                 'help' => 'Type of hypervisor.',
             ])
-          /*  ->add('labs', EntityType::class, [
-                'class' => Lab::class,
-                'choice_label' => 'name',
-                'by_reference' => false,
-                'multiple' => true
-            ])
-            */
+            
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'choice_label' => 'name',
@@ -67,14 +57,17 @@ class DeviceType extends AbstractType
                 'class' => Flavor::class,
                 'choice_label' => 'name'
             ])
-          /*  ->add('networkInterfaces', EntityType::class, [
+            ->add('networkInterfaces', NumberType::class, [
+                'data' => $options["nb_network_interface"],
+                'help' => "Limit to 19 interfaces",
+                'empty_data' => 0,
+                'mapped' => false
+            ])
+            /*->add('networkInterfaces', EntityType::class, [
                 'class' => NetworkInterface::class,
                 'choice_label' => 'name',
                 'multiple' => true,
                 'required' => false,
-                'row_attr' => ['class' => 'd-none'],
-                'label_attr' => ['class' => 'd-none'],
-                'attr' => ['class' => 'd-none']
             ])*/
             ->add('controlProtocols', EntityType::class, [
                 'class' => ControlProtocol::class,
@@ -95,7 +88,8 @@ class DeviceType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Device::class,
-            "allow_extra_fields" => true
+            "allow_extra_fields" => true,
+            'nb_network_interface' => null
         ]);
     }
 }
