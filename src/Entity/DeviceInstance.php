@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use Exception;
 use App\Entity\Instance;
+use App\Entity\ControlProtocolTypeInstance;
+use App\Entity\NetworkInterfaceInstance;
 use App\Instance\InstanceState;
 use App\Utils\MacAddress;
 use Doctrine\ORM\Mapping as ORM;
@@ -52,17 +54,23 @@ class DeviceInstance extends Instance
      */
     private $state;
 
+     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocolTypeInstance", mappedBy="deviceInstance", cascade={"persist"})
+     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox"})
+     */
+    private $controlProtocolTypeInstances;
+    
     /**
      * @ORM\Column(type="integer", nullable=true)
      * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
      */
-    private $remotePort;
+    //private $remotePort;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
      */
-    private $serialPort;
+    //private $serialPort;
 
     /**
      * @ORM\OneToMany(targetEntity=DeviceInstanceLog::class, mappedBy="deviceInstance", cascade={"persist"})
@@ -75,6 +83,7 @@ class DeviceInstance extends Instance
         parent::__construct();
         $this->state = InstanceState::STOPPED;
         $this->networkInterfaceInstances = new ArrayCollection();
+        $this->controlProtocolTypeInstances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -198,30 +207,6 @@ class DeviceInstance extends Instance
         return $this->state === InstanceState::STARTED;
     }
 
-    public function getRemotePort(): ?int
-    {
-        return $this->remotePort;
-    }
-
-    public function setRemotePort(?int $remotePort): self
-    {
-        $this->remotePort = $remotePort;
-
-        return $this;
-    }
-
-    public function getSerialPort(): ?int
-    {
-        return $this->serialPort;
-    }
-
-    public function setSerialPort(?int $serialPort): self
-    {
-        $this->serialPort = $serialPort;
-
-        return $this;
-    }
-
     /**
      * @return Collection|DeviceInstanceLog[]
      */
@@ -261,6 +246,56 @@ class DeviceInstance extends Instance
         return $this;
     }
 
+
+    /**
+     * Get network interface instance associated to this lab instance
+     *
+     * @return ControlProtocolTypeInstance
+     */
+    public function getControlProtocolTypeInstance($controlProtocolType): ?ControlProtocolTypeInstance
+    {
+        $criteria = Criteria::create()
+            ->where(Criteria::expr()->eq("controlProtocolType", $controlProtocolType));
+
+        $controlProtocolTypeInstance = ($this->controlProtocolTypeInstances !== null) ? $this->controlProtocolTypeInstances->matching($criteria)->first() : null;
+
+        return $controlProtocolTypeInstance ?: null;
+    }
+
+    /**
+     * Get network interface instances associated to this lab instance
+     *
+     * @return Collection|ControlProtocolTypeInstance[]
+     */
+    public function getControlProtocolTypeInstances(): Collection
+    {
+        return $this->controlProtocolTypeInstances;
+    }
+
+    public function addControlProtocolTypeInstance(ControlProtocolTypeInstance $controlProtocolTypeInstance): self
+    {
+        if (!$this->controlProtocolTypeInstances->contains($controlProtocolTypeInstance)) {
+            $this->controlProtocolTypeInstances[] = $controlProtocolTypeInstance;
+            $controlProtocolTypeInstance->setDeviceInstance($this);
+        }
+
+        return $this;
+    }
+
+    public function removeControlProtocolTypeInstance(ControlProtocolTypeInstance $controlProtocolTypeInstance): self
+    {
+        if ($this->controlProtocolTypeInstances->contains($controlProtocolTypeInstance)) {
+            $this->controlProtocolTypeInstances->removeElement($controlProtocolTypeInstance);
+            // set the owning side to null (unless already changed)
+            if ($controlProtocolTypeInstance->getDeviceInstance() === $this) {
+                $controlProtocolTypeInstance->setDeviceInstance(null);
+            }
+        }
+
+        return $this;
+    }
+
+
     /**
      * Creates all sub-instances from device descriptor. This does not record them in the database.
      */
@@ -293,5 +328,24 @@ class DeviceInstance extends Instance
             // $networkInterface->addInstance($networkInterfaceInstance);
             $this->addNetworkInterfaceInstance($networkInterfaceInstance);
         }
+
+        /** @var ControlProtocolType $controlProtocolType */
+        foreach ($this->device->getControlProtocolTypes() as $controlProtocolType) {
+            $controlProtocolTypeInstance = ControlProtocolTypeInstance::create()
+                ->setControlProtocolType($controlProtocolType)
+                ->setPort(0)
+                ->setOwnedBy($this->ownedBy);
+                switch ($this->ownedBy) {
+                    case self::OWNED_BY_USER:
+                        $controlProtocolTypeInstance->setUser($this->user);
+                        break;
+    
+                    case self::OWNED_BY_GROUP:
+                        $controlProtocolTypeInstance->setGroup($this->_group);
+                        break;
+                }
+            $this->addControlProtocolTypeInstance($controlProtocolTypeInstance);
+        }
+
     }
 }

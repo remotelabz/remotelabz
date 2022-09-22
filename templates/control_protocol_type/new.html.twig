@@ -1,7 +1,7 @@
-{% extends 'control_protocol/index.html.twig' %}
+{% extends 'control_protocol_type/index.html.twig' %}
 
 {% block breadcrumbs %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_controlProtocol') }) %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_controlProtocolType') }) %}
     {{ parent() }}
 {% endblock %}
 
@@ -12,15 +12,15 @@
         <div class="content-title-infos">
             <h1>
                 {% if app.request.uri ends with 'edit' %}
-                    {{ 'Edit controlprotocol'|trans }}: {{ controlProtocol.name }}
+                    {{ 'Edit Control Protocol Type'|trans }}: {{ controlProtocolType.name }}
                 {% else %}
-                    {{ 'New controlprotocol'|trans }}
+                    {{ 'New Control Protocol Type'|trans }}
                 {% endif %}
             </h1>
         </div>
     </div>
     <div class="content-body">
-        {{ form(controlProtocolForm) }}
+        {{ form(controlProtocolTypeForm) }}
     </div>
 {% endblock %}
 

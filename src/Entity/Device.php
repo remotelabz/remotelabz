@@ -5,7 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
-use App\Entity\ControlProtocol;
+use App\Entity\ControlProtocolType;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -137,12 +137,12 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocol", mappedBy="devices", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocolType", mappedBy="devices", cascade={"persist"})
      * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
      * @Assert\NotNull
      * @Assert\Valid
      */
-    private $controlProtocols;
+    private $controlProtocolTypes;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
@@ -165,7 +165,7 @@ class Device implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
-        $this->controlProtocols = new ArrayCollection();
+        $this->controlProtocolTypes = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
         /*$this->type = 'vm';
@@ -299,27 +299,27 @@ class Device implements InstanciableInterface
     }
 
     /**
-     * @return Collection|controlProtocol[]
+     * @return Collection|controlProtocolType[]
      */
-    public function getControlProtocols()
+    public function getControlProtocolTypes()
     {
-        return $this->controlProtocols;
+        return $this->controlProtocolTypes;
     }
 
-    public function addControlProtocol(ControlProtocol $controlProtocol): self
+    public function addControlProtocolType(ControlProtocolType $controlProtocolType): self
     {
-        if (!$this->controlProtocols->contains($controlProtocol)) {
-            $this->controlProtocols[] = $controlProtocol;
-            $controlProtocol->addDevice($this);
+        if (!$this->controlProtocolTypes->contains($controlProtocolType)) {
+            $this->controlProtocolTypes[] = $controlProtocolType;
+            $controlProtocolType->addDevice($this);
         }
         return $this;
     }
 
-    public function removeControlProtocol(ControlProtocol $controlProtocol): self
+    public function removeControlProtocolType(ControlProtocolType $controlProtocolType): self
     {
-        if ($this->controlProtocols->contains($controlProtocol)) {
-            $this->controlProtocols->removeElement($controlProtocol);
-            $controlProtocol->removeDevice($this);
+        if ($this->controlProtocolTypes->contains($controlProtocolType)) {
+            $this->controlProtocolTypes->removeElement($controlProtocolType);
+            $controlProtocolType->removeDevice($this);
         }
         return $this;
     }

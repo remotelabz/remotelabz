@@ -52,8 +52,8 @@
         <hr>
         <p>Control protocols :</p>
         <ul>
-        {% for controlProtocol in device.controlProtocols %}
-                <li>{{ controlProtocol.name }}</li>
+        {% for controlProtocolType in device.controlProtocolTypes %}
+                <li>{{ controlProtocolType.name }}</li>
             {% else %}
                 None
         {% endfor %}

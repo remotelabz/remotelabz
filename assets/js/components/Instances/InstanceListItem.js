@@ -124,8 +124,8 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     
     function is_vnc() {
         let result=false;
-        if (instance.device.controlProtocols.length > 0 ) {
-            instance.device.controlProtocols.forEach((element,index) => {
+        if (instance.device.controlProtocolTypes.length > 0 ) {
+            instance.device.controlProtocolTypes.forEach((element,index) => {
               if (element.name === 'vnc') {
                 result=(result || true);
               }
@@ -230,7 +230,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                             </div>
                         }
                         
-                        {(instance.state == 'started' && (instance.device.controlProtocols.length>0
+                        {(instance.state == 'started' && (instance.device.controlProtocolTypes.length>0
                          && is_vnc())
                          )
                          &&

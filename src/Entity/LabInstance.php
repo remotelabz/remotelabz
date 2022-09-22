@@ -274,7 +274,6 @@ class LabInstance extends Instance
             $deviceInstance = DeviceInstance::create()
                 ->setDevice($device)
                 ->setLabInstance($this)
-                ->setRemotePort(null)
                 ->setOwnedBy($this->ownedBy);
 
             switch ($this->ownedBy) {

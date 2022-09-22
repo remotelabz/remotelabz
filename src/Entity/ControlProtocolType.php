@@ -2,22 +2,24 @@
 
 namespace App\Entity;
 
-use App\Repository\ControlProtocolRepository;
+use App\Repository\ControlProtocolTypeRepository;
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Entity\Device;
+use JMS\Serializer\Annotation as Serializer;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+
+
 
 /**
- * @ORM\Entity(repositoryClass=ControlProtocolRepository::class)
+ * @ORM\Entity(repositoryClass=ControlProtocolTypeRepository::class)
  */
-class ControlProtocol
+class ControlProtocolType
 {
     /**
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $id;
 
@@ -30,7 +32,7 @@ class ControlProtocol
     private $name;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="controlProtocols", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="controlProtocolTypes", cascade={"persist"})
      */
     private $devices;
 
@@ -38,7 +40,6 @@ class ControlProtocol
     {
         $this->devices = new ArrayCollection();
     }
-
 
     public function getId(): ?int
     {
@@ -57,19 +58,11 @@ class ControlProtocol
         return $this;
     }
 
-    /**
-     * @return Collection|Device[]
-     */
-    public function getDevices(): ?Device
-    {
-        return $this->devices;
-    }
-
     public function addDevice(?Device $device): self
     {
         if (!$this->devices->contains($device)) {
             $this->devices[] = $device;
-            $device->addControlProtocol($this);
+            $device->addControlProtocolType($this);
         }
         return $this;
     }
@@ -78,7 +71,7 @@ class ControlProtocol
     {
         if ($this->devices->contains($device)) {
             $this->devices->removeElement($device);
-            $device->removeControlProtocol($this);
+            $device->removeControlProtocolType($this);
         }
 
         return $this;

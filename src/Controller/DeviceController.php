@@ -6,10 +6,11 @@ use DateTime;
 use App\Entity\Device;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
-
-use App\Form\DeviceType;
 use App\Entity\EditorData;
+use App\Entity\ControlProtocolType;
+use App\Form\DeviceType;
 use App\Form\EditorDataType;
+use App\Form\ControlProtocolTypeType;
 use App\Repository\DeviceRepository;
 use App\Repository\LabRepository;
 use App\Repository\EditorDataRepository;
@@ -169,7 +170,7 @@ class DeviceController extends Controller
         );
         $deviceForm->handleRequest($request);
         $this->logger->debug($request->query->get('nb_network_interface'));
-        foreach ($device->getControlProtocols() as $proto) {
+        foreach ($device->getControlProtocolTypes() as $proto) {
             $proto->removeDevice($device);
             //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
         }
@@ -205,7 +206,7 @@ class DeviceController extends Controller
             }
 
             
-            foreach ($device->getControlProtocols() as $proto) {
+            foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
                 //$this->logger->debug($device->getName()." has control protocol ".$proto->getName());

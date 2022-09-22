@@ -356,7 +356,7 @@ class LabController extends Controller
                 "uuid": "a697b0da-1427-46a7-9dc5-34e3435060c3",
                 "createdAt": "2022-09-16T22:16:36+02:00",
                 "lastUpdated": "2022-09-18T12:01:23+02:00",
-                "controlProtocols": [{ "id": 3 }],
+                "controlProtocolTypes": [{ "id": 3 }],
                 "editorData": {
                     "id": 119,
                     "x": 0,
@@ -366,7 +366,7 @@ class LabController extends Controller
             }';
             $device_array = json_decode($json_example, true);*/
             //Delete this key otherwise the validation doesn't work.
-            unset($device_array['controlProtocols']);
+            unset($device_array['controlProtocolTypes']);
             $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
             $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             $deviceForm->submit($device_array);
@@ -401,8 +401,8 @@ class LabController extends Controller
                     }
                 }
 
-                foreach ($device->getControlProtocols() as $control_protocol) {
-                    $new_device->addControlProtocol($control_protocol);        
+                foreach ($device->getControlProtocolTypes() as $control_protocol) {
+                    $new_device->addControlProtocolType($control_protocol);        
 
                 }
                 $entityManager->persist($new_device);
@@ -594,8 +594,8 @@ class LabController extends Controller
             $newDevice->addNetworkInterface($new_network_inter);
         }
 
-        foreach ($device->getControlProtocols() as $control_protocol) {
-            $newDevice->addControlProtocol($control_protocol);
+        foreach ($device->getControlProtocolTypes() as $control_protocol) {
+            $newDevice->addControlProtocolType($control_protocol);
         }
 
         return $newDevice;

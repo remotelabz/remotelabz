@@ -38,7 +38,7 @@ class SandboxListItem extends Component {
         this.setState({ isLoading: true});
         let lab;
         let networkInterfaces = [];
-        let controlProtocols = [];
+        let controlProtocolTypes = [];
         // Create Lab
         await this.api.post("/api/labs").then(response => {
             lab = response.data
@@ -55,9 +55,9 @@ class SandboxListItem extends Component {
         device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
         device.networkInterfaces.forEach(element => console.log(element.id));
         device.networkInterfaces = networkInterfaces;
-        device.controlProtocols.forEach(element => controlProtocols.push(element.id));
-        device.controlProtocols.forEach(element => console.log(element.id));
-        device.controlProtocols = controlProtocols;
+        device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
+        device.controlProtocolTypes.forEach(element => console.log(element.id));
+        device.controlProtocolTypes = controlProtocolTypes;
         /*console.log("OnModify");
         console.log(device);*/
         await this.api.post('/api/labs/' + lab.id + '/devices', device);

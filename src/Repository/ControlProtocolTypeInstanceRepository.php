@@ -2,32 +2,32 @@
 
 namespace App\Repository;
 
-use App\Entity\ControlProtocol;
+use App\Entity\ControlProtocolTypeInstance;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<ControlProtocol>
+ * @extends ServiceEntityRepository<ControlProtocolTypeInstance>
  *
- * @method ControlProtocol|null find($id, $lockMode = null, $lockVersion = null)
- * @method ControlProtocol|null findOneBy(array $criteria, array $orderBy = null)
- * @method ControlProtocol[]    findAll()
- * @method ControlProtocol[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method ControlProtocolTypeInstance|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ControlProtocolTypeInstance|null findOneBy(array $criteria, array $orderBy = null)
+ * @method ControlProtocolTypeInstance[]    findAll()
+ * @method ControlProtocolTypeInstance[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class ControlProtocolRepository extends ServiceEntityRepository
+class ControlProtocolTypeInstanceRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ControlProtocol::class);
+        parent::__construct($registry, ControlProtocolTypeInstance::class);
     }
 
     /**
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function add(ControlProtocol $entity, bool $flush = true): void
+    public function add(ControlProtocolTypeInstance $entity, bool $flush = true): void
     {
         $this->_em->persist($entity);
         if ($flush) {
@@ -39,7 +39,7 @@ class ControlProtocolRepository extends ServiceEntityRepository
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function remove(ControlProtocol $entity, bool $flush = true): void
+    public function remove(ControlProtocolTypeInstance $entity, bool $flush = true): void
     {
         $this->_em->remove($entity);
         if ($flush) {
@@ -48,7 +48,7 @@ class ControlProtocolRepository extends ServiceEntityRepository
     }
 
     // /**
-    //  * @return ControlProtocol[] Returns an array of ControlProtocol objects
+    //  * @return ControlProtocolTypeInstance[] Returns an array of ControlProtocolTypeInstance objects
     //  */
     /*
     public function findByExampleField($value)
@@ -65,7 +65,7 @@ class ControlProtocolRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?ControlProtocol
+    public function findOneBySomeField($value): ?ControlProtocolTypeInstance
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')

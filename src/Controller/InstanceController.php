@@ -498,7 +498,7 @@ class InstanceController extends Controller
         $result=false;
         $this->logger->debug("VNC test ".$device->getName()." ".$device->getUUID());
 
-        foreach ($device->getControlProtocols() as $control_protocol) {
+        foreach ($device->getControlProtocolTypes() as $control_protocol) {
             if (strtolower($control_protocol->getName())==="vnc") {
                 $this->logger->debug("VNC detected in ".$device->getName()." ".$device->getUUID());
                 $result=($result || true);

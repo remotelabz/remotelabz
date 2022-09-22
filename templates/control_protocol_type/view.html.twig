@@ -1,0 +1,22 @@
+{% extends 'control_protocol_type/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {#{%- set breadcrumbs = breadcrumbs|merge({ (controlprotocoltype.name): path('show_controlprotocoltype', {'id': controlprotocoltype.id}) }) -%}#}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ controlProtocolType.name }}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('edit_controlProtocolType', {'id': controlProtocolType.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> Edit</a>
+            <a href="{{ path('delete_controlProtocolType', {'id': controlProtocolType.id}) }}" class="btn btn-danger" role="button">Delete</a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
