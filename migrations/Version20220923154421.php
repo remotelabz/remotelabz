@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20220922115807 extends AbstractMigration
+final class Version20220923154421 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -24,7 +24,7 @@ final class Version20220922115807 extends AbstractMigration
 
         $this->addSql('CREATE TABLE control_protocol_type (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE control_protocol_type_device (control_protocol_type_id INT NOT NULL, device_id INT NOT NULL, INDEX IDX_65BC8659B7C02C3E (control_protocol_type_id), INDEX IDX_65BC865994A4C7D4 (device_id), PRIMARY KEY(control_protocol_type_id, device_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE control_protocol_type_instance (id INT AUTO_INCREMENT NOT NULL, control_protocol_type_id INT DEFAULT NULL, device_instance_id INT DEFAULT NULL, user_id INT DEFAULT NULL, _group_id INT DEFAULT NULL, port INT NOT NULL, uuid VARCHAR(255) NOT NULL, owned_by VARCHAR(255) NOT NULL, UNIQUE INDEX UNIQ_AA90BE39B7C02C3E (control_protocol_type_id), INDEX IDX_AA90BE3948D126DB (device_instance_id), INDEX IDX_AA90BE39A76ED395 (user_id), INDEX IDX_AA90BE39D0949C27 (_group_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        $this->addSql('CREATE TABLE control_protocol_type_instance (id INT AUTO_INCREMENT NOT NULL, control_protocol_type_id INT DEFAULT NULL, device_instance_id INT DEFAULT NULL, user_id INT DEFAULT NULL, _group_id INT DEFAULT NULL, port INT NOT NULL, uuid VARCHAR(255) NOT NULL, owned_by VARCHAR(255) NOT NULL, INDEX IDX_AA90BE39B7C02C3E (control_protocol_type_id), INDEX IDX_AA90BE3948D126DB (device_instance_id), INDEX IDX_AA90BE39A76ED395 (user_id), INDEX IDX_AA90BE39D0949C27 (_group_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE control_protocol_type_device ADD CONSTRAINT FK_65BC8659B7C02C3E FOREIGN KEY (control_protocol_type_id) REFERENCES control_protocol_type (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE control_protocol_type_device ADD CONSTRAINT FK_65BC865994A4C7D4 FOREIGN KEY (device_id) REFERENCES device (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE control_protocol_type_instance ADD CONSTRAINT FK_AA90BE39B7C02C3E FOREIGN KEY (control_protocol_type_id) REFERENCES control_protocol_type (id)');

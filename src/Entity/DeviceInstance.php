@@ -56,7 +56,7 @@ class DeviceInstance extends Instance
 
      /**
      * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocolTypeInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     private $controlProtocolTypeInstances;
     

@@ -24,13 +24,13 @@ class ControlProtocolTypeInstance extends Instance
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     private $port;
 
      /**
-     * @ORM\OneToOne(targetEntity="App\Entity\ControlProtocolType", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\ControlProtocolType", inversedBy="controlProtocolTypeInstances", cascade={"persist"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     private $controlProtocolType;
 

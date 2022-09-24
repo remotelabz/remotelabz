@@ -32,6 +32,13 @@ class ControlProtocolType
     private $name;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocolTypeInstance", mappedBy="controlProtocolType", cascade={"persist"})
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     */
+    private $controlProtocolTypeInstances;
+
+
+    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="controlProtocolTypes", cascade={"persist"})
      */
     private $devices;

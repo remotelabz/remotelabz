@@ -415,9 +415,12 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Route("/instances/{uuid}/view", name="view_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     * @Route("/instances/{uuid}/view/{type}", name="view_instance", requirements={
+     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial"
+     * }
+     * )
      */
-    public function viewInstanceAction(Request $request, string $uuid)
+    public function viewInstanceAction(Request $request, string $uuid, string $type)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException();
@@ -426,16 +429,18 @@ class InstanceController extends Controller
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
 
-        if ($this->isVNC($device)) {
+        $port_number=$this->isRemoteAccess($deviceInstance,$type);
+        if ($port_number) {
+            $this->logger->debug("Creation proxy rule to port ".$port_number);
             try {
                 if ($deviceInstance->getDevice()->getType()=="vm")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $deviceInstance->getRemotePort()
+                    $port_number
                 );
                 else $this->proxyManager->createContainerInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $deviceInstance->getRemotePort()
+                    $port_number
                 );
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
@@ -493,17 +498,18 @@ class InstanceController extends Controller
         return $this->json($logs);
     }
 
-    //$device : a device entity
-    private function isVNC($device) {
+    //DeviceInstance $deviceInstance : a device Instance
+    //String $controlprotocoltype : type of control protocol  
+    private function isRemoteAccess($deviceInstance,$controlprotocoltype) {
         $result=false;
-        $this->logger->debug("VNC test ".$device->getName()." ".$device->getUUID());
+        //$this->logger->debug($controlprotocoltype." test ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID());
 
-        foreach ($device->getControlProtocolTypes() as $control_protocol) {
-            if (strtolower($control_protocol->getName())==="vnc") {
-                $this->logger->debug("VNC detected in ".$device->getName()." ".$device->getUUID());
-                $result=($result || true);
+        foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol) {
+            if (strtolower($control_protocol->getControlProtocolType()->getName())===$controlprotocoltype) {
+                $this->logger->debug($controlprotocoltype." detected in ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID());
+                $result=$control_protocol->getPort();
             } else {
-                $this->logger->debug("VNC not found : ".$device->getName()." ".$device->getUUID()." ".$control_protocol->getName());
+                $this->logger->debug($controlprotocoltype." not found : ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID()." ".$control_protocol->getControlProtocolType()->getName());
             }
         }
         return $result;

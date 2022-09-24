@@ -124,9 +124,33 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     
     function is_vnc() {
         let result=false;
-        if (instance.device.controlProtocolTypes.length > 0 ) {
-            instance.device.controlProtocolTypes.forEach((element,index) => {
-              if (element.name === 'vnc') {
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'vnc') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
+
+    function is_login() {
+        let result=false;
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'login') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
+
+    function is_serial() {
+        let result=false;
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'serial') {
                 result=(result || true);
               }
             });
@@ -134,7 +158,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
         return result;
     }
     
-
+    //console.log(instance);
     let controls;
     
     switch (instance.state) {
@@ -230,20 +254,52 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                             </div>
                         }
                         
-                        {(instance.state == 'started' && (instance.device.controlProtocolTypes.length>0
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
                          && is_vnc())
                          )
                          &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                href={"/instances/" + instance.uuid + "/view"}
+                                href={"/instances/" + instance.uuid + "/view/vnc"}
                                 className="btn btn-primary ml-3"
                                 title="Open VNC console"
                                 data-toggle="tooltip"
                                 data-placement="top"
                             >
                                 <SVG name="external-link" />
+                            </a>
+                        }
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_login())
+                         )
+                         &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + instance.uuid + "/view/login"}
+                                className="btn btn-primary ml-3"
+                                title="Open Login console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="terminal" />
+                            </a>
+                        }
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_serial())
+                         )
+                         &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + instance.uuid + "/view/serial"}
+                                className="btn btn-primary ml-3"
+                                title="Open Serial console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="admin" />
                             </a>
                         }
 
