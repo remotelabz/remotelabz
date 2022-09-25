@@ -169,7 +169,9 @@ class DeviceController extends Controller
             'nb_network_interface' => count($device->getNetworkInterfaces())]
         );
         $deviceForm->handleRequest($request);
-        $this->logger->debug($request->query->get('nb_network_interface'));
+
+        //$this->logger->debug("Nb network interface:".$request->query->get('nb_network_interface'));
+
         foreach ($device->getControlProtocolTypes() as $proto) {
             $proto->removeDevice($device);
             //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
@@ -180,7 +182,8 @@ class DeviceController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_json = json_decode($request->getContent(), true);
-            
+            $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
+            //$this->logger->debug("device_json",$device_json);
             $deviceForm->submit($device_json, false);
         }
 

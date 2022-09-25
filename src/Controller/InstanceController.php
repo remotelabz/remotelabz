@@ -445,15 +445,15 @@ class InstanceController extends Controller
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             } catch (RequestException $exception) {
                 $this->logger->error($exception);
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             } catch (ConnectException $exception) {
                 $this->logger->error($exception);
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             }
         }
 
