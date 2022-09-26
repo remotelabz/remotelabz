@@ -433,7 +433,7 @@ class InstanceController extends Controller
         if ($port_number) {
             $this->logger->debug("Creation proxy rule to port ".$port_number);
             try {
-                if ($deviceInstance->getDevice()->getType()=="vm")
+                if ($type=="vnc")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
                     $port_number
@@ -472,6 +472,7 @@ class InstanceController extends Controller
             'device' => $device,
             'deviceInstance' => $deviceInstance,
             'ssl' => $ssl,
+            'type_control_access' => $type,
             'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
             'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
             'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
