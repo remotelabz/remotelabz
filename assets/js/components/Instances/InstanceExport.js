@@ -7,7 +7,7 @@ class InstanceExport extends Component {
 
         this.exportName = React.createRef();
         //console.log("export");
-        //console.log(props.deviceInstance.device);
+        console.log(props.deviceInstance.device);
     }
 
     handleSubmit() {

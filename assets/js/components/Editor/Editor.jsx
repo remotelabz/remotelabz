@@ -81,8 +81,6 @@ export default class Editor extends React.Component {
             const device = await Remotelabz.devices.get(_device.id)
             devices.push(device.data)
         }
-        //console.log(devices)
-
         this.setState({ devices, lab, ready: true })
     }
 
@@ -93,6 +91,7 @@ export default class Editor extends React.Component {
         Remotelabz.labs.addDeviceInLab(this.labId,device).then(response => {
             this.addDevice(response.data)
         })
+
     }
 
     updateDevicePositionRequest = device => {

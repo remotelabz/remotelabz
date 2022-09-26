@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
+use App\Entity\ControlProtocolType;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -56,7 +57,6 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     *
      * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
      */
     private $launchScript;
@@ -106,7 +106,6 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
-     * @Serializer\Groups({})
      */
     private $controlInterface;
 
@@ -138,10 +137,12 @@ class Device implements InstanciableInterface
     private $lastUpdated;
 
     /**
-     * @ORM\Column(type="boolean", options={"default": 1})
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocolType", mappedBy="devices", cascade={"persist"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox"})
+     * @Assert\NotNull
+     * @Assert\Valid
      */
-    private $vnc;
+    private $controlProtocolTypes;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
@@ -164,13 +165,13 @@ class Device implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->labs = new ArrayCollection();
+        $this->controlProtocolTypes = new ArrayCollection();
         $this->editorData = new EditorData();
         $this->editorData->setDevice($this);
         /*$this->type = 'vm';
         $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
-        $this->vnc = true;
     }
 
     public function getId(): ?int
@@ -297,6 +298,33 @@ class Device implements InstanciableInterface
         return $this;
     }
 
+    /**
+     * @return Collection|controlProtocolType[]
+     */
+    public function getControlProtocolTypes()
+    {
+        return $this->controlProtocolTypes;
+    }
+
+    public function addControlProtocolType(ControlProtocolType $controlProtocolType): self
+    {
+        if (!$this->controlProtocolTypes->contains($controlProtocolType)) {
+            $this->controlProtocolTypes[] = $controlProtocolType;
+            $controlProtocolType->addDevice($this);
+        }
+        return $this;
+    }
+
+    public function removeControlProtocolType(ControlProtocolType $controlProtocolType): self
+    {
+        if ($this->controlProtocolTypes->contains($controlProtocolType)) {
+            $this->controlProtocolTypes->removeElement($controlProtocolType);
+            $controlProtocolType->removeDevice($this);
+        }
+        return $this;
+    }
+
+
     public function getType(): ?string
     {
         return $this->type;
@@ -401,18 +429,6 @@ class Device implements InstanciableInterface
     public function setLastUpdated(?\DateTimeInterface $lastUpdated): self
     {
         $this->lastUpdated = $lastUpdated;
-
-        return $this;
-    }
-
-    public function getVnc(): bool
-    {
-        return $this->vnc;
-    }
-
-    public function setVnc(bool $vnc): self
-    {
-        $this->vnc = $vnc;
 
         return $this;
     }

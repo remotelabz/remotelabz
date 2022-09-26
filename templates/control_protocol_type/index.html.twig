@@ -1,0 +1,50 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Control Protocol Type': path('controlProtocolType') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'controlProtocolType' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="quick-actions">
+        <a class="btn btn-success" role="button" href="{{ path('new_controlProtocolType') }}">
+            New Control Protocol Type
+        </a>
+    </div>
+    <ul class="nav-links nav nav-tabs">
+        <li class="active"><a href="#"><span>All</span> <span class="badge badge-pill">{{ controlProtocolType|length }}</span></a></li>
+        {# <li><a href="#"><span>Images</span> <span class="badge badge-pill">0</span></a></li>
+        <li><a href="#"><span>Links</span> <span class="badge badge-pill">0</span></a></li> #}
+    </ul>
+</div>
+{# <div class="search-panel">
+    <form action="{{ path('operating_systems') }}" method="GET">
+        <input type="search" class="form-control input-sm" name="search"
+        placeholder="Search by name"
+        spellcheck="false" value="{{ search|default('') }}" type="search">
+    </form>
+</div> #}
+<div class="labs-panel">
+    {% for controlProtocolType in controlProtocolType %}
+    <div class="content-list row align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
+            <div class="col-11">
+                <a href="{{ path('show_controlProtocolType', {'id': controlProtocolType.id}) }}" class="lab-item-name">
+                {{- controlProtocolType.name -}}
+            </a>
+            </div>
+            
+    </div>
+    {% endfor %} 
+</div>
+{% endblock %}
+    
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('operating-system') }} #}
+{% endblock %}

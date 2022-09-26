@@ -21,3 +21,6 @@ framework:
 
     router:
         utf8: true
+
+    form:
+        legacy_error_messages: false

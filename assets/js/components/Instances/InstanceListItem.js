@@ -29,6 +29,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
         Remotelabz.devices.get(instance.device.id).then(response => {
             setDevice(response.data)
             setLoading(false)
+        //console.log(response.data)
         })
         return () => {
             clearInterval(interval)
@@ -120,9 +121,46 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
             setExporting(false)
         })
     }
+    
+    function is_vnc() {
+        let result=false;
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'vnc') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
 
+    function is_login() {
+        let result=false;
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'login') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
+
+    function is_serial() {
+        let result=false;
+        if (instance.controlProtocolTypeInstances.length > 0 ) {
+            instance.controlProtocolTypeInstances.forEach((element,index) => {
+              if (element.controlProtocolType.name === 'serial') {
+                result=(result || true);
+              }
+            });
+        }
+        return result;
+    }
+    
+    //console.log(instance);
     let controls;
-
+    
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -169,6 +207,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                     <SVG name="stop" />
                 </Button>
             );
+            
             break;
     }
 
@@ -214,18 +253,53 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                                 }
                             </div>
                         }
-
-                        {(instance.state == 'started' && device.vnc) &&
+                        
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_vnc())
+                         )
+                         &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                href={"/instances/" + instance.uuid + "/view"}
+                                href={"/instances/" + instance.uuid + "/view/vnc"}
                                 className="btn btn-primary ml-3"
                                 title="Open VNC console"
                                 data-toggle="tooltip"
                                 data-placement="top"
                             >
                                 <SVG name="external-link" />
+                            </a>
+                        }
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_login())
+                         )
+                         &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + instance.uuid + "/view/login"}
+                                className="btn btn-primary ml-3"
+                                title="Open Login console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="terminal" />
+                            </a>
+                        }
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_serial())
+                         )
+                         &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + instance.uuid + "/view/serial"}
+                                className="btn btn-primary ml-3"
+                                title="Open Serial console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="admin" />
                             </a>
                         }
 

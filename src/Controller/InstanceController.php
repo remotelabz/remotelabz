@@ -415,9 +415,12 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Route("/instances/{uuid}/view", name="view_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     * @Route("/instances/{uuid}/view/{type}", name="view_instance", requirements={
+     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial"
+     * }
+     * )
      */
-    public function viewInstanceAction(Request $request, string $uuid)
+    public function viewInstanceAction(Request $request, string $uuid, string $type)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException();
@@ -426,29 +429,31 @@ class InstanceController extends Controller
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
 
-        if (true === $device->getVnc()) {
+        $port_number=$this->isRemoteAccess($deviceInstance,$type);
+        if ($port_number) {
+            $this->logger->debug("Creation proxy rule to port ".$port_number);
             try {
-                if ($deviceInstance->getDevice()->getType()=="vm")
+                if ($type=="vnc")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $deviceInstance->getRemotePort()
+                    $port_number
                 );
                 else $this->proxyManager->createContainerInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $deviceInstance->getRemotePort()
+                    $port_number
                 );
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             } catch (RequestException $exception) {
                 $this->logger->error($exception);
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             } catch (ConnectException $exception) {
                 $this->logger->error($exception);
 
-                $this->addFlash('danger', 'Cannot forward VNC connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
             }
         }
 
@@ -467,6 +472,7 @@ class InstanceController extends Controller
             'device' => $device,
             'deviceInstance' => $deviceInstance,
             'ssl' => $ssl,
+            'type_control_access' => $type,
             'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
             'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
             'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
@@ -491,5 +497,22 @@ class InstanceController extends Controller
         ]);
 
         return $this->json($logs);
+    }
+
+    //DeviceInstance $deviceInstance : a device Instance
+    //String $controlprotocoltype : type of control protocol  
+    private function isRemoteAccess($deviceInstance,$controlprotocoltype) {
+        $result=false;
+        //$this->logger->debug($controlprotocoltype." test ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID());
+
+        foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol) {
+            if (strtolower($control_protocol->getControlProtocolType()->getName())===$controlprotocoltype) {
+                $this->logger->debug($controlprotocoltype." detected in ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID());
+                $result=$control_protocol->getPort();
+            } else {
+                $this->logger->debug($controlprotocoltype." not found : ".$deviceInstance->getDevice()->getName()." ".$deviceInstance->getUUID()." ".$control_protocol->getControlProtocolType()->getName());
+            }
+        }
+        return $result;
     }
 }

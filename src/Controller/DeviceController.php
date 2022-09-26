@@ -6,10 +6,11 @@ use DateTime;
 use App\Entity\Device;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
-
-use App\Form\DeviceType;
 use App\Entity\EditorData;
+use App\Entity\ControlProtocolType;
+use App\Form\DeviceType;
 use App\Form\EditorDataType;
+use App\Form\ControlProtocolTypeType;
 use App\Repository\DeviceRepository;
 use App\Repository\LabRepository;
 use App\Repository\EditorDataRepository;
@@ -90,7 +91,7 @@ class DeviceController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
         }
-
+        
         return $this->render('device/view.html.twig', ['device' => $device]);
     }
 
@@ -113,14 +114,11 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-
-            $networkInterface = new NetworkInterface();
-            $networkInterface->setName($device->getName()."_net");
-            $networkInterface->setIsTemplate(true);
-            $networkSettings = new NetworkSettings();
-            $networkSettings->setName($networkInterface->getName()."_set");
-            $networkInterface->setSettings($networkSettings);
-            $device->addNetworkInterface($networkInterface);
+            foreach ($device->getControlProtocols() as $proto) {
+                $proto->addDevice($device);
+                $this->logger->debug($proto->getName());
+            }
+            $this->addNetworkInterface($device);
             $device->setHypervisor($device->getOperatingSystem()->getHypervisor());
             switch($device->getOperatingSystem()->getHypervisor()->getName()) {
                 case 'lxc':
@@ -161,23 +159,62 @@ class DeviceController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
-        $this->logger->info("Device modification asked by user ");
         if (!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
-        $deviceForm = $this->createForm(DeviceType::class, $device);
+        $this->logger->info("Device ".$device->getName()." modification asked by user ");
+
+        $deviceForm = $this->createForm(DeviceType::class, $device, [
+            'nb_network_interface' => count($device->getNetworkInterfaces())]
+        );
         $deviceForm->handleRequest($request);
+
+        //$this->logger->debug("Nb network interface:".$request->query->get('nb_network_interface'));
+
+        foreach ($device->getControlProtocolTypes() as $proto) {
+            $proto->removeDevice($device);
+            //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
+        }
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($device);
+        $entityManager->flush();
 
         if ($request->getContentType() === 'json') {
             $device_json = json_decode($request->getContent(), true);
+            $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
+            //$this->logger->debug("device_json",$device_json);
             $deviceForm->submit($device_json, false);
         }
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             
-            $device = $deviceForm->getData();
+            $modified_device = $deviceForm->getData();
+            $nbNetworkInterface=count($device->getNetworkInterfaces());
+            $wanted_nbNetworkInterface=$deviceForm->get("networkInterfaces")->getData();
+            if (!is_int($wanted_nbNetworkInterface) || ($wanted_nbNetworkInterface > 19)) {
+                if ($nbNetworkInterface < $wanted_nbNetworkInterface ){
+                    for ($j=0; $j<($wanted_nbNetworkInterface-$nbNetworkInterface); $j++)
+                        $this->addNetworkInterface($device);
+                }
+                elseif ($nbNetworkInterface > $wanted_nbNetworkInterface){
+                    for ($j=0; $j<($nbNetworkInterface-$wanted_nbNetworkInterface); $j++)
+                        $this->removeNetworkInterface($device);
+                }
+            } else {
+                $this->logger->error("Value in interface number field in edit device form is not integer");
+                $this->addFlash('error', 'Incorrect value.');
+                return $this->redirectToRoute('show_device', ['id' => $id]);
+            }
+
+            
+            foreach ($device->getControlProtocolTypes() as $proto) {
+                $proto->addDevice($device);
+                $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
+                //$this->logger->debug($device->getName()." has control protocol ".$proto->getName());
+            }
+            
             $device->setLastUpdated(new DateTime());
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -186,14 +223,13 @@ class DeviceController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 200, [], ['api_get_device']);
             }
+            $this->logger->info("Device ".$device->getName()." modification submitted");
 
             $this->addFlash('success', 'Device has been updated.');
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
         } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
-            $this->logger->info("Device modification submitted");
-            else
-            $this->logger->info("Device modification aborted, form not valid");
+            $this->logger->error("Device ".$device->getName()."modification submitted but form not valid");
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
@@ -295,10 +331,26 @@ class DeviceController extends Controller
             $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
 
         }
+    }
 
+    private function addNetworkInterface(Device $device) {
+        $i=count($device->getNetworkInterfaces());
+        $networkInterface = new NetworkInterface();
+        $networkInterface->setName($device->getName()."_net".($i+1));
+        $networkInterface->setIsTemplate(true);
+        $networkSettings = new NetworkSettings();
+        $networkSettings->setName($networkInterface->getName()."_set".($i+1));
+        $networkInterface->setSettings($networkSettings);
+        $device->addNetworkInterface($networkInterface);
+    }
 
-
-
-
+    private function removeNetworkInterface(Device $device) {
+        $entityManager = $this->getDoctrine()->getManager();
+        $networkInterface = $device->getNetworkInterfaces()->last();
+        $entityManager->remove($networkInterface);
+        //$networkInterface->removeNetworkSetting($networkInterface->getSetting());
+        $device->removeNetworkInterface($networkInterface);
+        $entityManager->persist($device);
+        $entityManager->flush();
     }
 }
