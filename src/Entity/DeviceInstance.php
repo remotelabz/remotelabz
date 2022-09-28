@@ -13,6 +13,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceInstanceRepository")
@@ -34,6 +35,13 @@ class DeviceInstance extends Instance
      * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      */
     protected $device;
+
+        /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     * @Assert\NotNull
+     */
+    private $nbCpu;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
@@ -99,6 +107,18 @@ class DeviceInstance extends Instance
     public function setDevice(?Device $device): self
     {
         $this->device = $device;
+
+        return $this;
+    }
+
+    public function getNbCpu(): ?int
+    {
+        return $this->nbCpu;
+    }
+
+    public function setNbCpu(int $nb): self
+    {
+        $this->nbCpu = $nb;
 
         return $this;
     }

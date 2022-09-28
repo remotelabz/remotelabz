@@ -4,6 +4,9 @@ namespace App\Entity;
 
 use App\Repository\WorkerRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
+
 
 /**
  * @ORM\Entity(repositoryClass=WorkerRepository::class)
@@ -25,12 +28,14 @@ class Worker
     /**
      * @ORM\Column(type="string", length=255)
      * @Assert\Ip(version="4")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
     private $IPv4;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Assert\Ip(version="6")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
     private $IPv6;
 

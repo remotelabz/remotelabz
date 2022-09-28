@@ -84,6 +84,13 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Assert\NotNull
+     */
+    private $nbCpu;
+
+    /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
     private $virtuality;
 
@@ -345,6 +352,18 @@ class Device implements InstanciableInterface
     public function setVirtuality(int $virtuality): self
     {
         $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getNbCpu(): ?int
+    {
+        return $this->nbCpu;
+    }
+
+    public function setNbCpu(int $nb): self
+    {
+        $this->nbCpu = $nb;
 
         return $this;
     }
