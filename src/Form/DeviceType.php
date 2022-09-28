@@ -37,7 +37,7 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'empty_data' => ''
             ])
-             ->add('type', ChoiceType::class, [
+            ->add('type', ChoiceType::class, [
                  'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container'],
                  'help' => 'Nature of the device.',
                  'empty_data' => 'vm'
@@ -56,6 +56,10 @@ class DeviceType extends AbstractType
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
                 'choice_label' => 'name'
+            ])
+            ->add('nbCpu', NumberType::class, [
+                'help' => "Limit to 4 vCPU",
+                'empty_data' => 1
             ])
             ->add('networkInterfaces', NumberType::class, [
                 'data' => $options["nb_network_interface"],

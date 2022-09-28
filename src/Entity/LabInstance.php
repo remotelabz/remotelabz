@@ -273,6 +273,7 @@ class LabInstance extends Instance
         foreach ($this->lab->getDevices() as $device) {
             $deviceInstance = DeviceInstance::create()
                 ->setDevice($device)
+                ->setNbCpu($device->getNbCpu())
                 ->setLabInstance($this)
                 ->setOwnedBy($this->ownedBy);
 

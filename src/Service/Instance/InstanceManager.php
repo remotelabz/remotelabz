@@ -344,6 +344,7 @@ class InstanceManager
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
         $newDevice->setType($device->getType());
+        $newDevice->setNbCpu($device->getNbCpu());
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
