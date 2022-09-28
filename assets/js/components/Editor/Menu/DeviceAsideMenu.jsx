@@ -16,13 +16,13 @@ export default function DeviceAsideMenu(props) {
         operatingSystem: {},
         hypervisor: {},
         flavor: {},
+        nbCpu: ''
     });
     const [networkInterfaces, setNetworkInterfaces] = useState([]);
 
     useEffect(() => {
         async function getDevice() {
             const data = (await Remotelabz.devices.get(props.device)).data;
-            //console.log("useEffect devices data",data)
             setDevice(data);
             setNetworkInterfaces(data.networkInterfaces);
         }      

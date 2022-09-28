@@ -26,6 +26,7 @@ export default class DeviceForm extends React.Component
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
+            nbCpu: Yup.number().required(),
             vnc: Yup.boolean()
         });
 
@@ -160,6 +161,7 @@ export default class DeviceForm extends React.Component
                         operatingSystem: values.operatingSystem.value,
                         hypervisor: values.hypervisor.value,
                         flavor: values.flavor.value,
+                        nbCpu: values.nbCpu,
                         vnc: values.vnc
                     });
                 }}
@@ -181,7 +183,8 @@ export default class DeviceForm extends React.Component
                         value: this.props.device.flavor.id,
                         label: this.props.device.flavor.name
                     },
-                    vnc: this.props.device.vnc,
+                    nbCpu: this.props.device.nbCpu,
+                    //vnc: this.props.device.vnc,
                 }}
             >
                 {({
@@ -208,7 +211,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
                         </Form.Group>
-                    <Form.Group>
+                        <Form.Group>
                             <Form.Label>Brand</Form.Label>
                             <Form.Control
                                 type="text"
@@ -277,11 +280,20 @@ export default class DeviceForm extends React.Component
                                 defaultOptions={this.state.flavorOptions}
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
-                            </Form.Group>
-                            <label>
-                                <Field type="checkbox" name="vnc" />
-                                VNC Access
-                            </label>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number CPU</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbCpu"
+                                placeholder="Number of CPU"
+                                value={values.nbCpu}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbCpu}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbCpu}</Form.Control.Feedback>
+                        </Form.Group>
+                            
                         <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>
                             Submit
                         </Button>
