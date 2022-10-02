@@ -16,7 +16,8 @@ export default function DeviceAsideMenu(props) {
         operatingSystem: {},
         hypervisor: {},
         flavor: {},
-        nbCpu: ''
+        nbCpu: '',
+        controlProtocol: {},
     });
     const [networkInterfaces, setNetworkInterfaces] = useState([]);
 
@@ -30,6 +31,7 @@ export default function DeviceAsideMenu(props) {
     }, [props.device]);
 
     const onSubmitDeviceForm = async device => {
+        //console.log("submit device form device", device);
         const response = await Remotelabz.devices.update(device.id, device);
         setDevice(response.data);
         new Noty({ type: 'success', text: 'Device has been updated.' }).show();

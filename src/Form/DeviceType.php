@@ -67,13 +67,7 @@ class DeviceType extends AbstractType
                 'empty_data' => 0,
                 'mapped' => false
             ])
-            /*->add('networkInterfaces', EntityType::class, [
-                'class' => NetworkInterface::class,
-                'choice_label' => 'name',
-                'multiple' => true,
-                'required' => false,
-            ])*/
-            ->add('controlProtocolTypes', EntityType::class, [
+           ->add('controlProtocolTypes', EntityType::class, [
                 'class' => ControlProtocolType::class,
                 'choice_label' => 'name',
                 'multiple' => true,

@@ -60,7 +60,7 @@ export default class GroupSelect extends Component {
         return Remotelabz.groups.all(input, 10, 1, false)
         .then(response => {
             const data = []
-            console.log(response.data)
+           // console.log(response.data)
             for (let group of response.data) {
                 group.fullyQualifiedName.pop()
                 group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
