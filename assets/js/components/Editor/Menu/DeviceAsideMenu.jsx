@@ -41,8 +41,10 @@ export default function DeviceAsideMenu(props) {
     /**
      * @param {number} id ID of the device
      */
-    const onNetworkInterfaceCreate = async id => {
-        const nic = await Remotelabz.networkInterfaces.create({ device: id });
+    const onNetworkInterfaceCreate = async (device,id) => {
+        const nbnic = await Remotelabz.devices.getNbNetworkInterface(id);
+        const name=device.name+"_net"+(nbnic.data+1);
+        const nic = await Remotelabz.networkInterfaces.create({ device: id, name: name });
         setNetworkInterfaces([...networkInterfaces, nic.data]);
         new Noty({type: 'success', text: 'New NIC has been added to device.'}).show();
     }
@@ -54,6 +56,7 @@ export default function DeviceAsideMenu(props) {
         new Noty({type: 'success', text: 'NIC has been removed from device.'}).show();
     }
 
+    
     return (<AsideMenu onClose={props.onClose}>
         <h2>Edit device</h2>
         <DeviceForm onSubmit={onSubmitDeviceForm} device={device} />
@@ -61,8 +64,8 @@ export default function DeviceAsideMenu(props) {
         <h2 className="mb-3">Network interfaces</h2>
         {networkInterfaces.map((networkInterface, index) =>
             <NetworkInterfaceItem key={networkInterface.uuid} index={index} networkInterface={networkInterface} onNetworkInterfaceDelete={onNetworkInterfaceDelete} />
-        )}
-        <Button variant="success" onClick={() => onNetworkInterfaceCreate(device.id)} block>
+        )}        
+        <Button variant="success" onClick={() => onNetworkInterfaceCreate(device,device.id)} block>
             <SVG name="plus-square" className="image-sm v-sub" /> Add network interface
         </Button>
     </AsideMenu>);

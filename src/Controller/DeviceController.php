@@ -375,4 +375,29 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $entityManager->flush();
     }
+
+    /**
+     * @Rest\Get("/api/device/{id<\d+>}/networkinterface", name="api_get_device_interface")
+     */
+    public function getNetworkInterface(Request $request, int $id)
+    {
+        $device = $this->deviceRepository->find($id);
+
+        if (!$device) {
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            $i=count($device->getNetworkInterfaces());
+            
+        $response=new JsonResponse();
+        $response->setData($i);
+        return $response;
+        }
+        
+        return new JsonResponse();
+        
+    }
+
+
 }

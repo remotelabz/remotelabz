@@ -322,6 +322,19 @@ export class RemotelabzAPI {
          */
         delete(id) {
             return axios.delete(`/devices/${id}`)
+        },
+
+        /**
+         * Request an async network interface by device id
+         * 
+         * Implements GET `/api/device/{id<\d+>}/networkinterface`
+         * 
+         * @param {integer} id
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        getNbNetworkInterface(id) {
+            return axios.get(`/device/${id}/networkinterface`);
         }
     }
 
@@ -451,7 +464,7 @@ export class RemotelabzAPI {
         create(options = {}) {
             /** @type {NetworkInterfaceOptions} */
             const data = {
-                name: 'New network interface',
+                name: options.name,
                 isTemplate: false
             };
 
