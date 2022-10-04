@@ -26,7 +26,7 @@ export default class DeviceForm extends React.Component
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
-            nbCpu: Yup.number().min(1).max(4).required(),
+            nbCpu: Yup.number().min(1).max(12).required(),
             nbCore: Yup.number().min(1).max(4).nullable(true),
             nbSocket: Yup.number().min(1).max(4).nullable(true),
             nbThread: Yup.number().min(1).max(4).nullable(true),
