@@ -26,7 +26,10 @@ export default class DeviceForm extends React.Component
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
-            nbCpu: Yup.number().required()
+            nbCpu: Yup.number().min(1).max(4).required(),
+            nbCore: Yup.number().min(1).max(4).nullable(true),
+            nbSocket: Yup.number().min(1).max(4).nullable(true),
+            nbThread: Yup.number().min(1).max(4).nullable(true),
         });
 
         this.state = {
@@ -199,6 +202,9 @@ export default class DeviceForm extends React.Component
                         hypervisor: values.hypervisor.value,
                         flavor: values.flavor.value,
                         nbCpu: values.nbCpu,
+                        nbCore: values.nbCore,
+                        nbSocket: values.nbSocket,
+                        nbThread: values.nbThread,
                         controlProtocolTypes: values.controlProtocolTypes
                     });
                 }}
@@ -221,6 +227,9 @@ export default class DeviceForm extends React.Component
                         label: this.props.device.flavor.name
                     },
                     nbCpu: this.props.device.nbCpu,
+                    nbCore: this.props.device.nbCore || '',
+                    nbSocket: this.props.device.nbSocket || '',
+                    nbThread: this.props.device.nbThread || '',
                     controlProtocolTypes: this.props.device.controlProtocolTypes
                 }}
             >
@@ -329,6 +338,42 @@ export default class DeviceForm extends React.Component
                                 isInvalid={!!errors.nbCpu}
                             />
                             <Form.Control.Feedback type="invalid">{errors.nbCpu}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number core</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbCore"
+                                placeholder="Number of core"
+                                value={values.nbCore}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbCore}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbCore}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number socket</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbSocket"
+                                placeholder="Number of socket"
+                                value={values.nbSocket}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbSocket}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbSocket}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number Thread</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbThread"
+                                placeholder="Number of Thread"
+                                value={values.nbThread}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbThread}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbThread}</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Control protocol</Form.Label>

@@ -221,6 +221,7 @@ class DeviceController extends Controller
                 $this->addFlash('error', 'Incorrect value.');
                 return $this->redirectToRoute('show_device', ['id' => $id]);
             }
+            $this->logger->debug("Add for ".$device->getName()." nbcore ".$device->getNbCore());
 
             
             foreach ($device->getControlProtocolTypes() as $proto) {

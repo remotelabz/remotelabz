@@ -17,6 +17,9 @@ export default function DeviceAsideMenu(props) {
         hypervisor: {},
         flavor: {},
         nbCpu: '',
+        nbCore: '',
+        nbSocket: '',
+        nbThread: '',
         controlProtocol: {},
     });
     const [networkInterfaces, setNetworkInterfaces] = useState([]);

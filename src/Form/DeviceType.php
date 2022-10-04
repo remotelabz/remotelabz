@@ -61,6 +61,15 @@ class DeviceType extends AbstractType
                 'help' => "Limit to 4 vCPU",
                 'empty_data' => 1
             ])
+            ->add('nbCore', NumberType::class, [
+                'empty_data' => null
+            ])
+            ->add('nbSocket', NumberType::class, [
+                'empty_data' => null
+            ])
+            ->add('nbThread', NumberType::class, [
+                'empty_data' => null
+            ])
             ->add('networkInterfaces', NumberType::class, [
                 'data' => $options["nb_network_interface"],
                 'help' => "Limit to 19 interfaces",

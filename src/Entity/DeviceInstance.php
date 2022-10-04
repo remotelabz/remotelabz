@@ -36,12 +36,30 @@ class DeviceInstance extends Instance
      */
     protected $device;
 
-        /**
+    /**
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
      * @Assert\NotNull
      */
     private $nbCpu;
+
+        /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     */
+    private $nbCore;
+
+        /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     */
+    private $nbSocket;
+
+        /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     */
+    private $nbThread;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
@@ -123,6 +141,36 @@ class DeviceInstance extends Instance
         return $this;
     }
 
+    public function getNbSocket(): ?int
+    {
+        return $this->nbSocket;
+    }
+
+    public function setNbSocket(?int $nb): void
+    {
+        $this->nbSocket = $nb;
+    }
+
+    public function getNbCore(): ?int
+    {
+        return $this->nbCore;
+    }
+
+    public function setNbCore(?int $nb): void
+    {
+        $this->nbCore = $nb;
+    }
+
+    public function getNbThread(): ?int
+    {
+        return $this->nbThread;
+    }
+
+    public function setNbThread(?int $nb): void
+    {
+        $this->nbThread = $nb;
+    }
+    
     /**
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("owner")
