@@ -192,7 +192,12 @@ export default class DeviceForm extends React.Component
             <Formik
                 validationSchema={this.schema}
                 onSubmit={values => {
-                    //alert(JSON.stringify(values.controlProtocolTypes));
+                    var result=values.nbThread * values.nbSocket * values.nbCore;
+                    if ( result > values.nbCpu) {
+                        var nbMaxCpu=result
+                    } else {
+                        var nbMaxCpu=values.nbCpu
+                    }
                     this.props.onSubmit({
                         id: values.id,
                         name: values.name,
@@ -201,7 +206,7 @@ export default class DeviceForm extends React.Component
                         operatingSystem: values.operatingSystem.value,
                         hypervisor: values.hypervisor.value,
                         flavor: values.flavor.value,
-                        nbCpu: values.nbCpu,
+                        nbCpu: nbMaxCpu,
                         nbCore: values.nbCore,
                         nbSocket: values.nbSocket,
                         nbThread: values.nbThread,
@@ -332,7 +337,7 @@ export default class DeviceForm extends React.Component
                             <Form.Control
                                 type="text"
                                 name="nbCpu"
-                                placeholder="Number of CPU"
+                                placeholder="Number of CPU (mandatory)"
                                 value={values.nbCpu}
                                 onChange={handleChange}
                                 isInvalid={!!errors.nbCpu}
@@ -344,7 +349,7 @@ export default class DeviceForm extends React.Component
                             <Form.Control
                                 type="text"
                                 name="nbCore"
-                                placeholder="Number of core"
+                                placeholder="Number of core (can be null)"
                                 value={values.nbCore}
                                 onChange={handleChange}
                                 isInvalid={!!errors.nbCore}
@@ -356,7 +361,7 @@ export default class DeviceForm extends React.Component
                             <Form.Control
                                 type="text"
                                 name="nbSocket"
-                                placeholder="Number of socket"
+                                placeholder="Number of socket (can be null)"
                                 value={values.nbSocket}
                                 onChange={handleChange}
                                 isInvalid={!!errors.nbSocket}
@@ -368,7 +373,7 @@ export default class DeviceForm extends React.Component
                             <Form.Control
                                 type="text"
                                 name="nbThread"
-                                placeholder="Number of Thread"
+                                placeholder="Number of Thread (can be null)"
                                 value={values.nbThread}
                                 onChange={handleChange}
                                 isInvalid={!!errors.nbThread}

@@ -221,7 +221,7 @@ class DeviceController extends Controller
                 $this->addFlash('error', 'Incorrect value.');
                 return $this->redirectToRoute('show_device', ['id' => $id]);
             }
-            $this->logger->debug("Add for ".$device->getName()." nbcore ".$device->getNbCore());
+            //$this->logger->debug("Add for ".$device->getName()." nbcore ".$device->getNbCore());
 
             
             foreach ($device->getControlProtocolTypes() as $proto) {
@@ -231,6 +231,20 @@ class DeviceController extends Controller
             }
             
             $device->setLastUpdated(new DateTime());
+            //Check validity of cpu number with other parameters
+            $total=1;
+            if ($device->getNbCore()!=0)
+                $total=$total*$device->getNbCore();
+            if ($device->getNbSocket()!=0)
+                $total=$total*$device->getNbSocket();
+            if ($device->getNbThread()!=0)
+                 $total=$total*$device->getNbThread();
+            $this->logger->debug("Total CPU :".$total);
+            
+            if ($device->getNbCpu() < $total ) {
+                $device->setNbCpu($total);
+            }
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
