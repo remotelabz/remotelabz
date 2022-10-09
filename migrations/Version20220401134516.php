@@ -31,7 +31,6 @@ final class Version20220401134516 extends AbstractMigration
         $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Alpine3.15 cnt\', NULL, \'Alpine3.15\', \'2\')');
         $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Ubuntu20LTS cnt\', NULL, \'Ubuntu20LTS\', \'2\')');
 
-
     }
 
     public function down(Schema $schema) : void

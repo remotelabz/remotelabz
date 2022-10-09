@@ -14,6 +14,7 @@ use App\Form\ControlProtocolTypeType;
 use App\Repository\DeviceRepository;
 use App\Repository\LabRepository;
 use App\Repository\EditorDataRepository;
+use App\Repository\ControlProtocolTypeRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -29,6 +30,7 @@ class DeviceController extends Controller
 {
     private $deviceRepository;
     private $labRepository;
+    private $controlProtocolTypeRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -37,12 +39,14 @@ class DeviceController extends Controller
         LoggerInterface $logger,
         LabRepository $labRepository,
         DeviceRepository $deviceRepository,
-        SerializerInterface $serializerInterface)
+        SerializerInterface $serializerInterface,
+        ControlProtocolTypeRepository $controlProtocolTypeRepository)
     {
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
         $this->logger = $logger;
         $this->serializer = $serializerInterface;
+        $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
     }
 
     /**
@@ -163,8 +167,7 @@ class DeviceController extends Controller
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
-        $this->logger->info("Device ".$device->getName()." modification asked by user ");
-
+        $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
         $deviceForm = $this->createForm(DeviceType::class, $device, [
             'nb_network_interface' => count($device->getNetworkInterfaces())]
         );
@@ -182,15 +185,26 @@ class DeviceController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_json = json_decode($request->getContent(), true);
+            
             $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
-            //$this->logger->debug("device_json",$device_json);
+            $controlProtocolType_json=$device_json['controlProtocolTypes'];
+            $device_json['controlProtocolTypes']=array();
+            foreach ($controlProtocolType_json as $controlProtoType){
+                //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
+                array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
+            }
+            /*$device_json=["id" => 225,
+            "name"=>"Forti-DHCP","brand"=>"","model"=>"","operatingSystem"=>39,
+            "hypervisor"=>7,"flavor"=>9,"nbCpu"=>"1","networkInterfaces"=>1,
+            "controlProtocolTypes" => [ 3, 2]];*/
+
+            //$this->logger->debug("before submit json :",$device_json);
+
             $deviceForm->submit($device_json, false);
         }
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
-            
-            $modified_device = $deviceForm->getData();
             $nbNetworkInterface=count($device->getNetworkInterfaces());
             $wanted_nbNetworkInterface=$deviceForm->get("networkInterfaces")->getData();
             if (!is_int($wanted_nbNetworkInterface) || ($wanted_nbNetworkInterface > 19)) {
@@ -207,6 +221,7 @@ class DeviceController extends Controller
                 $this->addFlash('error', 'Incorrect value.');
                 return $this->redirectToRoute('show_device', ['id' => $id]);
             }
+            //$this->logger->debug("Add for ".$device->getName()." nbcore ".$device->getNbCore());
 
             
             foreach ($device->getControlProtocolTypes() as $proto) {
@@ -216,6 +231,20 @@ class DeviceController extends Controller
             }
             
             $device->setLastUpdated(new DateTime());
+            //Check validity of cpu number with other parameters
+            $total=1;
+            if ($device->getNbCore()!=0)
+                $total=$total*$device->getNbCore();
+            if ($device->getNbSocket()!=0)
+                $total=$total*$device->getNbSocket();
+            if ($device->getNbThread()!=0)
+                 $total=$total*$device->getNbThread();
+            $this->logger->debug("Total CPU :".$total);
+            
+            if ($device->getNbCpu() < $total ) {
+                $device->setNbCpu($total);
+            }
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -228,8 +257,16 @@ class DeviceController extends Controller
             $this->addFlash('success', 'Device has been updated.');
 
             return $this->redirectToRoute('show_device', ['id' => $id]);
-        } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid())
+        } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid()) {
             $this->logger->error("Device ".$device->getName()."modification submitted but form not valid");
+            $this->logger->error("Device form error ".$deviceForm->getErrors());
+            $this->logger->error("Device form error ".$deviceForm["controlProtocolTypes"]->getErrors());
+                foreach ($deviceForm as $fieldName => $formField) {
+                    $this->logger->debug($fieldName." ".$formField->getErrors());
+                }
+
+            
+        }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
@@ -353,4 +390,29 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $entityManager->flush();
     }
+
+    /**
+     * @Rest\Get("/api/device/{id<\d+>}/networkinterface", name="api_get_device_interface")
+     */
+    public function getNetworkInterface(Request $request, int $id)
+    {
+        $device = $this->deviceRepository->find($id);
+
+        if (!$device) {
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            $i=count($device->getNetworkInterfaces());
+            
+        $response=new JsonResponse();
+        $response->setData($i);
+        return $response;
+        }
+        
+        return new JsonResponse();
+        
+    }
+
+
 }

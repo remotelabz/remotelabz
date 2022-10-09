@@ -444,7 +444,14 @@ function ShortDescriptionEditor({ id, initialValue, onChange }) {
         }, 100);
     }
 
-    return (<Form.Control name="shortDescription" type="text" placeholder="Write a small description about your lab (255 characters max.)" maxLength={255} onChange={handleChange} defaultValue={initialValue} />)
+    return (<Form.Control
+        name="shortDescription"
+        type="text"
+        placeholder="Write a small description about your lab (255 characters max.)"
+        maxLength={255}
+        onChange={handleChange}
+        defaultValue={initialValue}
+        />)
 }
 
 function DescriptionEditor({ id, initialValue }) {

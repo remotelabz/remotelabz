@@ -89,6 +89,24 @@ class Device implements InstanciableInterface
     private $nbCpu;
 
     /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     */
+    private $nbCore;
+
+    /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     */
+    private $nbSocket;
+
+    /**
+     * @ORM\Column(type="integer",nullable=true)
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     */
+    private $nbThread;
+
+    /**
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      */
@@ -366,6 +384,36 @@ class Device implements InstanciableInterface
         $this->nbCpu = $nb;
 
         return $this;
+    }
+
+    public function getNbSocket(): ?int
+    {
+        return $this->nbSocket;
+    }
+
+    public function setNbSocket(?int $nb): void
+    {
+        $this->nbSocket = $nb;
+    }
+
+    public function getNbCore(): ?int
+    {
+        return $this->nbCore;
+    }
+
+    public function setNbCore(?int $nb): void
+    {
+        $this->nbCore = $nb;
+    }
+
+    public function getNbThread(): ?int
+    {
+        return $this->nbThread;
+    }
+
+    public function setNbThread(?int $nb): void
+    {
+        $this->nbThread = $nb;
     }
 
     public function getHypervisor(): ?Hypervisor

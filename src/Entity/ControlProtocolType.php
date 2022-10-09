@@ -9,8 +9,6 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 
-
-
 /**
  * @ORM\Entity(repositoryClass=ControlProtocolTypeRepository::class)
  */
@@ -20,6 +18,7 @@ class ControlProtocolType
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_controlProtocolType","api_delete_os","api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
      */
     private $id;
 
@@ -27,7 +26,7 @@ class ControlProtocolType
      * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank
      * @Assert\Type(type="string")
-     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_controlProtocolType","api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
      */
     private $name;
 
@@ -52,7 +51,9 @@ class ControlProtocolType
     {
         return $this->id;
     }
-
+    /*
+    * @Serializer\Groups({"api_get_device"})
+    */
     public function getName(): ?string
     {
         return $this->name;

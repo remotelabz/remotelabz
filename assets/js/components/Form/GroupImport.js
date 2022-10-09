@@ -9,11 +9,11 @@ export default function GroupImport(props) {
     const [selected, setSelected] = useState(null);
 
     function onGroupChange(value, {action}) {
-        console.group('Select changed');
+       /* console.group('Select changed');
         console.log('Value:', value);
         console.log('Action:', action);
         console.groupEnd();
-
+*/
         switch (action) {
             case 'select-option':
                 setGroup(value);

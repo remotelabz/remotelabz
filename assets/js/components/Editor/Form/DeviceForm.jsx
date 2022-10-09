@@ -26,13 +26,17 @@ export default class DeviceForm extends React.Component
                 label: Yup.string().required(),
                 value: Yup.number().required()
             }),
-            vnc: Yup.boolean()
+            nbCpu: Yup.number().min(1).max(12).required(),
+            nbCore: Yup.number().min(1).max(4).nullable(true),
+            nbSocket: Yup.number().min(1).max(4).nullable(true),
+            nbThread: Yup.number().min(1).max(4).nullable(true),
         });
 
         this.state = {
             device: this.props.device,
             operatingSystemOptions: this.props.device.operatingSystem,
-            flavorOptions: this.props.device.flavor
+            flavorOptions: this.props.device.flavor,
+            controlProtocolOptions: this.props.device.controlProtocolTypes
         };
     }
 
@@ -64,7 +68,22 @@ export default class DeviceForm extends React.Component
                 this.setState({hypervisorOptions});
                 return null;
             })
-            .then(() => { return this.api.get('/api/flavors') })
+            
+        this.api.get('/api/controlProtocolType')
+            .then(response => {
+                let controlProtocolOptions = [];
+                response.data.forEach(controlProtocolTypes => {
+                    controlProtocolOptions.push({
+                        ...controlProtocolTypes,
+                        value: controlProtocolTypes.id,
+                        label: controlProtocolTypes.name,
+                    })
+                });
+                this.setState({controlProtocolOptions});
+                return null;
+            })
+
+        this.api.get('/api/flavors')
             .then(response => {
                 let flavorOptions = [];
                 response.data.forEach(flavor => {
@@ -76,7 +95,7 @@ export default class DeviceForm extends React.Component
                 });
                 this.setState({flavorOptions});
                 return null;
-            });
+            })
     }
 
     componentDidUpdate(prevProps) {
@@ -146,12 +165,39 @@ export default class DeviceForm extends React.Component
         });
     }
 
+    loadControlProtocolOptions = (inputValue) => {
+        return this.api.get('/api/controlProtocolType', {
+            params: {
+                search: inputValue
+            }
+        })
+        .then(response => {
+            let options = [];
+            response.data.forEach(controlProtocolTypes => {
+                options.push({
+                    ...controlProtocolTypes,
+                    value: controlProtocolTypes.id,
+                    label: controlProtocolTypes.name,
+                })
+            });
+            return options;
+        });
+    }
+
+
     render() {
-        //console.log("render DeviceForm",this.props)
+        //console.log("this.props.device.controlProtocolTypes",this.props.device.controlProtocolTypes)
+        
         return (
             <Formik
                 validationSchema={this.schema}
                 onSubmit={values => {
+                    var result=values.nbThread * values.nbSocket * values.nbCore;
+                    if ( result > values.nbCpu) {
+                        var nbMaxCpu=result
+                    } else {
+                        var nbMaxCpu=values.nbCpu
+                    }
                     this.props.onSubmit({
                         id: values.id,
                         name: values.name,
@@ -160,7 +206,11 @@ export default class DeviceForm extends React.Component
                         operatingSystem: values.operatingSystem.value,
                         hypervisor: values.hypervisor.value,
                         flavor: values.flavor.value,
-                        vnc: values.vnc
+                        nbCpu: nbMaxCpu,
+                        nbCore: values.nbCore,
+                        nbSocket: values.nbSocket,
+                        nbThread: values.nbThread,
+                        controlProtocolTypes: values.controlProtocolTypes
                     });
                 }}
                 enableReinitialize
@@ -181,7 +231,11 @@ export default class DeviceForm extends React.Component
                         value: this.props.device.flavor.id,
                         label: this.props.device.flavor.name
                     },
-                    vnc: this.props.device.vnc,
+                    nbCpu: this.props.device.nbCpu,
+                    nbCore: this.props.device.nbCore || '',
+                    nbSocket: this.props.device.nbSocket || '',
+                    nbThread: this.props.device.nbThread || '',
+                    controlProtocolTypes: this.props.device.controlProtocolTypes
                 }}
             >
                 {({
@@ -208,7 +262,7 @@ export default class DeviceForm extends React.Component
                             />
                             <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
                         </Form.Group>
-                    <Form.Group>
+                        <Form.Group>
                             <Form.Label>Brand</Form.Label>
                             <Form.Control
                                 type="text"
@@ -277,11 +331,74 @@ export default class DeviceForm extends React.Component
                                 defaultOptions={this.state.flavorOptions}
                             />
                             <Form.Control.Feedback type="invalid">{errors.flavor}</Form.Control.Feedback>
-                            </Form.Group>
-                            <label>
-                                <Field type="checkbox" name="vnc" />
-                                VNC Access
-                            </label>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number CPU</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbCpu"
+                                placeholder="Number of CPU (mandatory)"
+                                value={values.nbCpu}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbCpu}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbCpu}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number core</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbCore"
+                                placeholder="Number of core (can be null)"
+                                value={values.nbCore}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbCore}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbCore}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number socket</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbSocket"
+                                placeholder="Number of socket (can be null)"
+                                value={values.nbSocket}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbSocket}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbSocket}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Number Thread</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nbThread"
+                                placeholder="Number of Thread (can be null)"
+                                value={values.nbThread}
+                                onChange={handleChange}
+                                isInvalid={!!errors.nbThread}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.nbThread}</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Control protocol</Form.Label>
+                            <AsyncSelect
+                                placeholder="Select a control protocol ..."
+                                value={values.controlProtocolTypes}
+                                onBlur={setFieldTouched}
+                                error={errors.controlProtocolTypes}
+                                onChange={value => setFieldValue("controlProtocolTypes", value)}
+                                className='react-select-container'
+                                classNamePrefix="react-select"
+                                loadOptions={this.loadControlProtocolOptions}
+                                getOptionLabel={o => o.name}
+                                getOptionValue={o => o.id}
+                                defaultOptions
+                                cacheOptions
+                                isMulti
+                            />
+                        </Form.Group>
+                            
                         <Button variant="success" type="submit" block {...(dirty || {disabled: true})}>
                             Submit
                         </Button>
