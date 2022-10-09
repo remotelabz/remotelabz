@@ -198,15 +198,14 @@ class DeviceController extends Controller
                     array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
                 }
             }
-            else 
-                $this->logger->debug("empty:",$device_json['controlProtocolTypes']);
+            
                 
             /*$device_json=["id" => 225,
             "name"=>"Forti-DHCP","brand"=>"","model"=>"","operatingSystem"=>39,
             "hypervisor"=>7,"flavor"=>9,"nbCpu"=>"1","networkInterfaces"=>1,
             "controlProtocolTypes" => [ 3, 2]];*/
 
-            $this->logger->debug("before submit json :",$device_json);
+            //$this->logger->debug("before submit json :",$device_json);
 
             $deviceForm->submit($device_json, false);
         }
@@ -233,7 +232,7 @@ class DeviceController extends Controller
 
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
-                $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
+                //$this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
                 //$this->logger->debug($device->getName()." has control protocol ".$proto->getName());
             }
             
