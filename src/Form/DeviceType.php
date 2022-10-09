@@ -58,17 +58,19 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name'
             ])
             ->add('nbCpu', NumberType::class, [
-                'help' => "Limit to 4 vCPU",
                 'empty_data' => 1
             ])
             ->add('nbCore', NumberType::class, [
-                'empty_data' => null
+                'empty_data' => null,
+                'required' => false
             ])
             ->add('nbSocket', NumberType::class, [
-                'empty_data' => null
+                'empty_data' => null,
+                'required' => false
             ])
             ->add('nbThread', NumberType::class, [
-                'empty_data' => null
+                'empty_data' => null,
+                'required' => false
             ])
             ->add('networkInterfaces', NumberType::class, [
                 'data' => $options["nb_network_interface"],

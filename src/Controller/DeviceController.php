@@ -189,16 +189,24 @@ class DeviceController extends Controller
             $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
             $controlProtocolType_json=$device_json['controlProtocolTypes'];
             $device_json['controlProtocolTypes']=array();
-            foreach ($controlProtocolType_json as $controlProtoType){
-                //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
-                array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
+            
+            
+
+            if ( !empty($controlProtocolType_json) ) {
+                foreach ($controlProtocolType_json as $controlProtoType){
+                    //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
+                    array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
+                }
             }
+            else 
+                $this->logger->debug("empty:",$device_json['controlProtocolTypes']);
+                
             /*$device_json=["id" => 225,
             "name"=>"Forti-DHCP","brand"=>"","model"=>"","operatingSystem"=>39,
             "hypervisor"=>7,"flavor"=>9,"nbCpu"=>"1","networkInterfaces"=>1,
             "controlProtocolTypes" => [ 3, 2]];*/
 
-            //$this->logger->debug("before submit json :",$device_json);
+            $this->logger->debug("before submit json :",$device_json);
 
             $deviceForm->submit($device_json, false);
         }
@@ -221,9 +229,8 @@ class DeviceController extends Controller
                 $this->addFlash('error', 'Incorrect value.');
                 return $this->redirectToRoute('show_device', ['id' => $id]);
             }
-            //$this->logger->debug("Add for ".$device->getName()." nbcore ".$device->getNbCore());
-
             
+
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
@@ -239,7 +246,7 @@ class DeviceController extends Controller
                 $total=$total*$device->getNbSocket();
             if ($device->getNbThread()!=0)
                  $total=$total*$device->getNbThread();
-            $this->logger->debug("Total CPU :".$total);
+            //$this->logger->debug("Total CPU :".$total);
             
             if ($device->getNbCpu() < $total ) {
                 $device->setNbCpu($total);
