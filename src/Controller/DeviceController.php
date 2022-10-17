@@ -194,8 +194,10 @@ class DeviceController extends Controller
 
             if ( !empty($controlProtocolType_json) ) {
                 foreach ($controlProtocolType_json as $controlProtoType){
+                    $this->logger->debug("ControlProtoType : ",$controlProtoType);
                     //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
                     array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
+                    $this->logger->debug("controlProtocolTypes  : ",$device_json['controlProtocolTypes']);
                 }
             }
             
