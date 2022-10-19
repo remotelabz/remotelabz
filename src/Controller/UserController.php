@@ -31,7 +31,9 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Email as Email;
+use Symfony\Component\Validator\Constraints\Email as ConstraintsEmail;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class UserController extends Controller
 {
@@ -413,7 +415,7 @@ class UserController extends Controller
             $line[$i] = str_replace('"', '', $line[$i]);
 
             $data = explode(",", $line[$i]);
-
+            $this->logger->debug("User importation : ",$data);
             if (count($data) === 4) {
                 $lastName = $data[0];
                 $firstName = $data[1];
@@ -428,7 +430,7 @@ class UserController extends Controller
                     ->setEmail($email)
                     ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
-                $validEmail = count($validator->validate($email, [new Email()])) === 0;
+                $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
                 if ($validEmail && $this->userRepository->findByEmail($email) == null) {
                     $entityManager->persist($user);
@@ -467,8 +469,11 @@ class UserController extends Controller
                     ]
                 )
             );
-
-        $this->mailer->send($message);
+            try {
+                $this->mailer->send($message);
+            } catch(TransportExceptionInterface $e) {
+                $this->logger->error("Send mail problem :". $e);
+            }
     }
 
     /**
