@@ -196,16 +196,16 @@ class DeviceController extends Controller
                 foreach ($controlProtocolType_json as $controlProtoType){
                     $this->logger->debug("ControlProtoType : ",$controlProtoType);
                     //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
-                    array_push($device_json['controlProtocolTypes'],$controlProtoType['id']);
+                    array_push($device_json['controlProtocolTypes'],(string)$controlProtoType['id']);
                     $this->logger->debug("controlProtocolTypes  : ",$device_json['controlProtocolTypes']);
                 }
             }
             
                 
-            /*$device_json=["id" => 225,
-            "name"=>"Forti-DHCP","brand"=>"","model"=>"","operatingSystem"=>39,
-            "hypervisor"=>7,"flavor"=>9,"nbCpu"=>"1","networkInterfaces"=>1,
-            "controlProtocolTypes" => [ 3, 2]];*/
+            /*$device_json=["id" => 52,
+            "name"=>"Linux Alpine","brand"=>"Test","model"=>"","operatingSystem"=>5,
+            "hypervisor"=>3,"flavor"=>2,"nbCpu"=>"1","networkInterfaces"=>1,
+            "controlProtocolTypes" => ["1" ]];*/
 
             //$this->logger->debug("before submit json :",$device_json);
 
@@ -267,10 +267,9 @@ class DeviceController extends Controller
             return $this->redirectToRoute('show_device', ['id' => $id]);
         } elseif ($deviceForm->isSubmitted() && !$deviceForm->isValid()) {
             $this->logger->error("Device ".$device->getName()."modification submitted but form not valid");
-            $this->logger->error("Device form error ".$deviceForm->getErrors());
-            $this->logger->error("Device form error ".$deviceForm["controlProtocolTypes"]->getErrors());
                 foreach ($deviceForm as $fieldName => $formField) {
-                    $this->logger->debug($fieldName." ".$formField->getErrors());
+                    if ($formField->getErrors() != "")
+                        $this->logger->debug($fieldName." Error : ".$formField->getErrors());
                 }
 
             
