@@ -42,7 +42,6 @@ class NetworkInterface implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist"})
      * @ORM\JoinColumn(nullable=true)
-     * @ORM\JoinColumn(onDelete="CASCADE")
      * @Serializer\Groups({"api_get_network_interface"})
      */
     private $device;
