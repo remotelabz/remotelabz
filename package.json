@@ -47,11 +47,6 @@
         "datatables.net-bs4": "^1.10.21",
         "datatables.net-buttons-bs4": "^1.6.2",
         "datatables.net-select-bs4": "^1.2.7",
-<<<<<<< Updated upstream
-=======
-        "easymde": "^2.0",
-        "file-loader": "^6.2.0",
->>>>>>> Stashed changes
         "font-awesome": "^4.7.0",
         "formik": "^2.0.3",
         "guacamole-common-js": "^1.1.0",
