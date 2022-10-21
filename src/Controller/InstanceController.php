@@ -367,7 +367,7 @@ class InstanceController extends Controller
         $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
         
             $instanceManager->delete($instance);
-            $this->logger->debug("Delete from export");
+            //$this->logger->debug("Delete from export");
             /*$instanceManager->entityManager->remove($lab);
             $instanceManager->entityManager->persist($lab);
             $instanceManager->entityManager->flush();*/
