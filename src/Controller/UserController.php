@@ -442,8 +442,8 @@ class UserController extends Controller
                         $firstName = $line['firstname'];
                         $group = $line['group'];
                         $email = $line['email'];
-                        if (!$this->userRepository->findByEmail($email)) {
-
+                        $user=$this->userRepository->findOneByEmail($email);
+                        if ($user==null) {
                             $password = $this->generateStrongPassword(); // trim newline because this is the last field
                             $user = new User();
                             $user
@@ -453,20 +453,6 @@ class UserController extends Controller
                                 ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
                             $this->logger->info("User importation by ".$this->getUser()->getName().": ".$firstName." ".$lastName." ".$email);
-                            if ($group != "") {
-                                
-                                if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
-                                    $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
-                                    $group_wanted = new Group();
-                                    $group_wanted->setName($group);
-                                    $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                    $group_wanted->setSlug(str_replace(" ","-",$group));
-                                    $entityManager->persist($group_wanted);
-                                    $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
-                                }
-                                if (!$user->isMemberOf($group_wanted))
-                                    $group_wanted->addUser($user);
-                            }
 
                             $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
@@ -475,6 +461,21 @@ class UserController extends Controller
                                 $this->sendNewAccountEmail($user, $password);
                                 $addedUsers[$row] = $user;
                             }
+
+                        }
+                        if ($group != "") {
+                            
+                            if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
+                                $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
+                                $group_wanted = new Group();
+                                $group_wanted->setName($group);
+                                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+                                $group_wanted->setSlug(str_replace(" ","-",$group));
+                                $entityManager->persist($group_wanted);
+                                $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
+                            }
+                            if (!$user->isMemberOf($group_wanted))
+                                $group_wanted->addUser($user);
                         }
                         $row++;
                     }
@@ -511,7 +512,7 @@ class UserController extends Controller
             );
             try {
                 $this->mailer->send($message);
-                $this->logger->info("Mail send to ".$user." by ".$this->getUser()->getName());
+                $this->logger->info("Mail send to ".$user->getEmail()." by ".$this->getUser()->getName());
             } catch(TransportExceptionInterface $e) {
                 $this->logger->error("Send mail problem :". $e->getMessage());
             }
