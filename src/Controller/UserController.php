@@ -5,6 +5,7 @@ namespace App\Controller;
 use Exception;
 use App\Utils\Uuid;
 use App\Entity\User;
+use App\Entity\Group;
 use App\Form\UserType;
 use App\Utils\Gravatar;
 use App\Form\UserProfileType;
@@ -151,11 +152,11 @@ class UserController extends Controller
 
                 switch ($fileExtension) {
                     case 'csv':
-                        $addedUsers = $this->createUserFromCSV($fileSocket);
+                        $addedUsers = $this->createUserFromCSV($fileSocket,$file);
                         break;
                 }
 
-                if (count($addedUsers) > 0) {
+                if ($addedUsers && count($addedUsers) > 0) {
                     $this->addFlash('success', 'Utilisateur(s) créé(s).');
                 } else {
                     $this->addFlash(
@@ -169,6 +170,8 @@ class UserController extends Controller
             } else {
                 $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
             }
+            return $this->redirectToRoute('users');
+
         }
 
         if ('json' === $request->getRequestFormat()) {
@@ -403,48 +406,86 @@ class UserController extends Controller
      * Name, firstname,email,password
      * @return array The number of elements added
      */
-    public function createUserFromCSV($file)
+    public function createUserFromCSV($filehandler,$file)
     {
-        $i = 0;
+        $row = 0;
         $line = array();
         $addedUsers = array();
         $validator = Validation::createValidator();
         $entityManager = $this->getDoctrine()->getManager();
 
-        while ($line[$i] = fgets($file, 4096)) {
-            $line[$i] = str_replace('"', '', $line[$i]);
+        $error=false;
 
-            $data = explode(",", $line[$i]);
-            $this->logger->debug("User importation : ",$data);
-            if (count($data) === 4) {
-                $lastName = $data[0];
-                $firstName = $data[1];
-                $email = $data[2];
-                $password = trim($data[3]); // trim newline because this is the last field
+        if (($data = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
+            if ( in_array("firstname",array_map('strtolower',$data)) && in_array("lastname",array_map('strtolower',$data)) 
+            && in_array("email",array_map('strtolower',$data)) ) {
+                //$this->logger->debug("Find first line in CSV file");
 
-                $user = new User();
+                $csv = array_map('str_getcsv', file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES));
+                array_walk($csv, function(&$a) use ($csv) {
+                    $a = array_combine($csv[0], $a);
+                });
+                $this->logger->debug("firstname in CSV file :",$csv);
+            }
+            else {
+                $this->addFlash('danger',"File format is incorrect");
+                $error=true;
+            }
+        }
+    
+        if (!$error) {
+            $row=0;
+            foreach ($csv as $line_num => $line) {
+                if ($line_num > 0) {
+                    if (count($line) > 3) {
+                        $lastName = $line['lastname'];
+                        $firstName = $line['firstname'];
+                        $group = $line['group'];
+                        $email = $line['email'];
+                        $user=$this->userRepository->findOneByEmail($email);
+                        if ($user==null) {
+                            $password = $this->generateStrongPassword(); // trim newline because this is the last field
+                            $user = new User();
+                            $user
+                                ->setLastName($lastName)
+                                ->setFirstName($firstName)
+                                ->setEmail($email)
+                                ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
-                $user
-                    ->setLastName($firstName)
-                    ->setFirstName($lastName)
-                    ->setEmail($email)
-                    ->setPassword($this->passwordEncoder->encodePassword($user, $password));
+                            $this->logger->info("User importation by ".$this->getUser()->getName().": ".$firstName." ".$lastName." ".$email);
 
-                $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
+                            $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
-                if ($validEmail && $this->userRepository->findByEmail($email) == null) {
-                    $entityManager->persist($user);
-                    $this->sendNewAccountEmail($user, $password);
-                    $addedUsers[$i] = $user;
+                            if ($validEmail && $this->userRepository->findByEmail($email) == null) {
+                                $entityManager->persist($user);
+                                $this->sendNewAccountEmail($user, $password);
+                                $addedUsers[$row] = $user;
+                            }
+
+                        }
+                        if ($group != "") {
+                            
+                            if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
+                                $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
+                                $group_wanted = new Group();
+                                $group_wanted->setName($group);
+                                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+                                $group_wanted->setSlug(str_replace(" ","-",$group));
+                                $entityManager->persist($group_wanted);
+                                $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
+                            }
+                            if (!$user->isMemberOf($group_wanted))
+                                $group_wanted->addUser($user);
+                        }
+                        $row++;
+                    }
+                    $entityManager->flush();
                 }
             }
-
-            $i++;
-        }
-
+    
         $entityManager->flush();
-
         return $addedUsers;
+        }
     }
 
     /**
@@ -471,8 +512,9 @@ class UserController extends Controller
             );
             try {
                 $this->mailer->send($message);
+                $this->logger->info("Mail send to ".$user->getEmail()." by ".$this->getUser()->getName());
             } catch(TransportExceptionInterface $e) {
-                $this->logger->error("Send mail problem :". $e);
+                $this->logger->error("Send mail problem :". $e->getMessage());
             }
     }
 
@@ -773,4 +815,55 @@ class UserController extends Controller
             }
         return $response;
     }
-}
+
+    // Generates a strong password of N length containing at least one lower case letter,
+    // one uppercase letter, one digit, and one special character. The remaining characters
+    // in the password are chosen at random from those four sets.
+    //
+    // The available characters in each set are user friendly - there are no ambiguous
+    // characters such as i, l, 1, o, 0, etc. This, coupled with the $add_dashes option,
+    // makes it much easier for users to manually type or speak their passwords.
+    //
+    // Note: the $add_dashes option will increase the length of the password by
+    // floor(sqrt(N)) characters.
+
+    private function generateStrongPassword($length = 12, $add_dashes = false, $available_sets = 'luds')
+    {
+        $sets = array();
+        if(strpos($available_sets, 'l') !== false)
+            $sets[] = 'abcdefghjkmnpqrstuvwxyz';
+        if(strpos($available_sets, 'u') !== false)
+            $sets[] = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+        if(strpos($available_sets, 'd') !== false)
+            $sets[] = '23456789';
+        if(strpos($available_sets, 's') !== false)
+            $sets[] = '!@#$%&*?';
+
+        $all = '';
+        $password = '';
+        foreach($sets as $set)
+        {
+            $password .= $set[array_rand(str_split($set))];
+            $all .= $set;
+        }
+
+        $all = str_split($all);
+        for($i = 0; $i < $length - count($sets); $i++)
+            $password .= $all[array_rand($all)];
+
+        $password = str_shuffle($password);
+
+        if(!$add_dashes)
+            return $password;
+
+        $dash_len = floor(sqrt($length));
+        $dash_str = '';
+        while(strlen($password) > $dash_len)
+        {
+            $dash_str .= substr($password, 0, $dash_len) . '-';
+            $password = substr($password, $dash_len);
+        }
+        $dash_str .= $password;
+        return $dash_str;
+        }
+    }

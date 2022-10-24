@@ -19,11 +19,12 @@
 {% block wrapper %}
     {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
         {% block body %}
-            <p>The CSV file must contains user information in the following format:
+            <p>The CSV file, encoded in UTF8, must contains user information in the following format:
                 <br>
                 <br>
-                <kbd>lastName,firstName,email,password</kbd>
-                <br>
+                <kbd>lastname,firstname,email,group</kbd>
+                <br><br>
+                The password of each user will be send by email<br>
                 <br>
                 <span class="text-danger">Warning:</span> Lines with an already used e-mail will be silently ignored.
             </p>
