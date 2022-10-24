@@ -16,10 +16,11 @@
         <h1>{{ device.name }}</h1>
     </div>
     <div class="content-title-actions">
-        
+        {% if ((type_control_access != "login") and (type_control_access != "serial")) %}
         <button class="btn btn-primary" id="openFullscreenButton">
             {{ svg('external-link') }}
         </button>
+        {% endif %}
     </div>
 </div>
 <div class="content-body">
