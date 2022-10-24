@@ -249,7 +249,7 @@ class LabController extends Controller
             //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
             SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
         );
-        $this->logger->debug("show_lab props".$props);
+        //$this->logger->debug("show_lab props".$props);
         return $this->render('lab/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
@@ -309,68 +309,6 @@ class LabController extends Controller
 
         $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
         $entityManager->persist($lab);
-        //$this->logger->debug($request);
-        
-        // Check if the creation is from export process or not
-        //$from_export=strstr($request->headers->get('referer'),"devices_sandbox");
-        
-        /*
-        $data=json_decode($labJson,true);
-        $data['from_export']=$fromexport;
-        $labJson=json_encode($data);
-        */
-        /* if (!$from_export) {
-            // Add Service container LXC for each new lab
-            // This creation is transparent
-            // TODO: protect the name svc because it's become now an internal name
-            // Check in the device creation if the name is svc and template true      
-            $svc_device=$this->deviceRepository->findByNameByTemplate('svc',true);
-            if (!$svc_device) {
-                $this->logger->debug("Creation not from export process");
-                $this->logger->debug("svc template doesn't exist");
-
-                //The svc device doesn't exist
-                $svc_device=new Device();
-                $svc_device->setName('svc');
-                $svc_device->setIsTemplate(true);
-                $svc_device->setType("container");
-                // TODO: find an operating system to the svc service but not used
-                $operating=$this->operatingSystemRepository->findAll();
-                $svc_device->setOperatingSystem($operating[0]);
-
-                // TODO: same than Operating System, it's not used for container
-                $flavor=$this->flavorRepository->findAll();
-                $svc_device->setFlavor($flavor[0]);
-
-                $svc_device->setHypervisor('lxc');
-                $svc_device->setVnc(false);
-                $lab->addDevice($svc_device);
-                $entityManager->persist($svc_device);
-            }
-            else {
-                $svc_new_device=new Device();
-                $svc_new_device->setName('svc');
-                $svc_new_device->setIsTemplate(false);
-                $svc_new_device->setType("container");
-                // TODO: find an operating system to the svc service but not used
-                $operating=$this->operatingSystemRepository->findAll();
-                $svc_new_device->setOperatingSystem($operating[0]);
-
-                // TODO: same than Operating System, it's not used for container
-                $flavor=$this->flavorRepository->findAll();
-                $svc_new_device->setFlavor($flavor[0]);
-
-                $svc_new_device->setHypervisor('lxc');
-                $svc_new_device->setVnc(false);
-                $lab->addDevice($svc_new_device);
-                $entityManager->persist($svc_new_device);
-            }
-
-            $entityManager->flush();        
-        } 
-        else
-            $this->logger->debug("Creation from export process - not svc creation");
-        */
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($lab, 200, [], ['api_get_lab']);
@@ -387,42 +325,96 @@ class LabController extends Controller
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
-        //$this->logger->debug("Add a device to lab. Request received: ".$request);
-        //$this->logger->debug("Add a device to lab id: ".$id);
         $lab = $this->labRepository->find($id);
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("Add device from API by : ".$this->getUser()->getUsername());
+            $this->logger->debug("Add device to a lab from API by : ".$this->getUser()->getUsername());
         
         $device = new Device();
-        //Only to debug 
-        $serializer = $this->container->get('jms_serializer');
-        //
+        
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
-            $device = json_decode($request->getContent(), true);
-            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device);
-            // fetch network interfaces to copy them later
-            $networkInterfaces = $device['networkInterfaces'];
-            $deviceForm->submit($device);
+            $device_array = json_decode($request->getContent(), true);
+            //$this->logger->debug("json:",$device_array);
+            /*$json_example='{
+                "id": 121,
+                "name": "FortiGate-v7.2.0",
+                "brand": "",
+                "model": "",
+                "launchOrder": 0,
+                "launchScript": null,
+                "type": "vm",
+                "virtuality": 1,
+                "hypervisor": 7,
+                "operatingSystem": 34,
+                "controlInterface": null,
+                "flavor": 8,
+                "networkInterfaces":2,
+                "uuid": "a697b0da-1427-46a7-9dc5-34e3435060c3",
+                "createdAt": "2022-09-16T22:16:36+02:00",
+                "lastUpdated": "2022-09-18T12:01:23+02:00",
+                "controlProtocolTypes": [{ "id": 3 }],
+                "editorData": {
+                    "id": 119,
+                    "x": 0,
+                    "y": 0
+                },
+                "isTemplate": true
+            }';
+            $device_array = json_decode($json_example, true);*/
+            //Delete this key otherwise the validation doesn't work.
+            unset($device_array['controlProtocolTypes']);
+            $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
+            $this->logger->debug("Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            $deviceForm->submit($device_array);
         }
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
-                $this->logger->debug("Add device form submitted is valid");
+                $this->logger->debug("Add device in lab form submitted is valid");
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
-                $this->logger->debug("Device added : ".$new_device->getName().",".$new_device->getHypervisor()->getName());
+                $this->logger->debug("Device added : ".$new_device->getName());
+                
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($new_device);
+                $entityManager->flush();
+                $device = $this->deviceRepository->find($device_array['id']);
+                $this->logger->debug("Source device id adds is :".$device_array['id']);
+                $i=0;
+                if ($device_array['networkInterfaces'] > 0) {
+                    foreach ($device->getNetworkInterfaces() as $network_int) {
+                        $new_network_inter=new NetworkInterface();
+                        $new_setting=new NetworkSettings();
+                        $new_setting=clone $network_int->getSettings();
+                        $new_network_inter->setSettings($new_setting);
+                        $new_network_inter->setName($device->getName()."_"."int".$i);
+                        $i=$i+1;
+                        $new_network_inter->setIsTemplate(true);
+                        $new_device->addNetworkInterface($new_network_inter);
+                        $new_setting->setName($new_network_inter->getName());
+                        $entityManager->persist($new_network_inter);
+                        $entityManager->persist($new_setting);
+                    }
+                }
+
+                foreach ($device->getControlProtocolTypes() as $control_protocol) {
+                    $new_device->addControlProtocolType($control_protocol);        
+
+                }
+                $entityManager->persist($new_device);
+                $entityManager->flush();
 
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
             } else {
-                $this->logger->debug("Add device form submitted is not valid");
-                foreach ($deviceForm->getErrors() as $error) {
+                $this->logger->debug("Add device in lab form submitted is not valid");
+                $this->logger->debug($deviceForm->getErrors());
+                foreach ($deviceForm->getErrors(true) as $error) {
                     $this->logger->debug("Error validating :".$error->getMessage());
                 }
             }
@@ -447,7 +439,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
-        foreach ($new_device->getNetworkInterfaces() as $network_int) {
+/*        foreach ($new_device->getNetworkInterfaces() as $network_int) {
             $this->logger->debug("Add Network interface".$network_int->getName());
             $new_network_inter=new NetworkInterface();
             $new_setting=new NetworkSettings();
@@ -458,7 +450,9 @@ class LabController extends Controller
             $new_network_inter->setIsTemplate(true);
             $new_device->addNetworkInterface($new_network_inter);
             $entityManager->persist($new_network_inter);
-        }
+        }*/
+
+
         $entityManager->flush();
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
@@ -473,11 +467,11 @@ class LabController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
-        $this->logger->debug("Lab edit by : ".$this->getUser()->getUsername());
+        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->info("Lab edit by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
         
 
         if (!$lab) {
@@ -598,6 +592,10 @@ class LabController extends Controller
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);
+        }
+
+        foreach ($device->getControlProtocolTypes() as $control_protocol) {
+            $newDevice->addControlProtocolType($control_protocol);
         }
 
         return $newDevice;

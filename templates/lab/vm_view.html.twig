@@ -16,10 +16,11 @@
         <h1>{{ device.name }}</h1>
     </div>
     <div class="content-title-actions">
-        
+        {% if ((type_control_access != "login") and (type_control_access != "serial")) %}
         <button class="btn btn-primary" id="openFullscreenButton">
             {{ svg('external-link') }}
         </button>
+        {% endif %}
     </div>
 </div>
 <div class="content-body">
@@ -29,7 +30,7 @@
         Attributed network your laboratory : <strong>{{ deviceInstance.getLabInstance().getNetwork() }}</strong>
     </div>
     {#{{dump(deviceInstance)}}#}
-    {% if (deviceInstance.device.type == "container") %}
+    {% if ((type_control_access == "login") or (type_control_access == "serial")) %}
     <div class="card stretch-card">
         <div class="card-body">
             <div class="row mb-2">

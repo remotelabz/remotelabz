@@ -12,6 +12,8 @@ use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\OperatingSystem;
+use App\Entity\ControlProtocolType;
+use App\Entity\ControlProtocolTypeInstance;
 use App\Instance\InstanceState;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
@@ -19,6 +21,8 @@ use App\Repository\DeviceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use App\Repository\ControlProtocolTypeRepository;
+use App\Repository\ControlProtocolTypeInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Network\NetworkManager;
 use App\Service\Proxy\ProxyManager;
@@ -53,6 +57,7 @@ class InstanceManager
     protected $labInstanceRepository;
     protected $deviceInstanceRepository;
     protected $networkInterfaceInstanceRepository;
+    protected $controlProtocolTypeInstanceRepository;
     protected $workerServer;
     protected $workerPort;
     protected $proxyManager;
@@ -72,6 +77,7 @@ class InstanceManager
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        ControlProtocolTypeInstanceRepository $controlProtocolTypeInstanceRepository,
         DeviceRepository $DeviceRepository,
         OperatingSystemRepository $OperatingSystemRepository,
         string $workerServer,
@@ -87,6 +93,7 @@ class InstanceManager
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
+        $this->controlProtocolTypeInstanceRepository = $controlProtocolTypeInstanceRepository;
         $this->DeviceRepository=$DeviceRepository;
         $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
@@ -175,12 +182,9 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
-        
-
-        if (true === $device->getVnc()) {
-            $remotePort = $this->getRemoteAvailablePort();
-            $deviceInstance->setRemotePort($remotePort);
-            $this->entityManager->persist($deviceInstance);
+        foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
+            $control_protocol_instance->setPort($this->getRemoteAvailablePort());
+            $this->entityManager->persist($control_protocol_instance);
         }
 
         $deviceInstance->setState(InstanceState::STARTING);
@@ -190,7 +194,7 @@ class InstanceManager
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
 
-        $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($labJson, true));
+        $this->logger->info('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
         );
@@ -280,8 +284,14 @@ class InstanceManager
             'instance' => $deviceInstance
         ]);
         $device = $deviceInstance->getDevice();
+        
+        $vnc=false;
+        foreach($device->getControlProtocolTypes() as $controlProtocolType){
+            if ($controlProtocolType->getName()==="vnc")
+                $vnc=($vnc || true);
+        }
 
-        if (true === $device->getVnc()) {
+        if ($vnc) {
             $this->logger->info('Deleting proxy route');
             try {
                 $uuid=$deviceInstance->getUuid();
@@ -294,7 +304,7 @@ class InstanceManager
                 $this->logger->warning('Route has already been deleted.', ['exception' => $exception]);
             }
 
-            $deviceInstance->setRemotePort(null);
+            //$deviceInstance->setRemotePort(null);
             $this->entityManager->persist($deviceInstance);
         }
 
@@ -334,6 +344,7 @@ class InstanceManager
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
         $newDevice->setType($device->getType());
+        $newDevice->setNbCpu($device->getNbCpu());
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
@@ -349,6 +360,10 @@ class InstanceManager
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);
+        }
+
+        foreach ($device->getControlProtocolTypes() as $control_protocol) {
+            $newDevice->addControlProtocolType($control_protocol);
         }
 
         return $newDevice;

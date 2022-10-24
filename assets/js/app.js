@@ -58,30 +58,33 @@ if (theme !== undefined) {
 
     // Switch themes
     //TODO: #665 On login page, this element is empty and generate error
-    document.getElementById("themeSwitcher").addEventListener('change', () => {
-        if (document.getElementById("themeSwitcher").checked) {
-            Cookies.set('theme', 'dark', {
-                expires: 3650
-            });
-        } else {
-            Cookies.set('theme', 'light', {
-                expires: 3650
-            });
-        }
-    });
-    document.getElementById("themeSwitcherDiv").addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById("themeSwitcher").checked = !document.getElementById("themeSwitcher").checked;
+    if (document.getElementById("themeSwitcher")) {
+        document.getElementById("themeSwitcher").addEventListener('change', () => {
+            if (document.getElementById("themeSwitcher").checked) {
+                Cookies.set('theme', 'dark', {
+                    expires: 3650
+                });
+            } else {
+                Cookies.set('theme', 'light', {
+                    expires: 3650
+                });
+            }
+        });
+    
+        document.getElementById("themeSwitcherDiv").addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById("themeSwitcher").checked = !document.getElementById("themeSwitcher").checked;
 
-        if (document.getElementById("themeSwitcher").checked) {
-            document.documentElement.setAttribute('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('theme', 'light');
-        }
+            if (document.getElementById("themeSwitcher").checked) {
+                document.documentElement.setAttribute('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('theme', 'light');
+            }
 
-        document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
-    });
+            document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
+        });
+    };
 
     /**
     * Customize dataTables

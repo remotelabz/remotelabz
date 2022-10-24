@@ -143,7 +143,7 @@ class GroupController extends Controller
 
             
             $result=$this->json($groups_secured, 200, [], [$request->get('_route')]);*/
-            $this->logger->debug("data from json groupcontroller ".$request->get('_route'). " context ". $context);
+            //$this->logger->debug("data from json groupcontroller ".$request->get('_route'). " context ". $context);
             if (is_null($context))
                 $result=$this->json($groups->getValues(), 200, [], [$request->get('_route')]);
             else

@@ -49,6 +49,10 @@ const url = require('url');
  * @property {number} vlan
  * @property {boolean} isTemplate
  * 
+ * @typedef {Object} ControlProtocol
+ * @property {number} id
+ * @property {string} name
+ * 
  * @typedef {Object} NetworkInterfaceOptions
  * @property {string} name
  * @property {boolean} [isTemplate]
@@ -138,7 +142,7 @@ const url = require('url');
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
  * @typedef {{name: string, uuid: string}} InstanceOwnerInterface
- * @typedef {"qemu"} Hypervisor
+ * @typedef {"qemu"|"lxc"} Hypervisor
  * @typedef {"tap"} NetworkInterfaceType
  * @typedef {"VNC"|null} NetworkInterfaceAccess
  * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
@@ -318,6 +322,19 @@ export class RemotelabzAPI {
          */
         delete(id) {
             return axios.delete(`/devices/${id}`)
+        },
+
+        /**
+         * Request an async network interface by device id
+         * 
+         * Implements GET `/api/device/{id<\d+>}/networkinterface`
+         * 
+         * @param {integer} id
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        getNbNetworkInterface(id) {
+            return axios.get(`/device/${id}/networkinterface`);
         }
     }
 
@@ -447,7 +464,7 @@ export class RemotelabzAPI {
         create(options = {}) {
             /** @type {NetworkInterfaceOptions} */
             const data = {
-                name: 'New network interface',
+                name: options.name,
                 isTemplate: false
             };
 

@@ -81,8 +81,6 @@ export default class Editor extends React.Component {
             const device = await Remotelabz.devices.get(_device.id)
             devices.push(device.data)
         }
-        //console.log(devices)
-
         this.setState({ devices, lab, ready: true })
     }
 
@@ -93,6 +91,7 @@ export default class Editor extends React.Component {
         Remotelabz.labs.addDeviceInLab(this.labId,device).then(response => {
             this.addDevice(response.data)
         })
+
     }
 
     updateDevicePositionRequest = device => {
@@ -445,7 +444,14 @@ function ShortDescriptionEditor({ id, initialValue, onChange }) {
         }, 100);
     }
 
-    return (<Form.Control name="shortDescription" type="text" placeholder="Write a small description about your lab (255 characters max.)" maxLength={255} onChange={handleChange} defaultValue={initialValue} />)
+    return (<Form.Control
+        name="shortDescription"
+        type="text"
+        placeholder="Write a small description about your lab (255 characters max.)"
+        maxLength={255}
+        onChange={handleChange}
+        defaultValue={initialValue}
+        />)
 }
 
 function DescriptionEditor({ id, initialValue }) {
