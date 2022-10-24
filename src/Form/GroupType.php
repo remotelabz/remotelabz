@@ -22,13 +22,13 @@ class GroupType extends AbstractType
         $builder
             ->add('name', TextType::class, [
                 'attr' => [
-                    'placeholder' => 'MathInfo 101'
+                    'placeholder' => 'Group L2S3'
                 ],
                 'label' => 'Group name'
             ])
             ->add('slug', TextType::class, [
                 'attr' => [
-                    'placeholder' => 'math-info-101',
+                    'placeholder' => 'Group-L2S3',
                     'pattern' => '[a-zA-Z0-9_\.][a-zA-Z0-9_\-\.]*[a-zA-Z0-9_\-]|[a-zA-Z0-9_]',
                     'title' => 'Please choose a group URL with no special characters'
                 ],
