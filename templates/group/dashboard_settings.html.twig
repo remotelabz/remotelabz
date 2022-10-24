@@ -172,7 +172,12 @@
                     <div class="col">
                         <p>A group can only be deleted by its owner.</p>
                         <p><strong>Deleted groups cannot be restored! Proceed with caution.</strong></p>
-                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete group</a>
+                        {% embed 'modal-delete-group.html.twig' with {'title': 'Delete group'|trans, 'class': 'delete-group-modal'} %}
+                            {% block content %}Do you confirm to delete this group ?{% endblock %}
+                        {% endembed %}
+                        <button class="btn btn-danger" data-target={{'.delete-group-modal'}} data-toggle="modal" type="button">
+                               {{ 'Delete'|trans }}
+                        </button>
                     </div>
                 </div>
             </div>
