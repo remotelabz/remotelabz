@@ -529,12 +529,12 @@ class LabController extends Controller
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
                 $device=$this->deviceRepository->findBy(['name' => 'Service', 'isTemplate' => true]);
-                $this->logger->debug("Device Service find ? : ",$device);
+                $this->logger->debug("Device Service found ? : ",$device);
                 if (!is_null($device) && count($device)>0 ) {
                     $srv_device=$this->copyDevice($device[0],'Service_sandbox');
                     $srv_device->setIsTemplate(false);
                     $entityManager->persist($srv_device);
-                    $this->logger->debug("Add additional device to lab ".$srv_device->getName());
+                    $this->logger->debug("Add additional device ".$srv_device->getName()." to lab ".$lab_name);
                     $this->adddeviceinlab($srv_device,$lab);
                 }
             $entityManager->persist($lab);
@@ -579,6 +579,10 @@ class LabController extends Controller
         $newDevice->setType($device->getType());
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($device->getOperatingSystem());
+        $newDevice->setNbCpu($device->getNbCpu());
+        $newDevice->setNbSocket($device->getNbSocket());
+        $newDevice->setNbCore($device->getNbCore());
+        $newDevice->setNbThread($device->getNbThread());
         $newDevice->setIsTemplate(true);
 
         $i=0;

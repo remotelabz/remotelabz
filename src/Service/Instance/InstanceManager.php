@@ -369,6 +369,7 @@ class InstanceManager
         return $newDevice;
     }
 
+    // TODO : Problem with the entitymanager closed when called to this function
     /**
      * Delete a device form a DeviceInstance, with its os defined in options.
      * This function is used when an error occurs in export process

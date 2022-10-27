@@ -62,7 +62,7 @@ class Device implements InstanciableInterface
     private $launchScript;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist","remove"})
      * @Serializer\Groups({"api_get_device", "export_lab"})
      */
     private $networkInterfaces;
