@@ -118,7 +118,7 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-            foreach ($device->getControlProtocols() as $proto) {
+            foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
