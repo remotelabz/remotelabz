@@ -59,7 +59,7 @@ class GroupVoter extends Voter
         return $user->isAdministrator() ||
             $group->isPublic() ||
             ($group->isInternal() && $user->isMemberOf($group)) ||
-            ($group->isPrivate() && $group->isOwner($user))
+            ($group->isPrivate() && $group->isElevatedUser($user))
         ;
     }
 
