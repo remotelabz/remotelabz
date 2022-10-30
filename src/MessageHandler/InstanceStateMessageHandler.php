@@ -28,19 +28,17 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,
         LabInstanceRepository $labInstanceRepository,
-        OperatingSystemRepository $OperatingSystemRepository,
+        OperatingSystemRepository $operatingSystemRepository,
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
         LoggerInterface $logger
-        //UrlGeneratorInterface $router
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
-        $this->operatingSystemRepository=$OperatingSystemRepository;
+        $this->operatingSystemRepository=$operatingSystemRepository;
         $this->instanceManager = $instanceManager;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
-        //$this->router = $router;
     }
 
     public function __invoke(InstanceStateMessage $message)
@@ -73,7 +71,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                 }
             }
             if (!is_null($instance)) {
-                $this->logger->debug("Instance not null and Error received from : ". $message->getUuid() ." message state ".$message->getState()." instance state :".$instance->getState());
+                $this->logger->debug("Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
                 switch ($instance->getState()) {
                     case InstanceStateMessage::STATE_STARTING:
                         $this->logger->debug('Instance in '.$instance->getState());
@@ -102,7 +100,8 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                     case InstanceStateMessage::STATE_EXPORTING:
                         $this->logger->debug('Instance in '.$instance->getState());
-                        $instance->setState(InstanceStateMessage::STATE_ERROR);
+                        $instance->setState(InstanceStateMessage::STATE_DELETED);
+                        //$instance->setState(InstanceStateMessage::STATE_ERROR);
                         $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
 
                         /* Remove newdevice template and OS created
@@ -124,7 +123,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                         //$message->getUuid();
                         // Test using options
                         // For transition, all uuid are copy in options
-                        $this->instanceManager->deleteDev_fromexport($message->getUuid(),$message->getOptions());
+                        //$this->instanceManager->deleteDev_fromexport($message->getUuid(),$message->getOptions());
                         break;
 
                     default:
@@ -140,7 +139,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             $this->logger->debug("No error received from : ". $message->getUuid() ." ".$message->getState());
             if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
                 $this->logger->debug("InstanceStateMessageHandler Instance is not null");
-                $instance->setState($message->getState());}
+                $instance->setState($message->getState());
+                $this->entityManager->persist($instance);
+            }
             else 
                 $this->logger->debug("InstanceStateMessageHandler Instance is null");
 
@@ -184,7 +185,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                 }
                 
             } else {
-                $this->logger->debug("Instance state received:".$instance->getState());
+                $this->logger->debug("Instance state received: ".$instance->getState());
                 $this->entityManager->persist($instance);
                 }
         }

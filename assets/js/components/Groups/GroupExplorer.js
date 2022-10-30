@@ -52,7 +52,7 @@ class GroupNode extends Component {
                                             placement="bottom"
                                             overlay={
                                                 <Tooltip id={group.name}>
-                                                    Private - The group and its activities can only be viewed by yourself.
+                                                    Private - The group and its activities can only be viewed by its owner and administrators.
                                                 </Tooltip>
                                             }
                                         >

@@ -118,20 +118,12 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
             $device = $deviceForm->getData();
-            foreach ($device->getControlProtocols() as $proto) {
+            foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
             $this->addNetworkInterface($device);
-            $device->setHypervisor($device->getOperatingSystem()->getHypervisor());
-            switch($device->getOperatingSystem()->getHypervisor()->getName()) {
-                case 'lxc':
-                    $device->setType('container');
-                break;
-                case 'qemu':
-                    $device->setType('vm');
-                break;
-            }
+            $this->setDeviceHypervisorToOS($device);
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -189,8 +181,6 @@ class DeviceController extends Controller
             $device_json['networkInterfaces']=count($device->getNetworkInterfaces());
             $controlProtocolType_json=$device_json['controlProtocolTypes'];
             $device_json['controlProtocolTypes']=array();
-            
-            
 
             if ( !empty($controlProtocolType_json) ) {
                 foreach ($controlProtocolType_json as $controlProtoType){
@@ -231,7 +221,6 @@ class DeviceController extends Controller
                 return $this->redirectToRoute('show_device', ['id' => $id]);
             }
             
-
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 //$this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
@@ -253,6 +242,8 @@ class DeviceController extends Controller
                 $device->setNbCpu($total);
             }
 
+            $this->setDeviceHypervisorToOS($device);
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -271,8 +262,6 @@ class DeviceController extends Controller
                     if ($formField->getErrors() != "")
                         $this->logger->debug($fieldName." Error : ".$formField->getErrors());
                 }
-
-            
         }
 
         if ('json' === $request->getRequestFormat()) {
@@ -421,5 +410,16 @@ class DeviceController extends Controller
         
     }
 
-
+    // Set the hypervisor of a device to the same that de OS choosen
+    private function setDeviceHypervisorToOS(Device $device){
+        $device->setHypervisor($device->getOperatingSystem()->getHypervisor());
+            switch($device->getOperatingSystem()->getHypervisor()->getName()) {
+                case 'lxc':
+                    $device->setType('container');
+                break;
+                case 'qemu':
+                    $device->setType('vm');
+                break;
+            }
+    }
 }
