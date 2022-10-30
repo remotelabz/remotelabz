@@ -58,7 +58,8 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name'
             ])
             ->add('nbCpu', NumberType::class, [
-                'empty_data' => 1
+                'empty_data' => 1,
+                'required' => true,
             ])
             ->add('nbCore', NumberType::class, [
                 'empty_data' => null,
@@ -75,7 +76,8 @@ class DeviceType extends AbstractType
             ->add('networkInterfaces', NumberType::class, [
                 'data' => $options["nb_network_interface"],
                 'help' => "Limit to 19 interfaces",
-                'empty_data' => 0,
+                'required' => true,
+                'empty_data' => 1,
                 'mapped' => false
             ])
            ->add('controlProtocolTypes', EntityType::class, [
