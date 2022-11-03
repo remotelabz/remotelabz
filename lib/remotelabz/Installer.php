@@ -288,13 +288,13 @@ class Installer
     {
         $isCopied = true;
         // Check if directory is already to the right place
-        if (dirname(__FILE__, 4) != $this->installPath) {
+        if (dirname(__FILE__, 3) != $this->installPath) {          
             // Check if there is already a directory
             if (is_dir($this->installPath)) {
                 $isCopied = false;
             } else {
                 // Copy files
-                $this->rcopy(dirname(__FILE__, 4), $this->installPath);
+                $this->rcopy(dirname(__FILE__, 3), $this->installPath);
             }
         } else {
             $isCopied = false;
@@ -324,7 +324,7 @@ class Installer
             $isCopied = false;
         } else {
             // symlink files
-            symlink(dirname(__FILE__, 4), $this->installPath);
+            symlink(dirname(__FILE__, 3), $this->installPath);
             $isCopied = true;
         }
 
@@ -511,6 +511,7 @@ class Installer
      */
     private function rcopy($src, $dst)
     {
+        $this->logger->debug("Copy file from ".$src." to ".$dst);
         $dir = opendir($src);
         @mkdir($dst);
         while (false !== ($file = readdir($dir))) {

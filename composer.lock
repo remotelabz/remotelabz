@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "562e12b60f536ca60c121f906d40647b",
+    "content-hash": "9e4e5f1c3e7fb8b022e2cd990740254a",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -4409,16 +4409,16 @@
         },
         {
             "name": "remotelabz/network-bundle",
-            "version": "1.0.2.1",
+            "version": "1.0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/network-bundle.git",
-                "reference": "fa69b07d97f090ab74cea25594459714a24cc3b5"
+                "reference": "b85f5d2441ed64926128451c87d58857739ce07c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/network-bundle/zipball/fa69b07d97f090ab74cea25594459714a24cc3b5",
-                "reference": "fa69b07d97f090ab74cea25594459714a24cc3b5",
+                "url": "https://api.github.com/repos/remotelabz/network-bundle/zipball/b85f5d2441ed64926128451c87d58857739ce07c",
+                "reference": "b85f5d2441ed64926128451c87d58857739ce07c",
                 "shasum": ""
             },
             "require": {
@@ -4434,7 +4434,7 @@
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
-                    "RemoteLabz\\NetworkBundle\\": ""
+                    "Remotelabz\\NetworkBundle\\": ""
                 },
                 "exclude-from-classmap": [
                     "Resources/",
@@ -4456,23 +4456,23 @@
             ],
             "description": "NetworkBundle is a bundle used by RemoteLabz to handle all IP and network related aspects.",
             "support": {
-                "source": "https://github.com/remotelabz/network-bundle/tree/1.0.2.1",
+                "source": "https://github.com/remotelabz/network-bundle/tree/1.0.2.2",
                 "issues": "https://github.com/remotelabz/network-bundle/issues"
             },
-            "time": "2022-11-03T18:10:04+00:00"
+            "time": "2022-11-03T22:29:19+00:00"
         },
         {
             "name": "remotelabz/remotelabz-message-bundle",
-            "version": "1.0.4.1",
+            "version": "1.0.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
-                "reference": "0a45a06a778d26f1b6d0e23605f7eec7f31f4f90"
+                "reference": "37bbbfdb4da263e397e6550c298ae1d52711b1e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/0a45a06a778d26f1b6d0e23605f7eec7f31f4f90",
-                "reference": "0a45a06a778d26f1b6d0e23605f7eec7f31f4f90",
+                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/37bbbfdb4da263e397e6550c298ae1d52711b1e0",
+                "reference": "37bbbfdb4da263e397e6550c298ae1d52711b1e0",
                 "shasum": ""
             },
             "require": {
@@ -4515,10 +4515,10 @@
             ],
             "description": "Shared messages between remotelabz components.",
             "support": {
-                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/1.0.4.1",
+                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/1.0.4.2",
                 "issues": "https://github.com/remotelabz/remotelabz-message-bundle/issues"
             },
-            "time": "2022-11-03T17:17:31+00:00"
+            "time": "2022-11-03T22:28:45+00:00"
         },
         {
             "name": "s1lentium/iptools",
