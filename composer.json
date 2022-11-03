@@ -1,5 +1,5 @@
 {
-    "name": "crestic-urca/remotelabz",
+    "name": "remotelabz/remotelabz",
     "description": "Education software to provide VMs and networks as-a-service.",
     "type": "project",
     "license": "proprietary",
@@ -8,8 +8,8 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "composer/package-versions-deprecated": "^1.11.99",
-        "crestic-urca/network-bundle": "^1.0",
-        "crestic-urca/remotelabz-message-bundle": "^1.0.4",
+        "remotelabz/network-bundle": "^1.0",
+        "remotelabz/remotelabz-message-bundle": "^1.0.4",
         "doctrine/annotations": "^1.0",
         "doctrine/common": "^3",
         "doctrine/doctrine-bundle": "^2",
@@ -131,11 +131,11 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/crestic-urca/network-bundle.git"
+            "url": "https://github.com/remotelabz/network-bundle.git"
         },
         {
             "type": "vcs",
-            "url": "https://github.com/crestic-urca/remotelabz-message-bundle.git"
+            "url": "https://github.com/remotelabz/remotelabz-message-bundle.git"
         }
     ]
 }

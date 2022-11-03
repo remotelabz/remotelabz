@@ -326,6 +326,9 @@
     "ralouphie/getallheaders": {
         "version": "3.0.3"
     },
+    "remotelabz/remotelabz-message-bundle": {
+        "version": "1.0.4.1"
+    },
     "s1lentium/iptools": {
         "version": "v1.1.1"
     },
