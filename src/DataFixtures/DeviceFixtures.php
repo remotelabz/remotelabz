@@ -3,6 +3,8 @@
 namespace App\DataFixtures;
 
 use App\Entity\Device;
+use App\Entity\ControlProtocolType;
+use App\Repository\ControlProtocolTypeRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -13,6 +15,10 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
     public function load(ObjectManager $manager)
     {
+
+        // Don't work. Try to get the object from the database because this data is present from the migration process
+    //    $vnc=$manager->getRepository(ControlProtocolType::class)->findOneByName('vnc');
+    //    $login=$manager->getRepository(ControlProtocolType::class)->findOneByName('login');
 
         $device = new Device();
 
@@ -28,6 +34,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setHypervisor($this->getReference('qemu'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
+            ->setNbCpu(1)
+//            ->addControlProtocolType($vnc)
         ;
 
         $manager->persist($device);
@@ -80,7 +88,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
-            ->setVnc(true)
+            ->setNbCpu(1)
+          //  ->addControlProtocolType($login)
         ;
         $manager->persist($device);
         $this->addReference('Migration', $device);
@@ -98,7 +107,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
-            ->setVnc(true)
+            ->setNbCpu(1)
+          //  ->addControlProtocolType($login)
         ;
         $manager->persist($device);
         $this->addReference('Ubuntu20LTS-cnt', $device);
@@ -116,7 +126,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
-            ->setVnc(true)
+            ->setNbCpu(1)
+          //  ->addControlProtocolType($login)
         ;
         $manager->persist($device);
         $this->addReference('Alpine3.15-cnt', $device);
@@ -134,7 +145,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
-            ->setVnc(true)
+            ->setNbCpu(1)
+         //   ->addControlProtocolType($login)
         ;
         $manager->persist($device);
         $this->addReference('Debian-cnt', $device);
