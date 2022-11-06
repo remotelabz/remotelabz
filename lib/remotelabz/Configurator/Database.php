@@ -83,6 +83,17 @@ class Database
 
         if ($doFixtures) {
             $log->debug("Starting database fixtures loading");
+
+            $log->debug("Clear cache before database fixtures loading");
+            Logger::println('Clear cache before database fixtures loading', Logger::COLOR_NONE, 1);
+
+            exec("php " . dirname(__FILE__) . "/../../../bin/console cache:clear -n 2>&1", $output, $return);
+            Logger::println($output, null, 1);
+            $log->debug($output);
+            if ($return !== 0) {
+                throw new ConfigurationException("Error while clear cache.");
+            }
+
             Logger::println('Starting database fixtures loading', Logger::COLOR_NONE, 1);
 
             /*$log->debug("First - Drop the database");
