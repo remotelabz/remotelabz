@@ -104,10 +104,10 @@ $getopt = new GetOpt([
 /*
     Option::create(null, 'no-permission', GetOpt::NO_ARGUMENT)
         ->setDescription("Skip file permissions step."),
-
+*/
     Option::create(null, 'symlink', GetOpt::NO_ARGUMENT)
         ->setDescription("Symlink remotelabz to this folder instead of copying files."),
-*/
+
 ]);
 try {
     $getopt->process();
