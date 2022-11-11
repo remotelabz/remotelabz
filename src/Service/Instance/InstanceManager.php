@@ -245,13 +245,14 @@ class InstanceManager
         $id = uniqid();
         $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
         
+        $this->logger->debug('Export process. Hypervisor is :'.$hypervisor->getName());
 
-        switch ($hypervisor) {
+        switch ($hypervisor->getName()) {
             case "qemu":
                 $imageName=$imageName.'.img';
                 break;
             default:
-                $imageName=$imageName.'.img';
+                $imageName=$imageName;
         }
         $this->logger->debug('Export process. New name will be :'.$imageName);
 
@@ -287,8 +288,11 @@ class InstanceManager
         
         $vnc=false;
         foreach($device->getControlProtocolTypes() as $controlProtocolType){
-            if ($controlProtocolType->getName()==="vnc")
+            $this->logger->debug('Test ControlProtocolType for device stopped');
+            if ($controlProtocolType->getName()!="") {
+                $this->logger->debug('Route found for device stopped');
                 $vnc=($vnc || true);
+            }
         }
 
         if ($vnc) {
@@ -309,7 +313,6 @@ class InstanceManager
         }
 
         $this->entityManager->flush();
-
         $this->logger->info('Device instance state changed.');
     }
 

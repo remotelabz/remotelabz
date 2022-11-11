@@ -121,11 +121,15 @@ class ProxyManager
     {
         $client = new Client();
 
-        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServerAPI.':'.$this->remotelabzProxyApiPort.'/api/routes/device/'.$uuid;
-        $this->logger->debug('Delete route in proxy', [
-            'url' => $url
-        ]);
-
-        $client->delete($url);
+        $url = ($this->remotelabzProxyUseHttps ? 'https' : 'http').'://'.$this->remotelabzProxyServerAPI.':'.$this->remotelabzProxyApiPort.'/api/routes';
+        $response=$client->get($url);
+        if (array_key_exists('/device/'.$uuid ,json_decode($response->getBody(),true))){
+            //$this->logger->debug('device found in proxy:'.$response->getBody());
+            $url = $url.'/device/'.$uuid;
+            $this->logger->info('Delete route in proxy', [
+                'url' => $url
+            ]);
+            $client->delete($url);
+        }
     }
 }

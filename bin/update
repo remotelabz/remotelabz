@@ -60,7 +60,7 @@ else
     echo "Downloading version ${LATEST_TAG}..."
 fi
 
-LATEST_VERSION_URL="https://github.com/crestic-urca/remotelabz/archive"
+LATEST_VERSION_URL="https://github.com/remotelabz/remotelabz/archive"
 
 ORIGINAL_DIR_OWNER=$(ls -ld $PWD | awk 'NR==1 {print $3}')
 

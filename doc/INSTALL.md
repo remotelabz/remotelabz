@@ -117,7 +117,7 @@ echo "JWT_PASSPHRASE=yourpassphrase" | sudo tee -a .env
 
 ### Instances
 
-In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/crestic/remotelabz-worker), you need to start **Symfony Messenger** :
+In order to be able to control instances on [the worker](https://gitlab.remotelabz.com/remotelabz/remotelabz-worker), you need to start **Symfony Messenger** :
 
 ```bash
 sudo systemctl start remotelabz
