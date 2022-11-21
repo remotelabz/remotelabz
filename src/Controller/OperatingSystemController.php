@@ -107,11 +107,14 @@ class OperatingSystemController extends Controller
 
             if ($operatingSystem->getImageUrl() !== null && $operatingSystem->getImageFilename() !== null) {
                 $this->addFlash('danger', "You can't provide an image url and an image file. Please provide only one.");
+                $this->logger->error("New OS - You can't provide an image url and an image file. Please provide only one.");
             } else {
                 /** @var UploadedFile|null $imageFile */
                 $imageFile = $operatingSystemForm->get('imageFilename')->getData();
-                    if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img') {
-                        $this->addFlash('danger', "Only .img files are accepted.");
+                    if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img' && strtolower($imageFile->getClientOriginalExtension()) != 'qcow2') {
+                        $this->addFlash('danger', "Only .img or qcow2 files are accepted.");
+                        $this->logger->error("New OS - Only .img or qcow2 files are accepted");
+
                     } else {
                         if ($imageFile) {
                             $imageFileName = $imageFileUploader->upload($imageFile);
@@ -122,6 +125,8 @@ class OperatingSystemController extends Controller
                         $entityManager->flush();
 
                         $this->addFlash('success', 'Operating system has been created.');
+                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$imageFileName);
+
                     }
                 return $this->redirectToRoute('operating_systems');
             }
