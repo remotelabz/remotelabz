@@ -114,6 +114,9 @@ duplicate-cn
 push "route 10.11.0.0 255.255.0.0"
 EOF
 
+chown :www-data /etc/openvpn/client
+chmod g+w /etc/openvpn/client
+
 systemctl enable openvpn-server@server
 service openvpn-server@server start
 
