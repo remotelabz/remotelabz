@@ -49,7 +49,8 @@ class WorkerHandshakeMessageHandler implements MessageHandlerInterface
             $uuid = $deviceInstance->getUuid();
             $context = SerializationContext::create()->setGroups('worker');
             $deviceJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-            $this->logger->info('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
+            $this->logger->info('Sending device instance '.$uuid.' start message.');
+            $this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START)
             );
