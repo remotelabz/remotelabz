@@ -124,6 +124,13 @@ sysctl -w net.ipv4.ip_forward=1
 sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
 
+# To avoid error message "Too many opened files" and containers don't stop
+sysctl -n -w fs.inotify.max_user_instances=512
+sysctl -n -w fs.inotify.max_user_watches=16384
+echo "fs.inotify.max_user_watches=16384" >> /etc/sysctl.conf
+echo "fs.inotify.max_user_instances=512" >> /etc/sysctl.conf
+
+
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"
 echo "Your .env.local will be configured with this default password. If you choose to change it, don't forget to modify your .env.local file"
