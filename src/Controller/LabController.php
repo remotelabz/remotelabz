@@ -260,6 +260,72 @@ class LabController extends Controller
     }
 
     /**
+     * @Route("/labs/test/{id<\d+>}", name="show_lab_test", methods="GET")
+     * 
+     * @Rest\Get("/api/labs/test/{id<\d+>}", name="api_get_lab_test")
+     */
+    public function showActionTest(
+        int $id,
+        Request $request,
+        UserInterface $user,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
+    {
+        $lab = $labRepository->findLabInfoById($id);
+
+        /*if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+
+        // Remove all instances not belongs to current user (changes are not stored in database)
+        $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
+        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
+        $deviceStarted = [];
+
+        foreach ($lab->getDevices()->getValues() as $device) {
+            $deviceStarted[$device->getId()] = false;
+
+            if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
+                $deviceStarted[$device->getId()] = true;
+            }
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            $context=$request->get('_route');
+            //Change the context value to limit the return information
+            return $this->json($lab, 200, [], [$context]);
+        }
+
+        $instanceManagerProps = [
+            'user' => $this->getUser(),
+            'labInstance' => $userLabInstance,
+            'lab' => $lab,
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
+            'isSandbox' => false
+        ];
+
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+        );
+        //$this->logger->debug("show_lab props".$props);
+        return $this->render('lab/view.html.twig', [
+            'lab' => $lab,
+            'labInstance' => $userLabInstance,
+            'deviceStarted' => $deviceStarted,
+            'user' => $user,
+            'props' => $props,
+        ]);*/
+        $response = new Response();
+        $response->setContent(json_encode(['status'=>'success','lab' =>$lab]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @Route("/labs/new", name="new_lab")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
@@ -964,6 +1030,24 @@ class LabController extends Controller
             //dd($exception->getResponse()->getBody()->getContents(), $labXml, $lab->getInstances());
             dd($exception->getResponse()->getBody()->getContents());
         }
+    }
+
+    /**
+     * @Route("/labs/close", name="close_lab", methods="GET")
+     * 
+     * @Rest\Delete("/api/labs/close", name="api_close_lab")
+     */
+    public function closeLab(
+        Request $request,
+        UserInterface $user,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
+    {
+        $response = new Response();
+        $response->setContent(json_encode(['status' => 'success']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
 }

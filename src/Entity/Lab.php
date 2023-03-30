@@ -92,6 +92,13 @@ class Lab implements InstanciableInterface
      */
     private $banner;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
+     *
+     * @var Collection|TextObject[]
+     */
+    private $textobjects;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -101,6 +108,7 @@ class Lab implements InstanciableInterface
         $this->uuid = (string) new Uuid();
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
+        $this->textobjects = new ArrayCollection();
     }
 
     public static function create(): self
@@ -283,6 +291,37 @@ class Lab implements InstanciableInterface
     public function setBanner(?string $banner): self
     {
         $this->banner = $banner;
+
+        return $this;
+    }
+
+     /**
+     * @return Collection|TextObject[]
+     */
+    public function getTextobjects()
+    {
+        return $this->textobjects;
+    }
+
+    public function addTextobject(Lab $textobject): self
+    {
+        if (!$this->textobjects->contains($textobject)) {
+            $this->textobjects[] = $textobject;
+            $textobject->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTextobject(Lab $textobject): self
+    {
+        if ($this->textobjects->contains($textobject)) {
+            $this->textobjects->removeElement($textobject);
+            // set the owning side to null (unless already changed)
+            if ($textobject->getLab() === $this) {
+                $textobject->setLab(null);
+            }
+        }
 
         return $this;
     }
