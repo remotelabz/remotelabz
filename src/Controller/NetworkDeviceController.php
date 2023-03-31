@@ -3,22 +3,14 @@
 namespace App\Controller;
 
 use IPTools;
-use App\Entity\TextObject;
+use App\Entity\NetworkDevice;
 use App\Entity\Lab;
-use App\Entity\Device;
-use App\Entity\Network;
-use App\Entity\Activity;
-use App\Entity\LabInstance;
-use App\Entity\DeviceInstance;
-use App\Entity\NetworkInterfaceInstance;
-use App\Entity\NetworkInterface;
-use App\Entity\NetworkSettings;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use GuzzleHttp\Client;
 use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
-use App\Repository\TextObjectRepository;
+use App\Repository\NetworkDeviceRepository;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
@@ -50,15 +42,11 @@ use Exception;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\HeaderUtils;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+
 use Doctrine\Persistence\ManagerRegistry;
 
 
-class TextObjectController extends Controller
+class NetworkDeviceController extends Controller
 {
     private $workerServer;
 
@@ -69,41 +57,44 @@ class TextObjectController extends Controller
     /** @var LoggerInterface $logger */
     private $logger;
 
-    /** @var TextObjectRepository $textobjectRepository */
-    private $textobjectRepository;
+    /** @var NetworkDeviceRepository $networkdeviceRepository */
+    private $networkdeviceRepository;
 
     public function __construct(
         LoggerInterface $logger,
         operatingSystemRepository $operatingSystemRepository,
         SerializerInterface $serializerInterface,
-        TextObjectRepository $textobjectRepository,
+        NetworkDeviceRepository $networkdeviceRepository,
         LabRepository $labRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
         $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
-        $this->textobjectRepository = $textobjectRepository;
+        $this->networkdeviceRepository = $networkdeviceRepository;
         $this->labRepository = $labRepository;
     }
 
     /**
-     * @Route("/textobjects", name="textobjects")
+     * @Route("/networks", name="networks")
      * 
-     * @Rest\Get("/api/labs/{id<\d+>}/textobjects", name="api_get_textobjects")
+     * @Rest\Get("/api/labs/{id<\d+>}/networks", name="api_get_networks")
      * 
      */
-    public function indexAction(int $id, Request $request, UserRepository $userRepository)
+    public function indexAction(int $id, Request $request)
     {
-        $textobjects = $this->textobjectRepository->findByLab($id);
+        $networks = $this->networkdeviceRepository->findByLab($id);
         $data = [];
-        foreach($textobjects as $textobject){
+        foreach($networks as $network){
             array_push($data, [
-                "name"=> $textobject->getName(),
-                "type"=> $textobject->getType(),
-                "data"=> $textobject->getData(),
-                "newdata"=> $textobject->getNewdata(),
-                "id"=>$textobject->getId(),
+                "id"=>$network->getId(),
+                "name"=> $network->getName(),
+                "type"=> $network->getType(),
+                "count"=> $network->getCount(),
+                "top"=> $network->getTop(),
+                "left"=> $network->getLeftPosition(),
+                "visibility"=> $network->getVisibility(),
+                "postfix"=> $network->getPostfix(),   
             ]);
         }
 
@@ -111,16 +102,16 @@ class TextObjectController extends Controller
         $response->setContent(json_encode([
             'code'=> 200,
             'status'=>'success',
-            'message' => 'Successfully listed textobjects (60062).',
+            'message' => 'Successfully listed networks (60004).',
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
 
  /**
-     * @Route("/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="show_textobject", methods="GET")
+     * @Route("/labs/{labId<\d+>}/networks/{id<\d+>}", name="show_network", methods="GET")
      * 
-     * @Rest\Get("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_get_textobject")
+     * @Rest\Get("/api/labs/{labId<\d+>}/networks/{id<\d+>}", name="api_get_network")
      */
     public function showAction(
         int $labId,
@@ -128,18 +119,19 @@ class TextObjectController extends Controller
         Request $request,
         UserInterface $user,
         LabInstanceRepository $labInstanceRepository,
-        TextObjectRepository $textobjectRepository,
+        NetworkDeviceRepository $networkdeviceRepository,
         SerializerInterface $serializer)
     {
         //$lab = $labRepository->findById($LabId);
-        $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
+        $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
 
         $data = [
-            "name"=> $textobject->getName(),
-            "type"=> $textobject->getType(),
-            "data"=> $textobject->getData(),
-            "newdata"=> $textobject->getNewdata(),
-            "id"=>$textobject->getId(),
+            "name"=> $network->getName(),
+            "type"=> $network->getType(),
+            "count"=> $network->getCount(),
+            "top"=> $network->getTop(),
+            "left"=> $network->getLeftPosition(),
+            "visibility"=> $network->getVisibility(),          
         ];
 
        
@@ -147,7 +139,7 @@ class TextObjectController extends Controller
         $response->setContent(json_encode([
             'code' => 200,
             'status'=>'success',
-            'message' => 'Object loaded',
+            'message' => 'Successfully listed network (60005).',
             'data' =>$data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
@@ -155,102 +147,101 @@ class TextObjectController extends Controller
     
 
     /**
-     * @Route("/textobjects/new", name="new_textobject")
+     * @Route("/networkDevice/new", name="new_networkdevice")
      * 
-     * @Rest\Post("/api/labs/{id<\d+>}/textobjects", name="api_new_textobject")
+     * @Rest\Post("/api/labs/{id<\d+>}/networks", name="api_new_networkdevice")
      */
     public function newAction(Request $request, int $id)
     {
-        $textobject = new TextObject();
+        $network = new NetworkDevice();
         $data = json_decode($request->getContent(), true);
         $lab = $this->labRepository->findById($id);
         //$this->logger->debug($textobject);
 
         
-        $textobject->setLab($lab);
-        $textobject->setName($data['name']);
-        $textobject->setData($data['data']);
-        $textobject->setType($data['type']);
+        $network->setLab($lab);
+        $network->setName($data['name']);
+        $network->setCount($data['count']);
+        $network->setType($data['type']);
+        $network->setLeftPosition($data['left']);
+        $network->setTop($data['top']);
+        $network->setVisibility($data['visibility']);
+        $network->setPostfix($data['postfix']);
 
         $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($textobject);
+        $entityManager->persist($network);
         $entityManager->flush();
 
 
-        $this->logger->info("TextObject named" . $textobject->getName() . " created");
+        $this->logger->info("Network named" . $network->getName() . " created");
 
-       /* if ('json' === $request->getRequestFormat()) {
-            return $this->json($textobject, 200, [], ['api_get_textobjects']);
-        }*/
-
-       /* return $this->redirectToRoute('edit_lab', [
-            'id' => $lab->getId()
-        ]);*/
         $response = new Response();
         $response->setContent(json_encode([
-            'code' => 200,
+            'code' => 201,
             'status'=> 'success',
-            'message' => 'Lab has been saved (60023).',
+            'message' => 'Network has been added to the lab (60006).',
             'data' => [
-                'name'=>$textobject->getName(),
-                "type"=> $textobject->getType(),
-                "data"=> $textobject->getData(),
-                "newdata"=> $textobject->getNewdata()
-
+                'id'=>$network->getId(),
             ]]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
 
     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_edit_textobject")
+     * @Rest\Put("/api/labs/{labId<\d+>}/networks/{id<\d+>}", name="api_edit_network")
      */
-    public function updateAction(Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
+    public function updateAction(Request $request, int $id, int $labId, NetworkDeviceRepository $networkdeviceRepository, ManagerRegistry $doctrine)
     {
-        $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
+        $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
         $data = json_decode($request->getContent(), true);   
 
-        if (isset($data['name'])) {
-            $textobject->setName($data['name']);
+        if (isset($data['visibility'])) {
+            $network->setVisibility($data['visibility']);
         }
-        $textobject->setData($data['data']);
+        if (isset($data['top'])) {
+            $network->setTop($data['top']);
+        }
+        if (isset($data['left'])) {
+            $network->setLeftPosition($data['left']);
+        }
+        if (isset($data['name'])) {
+            $network->setName($data['name']);
+            $network->setType($data['type']);
+            $network->setCount($data['count']);
+            $network->setPostfix($data['postfix']);
+        }
 
         $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($textobject);
+        $entityManager->persist($network);
         $entityManager->flush();
 
 
-        $this->logger->info("TextObject named" . $textobject->getName() . " modified");
+        $this->logger->info("Network named" . $network->getName() . " modified");
 
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).'
-            /*'data' => [
-                'name'=>$textobject->getName(),
-                "type"=> $textobject->getType(),
-                "data"=> $textobject->getData(),
-                "newdata"=> $textobject->getNewdata()
-
-            ]*/]));
+           ]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
 
-     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects", name="api_edit_textobjects")
+    /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/networks", name="api_edit_networks")
      */
-    public function updateMultipleTextObjectsAction(Request $request, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
+    public function updateMultipleNetwoksAction(Request $request, int $labId, NetworkDeviceRepository $networkdeviceRepository, ManagerRegistry $doctrine)
     {
        // $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
         $data = json_decode($request->getContent(), true);   
 
         foreach($data as $dataObject){
-            $textobject = $textobjectRepository->findByIdAndLab($dataObject['id'], $labId);
-            $textobject->setData($dataObject['data']);
+            $network = $networkdeviceRepository->findByIdAndLab($dataObject['id'], $labId);
+            $network->setTop($dataObject['top']);
+            $network->setLeftPosition($dataObject['left']);
             $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($textobject);
+            $entityManager->persist($network);
             $entityManager->flush();
         }
 
@@ -268,21 +259,31 @@ class TextObjectController extends Controller
     /**
      * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
      * 
-     * @Rest\Delete("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_delete_textobject")
+     * @Rest\Delete("/api/labs/{labId<\d+>}/networks/{id<\d+>}", name="api_delete_network")
      */
-    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository)
+    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, NetworkDeviceRepository $networkdeviceRepository)
     {
-        $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
+        $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
         
         $entityManager = $doctrine->getManager();
-        $entityManager->remove($textobject);
+        $entityManager->remove($network);
         $entityManager->flush();
+
+        $data = [
+            "id"=> $network->getId(),
+            "name"=> $network->getName(),
+            "type"=> $network->getType(),
+            "count"=> $network->getCount(),
+            "top"=> $network->getTop(),
+            "left"=> $network->getLeftPosition(),          
+        ];
 
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 200,
             'status'=>'success',
-            'message' => 'Lab has been saved (60023).'
+            'message' => 'Lab has been saved (60023).',
+            'data' => $data
         ]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;

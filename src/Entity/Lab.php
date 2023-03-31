@@ -99,6 +99,13 @@ class Lab implements InstanciableInterface
      */
     private $textobjects;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\NetworkDevice", mappedBy="lab")
+     *
+     * @var Collection|NetworkDevice[]
+     */
+    private $networks;
+
     public function __construct()
     {
         $this->devices = new ArrayCollection();
@@ -109,6 +116,7 @@ class Lab implements InstanciableInterface
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
+        $this->networks = new ArrayCollection();
     }
 
     public static function create(): self
@@ -320,6 +328,37 @@ class Lab implements InstanciableInterface
             // set the owning side to null (unless already changed)
             if ($textobject->getLab() === $this) {
                 $textobject->setLab(null);
+            }
+        }
+
+        return $this;
+    }
+
+     /**
+     * @return Collection|NetworkDevice[]
+     */
+    public function getNetworks()
+    {
+        return $this->networks;
+    }
+
+    public function addNetwork(NetworkDevice $network): self
+    {
+        if (!$this->networks->contains($network)) {
+            $this->networks[] = $network;
+            $network->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNetwork(NetworkDevice $network): self
+    {
+        if ($this->networks->contains($network)) {
+            $this->networks->removeElement($network);
+            // set the owning side to null (unless already changed)
+            if ($network->getLab() === $this) {
+                $network->setLab(null);
             }
         }
 
