@@ -51,3 +51,20 @@ monolog:
             type: syslog
             # log error-level messages and higher
             level: error
+            handler:    grouped
+        grouped:
+            type: group
+            members: [syslog_handler,deduplicated]
+        deduplicated:
+            type:    deduplication
+            handler: symfony_mailer
+        symfony_mailer:
+            type:       symfony_mailer
+            from_email: '%env(resolve:CONTACT_MAIL)%'
+            to_email:   '%env(resolve:CONTACT_MAIL)%'
+            # or list of recipients
+            # to_email:   ['dev1@example.com', 'dev2@example.com', ...]
+            subject:    '[RemoteLabz] An Error Occurred! %%message%%'
+            level:      error
+            formatter:  monolog.formatter.html
+            content_type: text/html
