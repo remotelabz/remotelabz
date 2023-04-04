@@ -1,0 +1,10 @@
+---
+type: remotelabz
+name: Linux
+icon: Server.png
+cpu: 1
+ram: 2048
+ethernet: 1
+console: vnc
+description: linux
+...

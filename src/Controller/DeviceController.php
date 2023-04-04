@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 
 class DeviceController extends Controller
@@ -76,6 +77,41 @@ class DeviceController extends Controller
             'devices' => $devices,
             'search' => $search
         ]);
+    }
+
+     /**
+     * @Route("/devices", name="devices_lab")
+     * 
+     * @Rest\Get("/api/labs/{id<\d+>}/nodes", name="api_devices_lab")
+     */
+    public function indexActionTest(Request $request, int $id)
+    {
+        $devices = $this->deviceRepository->findByLab($id);
+        $data = [];
+        foreach($devices as $device){
+            array_push($data, [
+                "id"=>$device->getId(),
+                "name"=> $device->getName(),
+                "type"=> $device->getType(),
+                "console"=> $device->getConsole(),
+                "delay"=> $device->getDelay(),
+                "left"=> $device->getEditorData()->getY(),
+                "top"=> $device->getEditorData()->getX(),
+                "icon"=> $device->getIcon(),
+                "image"=> $device->getImage(),
+                "ram"=>$device->getFlavor()->getMemory(),
+                "url"=>$device->getUrl()   
+            ]);
+        }
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed nodes (60026).',
+            'data' => $data]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**

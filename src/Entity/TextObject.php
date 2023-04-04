@@ -57,6 +57,7 @@ class TextObject implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="textobjects", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
      */
     private $lab;
 

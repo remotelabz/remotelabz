@@ -54,6 +54,28 @@ class DeviceRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByLab($id)
+    {
+        /*return $this->createQueryBuilder('d')
+            ->leftjoin('App\Entity\lab l', 'l.id IN d.labs')
+            ->andWhere('l.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getResult()
+        ;*/
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT d
+            FROM App\Entity\Device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id'
+        )->setParameter('id', $id);
+
+        return $query->getResult();
+    }
+
     // /**
     //  * @return Device[] Returns an array of Device objects
     //  */

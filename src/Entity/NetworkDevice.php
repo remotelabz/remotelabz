@@ -71,6 +71,7 @@ class NetworkDevice implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="networks", cascade={"persist"})
+     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
      */
     private $lab;
 

@@ -184,6 +184,37 @@ class Device implements InstanciableInterface
      */
     private $isTemplate;
 
+    /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_device"})
+     * @Assert\NotNull
+     */
+    private $delay;
+
+    /**
+     * @ORM\Column(type="string", length=50)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $console;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $icon;
+
+    /**
+     * @ORM\Column(type="string", length=70)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $url;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $image;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
@@ -520,6 +551,66 @@ class Device implements InstanciableInterface
     public function setIsTemplate(bool $isTemplate): self
     {
         $this->isTemplate = $isTemplate;
+
+        return $this;
+    }
+
+    public function getDelay(): ?int
+    {
+        return $this->delay;
+    }
+
+    public function setDelay(int $delay): self
+    {
+        $this->delay = $delay;
+
+        return $this;
+    }
+
+    public function getConsole(): ?string
+    {
+        return $this->console;
+    }
+
+    public function setConsole(string $console): self
+    {
+        $this->console = $console;
+
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(string $image): self
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(string $url): self
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(string $icon): self
+    {
+        $this->icon = $icon;
 
         return $this;
     }

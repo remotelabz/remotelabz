@@ -94,6 +94,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
+     * @ORM\JoinColumn(nullable=true)
      *
      * @var Collection|TextObject[]
      */
@@ -101,6 +102,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkDevice", mappedBy="lab")
+     * @ORM\JoinColumn(nullable=true)
      *
      * @var Collection|NetworkDevice[]
      */
