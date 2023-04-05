@@ -464,13 +464,25 @@ class UserController extends Controller
 
                         }
                         if ($group != "") {
-                            
                             if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
                                 $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
                                 $group_wanted = new Group();
                                 $group_wanted->setName($group);
                                 $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                $group_wanted->setSlug(str_replace(" ","-",$group));
+                                $slug_wanted=str_replace(" ","-",$group);
+
+                                $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                $i=1;
+                                while($slug_list) {
+                                    if ($slug_wanted==$slug_list->getSlug()) {
+                                        $this->logger->debug("The slug ".$slug_wanted." exists");
+                                        $slug_wanted=$slug_wanted.$i;
+                                        $i++;
+                                    }
+                                    $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                }
+                                $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
+                                $group_wanted->setSlug($slug_wanted);
                                 $entityManager->persist($group_wanted);
                                 $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
                             }
