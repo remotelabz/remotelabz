@@ -20,6 +20,4 @@ return [
     FOS\RestBundle\FOSRestBundle::class => ['all' => true],
     Limenius\ReactBundle\LimeniusReactBundle::class => ['all' => true],
     Twig\Extra\TwigExtraBundle\TwigExtraBundle::class => ['all' => true],
-    Remotelabz\NetworkBundle\RemotelabzNetworkBundle::class => ['all' => true],
-    Remotelabz\Message\RemotelabzMessageBundle::class => ['all' => true]
 ];

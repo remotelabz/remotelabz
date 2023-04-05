@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5d3585ad211e987723d6346e29f89c32",
+    "content-hash": "0815ed2eb509406bd28a4aa039fd0a07",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -486,20 +486,21 @@
         },
         {
             "name": "doctrine/data-fixtures",
-            "version": "1.6.3",
+            "version": "1.6.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/data-fixtures.git",
-                "reference": "c27821d038e64f1bfc852a94064d65d2a75ad01f"
+                "reference": "e6b97f557942ea17564bbc30ae3ebc9bd2209363"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/data-fixtures/zipball/c27821d038e64f1bfc852a94064d65d2a75ad01f",
-                "reference": "c27821d038e64f1bfc852a94064d65d2a75ad01f",
+                "url": "https://api.github.com/repos/doctrine/data-fixtures/zipball/e6b97f557942ea17564bbc30ae3ebc9bd2209363",
+                "reference": "e6b97f557942ea17564bbc30ae3ebc9bd2209363",
                 "shasum": ""
             },
             "require": {
-                "doctrine/persistence": "^1.3.3|^2.0|^3.0",
+                "doctrine/deprecations": "^0.5.3 || ^1.0",
+                "doctrine/persistence": "^1.3.3 || ^2.0 || ^3.0",
                 "php": "^7.2 || ^8.0"
             },
             "conflict": {
@@ -508,16 +509,15 @@
                 "doctrine/phpcr-odm": "<1.3.0"
             },
             "require-dev": {
-                "doctrine/coding-standard": "^10.0",
+                "doctrine/coding-standard": "^11.0",
                 "doctrine/dbal": "^2.13 || ^3.0",
-                "doctrine/deprecations": "^1.0",
                 "doctrine/mongodb-odm": "^1.3.0 || ^2.0.0",
                 "doctrine/orm": "^2.12",
                 "ext-sqlite3": "*",
                 "phpstan/phpstan": "^1.5",
-                "phpunit/phpunit": "^8.5 || ^9.5",
+                "phpunit/phpunit": "^8.5 || ^9.5 || ^10.0",
                 "symfony/cache": "^5.0 || ^6.0",
-                "vimeo/psalm": "^4.10"
+                "vimeo/psalm": "^4.10 || ^5.9"
             },
             "suggest": {
                 "alcaeus/mongo-php-adapter": "For using MongoDB ODM 1.3 with PHP 7 (deprecated)",
@@ -528,7 +528,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Doctrine\\Common\\DataFixtures\\": "lib/Doctrine/Common/DataFixtures"
+                    "Doctrine\\Common\\DataFixtures\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -548,7 +548,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/data-fixtures/issues",
-                "source": "https://github.com/doctrine/data-fixtures/tree/1.6.3"
+                "source": "https://github.com/doctrine/data-fixtures/tree/1.6.5"
             },
             "funding": [
                 {
@@ -564,7 +564,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-01-07T15:10:22+00:00"
+            "time": "2023-04-03T14:58:58+00:00"
         },
         {
             "name": "doctrine/dbal",
@@ -4027,16 +4027,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "1.16.1",
+            "version": "1.17.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "e27e92d939e2e3636f0a1f0afaba59692c0bf571"
+                "reference": "d3753fcb3abc6f78f5de6f72153d4b9c99c72dee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/e27e92d939e2e3636f0a1f0afaba59692c0bf571",
-                "reference": "e27e92d939e2e3636f0a1f0afaba59692c0bf571",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/d3753fcb3abc6f78f5de6f72153d4b9c99c72dee",
+                "reference": "d3753fcb3abc6f78f5de6f72153d4b9c99c72dee",
                 "shasum": ""
             },
             "require": {
@@ -4066,9 +4066,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.16.1"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.17.1"
             },
-            "time": "2023-02-07T18:11:17+00:00"
+            "time": "2023-04-04T11:11:22+00:00"
         },
         {
             "name": "psr/cache",
@@ -4219,25 +4219,25 @@
         },
         {
             "name": "psr/http-message",
-            "version": "1.0.1",
+            "version": "1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/http-message.git",
-                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+                "reference": "cb6ce4845ce34a8ad9e68117c10ee90a29919eba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
-                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/cb6ce4845ce34a8ad9e68117c10ee90a29919eba",
+                "reference": "cb6ce4845ce34a8ad9e68117c10ee90a29919eba",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0"
+                "php": "^7.2 || ^8.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0.x-dev"
+                    "dev-master": "1.1.x-dev"
                 }
             },
             "autoload": {
@@ -4266,9 +4266,9 @@
                 "response"
             ],
             "support": {
-                "source": "https://github.com/php-fig/http-message/tree/master"
+                "source": "https://github.com/php-fig/http-message/tree/1.1"
             },
-            "time": "2016-08-06T14:39:51+00:00"
+            "time": "2023-04-04T09:50:52+00:00"
         },
         {
             "name": "psr/link",
@@ -4415,121 +4415,6 @@
                 "source": "https://github.com/ralouphie/getallheaders/tree/develop"
             },
             "time": "2019-03-08T08:55:37+00:00"
-        },
-        {
-            "name": "remotelabz/network-bundle",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/remotelabz/network-bundle.git",
-                "reference": "0657e208355f69ddf0464892d36fa43b1902eaf9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/network-bundle/zipball/0657e208355f69ddf0464892d36fa43b1902eaf9",
-                "reference": "0657e208355f69ddf0464892d36fa43b1902eaf9",
-                "shasum": ""
-            },
-            "require": {
-                "doctrine/annotations": "^1.10",
-                "doctrine/orm": "^2.7",
-                "jms/serializer": "^1.13|^2.0|^3.0",
-                "php": "^7.3|^8.0"
-            },
-            "require-dev": {
-                "squizlabs/php_codesniffer": "3.*",
-                "symfony/phpunit-bridge": "^5.1"
-            },
-            "default-branch": true,
-            "type": "symfony-bundle",
-            "autoload": {
-                "psr-4": {
-                    "Remotelabz\\NetworkBundle\\": ""
-                },
-                "exclude-from-classmap": [
-                    "Resources/",
-                    "Tests/"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Julien Hubert",
-                    "email": "julien.hubert1@univ-reims.fr"
-                },
-                {
-                    "name": "Florent Nolot",
-                    "email": "florent.nolot@univ-reims.fr"
-                }
-            ],
-            "description": "NetworkBundle is a bundle used by RemoteLabz to handle all IP and network related aspects.",
-            "support": {
-                "source": "https://github.com/remotelabz/network-bundle/tree/master",
-                "issues": "https://github.com/remotelabz/network-bundle/issues"
-            },
-            "time": "2023-03-31T09:41:22+00:00"
-        },
-        {
-            "name": "remotelabz/remotelabz-message-bundle",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
-                "reference": "babcf2593140268a0df75d0bc24e923184f3579a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/babcf2593140268a0df75d0bc24e923184f3579a",
-                "reference": "babcf2593140268a0df75d0bc24e923184f3579a",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.3"
-            },
-            "require-dev": {
-                "squizlabs/php_codesniffer": "3.*",
-                "symfony/phpunit-bridge": "^5.1"
-            },
-            "default-branch": true,
-            "type": "symfony-bundle",
-            "autoload": {
-                "psr-4": {
-                    "Remotelabz\\Message\\": ""
-                },
-                "exclude-from-classmap": [
-                    "Resources/",
-                    "Tests/"
-                ]
-            },
-            "scripts": {
-                "test": [
-                    "./vendor/bin/simple-phpunit --coverage-clover coverage.xml --colors=never"
-                ],
-                "phpcs": [
-                    "./vendor/bin/phpcs --standard=PSR2 --exclude=Generic.Files.LineLength ./Tests/"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Julien Hubert",
-                    "email": "julien.hubert1@univ-reims.fr"
-                },
-                {
-                    "name": "Florent Nolot",
-                    "email": "florent.nolot@univ-reims.fr"
-                }
-            ],
-            "description": "Shared messages between remotelabz components.",
-            "support": {
-                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/master",
-                "issues": "https://github.com/remotelabz/remotelabz-message-bundle/issues"
-            },
-            "time": "2023-03-31T09:50:48+00:00"
         },
         {
             "name": "s1lentium/iptools",
@@ -12963,10 +12848,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "remotelabz/network-bundle": 20,
-        "remotelabz/remotelabz-message-bundle": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -12975,5 +12857,5 @@
         "ext-iconv": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.3.0"
 }
