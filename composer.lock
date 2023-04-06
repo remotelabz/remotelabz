@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0815ed2eb509406bd28a4aa039fd0a07",
+    "content-hash": "99cf982016ca2fde5ff9db5660bc6488",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -4027,16 +4027,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "1.17.1",
+            "version": "1.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "d3753fcb3abc6f78f5de6f72153d4b9c99c72dee"
+                "reference": "882eabc9b6a12e25c27091a261397f9c8792e722"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/d3753fcb3abc6f78f5de6f72153d4b9c99c72dee",
-                "reference": "d3753fcb3abc6f78f5de6f72153d4b9c99c72dee",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/882eabc9b6a12e25c27091a261397f9c8792e722",
+                "reference": "882eabc9b6a12e25c27091a261397f9c8792e722",
                 "shasum": ""
             },
             "require": {
@@ -4066,9 +4066,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.17.1"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.18.0"
             },
-            "time": "2023-04-04T11:11:22+00:00"
+            "time": "2023-04-06T07:26:43+00:00"
         },
         {
             "name": "psr/cache",
@@ -4415,6 +4415,121 @@
                 "source": "https://github.com/ralouphie/getallheaders/tree/develop"
             },
             "time": "2019-03-08T08:55:37+00:00"
+        },
+        {
+            "name": "remotelabz/network-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/remotelabz/network-bundle.git",
+                "reference": "0657e208355f69ddf0464892d36fa43b1902eaf9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/remotelabz/network-bundle/zipball/0657e208355f69ddf0464892d36fa43b1902eaf9",
+                "reference": "0657e208355f69ddf0464892d36fa43b1902eaf9",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/annotations": "^1.10",
+                "doctrine/orm": "^2.7",
+                "jms/serializer": "^1.13|^2.0|^3.0",
+                "php": "^7.3|^8.0"
+            },
+            "require-dev": {
+                "squizlabs/php_codesniffer": "3.*",
+                "symfony/phpunit-bridge": "^5.1"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Remotelabz\\NetworkBundle\\": ""
+                },
+                "exclude-from-classmap": [
+                    "Resources/",
+                    "Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Julien Hubert",
+                    "email": "julien.hubert1@univ-reims.fr"
+                },
+                {
+                    "name": "Florent Nolot",
+                    "email": "florent.nolot@univ-reims.fr"
+                }
+            ],
+            "description": "NetworkBundle is a bundle used by RemoteLabz to handle all IP and network related aspects.",
+            "support": {
+                "source": "https://github.com/remotelabz/network-bundle/tree/master",
+                "issues": "https://github.com/remotelabz/network-bundle/issues"
+            },
+            "time": "2023-03-31T09:41:22+00:00"
+        },
+        {
+            "name": "remotelabz/remotelabz-message-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
+                "reference": "babcf2593140268a0df75d0bc24e923184f3579a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/babcf2593140268a0df75d0bc24e923184f3579a",
+                "reference": "babcf2593140268a0df75d0bc24e923184f3579a",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.3"
+            },
+            "require-dev": {
+                "squizlabs/php_codesniffer": "3.*",
+                "symfony/phpunit-bridge": "^5.1"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Remotelabz\\Message\\": ""
+                },
+                "exclude-from-classmap": [
+                    "Resources/",
+                    "Tests/"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "./vendor/bin/simple-phpunit --coverage-clover coverage.xml --colors=never"
+                ],
+                "phpcs": [
+                    "./vendor/bin/phpcs --standard=PSR2 --exclude=Generic.Files.LineLength ./Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Julien Hubert",
+                    "email": "julien.hubert1@univ-reims.fr"
+                },
+                {
+                    "name": "Florent Nolot",
+                    "email": "florent.nolot@univ-reims.fr"
+                }
+            ],
+            "description": "Shared messages between remotelabz components.",
+            "support": {
+                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/master",
+                "issues": "https://github.com/remotelabz/remotelabz-message-bundle/issues"
+            },
+            "time": "2023-03-31T09:50:48+00:00"
         },
         {
             "name": "s1lentium/iptools",
@@ -12848,7 +12963,10 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "remotelabz/network-bundle": 20,
+        "remotelabz/remotelabz-message-bundle": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

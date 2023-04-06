@@ -77,6 +77,5 @@
         "timeago.js": "^4.0.1",
         "yup": "^0.27.0"
     },
-    "peerDependencies": {},
     "typings": "assets/js/components/Groups/index.d.ts"
 }

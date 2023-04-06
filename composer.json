@@ -8,6 +8,8 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "composer/package-versions-deprecated": "^1.11.99",
+        "remotelabz/network-bundle": "dev-master",
+        "remotelabz/remotelabz-message-bundle": "dev-master",
         "doctrine/annotations": "^1.0",
         "doctrine/common": "^3",
         "doctrine/doctrine-bundle": "^2",
