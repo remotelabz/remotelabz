@@ -1,4 +1,3 @@
-//import { BASE_URL } from "./url";
 // vim: syntax=javascript tabstop=4 softtabstop=0 noexpandtab laststatus=1 ruler
 
 /**
@@ -13,10 +12,9 @@
  * @version 20160719
  */
 
-var BASE_URL = "http://192.168.56.13";
+
 var token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2ODA4NTg4NTEsImV4cCI6MTY4MDk0NTI1MSwicm9sZXMiOlsiUk9MRV9TVVBFUl9BRE1JTklTVFJBVE9SIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoicm9vdEBsb2NhbGhvc3QifQ.XhkNHeFoNJgEfhGZTZFp5Za1dE4MbpIS4-0GUrKYNg-yAOBFhFlio8O73ui1wiComfn2QrkEb5sYzw9O4z7PZDY3-6Uox4QTVgdOql-X0EG5CW_13Xir5ZuYicuBRi2P4Lb22lwFu0QC86T6gzF7ax9gjRtW-HlAmjKyCgbcFcQwBMUonVaC4fNThoSPN6wxxj-neGTtOELmWwwJK_Td_FLUL-NHV-ajte5ZtpgSnoR_UvQee6LraeGwGblTZgtt_Ranh-zCqTGlxIj9rOJo6wuEflfTUqGIqbA2WoUGhOcghx8Fi9u5bYBsc47w7vjJ8EvdwmNuOAyrh5hbjlU9UnkztlEGAfwKamTVSEU8A8Po6xEqqEwQxKWx46uhXwpcVOe4aC6DlyH5-EvldT6EP61vATeRXmACuLpUQoautjDW5dHS_SqP_1VWLGQdoAYTRRQemYRS2bK8pr4g1aQNPdCID573kmUbuZDzD6McRhJzNNORAkjOO2dYQatw3uN6ReR7n-gQ2oAlA4_m0IzmR8iYZUjEIjL_qd8D9QU8JkzrorAD3QWfjNwUXx9ZrsqvdE4AzqW-zXwxDZWkOtvl5Dbltx0giNRNCbW-JkjVgds-GvQFsr1Wy2Cgg6BqUiB3_EHcpTBp1iK4WTj9tjLcuJADl4WwEttHRruoDAz5DTc";
 var contextMenuOpen = false;
-var lab_filename = "5";
 
 // Basename: given /a/b/c return c
 function basename(path) {
@@ -239,7 +237,7 @@ function closeLab() {
         });
 
         if (running_nodes == false) {
-            var url = BASE_URL +'/api/labs/close';
+            var url = '/api/labs/close';
             var type = 'DELETE';
             $.ajax({
                 cache: false,
@@ -272,7 +270,7 @@ function closeLab() {
         }
     }).fail(function (message) {
         // Lab maybe does not exist, closing
-        var url = BASE_URL + '/api/labs/close';
+        var url = '/api/labs/close';
         var type = 'DELETE';
         $.ajax({
             cache: false,
@@ -394,7 +392,7 @@ function deleteNetwork(id) {
     };*/
     var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/networks/' + id;
+    var url = '/api/labs/' + lab_filename + '/networks/' + id;
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -607,7 +605,7 @@ function getJsonMessage(response) {
 }
 
 // Get lab info
-function getLabInfo(labId = "5") {  //function getLabInfo(lab_filename)
+function getLabInfo(labId) {  //function getLabInfo(lab_filename)
     var deferred = $.Deferred();
    var labInfo = {
         author:"L'autheur",
@@ -620,7 +618,7 @@ function getLabInfo(labId = "5") {  //function getLabInfo(lab_filename)
         scripttimeout: 300,
         lock: 0
     }
-    var url = BASE_URL +'/api/labs/test/' + labId;
+    var url = '/api/labs/test/' + labId;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -729,7 +727,8 @@ function getLabLinks() {
 
 // Get lab networks
 function getNetworks(network_id) {
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    console.log(lab_filename);
     var deferred = $.Deferred();
     /*var networksData;
     var networks = {
@@ -755,10 +754,10 @@ function getNetworks(network_id) {
     };*/
     if (network_id != null) {
         //networksData = networks[network_id];
-        var url = BASE_URL + '/api/labs/' + lab_filename + '/networks/' + network_id;
+        var url = '/api/labs/' + lab_filename + '/networks/' + network_id;
     } else {
         //networksData = networks;
-        var url = BASE_URL + '/api/labs/' + lab_filename + '/networks';
+        var url = '/api/labs/' + lab_filename + '/networks';
     }
     var type = 'GET';
     $.ajax({
@@ -870,7 +869,7 @@ function getNetworkTypes() {
 // Get lab nodes
 function getNodes(node_id) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var nodesData;
     var nodes = {
         1:{
@@ -966,7 +965,7 @@ function getNodeConfigs(node_id) {
             len: 0,
         }
     }
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     if (node_id != null) {
         configs = configList[id];
         //var url = '/api/labs' + lab_filename + '/configs/' + node_id;
@@ -1034,8 +1033,8 @@ function getNodeInterfaces(node_id) {
             }
         }
     }
-    /*var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/interfaces';
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/interfaces';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1155,7 +1154,7 @@ function getPicturesMapped(picture_id) {
 // Get lab topology
 function getTopology() {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     //var lab_filename = "/test.unl";
     //var url = '/api/labs' + lab_filename + '/topology';
     //var type = 'GET';
@@ -1395,7 +1394,7 @@ function getTemplates(template) {
     else {
         templateData = oneTemplate;
     }*/
-    var url = (template == null) ? BASE_URL+'/api/list/templates' : BASE_URL+'/api/list/templates/' + template;
+    var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1472,7 +1471,8 @@ function getUserInfo() {
     var data = {};
     LANG = "en";
     //LAB = "/test.unl";
-    LAB = "5";
+    var pathname = window.location.pathname;
+    LAB = pathname.split(/(\d)/)[1];
     TENANT = "0";
     ROLE = "admin";
     data["lab"] = LAB;
@@ -1707,7 +1707,7 @@ function newUIreturn(param) {
 
 function setNetwork(nodeName,left, top) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
 
     form_data['count'] = 1;
@@ -1739,7 +1739,7 @@ function setNetwork(nodeName,left, top) {
             visibility: 1
         }
     }*/
-    var url = BASE_URL + '/api/labs' + lab_filename + '/networks';
+    var url = '/api/labs' + lab_filename + '/networks';
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -1896,7 +1896,7 @@ function setKsm(bool) {
 
 function setNetworkiVisibility(networkId,visibility) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data['visibility'] = visibility;
     var networks = {
@@ -1958,7 +1958,7 @@ function setNetworkiVisibility(networkId,visibility) {
 // Set network position
 function setNetworkPosition(network_id, left, top) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data['left'] = left;
     form_data['top'] = top;
@@ -2023,10 +2023,10 @@ function setNetworkPosition(network_id, left, top) {
 function setNetworksPosition(networks) {
     var deferred = $.Deferred();
     if ( networks.length == 0 ) { deferred.resolve(); return deferred.promise(); }
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data = networks;
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/networks' ;
+    var url = '/api/labs/' + lab_filename + '/networks' ;
     var type = 'PUT';
     $.ajax({
         cache: false,
@@ -2062,7 +2062,7 @@ function setNetworksPosition(networks) {
 // Set node boot
 function setNodeBoot(node_id, config) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data['config'] = config;
 
@@ -2140,7 +2140,7 @@ function setNodeBoot(node_id, config) {
 // Set node position
 function setNodePosition(node_id, left, top) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data['left'] = left;
     form_data['top'] = top;
@@ -2255,7 +2255,7 @@ function setNodesPosition(nodes) {
 
 // Update node data from node list
 function setNodeData(id){
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2ArrayByRow('node', id);
     var promises = [];
     logger(1, 'DEBUG: posting form-node-edit form.');
@@ -2456,8 +2456,8 @@ function start(node_id) {
             ethernet:1
         }
     }
-    /*var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/start';
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/start';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -2585,8 +2585,8 @@ function stop(node_id) {
         }
     }
     nodes[node_id].status = 0;
-    /*var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/stop';
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/stop';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -2734,7 +2734,7 @@ function update(path) {
 // Wipe node(s)
 function wipe(node_id) {
     var deferred = $.Deferred();
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var nodes = {
         1:{
             console:"telnet",
@@ -3888,8 +3888,8 @@ function printLabTopology() {
         getNodes(null),
         getTopology(),
         getTextObjects(),
-        //getLabInfo(lab_filename)
-        getLabInfo()
+        getLabInfo(lab_filename)
+        //getLabInfo()
     ).done(function (networks, nodes, topology, textObjects, labinfo) {
 
 
@@ -4176,13 +4176,13 @@ function printLabTopology() {
                             overlays: [src_label, dst_label]
                         });
                         if (destination.substr(0, 7) == 'network') {
-                              $.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
+                              /*$.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
                                   for ( ikey in ifaces['ethernet'] ) {
                                       if ( ifaces['ethernet'][ikey]['name'] == source_label ) {
                                          tmp_conn.id = 'iface:'+source+":"+ikey
                                       }
                                   }
-                              });
+                              });*/
                         } else {
                               tmp_conn.id = 'network_id:'+link['network_id']
                         }
@@ -5232,9 +5232,8 @@ function getTextObjects() {
             }
         },
     }*/
-    //var lab_filename = $('#lab-viewport').attr('data-path');
-    var lab_filename =5;
-    var url = BASE_URL +'/api/labs/' + lab_filename + '/textobjects';
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/textobjects';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -5295,9 +5294,8 @@ function getTextObject(id) {
             data:"PGRpdiBpZD0iY3VzdG9tU2hhcGU3IiBjbGFzcz0iY3VzdG9tU2hhcGUgY29udGV4dC1tZW51IHVpLXJlc2l6YWJsZSB1aS1yZXNpemFibGUtYXV0b2hpZGUiIGRhdGEtcGF0aD0iNyIgc3R5bGU9ImRpc3BsYXk6aW5saW5lO3otaW5kZXg6OTk5O3Bvc2l0aW9uOmFic29sdXRlO2xlZnQ6MHB4O3RvcDowcHg7IiB3aWR0aD0iMTIwcHgiIGhlaWdodD0iMTIwcHgiIG5hbWU9ImNpcmNsZSI+PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCI+PGVsbGlwc2UgY3g9IjYwIiBjeT0iNjAiIHJ4PSI1Ny41IiByeT0iNTcuNSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjIuNSIgZmlsbD0iI2ZmZmZmZiI+PC9lbGxpcHNlPlNvcnJ5LCB5b3VyIGJyb3dzZXIgZG9lcyBub3Qgc3VwcG9ydCBpbmxpbmUgU1ZHLjwvc3ZnPjxkaXYgY2xhc3M9InVpLXJlc2l6YWJsZS1oYW5kbGUgdWktcmVzaXphYmxlLWUiIHN0eWxlPSJ6LWluZGV4OiA5MDsgZGlzcGxheTogbm9uZTsiPjwvZGl2PjxkaXYgY2xhc3M9InVpLXJlc2l6YWJsZS1oYW5kbGUgdWktcmVzaXphYmxlLXMiIHN0eWxlPSJ6LWluZGV4OiA5MDsgZGlzcGxheTogbm9uZTsiPjwvZGl2PjxkaXYgY2xhc3M9InVpLXJlc2l6YWJsZS1oYW5kbGUgdWktcmVzaXphYmxlLXNlIHVpLWljb24gdWktaWNvbi1ncmlwc21hbGwtZGlhZ29uYWwtc2UiIHN0eWxlPSJ6LWluZGV4OiA5MDsgZGlzcGxheTogbm9uZTsiPjwvZGl2PjwvZGl2Pg==",
         },
     }*/
-    //var lab_filename = $('#lab-viewport').attr('data-path');
-    var lab_filename = "5";
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/textobjects/' + id;
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/textobjects/' + id;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -5344,9 +5342,8 @@ function getTextObject(id) {
 // Create New Text Object
 function createTextObject(newData) {
     var deferred = $.Deferred()
-    //    , lab_filename = $('#lab-viewport').attr('data-path')
-        , lab_filename = "5"
-        , url = BASE_URL + '/api/labs/' + lab_filename + '/textobjects'
+        , lab_filename = $('#lab-viewport').attr('data-path')
+        , url = '/api/labs/' + lab_filename + '/textobjects'
         , type = 'POST';
 
     if (newData.data) {
@@ -5419,7 +5416,7 @@ function createTextObject(newData) {
 
 // Update Text Object
 function editTextObject(id, newData) {
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var deferred = $.Deferred();
     /*var textobjects = {
         1: {
@@ -5453,7 +5450,7 @@ function editTextObject(id, newData) {
     }
     console.log("newdata: ", newData);*/
     var type = 'PUT';
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/textobjects/' + id;
+    var url = '/api/labs/' + lab_filename + '/textobjects/' + id;
 
     if (newData.data) {
         newData.data = fromByteArray(new TextEncoderLite('utf-8').encode(newData.data));
@@ -5523,11 +5520,11 @@ function editTextObjects(newData) {
             newdata: null
         },
     }*/
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var deferred = $.Deferred();
     if (newData.length == 0 ) { deferred.resolve(); return deferred.promise(); }
     var type = 'PUT';
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/textobjects';
+    var url = '/api/labs/' + lab_filename + '/textobjects';
 
     $.ajax({
         cache: false,
@@ -5594,9 +5591,8 @@ function deleteTextObject(id) {
     }*/
     var deferred = $.Deferred();
     var type = 'DELETE';
-    //var lab_filename = $('#lab-viewport').attr('data-path');
-    //var lab_filename = "5";
-    var url = BASE_URL + '/api/labs/' + lab_filename + '/textobjects/' + id;
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/textobjects/' + id;
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
