@@ -34,6 +34,8 @@ DirectoryIndex index.php
     RewriteCond %{HTTP:Authorization} .+
     RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
 
+    RewriteCond %{REQUEST_URI} ^/legacy/
+	RewriteRule ^(.*)$ ../editor/themes/default/ [B,L,QSA]
     # Redirect to URI without front controller to prevent duplicate content
     # (with and without `/index.php`). Only do this redirect on the initial
     # rewrite by Apache and not on subsequent cycles. Otherwise we would get an

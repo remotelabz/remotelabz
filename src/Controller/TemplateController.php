@@ -206,6 +206,13 @@ class TemplateController extends Controller
                 'value' => ''
             );
 
+            $data['options']['type'] = Array(
+                'name' => 'Type',
+                'type' => 'list',
+                'value' => 'container',
+                'list' => Array('vm'=>'vm', 'container'=>'container')
+            );
+
             $flavorList= [];
             $flavors = $this->flavorRepository->findAll();
             foreach($flavors as $flavor){

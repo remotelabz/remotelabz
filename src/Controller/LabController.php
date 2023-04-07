@@ -387,7 +387,8 @@ class LabController extends Controller
     }
 
     /**
-     * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
+     * 
+     * @Rest\Get("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
@@ -553,6 +554,44 @@ class LabController extends Controller
         }
 
         return $this->render('lab/editor.html.twig', ['lab' => $lab]);
+    }
+    else
+        { 
+            if (!is_null($lab))
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            else 
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
+            return $this->redirectToRoute('index');
+        }
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/edit2", name="edit2_lab")
+     */
+    public function edit2Action(Request $request, int $id)
+    {
+
+        $lab = $this->labRepository->find($id);
+        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+
+        if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
+        {
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+        
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+
+        $labForm = $this->createForm(LabType::class, $lab);
+        $labForm->handleRequest($request);
+
+        if ($request->getContentType() === 'json') {
+            $lab = json_decode($request->getContent(), true);
+            $labForm->submit($lab, false);
+        }
+
+        return $this->render('editor.html.twig', ['id' => $id]);
     }
     else
         { 

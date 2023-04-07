@@ -15,6 +15,9 @@ use App\Repository\DeviceRepository;
 use App\Repository\LabRepository;
 use App\Repository\EditorDataRepository;
 use App\Repository\ControlProtocolTypeRepository;
+use App\Repository\FlavorRepository;
+use App\Repository\OperatingSystemRepository;
+use App\Repository\HypervisorRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -22,6 +25,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,6 +36,9 @@ class DeviceController extends Controller
     private $deviceRepository;
     private $labRepository;
     private $controlProtocolTypeRepository;
+    private $hypervisorRepository;
+    private $flavorRepository;
+    private $operatingSystemRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -41,13 +48,19 @@ class DeviceController extends Controller
         LabRepository $labRepository,
         DeviceRepository $deviceRepository,
         SerializerInterface $serializerInterface,
-        ControlProtocolTypeRepository $controlProtocolTypeRepository)
+        ControlProtocolTypeRepository $controlProtocolTypeRepository
+        /*HypervisorRepository $hypervisorRepository,
+        OperatingSystemRepository $operatingSystemRepository,
+        FlavorRepository $flavorRepository*/)
     {
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
         $this->logger = $logger;
         $this->serializer = $serializerInterface;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
+        /*$this->flavorRepository = $flavorRepository;
+        $this->operatingSystemRepository = $operatingSystemRepository;
+        $this->hypervisorRepository = $hypervisorRepository;*/
     }
 
     /**
@@ -79,10 +92,11 @@ class DeviceController extends Controller
         ]);
     }
 
-     /**
-     * @Route("/devices", name="devices_lab")
+    /**
+     * @Route("/devices", name="get_devices")
      * 
-     * @Rest\Get("/api/labs/{id<\d+>}/nodes", name="api_devices_lab")
+     * @Rest\Get("/api/labs/{id<\d+>}/nodes", name="api_get_devices")
+     * 
      */
     public function indexActionTest(Request $request, int $id)
     {
@@ -153,7 +167,7 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
-            $device = $deviceForm->getData();
+           $device = $deviceForm->getData();
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
@@ -184,6 +198,67 @@ class DeviceController extends Controller
         ]);
     }
 
+    /**
+     * 
+     * 
+     * @Rest\Post("/api/labs/{id<\d+>}/node", name="api_new_devices")
+     */
+    public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
+    {
+        $device = new Device();
+        $data = json_decode($request->getContent(), true);
+        //var_dump($data);exit;
+        $lab = $this->labRepository->findById($id);
+        //$this->logger->debug($textobject);
+        $hypervisor = $hypervisorRepository->findByName($data['hypervisor']);
+        var_dump($hypervisor); exit;
+        $controlProtocolType = $this->controlProtocolTypeRepository->findByName($data['controlProtocol']);
+        $flavor = $flavorRepository->findByName($data['flavor']);
+        $operatingSystem = $operatingSystemRepository->findByName($data['operatingSystem']);
+        //$device->addLab($lab);
+        $device->setCount($data['count']);
+        $device->setName($data['name']);
+        $device->setType($data['type']);
+        $device->setIcon($data['icon']);
+        $device->setBrand($data['brand']);
+        $device->setFlavor($flavor);
+        $device->setNbCore($data['core']);
+        $device->setNbSocket($data['socket']);
+        $device->setNbThread($data['thread']);
+        $device->setOperatingSystem($operatingSystem);
+        $device->setHypervisor($hypervisor);
+        $device->addControlProtocolType($controlProtocolType);
+        //$device->setLeftPosition($data['left']);
+        $device->setEditorData([$x=>$data['top'], $y=>$data['left']]);
+        $device->setDelay($data['delay']);
+        $device->setPostFix($data['postfix']);
+        $device->setIsTemplate(false);
+        $device->setLaunchOrder(0);
+        $device->setVirtuality(0);
+        $device->setNbCpu(1);
+        $device->setCreatedAt(new \DateTime());
+        //$device->setUuid(new Uuid);
+        
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($device);
+        $lab->addDevice($device);
+        $entityManager->flush();
+        
+
+        $this->logger->info("Device named" . $device->getName() . " created");
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).',
+            'data' => [
+                'id'=>$device->getId(),
+            ]]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
     /**
      * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
      * 

@@ -47,6 +47,18 @@ class ControlProtocolTypeRepository extends ServiceEntityRepository
         }
     }
 
+    public function findByName($name)
+    {
+       $controlProtocolType = $this->createQueryBuilder('c')
+            ->andWhere('c.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        return $controlProtocolType[0];
+    }
+
     // /**
     //  * @return ControlProtocolType[] Returns an array of ControlProtocolType objects
     //  */

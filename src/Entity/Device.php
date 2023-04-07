@@ -215,6 +215,18 @@ class Device implements InstanciableInterface
      */
     private $image;
 
+    /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $count;
+
+    /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $postfix;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
@@ -615,5 +627,27 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    
+    public function getCount(): ?int
+    {
+        return $this->count;
+    }
+
+    public function setCount(int $count): self
+    {
+        $this->count = $count;
+
+        return $this;
+    }
+
+    public function getPostfix(): ?int
+    {
+        return $this->postfix;
+    }
+
+    public function setPostfix(int $postfix): self
+    {
+        $this->postfix = $postfix;
+
+        return $this;
+    }
 }
