@@ -572,7 +572,6 @@ class LabController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
-        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
@@ -581,14 +580,10 @@ class LabController extends Controller
 
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
-        }
-
-        $labForm = $this->createForm(LabType::class, $lab);
-        $labForm->handleRequest($request);
+        };
 
         if ($request->getContentType() === 'json') {
             $lab = json_decode($request->getContent(), true);
-            $labForm->submit($lab, false);
         }
 
         return $this->render('editor.html.twig', ['id' => $id]);

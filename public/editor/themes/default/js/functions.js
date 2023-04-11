@@ -12,8 +12,6 @@
  * @version 20160719
  */
 
-
-var token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2ODA4NTg4NTEsImV4cCI6MTY4MDk0NTI1MSwicm9sZXMiOlsiUk9MRV9TVVBFUl9BRE1JTklTVFJBVE9SIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoicm9vdEBsb2NhbGhvc3QifQ.XhkNHeFoNJgEfhGZTZFp5Za1dE4MbpIS4-0GUrKYNg-yAOBFhFlio8O73ui1wiComfn2QrkEb5sYzw9O4z7PZDY3-6Uox4QTVgdOql-X0EG5CW_13Xir5ZuYicuBRi2P4Lb22lwFu0QC86T6gzF7ax9gjRtW-HlAmjKyCgbcFcQwBMUonVaC4fNThoSPN6wxxj-neGTtOELmWwwJK_Td_FLUL-NHV-ajte5ZtpgSnoR_UvQee6LraeGwGblTZgtt_Ranh-zCqTGlxIj9rOJo6wuEflfTUqGIqbA2WoUGhOcghx8Fi9u5bYBsc47w7vjJ8EvdwmNuOAyrh5hbjlU9UnkztlEGAfwKamTVSEU8A8Po6xEqqEwQxKWx46uhXwpcVOe4aC6DlyH5-EvldT6EP61vATeRXmACuLpUQoautjDW5dHS_SqP_1VWLGQdoAYTRRQemYRS2bK8pr4g1aQNPdCID573kmUbuZDzD6McRhJzNNORAkjOO2dYQatw3uN6ReR7n-gQ2oAlA4_m0IzmR8iYZUjEIjL_qd8D9QU8JkzrorAD3QWfjNwUXx9ZrsqvdE4AzqW-zXwxDZWkOtvl5Dbltx0giNRNCbW-JkjVgds-GvQFsr1Wy2Cgg6BqUiB3_EHcpTBp1iK4WTj9tjLcuJADl4WwEttHRruoDAz5DTc";
 var contextMenuOpen = false;
 
 // Basename: given /a/b/c return c
@@ -1429,7 +1427,7 @@ function getTemplates(template) {
 // Get user info
 function getUserInfo() {
     var deferred = $.Deferred();
-   /* var url = '/api/auth';
+   var url = '/api/token';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1445,14 +1443,23 @@ function getUserInfo() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: user is authenticated.');
-                EMAIL = data['data']['email'];
+                /*EMAIL = data['data']['email'];
                 FOLDER = (data['data']['folder'] == null) ? '/' : data['data']['folder'];
                 LAB = data['data']['lab'];
                 LANG = data['data']['lang'];
                 NAME = data['data']['name'];
                 ROLE = data['data']['role'];
                 TENANT = data['data']['tenant'];
-                USERNAME = data['data']['username'];
+                USERNAME = data['data']['username'];*/
+                var pathname = window.location.pathname;
+                LANG = "en";
+                LAB = pathname.split(/(\d)/)[1];
+                TENANT = "0";
+                ROLE = "admin";
+                data["lab"] = LAB;
+                data["lang"] = LANG;
+                data["tenant"] = TENANT;
+                token = data['data']['token'];
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1467,18 +1474,18 @@ function getUserInfo() {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    var data = {};
-    LANG = "en";
+    });
+    //var data = {};
+    //LANG = "en";
     //LAB = "/test.unl";
-    var pathname = window.location.pathname;
-    LAB = pathname.split(/(\d)/)[1];
-    TENANT = "0";
-    ROLE = "admin";
-    data["lab"] = LAB;
-    data["lang"] = LANG;
-    data["tenant"] = TENANT;
-    deferred.resolve(data);
+    //var pathname = window.location.pathname;
+    //LAB = pathname.split(/(\d)/)[1];
+    //TENANT = "0";
+    //ROLE = "admin";
+    //data["lab"] = LAB;
+    //data["lang"] = LANG;
+    //data["tenant"] = TENANT;
+    //deferred.resolve(data);
     return deferred.promise();
 }
 

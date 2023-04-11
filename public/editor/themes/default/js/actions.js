@@ -12,7 +12,8 @@
  * @version 20160719
  */
 
-var token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2ODA4NTg4NTEsImV4cCI6MTY4MDk0NTI1MSwicm9sZXMiOlsiUk9MRV9TVVBFUl9BRE1JTklTVFJBVE9SIiwiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoicm9vdEBsb2NhbGhvc3QifQ.XhkNHeFoNJgEfhGZTZFp5Za1dE4MbpIS4-0GUrKYNg-yAOBFhFlio8O73ui1wiComfn2QrkEb5sYzw9O4z7PZDY3-6Uox4QTVgdOql-X0EG5CW_13Xir5ZuYicuBRi2P4Lb22lwFu0QC86T6gzF7ax9gjRtW-HlAmjKyCgbcFcQwBMUonVaC4fNThoSPN6wxxj-neGTtOELmWwwJK_Td_FLUL-NHV-ajte5ZtpgSnoR_UvQee6LraeGwGblTZgtt_Ranh-zCqTGlxIj9rOJo6wuEflfTUqGIqbA2WoUGhOcghx8Fi9u5bYBsc47w7vjJ8EvdwmNuOAyrh5hbjlU9UnkztlEGAfwKamTVSEU8A8Po6xEqqEwQxKWx46uhXwpcVOe4aC6DlyH5-EvldT6EP61vATeRXmACuLpUQoautjDW5dHS_SqP_1VWLGQdoAYTRRQemYRS2bK8pr4g1aQNPdCID573kmUbuZDzD6McRhJzNNORAkjOO2dYQatw3uN6ReR7n-gQ2oAlA4_m0IzmR8iYZUjEIjL_qd8D9QU8JkzrorAD3QWfjNwUXx9ZrsqvdE4AzqW-zXwxDZWkOtvl5Dbltx0giNRNCbW-JkjVgds-GvQFsr1Wy2Cgg6BqUiB3_EHcpTBp1iK4WTj9tjLcuJADl4WwEttHRruoDAz5DTc";
+
+
 var KEY_CODES = {
     "tab": 9,
     "enter": 13,
@@ -2540,7 +2541,6 @@ $(document).on('submit', '#form-network-add, #form-network-edit', function (e) {
         form_data['count'] = 1;
         form_data['postfix'] = 0;
     }
-
     for (var i = 0; i < form_data['count']; i++) {
         form_data['left'] = resolveZoom(form_data['left'], 'left');
         form_data['top'] = resolveZoom(form_data['top'], 'top');
