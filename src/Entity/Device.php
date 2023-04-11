@@ -213,6 +213,12 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
+    private $template;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
     private $image;
 
     /**
@@ -232,6 +238,24 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device"})
      */
     private $port;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $config = 0;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $status = 0;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 1})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $ethernet = 1;
 
     public function __construct()
     {
@@ -621,6 +645,18 @@ class Device implements InstanciableInterface
         return $this;
     }
 
+    public function getTemplate(): ?string
+    {
+        return $this->template;
+    }
+
+    public function setTemplate(string $template): self
+    {
+        $this->template = $template;
+
+        return $this;
+    }
+
     public function getIcon(): ?string
     {
         return $this->icon;
@@ -665,6 +701,42 @@ class Device implements InstanciableInterface
     public function setPort(int $port): self
     {
         $this->port = $port;
+
+        return $this;
+    }
+
+    public function getConfig(): ?int
+    {
+        return $this->config;
+    }
+
+    public function setConfig(int $config): self
+    {
+        $this->config = $config;
+
+        return $this;
+    }
+
+    public function getStatus(): ?int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getEthernet(): ?int
+    {
+        return $this->ethernet;
+    }
+
+    public function setEthernet(int $ethernet): self
+    {
+        $this->ethernet = $ethernet;
 
         return $this;
     }

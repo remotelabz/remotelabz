@@ -114,7 +114,8 @@ class DeviceController extends Controller
                 "icon"=> $device->getIcon(),
                 "image"=> $device->getImage(),
                 "ram"=>$device->getFlavor()->getMemory(),
-                "url"=>$device->getUrl()   
+                "url"=>$device->getUrl(),
+                "template"=>$device->getTemplate(),   
             ]);
         }
 
@@ -147,6 +148,48 @@ class DeviceController extends Controller
         }
         
         return $this->render('device/view.html.twig', ['device' => $device]);
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_get_node")
+     */
+    public function showActionTest(Request $request, int $id, int $labId)
+    {
+        $device = $this->deviceRepository->find($id);
+
+        if (!$device) {
+            throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        $data = [
+            "name"=> $device->getName(),
+            "type"=> $device->getType(),
+            "console"=> $device->getConsole(),
+            "delay"=> $device->getDelay(),
+            "left"=> $device->getEditorData()->getY(),
+            "top"=> $device->getEditorData()->getX(),
+            "icon"=> $device->getIcon(),
+            "image"=> $device->getImage(),
+            "url"=>$device->getUrl(),
+            "config"=>$device->getConfig(),
+            "status"=>$device->getStatus(),
+            "ethernet"=>$device->getEthernet(), 
+            "cpu"=>$device->getNbCpu(),
+            "template"=>$device->getTemplate(),
+            "brand"=>$device->getBrand(),
+            "model"=>$device->getModel(),
+            "status"=>$device->getStatus()
+        ];
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed node (60025).',
+            'data' => $data]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**
@@ -235,6 +278,8 @@ class DeviceController extends Controller
         $device->setVirtuality(0);
         $device->setNbCpu(1);
         $device->setCreatedAt(new \DateTime());
+        $device->setTemplate($data['template']);
+        $device->setModel($data['model']);
 
         $editorData->setX($data['top']);
         $editorData->setY($data['left']);
@@ -392,6 +437,59 @@ class DeviceController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Put("/api/labs/{labId<\d+>}/node/{id<\d+>}", name="api_edit_node")
+     */
+    public function updateActionTest(Request $request, int $id, int $labId)
+    {
+        $device = $this->deviceRepository->findById($id)[0];
+
+        $data = json_decode($request->getContent(), true);   
+
+        $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
+        $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+        $flavor = $this->flavorRepository->findById($data['flavor']);
+        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
+        //$device->addLab($lab);
+        $device->setCount($data['count']);
+        $device->setName($data['name']);
+        $device->setType($data['type']);
+        $device->setIcon($data['icon']);
+        $device->setBrand($data['brand']);
+        $device->setFlavor($flavor[0]);
+        $device->setNbCore($data['core']);
+        $device->setNbSocket($data['socket']);
+        $device->setNbThread($data['thread']);
+        $device->setOperatingSystem($operatingSystem[0]);
+        $device->setHypervisor($hypervisor[0]);
+        $device->addControlProtocolType($controlProtocolType[0]);
+        $device->setDelay($data['delay']);
+        $device->setPostFix($data['postfix']);
+        $device->setTemplate($data['template']);
+        $device->setModel($data['model']);
+
+        $editorData = $device->getEditorData();
+        $editorData->setX($data['top']);
+        $editorData->setY($data['left']);
+        $device->setEditorData($editorData);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($device);
+        $entityManager->flush();
+
+
+        $this->logger->info("Device named" . $device->getName() . " modified");
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 201,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
      */
     public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
@@ -535,7 +633,7 @@ class DeviceController extends Controller
      * 
      * @Rest\Delete("/api/nodes/{id<\d+>}", name="api_delete_device")
      */
-    public function deleteActionTest(Request $request, int $id, int $labId)
+    public function deleteActionTest(Request $request, int $id)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $username=$user->getUsername();

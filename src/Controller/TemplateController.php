@@ -198,6 +198,14 @@ class TemplateController extends Controller
             'value' => $p['icon'],
             'list' => $this->listNodeIcons()
         );
+        $data['options']['config'] = Array(
+			'name' => 'Startup configuration',
+			'type' => 'list',
+			'value' => '0',	// None
+			'list' => $this->listNodeConfigTemplates()
+		);
+		$data['options']['config']['list'][0] = 'None';	// None
+		$data['options']['config']['list'][1] = 'Exported';	// Exported
 
         $data['options']['delay'] = Array(
             'name' => 'Delay (s)',
@@ -208,6 +216,12 @@ class TemplateController extends Controller
         if ($p['type'] = 'remotelabz') {
             $data['options']['brand'] = Array(
                 'name' => 'Brand',
+                'type' => 'input',
+                'value' => ''
+            );
+
+            $data['options']['model'] = Array(
+                'name' => 'Model',
                 'type' => 'input',
                 'value' => ''
             );
@@ -282,6 +296,19 @@ class TemplateController extends Controller
         foreach (scandir('/opt/remotelabz/assets/images/icons') as $filename) {
             if (is_file('/opt/remotelabz/assets/images/icons/'.$filename) && preg_match('/^.+\.[png$\|jpg$]/', $filename)) {
                 $patterns[0] = '/^(.+)\.\(png$\|jpg$\)/';  // remove extension
+                $replacements[0] = '$1';
+                $name = preg_replace($patterns, $replacements, $filename);
+                $results[$filename] = $name;
+            }
+        }
+        return $results;
+    }
+
+    function listNodeConfigTemplates() {
+        $results = Array();
+        foreach (scandir('/opt/remotelabz/public/editor/configs') as $filename) {
+            if (is_file('/opt/remotelabz/public/editor/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
+                $patterns[0] = '/^(.+)\.php$/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);
                 $results[$filename] = $name;

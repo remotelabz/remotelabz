@@ -4526,7 +4526,6 @@ $(document).on('click','.action-nightmode', function(e){
   $.cookie('topo', 'dark', {
       expires: 90
   });
-  alert("dark");
 });
 
 
