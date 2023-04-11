@@ -192,40 +192,46 @@ class Device implements InstanciableInterface
     private $delay;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="string", length=50, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $console;
 
     /**
-     * @ORM\Column(type="string", length=100)
+     * @ORM\Column(type="string", length=100, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $icon;
 
     /**
-     * @ORM\Column(type="string", length=70)
+     * @ORM\Column(type="string", length=70, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $url;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $image;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $count;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $postfix;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $port;
 
     public function __construct()
     {
@@ -647,6 +653,18 @@ class Device implements InstanciableInterface
     public function setPostfix(int $postfix): self
     {
         $this->postfix = $postfix;
+
+        return $this;
+    }
+
+    public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function setPort(int $port): self
+    {
+        $this->port = $port;
 
         return $this;
     }

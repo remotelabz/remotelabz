@@ -48,19 +48,19 @@ class DeviceController extends Controller
         LabRepository $labRepository,
         DeviceRepository $deviceRepository,
         SerializerInterface $serializerInterface,
-        ControlProtocolTypeRepository $controlProtocolTypeRepository
-        /*HypervisorRepository $hypervisorRepository,
+        ControlProtocolTypeRepository $controlProtocolTypeRepository,
+        HypervisorRepository $hypervisorRepository,
         OperatingSystemRepository $operatingSystemRepository,
-        FlavorRepository $flavorRepository*/)
+        FlavorRepository $flavorRepository)
     {
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
         $this->logger = $logger;
         $this->serializer = $serializerInterface;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
-        /*$this->flavorRepository = $flavorRepository;
+        $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
-        $this->hypervisorRepository = $hypervisorRepository;*/
+        $this->hypervisorRepository = $hypervisorRepository;
     }
 
     /**
@@ -206,30 +206,28 @@ class DeviceController extends Controller
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
         $device = new Device();
+        $editorData = new EditorData();
         $data = json_decode($request->getContent(), true);
         //var_dump($data);exit;
         $lab = $this->labRepository->findById($id);
         //$this->logger->debug($textobject);
-        $hypervisor = $hypervisorRepository->findByName($data['hypervisor']);
-        var_dump($hypervisor); exit;
-        $controlProtocolType = $this->controlProtocolTypeRepository->findByName($data['controlProtocol']);
-        $flavor = $flavorRepository->findByName($data['flavor']);
-        $operatingSystem = $operatingSystemRepository->findByName($data['operatingSystem']);
+        $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
+        $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+        $flavor = $this->flavorRepository->findById($data['flavor']);
+        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
         //$device->addLab($lab);
         $device->setCount($data['count']);
         $device->setName($data['name']);
         $device->setType($data['type']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
-        $device->setFlavor($flavor);
+        $device->setFlavor($flavor[0]);
         $device->setNbCore($data['core']);
         $device->setNbSocket($data['socket']);
         $device->setNbThread($data['thread']);
-        $device->setOperatingSystem($operatingSystem);
-        $device->setHypervisor($hypervisor);
-        $device->addControlProtocolType($controlProtocolType);
-        //$device->setLeftPosition($data['left']);
-        $device->setEditorData([$x=>$data['top'], $y=>$data['left']]);
+        $device->setOperatingSystem($operatingSystem[0]);
+        $device->setHypervisor($hypervisor[0]);
+        $device->addControlProtocolType($controlProtocolType[0]);
         $device->setDelay($data['delay']);
         $device->setPostFix($data['postfix']);
         $device->setIsTemplate(false);
@@ -237,12 +235,19 @@ class DeviceController extends Controller
         $device->setVirtuality(0);
         $device->setNbCpu(1);
         $device->setCreatedAt(new \DateTime());
+
+        $editorData->setX($data['top']);
+        $editorData->setY($data['left']);
+        $device->setEditorData($editorData);
         //$device->setUuid(new Uuid);
-        
         
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $lab->addDevice($device);
+        $entityManager->flush();
+        $device->setPort(32768 + 128 + $device->getId());
+        $url = $this->getConsoleUrl(false, $this->getUser()->getUsername(), $device);
+        $device->setUrl($url);
         $entityManager->flush();
         
 
@@ -533,4 +538,43 @@ class DeviceController extends Controller
                 break;
             }
     }
+
+    public function getConsoleUrl($html5,$username,$device) {
+
+                /*if ($device->getType() == 'docker') {
+                                return 'docker://'.$_SERVER['SERVER_NAME'].':4243/'.$this -> lab_id.'-'.$this -> tenant.'-'.$this -> id.'?'.$this -> name;
+                        }*/
+                //if ( $html5 != 1 ) {
+                    switch ( $device->getConsole() ) {
+                        default:
+                        case 'telnet' :
+                            //html5AddSession( $html5_db, $username.'_'.$this -> name , "telnet" , $this -> port, $this -> tenant);
+                            return 'telnet://'.$_SERVER['SERVER_ADDR'].':'.$device->getPort();
+                            break;;
+                        case 'vnc' :
+                            //html5AddSession( $html5_db, $username.'_'.$this -> name , "vnc" , $this -> port, $this -> tenant);
+                            return 'vnc://'.$_SERVER['SERVER_ADDR'].':'.$device->getPort();
+                            break;;
+                        case 'rdp' :
+                            //html5AddSession( $html5_db, $username.'_'.$this -> name , "rdp" , $this -> port, $this -> tenant);
+                            //return 'rdp://full%20address=s:'.$_SERVER['SERVER_NAME'].':'.$this -> port;
+                            return '/rdp/?target='.$_SERVER['SERVER_ADDR'].'&port='.$device->getPort();
+                            break;;
+                    }
+                /*} else {
+                    if ( !isset($this->console) || $this->console == '' ) {
+                        $console='telnet' ;
+                    } else {
+                        $console=$this->console ;
+                    }
+                    //$html5_db = html5_checkDatabase();
+                    html5AddSession( $html5_db, $this -> name.'_'.$this ->id.'_'.$username , $console , $this -> port, $this -> tenant);
+                    $html5_db = null ;
+                    addHtml5Perm($this->port,$this->tenant);
+                    $token=getHtml5Token($this->tenant);
+                    $b64id=base64_encode( $this->port."\0".'c'."\0".'mysql' );
+                    //return 'http://'.$_SERVER['SERVER_NAME'].':8080/guacamole/#/client/'.$b64id ;
+                    return '/html5/#/client/'.$b64id.'?token='.$token ;
+                }*/
+            }
 }

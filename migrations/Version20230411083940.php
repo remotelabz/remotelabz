@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20230405213856 extends AbstractMigration
+final class Version20230411083940 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -26,8 +26,6 @@ final class Version20230405213856 extends AbstractMigration
         $this->addSql('CREATE TABLE text_object (id INT AUTO_INCREMENT NOT NULL, lab_id INT DEFAULT NULL, name VARCHAR(255) NOT NULL, type VARCHAR(255) DEFAULT NULL, data VARCHAR(500) DEFAULT NULL, newdata VARCHAR(255) DEFAULT NULL, INDEX IDX_BD21321F628913D5 (lab_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE network_device ADD CONSTRAINT FK_6B3CB1E8628913D5 FOREIGN KEY (lab_id) REFERENCES lab (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE text_object ADD CONSTRAINT FK_BD21321F628913D5 FOREIGN KEY (lab_id) REFERENCES lab (id) ON DELETE SET NULL');
-        $this->addSql('ALTER TABLE control_protocol_type_instance CHANGE port port INT NOT NULL');
-        $this->addSql('ALTER TABLE device ADD delay INT NOT NULL, ADD console VARCHAR(50) NOT NULL, ADD icon VARCHAR(100) NOT NULL, ADD url VARCHAR(70) NOT NULL, ADD image VARCHAR(255) NOT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -37,7 +35,5 @@ final class Version20230405213856 extends AbstractMigration
 
         $this->addSql('DROP TABLE network_device');
         $this->addSql('DROP TABLE text_object');
-        $this->addSql('ALTER TABLE control_protocol_type_instance CHANGE port port INT DEFAULT NULL');
-        $this->addSql('ALTER TABLE device DROP delay, DROP console, DROP icon, DROP url, DROP image');
     }
 }

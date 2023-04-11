@@ -868,7 +868,7 @@ function getNetworkTypes() {
 function getNodes(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var nodesData;
+    /*var nodesData;
     var nodes = {
         1:{
             console:"telnet",
@@ -906,25 +906,26 @@ function getNodes(node_id) {
             config:0, 
             ethernet:1
         }
-    }
+    }*/
     
     if (node_id != null) {
-        nodesData = nodes[node_id];
-        //var url = '/api/labs' + lab_filename + '/nodes/' + node_id;
+        //nodesData = nodes[node_id];
+        var url = '/api/labs/' + lab_filename + '/nodes/' + node_id;
     } else {
-        nodesData = nodes;
-        //var url = '/api/labs' + lab_filename + '/nodes';
+        //nodesData = nodes;
+        var url = '/api/labs/' + lab_filename + '/nodes';
     }
-    /*var type = 'GET';
+    var type = 'GET';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
-                // logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
+                logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -939,9 +940,7 @@ function getNodes(node_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    console.log(nodesData);
-    deferred.resolve(nodesData);
+    });
     return deferred.promise();
 }
 

@@ -199,6 +199,12 @@ class TemplateController extends Controller
             'list' => $this->listNodeIcons()
         );
 
+        $data['options']['delay'] = Array(
+            'name' => 'Delay (s)',
+            'type' => 'input',
+            'value' => 0
+        );
+
         if ($p['type'] = 'remotelabz') {
             $data['options']['brand'] = Array(
                 'name' => 'Brand',
@@ -213,16 +219,11 @@ class TemplateController extends Controller
                 'list' => Array('vm'=>'vm', 'container'=>'container')
             );
 
-            $flavorList= [];
-            $flavors = $this->flavorRepository->findAll();
-            foreach($flavors as $flavor){
-                $flavorList = [...$flavorList, $flavor->getMemory()];
-            }
             $data['options']['flavor'] = Array(
                 'name' => 'Ram',
                 'type' => 'list',
                 'value' => '',
-                'list' => $flavorList
+                'list' => $this->listFlavors()
             );
 
             $data['options']['core'] = Array(
@@ -243,40 +244,26 @@ class TemplateController extends Controller
                 'value' => '1',
             );
 
-            $operatingSystemList= [];
-            $operatingSystems = $this->operatingSystemRepository->findAll();
-            foreach($operatingSystems as $operatingSystem){
-                $operatingSystemList = [...$operatingSystemList, $operatingSystem->getName()];
-            }
             $data['options']['operatingSystem'] = Array(
                 'name' => 'Operating System',
                 'type' => 'list',
                 'value' => '',
-                'list' => $operatingSystemList
+                'list' => $this->listOperatingSystems()
             );
 
-            $hypervisorList= [];
-            $hypervisors = $this->hypervisorRepository->findAll();
-            foreach($hypervisors as $hypervisor){
-                $hypervisorList = [...$hypervisorList, $hypervisor->getName()];
-            }
+            
             $data['options']['hypervisor'] = Array(
                 'name' => 'Hypervisor',
                 'type' => 'list',
                 'value' => '',
-                'list' => $hypervisorList
+                'list' => $this->listHypervisors()
             );
 
-            $controlProtocolTypeList= [];
-            $controlProtocolTypes = $this->controlProtocolTypeRepository->findAll();
-            foreach($controlProtocolTypes as $controlProtocolType){
-                $controlProtocolTypeList = [...$controlProtocolTypeList, $controlProtocolType->getName()];
-            }
             $data['options']['controlProtocol'] = Array(
                 'name' => 'Control Protocol',
                 'type' => 'list',
                 'value' => '',
-                'list' => $controlProtocolTypeList
+                'list' => $this->listControlProtocolTypes()
             );
         
         }
@@ -303,4 +290,44 @@ class TemplateController extends Controller
         return $results;
     }
 
+    public function listControlProtocolTypes() {
+
+        $controlProtocolTypeList= [];
+            $controlProtocolTypes = $this->controlProtocolTypeRepository->findAll();
+            foreach($controlProtocolTypes as $controlProtocolType){
+                $controlProtocolTypeList[$controlProtocolType->getId()] = $controlProtocolType->getName();
+            }
+        return $controlProtocolTypeList;
+    }
+
+    public function listHypervisors() {
+
+        $hypervisorList= [];
+            $hypervisors = $this->hypervisorRepository->findAll();
+            foreach($hypervisors as $hypervisor){
+                $hypervisorList[$hypervisor->getId()] = $hypervisor->getName();
+            }
+        return $hypervisorList;
+    }
+
+    public function listOperatingSystems() {
+
+        $operatingSystemList= [];
+            $operatingSystems = $this->operatingSystemRepository->findAll();
+            foreach($operatingSystems as $operatingSystem){
+                $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
+            }
+        return $operatingSystemList;
+    }
+    
+
+    public function listFlavors() {
+
+        $flavorList= [];
+            $flavors = $this->flavorRepository->findAll();
+            foreach($flavors as $flavor){
+                $flavorList[$flavor->getId()] = $flavor->getMemory() ;
+            }
+        return $flavorList;
+    }
 }
