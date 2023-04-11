@@ -424,7 +424,7 @@ function deleteNetwork(id) {
 // Delete node
 function deleteNode(id) {
     var deferred = $.Deferred();
-    var nodes = {
+    /*var nodes = {
         1:{
             console:"telnet",
             delay:0, 
@@ -461,16 +461,17 @@ function deleteNode(id) {
             config:0, 
             ethernet:1
         }
-    }
-    /*var type = 'DELETE';
+    }*/
+    var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + id;
+    var url = '/api/nodes/' + id;
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        headers: {"Authorization" : `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node deleted.');
@@ -488,9 +489,7 @@ function deleteNode(id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    delete nodes[id];
-    deferred.resolve(nodes);
+    })
     return deferred.promise();
 }
 
@@ -2229,7 +2228,8 @@ function setNodesPosition(nodes) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = [];
     form_data=nodes;
-    var url = '/api/labs' + lab_filename + '/nodes' ;
+    //var url = '/api/labs' + lab_filename + '/nodes' ;
+    var url = '/api/labs/' + lab_filename + '/editordata' ;
     var type = 'PUT';
     $.ajax({
         cache: false,

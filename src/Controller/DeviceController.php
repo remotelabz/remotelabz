@@ -247,6 +247,7 @@ class DeviceController extends Controller
         $entityManager->flush();
         $device->setPort(32768 + 128 + $device->getId());
         $url = $this->getConsoleUrl(false, $this->getUser()->getUsername(), $device);
+        $editorData->setDevice($device);
         $device->setUrl($url);
         $entityManager->flush();
         
@@ -432,6 +433,54 @@ class DeviceController extends Controller
     }
 
     /**
+     * @Rest\Put("/api/labs/{id<\d+>}/editordata", name="api_edit_node_editor_data")
+     */
+    public function updateEditorDataActionTest(Request $request, int $id, EditorDataRepository $editorDataRepository)
+    {
+        $lab = $this->labRepository->findById($id);
+
+ 
+        $editorDataList = json_decode($request->getContent(), true);
+
+        if (!$editorDataList) {
+            throw new BadRequestHttpException("Incorrect JSON.");
+        }
+
+        /** @var EditorDataRepository $editorDataRepository */
+        $editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);
+
+        $entityManager = $this->getDoctrine()->getManager();
+
+        foreach ($editorDataList as $editorData) {
+            $deviceEditorData = $editorDataRepository->findByDeviceId($editorData['id']);
+
+            //$deviceEditorData = $device->getEditorData();
+            if (array_key_exists('top', $editorData)) {
+                $deviceEditorData->setX($editorData['top']);
+            }
+            if (array_key_exists('left', $editorData)) {
+                $deviceEditorData->setY($editorData['left']);
+            }
+
+            $entityManager->persist($deviceEditorData);
+            
+        }
+
+        $lab->setLastUpdated(new \DateTime());       
+        
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
      * 
      * @Rest\Delete("/api/devices/{id<\d+>}", name="api_delete_device")
@@ -480,6 +529,28 @@ class DeviceController extends Controller
             $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
 
         }
+    }
+
+    /**
+     * 
+     * @Rest\Delete("/api/nodes/{id<\d+>}", name="api_delete_device")
+     */
+    public function deleteActionTest(Request $request, int $id, int $labId)
+    {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $username=$user->getUsername();
+        $device = $this->deviceRepository->find($id);
+
+        $this->delete_device($device);
+        $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     private function addNetworkInterface(Device $device) {
