@@ -446,32 +446,41 @@ class DeviceController extends Controller
 
         $data = json_decode($request->getContent(), true);   
 
-        $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
-        $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
-        $flavor = $this->flavorRepository->findById($data['flavor']);
-        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
-        //$device->addLab($lab);
         $device->setCount($data['count']);
         $device->setName($data['name']);
-        $device->setType($data['type']);
-        $device->setIcon($data['icon']);
-        $device->setBrand($data['brand']);
-        $device->setFlavor($flavor[0]);
-        $device->setNbCore($data['core']);
-        $device->setNbSocket($data['socket']);
-        $device->setNbThread($data['thread']);
-        $device->setOperatingSystem($operatingSystem[0]);
-        $device->setHypervisor($hypervisor[0]);
-        $device->addControlProtocolType($controlProtocolType[0]);
-        $device->setDelay($data['delay']);
         $device->setPostFix($data['postfix']);
-        $device->setTemplate($data['template']);
-        $device->setModel($data['model']);
 
-        $editorData = $device->getEditorData();
-        $editorData->setX($data['top']);
-        $editorData->setY($data['left']);
-        $device->setEditorData($editorData);
+        if(isset($data['config'])) {
+            $device->setConfig($data['config']);
+        }
+
+        if(isset($data['type'])) {
+            $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
+            $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+            $flavor = $this->flavorRepository->findById($data['flavor']);
+            $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
+        
+            $device->setType($data['type']);
+            $device->setIcon($data['icon']);
+            $device->setBrand($data['brand']);
+            $device->setFlavor($flavor[0]);
+            $device->setNbCore($data['core']);
+            $device->setNbSocket($data['socket']);
+            $device->setNbThread($data['thread']);
+            $device->setOperatingSystem($operatingSystem[0]);
+            $device->setHypervisor($hypervisor[0]);
+            $device->addControlProtocolType($controlProtocolType[0]);
+            $device->setDelay($data['delay']);
+            $device->setTemplate($data['template']);
+            $device->setModel($data['model']);
+        }
+    
+        if( $data['top'] !== null || $data['left'] !== null) {
+            $editorData = $device->getEditorData();
+            $editorData->setX($data['top']);
+            $editorData->setY($data['left']);
+            $device->setEditorData($editorData);
+        }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);

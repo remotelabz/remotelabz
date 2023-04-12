@@ -246,6 +246,12 @@ class Device implements InstanciableInterface
     private $config = 0;
 
     /**
+     * @ORM\Column(type="string", options={"default": ""})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $config_data = "";
+
+    /**
      * @ORM\Column(type="integer", options={"default": 0})
      * @Serializer\Groups({"api_get_device"})
      */
@@ -713,6 +719,18 @@ class Device implements InstanciableInterface
     public function setConfig(int $config): self
     {
         $this->config = $config;
+
+        return $this;
+    }
+
+    public function getConfigData(): ?string
+    {
+        return $this->config_data;
+    }
+
+    public function setConfigData(string $config_data): self
+    {
+        $this->config_data = $config_data;
 
         return $this;
     }

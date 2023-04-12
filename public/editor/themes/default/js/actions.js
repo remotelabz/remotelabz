@@ -1737,7 +1737,7 @@ $(document).on('click', '.action-nodesbootdelete, .action-nodesbootdelete-group'
                 var form_data = {};
                 form_data['id'] = node.path;
                 form_data['data'] = '';
-                var url = '/api/labs' + lab_filename + '/configs/' + node.path;
+                var url = '/api/labs/' + lab_filename + '/configs/' + node.path;
                 var type = 'PUT';
                 $.when($.ajax({
                     cache: false,
@@ -1770,7 +1770,7 @@ $(document).on('click', '.action-nodesbootdelete, .action-nodesbootdelete-group'
                     var form_data = {};
                     form_data['id'] = key;
                     form_data['data'] = '';
-                    var url = '/api/labs' + lab_filename + '/configs/' + key;
+                    var url = '/api/labs/' + lab_filename + '/configs/' + key;
                     var type = 'PUT';
                     $.when($.ajax({
                         cache: false,

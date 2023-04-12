@@ -5,7 +5,7 @@ function setStartupData(id, set_data = false, config = null, name = null) {
 
     var promises = [];
     logger(1, 'DEBUG: posting form-node-edit form.');
-    var url = '/api/labs' + lab_filename + '/nodes/' + id;
+    var url = '/api/labs/' + lab_filename + '/node/' + id;
     var type = 'PUT';
     form_data['id'] = id;
     form_data['count'] = 1;
@@ -179,7 +179,7 @@ function saveEditorLab(formId = 'form-node-config', bool)
     
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('config');
-    var url = '/api/labs' + lab_filename + '/configs/' + form_data['id'];
+    var url = '/api/labs/' + lab_filename + '/configs/' + form_data['id'];
     var type = 'PUT';
     $.ajax({
         cache: false,

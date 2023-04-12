@@ -946,7 +946,7 @@ function getNodes(node_id) {
 // Get node startup-config
 function getNodeConfigs(node_id) {
     var deferred = $.Deferred();
-    var configs;
+    /*var configs;
     var configList = {
         1: {
             config: 0,
@@ -960,16 +960,16 @@ function getNodeConfigs(node_id) {
             icon: "Desktop.png",
             len: 0,
         }
-    }
+    }*/
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (node_id != null) {
-        configs = configList[id];
-        //var url = '/api/labs' + lab_filename + '/configs/' + node_id;
+        //configs = configList[id];
+        var url = '/api/labs/' + lab_filename + '/configs/' + node_id;
     } else {
-        configs = configList;
-        //var url = '/api/labs' + lab_filename + '/configs';
+        //configs = configList;
+        var url = '/api/labs/' + lab_filename + '/configs';
     }
-    /*var type = 'GET';
+    var type = 'GET';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -993,9 +993,9 @@ function getNodeConfigs(node_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    console.log("configs nodes: ", configs);
-    deferred.resolve(configs);
+    });
+    //console.log("configs nodes: ", configs);
+    //deferred.resolve(configs);
     return deferred.promise();
 }
 
@@ -3379,7 +3379,7 @@ function printNodesMap(values, cb) {
 function saveLab(form) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('config');
-    var url = '/api/labs' + lab_filename + '/configs/' + form_data['id'];
+    var url = '/api/labs/' + lab_filename + '/configs/' + form_data['id'];
     var type = 'PUT';
     $.ajax({
         cache: false,
