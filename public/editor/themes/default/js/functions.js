@@ -1534,7 +1534,7 @@ function logger(severity, message) {
 // Logout user
 function logoutUser() {
     var deferred = $.Deferred();
-    var url = '/api/auth/logout';
+    var url = '/api/logout';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1543,18 +1543,18 @@ function logoutUser() {
         url: encodeURI(url),
         dataType: 'json',
         success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: user is logged off.');
+            //if (data['status'] == 'success') {
+            //    logger(1, 'DEBUG: user is logged off.');
                 if (UPDATEID != null) {
                     // Stop updating node_status
                     clearInterval(UPDATEID);
                 }
                 deferred.resolve();
-            } else {
+            /*} else {
                 // Authentication error
                 logger(1, 'DEBUG: internal error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
-            }
+            }*/
         },
         error: function (data) {
             // Authentication error
