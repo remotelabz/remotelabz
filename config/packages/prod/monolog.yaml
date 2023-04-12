@@ -54,7 +54,7 @@ monolog:
             handler:    grouped
         grouped:
             type: group
-            members: [syslog_handler,deduplicated]
+            members: [syslog_handler]
         deduplicated:
             type:    deduplication
             handler: symfony_mailer
