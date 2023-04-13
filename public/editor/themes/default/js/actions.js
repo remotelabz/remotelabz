@@ -2416,13 +2416,14 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
+    path = form_data['path'].split(/(\d)/)[1];
     if ($(this).attr('id') == 'form-lab-add') {
         logger(1, 'DEBUG: posting form-lab-add form.');
         var url = '/api/labs';
         var type = 'POST';
     } else {
         logger(1, 'DEBUG: posting form-lab-edit form.');
-        var url = '/api/labs' + form_data['path'];
+        var url = '/api/labs/test/' + path;
         var type = 'PUT';
     }
 
@@ -3524,6 +3525,7 @@ $('body').on('click', '.action-textobjectduplicate', function (e) {
             $duplicated_shape.attr("id", "customText" + new_id);
             $duplicated_shape.attr("data-path", new_id);
 
+            console.log(textObjects);
             new_data_html = $duplicated_shape[0].outerHTML;
             form_data['data'] = new_data_html;
             form_data['name'] = 'txt ' + new_id;

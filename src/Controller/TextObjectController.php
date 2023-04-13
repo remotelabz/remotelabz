@@ -98,13 +98,20 @@ class TextObjectController extends Controller
         $textobjects = $this->textobjectRepository->findByLab($id);
         $data = [];
         foreach($textobjects as $textobject){
-            array_push($data, [
+
+            $data[$textobject->getId()] = [
+                "id"=> $textobject->getId(),
                 "name"=> $textobject->getName(),
                 "type"=> $textobject->getType(),
                 "data"=> $textobject->getData(),
                 "newdata"=> $textobject->getNewdata(),
-                "id"=>$textobject->getId(),
-            ]);
+            ];
+            /*array_push($data, [
+                "name"=> $textobject->getName(),
+                "type"=> $textobject->getType(),
+                "data"=> $textobject->getData(),
+                "newdata"=> $textobject->getNewdata(),
+            ]);*/
         }
 
         $response = new Response();

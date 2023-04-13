@@ -42,20 +42,42 @@ class LabRepository extends ServiceEntityRepository
         return $lab[0];
     }
 
-    public function findLabInfoById($id)
+    public function findLabDetailsById($id)
     {
         $entityManager = $this->getEntityManager();
 
         $query = $entityManager->createQuery(
-            'SELECT L.id, L.name, L.shortDescription as description, CONCAT(A.firstName,\' \',A.lastName) as author
+            'SELECT L.id, L.name, L.shortDescription as description, L.tasks, CONCAT(A.firstName,\' \',A.lastName) as author
             FROM App\Entity\Lab L
             LEFT JOIN L.author A
             WHERE L.id = :id'
         )
         ->setParameter('id', $id);
 
+        $lab = $query->getResult();
+
         // returns an array of Product objects
-        return $query->getResult();
+        return $lab[0];
+    }
+
+    public function findLabInfoById($id)
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT L.id as filename, L.uuid as id, L.name, L.shortDescription as description, 
+            L.tasks as body, CONCAT(A.firstName,\' \',A.lastName) as author, L.version,
+            L.scripttimeout, L.lock
+            FROM App\Entity\Lab L
+            LEFT JOIN L.author A
+            WHERE L.id = :id'
+        )
+        ->setParameter('id', $id);
+
+        $lab = $query->getResult();
+
+        // returns an array of Product objects
+        return $lab[0];
     }
 
     // /**

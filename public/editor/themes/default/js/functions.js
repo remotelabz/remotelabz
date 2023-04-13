@@ -602,19 +602,8 @@ function getJsonMessage(response) {
 }
 
 // Get lab info
-function getLabInfo(labId) {  //function getLabInfo(lab_filename)
+function getLabInfo(labId) { 
     var deferred = $.Deferred();
-   var labInfo = {
-        author:"L'autheur",
-        description: "la description du lab",
-        body: "",
-        filename: "test.unl",
-        id: "dd99fceb-0a45-446f-8e75-9450da17a69e",
-        name: "test",
-        version: "1",
-        scripttimeout: 300,
-        lock: 0
-    }
     var url = '/api/labs/test/' + labId;
     var type = 'GET';
     $.ajax({
@@ -627,12 +616,12 @@ function getLabInfo(labId) {  //function getLabInfo(lab_filename)
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: lab "' + labId + '" found.');
-                //deferred.resolve(data['data']);
+                deferred.resolve(data['data']);
             } else {
                 // Application error
                 console.log(data);
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                //deferred.reject(data['message']);
+                deferred.reject(data['message']);
             }
         },
         error: function (data) {
@@ -643,7 +632,7 @@ function getLabInfo(labId) {  //function getLabInfo(lab_filename)
             //deferred.reject(message);
         }
     })
-    deferred.resolve(labInfo);
+    //deferred.resolve(labInfo);
     return deferred.promise();
 }
 
@@ -651,7 +640,7 @@ function getLabInfo(labId) {  //function getLabInfo(lab_filename)
 function getLabBody() {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/html';
+    var url = '/api/labs/' + lab_filename + '/html';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -6044,7 +6033,7 @@ function lockLab() {
     $('.action-lock-lab').removeClass('action-lock-lab').addClass('action-unlock-lab')
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/Lock' ;
+    var url = '/api/labs/' + lab_filename + '/Lock' ;
     var type = 'PUT';
     $.ajax({
         cache: false,
@@ -6091,7 +6080,7 @@ function unlockLab(){
     $('.action-unlock-lab').removeClass('action-unlock-lab').addClass('action-lock-lab')
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/Unlock' ;
+    var url = '/api/labs/' + lab_filename + '/Unlock' ;
     var type = 'PUT';
     $.ajax({
         cache: false,

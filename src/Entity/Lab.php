@@ -42,6 +42,30 @@ class Lab implements InstanciableInterface
     private $description;
 
     /**
+     * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $tasks;
+
+    /**
+     * @ORM\Column(type="string", options={"default": "1"},  nullable=true)
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $version;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 300},  nullable=true)
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $scripttimeout;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $lock;
+
+    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
      * @ORM\JoinTable(name="lab_device",
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
@@ -167,7 +191,55 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    /**
+    public function getTasks(): ?string
+    {
+        return $this->tasks;
+    }
+
+    public function setTasks(?string $tasks): self
+    {
+        $this->tasks = $tasks;
+
+        return $this;
+    }
+
+    public function getVersion(): ?string
+    {
+        return $this->version;
+    }
+
+    public function setVersion(?string $version): self
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
+    public function getScripttimeout(): ?int
+    {
+        return $this->scripttimeout;
+    }
+
+    public function setScripttimeout(?int $scripttimeout): self
+    {
+        $this->scripttimeout = $scripttimeout;
+
+        return $this;
+    }
+
+    public function getLock(): ?int
+    {
+        return $this->lock;
+    }
+
+    public function setLock(?int $lock): self
+    {
+        $this->lock = $lock;
+
+        return $this;
+    }
+
+    /**y
      * @return Collection|Device[]
      */
     public function getDevices()
