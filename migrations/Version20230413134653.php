@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20230413071920 extends AbstractMigration
+final class Version20230413134653 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -22,7 +22,7 @@ final class Version20230413071920 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE lab ADD version VARCHAR(255) DEFAULT \'1\', ADD scripttimeout INT DEFAULT 300, ADD `lock` INT DEFAULT 0 NOT NULL');
+        $this->addSql('ALTER TABLE lab ADD version VARCHAR(10) DEFAULT \'1\' NOT NULL, ADD scripttimeout INT DEFAULT 300 NOT NULL, ADD locked INT DEFAULT 0 NOT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -30,6 +30,6 @@ final class Version20230413071920 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE lab DROP version, DROP scripttimeout, DROP `lock`');
+        $this->addSql('ALTER TABLE lab DROP version, DROP scripttimeout, DROP locked');
     }
 }

@@ -115,7 +115,8 @@ class DeviceController extends Controller
                 "image"=> $device->getImage(),
                 "ram"=>$device->getFlavor()->getMemory(),
                 "url"=>$device->getUrl(),
-                "template"=>$device->getTemplate(),   
+                "template"=>$device->getTemplate(),
+                "status"=> $device->getStatus(),  
             ]);
         }
 

@@ -2413,7 +2413,7 @@ function setNodeInterface(node_id,network_id,interface_id){
 function start(node_id) {
     var deferred = $.Deferred();
 
-    var nodes = {
+    /*var nodes = {
         1:{
             console:"telnet",
             delay:0, 
@@ -2450,9 +2450,9 @@ function start(node_id) {
             config:0, 
             ethernet:1
         }
-    }
+    }*/
     var lab_filename = $('#lab-viewport').attr('data-path');
-    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/start';
+    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/start';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -2478,10 +2478,10 @@ function start(node_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    nodes[node_id].status = 2;
-    console.log("start ",nodes[node_id])
-    deferred.resolve(nodes[node_id]);
+    });
+    //nodes[node_id].status = 2;
+    /*console.log("start ",nodes[node_id])
+    deferred.resolve(nodes[node_id]);*/
     return deferred.promise();
 }
 

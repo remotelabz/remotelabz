@@ -48,22 +48,22 @@ class Lab implements InstanciableInterface
     private $tasks;
 
     /**
-     * @ORM\Column(type="string", options={"default": "1"},  nullable=true)
+     * @ORM\Column(type="string", length=10, options={"default": "1"})
      * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
-    private $version;
+    private $version = "1";
 
     /**
-     * @ORM\Column(type="integer", options={"default": 300},  nullable=true)
+     * @ORM\Column(type="integer", options={"default": 300})
      * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
-    private $scripttimeout;
+    private $scripttimeout = 300;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
      * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
-    private $lock;
+    private $locked = 0;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
@@ -227,14 +227,14 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function getLock(): ?int
+    public function getLocked(): ?int
     {
-        return $this->lock;
+        return $this->locked;
     }
 
-    public function setLock(?int $lock): self
+    public function setLocked(?int $locked): self
     {
-        $this->lock = $lock;
+        $this->locked = $locked;
 
         return $this;
     }

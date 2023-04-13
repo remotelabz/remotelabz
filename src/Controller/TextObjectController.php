@@ -273,7 +273,6 @@ class TextObjectController extends Controller
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
      * 
      * @Rest\Delete("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_delete_textobject")
      */

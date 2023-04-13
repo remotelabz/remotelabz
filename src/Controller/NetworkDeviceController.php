@@ -257,7 +257,6 @@ class NetworkDeviceController extends Controller
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
      * 
      * @Rest\Delete("/api/labs/{labId<\d+>}/networks/{id<\d+>}", name="api_delete_network")
      */

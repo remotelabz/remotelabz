@@ -369,7 +369,7 @@ class LabController extends Controller
 
     /**
      * 
-     * @Rest\Get("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
+     * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
@@ -1109,7 +1109,7 @@ class LabController extends Controller
     {
         $lab = $labRepository->find($id);
 
-        $lab->setLock(1);
+        $lab->setLocked(1);
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 200,
@@ -1132,7 +1132,7 @@ class LabController extends Controller
     {
         $lab = $labRepository->find($id);
 
-        $lab->setLock(0);
+        $lab->setLocked(0);
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 200,
