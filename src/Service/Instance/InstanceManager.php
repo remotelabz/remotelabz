@@ -194,7 +194,8 @@ class InstanceManager
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
 
-        $this->logger->info('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+        $this->logger->info('Sending device instance '.$uuid.' start message');
+        $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
         );
@@ -218,7 +219,8 @@ class InstanceManager
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
-        $this->logger->info('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
+        $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
+        $this->logger->info('Sending device instance '.$uuid.' stop message.');
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP)
         );
