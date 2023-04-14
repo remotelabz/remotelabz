@@ -1434,8 +1434,9 @@ $('body').on('submit', '#form-picture-add', function (e) {
         form_data.append(key, value);
     });
 
+    console.log("form_data: ",form_data)
     // Get action URL
-    var url = '/api/labs' + lab_file + '/pictures';
+    var url = '/api/labs/' + lab_file + '/pictures';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,

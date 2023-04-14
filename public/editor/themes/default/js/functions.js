@@ -1053,7 +1053,7 @@ function getNodeInterfaces(node_id) {
 // Get lab pictures
 function getPictures(picture_id) {
     var deferred = $.Deferred();
-    var pictures = {
+    /*var pictures = {
         1: {
             height: 424,
             id: 1,
@@ -1062,15 +1062,15 @@ function getPictures(picture_id) {
             width: 693,
             map: "" //seulement quand on précise l'id
         }
-    }
+    }*/
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (picture_id != null) {
-        var url = '/api/labs' + lab_filename + '/pictures/' + picture_id;
+        var url = '/api/labs/' + lab_filename + '/pictures/' + picture_id;
     } else {
-        var url = '/api/labs' + lab_filename + '/pictures';
+        var url = '/api/labs/' + lab_filename + '/pictures';
     }
     var type = 'GET';
-   /* $.ajax({
+    $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
@@ -1093,8 +1093,7 @@ function getPictures(picture_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    deferred.resolve(pictures);
+    });
     return deferred.promise();
 }
 
@@ -3485,7 +3484,7 @@ function printFormNodeInterfaces(values) {
 // Display picture in form
 function printPictureInForm(id) {
     var picture_id = id;
-    var picture_url = '/api/labs' + $('#lab-viewport').attr('data-path') + '/pictures/' + picture_id + '/data';
+    var picture_url = '/api/labs/' + $('#lab-viewport').attr('data-path') + '/pictures/' + picture_id + '/data';
 
     //$.when(getPicturesMapped(picture_id)).done(function (picture) {
     $.when(getPictures(picture_id)).done(function (picture) {
@@ -3574,7 +3573,7 @@ function displayPictureForm(picture_id) {
                     // Name
                     form += '<div class="form-group"><label class="col-md-3 control-label">Name</label><div class="col-md-5"><input type="text" class="form-control" name="picture[name]" value="' + picture_name + '"/></div></div>';
                     // Picure
-                    form += '<img id="lab_picture" src="/api/labs' + lab_file + '/pictures/' + picture_id + '/data">'
+                    form += '<img id="lab_picture" src="/api/labs/' + lab_file + '/pictures/' + picture_id + '/data">'
                     // MAP
                     form += '<div class="form-group"><label class="col-md-3 control-label">Map</label><div class="col-md-5"><textarea type="textarea" name="picture[map]">' + picture_map + '</textarea></div></div>';
                     // Footer
@@ -3599,7 +3598,7 @@ function displayPictureForm(picture_id) {
                     // Header
                     form += '<div class="modal fade" id="modal-' + action + '" tabindex="-1" role="dialog"><div class="modal-dialog" style="width: 100%;"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">' + title + '</h4></div><div class="modal-body">';
                     // Picure
-                    form += '<img id="lab_picture" src="/api/labs' + lab_file + '/pictures/' + picture_id + '/data" usemap="#picture_map">';
+                    form += '<img id="lab_picture" src="/api/labs/' + lab_file + '/pictures/' + picture_id + '/data" usemap="#picture_map">';
                     // Map
                     form += '<map name="picture_map">' + translateMap(picture_map) + '</map>';
                     // Footer
@@ -3663,7 +3662,7 @@ function printFormPicture(action, values) {
             var sizeClass = 'resized'
             html += '<form id="form-picture-' + action + '" class="form-horizontal form-lab-' + action + '" data-path=' + values['id'] + '>'+
                 '<div class="follower-wrapper">'+
-                    '<img class="' + sizeClass + '" src="/api/labs' + $('#lab-viewport').attr('data-path') + '/pictures/' + values['id'] + '/data" alt="' + values['name'] + '" width-val="'+values['width'] + '" height-val="' + values['height'] +'"/>'+
+                    '<img class="' + sizeClass + '" src="/api/labs/' + $('#lab-viewport').attr('data-path') + '/pictures/' + values['id'] + '/data" alt="' + values['name'] + '" width-val="'+values['width'] + '" height-val="' + values['height'] +'"/>'+
                     '<div id="follower">'+
                     '<map name="picture_map">' + picture_map + '</map>' +
                     '</div>'+
