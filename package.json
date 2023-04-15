@@ -41,6 +41,7 @@
         "babel-plugin-transform-runtime": "^6.23.0",
         "babel-polyfill": "^6.26.0",
         "bs-custom-file-input": "^1.3.4",
+        "caniuse-lite": "^1.0.30001478",
         "compass-mixins": "^0.12.10",
         "cropperjs": "^1.5.7",
         "datatables.net-bs4": "^1.10.21",
@@ -77,6 +78,5 @@
         "timeago.js": "^4.0.1",
         "yup": "^0.27.0"
     },
-    "peerDependencies": {},
     "typings": "assets/js/components/Groups/index.d.ts"
 }
