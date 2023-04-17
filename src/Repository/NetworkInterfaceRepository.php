@@ -19,6 +19,16 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         parent::__construct($registry, NetworkInterface::class);
     }
 
+    public function findByDeviceId($id)
+    {
+        return  $this->createQueryBuilder('n')
+            ->andWhere('n.device = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     // /**
     //  * @return NetworkInterface[] Returns an array of NetworkInterface objects
     //  */

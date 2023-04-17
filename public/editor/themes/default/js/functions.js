@@ -671,12 +671,12 @@ function getLabBody() {
 
 // Get lab endpoints
 function getLabLinks() {
-    //var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var deferred = $.Deferred();
     var labLinks = {
         ethernet: {
-            1: "Net",
-            2: "Net",
+            21: "Net",
+            22: "Net",
         },
         serial: []
     }
@@ -991,7 +991,7 @@ function getNodeConfigs(node_id) {
 // Get lab node interfaces
 function getNodeInterfaces(node_id) {
     var deferred = $.Deferred();
-    var interfaces;
+    /*var interfaces;
     if (node_id == 1) {
         interfaces = {
             id : 1,
@@ -1017,9 +1017,9 @@ function getNodeInterfaces(node_id) {
                 serial: []
             }
         }
-    }
+    }*/
     var lab_filename = $('#lab-viewport').attr('data-path');
-    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/interfaces';
+    var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/interfaces';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1044,9 +1044,7 @@ function getNodeInterfaces(node_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    console.log("interfaces nodes: ", interfaces);
-    deferred.resolve(interfaces);
+    });
     return deferred.promise();
 }
 
@@ -1138,11 +1136,10 @@ function getPicturesMapped(picture_id) {
 // Get lab topology
 function getTopology() {
     var deferred = $.Deferred();
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    //var lab_filename = "/test.unl";
-    //var url = '/api/labs' + lab_filename + '/topology';
-    //var type = 'GET';
-    /*$.ajax({
+    /*var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/topology';
+    var type = 'GET';
+    $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
@@ -1173,12 +1170,12 @@ function getTopology() {
             source: "node1",
             source_type: "node",
             source_label: "eth0",
-            destination: "network1",
-            destination_type: "network",
-            destination_label: ""
+            destination: "node2",
+            destination_type: "node",
+            destination_label: "eth0"
         },
     }
-    deferred.resolve(topology);
+    deferred.resolve({});
     return deferred.promise();
 }
 
@@ -2346,7 +2343,7 @@ function setNodeInterface(node_id,network_id,interface_id){
     var form_data = {};
     form_data[interface_id] = network_id;
 
-    var interfaces;
+    /*var interfaces;
     if (node_id == 1) {
         interfaces = {
             id : 1,
@@ -2372,9 +2369,9 @@ function setNodeInterface(node_id,network_id,interface_id){
                 serial: []
             }
         }
-    }
+    }*/
 
-    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id +'/interfaces';
+    var url = '/api/labs/' + lab_filename + '/nodes/' + node_id +'/interfaces';
     var type = 'PUT';
     $.ajax({
         cache: false,
@@ -2400,10 +2397,10 @@ function setNodeInterface(node_id,network_id,interface_id){
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    interfaces.ethernet[0].network_id = Number(form_data[interface_id]); //???
+    });
+    /*interfaces.ethernet[0].network_id = Number(form_data[interface_id]); //???
     console.log("interfaces: ",interfaces);
-    deferred.resolve(interfaces);
+    deferred.resolve(interfaces);*/
     return deferred.promise();
 
 }
@@ -4069,7 +4066,6 @@ function printLabTopology() {
                     cssClass: 'link'
                 });
                 // Read privileges and set specific actions/elements
-
                 if ((ROLE == 'admin' || ROLE == 'editor') && labinfo['lock'] == 0 )  {
                     dragDeferred = $.Deferred()
                     $.when ( labTextObjectsResolver ).done ( function () {
@@ -4170,13 +4166,13 @@ function printLabTopology() {
                             overlays: [src_label, dst_label]
                         });
                         if (destination.substr(0, 7) == 'network') {
-                              /*$.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
+                              $.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
                                   for ( ikey in ifaces['ethernet'] ) {
                                       if ( ifaces['ethernet'][ikey]['name'] == source_label ) {
                                          tmp_conn.id = 'iface:'+source+":"+ikey
                                       }
                                   }
-                              });*/
+                              });
                         } else {
                               tmp_conn.id = 'network_id:'+link['network_id']
                         }
@@ -4769,7 +4765,7 @@ function printPageLabOpen(lab) {
               $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
          }
          $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
-         $('#lab-sidebar ul').append('<li><a class="action-networksget" href="javascript:void(0)" title="' + MESSAGES[61] + '"><i class="glyphicon glyphicon-transfer"></i></a></li>');
+         //$('#lab-sidebar ul').append('<li><a class="action-networksget" href="javascript:void(0)" title="' + MESSAGES[61] + '"><i class="glyphicon glyphicon-transfer"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
          $('#lab-sidebar ul').append('<li class="action-picturesget-li"><a class="action-picturesget" href="javascript:void(0)" title="' + MESSAGES[59] + '"><i class="glyphicon glyphicon-picture"></i></a></li>');
          if ( Object.keys(pic)  < 1 ) {
@@ -4782,7 +4778,7 @@ function printPageLabOpen(lab) {
          $('#lab-sidebar ul').append('<li class="plus-minus-slider"><i class="fa fa-minus"></i><div class="col-md-2 glyphicon glyphicon-zoom-in sidemenu-zoom"></div><div id="zoomslide" class="col-md-5"></div><div class="col-md-5"></div><i class="fa fa-plus"></i><br></li>');
          $('#zoomslide').slider({value:100,min:10,max:200,step:10,slide:zoomlab});
          //$('#lab-sidebar ul').append('<li><a class="action-freeselect" href="javascript:void(0)" title="' + MESSAGES[151] + '"><i class="glyphicon glyphicon-check"></i></a></li>');
-         $('#lab-sidebar ul').append('<li><a class="action-status" href="javascript:void(0)" title="' + MESSAGES[13] + '"><i class="glyphicon glyphicon-info-sign"></i></a></li>');
+        // $('#lab-sidebar ul').append('<li><a class="action-status" href="javascript:void(0)" title="' + MESSAGES[13] + '"><i class="glyphicon glyphicon-info-sign"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-labbodyget" href="javascript:void(0)" title="' + MESSAGES[64] + '"><i class="glyphicon glyphicon-list-alt"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
          if ( $.cookie("topo") == 'dark' ) {
@@ -6173,6 +6169,7 @@ function newConnModal(info , oe ) {
         $('#'+info.source.id).addClass("startNode")
             if ( info.source.id.search('node')  != -1  ) {
                   linksourcedata =  nodes[ info.source.id.replace('node','') ] ;
+                  console.log("cas1 ",linksourcedata );
                   linksourcetype = 'node' ;
                   linksourcedata['interfaces'] = getNodeInterfaces(linksourcedata['id'])
                   if ( linksourcedata['status'] == 0 ) linksourcestyle = 'grayscale'
@@ -6183,6 +6180,7 @@ function newConnModal(info , oe ) {
              }
              if ( info.target.id.search('node')  != -1  ) {
                   linktargetdata =  nodes[ info.target.id.replace('node','') ] ;
+                  console.log("cas3 ",linktargetdata );
                   linktargettype = 'node' ;
                   linktargetdata['interfaces'] = getNodeInterfaces(linktargetdata['id'])
                   if ( linktargetdata['status'] == 0 ) linktargetstyle = 'grayscale'
@@ -6198,7 +6196,9 @@ function newConnModal(info , oe ) {
                        logger(1,'DEBUG: looking interfaces... ');
                    linksourcedata['selectedif'] = '' ;
                        var tmp_interfaces = {} ;
+                       console.log(sourceif);
                        for ( var key in sourceif['ethernet'] ) {
+                        console.log("key ", key);
                  logger(1,'DEBUG: interface id ' + key + ' named ' + sourceif['ethernet'][key]['name']  + ' ' + sourceif['ethernet'][key]['network_id'])
                              tmp_interfaces[key] = sourceif['ethernet'][key]
                              tmp_interfaces[key]['type'] = 'ethernet'
@@ -6206,6 +6206,7 @@ function newConnModal(info , oe ) {
                                     linksourcedata['selectedif'] = key ;
                              }
                        }
+                       console.log("tmp_interfaces ", tmp_interfaces);
                        for ( var key in sourceif['serial'] ) {
                              logger(1,'DEBUG: interface id ' + key + ' named ' + sourceif['serial'][key]['name']  + ' ' + sourceif['serial'][key]['remote_id'])
                              tmp_interfaces[key] =  sourceif['serial'][key]
@@ -6214,6 +6215,7 @@ function newConnModal(info , oe ) {
                                     linksourcedata['selectedif'] = key ;
                              }
                        }
+                       
                        linksourcedata['interfaces'] = tmp_interfaces
                   }
                   if ( linksourcedata['selectedif'] == '') linksourcedata['selectedif'] = 0 ;
@@ -6241,6 +6243,7 @@ function newConnModal(info , oe ) {
                   }
                   if ( linktargetdata['selectedif'] == '' ) linktargetdata['selectedif'] = 0 ;
                   if ( linksourcedata['status'] == 2 || linktargetdata['status'] == 2 ) { lab_topology.detach( info.connection ) ; return }
+                  console.log("link source: ",linksourcedata['interfaces'])
                   window.tmpconn = info.connection
                   html = '<form id="addConn" class="addConn-form">' +
                            '<input type="hidden" name="addConn[srcNodeId]" value="'+linksourcedata['id']+'">' +

@@ -1185,7 +1185,7 @@ $(document).on('click', '.action-labobjectadd', function (e) {
     logger(1, 'DEBUG: action = labobjectadd');
     var body = '';
     body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
-    body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
+    //body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
     body += '<li><a class="action-pictureadd" href="javascript:void(0)"><i class="glyphicon glyphicon-picture"></i> ' + MESSAGES[83] + '</a></li>';
   body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
   body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
@@ -2595,8 +2595,8 @@ $(document).on('submit', '#form-node-connect', function (e) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('interfc');
     var node_id = $('form :input[name="node_id"]').val();
-    //var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/interfaces';
-    var interfaces;
+    var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/interfaces';
+    /*var interfaces;
     if (node_id == 1) {
         interfaces = {
             id : 1,
@@ -2625,8 +2625,8 @@ $(document).on('submit', '#form-node-connect', function (e) {
     }
     interfaces= form_data;
     interfaces.id = nodes_id;
-    console.log("nouvelles interfaces: ", interfaces)
-    /*var type = 'PUT';
+    console.log("nouvelles interfaces: ", interfaces)*/
+    var type = 'PUT';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -2656,7 +2656,7 @@ $(document).on('submit', '#form-node-connect', function (e) {
             logger(1, 'DEBUG: ' + message);
             addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
         }
-    });*/
+    });
 });
 
 

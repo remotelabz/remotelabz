@@ -14,6 +14,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpFoundation\Response;
 
 class NetworkInterfaceController extends Controller
 {
@@ -65,6 +66,7 @@ class NetworkInterfaceController extends Controller
             'networkInterfaceForm' => $networkInterfaceForm->createView(),
         ]);
     }
+
 
     /**
      * @Rest\Get("/api/network-interfaces/{id<\d+>}", name="api_get_network_interface")
@@ -121,6 +123,52 @@ class NetworkInterfaceController extends Controller
         return $this->render('network_interface/new.html.twig', [
             'networkInterfaceForm' => $networkInterfaceForm->createView()
         ]);
+    }
+
+     /**
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_new_device_interfaces")
+     */
+    public function newNetworkInterface(Request $request, int $labId, int $deviceId)
+    {
+        $device = $this->deviceRepository->find($deviceId);
+        $networkInterface = new NetworkInterface();
+
+        /*if ($networkInterfaces[0] != null){
+            $data = [];
+            $ethernet = [];
+            foreach($networkInterfaces as $networkInterface){
+                $ethernet[$networkInterface->getVlan()] = [
+                        "name"=> $networkInterface->getName(),
+                        "network_id"=> $networkInterface->getVlan(),
+                    ];
+            }
+            $data = [
+                "id"=>$networkInterface->getDevice()->getId(),
+                "sort"=> $networkInterface->getDevice()->getType(),
+                "ethernet"=>$ethernet
+            ];
+        }
+        else {
+            $data = [
+                "id"=>$device->getId(),
+                "sort"=> $device->getType(),
+                "ethernet"=>[
+                    0 => [
+                        "name"=> "eth0",
+                        "network_id"=> 0,
+                    ],
+                ]
+            ];
+        }
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed network interfaces (60030).',
+            'data' => $data]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;*/
+
     }
 
     /**

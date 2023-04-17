@@ -1,5 +1,6 @@
 ---
 type: remotelabz
+config_script: embedded
 name: Linux
 icon: Server.png
 cpu: 1

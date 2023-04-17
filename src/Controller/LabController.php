@@ -273,12 +273,22 @@ class LabController extends Controller
         SerializerInterface $serializer)
     {
         $lab = $labRepository->findLabInfoById($id);
+        $data = [
+            "id"=>$lab["id"],
+            "name"=>$lab["name"],
+            "description"=>$lab["description"],
+            "body"=>$lab["body"],
+            "author"=>$lab["author"],
+            "version"=>$lab["version"],
+            "scripttimeout"=>$lab["scripttimeout"],
+            "lock"=>$lab["locked"],
+        ];
 
         $response = new Response();
         $response->setContent(json_encode([
             'code'=>200,
             'status'=>'success',
-            'data' =>$lab]));
+            'data' =>$data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
