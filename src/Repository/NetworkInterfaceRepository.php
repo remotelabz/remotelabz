@@ -3,8 +3,11 @@
 namespace App\Repository;
 
 use App\Entity\NetworkInterface;
+use App\Entity\Device;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Query\ResultSetMapping;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 /**
  * @method NetworkInterface|null find($id, $lockMode = null, $lockVersion = null)
@@ -27,6 +30,41 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    public function getVlans($id)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT MAX(n.vlan) as vlan
+            FROM App\Entity\NetworkInterface n
+            LEFT JOIN n.device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id'
+        )
+        ->setParameter('id', $id);
+
+        return $query->getResult();
+    }
+
+    public function getTopology($id)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT n.vlan, GROUP_CONCAT(n.name) AS names, GROUP_CONCAT(d.id) AS devices
+            FROM App\Entity\NetworkInterface n
+            LEFT JOIN n.device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id
+            GROUP BY n.vlan'
+        )
+        ->setParameter('id', $id);
+
+        return $query->getResult();
     }
 
     // /**

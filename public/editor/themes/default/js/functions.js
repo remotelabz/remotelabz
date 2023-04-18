@@ -1136,7 +1136,7 @@ function getPicturesMapped(picture_id) {
 // Get lab topology
 function getTopology() {
     var deferred = $.Deferred();
-    /*var lab_filename = $('#lab-viewport').attr('data-path');
+    var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/topology';
     var type = 'GET';
     $.ajax({
@@ -1162,8 +1162,8 @@ function getTopology() {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    var topology = {
+    });
+    /*var topology = {
         1: {
             id: 1,
             type: "ethernet",
@@ -1175,7 +1175,7 @@ function getTopology() {
             destination_label: "eth0"
         },
     }
-    deferred.resolve({});
+    deferred.resolve({});*/
     return deferred.promise();
 }
 
@@ -1729,7 +1729,7 @@ function setNetwork(nodeName,left, top) {
             visibility: 1
         }
     }*/
-    var url = '/api/labs' + lab_filename + '/networks';
+    var url = '/api/labs/' + lab_filename + '/networks';
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -1889,7 +1889,7 @@ function setNetworkiVisibility(networkId,visibility) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data['visibility'] = visibility;
-    var networks = {
+    /*var networks = {
         1: {
             id:1,
             count:1,
@@ -1909,9 +1909,9 @@ function setNetworkiVisibility(networkId,visibility) {
             type: "brigde",
             visibility: 1
         }
-    }
-    //var url = '/api/labs' + lab_filename + '/networks/' + networkId;
-    /*var type = 'PUT';
+    }*/
+    var url = '/api/labs/' + lab_filename + '/networks/' + networkId;
+    var type = 'PUT';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -1938,10 +1938,10 @@ function setNetworkiVisibility(networkId,visibility) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    networks[networkId].visibility = form_data.visibility;
+    });
+    /*networks[networkId].visibility = form_data.visibility;
     console.log(networks[networkId])
-    deferred.resolve(networks[networkId]);
+    deferred.resolve(networks[networkId]);*/
     return deferred.promise();
 }
 
@@ -2336,12 +2336,14 @@ function setNodeData(id){
 }
 
 //set note interface
-function setNodeInterface(node_id,network_id,interface_id){
+function setNodeInterface(node_id,interface_id,vlan){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
-    form_data[interface_id] = network_id;
+    form_data["interface id"] = interface_id;
+    form_data["vlan"] = vlan;
+    console.log(form_data);
 
     /*var interfaces;
     if (node_id == 1) {
@@ -2383,6 +2385,44 @@ function setNodeInterface(node_id,network_id,interface_id){
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node interface updated.');
+                deferred.resolve(data);
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                deferred.reject(data['message']);
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            deferred.reject(message);
+        }
+    });
+    /*interfaces.ethernet[0].network_id = Number(form_data[interface_id]); //???
+    console.log("interfaces: ",interfaces);
+    deferred.resolve(interfaces);*/
+    return deferred.promise();
+
+}
+
+//get vlan
+function getVlan(){
+
+    var deferred = $.Deferred();
+    var lab_filename = $('#lab-viewport').attr('data-path');
+
+    var url = '/api/labs/' + lab_filename + '/vlans';
+    var type = 'Get';
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: vlan listed.');
                 deferred.resolve(data);
             } else {
                 // Application error

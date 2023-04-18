@@ -740,6 +740,10 @@ class DeviceController extends Controller
                         "name"=> "eth0",
                         "network_id"=> 0,
                     ],
+                    1 => [
+                        "name"=> "eth1",
+                        "network_id"=> 0,
+                    ],
                 ]
             ];
         }

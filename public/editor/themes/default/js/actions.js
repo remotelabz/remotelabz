@@ -4407,18 +4407,22 @@ $(document).on('submit', '#addConn', function (e) {
              var iface1 = form_data['srcConn'].replace(',ethernet','')
              var node2 = form_data['dstNodeId']
              var iface2 = form_data['dstConn'].replace(',ethernet','')
-             $.when(setNetwork(bridgename, offset.left + 20, offset.top + 40)).then( function (response) {
-                  var networkId = response.data.id;
-                  logger(1, 'Link DEBUG: new network created ' + networkId);
-                  $.when(setNodeInterface(node1, networkId, iface1) ).done( function () {
-                     $.when(setNodeInterface(node2, networkId, iface2)).done( function () {
-                       $.when(setNetworkiVisibility( networkId , 0 )).done( function () {
-                         $(e.target).parents('.modal').attr('skipRedraw', true);
-                         $(e.target).parents('.modal').modal('hide');
-                       });
-                     });
-                  });
-             });
+             //$.when(setNetwork(bridgename, offset.left + 20, offset.top + 40)).then( function (response) {
+                  //var networkId = response.data.id;
+                  //logger(1, 'Link DEBUG: new network created ' + networkId);
+                  $.when(getVlan()).done(function (response){
+                    var vlan = response.data.vlan;
+                    console.log("response ", vlan);
+                    $.when(setNodeInterface(node1, iface1, vlan) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, vlan)).done( function () {
+                        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+                            $(e.target).parents('.modal').attr('skipRedraw', true);
+                            $(e.target).parents('.modal').modal('hide');
+                        //});
+                        });
+                    });
+                    })
+             //});
 
          }
 
