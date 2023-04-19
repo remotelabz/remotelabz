@@ -713,24 +713,39 @@ class DeviceController extends Controller
     {
         $device = $this->deviceRepository->find($deviceId);
         $networkInterfaces = $device->getNetworkInterfaces();
-        //var_dump($networkInterfaces);exit;
 
+        //the device has at least one interface
         if ($networkInterfaces[0] != null){
             $data = [];
             $ethernet = [];
             $i = [];
+
+            //get all network Interfaces of the device
             foreach($networkInterfaces as $networkInterface){
-                array_push($ethernet, [
+                $ethernet[(int)explode("eth", $networkInterface->getName())[1]] = [
                         "name"=> $networkInterface->getName(),
                         "network_id"=> $networkInterface->getVlan(),
-                    ]);
+                    ];
                 array_push($i, (int)explode("eth", $networkInterface->getName())[1]);
             }
 
-            if(sizeof($i) > 1) {
-                $i = sort($i);
+            //sort the array to get the next interface number
+            if(sizeof((array)$i) > 1) {
+                sort($i);
             }
-            $interface = ($i[sizeof($i)-1] +1);
+
+            //add the missing interfaces
+            for ($j = 0; $j < $i[count($i)-1]; $j++) {
+                if (!isset($ethernet[$j])) {
+                    $ethernet[$j] = [
+                        "name"=> "eth".$j,
+                        "network_id"=> 0,
+                    ];
+                }
+            }
+
+            //add an availbable interface
+            $interface = ($i[sizeof((array)$i)-1] +1);
             array_push($ethernet, [
                 "name"=> "eth".$interface,
                 "network_id"=> 0,
@@ -742,6 +757,7 @@ class DeviceController extends Controller
                 "ethernet"=>$ethernet
             ];
         }
+        //the device does not have any interface
         else {
             $data = [
                 "id"=>$device->getId(),

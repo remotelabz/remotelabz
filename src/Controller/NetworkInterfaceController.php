@@ -156,6 +156,29 @@ class NetworkInterfaceController extends Controller
     }
 
     /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{vlan<\d+>}", name="api_remove_connection")
+     */
+    public function removeConnection(int $labId, int $vlan)
+    {
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndVlan($labId, $vlan);
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        foreach($networkInterfaces as $networkInterface) {
+            $entityManager->remove($networkInterface);
+        }
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 201,
+            'status'=>'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+    
+    /**
      * @Rest\Get("/api/labs/{labId<\d+>}/vlans", name="api_get_vlan")
      */
     public function getVlan(Request $request, int $labId)

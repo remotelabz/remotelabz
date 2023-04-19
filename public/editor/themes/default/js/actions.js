@@ -859,7 +859,7 @@ $(document).on('click', '.action-conndelete', function (e) {
         });
      } else { // network P2P
         network_id = id.replace('network_id:','')
-        $.when(deleteNetwork(network_id)).done(function (values) {
+        $.when(removeConnection(network_id)).done(function (values) {
            //window.closeModal = true;
            $('.action-labtopologyrefresh').click();
         }).fail(function (message) {
