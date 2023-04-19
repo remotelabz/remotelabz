@@ -60,6 +60,7 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
             LEFT JOIN n.device d
             LEFT JOIN d.labs l
             WHERE l.id = :id
+            AND n.vlan >0
             GROUP BY n.vlan'
         )
         ->setParameter('id', $id);
@@ -67,6 +68,21 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    public function findByDeviceAndName($deviceId, $name)
+    {
+        $query = $this->createQueryBuilder('n')
+            ->andWhere('n.device = :id')
+            ->andWhere('n.name = :name')
+            ->setParameter('id', $deviceId)
+            ->setParameter('name', $name)
+            ->getQuery()
+        ;
+
+        $networkInterface = $query->getResult();
+        
+        return $networkInterface[0];
+    }
+    
     // /**
     //  * @return NetworkInterface[] Returns an array of NetworkInterface objects
     //  */

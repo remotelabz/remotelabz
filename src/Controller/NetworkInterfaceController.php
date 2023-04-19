@@ -135,7 +135,7 @@ class NetworkInterfaceController extends Controller
         $device = $this->deviceRepository->find($deviceId);
         $data = json_decode($request->getContent(), true);
         $networkInterface = new NetworkInterface();
-        
+        //$networkInterface = $this->networkInterfaceRepository->findByDeviceAndName($deviceId, "eth". $data["interface id"]);
         $networkInterface->setDevice($device);
         $networkInterface->setName("eth". $data["interface id"]);
         $networkInterface->setVlan($data["vlan"]);
@@ -166,7 +166,7 @@ class NetworkInterfaceController extends Controller
             $vlan = 1;
         }
         else {
-            $vlan = (int)$vlans[0] +1;
+            $vlan = (int)$vlans[0]['vlan'] +1;
         }
 
         $response = new Response();

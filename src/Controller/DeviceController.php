@@ -298,7 +298,6 @@ class DeviceController extends Controller
         $editorData->setDevice($device);
         $device->setUrl($url);
         $entityManager->flush();
-        
 
         $this->logger->info("Device named" . $device->getName() . " created");
 
@@ -719,12 +718,24 @@ class DeviceController extends Controller
         if ($networkInterfaces[0] != null){
             $data = [];
             $ethernet = [];
+            $i = [];
             foreach($networkInterfaces as $networkInterface){
-                $ethernet[$networkInterface->getVlan()] = [
+                array_push($ethernet, [
                         "name"=> $networkInterface->getName(),
                         "network_id"=> $networkInterface->getVlan(),
-                    ];
+                    ]);
+                array_push($i, (int)explode("eth", $networkInterface->getName())[1]);
             }
+
+            if(sizeof($i) > 1) {
+                $i = sort($i);
+            }
+            $interface = ($i[sizeof($i)-1] +1);
+            array_push($ethernet, [
+                "name"=> "eth".$interface,
+                "network_id"=> 0,
+            ]);
+
             $data = [
                 "id"=>$networkInterface->getDevice()->getId(),
                 "sort"=> $networkInterface->getDevice()->getType(),
@@ -738,10 +749,6 @@ class DeviceController extends Controller
                 "ethernet"=>[
                     0 => [
                         "name"=> "eth0",
-                        "network_id"=> 0,
-                    ],
-                    1 => [
-                        "name"=> "eth1",
                         "network_id"=> 0,
                     ],
                 ]
