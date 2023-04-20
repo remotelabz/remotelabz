@@ -3963,13 +3963,13 @@ function printLabTopology() {
     $("#lab-sidebar *").hide();
 
      $.when(
-        getNetworks(null),
+        //getNetworks(null),
         getNodes(null),
         getTopology(),
         getTextObjects(),
         getLabInfo(lab_filename)
         //getLabInfo()
-    ).done(function (networks, nodes, topology, textObjects, labinfo) {
+    ).done(function (nodes, topology, textObjects, labinfo) {
 
 
         var networkImgs = []
@@ -3977,10 +3977,10 @@ function printLabTopology() {
             , textObjectsCount = Object.keys(textObjects).length
             ;
 
-        progressbarMax = Object.keys(networks).length + Object.keys(nodes).length + Object.keys(textObjects).length;
+        progressbarMax = Object.keys(nodes).length + Object.keys(textObjects).length;
         $(".progress-bar").attr("aria-valuemax", progressbarMax);
 
-        $.each(networks, function (key, value) {
+        /*$.each(networks, function (key, value) {
             var icon;
             var unusedClass='';
 
@@ -4027,7 +4027,7 @@ function printLabTopology() {
 
 
 
-        });
+        });*/
         $.each(nodes, function (key, value) {
             if ( value['url'].indexOf('token') != -1 ) {
                hrefbuf='<a href="' + value['url'] + '" target="'+ value['name']  +'" >' ;
@@ -4192,7 +4192,7 @@ function printLabTopology() {
                           });
                           adjustZoom(lab_topology, window.scroll_top || 0, window.scroll_left || 0)
                     });
-                    $.each(networks, function (key,value) {
+                    /*$.each(networks, function (key,value) {
                            if ( value['visibility'] == 1 ) lab_topology.makeSource('network' + value['id'], {
                                 filter: ".ep",
                                 Anchor:"Continuous",
@@ -4212,7 +4212,7 @@ function printLabTopology() {
                                 allowLoopback: false
                           });
                         adjustZoom(lab_topology, window.scroll_top || 0, window.scroll_left || 0)
-                    });
+                    });*/
                     });
                 }
 
@@ -4356,7 +4356,7 @@ function printLabTopology() {
 
     $.when(labNodesResolver, labTextObjectsResolver).done(function () {
 
-        $.when(deleteSingleNetworks()).done(function(){
+        //$.when(deleteSingleNetworks()).done(function(){
             if ( $.cookie("topo")  != undefined && $.cookie("topo") == 'dark' ) {
                 $('#lab-viewport').css('background-image','url(/editor/themes/adminLTE/unl_data/img/grid-dark.png)');
                 $('.node_name').css('color','#b8c7ce')
@@ -4366,7 +4366,7 @@ function printLabTopology() {
             //lab_topology.repaintEverything()
             $("#loading-lab").remove();
             $("#lab-sidebar *").show();
-        })
+        //})
 
     }).fail(function (message1, message2) {
         if (message1 != null) {
@@ -6248,10 +6248,10 @@ function natSort(as, bs){
 function newConnModal(info , oe ) {
         if ( !oe ) return ;
     $.when(
-        getNetworks(null),
+        //getNetworks(null),
         getNodes(null),
         getTopology()
-        ).done(function (networks, nodes, topology ) {
+        ).done(function (nodes, topology ) {
             linksourcestyle = '' ;
             linktargetstyle = '' ;
         $('#'+info.source.id).addClass("startNode")
@@ -6261,22 +6261,22 @@ function newConnModal(info , oe ) {
                   linksourcetype = 'node' ;
                   linksourcedata['interfaces'] = getNodeInterfaces(linksourcedata['id'])
                   if ( linksourcedata['status'] == 0 ) linksourcestyle = 'grayscale'
-             } else {
+             } /*else {
                   linksourcedata =  networks[ info.source.id.replace('network','') ] ;
                   linksourcetype = 'net' ;
                   linksourcedata['icon'] = ( linksourcedata['type'] == "bridge")  ? "../lan.png" : "../cloud.png"
-             }
+             }*/
              if ( info.target.id.search('node')  != -1  ) {
                   linktargetdata =  nodes[ info.target.id.replace('node','') ] ;
                   console.log("cas3 ",linktargetdata );
                   linktargettype = 'node' ;
                   linktargetdata['interfaces'] = getNodeInterfaces(linktargetdata['id'])
                   if ( linktargetdata['status'] == 0 ) linktargetstyle = 'grayscale'
-             } else {
+             } /*else {
                   linktargetdata =  networks[ info.target.id.replace('network','') ] ;
                   linktargettype = 'net' ;
           linktargetdata['icon'] = ( linktargetdata['type'] == "bridge")  ? "../lan.png" : "../cloud.png"
-             }
+             }*/
              title = 'Add connection between ' + linksourcedata['name'] + ' and ' + linktargetdata['name'] ;
              $.when( linksourcedata['interfaces'] , linktargetdata['interfaces'] ).done( function ( sourceif, targetif) {
              /* choose first free interface */

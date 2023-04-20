@@ -29,9 +29,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\YamlEncoder;
+use Symfony\Component\Yaml\Yaml;
+use function Symfony\Component\String\u;
 
 
 class DeviceController extends Controller
@@ -206,11 +205,6 @@ class DeviceController extends Controller
     public function newAction(Request $request)
     {
 
-        $encoders = [new YamlEncoder()];
-        $normalizers = [new ObjectNormalizer()];
-
-        $serializer = new Serializer($normalizers, $encoders);
-
         $device = new Device();
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
@@ -229,13 +223,39 @@ class DeviceController extends Controller
             }
             $this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
+            $controlProtocolTypes= [];
+            foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+                array_push($controlProtocolTypes, $controlProtocolType->getId());
+            }
+            $deviceData = [
+                "name" => $device->getName(),
+                "type" => $device->getType(),
+                "icon" => $device->getIcon(),
+                "operatingSystem" => $device->getOperatingSystem()->getId(),
+                "flavor" => $device->getFlavor()->getId(),
+                "controlProtocol" => $controlProtocolTypes,
+                "hypervisor" => $device->getHypervisor()->getId(),
+                "brand" => $device->getBrand(),
+                "model" => $device->getModel(),
+                "description" => $device->getName(),
+                "cpu" => $device->getNbCpu(),
+                "core" => $device->getNbCore(),
+                "socket" => $device->getNbSocket(),
+                "thread" => $device->getNbSocket(),
+                "context" => "remotelabz",
+                "config_script" => "embedded",
+                "ethernet" => 1
+            ];
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
 
-            /*$yamlContent = $serializer->serialize($person, 'yaml');
-            var_dump( $yamlContent); exit;*/
+            $yamlContent = Yaml::dump($deviceData);
+            $fileName = u($device->getName())->camel();
+            file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+
+            
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 201, [], ['api_get_device']);
             }

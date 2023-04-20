@@ -8,6 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=ControlProtocolTypeRepository::class)
@@ -19,6 +20,7 @@ class ControlProtocolType
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_controlProtocolType","api_delete_os","api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
+     * @Groups({"api_get_template"})
      */
     private $id;
 

@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\FlavorRepository")
@@ -17,6 +18,7 @@ class Flavor
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"api_get_flavor", "api_get_device"})
+     * @Groups({"api_get_template"})
      */
     private $id;
 
