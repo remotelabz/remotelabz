@@ -185,11 +185,10 @@ class Device implements InstanciableInterface
     private $isTemplate;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", options={"default": 0})
      * @Serializer\Groups({"api_get_device"})
-     * @Assert\NotNull
      */
-    private $delay;
+    private $delay = 0;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)

@@ -3118,6 +3118,10 @@ function printFormNode(action, values, fromNodeList) {
                         // Print all options from template
                         var value_set = (node_values != null && node_values[key] != null) ? node_values[key] : value['value'];
                         if (value['type'] == 'list') {
+                            var select = '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
+                            if (value['multiple'] != false) {
+                                select = '<select class="selectpicker form-control" name="node[' + key + ']" multiple data-size="5" data-style="selectpicker-button">';
+                            }
                             // Option is a list
                             var widthClass = ' col-sm-12 '
                             if(key == 'image' && action == 'add') widthClass = ' col-sm-7'
@@ -3136,12 +3140,20 @@ function printFormNode(action, values, fromNodeList) {
                             if (key.startsWith('slot')) widthClass = ' col-sm-6 '
                             html_data += '<div class="form-group '+widthClass+'">'+
                                             '<label class=" control-label">' + value['name'] + '</label>'+
-                                            '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
+                                            select;
                             $.each(value['list'], function (list_key, list_value) {
                                 var selected = (list_key == value_set) ? 'selected ' : '';
+                                if(typeof(value_set) == "object") {
+                                    value_set.forEach(value => {
+                                        selected = (list_key == value) ? 'selected ' : '';
+                                        html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
+                                    });
+                                }
+                                else{
                                     iconselect = '' ;
-                                if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
-                                html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
+                                    if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
+                                    html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
+                                }
                             });
                             html_data += '</select>';
                             html_data += '</div>';

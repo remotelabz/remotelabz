@@ -78,15 +78,13 @@ class TemplateController extends Controller
     /** @var LoggerInterface $logger */
     private $logger;
 
-    /** @var TextObjectRepository $textobjectRepository */
-    private $textobjectRepository;
-
     public function __construct(
         LoggerInterface $logger,
         operatingSystemRepository $operatingSystemRepository,
         HypervisorRepository $hypervisorRepository,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
-        FlavorRepository $flavorRepository
+        FlavorRepository $flavorRepository,
+        DeviceRepository $deviceRepository
         //SerializerBuilder $serializerBuilder
         )
     {
@@ -98,6 +96,7 @@ class TemplateController extends Controller
         $this->hypervisorRepository = $hypervisorRepository;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->flavorRepository = $flavorRepository;
+        $this->deviceRepository = $deviceRepository;
         //$this->serializerBuilder = $serializerBuilder;
     }
 
@@ -109,11 +108,6 @@ class TemplateController extends Controller
      */
     public function indexAction(Request $request)
     {
-        /*$encoders = [new YamlEncoder(), new JsonEncoder()];
-        $normalizers = [new ObjectNormalizer()];
-
-        $serializer = new Serializer($normalizers, $encoders);*/
-        //$serializer = SerializerBuilder::create()->build();
 
         $node_templates = Array();
         $node_config = Array();
@@ -134,18 +128,6 @@ class TemplateController extends Controller
                         $node_templates = array_merge ( $node_templates , $custom_templates );
                 }
             natcasesort(  $node_templates ) ;
-            
-            foreach ( $node_templates as $templ => $desc ) {
-                $found = 0 ;
-                if ($templ == "linux" ) {
-                $found = 1 ;
-                }
-                if ( $found == 0 )  {
-                    //$node_templates[$templ] = $desc.'.missing'  ;
-                    $node_templates[$templ] = $desc.TEMPLATE_DISABLED  ;
-                }
-                    
-            }
 
         $response = new Response();
         $response->setContent(json_encode([
@@ -172,7 +154,7 @@ class TemplateController extends Controller
         $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$template.'.yaml'));
         $p['template'] = $template;
 
-        if (!isset($p['type']) || !isset($p['template'])) {
+        if (!isset($p['context']) || !isset($p['template'])) {
 
             $response->setContent(json_encode([
                 'code' => 400,
@@ -188,19 +170,21 @@ class TemplateController extends Controller
         $data['options']['name'] = Array(
             'name' => 'Name',
             'type' => 'input',
-            'value' => $p['name']
+            'value' => $p['name'] ?? ''
         );
 
         // Icon
         $data['options']['icon'] = Array(
             'name' => 'Icon',
             'type' => 'list',
-            'value' => $p['icon'],
+            'multiple'=> false,
+            'value' => $p['icon'] ?? '',
             'list' => $this->listNodeIcons()
         );
         $data['options']['config'] = Array(
 			'name' => 'Startup configuration',
 			'type' => 'list',
+            'multiple'=> false,
 			'value' => '0',	// None
 			'list' => $this->listNodeConfigTemplates()
 		);
@@ -213,55 +197,64 @@ class TemplateController extends Controller
             'value' => 0
         );
 
-        if ($p['type'] = 'remotelabz') {
+        //if ($p['type'] = 'remotelabz') {
             $data['options']['brand'] = Array(
                 'name' => 'Brand',
                 'type' => 'input',
-                'value' => ''
+                'value' => $p['brand'] ?? ''
             );
 
             $data['options']['model'] = Array(
                 'name' => 'Model',
                 'type' => 'input',
-                'value' => ''
+                'value' => $p['model'] ?? ''
             );
 
             $data['options']['type'] = Array(
                 'name' => 'Type',
                 'type' => 'list',
-                'value' => 'container',
+                'multiple'=> false,
+                'value' => $p['type'] ?? 'container',
                 'list' => Array('vm'=>'vm', 'container'=>'container')
             );
 
             $data['options']['flavor'] = Array(
                 'name' => 'Ram',
                 'type' => 'list',
-                'value' => '',
+                'multiple'=> false,
+                'value' => $p['flavor'] ?? '',
                 'list' => $this->listFlavors()
+            );
+
+            $data['options']['cpu'] = Array(
+                'name' => 'Number of cpu',
+                'type' => 'input',
+                'value' => $p['cpu'] ?? '1',
             );
 
             $data['options']['core'] = Array(
                 'name' => 'Number of cores',
                 'type' => 'input',
-                'value' => '1',
+                'value' => $p['core'] ?? '',
             );
 
             $data['options']['socket'] = Array(
                 'name' => 'Number of sockets',
                 'type' => 'input',
-                'value' => '1',
+                'value' => $p['socket'] ?? '',
             );
 
             $data['options']['thread'] = Array(
                 'name' => 'Number of threads',
                 'type' => 'input',
-                'value' => '1',
+                'value' => $p['thread'] ?? '',
             );
 
             $data['options']['operatingSystem'] = Array(
                 'name' => 'Operating System',
                 'type' => 'list',
-                'value' => '',
+                'multiple'=> false,
+                'value' => $p['operatingSystem'] ?? '',
                 'list' => $this->listOperatingSystems()
             );
 
@@ -269,18 +262,20 @@ class TemplateController extends Controller
             $data['options']['hypervisor'] = Array(
                 'name' => 'Hypervisor',
                 'type' => 'list',
-                'value' => '',
+                'multiple'=> false,
+                'value' => $p['hypervisor'] ?? '',
                 'list' => $this->listHypervisors()
             );
 
             $data['options']['controlProtocol'] = Array(
                 'name' => 'Control Protocol',
                 'type' => 'list',
-                'value' => '',
+                'multiple'=> true,
+                'value' => $p['controlProtocol'] ?? '',
                 'list' => $this->listControlProtocolTypes()
             );
         
-        }
+        //}
         
         $response->setContent(json_encode([
             'code' => 200,
@@ -353,7 +348,7 @@ class TemplateController extends Controller
         $flavorList= [];
             $flavors = $this->flavorRepository->findAll();
             foreach($flavors as $flavor){
-                $flavorList[$flavor->getId()] = $flavor->getMemory() ;
+                $flavorList[$flavor->getId()] = $flavor->getName() ;
             }
         return $flavorList;
     }

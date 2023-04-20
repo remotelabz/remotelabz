@@ -200,6 +200,10 @@ body.login {
 	color: #0066aa;
 }
 
+.dropdown-menu>li.selected>a{
+	color: #ffffff;
+}
+
 .dropdown-menu li:hover{
 	background: #ccc;
 }

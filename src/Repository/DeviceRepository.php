@@ -33,7 +33,7 @@ class DeviceRepository extends ServiceEntityRepository
     public function findByTemplate($template = true)
     {
         return $this->createQueryBuilder('l')
-            ->andWhere('l.is_template = :val')
+            ->andWhere('l.isTemplate = :val')
             ->setParameter('val', $template ? 1 : 0)
             ->orderBy('l.id', 'DESC')
             ->getQuery()

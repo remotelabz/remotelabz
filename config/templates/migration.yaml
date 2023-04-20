@@ -1,0 +1,18 @@
+---
+context: remotelabz
+config_script: embedded
+name: Migration
+icon: Server_Linux.png
+cpu: 1
+ethernet: 1
+console: vnc
+description: Migration
+brand: Debian
+model: Version Bulleye
+type: vm
+flavor: 1
+operatingSystem: 6
+hypervisor: 4
+controlProtocol: ''
+interfaces: 0
+...

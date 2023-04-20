@@ -29,6 +29,9 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Encoder\YamlEncoder;
 
 
 class DeviceController extends Controller
@@ -202,6 +205,12 @@ class DeviceController extends Controller
      */
     public function newAction(Request $request)
     {
+
+        $encoders = [new YamlEncoder()];
+        $normalizers = [new ObjectNormalizer()];
+
+        $serializer = new Serializer($normalizers, $encoders);
+
         $device = new Device();
         $deviceForm = $this->createForm(DeviceType::class, $device);
         $deviceForm->handleRequest($request);
@@ -225,6 +234,8 @@ class DeviceController extends Controller
             $entityManager->persist($device);
             $entityManager->flush();
 
+            /*$yamlContent = $serializer->serialize($person, 'yaml');
+            var_dump( $yamlContent); exit;*/
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 201, [], ['api_get_device']);
             }
