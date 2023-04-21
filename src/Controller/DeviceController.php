@@ -726,7 +726,7 @@ class DeviceController extends Controller
 
     /**
      * 
-     * @Rest\Delete("/api/nodes/{id<\d+>}", name="api_delete_device")
+     * @Rest\Delete("/api/nodes/{id<\d+>}", name="api_delete_device_test")
      */
     public function deleteActionTest(Request $request, int $id)
     {
@@ -806,11 +806,15 @@ class DeviceController extends Controller
 
             //get all network Interfaces of the device
             foreach($networkInterfaces as $networkInterface){
-                $ethernet[(int)explode("eth", $networkInterface->getName())[1]] = [
+                /*array_push($ethernet, [
+                        "name"=> $networkInterface->getName(),
+                        "network_id"=> $networkInterface->getVlan(),
+                    ]);*/
+                    $ethernet[(int)explode($device->getName()."_net", $networkInterface->getName())[1]]= [
                         "name"=> $networkInterface->getName(),
                         "network_id"=> $networkInterface->getVlan(),
                     ];
-                array_push($i, (int)explode("eth", $networkInterface->getName())[1]);
+                array_push($i, (int)explode($device->getName()."_net", $networkInterface->getName())[1]);
             }
 
             //sort the array to get the next interface number
@@ -822,18 +826,28 @@ class DeviceController extends Controller
             for ($j = 0; $j < $i[count($i)-1]; $j++) {
                 if (!isset($ethernet[$j])) {
                     $ethernet[$j] = [
-                        "name"=> "eth".$j,
+                        "name"=> "new network interface",
                         "network_id"=> 0,
                     ];
+                    break;
                 }
             }
 
             //add an availbable interface
-            $interface = ($i[sizeof((array)$i)-1] +1);
-            array_push($ethernet, [
-                "name"=> "eth".$interface,
-                "network_id"=> 0,
-            ]);
+            $newInterfaceExists = false;
+            foreach($ethernet as $interface) {
+                if ($interface["name"] == "new network interface") {
+                    $newInterfaceExists = true;
+                    break;
+                }
+            }
+            if ($newInterfaceExists == false) {
+                //$interface = ($i[sizeof((array)$i)-1] +1);
+                array_push($ethernet, [
+                    "name"=> "new network interface",
+                    "network_id"=> 0,
+                ]);
+            }
 
             $data = [
                 "id"=>$networkInterface->getDevice()->getId(),
@@ -848,7 +862,7 @@ class DeviceController extends Controller
                 "sort"=> $device->getType(),
                 "ethernet"=>[
                     0 => [
-                        "name"=> "eth0",
+                        "name"=> "new network interface",
                         "network_id"=> 0,
                     ],
                 ]

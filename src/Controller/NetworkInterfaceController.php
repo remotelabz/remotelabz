@@ -134,14 +134,20 @@ class NetworkInterfaceController extends Controller
     {
         $device = $this->deviceRepository->find($deviceId);
         $data = json_decode($request->getContent(), true);
+        $i=count($device->getNetworkInterfaces());
         $networkInterface = new NetworkInterface();
         //$networkInterface = $this->networkInterfaceRepository->findByDeviceAndName($deviceId, "eth". $data["interface id"]);
-        $networkInterface->setDevice($device);
-        $networkInterface->setName("eth". $data["interface id"]);
+        //$networkInterface->setDevice($device);
+        $networkInterface->setName($device->getName()."_net".$data["interface id"]);
+        $networkSettings = new NetworkSettings();
+        $networkSettings->setName($networkInterface->getName()."_set".$data["interface id"]);
+        $networkInterface->setSettings($networkSettings);
+        $device->addNetworkInterface($networkInterface);
+        //$networkInterface->setName("eth". $data["interface id"]);
         $networkInterface->setVlan($data["vlan"]);
 
         $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($networkInterface);
+        $entityManager->persist($device);
         $entityManager->flush();
 
         $response = new Response();
@@ -164,6 +170,8 @@ class NetworkInterfaceController extends Controller
         
         $entityManager = $this->getDoctrine()->getManager();
         foreach($networkInterfaces as $networkInterface) {
+            $device = $networkInterface->getDevice();
+            $device->removeNetworkInterface($networkInterface);
             $entityManager->remove($networkInterface);
         }
         $entityManager->flush();
