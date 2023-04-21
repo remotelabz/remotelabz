@@ -12,7 +12,6 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
@@ -32,7 +31,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
-     * @Groups({"api_get_template"})
      */
     private $name;
 
@@ -40,7 +38,6 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\Groups({"api_get_device", "export_lab"})
      * @Assert\Type(type="string")
-     * @Groups({"api_get_template"})
      */
     private $brand;
 
@@ -48,7 +45,6 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\Groups({"api_get_device", "export_lab"})
      * @Assert\Type(type="string")
-     * @Groups({"api_get_template"})
      */
     private $model;
 
@@ -82,7 +78,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
      * @Assert\Choice({"vm","container"})
-     * @Groups({"api_get_template"})
      */
     private $type;
 
@@ -90,28 +85,24 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
-     * @Groups({"api_get_template"})
      */
     private $nbCpu;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
-     * @Groups({"api_get_template"})
      */
     private $nbCore;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
-     * @Groups({"api_get_template"})
      */
     private $nbSocket;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
-     * @Groups({"api_get_template"})
      */
     private $nbThread;
 
@@ -127,7 +118,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
      * @Assert\NotNull
      * @Assert\Valid
-     * @Groups({"api_get_template"})
      */
     private $hypervisor;
 
@@ -136,7 +126,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker"})
      * @Assert\NotNull
      * @Assert\Valid
-     * @Groups({"api_get_template"})
      */
     private $operatingSystem;
 
@@ -150,7 +139,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
      * @Assert\Valid
-     * @Groups({"api_get_template"})
      */
     private $flavor;
 
@@ -178,7 +166,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox"})
      * @Assert\NotNull
      * @Assert\Valid
-     * @Groups({"api_get_template"})
      */
     private $controlProtocolTypes;
 
@@ -200,7 +187,6 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="integer", options={"default": 0})
      * @Serializer\Groups({"api_get_device"})
-     * @Groups({"api_get_template"})
      */
     private $delay = 0;
 
@@ -213,7 +199,6 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
      * @Serializer\Groups({"api_get_device"})
-     * @Groups({"api_get_template"})
      */
     private $icon;
 
@@ -274,7 +259,6 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="integer", options={"default": 1})
      * @Serializer\Groups({"api_get_device"})
-     * @Groups({"api_get_template"})
      */
     private $ethernet = 1;
 

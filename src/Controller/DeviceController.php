@@ -223,38 +223,41 @@ class DeviceController extends Controller
             }
             $this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
-            $controlProtocolTypes= [];
-            foreach($device->getControlProtocolTypes() as $controlProtocolType) {
-                array_push($controlProtocolTypes, $controlProtocolType->getId());
-            }
-            $deviceData = [
-                "name" => $device->getName(),
-                "type" => $device->getType(),
-                "icon" => $device->getIcon(),
-                "operatingSystem" => $device->getOperatingSystem()->getId(),
-                "flavor" => $device->getFlavor()->getId(),
-                "controlProtocol" => $controlProtocolTypes,
-                "hypervisor" => $device->getHypervisor()->getId(),
-                "brand" => $device->getBrand(),
-                "model" => $device->getModel(),
-                "description" => $device->getName(),
-                "cpu" => $device->getNbCpu(),
-                "core" => $device->getNbCore(),
-                "socket" => $device->getNbSocket(),
-                "thread" => $device->getNbSocket(),
-                "context" => "remotelabz",
-                "config_script" => "embedded",
-                "ethernet" => 1
-            ];
+            
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
+            if ($device->getIsTemplate() == true) {
+                $controlProtocolTypes= [];
+                foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+                    array_push($controlProtocolTypes, $controlProtocolType->getId());
+                }
 
-            $yamlContent = Yaml::dump($deviceData);
-            $fileName = u($device->getName())->camel();
-            file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                $deviceData = [
+                    "name" => $device->getName(),
+                    "type" => $device->getType(),
+                    "icon" => $device->getIcon(),
+                    "operatingSystem" => $device->getOperatingSystem()->getId(),
+                    "flavor" => $device->getFlavor()->getId(),
+                    "controlProtocol" => $controlProtocolTypes,
+                    "hypervisor" => $device->getHypervisor()->getId(),
+                    "brand" => $device->getBrand(),
+                    "model" => $device->getModel(),
+                    "description" => $device->getName(),
+                    "cpu" => $device->getNbCpu(),
+                    "core" => $device->getNbCore(),
+                    "socket" => $device->getNbSocket(),
+                    "thread" => $device->getNbSocket(),
+                    "context" => "remotelabz",
+                    "config_script" => "embedded",
+                    "ethernet" => 1
+                ];
 
+                $yamlContent = Yaml::dump($deviceData);
+                $fileName = u($device->getName())->camel();
+                file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+            }
             
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 201, [], ['api_get_device']);
@@ -354,6 +357,8 @@ class DeviceController extends Controller
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
+        $isTemplate = $device->getIsTemplate();
+        $oldName = $device->getName();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
         $deviceForm = $this->createForm(DeviceType::class, $device, [
             'nb_network_interface' => count($device->getNetworkInterfaces())]
@@ -438,6 +443,50 @@ class DeviceController extends Controller
             }
 
             $this->setDeviceHypervisorToOS($device);
+
+            $controlProtocolTypes= [];
+            foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+                array_push($controlProtocolTypes, $controlProtocolType->getId());
+            }
+            
+            $deviceData = [
+                "name" => $device->getName(),
+                "type" => $device->getType(),
+                "icon" => $device->getIcon(),
+                "operatingSystem" => $device->getOperatingSystem()->getId(),
+                "flavor" => $device->getFlavor()->getId(),
+                "controlProtocol" => $controlProtocolTypes,
+                "hypervisor" => $device->getHypervisor()->getId(),
+                "brand" => $device->getBrand(),
+                "model" => $device->getModel(),
+                "description" => $device->getName(),
+                "cpu" => $device->getNbCpu(),
+                "core" => $device->getNbCore(),
+                "socket" => $device->getNbSocket(),
+                "thread" => $device->getNbSocket(),
+                "context" => "remotelabz",
+                "config_script" => "embedded",
+                "ethernet" => 1
+            ];
+
+            $yamlContent = Yaml::dump($deviceData);
+            $fileName = u($device->getName())->camel();
+            $oldFileName = u($oldName)->camel();
+            if ($isTemplate == true && $device->getIsTemplate() == true) {
+                if ($oldName == $device->getName()) {
+                    file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                }
+                else {
+                    unlink("/opt/remotelabz/config/templates/". $oldFileName . ".yaml");
+                    file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                }
+            }
+            else if($isTemplate == true && $device->getIsTemplate() == false) {
+                unlink("/opt/remotelabz/config/templates/". $oldName . ".yaml");
+            }
+            else if($isTemplate == false && $device->getIsTemplate() == true) {
+                file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+            }
 
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
@@ -646,6 +695,10 @@ class DeviceController extends Controller
 
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
+        }
+        if($device->getIsTemplate()== true) {
+            $fileName = u($device->getName())->camel();
+            unlink("/opt/remotelabz/config/templates/". $fileName . ".yaml");
         }
 
         $entityManager = $this->getDoctrine()->getManager();

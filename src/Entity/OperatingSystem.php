@@ -5,7 +5,6 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * Represents a disk image with metadata
@@ -23,7 +22,6 @@ class OperatingSystem
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
      * @Serializer\Groups({"api_get_operating_system", "api_get_device","api_delete_os"})
-     * @Groups({"api_get_template"})
      * @var int
      */
     private $id;

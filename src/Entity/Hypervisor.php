@@ -9,7 +9,6 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=HypervisorRepository::class)
@@ -21,7 +20,6 @@ class Hypervisor
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      * @Serializer\Groups({"api_get_hypervisor","api_delete_os","api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
-     * @Groups({"api_get_template"})
      */
     private $id;
 
