@@ -43,6 +43,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 
 class PictureController extends Controller
@@ -158,14 +159,20 @@ class PictureController extends Controller
         PictureRepository $pictureRepository,
         SerializerInterface $serializer)
     {
-        //$lab = $labRepository->findById($LabId);
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
 
         $response = new Response();
-        //$data = json_decode($request->getContent(), true);   
 
-        $height = 0;
-		$width = 0;
+        if($picture === null) {
+            $response->setContent(json_encode([
+                'code' => 404,
+                'status'=>'fail',
+                'message' => 'Picture "'.$id.'" not found on lab "'.$labId.'".']));
+                return $response;
+        }
+
+        $height = $picture->getHeight();
+		$width = $picture->getWidth();
 		if ($request->query->get('width') > 0) {
 			$width = $request->query->get('width');
 		}
@@ -173,39 +180,20 @@ class PictureController extends Controller
 			$height = $request->query->get('height');
 		}
 
-//$data = imagescale($picture->getData(), $width, $height);
-var_dump($height); exit; 
+        $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
+        $file = '/opt/remotelabz/public/editor/images/pictures/'.$fileName;
 
-$thumb = imagecreatetruecolor($width, $height);
-$source = $picture->getData();
-
-// Resize
-$data = imagecopyresized($thumb, $source, 0, 0, 0, 0, $width, $height, $picture->getWidth(), $picture->getHeight());
-        
-
-        if($picture === null) {
-            $response->setContent(json_encode([
-                'code' => 404,
-                'status'=>'fail',
-                'message' => 'Picture "'.$id.'" not found on lab "'.$labId.'".']));
+        /*$thumb = imagecreatetruecolor($width, $height);
+        if($picture->getType() ==  "image/png") {
+            $source = imagecreatefrompng('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
         }
         else {
-            /*$data = [
-                "id"=> $picture->getId(),
-                "name"=> $picture->getName(),
-                "type"=> $picture->getType(),
-                "width"=> $picture->getWidth(),
-                "height"=> $picture->getHeight(),
-                "map" => $picture->getMap()
-            ];*/
-           
-            $response->setContent(json_encode([
-                'code' => 200,
-                'status'=>'success',
-                'message' => 'Picture loaded',
-                'data' =>$data]));
+            $source = imagecreatefromjpeg('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
         }
-        $response->headers->set('Content-Type', 'application/json');
+        // Resize
+        imagecopyresized($thumb, $source, 0, 0, 0, 0, $width, $height, $picture->getWidth(), $picture->getHeight());*/        
+
+        $response = new BinaryFileResponse($file);
         return $response;
     }
     
@@ -233,11 +221,12 @@ $data = imagecopyresized($thumb, $source, 0, 0, 0, 0, $width, $height, $picture-
 				}
 			}
 		}
-        
+        $type = explode("image/",$data['type'])[1];
         $picture->setLab($lab);
         $picture->setName($data['name']);
         $picture->setType($data['type']);
         $picture->setData($data['data']);
+        file_put_contents('/opt/remotelabz/public/editor/images/pictures/'.$data['name'].'.'.$type, $data['data']);
 
         list($width, $height) = getimagesizefromstring($data['data']);
         $picture->setWidth($width);
@@ -267,78 +256,18 @@ $data = imagecopyresized($thumb, $source, 0, 0, 0, 0, $width, $height, $picture-
     }
 
     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_edit_textobject")
-     */
-    public function updateAction(Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
-    {
-        $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
-        $data = json_decode($request->getContent(), true);   
-
-        if (isset($data['name'])) {
-            $textobject->setName($data['name']);
-        }
-        $textobject->setData($data['data']);
-
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($textobject);
-        $entityManager->flush();
-
-
-        $this->logger->info("TextObject named" . $textobject->getName() . " modified");
-
-        $response = new Response();
-        $response->setContent(json_encode([
-            'code' => 201,
-            'status'=> 'success',
-            'message' => 'Lab has been saved (60023).'
-            /*'data' => [
-                'name'=>$textobject->getName(),
-                "type"=> $textobject->getType(),
-                "data"=> $textobject->getData(),
-                "newdata"=> $textobject->getNewdata()
-
-            ]*/]));
-        $response->headers->set('Content-Type', 'application/json');
-        return $response;
-    }
-
-     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects", name="api_edit_textobjects")
-     */
-    public function updateMultipleTextObjectsAction(Request $request, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
-    {
-       // $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
-        $data = json_decode($request->getContent(), true);   
-
-        foreach($data as $dataObject){
-            $textobject = $textobjectRepository->findByIdAndLab($dataObject['id'], $labId);
-            $textobject->setData($dataObject['data']);
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($textobject);
-            $entityManager->flush();
-        }
-
-        $response = new Response();
-        $response->setContent(json_encode([
-            'code' => 201,
-            'status'=> 'success',
-            'message' => 'Lab has been saved (60023).'
-           ]));
-        $response->headers->set('Content-Type', 'application/json');
-        return $response;
-
-    }
-
-    /**
      * 
-     * @Rest\Delete("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_delete_textobject")
+     * @Rest\Delete("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_delete_picture")
      */
-    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository)
+    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
-        $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
+        $picture = $pictureRepository->findByIdAndLab($id, $labId);
         
+        $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
+        unlink('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
+
         $entityManager = $doctrine->getManager();
-        $entityManager->remove($textobject);
+        $entityManager->remove($picture);
         $entityManager->flush();
 
         $response = new Response();

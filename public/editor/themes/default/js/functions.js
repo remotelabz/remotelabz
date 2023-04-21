@@ -1628,7 +1628,7 @@ function deletePicture(lab_file, picture_id, cb) {
     var data = [];
 
     // Delete network
-    var url = '/api/labs' + lab_file + '/pictures/' + picture_id;
+    var url = '/api/labs/' + lab_file + '/pictures/' + picture_id;
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
