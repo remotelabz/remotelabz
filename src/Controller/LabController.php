@@ -260,9 +260,9 @@ class LabController extends Controller
     }
 
     /**
-     * @Route("/labs/test/{id<\d+>}", name="show_lab_test", methods="GET")
+     * @Route("/labs/info/{id<\d+>}", name="show_lab_test", methods="GET")
      * 
-     * @Rest\Get("/api/labs/test/{id<\d+>}", name="api_get_lab_test")
+     * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
      */
     public function showActionTest(
         int $id,

@@ -296,15 +296,31 @@ class DeviceController extends Controller
         $flavor = $this->flavorRepository->findById($data['flavor']);
         $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
         //$device->addLab($lab);
+        if($data['core'] === '') {
+            $device->setNbCore(null);
+        }
+        else {
+            $device->setNbCore($data['core']);
+        }
+
+        if($data['socket'] === '') {
+            $device->setNbSocket(null);
+        }
+        else {
+            $device->setNbSocket($data['socket']);
+        }
+        if($data['thread'] === '') {
+            $device->setNbThread(null);
+        }
+        else {
+            $device->setNbThread($data['thread']);
+        }
         $device->setCount($data['count']);
         $device->setName($data['name']);
         $device->setType($data['type']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
-        $device->setNbCore($data['core']);
-        $device->setNbSocket($data['socket']);
-        $device->setNbThread($data['thread']);
         $device->setOperatingSystem($operatingSystem[0]);
         $device->setHypervisor($hypervisor[0]);
         $device->addControlProtocolType($controlProtocolType[0]);
@@ -542,13 +558,29 @@ class DeviceController extends Controller
             $flavor = $this->flavorRepository->findById($data['flavor']);
             $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
         
+            if($data['core'] === '') {
+                $device->setNbCore(null);
+            }
+            else {
+                $device->setNbCore($data['core']);
+            }
+    
+            if($data['socket'] === '') {
+                $device->setNbSocket(null);
+            }
+            else {
+                $device->setNbSocket($data['socket']);
+            }
+            if($data['thread'] === '') {
+                $device->setNbThread(null);
+            }
+            else {
+                $device->setNbThread($data['thread']);
+            }
             $device->setType($data['type']);
             $device->setIcon($data['icon']);
             $device->setBrand($data['brand']);
             $device->setFlavor($flavor[0]);
-            $device->setNbCore($data['core']);
-            $device->setNbSocket($data['socket']);
-            $device->setNbThread($data['thread']);
             $device->setOperatingSystem($operatingSystem[0]);
             $device->setHypervisor($hypervisor[0]);
             $device->addControlProtocolType($controlProtocolType[0]);
