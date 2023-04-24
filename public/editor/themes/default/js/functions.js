@@ -1100,9 +1100,9 @@ function getPicturesMapped(picture_id) {
         var deferred = $.Deferred();
         var lab_filename = $('#lab-viewport').attr('data-path');
         if (picture_id != null) {
-                var url = '/api/labs' + lab_filename + '/picturesmapped/' + picture_id;
+                var url = '/api/labs/' + lab_filename + '/picturesmapped/' + picture_id;
         } else {
-                var url = '/api/labs' + lab_filename + '/pictures';
+                var url = '/api/labs/' + lab_filename + '/pictures';
         }
         var type = 'GET';
         $.ajax({

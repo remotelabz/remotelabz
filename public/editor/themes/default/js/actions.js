@@ -3142,7 +3142,7 @@ function submitPictureEdit(picture_id){
     form_data['map'] = form_data['map'] + form_data['custommap']
     form_data['custommap']=''
     // Get action URL
-    var url = '/api/labs' + lab_file + '/pictures/' + picture_id;//form_data['id'];
+    var url = '/api/labs/' + lab_file + '/pictures/' + picture_id;//form_data['id'];
     $.ajax({
         cache: false,
         timeout: TIMEOUT,

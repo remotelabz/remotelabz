@@ -196,7 +196,6 @@ class PictureController extends Controller
         $response = new BinaryFileResponse($file);
         return $response;
     }
-    
 
     /**
      * 
@@ -206,6 +205,9 @@ class PictureController extends Controller
     {
         $picture = new Picture();
         $lab = $this->labRepository->findById($id);
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
 
         $data = $_POST;
         if (!empty($_FILES)) {
@@ -221,6 +223,13 @@ class PictureController extends Controller
 				}
 			}
 		}
+        if($data['type'] !== 'image/png' || $data['type'] !== 'image/png') {
+            $response->setContent(json_encode([
+                'code' => 400,
+                'status'=> 'fail',
+                'message' => 'This is not a valid picture type']));
+            return $response;
+        }
         $type = explode("image/",$data['type'])[1];
         $picture->setLab($lab);
         $picture->setName($data['name']);
@@ -246,12 +255,51 @@ class PictureController extends Controller
        /* return $this->redirectToRoute('edit_lab', [
             'id' => $lab->getId()
         ]);*/
-        $response = new Response();
+        
         $response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).']));
+        return $response;
+    }
+
+    /**
+     * 
+     * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_new_picture")
+     */
+    public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
+    {
+        $picture = $pictureRepository->findByIdAndLab($id, $labId);
+        $data = json_decode($request->getContent(), true);   
+
+        $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
+        if(isset($data['name']) && $data['name'] == '') {
+            $response->setContent(json_encode([
+                'code' => 400,
+                'status'=> 'fail',
+                'message' => 'The picture is not valid']));
+            return $response;
+        }
+        if(isset($data['name']) && $data['name'] !== $picture->getName()){
+            $type = explode("image/",$picture->getType())[1];
+            unlink('/opt/remotelabz/public/editor/images/pictures/'.$picture->getName().'.'.$type);
+            file_put_contents('/opt/remotelabz/public/editor/images/pictures/'.$data['name'].'.'.$type, $picture->getData());
+            $picture->setName($data['name']);
+        }
+        $picture->setMap($data['map']);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($picture);
+        $entityManager->flush();
+
+
+        $this->logger->info("Picture named" . $picture->getName() . " modified");
+        
+        $response->setContent(json_encode([
+            'code' => 201,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
         return $response;
     }
 
