@@ -1,0 +1,109 @@
+<!-- <div class="modal-header">
+            <h3 class="modal-title">Add New Lab</h3>
+</div>
+<div class="modal-body">
+            <form role="form">
+                <div class="form-group {{errorClass}}">
+                  <label>Lab Name</label>
+                  <input type="text" class="form-control" data-ng-model="labName" placeholder="Enter Lab's Name" autofocus>
+                  <span class="help-block" data-ng-show="errorClass != ''" data-ng-bind="errorMessage"></span>
+                </div>
+                
+                <div class="form-group">
+                  <label>Version</label>
+                  <input type="text" class="form-control" data-ng-model="version" placeholder="Enter version">
+                </div>
+            
+                <div class="form-group">
+                  <label>Author</label>
+                  <input type="text" class="form-control" data-ng-model="author" placeholder="Enter Author">
+                </div>
+                
+                <div class="form-group">
+                 <label>Config Script timeout</label>
+                  <input class="form-control" data-ng-model="scripttimeout" placeholder="Enter timeout"/>
+                </div>
+                
+                <div class="form-group">
+                  <label>Description</label>
+                  <textarea class="form-control" rows="3" data-ng-model="description" placeholder="Enter description"></textarea>
+                </div>
+              </form>
+</div>
+<div class="modal-footer">
+            <button class="btn btn-success btn-flat {{blockButtonsClass}}" ng-disabled="blockButtons" type="button" ng-click="addNewLab()">Add</button>
+            <button class="btn btn-default btn-flat" type="button" ng-click="closeModal()">Cancel</button>
+</div> -->
+
+
+    <div class="modal-header">
+        <button type="button" class="close" ng-click="closeModal()" >&times;</button>
+        <i class="glyphicon glyphicon-certificate pull-right pointer action-changeopacity" ng-click="opacity()"></i>
+        <h4 class="modal-title">Add New Lab</h4>
+    </div>
+    <div class="modal-body">
+        <form id="form-lab-edit" class="form-horizontal form-lab-edit" name="formLabEdit" role="form">
+          <div class="row">
+            <div class="col-md-4">
+                <div class="form-group row required">
+                    <label class="col-md-2 control-label control-label_custom_pos">Name</label>
+                    <div class="col-md-10">
+                        <input class="form-control autofocus" name="name" data-ng-model="labName" placeholder="Enter Lab's Name" autofocus type="text" autofocus="autofocus" ng-pattern="restrictNumber" ng-class="{'input--error': formLabEdit.name.$valid == false, 'input': formLabEdit.name.$valid == true}">
+                        <span class="chars" ng-class="{'chars--active': formLabEdit.name.$valid == false, 'chars': formLabEdit.name.$valid == true}">Use only [A-Za-z0-9_- ]chars</span>
+                        <span class="help-block" data-ng-show="errorClass != ''" data-ng-bind="errorMessage"></span>
+                    </div>
+                </div>
+                <div class="form-group row required">
+                    <label class="col-md-2 control-label control-label_custom_pos">Version</label>
+                    <div class="col-md-10">
+                        <input id="version" class="form-control" name="version" data-ng-model="version" placeholder="Enter version" ng-pattern="restrictTest" ng-class="{'input--error': formLabEdit.version.$valid == false, 'input': formLabEdit.version.$valid == true}">
+                        <span class="chars" ng-class="{'chars--active': formLabEdit.version.$valid == false, 'chars': formLabEdit.version.$valid == true}">Must be interger ([0-9]chars)</span>
+                        <span class="help-block" data-ng-show="errorClass != ''" data-ng-bind="errorMessage"></span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-md-2 control-label control-label_custom_pos">Author</label>
+                    <div class="col-md-10">
+                        <input class="form-control" data-ng-model="author" placeholder="Enter Author"/>                  
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-md-5 control-label control-label_custom">Config Script Timeout</label>
+                    <div class="col-md-4">
+                        <input class="form-control" data-ng-model="scripttimeout"  placeholder="Enter timeout" />
+                    </div>
+                    <label class="col-md-3 control-label control-label_custom">Seconds</label>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 parent-required">
+              <p class="p-required"><sup class="sup-required">*</sup>- Required Fields</p>
+                  </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+              <div class="form-group row">
+                    <label class="col-md-2 control-label">Description</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control"  data-ng-model="description" placeholder="Enter description" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-md-2 control-label">Tasks</label>
+                    <div class="col-md-10">
+                        <textarea class="form-control" data-ng-model="body" placeholder="Enter tasks" rows="4"></textarea>
+                    </div>
+                </div>
+               
+                <div class="form-group">
+                    <div class="col-md-2 col-md-offset-10">
+                        <div class="pull-right" style="width: 123px;">
+                            <button type="submit" class="btn btn-success btn-flat" ng-click="addNewLab()">Save</button>
+                            <button type="button" class="btn btn-grey btn-flat" ng-click="closeModal()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </form>
+    </div>
+    <div class="modal-footer"></div>

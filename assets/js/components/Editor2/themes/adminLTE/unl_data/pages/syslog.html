@@ -1,0 +1,84 @@
+<div data-ng-include="'/themes/adminLTE/unl_data/pages/constant/header.html'" data-ng-controller="HeaderController">
+</div>
+<link rel="stylesheet" href="/themes/adminLTE/dist/css/skins/skin-blue.min.css">
+<script src="/themes/adminLTE/dist/js/app.js"></script>
+<div class="wrapper">
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+   
+      <!-- Content Header (Page header) -->
+      <section class="content-header">
+        <h1>
+          System logs
+          <small></small>
+        </h1>
+        <ol class="breadcrumb">
+			<li><a href="#/main"><i class="fa fa-home"></i></a></li>
+			<li><i class="fa fa-book"></i> Logs</li>
+			<li class="active"><i class="fa fa-life-ring"></i> System logs</li>
+        </ol>
+      </section>
+
+    <!-- Main content -->
+<section class="content">
+<!-- /.content -->
+<div class="box box-primary">
+    <div class="box-header with-border">
+        <h3 class="box-title">System log viewer</h3>
+    </div>
+            <!-- /.box-header -->
+    <div class="box-body no-padding">
+		
+		<div class="row" style="padding-top:10px;padding-left:10px">
+		<div class="col-sm-3 col-lg-2 col-md-2">
+		<div class="form-group">
+            <label>Select log file</label>
+            <select class="form-control" data-ng-init="fileSelection = logfiles[0]" data-ng-model="fileSelection" ng-options="x for x in logfiles"  data-ng-change="readFile()"></select>
+        </div>
+        </div>
+		<div class="col-sm-3 col-lg-2 col-md-2">
+		<div class="form-group">
+            <label>Number of Lines</label>
+            <input type="text" class="form-control"  id="log_lines" placeholder="Number of lines" data-ng-model="lineCount">
+        </div>
+        </div>
+		<div class="col-sm-3 col-lg-2 col-md-2">
+		<div class="form-group">
+            <label>Search text</label>
+            <input type="text" class="form-control"  id="log_search" placeholder="" data-ng-model="searchText">
+        </div>
+        </div>
+		<div class="col-sm-3 col-lg-2 col-md-2">
+			<div class="form-group">
+			 <button type="button" style="margin-top:25px" class="btn btn-block btn-success btn-flat {{blockButtonsClass}}" ng-disabled="blockButtons" data-ng-click="readFile(fileSelection)">View</button>
+			</div>
+        </div>
+        </div>
+		<hr>
+		<div class="col-xs-12" style="min-height:200px;">
+			<h4 class="text-center" style="margin-top:0px;" data-ng-show="!(logInfo.length == 0) && fileselect">File output start</h4>
+			<p data-ng-repeat="x in logInfo track by $index">{{x}}</p>
+			<h3 class="text-center" style="padding-top: 50px;" data-ng-show="!fileselect">Choose log file</h3>
+			<h3 class="text-center" style="padding-top:50px;" data-ng-show="logInfo.length == 0 && fileselect">Null</h3>
+			<h4 class="text-center" style="margin-top:0px;" data-ng-show="!(logInfo.length == 0) && fileselect">File output end</h4>
+		</div>
+        
+	</div>
+</div>
+            <!-- /.box-body -->
+      
+<!-- /.content -->
+</section>
+  </div>
+  <!-- /.content-wrapper -->
+  
+  
+  <!-- Main Footer -->
+  <!-- <div data-ng-include="'/themes/adminLTE/unl_data/pages/constant/footer.html'"> -->
+</div>
+<!-- ./wrapper -->
+<!-- AdminLTE App -->
+
+<script>
+
+</script>

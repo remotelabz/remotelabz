@@ -18,13 +18,6 @@
 	</div>
 {% endblock %}
 {% block javascripts_footer %}
-<script>
-             document.write("<script src='{{asset('editor/themes/default/js/ebs/functions.js?n=" + Date.now() + "')}}' defer><\/script>");
-             document.write("<script src='{{asset('editor/themes/default/js/ebs/actions.js?n=" + Date.now() + "')}}' defer><\/script>");
-             document.write("<script src='{{asset('editor/themes/default/js/actions.js?n=" + Date.now() + "')}}' defer><\/script>");
-             document.write("<script src='{{asset('editor/themes/default/js/functions.js?n=" + Date.now() + "')}}' defer><\/script>");
-        </script>
-        <script src="{{asset('editor/themes/default/js/javascript.js')}}" defer></script>
 
 	<script type="text/javascript" defer>
 		function ready(fn) {

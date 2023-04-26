@@ -1,0 +1,27 @@
+<div class="modal-header">
+    <h3 class="modal-title">Add a new node</h3>
+</div>
+<div class="modal-body">
+    <div class="form-group">
+        <label class="col-md-3 control-label">Name</label>
+        <div class="col-md-5">
+            <input type="text" class="form-control-static" name="picture[name]" value=""/>
+        </div>
+    </div>';
+    <div class="form-group">
+        <label class="col-md-3 control-label">Picture</label>
+        <div class="col-md-5">
+            <input type="file" name="picture[file]" value=""/>
+        </div>
+    </div>';
+    <div class="form-group">
+        <div class="col-md-5 col-md-offset-3">
+            <button type="submit" class="btn btn-success">Add</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-success btn-flat" type="button" data-ng-click="addImage()">Add</button>
+    <button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>
