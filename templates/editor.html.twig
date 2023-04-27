@@ -18,12 +18,16 @@
 	</div>
 {% endblock %}
 {% block javascripts_footer %}
-
+	{{parent()}}
 	<script type="text/javascript" defer>
+		console.log(document.readyState);
+		//document.addEventListener('readystatechange', e => {
+		//	console.log(document.readyState);
 		function ready(fn) {
 			if (document.readyState != 'loading'){
 				fn();
 			} else {
+				console.log("1:",document.readyState);
 				document.addEventListener('DOMContentLoaded', fn);
 			}
 		}
@@ -39,6 +43,7 @@
 				//ga('send', 'pageview');
 			}
 		}
+		//})
 	</script>
     {% endblock %}
 {#{% block body %}

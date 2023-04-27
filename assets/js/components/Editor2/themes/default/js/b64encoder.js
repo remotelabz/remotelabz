@@ -3,9 +3,9 @@
  */
 'use strict';
 
-function TextEncoderLite() {
+export function TextEncoderLite() {
 }
-function TextDecoderLite() {
+export function TextDecoderLite() {
 }
 
 var lookup = [];
@@ -30,7 +30,7 @@ function init () {
 
 init();
 
-function toByteArray (b64) {
+export function toByteArray (b64) {
     var i, j, l, tmp, placeHolders, arr;
     var len = b64.length;
 
@@ -86,7 +86,7 @@ function encodeChunk (uint8, start, end) {
     return output.join('');
 }
 
-function fromByteArray (uint8) {
+export function fromByteArray (uint8) {
     var tmp;
     var len = uint8.length;
     var extraBytes = len % 3; // if we have 1 byte left, pad 2 bytes

@@ -37,6 +37,7 @@ Encore
     .addEntry('groups', './assets/js/groups.js')
     .addEntry('dashboard', './assets/js/dashboard.js')
     .addEntry('editor', './assets/js/editor.js')
+    .addEntry('editor-functions', './assets/js/editor-functions.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
@@ -75,7 +76,12 @@ Encore
 
     // uncomment if you use TypeScript
     // .enableTypeScriptLoader()
+    /*.addLoader({ test: /\.ejs$/, loader: 'ejs-render-loader' })    
 
+    .addPlugin(new HtmlWebpackPlugin({
+        template: 'Editor2/themes/default/ejs/action_configsget.ejs',
+        filename: 'Editor2/themes/default/ejs/action_configsget.html'
+    }))*/
     // uncomment if you're having problems with a jQuery plugin
     .autoProvidejQuery()
 
@@ -107,15 +113,6 @@ Encore
         // 'react': path.resolve(__dirname, './node_modules/react'),
         // 'react-dom': path.resolve(__dirname, './node_modules/react-dom')
     })
-    /*
-    .addExternals({
-        "subtract": {
-            root: "subtract",
-            commonjs2: "./subtract",
-            commonjs: ["./math", "subtract"],
-            amd: "subtract"
-        }
-    })*/
 ;
 
 const defaultConfig = Encore.getWebpackConfig();
@@ -461,22 +458,5 @@ defaultConfig.externals = [
     
 ]
 
-/*secondConfig = {
-    mode: "development",
-    output: {
-        libraryTarget: "amd"
-    },
-    externals: [
-        "add",
-        {
-            "subtract": {
-                root: "subtract",
-                commonjs2: "./subtract",
-                commonjs: ["./math", "subtract"],
-                amd: "subtract"
-            }
-        }
-    ]
-}*/
 
 module.exports = defaultConfig;

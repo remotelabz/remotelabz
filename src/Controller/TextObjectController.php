@@ -199,6 +199,7 @@ class TextObjectController extends Controller
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).',
             'data' => [
+                "id"=>$textobject->getId(),
                 'name'=>$textobject->getName(),
                 "type"=> $textobject->getType(),
                 "data"=> $textobject->getData(),

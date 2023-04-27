@@ -12,15 +12,31 @@
  * @version 20160719
  */
 
+import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, TENANT, UPDATEID, LOCK, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, STATUSINTERVAL, USERNAME, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION} from './javascript';
+import {MESSAGES} from './messages_en';
+import '../bootstrap/js/jquery-3.2.1.min';
+import '../bootstrap/js/tinytools.toggleswitch.min';
+import '../bootstrap/js/jquery-ui-1.12.1.min';
+import '../bootstrap/js/jquery-cookie-1.4.1';
+import '../bootstrap/js/jquery.validate-1.14.0.min';
+import '../bootstrap/js/jquery.hotkey';
+import '../bootstrap/js/jsPlumb-2.4.min';
+import '../bootstrap/js/bootstrap.min';
+import '../bootstrap/js/bootstrap-select.min';
+import {validateLabInfo, validateLabPicture, validateNode} from './validate'
+import './ejs';
+import {fromByteArray,toByteArray,TextEncoderLite, TextDecoderLite} from './b64encoder';
 var contextMenuOpen = false;
+import { adjustZoom } from './ebs/functions';
+import {ObjectPosUpdate} from './actions';
 
 // Basename: given /a/b/c return c
-function basename(path) {
+export function basename(path) {
     return path.replace(/\\/g, '/').replace(/.*\//, '');
 }
 
 // Dirname: given /a/b/c return /a/b
-function dirname(path) {
+export function dirname(path) {
     var dir = path.replace(/\\/g, '/').replace(/\/[^\/]*$/, '');
     if (dir == '') {
         return '/';
@@ -30,7 +46,7 @@ function dirname(path) {
 }
 
 // Alert management
-function addMessage(severity, message, notFromLabviewport) {
+export function addMessage(severity, message, notFromLabviewport) {
     // Severity can be success (green), info (blue), warning (yellow) and danger (red)
     // Param 'notFromLabviewport' is used to filter notification
     $('#alert_container').show();
@@ -75,7 +91,7 @@ function addMessage(severity, message, notFromLabviewport) {
 /* Add Modal
 @param prop - helping classes. E.g prop = "red-text capitalize-title"
 */
-function addModal(title, body, footer, prop) {
+export function addModal(title, body, footer, prop) {
     var html = '<div aria-hidden="false" style="display: block;z-index: 10000;" class="modal ' + ' ' + prop + ' fade in" tabindex="-1" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title">' + title + '</h4></div><div class="modal-body">' + body + '</div><div class="modal-footer">' + footer + '</div></div></div></div>';
     $('body').append(html);
     $('body > .modal').modal('show');
@@ -83,14 +99,14 @@ function addModal(title, body, footer, prop) {
 }
 
 // Add Modal
-function addModalError(message) {
+export function addModalError(message) {
     var html = '<div aria-hidden="false" style="display: block; z-index: 99999" class="modal fade in" tabindex="-1" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title">' + MESSAGES[15] + '</h4></div><div class="modal-body">' + message + '</div><div class="modal-footer"></div></div></div></div>';
     $('body').append(html);
     $('body > .modal').modal('show');
 }
 
 // Add Modal
-function addModalWide(title, body, footer, property) {
+export function addModalWide(title, body, footer, property) {
     // avoid open wide modal twice
     if ( $('.modal.fade.in').length > 0 && property.match('/second-win/') != null ) return ;
     var prop = property || "";
@@ -108,7 +124,7 @@ function addModalWide(title, body, footer, property) {
 }
 
 // Export node(s) config
-function cfg_export(node_id) {
+export function cfg_export(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/export';
@@ -141,7 +157,7 @@ function cfg_export(node_id) {
 }
 
 // // Export node(s) config recursive
-function recursive_cfg_export(nodes, i) {
+export function recursive_cfg_export(nodes, i) {
     i = i - 1
     addMessage('info', nodes[Object.keys(nodes)[i]]['name'] + ': ' + MESSAGES[138])
     var deferred = $.Deferred();
@@ -191,7 +207,7 @@ function recursive_cfg_export(nodes, i) {
 }
 
 // Clone selected labs
-function cloneLab(form_data) {
+export function cloneLab(form_data) {
     var deferred = $.Deferred();
     var type = 'POST';
     var url = '/api/labs';
@@ -224,7 +240,7 @@ function cloneLab(form_data) {
 }
 
 // Close lab
-function closeLab() {
+export function closeLab() {
     var deferred = $.Deferred();
     $.when(getNodes()).done(function (values) {
         var running_nodes = false;
@@ -243,11 +259,10 @@ function closeLab() {
                 type: type,
                 url: encodeURI(url),
                 dataType: 'json',
-                headers: {"Authorization": `Bearer ${token}`},
                 success: function (data) {
                     if (data['status'] == 'success') {
                         logger(1, 'DEBUG: lab closed.');
-                        LAB = null;
+                        setLab(null);
                         deferred.resolve();
                     } else {
                         // Application error
@@ -276,7 +291,6 @@ function closeLab() {
             type: type,
             url: encodeURI(url),
             dataType: 'json',
-            headers: {"Authorization": `Bearer ${token}`},
             success: function (data) {
                 if (data['status'] == 'success') {
                     logger(1, 'DEBUG: lab closed.');
@@ -365,7 +379,7 @@ function deleteLab(path) {
 }*/
 
 // Delete network
-function deleteNetwork(id) {
+export function deleteNetwork(id) {
     var deferred = $.Deferred();
     var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -376,7 +390,6 @@ function deleteNetwork(id) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: network deleted.');
@@ -399,7 +412,7 @@ function deleteNetwork(id) {
 }
 
 // Delete node
-function deleteNode(id) {
+export function deleteNode(id) {
     var deferred = $.Deferred();
     var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -410,7 +423,6 @@ function deleteNode(id) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization" : `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node deleted.');
@@ -465,7 +477,7 @@ function deleteNode(id) {
 }*/
 
 // Export selected folders and labs
-function exportObjects(form_data) {
+export function exportObjects(form_data) {
     var deferred = $.Deferred();
     var type = 'POST';
     var url = '/api/export';
@@ -498,7 +510,7 @@ function exportObjects(form_data) {
 }
 
 // HTML Form to array
-function form2Array(form_name) {
+export function form2Array(form_name) {
     var form_array = {};
     $('form :input[name^="' + form_name + '["]').each(function (id, object) {
         // INPUT name is in the form of "form_name[value]", get value only
@@ -519,7 +531,7 @@ function form2ArrayByRow(form_name, id) {
 }
 
 // Get JSon message from HTTP response
-function getJsonMessage(response) {
+export function getJsonMessage(response) {
     var message = '';
     try {
         message = JSON.parse(response)['message'];
@@ -541,7 +553,7 @@ function getJsonMessage(response) {
 }
 
 // Get lab info
-function getLabInfo(labId) { 
+export function getLabInfo(labId) { 
     var deferred = $.Deferred();
     var url = '/api/labs/info/' + labId;
     var type = 'GET';
@@ -551,7 +563,6 @@ function getLabInfo(labId) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: lab "' + labId + '" found.');
@@ -576,7 +587,7 @@ function getLabInfo(labId) {
 }
 
 // Get lab body
-function getLabBody() {
+export function getLabBody() {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/html';
@@ -669,7 +680,6 @@ function getLabBody() {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got network(s) from lab "' + lab_filename + '".');
@@ -768,7 +778,7 @@ function deleteSingleNetworks() {
 }*/
 
 // Get lab nodes
-function getNodes(node_id) {
+export function getNodes(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');    
     if (node_id != null) {
@@ -785,7 +795,6 @@ function getNodes(node_id) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
@@ -808,7 +817,7 @@ function getNodes(node_id) {
 }
 
 // Get node startup-config
-function getNodeConfigs(node_id) {
+export function getNodeConfigs(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (node_id != null) {
@@ -847,7 +856,7 @@ function getNodeConfigs(node_id) {
 }
 
 // Get lab node interfaces
-function getNodeInterfaces(node_id) {
+export function getNodeInterfaces(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/interfaces';
@@ -880,7 +889,7 @@ function getNodeInterfaces(node_id) {
 }
 
 // Get lab pictures
-function getPictures(picture_id) {
+export function getPictures(picture_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (picture_id != null) {
@@ -1097,7 +1106,6 @@ function getTemplates(template) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {'Authorization': `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got template(s).');
@@ -1120,7 +1128,7 @@ function getTemplates(template) {
 }
 
 // Get user info
-function getUserInfo() {
+export function getUserInfo() {
     var deferred = $.Deferred();
    var url = '/api/token';
     var type = 'GET';
@@ -1147,14 +1155,14 @@ function getUserInfo() {
                 TENANT = data['data']['tenant'];
                 USERNAME = data['data']['username'];*/
                 var pathname = window.location.pathname;
-                LANG = "en";
-                LAB = pathname.split(/(\d)/)[1];
-                TENANT = "0";
-                ROLE = "admin";
+                setLang("en");
+                setLab(pathname.split(/(\d)/)[1]);
+                setTenant("0");
+                setRole("admin");
                 data["lab"] = LAB;
                 data["lang"] = LANG;
                 data["tenant"] = TENANT;
-                token = data['data']['token'];
+                //token = data['data']['token'];
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1221,7 +1229,7 @@ function getUsers(user) {
 }
 
 // Logging
-function logger(severity, message) {
+export function logger(severity, message) {
     if (DEBUG >= severity) {
         console.log(message);
     }
@@ -1229,7 +1237,7 @@ function logger(severity, message) {
 }
 
 // Logout user
-function logoutUser() {
+export function logoutUser() {
     var deferred = $.Deferred();
     var url = '/api/logout';
     var type = 'GET';
@@ -1335,7 +1343,7 @@ function logoutUser() {
 }*/
 
 // Delete picture
-function deletePicture(lab_file, picture_id, cb) {
+export function deletePicture(lab_file, picture_id, cb) {
     var deferred = $.Deferred();
     var data = [];
 
@@ -1369,7 +1377,7 @@ function deletePicture(lab_file, picture_id, cb) {
 }
 
 // Post login
-function postLogin(param) {
+export function postLogin(param) {
     if (UPDATEID != null) {
         // Stop updating node_status
         clearInterval(UPDATEID);
@@ -1382,19 +1390,22 @@ function postLogin(param) {
         logger(1, 'DEBUG: loading folder "' + FOLDER + '".');
         printPageLabList(FOLDER);
     } else {
-        LAB = LAB || param;
+        if (LAB == null) {
+            setLab(param);
+        }
         logger(1, 'DEBUG: loading lab "' + LAB + '".');
 
 
         printPageLabOpen(LAB);
         // Update node status
-        UPDATEID = setInterval('printLabStatus("' + LAB + '")', STATUSINTERVAL);
+        var LabStatus = printLabStatus(LAB);
+        setUpdateId(setInterval(LabStatus, STATUSINTERVAL));
 
 
     }
 }
 // Post login
-function newUIreturn(param) {
+export function newUIreturn(param) {
     if (UPDATEID != null) {
         // Stop updating node_status
         clearInterval(UPDATEID);
@@ -1426,7 +1437,6 @@ function newUIreturn(param) {
         url: encodeURI(url),
         dataType: 'json',
         data: JSON.stringify(form_data),
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: new network created.');
@@ -1685,7 +1695,6 @@ function newUIreturn(param) {
         url: encodeURI(url),
         dataType: 'json',
         data: JSON.stringify(form_data),
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: network position updated.');
@@ -1867,7 +1876,7 @@ function setNodeBoot(node_id, config) {
 }*/
 
 // Set multiple node position
-function setNodesPosition(nodes) {
+export function setNodesPosition(nodes) {
     var deferred = $.Deferred();
     if ( nodes.length == 0 ) { deferred.resolve(); return deferred.promise(); }
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -1905,17 +1914,17 @@ function setNodesPosition(nodes) {
 }
 
 // Update node data from node list
-function setNodeData(id){
+export function setNodeData(id){
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2ArrayByRow('node', id);
     var promises = [];
     logger(1, 'DEBUG: posting form-node-edit form.');
-    //var url = '/api/labs' + lab_filename + '/nodes/' + id;
-    //var type = 'PUT';
+    var url = '/api/labs' + lab_filename + '/nodes/' + id;
+    var type = 'PUT';
     form_data['id'] = id;
     form_data['count'] = 1;
     form_data['postfix'] = 0;
-    var nodes = {
+    /*var nodes = {
         1:{
             console:"telnet",
             delay:0, 
@@ -1952,11 +1961,11 @@ function setNodeData(id){
             config:0, 
             ethernet:1
         }
-    }
+    }*/
     for (var i = 0; i < form_data['count']; i++) {
         form_data['left'] = parseInt(form_data['left']) + i * 10;
         form_data['top'] = parseInt(form_data['top']) + i * 10;
-        /*var request = $.ajax({
+        var request = $.ajax({
         cache: false,
             timeout: TIMEOUT,
             type: type,
@@ -1964,13 +1973,13 @@ function setNodeData(id){
             dataType: 'json',
             data: JSON.stringify(form_data),
             success: function (data) {
-                if (data['status'] == 'success') {*/
+                if (data['status'] == 'success') {
                     nodes[id] = form_data;
                     logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
                     // Close the modal
                     $("#node" + id + " .node_name").html('<i class="node' + id + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
                     $("#node" + id + " a img").attr("src", "/editor/images/icons/" + form_data['icon'])
-                    /*addMessage(data['status'], data['message']);
+                    addMessage(data['status'], data['message']);
                 } else {
                     // Application error
                     logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
@@ -1984,7 +1993,7 @@ function setNodeData(id){
                 logger(1, 'DEBUG: ' + message);
                 addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-flat" data-dismiss="modal">Close</button>');
             }
-        });*/
+        });
         console.log(nodes[id]);
         //promises.push(request);
     }
@@ -1996,7 +2005,7 @@ function setNodeData(id){
 }
 
 //set note interface
-function setNodeInterface(node_id,interface_id,vlan){
+export function setNodeInterface(node_id,interface_id,vlan){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -2036,7 +2045,7 @@ function setNodeInterface(node_id,interface_id,vlan){
 }
 
 //set note interface
-function removeConnection(vlan){
+export function removeConnection(vlan){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -2072,7 +2081,7 @@ function removeConnection(vlan){
 }
 
 //get vlan
-function getVlan(){
+export function getVlan(){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -2459,7 +2468,7 @@ function wipe(node_id) {
  * Print forms and pages
  **************************************************************************/
 // Context menu
-function printContextMenu(title, body, pageX, pageY, addToBody, role, hideTitle) {
+export function printContextMenu(title, body, pageX, pageY, addToBody, role, hideTitle) {
     var zoomvalue = 100
     if ( role == "menu" ) zoomvalue=$('#zoomslide').slider("value")
     pageX=pageX*100/zoomvalue
@@ -2633,7 +2642,7 @@ function printFormNetwork(action, values) {
 }
 
 // Node form
-function printFormNode(action, values, fromNodeList) {
+export function printFormNode(action, values, fromNodeList) {
     logger (2,'action = ' + action)
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
@@ -2734,7 +2743,7 @@ function printFormNode(action, values, fromNodeList) {
                                     });
                                 }
                                 else{
-                                    iconselect = '' ;
+                                    var iconselect = '' ;
                                     if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
                                     html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
                                 }
@@ -2911,7 +2920,7 @@ function printFormNodeConfigs(values, cb) {
 }
 
 // Custom Shape form
-function printFormCustomShape(values) {
+export function printFormCustomShape(values) {
     var shapeTypes = ['square', 'circle'],
         borderTypes = ['solid', 'dashed'],
         left = (values == null || values['left'] == null) ? null : values['left'],
@@ -2995,7 +3004,7 @@ function printFormCustomShape(values) {
 };
 
 // Text form
-function printFormText(values) {
+export function printFormText(values) {
     var left = (values == null || values['left'] == null) ? null : values['left']
         , top = (values == null || values['top'] == null) ? null : values['top']
         , fontStyles = ['normal', 'bold', 'italic'];
@@ -3025,7 +3034,7 @@ function printFormText(values) {
 };
 
 // Map picture
-function printNodesMap(values, cb) {
+export function printNodesMap(values, cb) {
     var title = values['name'] + ': ' + MESSAGES[123];
     var html = '<div class="col-md-12">' + values.body + '</div><div class="text-right">' + values.footer + '</div>';
     $('#config-data').html(html);
@@ -3033,7 +3042,7 @@ function printNodesMap(values, cb) {
 }
 
 //save lab handler
-function saveLab(form) {
+export function saveLab(form) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('config');
     var url = '/api/labs/' + lab_filename + '/configs/' + form_data['id'];
@@ -3151,7 +3160,7 @@ function printFormNodeInterfaces(values) {
 }
 
 // Display picture in form
-function printPictureInForm(id) {
+export function printPictureInForm(id) {
     var picture_id = id;
     var picture_url = '/api/labs/' + $('#lab-viewport').attr('data-path') + '/pictures/' + picture_id + '/data';
 
@@ -3194,7 +3203,7 @@ function printPictureInForm(id) {
 }
 
 // Display picture form
-function displayPictureForm(picture_id) {
+export function displayPictureForm(picture_id) {
     var deferred = $.Deferred();
     var form = '';
     var lab_file = LAB;
@@ -3291,7 +3300,7 @@ function displayPictureForm(picture_id) {
 }
 
 // Add a new picture
-function printFormPicture(action, values) {
+export function printFormPicture(action, values) {
     var map = (values['map'] != null) ? values['map'] : ''
         , custommap = map.replace(/.*NODE.*/g,'').replace(/^\s*[\r\n]/gm,'').replace(/\n*$/,'\n')
         , name = (values['name'] != null) ? values['name'] : ''
@@ -3489,7 +3498,7 @@ function updateFreeSelect ( e , ui ) {
 
 
 // Print lab topology
-function printLabTopology() {
+export function printLabTopology() {
     var defer  = $.Deferred();
     $('#lab-viewport').empty();
     $('#lab-viewport').selectable();
@@ -3509,7 +3518,7 @@ function printLabTopology() {
         },
         stop: function ( event, ui ) {
             $('.customShape').each(function (index) {
-                $this = $(this);
+                var $this = $(this);
                 $this.height(window.newshape[$this.attr('id')]['height'])
                 $this.width(window.newshape[$this.attr('id')]['width'])
             });
@@ -3614,9 +3623,9 @@ function printLabTopology() {
         });*/
         $.each(nodes, function (key, value) {
             if ( value['url'].indexOf('token') != -1 ) {
-               hrefbuf='<a href="' + value['url'] + '" target="'+ value['name']  +'" >' ;
+               var hrefbuf='<a href="' + value['url'] + '" target="'+ value['name']  +'" >' ;
             } else {
-               hrefbuf='<a href="' + value['url'] + '" >' ;
+               var hrefbuf='<a href="' + value['url'] + '" >' ;
             }
             $labViewport.append(
                 '<div id="node' + value['id'] + '" ' +
@@ -3660,6 +3669,7 @@ function printLabTopology() {
 
             $(".progress-bar").css("width", ++progressbarValue / progressbarMax * 100 + "%");
         });
+        var checkDeferred;
         // In bad situation resolving textobject will save our soul ;-)
         setTimeout( checkDeferred =  ( labTextObjectsResolver.state() == 'pending' ? true :  labTextObjectsResolver.resolve()  ) , 10000 )
         //add shapes from server to viewport
@@ -3739,7 +3749,7 @@ function printLabTopology() {
                 });
                 // Read privileges and set specific actions/elements
                 if ((ROLE == 'admin' || ROLE == 'editor') && labinfo['lock'] == 0 )  {
-                    dragDeferred = $.Deferred()
+                    var dragDeferred = $.Deferred()
                     $.when ( labTextObjectsResolver ).done ( function () {
                         logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
                         lab_topology.draggable($('.node_frame, .network_frame, .customShape' ), {
@@ -4199,7 +4209,7 @@ function createNodeListRow(template, id){
 }
 
 // Display all nodes in a table
-function printListNodes(nodes) {
+export function printListNodes(nodes) {
     logger(1, 'DEBUG: printing node list');
     var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[163] + '</th><th>' + MESSAGES[105] + '</th><th>' + MESSAGES[203] + '</th><th>' + MESSAGES[106] + '</th><th>'+ MESSAGES[107] + '</th><th>' + MESSAGES[108] + '</th><th>' + MESSAGES[109] + '</th><th>' + MESSAGES[110] + '</th><th>' + MESSAGES[112] + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[123] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
     var html_rows = [];
@@ -4242,7 +4252,7 @@ function printListNodes(nodes) {
 }
 
 // Display all text objects in a table
-function printListTextobjects(textobjects) {
+export function printListTextobjects(textobjects) {
     logger(1, 'DEBUG: printing text objects list');
     var text
         , body = '<div class="table-responsive">' +
@@ -4287,7 +4297,7 @@ function printListTextobjects(textobjects) {
 }
 
 // Print Authentication Page
-function printPageAuthentication() {
+export function printPageAuthentication() {
     location.href = "/" ;
     //var html = new EJS({url: '/themes/default/ejs/login.ejs'}).render()
     //$('#body').html(html);
@@ -4814,7 +4824,7 @@ function printSystemStats(data) {
  * Custom Shape Functions
  * *****************************************************************************/
 // Get All Text Objects
-function getTextObjects() {
+export function getTextObjects() {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/textobjects';
@@ -4825,7 +4835,6 @@ function getTextObjects() {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
@@ -4860,7 +4869,6 @@ function getTextObject(id) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got shape ' + id + 'from lab "' + lab_filename + '".');
@@ -4895,7 +4903,7 @@ function getTextObject(id) {
 }
 
 // Create New Text Object
-function createTextObject(newData) {
+export function createTextObject(newData) {
     var deferred = $.Deferred()
         , lab_filename = $('#lab-viewport').attr('data-path')
         , url = '/api/labs/' + lab_filename + '/textobjects'
@@ -4912,7 +4920,6 @@ function createTextObject(newData) {
         url: encodeURI(url),
         data: JSON.stringify(newData),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: create shape ' + 'for lab "' + lab_filename + '".');
@@ -4937,7 +4944,7 @@ function createTextObject(newData) {
 }
 
 // Update Text Object
-function editTextObject(id, newData) {
+export function editTextObject(id, newData) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var deferred = $.Deferred();
     var type = 'PUT';
@@ -4954,7 +4961,6 @@ function editTextObject(id, newData) {
         url: encodeURI(url),
         dataType: 'json',
         data: JSON.stringify(newData), // newData is object with differences between old and new data
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: custom shape text object updated.');
@@ -4978,7 +4984,7 @@ function editTextObject(id, newData) {
 }
 
 // Update Multiple Text Object
-function editTextObjects(newData) {
+export function editTextObjects(newData) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var deferred = $.Deferred();
     if (newData.length == 0 ) { deferred.resolve(); return deferred.promise(); }
@@ -4992,7 +4998,6 @@ function editTextObjects(newData) {
         url: encodeURI(url),
         dataType: 'json',
         data: JSON.stringify(newData), // newData is object with differences between old and new data
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: custom shape text object updated.');
@@ -5015,7 +5020,7 @@ function editTextObjects(newData) {
     return deferred.promise();
 }
 // Delete Text Object By Id
-function deleteTextObject(id) {
+export function deleteTextObject(id) {
     var deferred = $.Deferred();
     var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -5026,7 +5031,6 @@ function deleteTextObject(id) {
         type: type,
         url: encodeURI(url),
         dataType: 'json',
-        headers: {"Authorization": `Bearer ${token}`},
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: shape/text deleted.');
@@ -5049,7 +5053,7 @@ function deleteTextObject(id) {
 }
 
 // Text Object Drag Stop / Resize Stop
-function textObjectDragStop(event, ui) {
+export function textObjectDragStop(event, ui) {
     var id
         , objectData
         , shape_border_width
@@ -5128,7 +5132,7 @@ function textObjectResize(event, ui, shape_options) {
 }
 
 // Edit Form: Custom Shape
-function printFormEditCustomShape(id) {
+export function printFormEditCustomShape(id) {
     $('.edit-custom-shape-form').remove();
     $('.edit-custom-text-form').remove();
     $('.customShape').each(function (index) {
@@ -5222,7 +5226,7 @@ function printFormEditCustomShape(id) {
 }
 
 // Edit Form: Text
-function printFormEditText(id) {
+export function printFormEditText(id) {
     $('.edit-custom-shape-form').remove();
     $('.edit-custom-text-form').remove();
     $('.customShape').each(function (index) {
@@ -5447,7 +5451,7 @@ function autoheight() {
     }
 }
 
-function lockLab() {
+export function lockLab() {
     var lab_topology = window.lab_topology
     //var allElements = $('.node_frame, .network_frame, .customShape');
     //alert ( JSON.stringify( allElements ));
@@ -5480,7 +5484,7 @@ function lockLab() {
                 deferred.reject(data['message']);
             }
             addMessage(data['status'], data['message']);
-            LOCK = 1 ;
+            setLock(1) ;
 
         },
         error: function (data) {
@@ -5495,7 +5499,7 @@ function lockLab() {
     return deferred.promise();
 }
 
-function unlockLab(){
+export function unlockLab(){
     lab_topology = window.lab_topology
     lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true);
     lab_topology.draggable($('.node_frame, .network_frame, .customShape'), {
@@ -5527,7 +5531,7 @@ function unlockLab(){
                 deferred.reject(data['message']);
             }
             addMessage(data['status'], data['message']);
-        LOCK = 0 ;
+        setLock(0) ;
 
         },
         error: function (data) {
@@ -5598,13 +5602,13 @@ function newConnModal(info , oe ) {
         getNodes(null),
         getTopology()
         ).done(function (nodes, topology ) {
-            linksourcestyle = '' ;
-            linktargetstyle = '' ;
+            var linksourcestyle = '' ;
+            var linktargetstyle = '' ;
         $('#'+info.source.id).addClass("startNode")
             if ( info.source.id.search('node')  != -1  ) {
-                  linksourcedata =  nodes[ info.source.id.replace('node','') ] ;
+                  var linksourcedata =  nodes[ info.source.id.replace('node','') ] ;
                   console.log("cas1 ",linksourcedata );
-                  linksourcetype = 'node' ;
+                  var linksourcetype = 'node' ;
                   linksourcedata['interfaces'] = getNodeInterfaces(linksourcedata['id'])
                   if ( linksourcedata['status'] == 0 ) linksourcestyle = 'grayscale'
              } /*else {
@@ -5613,9 +5617,9 @@ function newConnModal(info , oe ) {
                   linksourcedata['icon'] = ( linksourcedata['type'] == "bridge")  ? "../lan.png" : "../cloud.png"
              }*/
              if ( info.target.id.search('node')  != -1  ) {
-                  linktargetdata =  nodes[ info.target.id.replace('node','') ] ;
+                  var linktargetdata =  nodes[ info.target.id.replace('node','') ] ;
                   console.log("cas3 ",linktargetdata );
-                  linktargettype = 'node' ;
+                  var linktargettype = 'node' ;
                   linktargetdata['interfaces'] = getNodeInterfaces(linktargetdata['id'])
                   if ( linktargetdata['status'] == 0 ) linktargetstyle = 'grayscale'
              } /*else {
@@ -5623,7 +5627,7 @@ function newConnModal(info , oe ) {
                   linktargettype = 'net' ;
           linktargetdata['icon'] = ( linktargetdata['type'] == "bridge")  ? "../lan.png" : "../cloud.png"
              }*/
-             title = 'Add connection between ' + linksourcedata['name'] + ' and ' + linktargetdata['name'] ;
+             var title = 'Add connection between ' + linksourcedata['name'] + ' and ' + linktargetdata['name'] ;
              $.when( linksourcedata['interfaces'] , linktargetdata['interfaces'] ).done( function ( sourceif, targetif) {
              /* choose first free interface */
                   if ( linksourcetype == 'node' )  {
@@ -5679,7 +5683,7 @@ function newConnModal(info , oe ) {
                   if ( linksourcedata['status'] == 2 || linktargetdata['status'] == 2 ) { lab_topology.detach( info.connection ) ; return }
                   console.log("link source: ",linksourcedata['interfaces'])
                   window.tmpconn = info.connection
-                  html = '<form id="addConn" class="addConn-form">' +
+                  var html = '<form id="addConn" class="addConn-form">' +
                            '<input type="hidden" name="addConn[srcNodeId]" value="'+linksourcedata['id']+'">' +
                            '<input type="hidden" name="addConn[dstNodeId]" value="'+linktargetdata['id']+'">' +
                            '<input type="hidden" name="addConn[srcNodeType]" value="'+linksourcetype+'">' +
@@ -5721,12 +5725,12 @@ function newConnModal(info , oe ) {
                                             }
                                             var ordered_name = tmp_name.sort(natSort)
                                             for ( key in ordered_name ) {
-                                                okey = reversetab[ordered_name[key]] ;
+                                                var okey = reversetab[ordered_name[key]] ;
                                                 if ( linksourcedata['interfaces'][okey]['type'] == 'ethernet' ) {
                                                     html += '<option value="' + okey + ',ethernet' +'" '+((linksourcedata['interfaces'][okey]['network_id'] != 0) ? 'disabled="true"' : '' ) +'>' + linksourcedata['interfaces'][okey]['name']
                                                     if ( linksourcedata['interfaces'][okey]['network_id'] != 0) {
                                                         html += ' connected to '
-                                                        for ( tkey in topology ) {
+                                                        for ( var tkey in topology ) {
                                                             if ( ( topology[tkey]['source'] == ( 'node' + linksourcedata['id'] ))  && ( topology[tkey]['source_label'] == linksourcedata['interfaces'][okey]['name'] )) {
                                                                 if (topology[tkey]['destination_type'] == 'node'  ) html += nodes[topology[tkey]['destination'].replace('node','')]['name']
                                                                 if (topology[tkey]['destination_type'] == 'node' ) html += ' ' + topology[tkey]['destination_label']
@@ -5741,7 +5745,7 @@ function newConnModal(info , oe ) {
                                                     }
                                                 }
                                             }
-                                            for ( key in ordered_name ) {
+                                            for ( var key in ordered_name ) {
                                                 okey = reversetab[ordered_name[key]] ;
                                                 if ( linksourcedata['interfaces'][okey]['type'] == 'serial' ) {
                                                     html += '<option value="' + okey + ',serial' +'" '+ ((linksourcedata['interfaces'][okey]['remote_id'] != 0) ? 'disabled="true"' : '' )  +'>' + linksourcedata['interfaces'][okey]['name']
@@ -5905,3 +5909,4 @@ function printFormUploadNodeConfig(path) {
     addModal(MESSAGES[201], html, '', 'upload-modal');
     validateImport();
 }
+

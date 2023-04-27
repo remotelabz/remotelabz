@@ -12,29 +12,63 @@
  * @version 20160719
  */
 
+import { getInternetExplorerVersion } from './browsers.js';
+import '../bootstrap/js/jquery-cookie-1.4.1';
+import { logger, getUserInfo, postLogin, printPageAuthentication } from'./functions.js';
 // Custom vars
-var DEBUG = 5;
-var TIMEOUT = 30000;
-var LONGTIMEOUT = 600000;
-var STATUSINTERVAL = 5000;
+export var DEBUG = 5;
+export var TIMEOUT = 30000;
+export var LONGTIMEOUT = 600000;
+export var STATUSINTERVAL = 5000;
 
 // Global vars
 var EMAIL;
-var FOLDER;
-var LAB;
-var LANG;
-var NAME;
-var ROLE;
-var TENANT;
-var USERNAME;
-var ATTACHMENTS;
-var UPDATEID;
-var LOCK = 0 ; 
-var isIE = getInternetExplorerVersion() > -1;
-var FOLLOW_WRAPPER_IMG_STATE = 'resized'
-var EVE_VERSION = "5.0.1-19";
+export var FOLDER;
+export var LAB;
+export var LANG;
+export var NAME;
+export var ROLE;
+export var TENANT;
+export var USERNAME;
+export var ATTACHMENTS;
+export var UPDATEID;
+export var LOCK = 0 ; 
+console.log("yo");
+export var isIE = getInternetExplorerVersion() > -1;
+export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
+export var EVE_VERSION = "5.0.1-19";
+
+export function setFolder(value){
+	FOLDER = value;
+}
+export function setLab(value){
+	LAB = value;
+}
+export function setLang(value){
+	LANG = value;
+}
+export function setName(value){
+	NAME = value;
+}
+export function setRole(value){
+	ROLE = value;
+}
+export function setTenant(value){
+	TENANT = value;
+}
+export function setUpdateId(value){
+	UPDATEID = value;
+}
+export function setLock(value){
+	LOCK = value;
+}
+
+export function setAttachements(value) {
+	ATTACHMENTS = value;
+}
 
 $(document).ready(function() {
+	console.log("ready");
 	if ($.cookie('privacy') != 'true') {
 		// Cookie is not set, show a modal with privacy policy
 		logger(1, 'DEBUG: need to accept privacy.');
@@ -51,13 +85,13 @@ $(document).ready(function() {
 		$.when(getUserInfo()).done(function() {
 			// User is authenticated
 			logger(1, 'DEBUG: loading language.');
-			$.getScript('/editor/themes/default/js/messages_' + LANG + '.js')
-				.done(function() {
+			/*$.getScript('./components/Editor2/themes/default/js/messages_' + LANG + '.js')
+				.done(function() {*/
 					postLogin();
-				})
+				/*})
 				.fail(function() {
 					logger(1, 'DEBUG: error loading language.');
-				});
+				});*/
 		}).fail(function(data) {
 			// User is not authenticated, or error on API
 			logger(1, 'DEBUG: loading authentication page.');

@@ -1,12 +1,12 @@
 define("ace/snippets",["require","exports","module","ace/lib/oop","ace/lib/event_emitter","ace/lib/lang","ace/range","ace/anchor","ace/keyboard/hash_handler","ace/tokenizer","ace/lib/dom","ace/editor"], function(require, exports, module) {
 "use strict";
-var oop = require("./lib/oop");
-var EventEmitter = require("./lib/event_emitter").EventEmitter;
-var lang = require("./lib/lang");
-var Range = require("./range").Range;
-var Anchor = require("./anchor").Anchor;
-var HashHandler = require("./keyboard/hash_handler").HashHandler;
-var Tokenizer = require("./tokenizer").Tokenizer;
+var oop = require("ace/lib/oop");
+var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
+var lang = require("ace/lib/lang");
+var Range = require("ace/range").Range;
+var Anchor = require("ace/anchor").Anchor;
+var HashHandler = require("ace/keyboard/hash_handler").HashHandler;
+var Tokenizer = require("ace/tokenizer").Tokenizer;
 var comparePoints = Range.comparePoints;
 
 var SnippetManager = function() {
@@ -882,7 +882,7 @@ var moveRelative = function(point, start) {
 };
 
 
-require("./lib/dom").importCssString("\
+require("ace/lib/dom").importCssString("\
 .ace_snippet-marker {\
     -moz-box-sizing: border-box;\
     box-sizing: border-box;\
@@ -894,7 +894,7 @@ require("./lib/dom").importCssString("\
 exports.snippetManager = new SnippetManager();
 
 
-var Editor = require("./editor").Editor;
+var Editor = require("ace/editor").Editor;
 (function() {
     this.insertSnippet = function(content, options) {
         return exports.snippetManager.insertSnippet(this, content, options);
@@ -909,12 +909,12 @@ var Editor = require("./editor").Editor;
 define("ace/autocomplete/popup",["require","exports","module","ace/virtual_renderer","ace/editor","ace/range","ace/lib/event","ace/lib/lang","ace/lib/dom"], function(require, exports, module) {
 "use strict";
 
-var Renderer = require("../virtual_renderer").VirtualRenderer;
-var Editor = require("../editor").Editor;
-var Range = require("../range").Range;
-var event = require("../lib/event");
-var lang = require("../lib/lang");
-var dom = require("../lib/dom");
+var Renderer = require("ace/virtual_renderer").VirtualRenderer;
+var Editor = require("ace/editor").Editor;
+var Range = require("ace/range").Range;
+var event = require("ace/lib/event");
+var lang = require("ace/lib/lang");
+var dom = require("ace/lib/dom");
 
 var $singleLineEditor = function(el) {
     var renderer = new Renderer(el);
@@ -1282,13 +1282,13 @@ exports.getCompletionPrefix = function (editor) {
 define("ace/autocomplete",["require","exports","module","ace/keyboard/hash_handler","ace/autocomplete/popup","ace/autocomplete/util","ace/lib/event","ace/lib/lang","ace/lib/dom","ace/snippets"], function(require, exports, module) {
 "use strict";
 
-var HashHandler = require("./keyboard/hash_handler").HashHandler;
-var AcePopup = require("./autocomplete/popup").AcePopup;
-var util = require("./autocomplete/util");
-var event = require("./lib/event");
-var lang = require("./lib/lang");
-var dom = require("./lib/dom");
-var snippetManager = require("./snippets").snippetManager;
+var HashHandler = require("ace/keyboard/hash_handler").HashHandler;
+var AcePopup = require("ace/autocomplete/popup").AcePopup;
+var util = require("ace/autocomplete/util");
+var event = require("ace/lib/event");
+var lang = require("ace/lib/lang");
+var dom = require("ace/lib/dom");
+var snippetManager = require("ace/snippets").snippetManager;
 
 var Autocomplete = function() {
     this.autoInsert = false;
@@ -1731,7 +1731,7 @@ exports.FilteredList = FilteredList;
 });
 
 define("ace/autocomplete/text_completer",["require","exports","module","ace/range"], function(require, exports, module) {
-    var Range = require("../range").Range;
+    var Range = require("ace/range").Range;
     
     var splitRegex = /[^a-zA-Z_0-9\$\-\u00C0-\u1FFF\u2C00-\uD7FF\w]+/;
 
@@ -1777,13 +1777,13 @@ define("ace/autocomplete/text_completer",["require","exports","module","ace/rang
 define("ace/ext/language_tools",["require","exports","module","ace/snippets","ace/autocomplete","ace/config","ace/lib/lang","ace/autocomplete/util","ace/autocomplete/text_completer","ace/editor","ace/config"], function(require, exports, module) {
 "use strict";
 
-var snippetManager = require("../snippets").snippetManager;
-var Autocomplete = require("../autocomplete").Autocomplete;
-var config = require("../config");
-var lang = require("../lib/lang");
-var util = require("../autocomplete/util");
+var snippetManager = require("ace/snippets").snippetManager;
+var Autocomplete = require("ace/autocomplete").Autocomplete;
+var config = require("ace/config");
+var lang = require("ace/lib/lang");
+var util = require("ace/autocomplete/util");
 
-var textCompleter = require("../autocomplete/text_completer");
+var textCompleter = require("ace/autocomplete/text_completer");
 var keyWordCompleter = {
     getCompletions: function(editor, session, pos, prefix, callback) {
         if (session.$mode.completer) {
@@ -1899,8 +1899,8 @@ var doLiveAutocomplete = function(e) {
     }
 };
 
-var Editor = require("../editor").Editor;
-require("../config").defineOptions(Editor.prototype, "editor", {
+var Editor = require("ace/editor").Editor;
+require("ace/config").defineOptions(Editor.prototype, "editor", {
     enableBasicAutocompletion: {
         set: function(val) {
             if (val) {

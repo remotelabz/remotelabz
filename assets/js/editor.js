@@ -3,7 +3,7 @@
 //import './components/Editor2/themes/default/images/favicon-32x32.ico';
 //import './components/Editor2/themes/default/images/favicon-96x96.ico';
 import './components/Editor2/themes/default/bootstrap/css/bootstrap.min.css';
-//import './components/Editor2/themes/default/bootstrap/css/bootstrap-select.min.css';
+import './components/Editor2/themes/default/bootstrap/css/bootstrap-select.min.css';
 import './components/Editor2/themes/default/bootstrap/css/tinytools.toggleswitch.min.css';
 import './components/Editor2/themes/default/bootstrap/css/jquery-ui.min.css';
 import './components/Editor2/themes/default/css/font-awesome.min.css';
@@ -32,18 +32,26 @@ import './components/Editor2/themes/default/js/colorpicker.min';
 import './components/Editor2/themes/default/js/browsers';
 import './components/Editor2/themes/default/js/src/ace';
 import './components/Editor2/themes/default/js/src/ext-language_tools';
-import './components/Editor2/themes/default/js/javascript';
-import './components/Editor2/themes/default/js/ebs/functions';
+/*import './components/Editor2/themes/default/js/ebs/functions';
 import './components/Editor2/themes/default/js/ebs/actions';
 import './components/Editor2/themes/default/js/actions';
-import './components/Editor2/themes/default/js/functions';
+import './components/Editor2/themes/default/js/functions';*/
+/*document.write("<script src='./components/Editor2/themes/default/js/ebs/functions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/ebs/actions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/actions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/functions?n=" + Date.now() + "' defer><\/script>");
+import './components/Editor2/themes/default/js/javascript';*/
 
+/*document.write("<script src='./components/Editor2/themes/default/js/ebs/functions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/ebs/actions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/actions?n=" + Date.now() + "' defer><\/script>");
+document.write("<script src='./components/Editor2/themes/default/js/functions?n=" + Date.now() + "' defer><\/script>");*/
 /**
 * Functions using jQuery goes here
 */
-(function($) {
+/*(function($) {
     'use strict';
-
+	console.log(document.readyState);
 		function ready(fn) {
 			if (document.readyState != 'loading'){
 				fn();
@@ -64,4 +72,4 @@ import './components/Editor2/themes/default/js/functions';
 			}
 		}
     
-})(jQuery);
+})(jQuery);*/

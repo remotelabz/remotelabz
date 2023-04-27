@@ -220,7 +220,7 @@ function zoomToDefault(instance){
     $('#zoomslide').slider({ value:100 });
 }
 
-function adjustZoom(lab_topology, scroll_top = null, scroll_left = null)
+export function adjustZoom(lab_topology, scroll_top = null, scroll_left = null)
 {
     var zoomvalue = $('#zoomslide').slider("value")/100;
     var viewport =  $('#lab-viewport');
@@ -243,7 +243,7 @@ function hideContextmenu()
     contextMenuOpen = false;
 }
 
-function resolveZoom(value, scroll)
+export function resolveZoom(value, scroll)
 {
     window.scroll_left = $('#lab-viewport').scrollLeft();
     window.scroll_top = $('#lab-viewport').scrollTop();

@@ -102,3 +102,5 @@ function getInternetExplorerVersion(){
 	}
 	return rv;
 };
+
+export {getInternetExplorerVersion};

@@ -12,7 +12,26 @@
  * @version 20160719
  */
 
-
+import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, setAttachements} from './javascript';
+import {MESSAGES} from './messages_en';
+import '../bootstrap/js/jquery-3.2.1.min';
+import '../bootstrap/js/tinytools.toggleswitch.min';
+import '../bootstrap/js/jquery-ui-1.12.1.min';
+import '../bootstrap/js/jquery-cookie-1.4.1';
+import '../bootstrap/js/jquery.validate-1.14.0.min';
+import '../bootstrap/js/jquery.hotkey';
+import '../bootstrap/js/jsPlumb-2.4.min';
+import '../bootstrap/js/imageMapResizer.min';
+import '../bootstrap/js/bootstrap.min';
+import '../bootstrap/js/bootstrap-select.min';
+import './ejs';
+import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, logoutUser, getLabInfo, getLabBody, closeLab, 
+         lockLab, unlockLab, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
+         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, printFormNode, printListNodes, setNodeData, printFormCustomShape, printFormPicture, 
+         printFormText, printListTextobjects, printFormEditCustomShape, printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects,
+         createTextObject, editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide } from'./functions.js';
+import {fromByteArray,TextEncoderLite} from './b64encoder';
+import { adjustZoom, resolveZoom } from './ebs/functions';
 
 var KEY_CODES = {
     "tab": 9,
@@ -25,7 +44,7 @@ var KEY_CODES = {
 
 // Attach files
 $('body').on('change', 'input[type=file]', function (e) {
-    ATTACHMENTS = e.target.files;
+    setAttachements(e.target.files);
 });
 
 // Add the selected filename to the proper input box
@@ -172,7 +191,7 @@ $(document).on('shown.bs.modal', '.modal', function () {
 });
 
 // After node/network move
-function ObjectPosUpdate (event ,ui) {
+export function ObjectPosUpdate (event ,ui) {
      var groupMove = []
      if ( $('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customShape.ui-selecting').length == 0 ) {
           groupMove.push(event.el)
@@ -195,9 +214,9 @@ function ObjectPosUpdate (event ,ui) {
          tmp_networks = [];
      $.each( groupMove,  function ( id, node ) {
           //eLeft = Math.round(node.offsetLeft + $('#lab-viewport').scrollLeft())
-          eLeft = Math.round($('#'+node.id).position().left / zoom + $('#lab-viewport').scrollLeft());
+          var eLeft = Math.round($('#'+node.id).position().left / zoom + $('#lab-viewport').scrollLeft());
           //eTop = Math.round(node.offsetTop + $('#lab-viewport').scrollTop())
-          eTop = Math.round($('#'+node.id).position().top / zoom + $('#lab-viewport').scrollTop());
+          var eTop = Math.round($('#'+node.id).position().top / zoom + $('#lab-viewport').scrollTop());
           id = node.id
           $('#'+id).addClass('dragstopped')
           if ( id.search('node') != -1 ) {
@@ -208,7 +227,7 @@ function ObjectPosUpdate (event ,ui) {
               tmp_networks.push( { id : id.replace('network','') , left: eLeft, top: eTop } )
           } else if ( id.search('custom') != -1 )  {
               logger(1, 'DEBUG: setting ' + id + ' position.');
-              objectData = node.outerHTML;
+              var objectData = node.outerHTML;
               objectData = fromByteArray(new TextEncoderLite('utf-8').encode(objectData));
               tmp_shapes.push( { id : id.replace(/customShape/,'').replace(/customText/,'') , data: objectData } )
           }
@@ -220,11 +239,11 @@ function ObjectPosUpdate (event ,ui) {
            logger(1, 'DEBUG: all selected node position saved.');
            $.when(editTextObjects(tmp_shapes)).done(function () {
                 logger(1, 'DEBUG: all selected shape position saved.');
-                $.when(setNetworksPosition(tmp_networks)).done(function () {
+                /*$.when(setNetworksPosition(tmp_networks)).done(function () {
                      logger(1, 'DEBUG: all selected networks position saved.');
                 }).fail(function (message) {
                      addModalError(message);
-                });
+                });*/
            }).fail(function (message) {
                 addModalError(message);
            });
@@ -657,7 +676,9 @@ $(window).resize(function () {
         // Update topology on window resize
         lab_topology.repaintEverything();
         // Update picture map on window resize
-        $('map').imageMapResize();
+        jQuery(function($) {
+            $('map').imageMapResize();
+        });
     }
 });
 
@@ -858,7 +879,7 @@ $(document).on('click', '.action-conndelete', function (e) {
            addModalError(message);
         });
      } else { // network P2P
-        network_id = id.replace('network_id:','')
+        var network_id = id.replace('network_id:','')
         $.when(removeConnection(network_id)).done(function (values) {
            //window.closeModal = true;
            $('.action-labtopologyrefresh').click();
@@ -2553,7 +2574,6 @@ $(document).on('submit', '#form-network-add, #form-network-edit', function (e) {
             url: encodeURI(url),
             dataType: 'json',
             data: JSON.stringify(form_data),
-            headers: {"Authorization": `Bearer ${token}`},
             success: function (data) {
                 if (data['status'] == 'success') {
                     logger(1, 'DEBUG: network "' + form_data['name'] + '" saved.');
@@ -2744,7 +2764,6 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
             url: encodeURI(url),
             dataType: 'json',
             data: JSON.stringify(form_data),
-            headers: {"Authorization": `Bearer ${token}`},
             success: function (data) {
                 if (data['status'] == 'success') {
                     logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');

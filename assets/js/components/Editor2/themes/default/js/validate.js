@@ -70,7 +70,7 @@ function validateImport() {
 }
 
 // Validate lab info form
-function validateLabInfo() {
+export function validateLabInfo() {
 	$('#form-lab-add').validate({
 		rules: {
 			'lab[name]': {
@@ -114,7 +114,7 @@ function validateUser() {
 }
 
 // Validate node form
-function validateNode() {
+export function validateNode() {
 	$('#form-node-add, #form-node-edit').validate({
 		rules: {
 			'node[nvram]': {
@@ -141,7 +141,7 @@ function validateNode() {
 }
 
 // Validate lab picture form
-function validateLabPicture() {
+export function validateLabPicture() {
     $('.form-picture').validate({
         rules: {
             'picture[name]': {

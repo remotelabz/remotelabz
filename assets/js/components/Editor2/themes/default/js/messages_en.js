@@ -193,3 +193,5 @@ MESSAGES[206] = 'Circular Align' ;
 MESSAGES[207] = 'Auto Align' ;
 MESSAGES[235] = 'Dark Mode';
 MESSAGES[236] = 'Light Mode';
+
+export {MESSAGES};

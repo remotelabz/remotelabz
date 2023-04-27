@@ -223,7 +223,7 @@ class PictureController extends Controller
 				}
 			}
 		}
-        if($data['type'] !== 'image/png' || $data['type'] !== 'image/png') {
+        if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
             $response->setContent(json_encode([
                 'code' => 400,
                 'status'=> 'fail',
@@ -265,7 +265,7 @@ class PictureController extends Controller
 
     /**
      * 
-     * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_new_picture")
+     * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_update_picture")
      */
     public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
