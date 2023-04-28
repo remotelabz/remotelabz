@@ -23,11 +23,12 @@ import '../bootstrap/js/jquery.hotkey';
 import '../bootstrap/js/jsPlumb-2.4.min';
 import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
+import '../bootstrap/js/imageMapResizer.min';
 import {validateLabInfo, validateLabPicture, validateNode} from './validate'
 import './ejs';
 import {fromByteArray,toByteArray,TextEncoderLite, TextDecoderLite} from './b64encoder';
 var contextMenuOpen = false;
-import { adjustZoom } from './ebs/functions';
+import { adjustZoom, readCookie, initTextarea } from './ebs/functions';
 import {ObjectPosUpdate} from './actions';
 
 // Basename: given /a/b/c return c
@@ -1978,7 +1979,7 @@ export function setNodeData(id){
                     logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
                     // Close the modal
                     $("#node" + id + " .node_name").html('<i class="node' + id + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
-                    $("#node" + id + " a img").attr("src", "/editor/images/icons/" + form_data['icon'])
+                    $("#node" + id + " a img").attr("src", "/build/editor/images/icons/" + form_data['icon'])
                     addMessage(data['status'], data['message']);
                 } else {
                     // Application error
@@ -2571,7 +2572,7 @@ function printFormLab(action, values) {
     var title = (action == 'add') ? MESSAGES[5] : MESSAGES[87] ;
 
     var html = new EJS({
-        url: '/editor/themes/default/ejs/form_lab.ejs'
+        url: '/build/editor/ejs/form_lab.ejs'
     }).render({
         name: (values['name'] != null) ? values['name'] : '',
         version: (values['version'] != null) ? values['version'] : '',
@@ -2744,7 +2745,7 @@ export function printFormNode(action, values, fromNodeList) {
                                 }
                                 else{
                                     var iconselect = '' ;
-                                    if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
+                                    if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/build/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
                                     html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
                                 }
                             });
@@ -2863,7 +2864,7 @@ function OldprintFormNodeConfigs(values, cb) {
     $('#nodeconfig').val(values['data']);
     cb && cb();
 }
-function printFormNodeConfigs(values, cb) {
+export function printFormNodeConfigs(values, cb) {
     var title = values['name'] + ': ' + MESSAGES[123];
     if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 )
     {
@@ -2888,7 +2889,7 @@ function printFormNodeConfigs(values, cb) {
         ];
 
         var html = new EJS({
-            url: '/editor/themes/default/ejs/form_node_configs.ejs'
+            url: '/build/editor/ejs/form_node_configs.ejs'
         }).render({
             MESSAGES: MESSAGES,
             values: values,
@@ -2900,7 +2901,7 @@ function printFormNodeConfigs(values, cb) {
 
     } else {
         var html = new EJS({
-            url: '/editor/themes/default/ejs/locked_node_configs.ejs'
+            url: '/build/editor/ejs/locked_node_configs.ejs'
         }).render({
              values: values
         })
@@ -3009,7 +3010,7 @@ export function printFormText(values) {
         , top = (values == null || values['top'] == null) ? null : values['top']
         , fontStyles = ['normal', 'bold', 'italic'];
     var html = new EJS({
-        url: '/editor/themes/default/ejs/form_text.ejs'
+        url: '/build/editor/ejs/form_text.ejs'
     }).render({ MESSAGES: MESSAGES, left: left, top: top});
     addModal("ADD TEXT", html, '');
 
@@ -3533,7 +3534,7 @@ export function printLabTopology() {
         , loadingLabHtml = '' +
             '<div id="loading-lab" class="loading-lab">' +
             '<div class="container">' +
-            '<img src="/editor/themes/default/images/wait.gif"/><br />' +
+            '<img src="/build/editor/images/wait.gif"/><br />' +
             '<h3>Loading Lab</h3>' +
             '<div class="progress">' +
             '<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>' +
@@ -3648,7 +3649,7 @@ export function printLabTopology() {
                 img.onerror = resolve;
                 img.onabort = resolve;
 
-                img.src = "/editor/images/icons/" + value['icon'];
+                img.src = "/build/editor/images/icons/" + value['icon'];
 
                 if(value['status'] == 0) img.className = 'grayscale';
 
@@ -3952,7 +3953,7 @@ export function printLabTopology() {
 
         //$.when(deleteSingleNetworks()).done(function(){
             if ( $.cookie("topo")  != undefined && $.cookie("topo") == 'dark' ) {
-                $('#lab-viewport').css('background-image','url(/editor/themes/adminLTE/unl_data/img/grid-dark.png)');
+                $('#lab-viewport').css('background-image','url(/build/editor/images/grid-dark.png)');
                 $('.node_name').css('color','#b8c7ce')
                 $('.network_name').css('color','#b8c7ce')
             }
@@ -4167,7 +4168,7 @@ function createNodeListRow(template, id){
         value_set = (node_values != null && node_values['icon'] != null) ? node_values['icon'] : value['value'];
         $.each(template_values['options']['icon']['list'], function (list_key, list_value) {
             var selected = (list_key == value_set) ? 'selected ' : '';
-            var iconselect = 'data-content="<img src=\'/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
+            var iconselect = 'data-content="<img src=\'/build/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
             html_data += '<option ' + selected + 'value="' + list_key + '" ' + iconselect + '>' + list_value + '</option>';
         });
         html_data += '</select></td>';
@@ -4323,7 +4324,7 @@ function printPageLabList(folder) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: folder "' + folder + '" found.');
 
-                html = new EJS({url: '/editor/themes/default/ejs/layout.ejs'}).render({
+                html = new EJS({url: '/build/editor/ejs/layout.ejs'}).render({
                     "MESSAGES": MESSAGES,
                     "folder": folder,
                     "username": USERNAME,
@@ -5146,7 +5147,7 @@ export function printFormEditCustomShape(id) {
         , colorDigits
         , bgColor
         , html = new EJS({
-            url: '/editor/themes/default/ejs/form_edit_custom_shape.ejs'
+            url: '/build/editor/ejs/form_edit_custom_shape.ejs'
         }).render({
             MESSAGES: MESSAGES,
             id: id
@@ -5238,7 +5239,7 @@ export function printFormEditText(id) {
         , colorDigits
         , bgColor
         , html = new EJS({
-            url: '/editor/themes/default/ejs/form_edit_text.ejs'
+            url: '/build/editor/ejs/form_edit_text.ejs'
         }).render({
             id: id,
             MESSAGES: MESSAGES
@@ -5385,7 +5386,7 @@ function getLogs(file, per_page, search) {
         url: encodeURI(url),
         dataType: 'json',
         success: function (data) {
-            var html = new EJS({url: '/editor/themes/default/ejs/logs.ejs'}).render({
+            var html = new EJS({url: '/build/editor/ejs/logs.ejs'}).render({
                 "logs": data,
                 "per_page": per_page,
                 "search": search,
@@ -5691,7 +5692,7 @@ function newConnModal(info , oe ) {
                            '<div class="row">' +
                             '<div class="col-md-4">' +
                                 '<div style="text-align:center;" >'+ linksourcedata['name']  + '</div>' +
-                                '<img src="'+ '/editor/images/icons/' + linksourcedata['icon'] + '" class="'+ linksourcestyle  +' img-responsive" style="margin:0 auto;">' +
+                                '<img src="'+ '/build/editor/images/icons/' + linksourcedata['icon'] + '" class="'+ linksourcestyle  +' img-responsive" style="margin:0 auto;">' +
                                 '<div style="width:3px;height: ' + ( (linksourcetype == 'net') ? '0' : '10' ) + 'px; margin: 0 auto; background-color:#444"></div>' +
                                 '<div style="margin: 0 auto; width:50%; text-align:center;" class="' + (( linksourcetype == 'net') ? 'hidden' : '')  +  '">' +
                                     '<text class="aLabel addConnSrc text-center" >'+ (( linksourcetype == 'node') ? linksourcedata['interfaces'][linksourcedata['selectedif']]['name'] : '' )  +'</text>' +
@@ -5701,7 +5702,7 @@ function newConnModal(info , oe ) {
                                     '<text class="aLabel addConnDst text-center" >'+ ((linktargettype == 'node') ?  linktargetdata['interfaces'][linktargetdata['selectedif']]['name'] : '' ) +'</text>' +
                                 '</div>' +
                                 '<div style="width:3px;height: '+ ( ( linktargettype  == 'net') ? '0' : '10')  + 'px; margin: 0 auto; background-color:#444"></div>' +
-                                '<img src="/editor/images/icons/'+linktargetdata['icon']+'" class="'+linktargetstyle+' img-responsive" style="margin:0 auto;">' +
+                                '<img src="/build/editor/images/icons/'+linktargetdata['icon']+'" class="'+linktargetstyle+' img-responsive" style="margin:0 auto;">' +
                                 '<div style="text-align:center;" >'+linktargetdata['name']+'</div>' +
                             '</div>' +
                             '<div class="col-md-8">' +
@@ -5859,7 +5860,7 @@ function zoomlab ( event, ui ) {
     $('#zoomslide').slider({value:ui.value})
 }
 
-function zoompic ( event, ui ) {
+export function zoompic ( event, ui ) {
     var zoom=ui.value/100
     setZoom(zoom,lab_picture,[0,0])
     $('#picslider').slider({value:ui.value})

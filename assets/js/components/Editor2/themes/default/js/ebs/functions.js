@@ -1,4 +1,4 @@
-
+import "../src/ace";
 function setStartupData(id, set_data = false, config = null, name = null) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2ArrayByRow('node', id);
@@ -95,7 +95,7 @@ function initEditor () {
     createCookie("editor", "ace");
 }
 
-function initTextarea() {
+export function initTextarea() {
     var editor = $('#editor');
     var textarea = $('#nodeconfig');
     var ace_conf_panel = $('#ace-conf-panel');
@@ -125,7 +125,7 @@ function createCookie(name, value, days = 30)
     document.cookie = name + "=" + value + expires + "; path=/";
 }
 
-function readCookie(name)
+export function readCookie(name)
 {
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
@@ -150,7 +150,7 @@ function eraseCookie(name)
     createCookie(name,"",-1);
 }
 
-function saveEditorLab(formId = 'form-node-config', bool)
+export function saveEditorLab(formId = 'form-node-config', bool)
 {
     if($('#toggle_editor').is(':checked')) {
         var editor_data = ace.edit('editor').getValue();

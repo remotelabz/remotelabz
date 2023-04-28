@@ -1,13 +1,13 @@
 <div class="row row-config-list">
     <div class="config-list col-md-3 col-lg-2 col-sm-3" style="overflow-x: hidden !important;padding-right: 0; margin-right: 0">
-        <ul style="margin-right: 0;"><!--
-            <% $.each(configs, function (key, config) { %>
+        <ul style="margin-right: 0;">
+                <% configs.forEach(function (config, key) { %>
             <li>
                 <a class="action-configget"
-                data-path="<%=key%>"
+                data-path="<%=config['key']%>"
                 href="javascript:void(0)"
                 title="<%=(config['config'] == 0 ? MESSAGES[122] : MESSAGES[121]) %>">
-                <img src="/editor/images/icons/<%=config['icon']%>"
+                <img src="/build/editor/images/icons/<%=config['icon']%>"
                 width="15" height="15" style="margin-bottom: 1px"
                 <%=(config['len'] == 0 ? 'class="grayscale"' : '')%>>
                 &nbsp;&nbsp;&nbsp;
@@ -23,7 +23,7 @@
                            title="<%=config['config'] == 0 ? 'Enable' : 'Disable'%> boot from exported">
                         <input type="checkbox"
                         class="change_config_status"
-                        data-path="<%=key%>"
+                        data-path="<%=config['key']%>"
                         data-name="<%=config['name']%>"
                         <%=config['config'] == 1 ? 'checked' : ''%>
                         <%=config['len'] == 0 ? 'disabled' : ''%>>
@@ -31,9 +31,9 @@
                     </label>
                 </span>
                 <div class="clearfix"></div><hr style="margin-bottom: 0;margin-top:3px"></li>
-            <% }); %>-->
+            <% }); %>
         </ul>
     </div>
     <div id="config-data" class="col-md-9 col-lg-10 col-sm-9">
     </div>
-</div>
+</div>-

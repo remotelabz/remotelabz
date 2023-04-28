@@ -27,12 +27,13 @@ import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, logoutUser, getLabInfo, getLabBody, closeLab, 
          lockLab, unlockLab, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
-         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, printFormNode, printListNodes, setNodeData, printFormCustomShape, printFormPicture, 
-         printFormText, printListTextobjects, printFormEditCustomShape, printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects,
-         createTextObject, editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide } from'./functions.js';
+         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, printFormNode, printFormNodeConfigs, 
+         printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
+         printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
+         editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
+         zoompic } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
-import { adjustZoom, resolveZoom } from './ebs/functions';
-
+import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 var KEY_CODES = {
     "tab": 9,
     "enter": 13,
@@ -717,12 +718,23 @@ $(document).on('mouseleave','.node_frame, .network_frame', function (e) {
 $(document).on('click', '.action-configsget', function (e) {
     logger(1, 'DEBUG: action = configsget');
     $.when(getNodeConfigs(null)).done(function (configs) {
-        addModalWide(MESSAGES[120], new EJS({ url: '/editor/themes/default/ejs/action_configsget.ejs' }).render({ configs: configs }), '');
+        var configTable= [];
+        for (var i  in configs) {
+            configs[i] = { ...configs[i], key: i };
+            console.log(i);
+            configTable.push(configs[i]);
+        }
+        printConfigEjs(configTable);
     }).fail(function (message) {
         addModalError(message);
     });
 });
 
+
+function printConfigEjs(configs) {
+    var html = new EJS({ url: '/build/editor/ejs/action_configsget.ejs' }).render({ configs: configs, MESSAGES: MESSAGES })
+    addModalWide(MESSAGES[120], html, '');
+}
 // Change opacity
 $(document).on('click', '.action-changeopacity', function (e) {
     if ($(this).data("transparent")) {
@@ -2783,7 +2795,7 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
                     $(".modal .node" + form_data['id'] + " td:nth-child(11)").text(form_data["console"]);
 
                     $("#node" + form_data['id'] + " .node_name").html('<i class="node' + form_data['id'] + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
-                    $("#node" + form_data['id'] + " a img").attr("src", "/editor/images/icons/" + form_data['icon'])
+                    $("#node" + form_data['id'] + " a img").attr("src", "/build/editor/images/icons/" + form_data['icon'])
 
                     $("#form-node-edit-table input[name='node[name]'][data-path='" + form_data['id'] + "']").val(form_data["name"])
                     $("#form-node-edit-table select[name='node[image]'][data-path='" + form_data['id'] + "']").val(form_data["image"])
@@ -2922,7 +2934,7 @@ $(document).on('submit', '#oldform-node-add, #oldform-node-edit', function (e) {
                     $(".modal .node" + form_data['id'] + " td:nth-child(11)").text(form_data["console"]);
 
                     $("#node" + form_data['id'] + " .node_name").html('<i class="node' + form_data['id'] + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
-                    $("#node" + form_data['id'] + " a img").attr("src", "/editor/images/icons/" + form_data['icon'])
+                    $("#node" + form_data['id'] + " a img").attr("src", "/build/editor/images/icons/" + form_data['icon'])
 
                     $("#form-node-edit-table input[name='node[name]'][data-path='" + form_data['id'] + "']").val(form_data["name"])
                     $("#form-node-edit-table select[name='node[image]'][data-path='" + form_data['id'] + "']").val(form_data["image"])
@@ -4546,7 +4558,7 @@ $(document).on('click', '.configured-nodes-checkbox', function(e){
 
 $(document).on('click','.action-nightmode', function(e){
   $('.action-nightmode').replaceWith('<a class="action-lightmode" href="javascript:void(0)" title="' + MESSAGES[236] + '"><i class="fas fa-sun"></i>'+MESSAGES[236]+'</a>')
-  $('#lab-viewport').css('background-image','url(/editor/themes/adminLTE/unl_data/img/grid-dark.png)');
+  $('#lab-viewport').css('background-image','url(/build/editor/images/grid-dark.png)');
   $('.node_name').css('color','#b8c7ce')
   $('.network_name').css('color','#b8c7ce')
   $.cookie('topo', 'dark', {
@@ -4557,7 +4569,7 @@ $(document).on('click','.action-nightmode', function(e){
 
 $(document).on('click','.action-lightmode', function(e){
   $('.action-lightmode').replaceWith('<a class="action-nightmode" href="javascript:void(0)" title="' + MESSAGES[235] + '"><i class="fas fa-moon"></i>'+MESSAGES[235]+'</a>')
-  $('#lab-viewport').css('background-image','url(/editor/themes/adminLTE/unl_data/img/grid.png)');
+  $('#lab-viewport').css('background-image','url(/build/editor/images/grid.png)');
   $('.node_name').css('color','#333')
   $('.network_name').css('color','#333')
   $.cookie('topo', 'light', {
