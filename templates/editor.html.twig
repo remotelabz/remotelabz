@@ -12,7 +12,7 @@
 	<div class="hidden-xs hidden-sm container-fluid" id="body">
 		<div style="background-color: #3ba9b9; bottom: 0px; left: 0px; position: absolute; right: 0px; top: 0px;">
 			<div class="container">
-				<img src="{{asset('editor/themes/default/images/wait.gif')}}" style="width:410px;-ms-transform: translate(-50%, -50%); -webkit-transform: translate(-50%, -50%); border: 0px; left: 50%; max-height: 100%; max-width: 100%; position: absolute; top: 50%; transform: translate(-50%, -50%);"/>
+				<img src="{{asset('/build/editor/images/wait.gif')}}" style="width:410px;-ms-transform: translate(-50%, -50%); -webkit-transform: translate(-50%, -50%); border: 0px; left: 50%; max-height: 100%; max-width: 100%; position: absolute; top: 50%; transform: translate(-50%, -50%);"/>
 			</div>
 		</div>
 	</div>
@@ -20,14 +20,10 @@
 {% block javascripts_footer %}
 	{{parent()}}
 	<script type="text/javascript" defer>
-		console.log(document.readyState);
-		//document.addEventListener('readystatechange', e => {
-		//	console.log(document.readyState);
 		function ready(fn) {
 			if (document.readyState != 'loading'){
 				fn();
 			} else {
-				console.log("1:",document.readyState);
 				document.addEventListener('DOMContentLoaded', fn);
 			}
 		}
@@ -43,57 +39,5 @@
 				//ga('send', 'pageview');
 			}
 		}
-		//})
 	</script>
     {% endblock %}
-{#{% block body %}
-{% verbatim %}
-	<div ui-view></div>
-{% endverbatim %}
-{% endblock %}
-{% block javascripts_footer %}
-    
-<script>
-$(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip({trigger: "click"}); 
-    $('[data-toggle="tooltip"]').tooltip('show');
-	
-	$('[data-toggle="popover"]').popover({
-    trigger: 'hover',
-        'placement': 'top'
-	});
-});
-
-toastr.options = {
-  "closeButton": false,
-  "debug": false,
-  "newestOnTop": true,
-  "progressBar": true,
-  "positionClass": "toast-top-right",
-  "preventDuplicates": false,
-  "onclick": null,
-  "showDuration": "300",
-  "hideDuration": "1000",
-  "timeOut": "2000",
-  "extendedTimeOut": "1000",
-  "showEasing": "swing",
-  "hideEasing": "linear",
-  "showMethod": "fadeIn",
-  "hideMethod": "fadeOut"
-}
-var blockUI = function(options) {
-			$.blockUI({
-                message: '<h4 style="margin:0px; padding:15px; background-color:#fff;"><img src="/themes/adminLTE/dist/img/waiting.gif" style="width:16px;height:16px"/> <text class="hidden-xs">Loading...</text></h4>',
-                css: {
-					
-                },
-                overlayCSS: {
-                    backgroundColor: '#444',
-                    opacity: 0.8,
-                    cursor: 'wait'
-                }
-            });
-}
-</script>
-{% endblock %}
-#}

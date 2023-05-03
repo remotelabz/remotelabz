@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\User;
 use App\Entity\Device;
+use App\Entity\Lab;
 use App\Entity\DeviceInstance;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -32,6 +33,41 @@ class DeviceInstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    public function findByUserDeviceAndLab(User $user, Device $device, Lab $lab)
+    {
+        /*return $this->createQueryBuilder('l')
+            ->leftJoin('l.labInstance', 'li')
+            ->andWhere('l.user = :user')
+            ->andWhere('l.device_id = :deviceId')
+            ->andWhere('li.lab_id = :labId')
+            ->setParameter('user', $user)
+            ->setParameter('deviceId', $deviceId)
+            ->setParameter('labId', $labId)
+            ->getQuery()
+            ->getResult()
+        ;*/
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT di 
+            FROM App\Entity\DeviceInstance di
+            LEFT JOIN di.labInstance li
+            WHERE di.user = :user
+            AND di.device = :device
+            AND li.lab = :lab'
+        )
+        ->setParameter('user', $user)
+        ->setParameter('device', $device)
+        ->setParameter('lab', $lab);
+
+        $deviceInstance = $query->getResult();
+        //return $query->getResult();
+
+        // returns an array of Product objects
+        return $deviceInstance[0];
     }
 
     public function findAllStartingOrStarted()

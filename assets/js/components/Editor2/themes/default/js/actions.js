@@ -26,14 +26,16 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, logoutUser, getLabInfo, getLabBody, closeLab, 
-         lockLab, unlockLab, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
-         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, printFormNode, printFormNodeConfigs, 
+         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
+         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         zoompic } from'./functions.js';
+         zoompic, dirname, basename } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
+import * as ace from 'ace-builds/src-noconflict/ace';
+
 var KEY_CODES = {
     "tab": 9,
     "enter": 13,
@@ -426,14 +428,14 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                 '</li>' +
                 '</li>';
         if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
-                 body +=   '<li>' +
+                 /*body +=   '<li>' +
                            '<a class="action-nodeexport" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                            '<i class="glyphicon glyphicon-save"></i> ' + MESSAGES[69] +
                            '</a>' +
-                           '</li>';
+                           '</li>';*/
         }
                 // capture section
-                body += '<li role="separator" class="divider">' +
+                /*body += '<li role="separator" class="divider">' +
                 '</li>' +
                 '<li id="menu-node-interfaces">' +
                     '<a class="menu-appear" data-path="menu-interface" href="javascript:void(0)">' +
@@ -442,7 +444,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                     '<div id="capture-menu">' +
                         '<ul></ul>' +
                     '</div>'+
-                '</li>';
+                '</li>';*/
                 // Read privileges and set specific actions/elements
                 if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
 
@@ -1150,13 +1152,13 @@ $(document).on('click', '.action-moreactions', function (e) {
     body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
     body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
     body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
-    body += '<li><a class="action-openconsole-all" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[168] + '</a></li>';
+    //body += '<li><a class="action-openconsole-all" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[168] + '</a></li>';
     if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
-        body += '<li><a class="action-nodesexport" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a></li>';
+        //body += '<li><a class="action-nodesexport" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
-        body += '<li><a class="action-nodesbootsaved" href="javascript:void(0)"><i class="glyphicon glyphicon-flash"></i> ' + MESSAGES[139] + '</a></li>';
-        body += '<li><a class="action-nodesbootscratch" href="javascript:void(0)"><i class="glyphicon glyphicon-remove"></i> ' + MESSAGES[140] + '</a></li>';
-        body += '<li><a class="action-nodesbootdelete" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[141] + '</a></li>';
+        //body += '<li><a class="action-nodesbootsaved" href="javascript:void(0)"><i class="glyphicon glyphicon-flash"></i> ' + MESSAGES[139] + '</a></li>';
+        //body += '<li><a class="action-nodesbootscratch" href="javascript:void(0)"><i class="glyphicon glyphicon-remove"></i> ' + MESSAGES[140] + '</a></li>';
+        //body += '<li><a class="action-nodesbootdelete" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[141] + '</a></li>';
     }
     printContextMenu(MESSAGES[125], body, e.pageX + 3, e.pageY + 3, true,"sidemenu", true);
 });
@@ -1924,7 +1926,7 @@ $(document).on('click', '.action-nodeexport, .action-nodesexport, .action-nodeex
 
     $.when(getNodes(null)).done(function (nodes) {
         if (isFreeSelectMode) {
-            nodesLenght = window.freeSelectedNodes.length;
+            var nodesLenght = window.freeSelectedNodes.length;
             addMessage('info', 'Export Selected:  Starting');
             $.when(recursive_cfg_export(window.freeSelectedNodes, nodesLenght)).done(function () {
             }).fail(function (message) {
@@ -1945,7 +1947,7 @@ $(document).on('click', '.action-nodeexport, .action-nodesexport, .action-nodeex
             /*
              * Parallel call for each node
              */
-            nodesLenght = Object.keys(nodes).length;
+            var nodesLenght = Object.keys(nodes).length;
             addMessage('info', 'Export all:  Starting');
             $.when(recursive_cfg_export(nodes, nodesLenght)).done(function () {
             }).fail(function (message) {
@@ -2004,17 +2006,26 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             });
         }
         else if (startAll) {
-            nodesLenght = Object.keys(nodes).length;
+            var nodesLenght = Object.keys(nodes).length;
             addMessage('info', 'Start all...');
             $.when(recursive_start(nodes, nodesLenght)).done(function () {
             }).fail(function (message) {
                 addMessage('danger', 'Start all: Error');
             });
-            /*
+            
              $.each(nodes, function(key, values) {
              $.when(start(key)).done(function() {
              // Node started -> print a small green message
              addMessage('success', values['name'] + ': ' + MESSAGES[76]);
+             if($('input[data-path='+values['id']+'][name="node[type]"]') &&
+                   $('input[data-path='+values['id']+'][name="node[type]"]').parent()){
+                       $('input[data-path='+values['id']+'][name="node[type]"]').parent().addClass('node-running')
+                       $('input[data-path='+values['id']+']').prop('disabled', true)
+                       $('select[data-path='+values['id']+']').prop('disabled', true)
+                       $("a[data-path="+values['id']+"].action-nodeedit").addClass('disabled')
+                       $("a[data-path="+values['id']+"].action-nodedelete").addClass('disabled')
+                       $("a[data-path="+values['id']+"].action-nodeinterfaces").attr('data-status', 2)
+                   }
              nodeLenght--;
              if(nodeLenght < 1){
              printLabStatus();
@@ -2028,7 +2039,7 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
              }
              });
              });
-             */
+             
         }
 
 
@@ -2450,7 +2461,7 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
-    path = form_data['path'].split(/(\d)/)[1];
+    var path = form_data['path'].split(/(\d)/)[1];
     if ($(this).attr('id') == 'form-lab-add') {
         logger(1, 'DEBUG: posting form-lab-add form.');
         var url = '/api/labs';
@@ -2533,27 +2544,6 @@ $(document).on('submit', '#form-network-add, #form-network-edit', function (e) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('network');
     var promises = [];
-    /*var networks = {
-        1: {
-            id:1,
-            count:1,
-            left:663,
-            name:"Net",
-            top:111,
-            type:"bridge",
-            visibility:1
-
-        },
-        2: {
-            id: 2,
-            count: 0,
-            left: 223,
-            name: "Net2",
-            top: 225,
-            type: "brigde",
-            visibility: 1
-        }
-    };*/
     if ($(this).attr('id') == 'form-network-add') {
         logger(1, 'DEBUG: posting form-network-add form.');
         var url = '/api/labs/' + lab_filename + '/networks';

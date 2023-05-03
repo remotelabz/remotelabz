@@ -301,8 +301,8 @@ class TemplateController extends Controller
 
     function listNodeConfigTemplates() {
         $results = Array();
-        foreach (scandir('/opt/remotelabz/public/editor/configs') as $filename) {
-            if (is_file('/opt/remotelabz/public/editor/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
+        foreach (scandir('/opt/remotelabz/assets/js/components/Editor2/configs') as $filename) {
+            if (is_file('/opt/remotelabz/assets/js/components/Editor2/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
                 $patterns[0] = '/^(.+)\.php$/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);

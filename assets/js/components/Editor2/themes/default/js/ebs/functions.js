@@ -1,4 +1,5 @@
-import "../src/ace";
+import * as ace from 'ace-builds/src-noconflict/ace';
+
 function setStartupData(id, set_data = false, config = null, name = null) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2ArrayByRow('node', id);
@@ -77,7 +78,7 @@ function initializeEditor(theme = 'cobalt', mode = 'cisco_ios', font_size = '12p
     editor.gotoLine(Infinity, editor.getSession().getValue().split("\n").length);
 }
 
-function initEditor () {
+export function initEditor () {
     var mode = readCookie('ace_mode') ? readCookie('ace_mode') : 'cisco_ios';
     var theme = readCookie('ace_theme') ? readCookie('ace_theme') : 'cobalt';
     var font_size = readCookie('ace_font_size') ? readCookie('ace_font_size') : '12px';
@@ -114,7 +115,7 @@ function destroyEditor()
     editor.destroy();
 }
 
-function createCookie(name, value, days = 30)
+export function createCookie(name, value, days = 30)
 {
     var expires = "";
     if (days) {
@@ -122,7 +123,7 @@ function createCookie(name, value, days = 30)
         date.setTime(date.getTime() + (days*24*60*60*1000));
         expires = "; expires=" + date.toUTCString();
     }
-    document.cookie = name + "=" + value + expires + "; path=/";
+    document.cookie = name + "=" + value + expires + "; path=/; SameSite=None;";
 }
 
 export function readCookie(name)

@@ -1,3 +1,5 @@
+import { initEditor, createCookie } from "./functions";
+
 // none or export button click #124
 $(document).on('change', '.change_config_status', function () {
     var url = '';

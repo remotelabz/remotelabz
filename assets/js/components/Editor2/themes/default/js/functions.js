@@ -28,8 +28,9 @@ import {validateLabInfo, validateLabPicture, validateNode} from './validate'
 import './ejs';
 import {fromByteArray,toByteArray,TextEncoderLite, TextDecoderLite} from './b64encoder';
 var contextMenuOpen = false;
-import { adjustZoom, readCookie, initTextarea } from './ebs/functions';
+import { adjustZoom, readCookie, initTextarea, initEditor } from './ebs/functions';
 import {ObjectPosUpdate} from './actions';
+import * as ace from 'ace-builds/src-noconflict/ace';
 
 // Basename: given /a/b/c return c
 export function basename(path) {
@@ -1157,7 +1158,7 @@ export function getUserInfo() {
                 USERNAME = data['data']['username'];*/
                 var pathname = window.location.pathname;
                 setLang("en");
-                setLab(pathname.split(/(\d)/)[1]);
+                setLab(pathname.split(/(\d+)/)[1]);
                 setTenant("0");
                 setRole("admin");
                 data["lab"] = LAB;
@@ -2117,11 +2118,12 @@ export function getVlan(){
 }
 
 // Start node(s)
-function start(node_id) {
+export function start(node_id) {
     var deferred = $.Deferred();
 
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/start';
+    var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/start';
+    //var url = '/api/instances/start/by-id/' + node_id;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -2152,17 +2154,17 @@ function start(node_id) {
 }
 
 // Start nodes recursive
-function recursive_start(nodes, i) {//??
+export function recursive_start(nodes, i) {//??
     i = i - 1;
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
-        var url = '/api/labs' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
+        var url = '/api/labs/' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
     } else {
-        var url = '/api/labs' + lab_filename + '/nodes/' + nodes[Object.keys(nodes)[i]]['path'] + '/start';
+        var url = '/api/labs/' + lab_filename + '/nodes/' + nodes[Object.keys(nodes)[i]]['path'] + '/start';
     }
     console.log("Object keys :",Object.keys(nodes))
-    /*var type = 'GET';
+    var type = 'GET';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -2200,54 +2202,16 @@ function recursive_start(nodes, i) {//??
             }
 
         }
-    });*/
+    });
     return deferred.promise();
 }
 
 // Stop node(s)
-function stop(node_id) {
+export function stop(node_id) {
     var deferred = $.Deferred();
-    var nodes = {
-        1:{
-            console:"telnet",
-            delay:0, 
-            id:1, 
-            left: 510, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:186, 
-            url:"telnet://192.168.107.182:32769", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        },
-        2:{
-            console:"telnet",
-            delay:0, 
-            id:2, 
-            left: 606, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:237, 
-            url:"telnet://192.168.107.182:32770", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        }
-    }
-    nodes[node_id].status = 0;
+
     var lab_filename = $('#lab-viewport').attr('data-path');
-    /*var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/stop';
+    var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/stop';
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -2274,9 +2238,8 @@ function stop(node_id) {
             logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
-    });*/
-    console.log("stop ",nodes[node_id])
-    deferred.resolve(nodes[node_id]);
+    });
+
     return deferred.promise();
 }
 
@@ -2563,7 +2526,7 @@ function printFormImport(path) {
 }
 
 // Add a new lab
-function printFormLab(action, values) {
+export function printFormLab(action, values) {
     if (action == 'add') {
         var path = values['path'];
     } else {
@@ -3978,7 +3941,7 @@ export function printLabTopology() {
 }
 
 // Display lab status
-function printLabStatus() {
+export function printLabStatus() {
     // logger(1, 'DEBUG: updating node status');
     $.when(getNodes(null)).done(function (nodes) {
         $.each(nodes, function (node_id, node) {
@@ -4449,7 +4412,7 @@ function printPageLabOpen(lab) {
          }
          $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
          //$('#lab-sidebar ul').append('<li><a class="action-networksget" href="javascript:void(0)" title="' + MESSAGES[61] + '"><i class="glyphicon glyphicon-transfer"></i></a></li>');
-         $('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
+         //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
          $('#lab-sidebar ul').append('<li class="action-picturesget-li"><a class="action-picturesget" href="javascript:void(0)" title="' + MESSAGES[59] + '"><i class="glyphicon glyphicon-picture"></i></a></li>');
          if ( Object.keys(pic)  < 1 ) {
          $('.action-picturesget-li').addClass('hidden');

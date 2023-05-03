@@ -33,7 +33,6 @@ export var USERNAME;
 export var ATTACHMENTS;
 export var UPDATEID;
 export var LOCK = 0 ; 
-console.log("yo");
 export var isIE = getInternetExplorerVersion() > -1;
 export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
 export var EVE_VERSION = "5.0.1-19";
@@ -68,7 +67,6 @@ export function setAttachements(value) {
 }
 
 $(document).ready(function() {
-	console.log("ready");
 	if ($.cookie('privacy') != 'true') {
 		// Cookie is not set, show a modal with privacy policy
 		logger(1, 'DEBUG: need to accept privacy.');
