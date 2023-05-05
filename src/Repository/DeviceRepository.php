@@ -76,6 +76,30 @@ class DeviceRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    public function findByLabInstance($lab)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        /*$query = $entityManager->createQuery(
+            'SELECT IDENTITY(di.device)
+            FROM App\Entity\DeviceInstance di
+            WHERE di.labInstance = :lab'
+        )->setParameter('lab', $lab);*/
+
+        $query = $entityManager->createQuery(
+            'SELECT d
+            FROM App\Entity\Device d
+            WHERE d IN (
+                SELECT IDENTITY(di.device)
+            FROM App\Entity\DeviceInstance di
+            WHERE di.labInstance = :lab
+            )'
+        )->setParameter('lab', $lab);
+
+        return $query->getResult();
+    }
+
     // /**
     //  * @return Device[] Returns an array of Device objects
     //  */

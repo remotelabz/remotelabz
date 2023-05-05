@@ -229,7 +229,7 @@ class InstanceController extends Controller
         //var_dump($deviceInstance->getDevice()); exit;
         $json = $instanceManager->start($deviceInstance);
         $status = empty($json) ? 204 : 200;
-        $device->setStatus(2);
+        //$device->setStatus(2);
         $entityManager->flush();
 
         //return $this->json($json, $status, [], [], true);
@@ -272,7 +272,7 @@ class InstanceController extends Controller
         //var_dump($deviceInstance->getDevice()); exit;
         $json = $instanceManager->stop($deviceInstance);
         $status = empty($json) ? 204 : 200;
-        $device->setStatus(0);
+        //$device->setStatus(0);
         $entityManager->flush();
 
         //return $this->json($json, $status, [], [], true);

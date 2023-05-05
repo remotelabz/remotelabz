@@ -786,6 +786,21 @@ function deleteSingleNetworks() {
 export function getNodes(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');    
+    var labInstance;
+    var edition;
+    var pathname = window.location.pathname;
+    console.log(EDITION);
+    if(EDITION == 1) {
+        labInstance = null;
+        edition = EDITION;
+    }
+    if(EDITION == 0) {
+       labInstance = pathname.split(/(\d+)/)[3];
+       edition = EDITION;
+    }
+    var node_data = {};
+    node_data['edition'] = edition;
+    node_data['labInstance'] = labInstance;
     if (node_id != null) {
         //nodesData = nodes[node_id];
         var url = '/api/labs/' + lab_filename + '/nodes/' + node_id;
@@ -793,13 +808,14 @@ export function getNodes(node_id) {
         //nodesData = nodes;
         var url = '/api/labs/' + lab_filename + '/nodes';
     }
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');

@@ -12,7 +12,9 @@ use App\Form\DeviceType;
 use App\Form\EditorDataType;
 use App\Form\ControlProtocolTypeType;
 use App\Repository\DeviceRepository;
+use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabRepository;
+use App\Repository\LabInstanceRepository;
 use App\Repository\EditorDataRepository;
 use App\Repository\ControlProtocolTypeRepository;
 use App\Repository\FlavorRepository;
@@ -36,7 +38,9 @@ use function Symfony\Component\String\u;
 class DeviceController extends Controller
 {
     private $deviceRepository;
+    private $deviceInstanceRepository;
     private $labRepository;
+    private $labInstanceRepository;
     private $controlProtocolTypeRepository;
     private $hypervisorRepository;
     private $flavorRepository;
@@ -48,7 +52,9 @@ class DeviceController extends Controller
     public function __construct(
         LoggerInterface $logger,
         LabRepository $labRepository,
+        LabInstanceRepository $labInstanceRepository,
         DeviceRepository $deviceRepository,
+        DeviceInstanceRepository $deviceInstanceRepository,
         SerializerInterface $serializerInterface,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         HypervisorRepository $hypervisorRepository,
@@ -56,7 +62,9 @@ class DeviceController extends Controller
         FlavorRepository $flavorRepository)
     {
         $this->deviceRepository = $deviceRepository;
+        $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labRepository = $labRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
         $this->logger = $logger;
         $this->serializer = $serializerInterface;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
@@ -97,15 +105,52 @@ class DeviceController extends Controller
     /**
      * @Route("/devices", name="get_devices")
      * 
-     * @Rest\Get("/api/labs/{id<\d+>}/nodes", name="api_get_devices")
+     * @Rest\Post("/api/labs/{id<\d+>}/nodes", name="api_get_devices")
      * 
      */
     public function indexActionTest(Request $request, int $id)
     {
-        $devices = $this->deviceRepository->findByLab($id);
+        $lab = $this->labRepository->findById($id);
+        $nodeData = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
+            $devices = $this->deviceRepository->findByLabInstance($labInstance);
+        }
+        if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($nodeData['edition'] == 1) {
+            $devices = $this->deviceRepository->findByLab($lab);
+        }
         $data = [];
         foreach($devices as $device){
- 
+
+            if($nodeData['edition'] == 0) {
+                $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
+                if($deviceInstance->getState() == 'started') {
+                    $status = 2;
+                }
+                else if($deviceInstance->getState() == 'stopped') {
+                    $status = 0;
+                }
+            }
+            else {
+                $deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab);
+                if($deviceInstance->getState() == 'started') {
+                    $status = 2;
+                }
+                else if($deviceInstance->getState() == 'stopped') {
+                    $status = 0;
+                }
+            }
+
             $data[$device->getId()] = [
                 "id"=>$device->getId(),
                 "name"=> $device->getName(),
@@ -119,18 +164,17 @@ class DeviceController extends Controller
                 "ram"=>$device->getFlavor()->getMemory(),
                 "url"=>$device->getUrl(),
                 "template"=>$device->getTemplate(),
-                "status"=> $device->getStatus(),
+                "status"=> $status,
                 "ethernet"=>$device->getEthernet()
             ];
         }
 
-        $response = new Response();
+        
         $response->setContent(json_encode([
             'code'=> 200,
             'status'=>'success',
             'message' => 'Successfully listed nodes (60026).',
             'data' => $data]));
-        $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
 
@@ -157,16 +201,38 @@ class DeviceController extends Controller
 
     /**
      * 
-     * @Rest\Get("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_get_node")
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_get_node")
      */
     public function showActionTest(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
-
+        $lab = $labRepository->find($labId);
+        $data = json_decode($request->getContent(), true);
         if (!$device) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
+        if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
+            $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
+        }
+        if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($nodeData['edition'] == 1) {
+            $deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab);
+        }
+
+        if($deviceInstance->getState() == 'started') {
+            $status = 2;
+        }
+        else if ($deviceInstance->getState() == 'stopped'){
+            $status = 0;
+        }
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
