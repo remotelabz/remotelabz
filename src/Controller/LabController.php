@@ -74,6 +74,7 @@ class LabController extends Controller
     private $operatingSystemRepository;
     private $flavorRepository;
     private $serializer;
+    private $labInstanceRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -81,7 +82,8 @@ class LabController extends Controller
         DeviceRepository $deviceRepository,
         operatingSystemRepository $operatingSystemRepository,
         FlavorRepository $flavorRepository,
-        SerializerInterface $serializerInterface)
+        SerializerInterface $serializerInterface,
+        LabInstanceRepository $labInstanceRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -92,6 +94,7 @@ class LabController extends Controller
         $this->operatingSystemRepository=$operatingSystemRepository;
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
+        $this->labInstanceRepository = $labInstanceRepository;
     }
 
     /**
@@ -291,6 +294,50 @@ class LabController extends Controller
             'data' =>$data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
+    }
+
+    /**
+     * @Route("/labs/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab")
+     */
+    public function seeAction(Request $request, int $id, int $instanceId)
+    {
+
+        $lab = $this->labRepository->find($id);
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
+        if($labInstance == null) {
+            //$redirectTo = $this->getRedirectUrl();
+               /* return new JsonResponse(array(
+                    'status' => 'error',
+                    'message' => 'Forbidden',
+                    //'redirect' => $redirectTo,
+                ), Response::HTTP_FORBIDDEN);*/
+                return new Response('Forbidden', Response::HTTP_FORBIDDEN);
+            //throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+
+        if ( !is_null($lab))
+        {
+            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUsername());
+        
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        };
+
+        if ($request->getContentType() === 'json') {
+            $lab = json_decode($request->getContent(), true);
+        }
+
+        return $this->render('editor.html.twig', ['id' => $id]);
+    }
+    else
+        { 
+            if (!is_null($lab))
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see the lab".$lab->getName());
+            else 
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see a lab");
+            return $this->redirectToRoute('index');
+        }
     }
 
     /**

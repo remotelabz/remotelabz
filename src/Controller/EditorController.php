@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-
+use App\Repository\LabRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -17,27 +17,23 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 class EditorController extends Controller
 {
-    private $deviceRepository;
     private $labRepository;
-    private $controlProtocolTypeRepository;
-    private $hypervisorRepository;
-    private $flavorRepository;
-    private $operatingSystemRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
 
-    public function __construct(TokenStorageInterface $tokenStorageInterface, JWTTokenManagerInterface $jwtManager)
+    public function __construct(TokenStorageInterface $tokenStorageInterface, JWTTokenManagerInterface $jwtManager, LabRepository $labRepository)
     {
         $this->jwtManager = $jwtManager;
         $this->tokenStorageInterface = $tokenStorageInterface;
+        $this->labRepository = $labRepository;
     }
 
     /**
-     * @Rest\Get("/api/token", name="api_token")
+     * @Rest\Get("/api/user/rights/lab/{id<\d+>}", name="api_user_rights")
      * 
      */
-    public function getToken(Request $request)
+    public function getToken(Request $request, int $id)
     {
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
@@ -46,12 +42,25 @@ class EditorController extends Controller
 
             $user = $this->tokenStorageInterface->getToken()->getUser();
             $token = $this->jwtManager->create($user);
+            $lab = $this->labRepository->find($id);
+            if($lab->getAuthor() == $user) {
+                $author = 1;
+            }
+            else {
+                $author = 0;
+            }
 
             $response->setContent(json_encode([
                 'code'=> 200,
                 'status'=>'success',
                 'message' => 'User connected',
-                'data' => ["token"=> $token]]));
+                'data' => [
+                    "token"=> $token, 
+                    "role" => $user->getHighestRole(), 
+                    "email"=>$user->getEmail(), 
+                    "username" => $user->getName(),
+                    "author" => $author
+                ]]));
         }
         else {
 

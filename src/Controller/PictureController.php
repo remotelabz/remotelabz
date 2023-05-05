@@ -181,17 +181,7 @@ class PictureController extends Controller
 		}
 
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        $file = '/opt/remotelabz/public/editor/images/pictures/'.$fileName;
-
-        /*$thumb = imagecreatetruecolor($width, $height);
-        if($picture->getType() ==  "image/png") {
-            $source = imagecreatefrompng('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
-        }
-        else {
-            $source = imagecreatefromjpeg('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
-        }
-        // Resize
-        imagecopyresized($thumb, $source, 0, 0, 0, 0, $width, $height, $picture->getWidth(), $picture->getHeight());*/        
+        $file = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName;      
 
         $response = new BinaryFileResponse($file);
         return $response;
@@ -223,6 +213,13 @@ class PictureController extends Controller
 				}
 			}
 		}
+        else {
+            $response->setContent(json_encode([
+                'code' => 400,
+                'status'=> 'fail',
+                'message' => 'No attachment has been done']));
+            return $response;
+        }
         if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
             $response->setContent(json_encode([
                 'code' => 400,
@@ -235,7 +232,7 @@ class PictureController extends Controller
         $picture->setName($data['name']);
         $picture->setType($data['type']);
         $picture->setData($data['data']);
-        file_put_contents('/opt/remotelabz/public/editor/images/pictures/'.$data['name'].'.'.$type, $data['data']);
+        file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
 
         list($width, $height) = getimagesizefromstring($data['data']);
         $picture->setWidth($width);
@@ -283,8 +280,8 @@ class PictureController extends Controller
         }
         if(isset($data['name']) && $data['name'] !== $picture->getName()){
             $type = explode("image/",$picture->getType())[1];
-            unlink('/opt/remotelabz/public/editor/images/pictures/'.$picture->getName().'.'.$type);
-            file_put_contents('/opt/remotelabz/public/editor/images/pictures/'.$data['name'].'.'.$type, $picture->getData());
+            unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$picture->getName().'.'.$type);
+            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$data['name'].'.'.$type, $picture->getData());
             $picture->setName($data['name']);
         }
         $picture->setMap($data['map']);
@@ -312,7 +309,7 @@ class PictureController extends Controller
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        unlink('/opt/remotelabz/public/editor/images/pictures/'.$fileName);
+        unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
 
         $entityManager = $doctrine->getManager();
         $entityManager->remove($picture);

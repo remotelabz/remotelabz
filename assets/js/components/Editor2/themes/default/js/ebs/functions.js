@@ -1,4 +1,4 @@
-import * as ace from 'ace-builds/src-noconflict/ace';
+//import * as ace from 'ace-builds/src-noconflict/ace';
 
 function setStartupData(id, set_data = false, config = null, name = null) {
     var lab_filename = $('#lab-viewport').attr('data-path');

@@ -12,7 +12,9 @@
  * @version 20160719
  */
 
-import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, TENANT, UPDATEID, LOCK, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, STATUSINTERVAL, USERNAME, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION} from './javascript';
+import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION,
+      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, 
+      LONGTIMEOUT, STATUSINTERVAL, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION, setEditon, setAuthor} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -30,7 +32,8 @@ import {fromByteArray,toByteArray,TextEncoderLite, TextDecoderLite} from './b64e
 var contextMenuOpen = false;
 import { adjustZoom, readCookie, initTextarea, initEditor } from './ebs/functions';
 import {ObjectPosUpdate} from './actions';
-import * as ace from 'ace-builds/src-noconflict/ace';
+//import * as ace from 'ace-builds/src-noconflict/ace';
+import { node } from 'prop-types';
 
 // Basename: given /a/b/c return c
 export function basename(path) {
@@ -1131,8 +1134,17 @@ function getTemplates(template) {
 
 // Get user info
 export function getUserInfo() {
+    var pathname = window.location.pathname;
+    var lab = pathname.split(/(\d+)/)[1];
+    var labInstance;
+    if(pathname.split(/(\d+)/)[3] != null) {
+        labInstance = pathname.split(/(\d+)/)[3];
+    }
+    else {
+        labInstance = null;
+    }
     var deferred = $.Deferred();
-   var url = '/api/token';
+   var url = '/api/user/rights/lab/' + lab;
     var type = 'GET';
     $.ajax({
         cache: false,
@@ -1156,15 +1168,22 @@ export function getUserInfo() {
                 ROLE = data['data']['role'];
                 TENANT = data['data']['tenant'];
                 USERNAME = data['data']['username'];*/
-                var pathname = window.location.pathname;
+                setEmail(data['data']['email']);
+                setUserName(data['data']['username']);
                 setLang("en");
-                setLab(pathname.split(/(\d+)/)[1]);
+                setLab(lab);
                 setTenant("0");
-                setRole("admin");
-                data["lab"] = LAB;
-                data["lang"] = LANG;
-                data["tenant"] = TENANT;
-                //token = data['data']['token'];
+                setRole(data['data']['role']);
+                console.log(pathname);
+                console.log('/labs/' + LAB + '/see/' + labInstance);
+                if(pathname == '/admin/labs/' + LAB + '/edit') {
+                    setEditon(1);
+                }
+                else if(pathname == '/labs/' + LAB + '/see/' + labInstance) {
+                    console.log('see!')
+                    setEditon(0);
+                }
+                setAuthor(data['data']['author']);
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1180,17 +1199,6 @@ export function getUserInfo() {
             deferred.reject(message);
         }
     });
-    //var data = {};
-    //LANG = "en";
-    //LAB = "/test.unl";
-    //var pathname = window.location.pathname;
-    //LAB = pathname.split(/(\d)/)[1];
-    //TENANT = "0";
-    //ROLE = "admin";
-    //data["lab"] = LAB;
-    //data["lang"] = LANG;
-    //data["tenant"] = TENANT;
-    //deferred.resolve(data);
     return deferred.promise();
 }
 
@@ -2120,17 +2128,33 @@ export function getVlan(){
 // Start node(s)
 export function start(node_id) {
     var deferred = $.Deferred();
-
     var lab_filename = $('#lab-viewport').attr('data-path');
+    var labInstance;
+    var edition;
+    var pathname = window.location.pathname;
+    console.log(EDITION);
+    if(EDITION == 1) {
+        labInstance = null;
+        edition = EDITION;
+    }
+    if(EDITION == 0) {
+       labInstance = pathname.split(/(\d+)/)[3];
+       edition = EDITION;
+    }
+    var node_data = {};
+    node_data['edition'] = edition;
+    node_data['labInstance'] = labInstance;
+    console.log(node_data);
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/start';
     //var url = '/api/instances/start/by-id/' + node_id;
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) started.');
@@ -2211,14 +2235,30 @@ export function stop(node_id) {
     var deferred = $.Deferred();
 
     var lab_filename = $('#lab-viewport').attr('data-path');
+    var labInstance;
+    var edition;
+    var pathname = window.location.pathname;
+    if(EDITION == 1) {
+        labInstance = null;
+        edition = EDITION;
+    }
+    if(EDITION == 0) {
+       labInstance = pathname.split(/(\d+)/)[3];
+       edition = EDITION;
+    }
+    var node_data = {};
+    node_data['edition'] = edition;
+    node_data['labInstance'] = labInstance;
+
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/stop';
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) stopped.');
@@ -2646,9 +2686,11 @@ export function printFormNode(action, values, fromNodeList) {
         $('#form-node-template').change(function (e2) {
             id = (id == '') ? null : id;    // Ugly fix for change template after selection
             template = $(this).find("option:selected").val();
+            var idTemplate = template.split(/(\d+)/)[1];
+            console.log(template);
             if (template != '') {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
-                $.when(getTemplates(template), getNodes(id)).done(function (template_values, node_values) {
+                $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
                     // TODO: this event is called twice
                     id = (id == null) ? '' : id;
                     var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
@@ -2800,7 +2842,8 @@ export function printFormNode(action, values, fromNodeList) {
 // Node config
 function OldprintFormNodeConfigs(values, cb) {
     var title = values['name'] + ': ' + MESSAGES[123];
-    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    //if ((ROLE != 'ROLE_USER' ) && LOCK == 0 ) {
         var html = '<form id="form-node-config" class="form-horizontal"><input name="config[id]" value="' + values['id'] + '" type="hidden"/>' +
             '<div class="form-group">' +
                  '<div class="col-md-12">' +
@@ -2829,7 +2872,8 @@ function OldprintFormNodeConfigs(values, cb) {
 }
 export function printFormNodeConfigs(values, cb) {
     var title = values['name'] + ': ' + MESSAGES[123];
-    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 )
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) 
+    //if ((ROLE != 'ROLE_USER') && LOCK == 0 )
     {
         var ace_themes = [
             'cobalt', 'github', 'crimson_editor', 'iplastic', 'draw', 'clouds_midnight',
@@ -3380,11 +3424,13 @@ function printFormUser(action, values) {
         });
         html += '</select></div></div><div class="form-group"><label class="col-md-3 control-label">' + MESSAGES[30] + '</label><div class="col-md-5"><input class="form-control expiration" name="user[expiration]" value="' + expiration + '" type="text"/></div></div><h4>' + MESSAGES[46] + '</h4><div class="form-group"><label class="col-md-3 control-label">POD</label><div class="col-md-5"><input class="form-control pod" name="user[pod]" value="' + pod + '" type="text"/></div></div><div class="form-group"><label class="col-md-3 control-label">' + MESSAGES[30] + '</label><div class="col-md-5"><input class="form-control expiration pod" name="user[pexpiration]" value="' + pexpiration + '" type="text"/></div></div><div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + submit + '</button> <button type="button" class="btn btn-flat" data-dismiss="modal">' + MESSAGES[18] + '</button></div></div></form>';
         addModal(title, html, '');
-        if (ROLE == "user") {
+        //if (ROLE == "user") {
+        if (ROLE == "ROLE_USER") {
             $("#form-user-edit input,#form-user-edit select").prop("disabled", true)
             $("#form-user-edit button").remove();
         }
-        if (ROLE == "editor") {
+        //if (ROLE == "editor") {
+        if (ROLE != "ROLE_USER") {
             $("#form-user-edit select").prop("disabled", true)
             $("#form-user-edit .pod,#form-user-edit .expiration").prop("disabled", true)
         }
@@ -3421,7 +3467,8 @@ function printLabPreview(lab_filename) {
             html += '<p>' + lab['description'] + '</p>';
         }
         html += '<button class="action-labopen btn btn-flat" type="button" data-path="' + lab_filename + '">' + MESSAGES[22] + '</button> ';
-        if (ROLE != "user")
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1)
+        //if (ROLE != "ROLE_USER")
             html += '<button class="action-labedit-inline btn btn-flat" type="button" data-path="' + lab_filename + '">Edit</button>';
         $('#list-title-info span').html(lab['filename'].replace(/\\/g, '/').replace(/.*\//, ''));
         $('#list-info').html(html);
@@ -3439,7 +3486,8 @@ function updateFreeSelect ( e , ui ) {
         $('#lab-viewport').addClass('freeSelectMode')
     }
     window.freeSelectedNodes = []
-         if ( LOCK == 0 && ( ROLE == 'admin' || ROLE == 'editor' )) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+         //if ( LOCK == 0 && ( ROLE != 'ROLE_USER' )) {
             $.when ( lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), false) ).done ( function () {
                $.when( lab_topology.clearDragSelection() ).done(  function () {
                     lab_topology.setDraggable($('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customShape.ui-selecting'),true)
@@ -3712,7 +3760,8 @@ export function printLabTopology() {
                     cssClass: 'link'
                 });
                 // Read privileges and set specific actions/elements
-                if ((ROLE == 'admin' || ROLE == 'editor') && labinfo['lock'] == 0 )  {
+                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && labinfo['lock'] == 0 ) {
+                //if ((ROLE != 'ROLE_USER') && labinfo['lock'] == 0 )  {
                     var dragDeferred = $.Deferred()
                     $.when ( labTextObjectsResolver ).done ( function () {
                         logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
@@ -3991,7 +4040,8 @@ function printListNetworks(networks) {
         }
     });
     body = $(body);
-    if ( ROLE == "user"  ||  LOCK == 1  ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 ) {
+    //if ( ROLE == "ROLE_USER"  ||  LOCK == 1  ) {
         body.find(".action-networkedit,.action-networkdelete").remove();
     }
     body = '<div class="table-responsive"><table class="table">' + body.html() + '</tbody></table></div>';
@@ -4014,32 +4064,42 @@ function createNodeListRow(template, id){
     var defer = $.Deferred();
     var userRight = "readonly";
     var disabledAttr = 'disabled="true"' ;
-    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
          userRight = "";
          disabledAttr = ""
     }
+    console.log("template", template);
+    var idTemplate = template.split(/(\d+)/)[1];
+    console.log("templateid", idTemplate);
 
-    $.when(getTemplates(template), getNodes(id)).done(function (template_values, node_values) {
-        console.log("node_values", node_values)
+    $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
+        console.log("template_values", template_values);
+        console.log("node_values", node_values);
         var value_set = "";
         var readonlyAttr = "";
         var value_name      = node_values['name'];
         var value_cpu       = node_values['cpu'] || "n/a";
-        var value_cpulimit       = node_values['cpulimit'] ;
-	if ( value_cpulimit == undefined )  value_cpulimit = "n/a";
-        var value_idlepc    = node_values['idlepc'] || "n/a";
+        var value_core = node_values['core'] || "n/a";
+        var value_socket = node_values['socket'] || "n/a";
+        var value_thread = node_values['thread'] || "n/a";
+        var value_flavor = node_values['flavor'] || "n/a";
+        //var value_cpulimit       = node_values['cpulimit'] ;
+	//if ( value_cpulimit == uvalue_flavorndefined )  value_cpulimit = "n/a";
+        /*var value_idlepc    = node_values['idlepc'] || "n/a";
         var value_nvram     = node_values['nvram'] || "n/a";
-        var value_ram       = node_values['ram'] || "n/a";
-        var value_ethernet  = node_values['ethernet'] || "n/a";
-        var value_console   = checkTemplateValue(template_values,'console') || node_values['console'] || ""
-        var value_serial    = "";
-        if(node_values['serial']){
+        var value_ram       = node_values['ram'] || "n/a";*/
+        //var value_ethernet  = node_values['ethernet'] || "n/a";
+        //var value_console   = checkTemplateValue(template_values,'console') || node_values['console'] || ""
+        var value_type = node_values['type'] || 'n/a';
+        //var value_serial    = "";
+        /*if(node_values['serial']){
             value_serial = node_values['serial'];
         } else if(!node_values['serial'] && parseInt(node_values['serial']) === 0){
             value_serial = node_values['serial'].toString();
         } else{
             value_serial = "n/a";
-        }
+        }*/
 
         var highlightRow = '';
         var disabled = '';
@@ -4067,7 +4127,7 @@ function createNodeListRow(template, id){
         html_data += '<td><input class="hide-border ' + userRight + '" data-path="' + id + '" name="node[template]" value="' + template + '" readonly/></td>';
 
         //node boot image
-        if(template == "vpcs"){
+        /*if(template == "vpcs"){
             html_data += '<td><input class="configured-nodes-input short-input readonly" data-path="' + id + '" name="node[cpu]" value="n/a" type="text" readonly /></td>';
         } else {
             html_data += '<td><select class="configured-nods-select form-control"' + disabledAttr + 'data-path="' + id + '" name="node[image]">'
@@ -4078,13 +4138,37 @@ function createNodeListRow(template, id){
                 html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
             });
             html_data += '</select></td>';
-        }
+        }*/
 
         //node cpu
         readonlyAttr = (value_cpu && value_cpu != "n/a") ? "" : "readonly";
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[cpu]" value="' + value_cpu + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';
-	//node cpu limit
-	readonlyAttr = (value_cpulimit != "n/a") ? "" : "readonly";
+        //node core
+        readonlyAttr = (value_core != "n/a") ? "" : "readonly";
+        html_data += '<td><input class="configured-nodes-checkbox short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[core]" value="' + value_core + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + '/></td>';
+    
+        //node socket
+        readonlyAttr = (value_socket != "n/a") ? "" : "readonly";
+        html_data += '<td><input class="configured-nodes-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[socket]" value="' + value_socket + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';
+
+        //node thread
+        readonlyAttr = (value_thread != "n/a") ? "" : "readonly";
+        html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[thread]" value="' + value_thread + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';
+
+        //node flavor
+        /*readonlyAttr = (value_flavor != "n/a") ? "" : "readonly";
+        html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[flavor]" value="' + value_flavor + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';*/
+
+        html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[type]" data-container="body">'
+        value_set = (node_values != null && node_values['flavor'] != null) ? node_values['flavor'] : value['value'];
+        $.each(template_values['options']['flavor']['list'], function (list_key, list_value) {
+            var selected = (list_key == value_set) ? 'selected ' : '';
+            var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
+            html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
+        });
+        html_data += '</select></td>';
+        //node cpu limit
+	/*readonlyAttr = (value_cpulimit != "n/a") ? "" : "readonly";
 	html_data += '<td><input class="configured-nodes-checkbox short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[cpulimit]" value="' + value_cpulimit + '" type="' + ((value_cpulimit == "n/a" ) ? 'input' :'checkbox')  + '" ' + readonlyAttr + ' ' + disabledAttr + ' '+ ( (value_cpulimit == 1) ? 'checked' : '' ) +'/></td>';
 
         //node idle
@@ -4098,21 +4182,34 @@ function createNodeListRow(template, id){
         //node ram
         readonlyAttr = (value_ram && value_ram != "n/a") ? "" : "readonly";
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[ram]" value="' + value_ram + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';
-
+    */ 
         //node ethernet
-        if(template == "vpcs"){
+        /*if(template == "vpcs"){
             readonlyAttr = "readonly";
         } else {
             readonlyAttr = (value_ethernet && value_ethernet != "n/a") ? "" : "readonly";
         }
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[ethernet]" value="' + value_ethernet + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';
-
+*/
         //node serial
-        readonlyAttr = (value_serial && value_serial != "n/a") ? "" : "readonly";
+        /*readonlyAttr = (value_serial && value_serial != "n/a") ? "" : "readonly";
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[serial]" value="' + value_serial + '" type="text" '  + readonlyAttr + ' ' + disabledAttr + '/></td>';
+*/
 
+        //node type 
+        /*readonlyAttr = (value_type != "n/a") ? "" : "readonly";
+        html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[type]" value="' + value_type + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';*/
+
+        html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[type]" data-container="body">'
+        value_set = (node_values != null && node_values['type'] != null) ? node_values['type'] : value['value'];
+        $.each(template_values['options']['type']['list'], function (list_key, list_value) {
+            var selected = (list_key == value_set) ? 'selected ' : '';
+            var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
+            html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
+        });
+        html_data += '</select></td>';
         //node console
-        if(template == "iol"){
+        /*if(template == "iol"){
             html_data += '<td><input class="hide-border"  data-path="' + id + '" value="telnet" readonly/></td>';
         } else if(template_values['options']['console']){
             html_data += '<td><select class="configured-nods-select form-control"' + disabledAttr + ' name="node[console]" data-path="' + id + '" >'
@@ -4124,7 +4221,7 @@ function createNodeListRow(template, id){
             html_data += '</select></td>';
         } else {
             html_data += '<td><input class="hide-border" name="node[console]" value="' + value_console + '" type="text" readonly/></td>';
-        }
+        }*/
 
         //node icons
         html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[icon]" data-container="body">'
@@ -4137,22 +4234,23 @@ function createNodeListRow(template, id){
         html_data += '</select></td>';
 
         //node startup-configs
-        html_data += '<td><select class="configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" name="node[config]">'
+        /*html_data += '<td><select class="configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" name="node[config]">'
         value_set = (node_values != null && node_values['config'] != null) ? node_values['config'] : value['value'];
         $.each(template_values['options']['config']['list'], function (list_key, list_value) {
             var selected = (list_key == value_set) ? 'selected ' : '';
             html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
         });
-        html_data += '</select></td>';
+        html_data += '</select></td>';*/
 
         //node actions
         html_data += '<td><div class="action-controls">'+
                          '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
-                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>'+
-                         '<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
-        if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>'
+                         //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
             html_data += '<a class="action-nodeexport" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[69] + '"><i class="glyphicon glyphicon-save"></i></a> '+
-                         '<a class="action-nodeinterfaces" data-status="' + node_values['status'] +'" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[72] + '"><i class="glyphicon glyphicon-transfer"></i></a>'+
+                         //'<a class="action-nodeinterfaces" data-status="' + node_values['status'] +'" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[72] + '"><i class="glyphicon glyphicon-transfer"></i></a>'+
                          '<a class="action-nodeedit control'+ disabledClass +'" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[71] + '"><i class="glyphicon glyphicon-edit"></i></a>'+
                          '<a class="action-nodedelete'+ disabledClass +'" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[65] + '"><i class="glyphicon glyphicon-trash"></i></a>';
         }
@@ -4175,19 +4273,25 @@ function createNodeListRow(template, id){
 // Display all nodes in a table
 export function printListNodes(nodes) {
     logger(1, 'DEBUG: printing node list');
-    var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[163] + '</th><th>' + MESSAGES[105] + '</th><th>' + MESSAGES[203] + '</th><th>' + MESSAGES[106] + '</th><th>'+ MESSAGES[107] + '</th><th>' + MESSAGES[108] + '</th><th>' + MESSAGES[109] + '</th><th>' + MESSAGES[110] + '</th><th>' + MESSAGES[112] + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[123] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
+    //var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[163] + '</th><th>' + MESSAGES[105] + '</th><th>' + MESSAGES[203] + '</th><th>' + MESSAGES[106] + '</th><th>'+ MESSAGES[107] + '</th><th>' + MESSAGES[108] + '</th><th>' + MESSAGES[109] + '</th><th>' + MESSAGES[110] + '</th><th>' + MESSAGES[112] + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[123] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
+    var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[105] + '</th><th>' + 'Core' + '</th><th>' + 'Socket' + '</th><th>'+ 'Thread' + '</th><th>' + 'Flavor' + '</th><th>' + 'Type' + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
     var html_rows = [];
     var promises = [];
 
     var composePromise = function (key, value) {
         var defer = $.Deferred();
         var cpu = (value['cpu'] != null) ? value['cpu'] : '';
-        var cpulimit = (value['cpulimit'] != null) ? value['cpulimit'] : '';
-        var ethernet = (value['ethernet'] != null) ? value['ethernet'] : '';
-        var idlepc = (value['idlepc'] != null) ? value['idlepc'] : '';
-        var image = (value['image'] != null) ? value['image'] : '';
-        var nvram = (value['nvram'] != null) ? value['nvram'] : '';
-        var serial = (value['serial'] != null) ? value['serial'] : '';
+        //var cpulimit = (value['cpulimit'] != null) ? value['cpulimit'] : '';
+        //var ethernet = (value['ethernet'] != null) ? value['ethernet'] : '';
+        //var idlepc = (value['idlepc'] != null) ? value['idlepc'] : '';
+        //var image = (value['image'] != null) ? value['image'] : '';
+        //var nvram = (value['nvram'] != null) ? value['nvram'] : '';
+        var type = (value['type'] != null) ?value['type'] : '';
+        var core = (value['core'] != null) ?value['core'] : '';
+        var socket = (value['socket'] != null) ?value['socket'] : '';
+        var thread = (value['thread'] != null) ?value['thread'] : '';
+        var flavor = (value['flavor'] != null) ?value['flavor'] : '';
+        //var serial = (value['serial'] != null) ? value['serial'] : '';
 
         $.when(createNodeListRow(value['template'], value['id'])).done(function (data) {
             html_rows.push(data);
@@ -4248,7 +4352,8 @@ export function printListTextobjects(textobjects) {
             '<td>' + value['type'] + '</td>' +
             '<td>' + text + '</td>' +
             '<td>';
-        if (ROLE != "user" && LOCK == 0  ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if (ROLE != "ROLE_USER" && LOCK == 0  ) {
              body += '<a class="action-textobjectdelete '+ textClass +'" data-path="' + value['id'] + '" data-name="' + value['name'] + '" href="javascript:void(0)" title="' + MESSAGES[65] + '">' +
                 '<i class="glyphicon glyphicon-trash" style="margin-left:20px;"></i>' +
                 '</a>'
@@ -4311,7 +4416,8 @@ function printPageLabList(folder) {
 
 
                 // Read privileges and set specific actions/elements
-                if (ROLE == 'admin' || ROLE == 'editor') {
+                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1) {
+                //if (ROLE != 'ROLE_USER') {
                     // Adding actions
                     $('#actions-menu').empty();
                     $('#actions-menu').append('<li><a class="action-folderadd" href="javascript:void(0)"><i class="glyphicon glyphicon-folder-close"></i> ' + MESSAGES[4] + '</a></li>');
@@ -4407,7 +4513,8 @@ function printPageLabOpen(lab) {
     $('#body').html(html);
     // Print topology
     $.when(printLabTopology(),getPictures()).done( function (rc,pic) {
-         if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+         //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
               $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
          }
          $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
@@ -4426,8 +4533,11 @@ function printPageLabOpen(lab) {
          //$('#lab-sidebar ul').append('<li><a class="action-freeselect" href="javascript:void(0)" title="' + MESSAGES[151] + '"><i class="glyphicon glyphicon-check"></i></a></li>');
         // $('#lab-sidebar ul').append('<li><a class="action-status" href="javascript:void(0)" title="' + MESSAGES[13] + '"><i class="glyphicon glyphicon-info-sign"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-labbodyget" href="javascript:void(0)" title="' + MESSAGES[64] + '"><i class="glyphicon glyphicon-list-alt"></i></a></li>');
-         $('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
-         if ( $.cookie("topo") == 'dark' ) {
+         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+         //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
+            $('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
+         }
+            if ( $.cookie("topo") == 'dark' ) {
                 $('#lab-sidebar ul').append('<li><a class="action-lightmode" href="javascript:void(0)" title="' + MESSAGES[236] + '"><i class="fas fa-sun"></i></a></li>');
          } else {
                 $('#lab-sidebar ul').append('<li><a class="action-nightmode" href="javascript:void(0)" title="' + MESSAGES[235] + '"><i class="fas fa-moon"></i></a></li>');
@@ -4463,7 +4573,8 @@ function printUserManagement() {
         $('#main').html(html);
 
         // Read privileges and set specific actions/elements
-        if (ROLE == 'admin') {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if (ROLE != 'ROLE_USER') {
             // Adding actions
             $('#actions-menu').empty();
             $('#actions-menu').append('<li><a class="action-useradd" href="javascript:void(0)"><i class="glyphicon glyphicon-plus"></i> ' + MESSAGES[34] + '</a></li>');

@@ -181,6 +181,10 @@ class DeviceController extends Controller
             "status"=>$device->getStatus(),
             "ethernet"=>$device->getEthernet(), 
             "cpu"=>$device->getNbCpu(),
+            "core"=>$device->getNbCore(),
+            "socket"=>$device->getNbSocket(),
+            "thread"=>$device->getNbThread(),
+            "flavor"=>$device->getFlavor()->getId(),
             "template"=>$device->getTemplate(),
             "brand"=>$device->getBrand(),
             "model"=>$device->getModel(),
@@ -217,14 +221,20 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
            $device = $deviceForm->getData();
+           /*if ($device->getIsTemplate() == true) {
+            foreach (scandir('/opt/remotelabz/config/templates') as $filename) {
+                if(is_file('/opt/remotelabz/config/templates/'. u($device->getName())->camel() . '.yaml')) {
+                    throw new NotFoundHttpException("The name " . $device->getName() . " already exists as a template");
+                }
+            }
+            }*/
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
             $this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
-            
-
+            $device->setIcon('Server_Linux.png');
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -233,7 +243,9 @@ class DeviceController extends Controller
                 foreach($device->getControlProtocolTypes() as $controlProtocolType) {
                     array_push($controlProtocolTypes, $controlProtocolType->getId());
                 }
-
+                if ($controlProtocolTypes == []) {
+                    $controlProtocolTypes = '';
+                }
                 $deviceData = [
                     "name" => $device->getName(),
                     "type" => $device->getType(),
@@ -254,9 +266,9 @@ class DeviceController extends Controller
                     "ethernet" => 1
                 ];
 
-                $yamlContent = Yaml::dump($deviceData);
+                $yamlContent = Yaml::dump($deviceData,2);
                 $fileName = u($device->getName())->camel();
-                file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
             
             if ('json' === $request->getRequestFormat()) {
@@ -285,17 +297,49 @@ class DeviceController extends Controller
      */
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
+        $data = json_decode($request->getContent(), true);
+        $lab = $this->labRepository->findById($id);
+
+        $no_array = true;
+        $ids = [];
+        if($data['count'] > 1) {
+            $no_array = false;
+            for($i = 1; $i <= $data['count']; $i++) {
+                if ($i > 1)
+                {
+                    $data['left'] =  $data['left'] + ( ( $i -1 ) % 5 )   * 60   ;
+                    $data['top'] =  $data['top'] + ( intval( ( $i -1 ) / 5 )  * 80 ) ;
+                }
+                $ids[] = $this->addDevice($lab, $data);
+            };
+        }
+        else {
+            $id = $this->addDevice($lab, $data);
+        }
+
+        
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).',
+            'data' => [
+                'id'=> $no_array? $ids : $id,
+            ]]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    public function addDevice($lab, $data)
+    {
         $device = new Device();
         $editorData = new EditorData();
-        $data = json_decode($request->getContent(), true);
-        //var_dump($data);exit;
-        $lab = $this->labRepository->findById($id);
-        //$this->logger->debug($textobject);
+        
         $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
         $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
         $flavor = $this->flavorRepository->findById($data['flavor']);
         $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
-        //$device->addLab($lab);
         if($data['core'] === '') {
             $device->setNbCore(null);
         }
@@ -315,29 +359,56 @@ class DeviceController extends Controller
         else {
             $device->setNbThread($data['thread']);
         }
-        $device->setCount($data['count']);
-        $device->setName($data['name']);
+        //$device->setCount($data['count']);
+        if($data['name'] != '') {
+            $device->setName($data['name']);
+        }
+        else {
+            $device->setName('Unamed device');
+        }
         $device->setType($data['type']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
         $device->setOperatingSystem($operatingSystem[0]);
         $device->setHypervisor($hypervisor[0]);
-        $device->addControlProtocolType($controlProtocolType[0]);
-        $device->setDelay($data['delay']);
+        if($controlProtocolType != null) {
+            $device->addControlProtocolType($controlProtocolType[0]);
+        }
+        if($data['delay'] != '') {
+            $device->setDelay($data['delay']);
+        }
+        else {
+            $device->setDelay(0);
+        }
         $device->setPostFix($data['postfix']);
         $device->setIsTemplate(false);
         $device->setLaunchOrder(0);
         $device->setVirtuality(0);
-        $device->setNbCpu(1);
+        if($data['cpu'] != '') {
+            $device->setNbCpu($data['cpu']);
+        }
+        else{
+            $device->setNbCpu(1);
+        }
         $device->setCreatedAt(new \DateTime());
         $device->setTemplate($data['template']);
         $device->setModel($data['model']);
 
-        $editorData->setX($data['top']);
-        $editorData->setY($data['left']);
+        if($data['top'] != '') {
+            $editorData->setX($data['top']);
+        }
+        else {
+            $editorData->setX(0);
+        }
+       
+        if($data['left'] != '') {
+            $editorData->setY($data['left']);
+        }
+        else {
+            $editorData->setY(0);
+        }
         $device->setEditorData($editorData);
-        //$device->setUuid(new Uuid);
         
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
@@ -351,16 +422,7 @@ class DeviceController extends Controller
 
         $this->logger->info("Device named" . $device->getName() . " created");
 
-        $response = new Response();
-        $response->setContent(json_encode([
-            'code' => 200,
-            'status'=> 'success',
-            'message' => 'Lab has been saved (60023).',
-            'data' => [
-                'id'=>$device->getId(),
-            ]]));
-        $response->headers->set('Content-Type', 'application/json');
-        return $response;
+        return $device->getId();
     }
     /**
      * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
@@ -420,6 +482,15 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
+            /*if ($device->getIsTemplate() == true) {
+                foreach (scandir('/opt/remotelabz/config/templates') as $filename) {
+                    if(u($oldName)->camel() != u($device->getName())->camel()) {
+                        if(is_file('/opt/remotelabz/config/templates/'. u($device->getName())->camel() . '.yaml')) {
+                            throw new NotFoundHttpException("The name " . $device->getName() . " already exists as a template");
+                        }
+                    }
+                }
+            }*/
             $nbNetworkInterface=count($device->getNetworkInterfaces());
             $wanted_nbNetworkInterface=$deviceForm->get("networkInterfaces")->getData();
             if (!is_int($wanted_nbNetworkInterface) || ($wanted_nbNetworkInterface > 19)) {
@@ -464,6 +535,9 @@ class DeviceController extends Controller
             foreach($device->getControlProtocolTypes() as $controlProtocolType) {
                 array_push($controlProtocolTypes, $controlProtocolType->getId());
             }
+            if ($controlProtocolTypes == []) {
+                $controlProtocolTypes = '';
+            }
             
             $deviceData = [
                 "name" => $device->getName(),
@@ -490,18 +564,18 @@ class DeviceController extends Controller
             $oldFileName = u($oldName)->camel();
             if ($isTemplate == true && $device->getIsTemplate() == true) {
                 if ($oldName == $device->getName()) {
-                    file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                    file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
                 }
                 else {
-                    unlink("/opt/remotelabz/config/templates/". $oldFileName . ".yaml");
-                    file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                    unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $oldFileName . ".yaml");
+                    file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
                 }
             }
             else if($isTemplate == true && $device->getIsTemplate() == false) {
-                unlink("/opt/remotelabz/config/templates/". $oldName . ".yaml");
+                unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $oldName . ".yaml");
             }
             else if($isTemplate == false && $device->getIsTemplate() == true) {
-                file_put_contents("/opt/remotelabz/config/templates/". $fileName . ".yaml", $yamlContent);
+                file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -545,7 +619,9 @@ class DeviceController extends Controller
         $data = json_decode($request->getContent(), true);   
 
         $device->setCount($data['count']);
-        $device->setName($data['name']);
+        if($data['name'] != '') {
+            $device->setName($data['name']);
+        }
         $device->setPostFix($data['postfix']);
 
         if(isset($data['config'])) {
@@ -584,15 +660,24 @@ class DeviceController extends Controller
             $device->setOperatingSystem($operatingSystem[0]);
             $device->setHypervisor($hypervisor[0]);
             $device->addControlProtocolType($controlProtocolType[0]);
-            $device->setDelay($data['delay']);
+            if($data['delay'] != '') {
+                $device->setDelay($data['delay']);
+            }
+            else {
+                $device->setDelay(0);
+            }
             $device->setTemplate($data['template']);
             $device->setModel($data['model']);
         }
     
         if( $data['top'] !== null || $data['left'] !== null) {
             $editorData = $device->getEditorData();
-            $editorData->setX($data['top']);
-            $editorData->setY($data['left']);
+            if($data['top'] != '') {
+                $editorData->setX($data['top']);
+            }
+            if($data['left'] != '') {
+                $editorData->setY($data['left']);
+            }
             $device->setEditorData($editorData);
         }
 
@@ -730,7 +815,7 @@ class DeviceController extends Controller
         }
         if($device->getIsTemplate()== true) {
             $fileName = u($device->getName())->camel();
-            unlink("/opt/remotelabz/config/templates/". $fileName . ".yaml");
+            unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml");
         }
 
         $entityManager = $this->getDoctrine()->getManager();

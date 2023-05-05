@@ -1,0 +1,17 @@
+name: Debian-cnt
+type: container
+icon: null
+operatingSystem: 8
+flavor: 1
+controlProtocol: ''
+hypervisor: 4
+brand: Debian
+model: Stable
+description: Debian-cnt
+cpu: 1
+core: null
+socket: null
+thread: null
+context: remotelabz
+config_script: embedded
+ethernet: 1

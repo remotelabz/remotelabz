@@ -100,6 +100,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                         <h4 className="mb-0">Instances</h4>
                     </div>
                     <div>
+                    <Button variant="danger" className="ml-2" href={`/labs/${props.labInstance.lab.id}/see/${props.labInstance.id}`}>See Lab</Button>
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }

@@ -22,7 +22,7 @@ export var LONGTIMEOUT = 600000;
 export var STATUSINTERVAL = 5000;
 
 // Global vars
-var EMAIL;
+export var EMAIL;
 export var FOLDER;
 export var LAB;
 export var LANG;
@@ -33,9 +33,11 @@ export var USERNAME;
 export var ATTACHMENTS;
 export var UPDATEID;
 export var LOCK = 0 ; 
+export var EDITION;
 export var isIE = getInternetExplorerVersion() > -1;
 export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
 export var EVE_VERSION = "5.0.1-19";
+export var AUTHOR;
 
 export function setFolder(value){
 	FOLDER = value;
@@ -46,8 +48,14 @@ export function setLab(value){
 export function setLang(value){
 	LANG = value;
 }
+export function setEmail(value){
+	EMAIL = value;
+}
 export function setName(value){
 	NAME = value;
+}
+export function setUserName(value){
+	USERNAME = value;
 }
 export function setRole(value){
 	ROLE = value;
@@ -64,6 +72,14 @@ export function setLock(value){
 
 export function setAttachements(value) {
 	ATTACHMENTS = value;
+}
+
+export function setEditon(value) {
+	EDITION = value;
+}
+
+export function setAuthor(value) {
+	AUTHOR = value;
 }
 
 $(document).ready(function() {

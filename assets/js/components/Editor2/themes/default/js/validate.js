@@ -146,7 +146,10 @@ export function validateLabPicture() {
         rules: {
             'picture[name]': {
                 required: true
-            }
+            },
+			'picture[file]':{
+				required: true
+			}
         }
     });
 }

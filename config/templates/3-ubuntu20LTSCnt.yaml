@@ -1,0 +1,18 @@
+name: Ubuntu20LTS-cnt
+type: container
+icon: null
+operatingSystem: 7
+flavor: 1
+controlProtocol:
+    - 5
+hypervisor: 4
+brand: Ubuntu
+model: 'Version Focal 20 LTS'
+description: Ubuntu20LTS-cnt
+cpu: 1
+core: null
+socket: null
+thread: null
+context: remotelabz
+config_script: embedded
+ethernet: 1

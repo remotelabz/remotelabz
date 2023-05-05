@@ -1,0 +1,17 @@
+name: 'Linux Alpine'
+type: vm
+icon: null
+operatingSystem: 5
+flavor: 2
+controlProtocol: ''
+hypervisor: 3
+brand: Test
+model: 'Test model'
+description: 'Linux Alpine'
+cpu: 1
+core: null
+socket: null
+thread: null
+context: remotelabz
+config_script: embedded
+ethernet: 1

@@ -31,7 +31,7 @@ import './components/Editor2/themes/default/js/validate';
 import './components/Editor2/themes/default/js/colorpicker.min';
 import './components/Editor2/themes/default/js/browsers';
 //import './components/Editor2/themes/default/js/src/ace';
-import 'ace-builds/src-noconflict/ace';
+//import 'ace-builds/src-noconflict/ace';
 //import './components/Editor2/themes/default/js/src/ext-language_tools';
 /*import './components/Editor2/themes/default/js/ebs/functions';
 import './components/Editor2/themes/default/js/ebs/actions';

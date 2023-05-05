@@ -1,0 +1,18 @@
+name: Alpine3.15-cnt
+type: container
+icon: null
+operatingSystem: 9
+flavor: 1
+controlProtocol:
+    - 5
+hypervisor: 4
+brand: Alpine
+model: 'Version 3.15'
+description: Alpine3.15-cnt
+cpu: 1
+core: null
+socket: null
+thread: null
+context: remotelabz
+config_script: embedded
+ethernet: 1

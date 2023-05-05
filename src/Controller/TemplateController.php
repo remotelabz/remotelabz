@@ -61,6 +61,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Yaml\Yaml;
+use function Symfony\Component\String\u;
 /*use Symfony\Component\Serializer\Encoder\YamlEncoder;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -128,7 +129,7 @@ class TemplateController extends Controller
                         $node_templates = array_merge ( $node_templates , $custom_templates );
                 }
             natcasesort(  $node_templates ) ;
-
+            
         $response = new Response();
         $response->setContent(json_encode([
             'code'=> 200,
@@ -140,19 +141,31 @@ class TemplateController extends Controller
     }
 
     /**
-     * @Route("/templates/{template<\w+>}", name="show_template", methods="GET")
+     * @Route("/templates/{id<\d+>}", name="show_template", methods="GET")
      * 
-     * @Rest\Get("/api/list/templates/{template<\w+>}", name="api_get_template")
+     * @Rest\Get("/api/list/templates/{id<\d+>}", name="api_get_template")
      */
     public function showAction(
-        string $template,
+        int $id,
         Request $request)
     {
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
 
-        $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$template.'.yaml'));
-        $p['template'] = $template;
+
+        $device = $this->deviceRepository->find($id);
+        $deviceName = u($device->getName())->camel();
+ 
+        /*if($id == null) {
+            $response->setContent(json_encode([
+                'code' => 400,
+                'status'=>'fail',
+                'message' => 'Requested template not found.'])
+            );
+            return $response;
+        }*/
+        $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml'));
+        $p['template'] = $deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
 
@@ -181,15 +194,15 @@ class TemplateController extends Controller
             'value' => $p['icon'] ?? '',
             'list' => $this->listNodeIcons()
         );
-        $data['options']['config'] = Array(
+        /*$data['options']['config'] = Array(
 			'name' => 'Startup configuration',
 			'type' => 'list',
             'multiple'=> false,
 			'value' => '0',	// None
 			'list' => $this->listNodeConfigTemplates()
-		);
-		$data['options']['config']['list'][0] = 'None';	// None
-		$data['options']['config']['list'][1] = 'Exported';	// Exported
+		);*/
+		//$data['options']['config']['list'][0] = 'None';	// None
+		//$data['options']['config']['list'][1] = 'Exported';	// Exported
 
         $data['options']['delay'] = Array(
             'name' => 'Delay (s)',

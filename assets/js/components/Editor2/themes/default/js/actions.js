@@ -12,7 +12,7 @@
  * @version 20160719
  */
 
-import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, setAttachements} from './javascript';
+import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, setAttachements} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -34,7 +34,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          zoompic, dirname, basename } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
-import * as ace from 'ace-builds/src-noconflict/ace';
+//import * as ace from 'ace-builds/src-noconflict/ace';
 
 var KEY_CODES = {
     "tab": 9,
@@ -79,7 +79,8 @@ $(document).on('keydown', 'body', function (e) {
         $('.ui-selecting').removeClass('ui-selecting')
         $("#lab-viewport").removeClass('freeSelectMode')
         lab_topology.clearDragSelection();
-        if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
               lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
         }
     }
@@ -356,14 +357,16 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
 
     if ( window.connContext == 1 ) {
            window.connContext = 0
-           if (ROLE == "user" || LOCK == 1 ) return;
+           if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 ) return;
+           //if (ROLE == "ROLE_USER" || LOCK == 1 ) return;
            body = '';
            body += '<li><a class="action-conndelete" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
            printContextMenu('Connection', body, e.pageX, e.pageY,false,"menu");
            return;
     }
 
-    if (ROLE != "user" && LOCK == 0 ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    //if (ROLE != "ROLE_USER" && LOCK == 0 ) {
         var body = '';
         body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
         body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
@@ -420,14 +423,17 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                         '<a class="action-nodestop  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                 '<i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[67] +
                 '</a>' +
-                '</li>' +
-                '<li>' +
+                '</li>';
+                /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
+                body += '<li>' +
                         '<a class="action-nodewipe menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                 '<i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[68] +
                 '</a>' +
-                '</li>' +
                 '</li>';
-        if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+                }*/
+                body += '</li>';
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                  /*body +=   '<li>' +
                            '<a class="action-nodeexport" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                            '<i class="glyphicon glyphicon-save"></i> ' + MESSAGES[69] +
@@ -446,7 +452,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                     '</div>'+
                 '</li>';*/
                 // Read privileges and set specific actions/elements
-                if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
 
                     body += '<li role="separator" class="divider">';/* +
                         '<li>' +
@@ -529,7 +536,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                 '<li>' +
                         '<a class="action-openconsole-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[169] + '</a>' +
                 '</li>';
-            if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+            if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+            //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
                 body += '' +
                     '<li role="separator" class="divider"></li>' +
                     '<li>' +
@@ -575,7 +583,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
         }
 
     } else if ($(this).hasClass('network_frame')) {
-        if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
 
 
             logger(1, 'DEBUG: opening network context menu');
@@ -603,7 +612,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                         '</li>' ;
 	  }
     } else if ($(this).hasClass('customShape')) {
-        if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
             logger(1, 'DEBUG: opening text object context menu');
             var textObject_id = $(this).attr('data-path')
             var elId =  $(this).attr('id');
@@ -699,7 +709,8 @@ $(document).on('change input', 'input[name="node[count]"]', function(e){
 // plug show/hide event
 
 $(document).on('mouseover','.node_frame, .network_frame', function (e) {
-    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 && ( $(this).attr('data-status') == 0 || $(this).attr('data-status') == undefined ) && !$('#lab-viewport').hasClass('freeSelectMode') ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0  && ( $(this).attr('data-status') == 0 || $(this).attr('data-status') == undefined ) && !$('#lab-viewport').hasClass('freeSelectMode') ) {
+    //if ((ROLE != 'ROLE_USER') && LOCK == 0 && ( $(this).attr('data-status') == 0 || $(this).attr('data-status') == undefined ) && !$('#lab-viewport').hasClass('freeSelectMode') ) {
          $(this).find('.tag').removeClass("hidden");
         }
 }) ;
@@ -1151,9 +1162,12 @@ $(document).on('click', '.action-moreactions', function (e) {
     var body = '';
     body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
     body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
-    body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
+    /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
+        body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
+    }*/
     //body += '<li><a class="action-openconsole-all" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[168] + '</a></li>';
-    if ((ROLE == 'admin' || ROLE == 'editor') && LOCK == 0 ) {
+    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
         //body += '<li><a class="action-nodesexport" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
         //body += '<li><a class="action-nodesbootsaved" href="javascript:void(0)"><i class="glyphicon glyphicon-flash"></i> ' + MESSAGES[139] + '</a></li>';
@@ -1263,6 +1277,7 @@ $(document).on('click', '.action-nodeplace, .action-networkplace, .action-custom
             // if ($('#mouse_frame').length > 0) {
                 // ESC not pressed
                 var values = {};
+                console.log($("#lab-viewport").data('contextClickXY'));
                 if ( $("#lab-viewport").data('contextClickXY') ) {
                         values['left'] = $("#lab-viewport").data('contextClickXY').x - 30;
                         values['top'] = $("#lab-viewport").data('contextClickXY').y;
@@ -1561,7 +1576,8 @@ $(document).on('click', '.action-picturesget', function (e) {
             $.each(pictures, function (key, picture) {
                 var title = picture['name'] || "pic name";
                 body += '<li>';
-                if (ROLE != "user" && LOCK != 1 ) {
+                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK != 1 ) {
+                //if (ROLE != "ROLE_USER" && LOCK != 1 ) {
                     body += '<a class="delete-picture" style="margin-right: 5px;" href="javascript:void(0)" data-path="' + key + '"><i class="glyphicon glyphicon-trash" title="Delete"></i> ';
                     body += '<a class="action-pictureedit" href="javascript:void(0)" data-path="' + key + '"><i class="glyphicon glyphicon-edit" title="Edit"></i> ';
                 }
@@ -2690,44 +2706,7 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
     var form_data = form2Array('node');
     console.log('form data ', form_data)
     var promises = [];
-    /*var nodes = {
-        1:{
-            console:"telnet",
-            delay:0, 
-            id:1, 
-            left: 510, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:186, 
-            url:"telnet://192.168.107.182:32769", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        },
-        2:{
-            console:"telnet",
-            delay:0, 
-            id:2, 
-            left: 606, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:237, 
-            url:"telnet://192.168.107.182:32770", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        }
-    }*/
+
     if ( form_data['template'] == "" ) {
           return false;
     }
@@ -2757,8 +2736,6 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
         form_data['count'] = 1;
         form_data['postfix'] = 0;
     }
-    /*nodes[3] = form_data;
-    console.log("nodes: ", nodes)*/
        var request = $.ajax({
             cache: false,
             timeout: TIMEOUT,
@@ -4285,7 +4262,8 @@ $(document).on('click','#lab-viewport', function (e) {
         $('.ui-selecting').removeClass('ui-selecting')
         $('#lab-viewport').removeClass('freeSelectMode')
         lab_topology.clearDragSelection()
-        if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        i//f ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
               lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
         }
    }
@@ -4312,7 +4290,8 @@ $(document).on('click', '.customShape', function (e) {
                      $('.ui-selecting').removeClass('ui-selecting')
                      $('#lab-viewport').removeClass('freeSelectMode')
                      lab_topology.clearDragSelection()
-                     if ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+                     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                     //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                           lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
                      }
                      e.preventDefault();
@@ -4376,7 +4355,8 @@ $(document).on('click', '.node.node_frame a', function (e) {
 
                 var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
                     '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
-                if  ((ROLE == 'admin' || ROLE == 'editor') &&  LOCK == 0  ) {
+                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                      network += '<li><a style="display: block;" class="action-nodeedit " data-path="' + node_id +
                      '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
                 }
