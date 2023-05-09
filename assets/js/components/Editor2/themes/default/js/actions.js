@@ -1165,7 +1165,7 @@ $(document).on('dblclick', '.action-labpreview', function (e) {
 $(document).on('click', '.action-moreactions', function (e) {
     logger(1, 'DEBUG: action = moreactions');
     var body = '';
-    if (EDITION ==0) {
+    if (EDITION == 0) {
         body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
         body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
     }

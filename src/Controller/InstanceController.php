@@ -218,7 +218,7 @@ class InstanceController extends Controller
         }
         if($data['edition'] == 1) {
             $response->setContent(json_encode([
-                'code'=> 400,
+                'code '=> 400,
                 'status'=>'fail',
                 'message' => 'You can not start device in edit mode.']));
                 return $response;

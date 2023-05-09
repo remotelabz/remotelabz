@@ -239,7 +239,7 @@ class DeviceController extends Controller
             "image"=> $device->getImage(),
             "url"=>$device->getUrl(),
             "config"=>$device->getConfig(),
-            "status"=>$status,
+            "status"=> $status,
             "ethernet"=>$device->getEthernet(), 
             "cpu"=>$device->getNbCpu(),
             "core"=>$device->getNbCore(),

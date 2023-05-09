@@ -4262,7 +4262,7 @@ function createNodeListRow(template, id){
         html_data += '<td><div class="action-controls">';
         if (EDITION == 0) {
             html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
-                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>'
+                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
                          //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
         }
         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
