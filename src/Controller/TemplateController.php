@@ -156,14 +156,9 @@ class TemplateController extends Controller
         $device = $this->deviceRepository->find($id);
         $deviceName = u($device->getName())->camel();
  
-        /*if($id == null) {
-            $response->setContent(json_encode([
-                'code' => 400,
-                'status'=>'fail',
-                'message' => 'Requested template not found.'])
-            );
-            return $response;
-        }*/
+        if (!is_file('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
+            $this->newAction($devicels);
+         }
         $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml'));
         $p['template'] = $deviceName;
 
