@@ -3666,11 +3666,12 @@ export function printLabTopology() {
 
         });*/
         $.each(nodes, function (key, value) {
-            if ( value['url'].indexOf('token') != -1 ) {
+            /*if ( value['url'].indexOf('token') != -1 ) {
                var hrefbuf='<a href="' + value['url'] + '" target="'+ value['name']  +'" >' ;
             } else {
                var hrefbuf='<a href="' + value['url'] + '" >' ;
-            }
+            }*/
+            var hrefbuf='<a href="javascript(0)" >' ;
             $labViewport.append(
                 '<div id="node' + value['id'] + '" ' +
                 'class="context-menu node node' + value['id'] + ' node_frame "' +

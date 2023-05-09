@@ -4361,11 +4361,13 @@ $(document).on('click', '.node.node_frame a', function (e) {
         $.when(getNodes(node_id))
             .then(function (node) {
 
+                if (EDITION == 0) {
                 var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
                     '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
+                }
                 if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
                 //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
-                     network += '<li><a style="display: block;" class="action-nodeedit " data-path="' + node_id +
+                    var network = '<li><a style="display: block;" class="action-nodeedit " data-path="' + node_id +
                      '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
                 }
 
