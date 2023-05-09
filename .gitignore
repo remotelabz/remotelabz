@@ -54,3 +54,4 @@ vagrant/provision_prod.sh
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
+config/templates/

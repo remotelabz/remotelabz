@@ -151,7 +151,7 @@ class TemplateController extends Controller
     {
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
-
+        $this->logger->debug("Device id request : ".$id);
 
         $device = $this->deviceRepository->find($id);
         $deviceName = u($device->getName())->camel();
