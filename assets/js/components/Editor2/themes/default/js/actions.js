@@ -409,37 +409,39 @@ $(document).on('contextmenu', '.context-menu', function (e) {
         logger(1, 'DEBUG: opening node context menu');
 
     var node_id = $(this).attr('data-path');
-    if(parseInt($('#node'+node_id).attr('data-status')) != 2){
-        content = '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
-                '<i class="glyphicon glyphicon-play"></i> ' + MESSAGES[66] +
-                '</a>' +
-                '</li>';
-    }
+        if(parseInt($('#node'+node_id).attr('data-status')) != 2){
+            content = '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
+                    '<i class="glyphicon glyphicon-play"></i> ' + MESSAGES[66] +
+                    '</a>' +
+                    '</li>';
+        }
 
-        var title = $(this).attr('data-name') + " (" + node_id + ")"
-            , body =
-                content+
-                '<li>' +
-                        '<a class="action-nodestop  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
-                '<i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[67] +
-                '</a>' +
-                '</li>';
-                /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
-                body += '<li>' +
-                        '<a class="action-nodewipe menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
-                '<i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[68] +
-                '</a>' +
-                '</li>';
-                }*/
-                body += '</li>';
-        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+            var title = $(this).attr('data-name') + " (" + node_id + ")";
+            if(EDITION == 0) {
+                body =
+                    content+
+                    '<li>' +
+                            '<a class="action-nodestop  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
+                    '<i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[67] +
+                    '</a>' +
+                    '</li>';
+                    /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
+                    body += '<li>' +
+                            '<a class="action-nodewipe menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
+                    '<i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[68] +
+                    '</a>' +
+                    '</li>';
+                    }*/
+                    body += '</li>';
+    }
+        //if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
         //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                  /*body +=   '<li>' +
                            '<a class="action-nodeexport" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                            '<i class="glyphicon glyphicon-save"></i> ' + MESSAGES[69] +
                            '</a>' +
                            '</li>';*/
-        }
+        //}
                 // capture section
                 /*body += '<li role="separator" class="divider">' +
                 '</li>' +
@@ -455,7 +457,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                 if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
                 //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
 
-                    body += '<li role="separator" class="divider">';/* +
+                    //body += '<li role="separator" class="divider">';
+                    /* +
                         '<li>' +
                             '<a class="action-nodeinterfaces" data-path="' + node_id + '" data-name="' + title + '"  data-status="'+ status +'" href="javascript:void(0)">' +
                         '<i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[72] +
@@ -523,14 +526,16 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
         if (isFreeSelectMode) {
             window.contextclick = 1
-            body = '' +
-                '<li>' +
+            body = '' ;
+            if (EDITION == 0) {
+                body += '<li>' +
                     '<a class="action-nodestart-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[153] + '</a>' +
                 '</li>' +
                 '<li>' +
                     '<a class="action-nodestop-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[154] + '</a>' +
-                '</li>' +
-                '<li>' +
+                '</li>';
+            }
+            body += '<li>' +
                     '<a class="action-nodewipe-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[155] + '</a>' +
                 '</li>' +
                 '<li>' +
@@ -1160,8 +1165,10 @@ $(document).on('dblclick', '.action-labpreview', function (e) {
 $(document).on('click', '.action-moreactions', function (e) {
     logger(1, 'DEBUG: action = moreactions');
     var body = '';
-    body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
-    body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
+    if (EDITION ==0) {
+        body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
+        body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
+    }
     /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
         body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
     }*/

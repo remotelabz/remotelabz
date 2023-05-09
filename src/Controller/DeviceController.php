@@ -142,13 +142,7 @@ class DeviceController extends Controller
                 }
             }
             else {
-                $deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab);
-                if($deviceInstance->getState() == 'started') {
-                    $status = 2;
-                }
-                else if($deviceInstance->getState() == 'stopped') {
-                    $status = 0;
-                }
+                $status = 0;
             }
 
             $data[$device->getId()] = [
@@ -206,8 +200,8 @@ class DeviceController extends Controller
     public function showActionTest(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
-        $lab = $labRepository->find($labId);
-        $data = json_decode($request->getContent(), true);
+        $lab = $this->labRepository->find($labId);
+        $nodeData = json_decode($request->getContent(), true);
         if (!$device) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
@@ -215,6 +209,12 @@ class DeviceController extends Controller
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
             $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
             $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
+            if($deviceInstance->getState() == 'started') {
+                $status = 2;
+            }
+            else if ($deviceInstance->getState() == 'stopped'){
+                $status = 0;
+            }
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
             $response->setContent(json_encode([
@@ -224,15 +224,10 @@ class DeviceController extends Controller
                 return $response;
         }
         if($nodeData['edition'] == 1) {
-            $deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab);
-        }
-
-        if($deviceInstance->getState() == 'started') {
-            $status = 2;
-        }
-        else if ($deviceInstance->getState() == 'stopped'){
             $status = 0;
         }
+
+        
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
@@ -244,7 +239,7 @@ class DeviceController extends Controller
             "image"=> $device->getImage(),
             "url"=>$device->getUrl(),
             "config"=>$device->getConfig(),
-            "status"=>$device->getStatus(),
+            "status"=>$status,
             "ethernet"=>$device->getEthernet(), 
             "cpu"=>$device->getNbCpu(),
             "core"=>$device->getNbCore(),
@@ -253,8 +248,7 @@ class DeviceController extends Controller
             "flavor"=>$device->getFlavor()->getId(),
             "template"=>$device->getTemplate(),
             "brand"=>$device->getBrand(),
-            "model"=>$device->getModel(),
-            "status"=>$device->getStatus()
+            "model"=>$device->getModel()
         ];
 
         $response = new Response();

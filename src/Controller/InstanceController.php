@@ -217,13 +217,11 @@ class InstanceController extends Controller
                 return $response;
         }
         if($data['edition'] == 1) {
-            if (!$deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab)) {
-                $response->setContent(json_encode([
-                    'code'=> 404,
-                    'status'=>'Not Found',
-                    'message' => 'Device Instance is not found']));
-                    return $response;
-            }
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'You can not start device in edit mode.']));
+                return $response;
         }
         $entityManager = $this->getDoctrine()->getManager();
         //var_dump($deviceInstance->getDevice()); exit;
@@ -264,8 +262,33 @@ class InstanceController extends Controller
     {
         $lab = $labRepository->find($labId);
         $device = $deviceRepository->find($deviceId);
-        if (!$deviceInstance = $this->deviceInstanceRepository->findByUserDeviceAndLab($this->getUser(), $device, $lab)) {
-            throw new NotFoundHttpException('No instance with ID ' . $id . ".");
+        $data = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($data['edition'] == 0 && $data['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($data['labInstance']);
+            if (!$deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance)) {
+                $response->setContent(json_encode([
+                    'code'=> 404,
+                    'status'=>'Not Found',
+                    'message' => 'Device Instance is not found']));
+                    return $response;
+            }
+        }
+        if($data['edition'] == 0 && $data['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($data['edition'] == 1) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'You can not stop device in edit mode.']));
+                return $response;
         }
 
         $entityManager = $this->getDoctrine()->getManager();
