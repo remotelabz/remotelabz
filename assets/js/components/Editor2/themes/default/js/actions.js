@@ -535,15 +535,15 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                     '<a class="action-nodestop-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[154] + '</a>' +
                 '</li>';
             }
-            body += '<li>' +
+            /*body += '<li>' +
                     '<a class="action-nodewipe-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[155] + '</a>' +
                 '</li>' +
                 '<li>' +
                         '<a class="action-openconsole-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[169] + '</a>' +
-                '</li>';
+                '</li>';*/
             if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
             //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
-                body += '' +
+                /*body += '' +
                     '<li role="separator" class="divider"></li>' +
                     '<li>' +
                         '<a class="action-nodeexport-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a>' +
@@ -553,9 +553,9 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                     '</li>' +
                     '<li>' +
                         '<a class="action-nodesbootscratch-group" href="javascript:void(0)"><i class="glyphicon glyphicon-floppy-save"></i> ' + MESSAGES[140] + '</a>' +
-                    '</li>';
-                body += '<li role="separator" class="divider">' +
-                        '<li>' +
+                    '</li>';*/
+                //body += '<li role="separator" class="divider">' +
+                body += '<li>' +
                         '<a class="action-halign-group" data-path="node' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                         '<i class="glyphicon glyphicon-object-align-horizontal"></i> ' + MESSAGES[204] +
                         '</a>' +
@@ -572,9 +572,9 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                         '</li>' ;
             body += '' +
                 '<li role="separator" class="divider"></li>' +
-                '<li>' +
+                /*'<li>' +
                     '<a class="action-nodesbootdelete-group" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> ' + MESSAGES[159] + '</a>' +
-                '</li>' +
+                '</li>' +*/
                 '<li>' +
                     '<a class="action-nodedelete-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> ' + MESSAGES[157] + '</a>' +
                 '</li>' +
@@ -1172,7 +1172,7 @@ $(document).on('click', '.action-moreactions', function (e) {
     /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
         body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
     }*/
-    
+
     //body += '<li><a class="action-openconsole-all" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[168] + '</a></li>';
     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
     //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
@@ -1316,7 +1316,7 @@ $(document).on('click', '.action-nodeplace, .action-networkplace, .action-custom
 
 $(document).on('click', '.action-halign-group', function (e) {
         $('#context-menu').remove();
-        node_id = $(this).attr('data-path');
+        var node_id = $(this).attr('data-path');
         var target = $(this);
         var zoom = $('#zoomslide').slider("value")/100 ;
         var isFreeSelectMode = $("#lab-viewport").hasClass("freeSelectMode")
@@ -1334,7 +1334,7 @@ $(document).on('click', '.action-halign-group', function (e) {
 
 $(document).on('click', '.action-valign-group', function (e) {
         $('#context-menu').remove();
-        node_id = $(this).attr('data-path');
+        var node_id = $(this).attr('data-path');
         var target = $(this);
         var zoom = $('#zoomslide').slider("value")/100 ;
         var isFreeSelectMode = $("#lab-viewport").hasClass("freeSelectMode")
@@ -1401,18 +1401,18 @@ $(document).on('click', '.action-calign-group', function (e) {
         var height = Math.round( $('#' + node_id).outerHeight(true) / 2)
         var hpos = Math.round($('#' + node_id).position().top / zoom) + height;
         window.moveCount = 0 ;
-        step = -1 ;
+        var step = -1 ;
         //angle= Math.round( 360 / ( $('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customS0hape.ui-selecting').length ));
-        nbo=$('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customS0hape.ui-selecting').length;
-        angle=Math.round(360 / nbo )
+        var nbo=$('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customS0hape.ui-selecting').length;
+        var angle=Math.round(360 / nbo )
         logger(1, 'DEBUG: action angle = ' + angle )
         $('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customShape.ui-selecting').each( function ( id, node ) {
                 width = Math.round( $('#' + node.id).outerWidth(true) /  2)  ;
                 height = Math.round( $('#' + node.id).outerHeight(true) / 2) ;
                 step += 1 ;
-                radius =  angle * step * Math.PI / 180 ;
-                x = hpos + Math.round( Math.sin(radius) * nbo * 20 ) - height
-                y = vpos + Math.round( Math.cos(radius) * nbo * 20 ) - width
+                var radius =  angle * step * Math.PI / 180 ;
+                var x = hpos + Math.round( Math.sin(radius) * nbo * 20 ) - height
+                var y = vpos + Math.round( Math.cos(radius) * nbo * 20 ) - width
                 //$('#' + node.type + node.path).position().top = vpos ;
                 $('#' + node.id).css({top: x });
                 $('#' + node.id).css({left: y });

@@ -2194,23 +2194,39 @@ export function start(node_id) {
 }
 
 // Start nodes recursive
-export function recursive_start(nodes, i) {//??
+export function recursive_start(nodes, i) {
     i = i - 1;
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
+    var labInstance;
+    var edition;
+    var pathname = window.location.pathname;
+    console.log(EDITION);
+    if(EDITION == 1) {
+        labInstance = null;
+        edition = EDITION;
+    }
+    if(EDITION == 0) {
+       labInstance = pathname.split(/(\d+)/)[3];
+       edition = EDITION;
+    }
+    var node_data = {};
+    node_data['edition'] = edition;
+    node_data['labInstance'] = labInstance;
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
         var url = '/api/labs/' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
     } else {
         var url = '/api/labs/' + lab_filename + '/nodes/' + nodes[Object.keys(nodes)[i]]['path'] + '/start';
     }
     console.log("Object keys :",Object.keys(nodes))
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: node(s) started.');
