@@ -1172,6 +1172,7 @@ $(document).on('click', '.action-moreactions', function (e) {
     /*if((ROLE != 'ROLE_USER') && LOCK == 0) {
         body += '<li><a class="action-nodeswipe" href="javascript:void(0)"><i class="glyphicon glyphicon-erase"></i> ' + MESSAGES[128] + '</a></li>';
     }*/
+    
     //body += '<li><a class="action-openconsole-all" href="javascript:void(0)"><i class="glyphicon glyphicon-console"></i> ' + MESSAGES[168] + '</a></li>';
     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
     //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {

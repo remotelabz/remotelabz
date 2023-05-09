@@ -209,6 +209,7 @@ class InstanceController extends Controller
                     return $response;
             }
         }
+        
         if($data['edition'] == 0 && $data['labInstance'] == null) {
             $response->setContent(json_encode([
                 'code'=> 400,

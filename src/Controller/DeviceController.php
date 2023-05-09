@@ -237,7 +237,7 @@ class DeviceController extends Controller
             "top"=> $device->getEditorData()->getX(),
             "icon"=> $device->getIcon(),
             "image"=> $device->getImage(),
-            "url"=>$device->getUrl(),
+            "url"=> $device->getUrl(),
             "config"=>$device->getConfig(),
             "status"=> $status,
             "ethernet"=>$device->getEthernet(), 
