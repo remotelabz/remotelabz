@@ -62,10 +62,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
-/*use Symfony\Component\Serializer\Encoder\YamlEncoder;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;*/
 
 
 class TemplateController extends Controller
@@ -86,7 +82,6 @@ class TemplateController extends Controller
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         FlavorRepository $flavorRepository,
         DeviceRepository $deviceRepository
-        //SerializerBuilder $serializerBuilder
         )
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
@@ -98,7 +93,6 @@ class TemplateController extends Controller
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->flavorRepository = $flavorRepository;
         $this->deviceRepository = $deviceRepository;
-        //$this->serializerBuilder = $serializerBuilder;
     }
 
     /**
@@ -110,6 +104,12 @@ class TemplateController extends Controller
     public function indexAction(Request $request)
     {
 
+        $templates = $this->deviceRepository->findByTemplate(true);
+        foreach ($templates as $template) {
+            if (!is_file('/opt/remotelabz/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
+               $this->newAction($template);
+            }
+        }
         $node_templates = Array();
         $node_config = Array();
         foreach ( scandir('/opt/remotelabz/config/templates/') as $element ) {
@@ -364,5 +364,38 @@ class TemplateController extends Controller
                 $flavorList[$flavor->getId()] = $flavor->getName() ;
             }
         return $flavorList;
+    }
+
+    public function newAction($template) {
+        $controlProtocolTypes= [];
+        foreach($template->getControlProtocolTypes() as $controlProtocolType) {
+            array_push($controlProtocolTypes, $controlProtocolType->getId());
+        }
+        if ($controlProtocolTypes == []) {
+            $controlProtocolTypes = '';
+        }
+    $templateData = [
+        "name" => $template->getName(),
+        "type" => $template->getType(),
+        "icon" => $template->getIcon(),
+        "operatingSystem" => $template->getOperatingSystem()->getId(),
+        "flavor" => $template->getFlavor()->getId(),
+        "controlProtocol" => $controlProtocolTypes,
+        "hypervisor" => $template->getHypervisor()->getId(),
+        "brand" => $template->getBrand(),
+        "model" => $template->getModel(),
+        "description" => $template->getName(),
+        "cpu" => $template->getNbCpu(),
+        "core" => $template->getNbCore(),
+        "socket" => $template->getNbSocket(),
+        "thread" => $template->getNbSocket(),
+        "context" => "remotelabz",
+        "config_script" => "embedded",
+        "ethernet" => 1
+    ];
+
+    $yamlContent = Yaml::dump($templateData,2);
+
+    file_put_contents("/opt/remotelabz/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
     }
 }

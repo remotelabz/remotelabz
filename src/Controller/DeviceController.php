@@ -152,7 +152,7 @@ class DeviceController extends Controller
             }
 
             $data[$device->getId()] = [
-                "id"=>$device->getId(),
+                "id"=> $device->getId(),
                 "name"=> $device->getName(),
                 "type"=> $device->getType(),
                 "console"=> $device->getConsole(),
@@ -161,11 +161,11 @@ class DeviceController extends Controller
                 "top"=> $device->getEditorData()->getX(),
                 "icon"=> $device->getIcon(),
                 "image"=> $device->getImage(),
-                "ram"=>$device->getFlavor()->getMemory(),
-                "url"=>$device->getUrl(),
-                "template"=>$device->getTemplate(),
+                "ram"=> $device->getFlavor()->getMemory(),
+                "url"=> $device->getUrl(),
+                "template"=> $device->getTemplate(),
                 "status"=> $status,
-                "ethernet"=>$device->getEthernet()
+                "ethernet"=> $device->getEthernet()
             ];
         }
 
