@@ -2748,6 +2748,7 @@ export function printFormNode(action, values, fromNodeList) {
                         if(key == 'nvram') postName = '(KB)';
                         // Print all options from template
                         var value_set = (node_values != null && node_values[key] != null) ? node_values[key] : value['value'];
+                        console.log("value_set ", value_set);
                         if (value['type'] == 'list') {
                             var select = '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
                             if (value['multiple'] != false) {
@@ -2775,10 +2776,15 @@ export function printFormNode(action, values, fromNodeList) {
                             $.each(value['list'], function (list_key, list_value) {
                                 var selected = (list_key == value_set) ? 'selected ' : '';
                                 if(typeof(value_set) == "object") {
+                                    var contain = false;
                                     value_set.forEach(value => {
-                                        selected = (list_key == value) ? 'selected ' : '';
-                                        html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
+                                        if(list_key == value) {
+                                            contain = true;
+                                            return;
+                                        }
                                     });
+                                    selected = (contain) ? 'selected ' : '';
+                                    html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
                                 }
                                 else{
                                     var iconselect = '' ;

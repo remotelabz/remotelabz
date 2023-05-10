@@ -157,7 +157,7 @@ class TemplateController extends Controller
         $deviceName = u($device->getName())->camel();
  
         if (!is_file('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
-            $this->newAction($devicels);
+            $this->newAction($device);
          }
         $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml'));
         $p['template'] = $deviceName;

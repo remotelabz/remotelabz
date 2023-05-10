@@ -190,11 +190,6 @@ class Device implements InstanciableInterface
      */
     private $delay = 0;
 
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $console;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
@@ -203,22 +198,11 @@ class Device implements InstanciableInterface
     private $icon;
 
     /**
-     * @ORM\Column(type="string", length=70, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $url;
-
-    /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Serializer\Groups({"api_get_device"})
      */
     private $template;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $image;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
@@ -231,12 +215,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device"})
      */
     private $postfix;
-
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $port;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
@@ -614,7 +592,7 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getConsole(): ?string
+    /*public function getConsole(): ?string
     {
         return $this->console;
     }
@@ -648,7 +626,7 @@ class Device implements InstanciableInterface
         $this->url = $url;
 
         return $this;
-    }
+    }*/
 
     public function getTemplate(): ?string
     {
@@ -698,7 +676,7 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getPort(): ?int
+    /*public function getPort(): ?int
     {
         return $this->port;
     }
@@ -708,7 +686,7 @@ class Device implements InstanciableInterface
         $this->port = $port;
 
         return $this;
-    }
+    }*/
 
     public function getConfig(): ?int
     {

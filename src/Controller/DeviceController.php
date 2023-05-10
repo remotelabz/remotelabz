@@ -149,14 +149,14 @@ class DeviceController extends Controller
                 "id"=> $device->getId(),
                 "name"=> $device->getName(),
                 "type"=> $device->getType(),
-                "console"=> $device->getConsole(),
+                //"console"=> $device->getConsole(),
                 "delay"=> $device->getDelay(),
                 "left"=> $device->getEditorData()->getY(),
                 "top"=> $device->getEditorData()->getX(),
                 "icon"=> $device->getIcon(),
-                "image"=> $device->getImage(),
+                //"image"=> $device->getImage(),
                 "ram"=> $device->getFlavor()->getMemory(),
-                "url"=> $device->getUrl(),
+                //"url"=> $device->getUrl(),
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
                 "ethernet"=> $device->getEthernet()
@@ -226,18 +226,22 @@ class DeviceController extends Controller
         if($nodeData['edition'] == 1) {
             $status = 0;
         }
-
+        $controlProtocolTypes = [];
+        foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+            //$controlProtocolTypes[$controlProtocolType->getId()] = $controlProtocolType->getName();
+            array_push($controlProtocolTypes, $controlProtocolType->getId());
+        }
         
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
-            "console"=> $device->getConsole(),
+            //"console"=> $device->getConsole(),
             "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
             "top"=> $device->getEditorData()->getX(),
             "icon"=> $device->getIcon(),
-            "image"=> $device->getImage(),
-            "url"=> $device->getUrl(),
+            //"image"=> $device->getImage(),
+            //"url"=> $device->getUrl(),
             "config"=>$device->getConfig(),
             "status"=> $status,
             "ethernet"=>$device->getEthernet(), 
@@ -248,7 +252,10 @@ class DeviceController extends Controller
             "flavor"=>$device->getFlavor()->getId(),
             "template"=>$device->getTemplate(),
             "brand"=>$device->getBrand(),
-            "model"=>$device->getModel()
+            "model"=>$device->getModel(),
+            "controlProtocol" => $controlProtocolTypes,
+            "hypervisor" => $device->getHypervisor()->getId(),
+            "operatingSystem" => $device->getOperatingSystem()->getId()
         ];
 
         $response = new Response();
@@ -397,7 +404,11 @@ class DeviceController extends Controller
         $editorData = new EditorData();
         
         $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
-        $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+        //$controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+        foreach($data['controlProtocol'] as $controlProtocolTypeId) {
+            $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
+            $device->addControlProtocolType($controlProtocolType[0]);
+        }
         $flavor = $this->flavorRepository->findById($data['flavor']);
         $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
         if($data['core'] === '') {
@@ -432,9 +443,9 @@ class DeviceController extends Controller
         $device->setFlavor($flavor[0]);
         $device->setOperatingSystem($operatingSystem[0]);
         $device->setHypervisor($hypervisor[0]);
-        if($controlProtocolType != null) {
+        /*if($controlProtocolType != null) {
             $device->addControlProtocolType($controlProtocolType[0]);
-        }
+        }*/
         if($data['delay'] != '') {
             $device->setDelay($data['delay']);
         }
@@ -474,10 +485,10 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $lab->addDevice($device);
         $entityManager->flush();
-        $device->setPort(32768 + 128 + $device->getId());
-        $url = $this->getConsoleUrl(false, $this->getUser()->getUsername(), $device);
+        //$device->setPort(32768 + 128 + $device->getId());
+        //$url = $this->getConsoleUrl(false, $this->getUser()->getUsername(), $device);
         $editorData->setDevice($device);
-        $device->setUrl($url);
+        //$device->setUrl($url);
         $entityManager->flush();
 
         $this->logger->info("Device named" . $device->getName() . " created");
@@ -675,7 +686,6 @@ class DeviceController extends Controller
     public function updateActionTest(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->findById($id)[0];
-
         $data = json_decode($request->getContent(), true);   
 
         $device->setCount($data['count']);
@@ -690,7 +700,21 @@ class DeviceController extends Controller
 
         if(isset($data['type'])) {
             $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
-            $controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
+
+            foreach ($device->getControlProtocolTypes() as $proto) {
+                $proto->removeDevice($device);
+                //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
+            }
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($device);
+            $entityManager->flush();
+
+            if(sizeof($data['controlProtocol']) > 0) {
+                foreach($data['controlProtocol'] as $controlProtocolTypeId) {
+                    $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
+                    $device->addControlProtocolType($controlProtocolType[0]);
+                }
+            }
             $flavor = $this->flavorRepository->findById($data['flavor']);
             $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
         
@@ -719,7 +743,6 @@ class DeviceController extends Controller
             $device->setFlavor($flavor[0]);
             $device->setOperatingSystem($operatingSystem[0]);
             $device->setHypervisor($hypervisor[0]);
-            $device->addControlProtocolType($controlProtocolType[0]);
             if($data['delay'] != '') {
                 $device->setDelay($data['delay']);
             }
