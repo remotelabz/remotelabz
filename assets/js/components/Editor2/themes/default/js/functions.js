@@ -1945,49 +1945,12 @@ export function setNodeData(id){
     var form_data = form2ArrayByRow('node', id);
     var promises = [];
     logger(1, 'DEBUG: posting form-node-edit form.');
-    var url = '/api/labs' + lab_filename + '/nodes/' + id;
+    var url = '/api/labs/' + lab_filename + '/node/' + id;
     var type = 'PUT';
     form_data['id'] = id;
     form_data['count'] = 1;
     form_data['postfix'] = 0;
-    /*var nodes = {
-        1:{
-            console:"telnet",
-            delay:0, 
-            id:1, 
-            left: 510, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:186, 
-            url:"telnet://192.168.107.182:32769", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        },
-        2:{
-            console:"telnet",
-            delay:0, 
-            id:2, 
-            left: 606, 
-            icon:"Desktop.png", 
-            image:"", 
-            name:"VPC", 
-            ram:1024, 
-            status:0, 
-            template:"vpcs", 
-            type:"vpcs", 
-            top:237, 
-            url:"telnet://192.168.107.182:32770", 
-            config_list:[], 
-            config:0, 
-            ethernet:1
-        }
-    }*/
+    console.log(form_data);
     for (var i = 0; i < form_data['count']; i++) {
         form_data['left'] = parseInt(form_data['left']) + i * 10;
         form_data['top'] = parseInt(form_data['top']) + i * 10;
@@ -2000,7 +1963,6 @@ export function setNodeData(id){
             data: JSON.stringify(form_data),
             success: function (data) {
                 if (data['status'] == 'success') {
-                    nodes[id] = form_data;
                     logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
                     // Close the modal
                     $("#node" + id + " .node_name").html('<i class="node' + id + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
@@ -2020,7 +1982,6 @@ export function setNodeData(id){
                 addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-flat" data-dismiss="modal">Close</button>');
             }
         });
-        console.log(nodes[id]);
         //promises.push(request);
     }
 
@@ -4198,11 +4159,11 @@ function createNodeListRow(template, id){
         /*readonlyAttr = (value_flavor != "n/a") ? "" : "readonly";
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[flavor]" value="' + value_flavor + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';*/
 
-        html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[type]" data-container="body">'
+        html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[flavor]" data-container="body">'
         value_set = (node_values != null && node_values['flavor'] != null) ? node_values['flavor'] : value['value'];
         $.each(template_values['options']['flavor']['list'], function (list_key, list_value) {
             var selected = (list_key == value_set) ? 'selected ' : '';
-            var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
+            //var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
             html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
         });
         html_data += '</select></td>';
@@ -4243,7 +4204,7 @@ function createNodeListRow(template, id){
         value_set = (node_values != null && node_values['type'] != null) ? node_values['type'] : value['value'];
         $.each(template_values['options']['type']['list'], function (list_key, list_value) {
             var selected = (list_key == value_set) ? 'selected ' : '';
-            var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
+            //var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
             html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
         });
         html_data += '</select></td>';

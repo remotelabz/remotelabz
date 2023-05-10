@@ -687,20 +687,29 @@ class DeviceController extends Controller
     {
         $device = $this->deviceRepository->findById($id)[0];
         $data = json_decode($request->getContent(), true);   
+        var_dump($data);
 
-        $device->setCount($data['count']);
-        if($data['name'] != '') {
-            $device->setName($data['name']);
+        if(isset($data['count'])) {
+            $device->setCount($data['count']);
         }
-        $device->setPostFix($data['postfix']);
+        if(isset($data['name'])) {
+            if($data['name'] != '') {
+                $device->setName($data['name']);
+            }
+        }
+        if(isset($data['postfix'])) {
+            $device->setPostFix($data['postfix']);
+        }
 
         if(isset($data['config'])) {
             $device->setConfig($data['config']);
         }
 
         if(isset($data['type'])) {
-            $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
-
+            $device->setType($data['type']);
+        }
+        
+        if(isset($data['controlProtocol'])) {
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->removeDevice($device);
                 //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
@@ -715,53 +724,90 @@ class DeviceController extends Controller
                     $device->addControlProtocolType($controlProtocolType[0]);
                 }
             }
-            $flavor = $this->flavorRepository->findById($data['flavor']);
-            $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
-        
+        }
+            
+        if(isset($data['core'])) {
             if($data['core'] === '') {
                 $device->setNbCore(null);
             }
             else {
-                $device->setNbCore($data['core']);
+                
+                $device->setNbCore((int)$data['core']);
             }
-    
+        }
+        if(isset($data['cpu'])) {
+            if($data['cpu'] === '' || $data['cpu'] === 0) {
+                $device->setNbCpu(1);
+            }
+            else {
+                
+                $device->setNbCpu((int)$data['cpu']);
+            }
+        }
+        if(isset($data['socket'])) {
             if($data['socket'] === '') {
                 $device->setNbSocket(null);
             }
             else {
-                $device->setNbSocket($data['socket']);
+                $device->setNbSocket((int)$data['socket']);
             }
+        }
+        if(isset($data['thread'])) {
             if($data['thread'] === '') {
                 $device->setNbThread(null);
             }
             else {
-                $device->setNbThread($data['thread']);
+                $device->setNbThread((int)$data['thread']);
             }
-            $device->setType($data['type']);
+        }
+            
+        if(isset($data['icon'])) {
             $device->setIcon($data['icon']);
+        }
+        if(isset($data['brand'])) {
             $device->setBrand($data['brand']);
+        }
+        
+        if(isset($data['flavor'])) {
+            $flavor = $this->flavorRepository->findById($data['flavor']);
             $device->setFlavor($flavor[0]);
+        }
+        if(isset($data['operatingSystem'])) {
+            $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
             $device->setOperatingSystem($operatingSystem[0]);
+        }
+        if(isset($data['hypervisor'])) {
+            $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
             $device->setHypervisor($hypervisor[0]);
+        }
+        if(isset($data['delay'])) {
             if($data['delay'] != '') {
                 $device->setDelay($data['delay']);
             }
             else {
                 $device->setDelay(0);
             }
+        }
+
+        if(isset($data['template'])) {
             $device->setTemplate($data['template']);
+        }
+        if(isset($data['model'])) {
             $device->setModel($data['model']);
         }
+        
     
-        if( $data['top'] !== null || $data['left'] !== null) {
-            $editorData = $device->getEditorData();
-            if($data['top'] != '') {
-                $editorData->setX($data['top']);
+        if(isset($data['top']) && isset($data['left'])) {
+            if( $data['top'] !== null || $data['left'] !== null) {
+                $editorData = $device->getEditorData();
+                if($data['top'] != '') {
+                    $editorData->setX($data['top']);
+                }
+                if($data['left'] != '') {
+                    $editorData->setY($data['left']);
+                }
+                $device->setEditorData($editorData);
             }
-            if($data['left'] != '') {
-                $editorData->setY($data['left']);
-            }
-            $device->setEditorData($editorData);
         }
 
         $entityManager = $this->getDoctrine()->getManager();
