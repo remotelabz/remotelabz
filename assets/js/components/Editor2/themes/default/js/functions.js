@@ -3731,6 +3731,9 @@ export function printLabTopology() {
                $newTextObject.removeClass('move-selected');
                $newTextObject.removeClass('dragstopped');
                if ( labinfo['lock'] == 1 ) $newTextObject.resizable("disable")
+               if (EDITION == 0) {
+                $newTextObject.resizable("disable")
+               }
                 if (--textObjectsCount === 0) {
                     labTextObjectsResolver.resolve();
                 }
@@ -4333,9 +4336,11 @@ export function printListTextobjects(textobjects) {
             '<th>' + MESSAGES[92] + '</th>' +
             '<th>' + MESSAGES[19] + '</th>' +
             '<th>' + MESSAGES[95] + '</th>' +
-            '<th style="width:69%">' + MESSAGES[146] + '</th>' +
-            '<th style="width:9%">' + MESSAGES[99] + '</th>' +
-            '</tr>' +
+            '<th style="width:69%">' + MESSAGES[146] + '</th>';
+            if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                body += '<th style="width:9%">' + MESSAGES[99] + '</th>';
+            }
+            body +='</tr>' +
             '</thead>' +
             '<tbody>'
         ;
@@ -4353,16 +4358,14 @@ export function printListTextobjects(textobjects) {
             '<td>' + value['id'] + '</td>' +
             '<td>' + value['name'] + '</td>' +
             '<td>' + value['type'] + '</td>' +
-            '<td>' + text + '</td>' +
-            '<td>';
+            '<td>' + text + '</td>';
         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
         //if (ROLE != "ROLE_USER" && LOCK == 0  ) {
-             body += '<a class="action-textobjectdelete '+ textClass +'" data-path="' + value['id'] + '" data-name="' + value['name'] + '" href="javascript:void(0)" title="' + MESSAGES[65] + '">' +
+             body += '<td><a class="action-textobjectdelete '+ textClass +'" data-path="' + value['id'] + '" data-name="' + value['name'] + '" href="javascript:void(0)" title="' + MESSAGES[65] + '">' +
                 '<i class="glyphicon glyphicon-trash" style="margin-left:20px;"></i>' +
-                '</a>'
+                '</a></td>'
         }
-        body += '</td>' +
-            '</tr>';
+        body += '</tr>';
     });
     body += '</tbody></table></div>';
     addModalWide(MESSAGES[150], body, '');
@@ -5365,7 +5368,7 @@ export function printFormEditText(id) {
         $('.edit-custom-text-form .btn-text-italic').addClass('active');
         firstTextValues['text-type-italic'] = 'italic'
     }
-    if ($("#customText" + id + " p").css('font-weight') == 'bold') {
+    if ($("#customText" + id + " p").css('font-weight') == 'bold' || $("#customText" + id + " p").css('font-weight') == 700) {
         $('.edit-custom-text-form .btn-text-bold').addClass('active');
         firstTextValues['text-type-bold'] = 'bold';
     }
@@ -5411,7 +5414,7 @@ function rgb2hex(color) {
 }
 
 // Change from Hex to RGB color
-function hex2rgb(hex, opacity) {
+export function hex2rgb(hex, opacity) {
     hex = hex.replace('#', '');
     var r = parseInt(hex.substring(0, 2), 16);
     var g = parseInt(hex.substring(2, 4), 16);

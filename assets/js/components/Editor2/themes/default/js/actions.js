@@ -31,7 +31,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         zoompic, dirname, basename } from'./functions.js';
+         zoompic, dirname, basename, hex2rgb } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 //import * as ace from 'ace-builds/src-noconflict/ace';
@@ -418,7 +418,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
             var title = $(this).attr('data-name') + " (" + node_id + ")";
             if(EDITION == 0) {
-                body =
+                body +=
                     content+
                     '<li>' +
                             '<a class="action-nodestop  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
@@ -4364,14 +4364,14 @@ $(document).on('click', '.node.node_frame a', function (e) {
                 if (EDITION == 0) {
                 var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
                     '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
+                    printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
                 }
                 if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
                 //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                     var network = '<li><a style="display: block;" class="action-nodeedit " data-path="' + node_id +
                      '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
+                     printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
                 }
-
-                printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
             })
             .fail(function (message) {
                 addMessage('danger', message);
