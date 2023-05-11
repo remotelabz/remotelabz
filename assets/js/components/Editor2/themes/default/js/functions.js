@@ -4082,10 +4082,10 @@ function createNodeListRow(template, id){
         var value_set = "";
         var readonlyAttr = "";
         var value_name      = node_values['name'];
-        var value_cpu       = node_values['cpu'] || "n/a";
-        var value_core = node_values['core'] || "n/a";
-        var value_socket = node_values['socket'] || "n/a";
-        var value_thread = node_values['thread'] || "n/a";
+        var value_cpu       = node_values['cpu'] || 0;
+        var value_core = node_values['core'] || 0;
+        var value_socket = node_values['socket'] || 0;
+        var value_thread = node_values['thread'] || 0;
         var value_flavor = node_values['flavor'] || "n/a";
         //var value_cpulimit       = node_values['cpulimit'] ;
 	//if ( value_cpulimit == uvalue_flavorndefined )  value_cpulimit = "n/a";

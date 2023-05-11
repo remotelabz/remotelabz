@@ -480,6 +480,20 @@ class DeviceController extends Controller
             $editorData->setY(0);
         }
         $device->setEditorData($editorData);
+
+        //Check validity of cpu number with other parameters
+        $total=1;
+        if ($device->getNbCore()!=0)
+            $total=$total*$device->getNbCore();
+        if ($device->getNbSocket()!=0)
+            $total=$total*$device->getNbSocket();
+        if ($device->getNbThread()!=0)
+             $total=$total*$device->getNbThread();
+        //$this->logger->debug("Total CPU :".$total);
+        
+        if ($device->getNbCpu() < $total ) {
+            $device->setNbCpu($total);
+        }
         
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
@@ -491,7 +505,7 @@ class DeviceController extends Controller
         //$device->setUrl($url);
         $entityManager->flush();
 
-        $this->logger->info("Device named" . $device->getName() . " created");
+        $this->logger->info("Device named '" . $device->getName() . "' created");
 
         return $device->getId();
     }
@@ -687,14 +701,22 @@ class DeviceController extends Controller
     {
         $device = $this->deviceRepository->findById($id)[0];
         $data = json_decode($request->getContent(), true);   
-        var_dump($data);
 
         if(isset($data['count'])) {
             $device->setCount($data['count']);
         }
         if(isset($data['name'])) {
             if($data['name'] != '') {
+                $oldDeviceName = $device->getName();
                 $device->setName($data['name']);
+
+                if($device->getNetworkInterfaces() != null) {
+                    foreach($device->getNetworkInterfaces() as $interface) {
+                        $oldInterfaceNameId = explode($oldDeviceName."_net", $interface->getName())[1];
+                        $newInterfaceName = $device->getName()."_net".$oldInterfaceNameId;
+                        $interface->setName($newInterfaceName);                       
+                    }
+                }
             }
         }
         if(isset($data['postfix'])) {
@@ -808,6 +830,20 @@ class DeviceController extends Controller
                 }
                 $device->setEditorData($editorData);
             }
+        }
+
+        //Check validity of cpu number with other parameters
+        $total=1;
+        if ($device->getNbCore()!=0)
+            $total=$total*$device->getNbCore();
+        if ($device->getNbSocket()!=0)
+            $total=$total*$device->getNbSocket();
+        if ($device->getNbThread()!=0)
+             $total=$total*$device->getNbThread();
+        //$this->logger->debug("Total CPU :".$total);
+        
+        if ($device->getNbCpu() < $total ) {
+            $device->setNbCpu($total);
         }
 
         $entityManager = $this->getDoctrine()->getManager();
