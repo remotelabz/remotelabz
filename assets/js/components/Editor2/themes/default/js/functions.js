@@ -1424,8 +1424,8 @@ export function postLogin(param) {
 
         printPageLabOpen(LAB);
         // Update node status
-        var LabStatus = printLabStatus(LAB);
-        setUpdateId(setInterval(LabStatus, STATUSINTERVAL));
+        //var LabStatus = printLabStatus(LAB);
+        setUpdateId(setInterval(function () {printLabStatus(LAB)}, STATUSINTERVAL));
 
 
     }

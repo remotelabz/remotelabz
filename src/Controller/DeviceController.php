@@ -140,6 +140,12 @@ class DeviceController extends Controller
                 else if($deviceInstance->getState() == 'stopped') {
                     $status = 0;
                 }
+                else if ($deviceInstance->getState() == 'starting'){
+                    $status = 3;
+                }
+                else if ($deviceInstance->getState() == 'stopping'){
+                    $status = 1;
+                }
             }
             else {
                 $status = 0;
@@ -214,6 +220,12 @@ class DeviceController extends Controller
             }
             else if ($deviceInstance->getState() == 'stopped'){
                 $status = 0;
+            }
+            else if ($deviceInstance->getState() == 'starting'){
+                $status = 3;
+            }
+            else if ($deviceInstance->getState() == 'stopping'){
+                $status = 1;
             }
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
