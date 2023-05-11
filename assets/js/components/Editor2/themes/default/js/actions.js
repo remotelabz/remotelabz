@@ -357,7 +357,7 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
 
     if ( window.connContext == 1 ) {
            window.connContext = 0
-           if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 ) return;
+           if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 || EDITION == 0) return;
            //if (ROLE == "ROLE_USER" || LOCK == 1 ) return;
            body = '';
            body += '<li><a class="action-conndelete" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
@@ -2485,7 +2485,7 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
-    var path = form_data['path'].split(/(\d)/)[1];
+    var path = form_data['path'].split(/(\d+)/)[1];
     if ($(this).attr('id') == 'form-lab-add') {
         logger(1, 'DEBUG: posting form-lab-add form.');
         var url = '/api/labs';
@@ -2530,12 +2530,12 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
                     // Lab has been renamed, need to close it.
                     logger(1, 'DEBUG: lab "' + form_data['name'] + '" renamed.');
                     if ($('#lab-viewport').length) {
-                        $('#lab-viewport').attr({'data-path': dirname(form_data['path']) + '/' + form_data['name'] + '.unl'});
+                        $('#lab-viewport').attr({'data-path': path});
                         printLabTopology();
                     } else {
                         $.when(closeLab()).done(function () {
                             postLogin();
-                            printLabPreview(dirname(form_data['path']) + '/' + form_data['name'] + '.unl');
+                            printLabPreview(path);
                         }).fail(function (message) {
                             addModalError(message);
                         });
