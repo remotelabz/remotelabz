@@ -614,6 +614,7 @@ class DeviceController extends Controller
                 $device->setNbCpu($total);
             }
 
+            $device->setIcon("Server_Linux.png");
             $this->setDeviceHypervisorToOS($device);
 
             $controlProtocolTypes= [];

@@ -369,10 +369,15 @@ class TemplateController extends Controller
         if ($controlProtocolTypes == []) {
             $controlProtocolTypes = '';
         }
+        $icon = "Server_Linux.png";
+        if($template->getIcon() != null) {
+            $icon = $template->getIcon();
+        }
+
     $templateData = [
         "name" => $template->getName(),
         "type" => $template->getType(),
-        "icon" => $template->getIcon(),
+        "icon" => $icon,
         "operatingSystem" => $template->getOperatingSystem()->getId(),
         "flavor" => $template->getFlavor()->getId(),
         "controlProtocol" => $controlProtocolTypes,
@@ -386,7 +391,7 @@ class TemplateController extends Controller
         "thread" => $template->getNbSocket(),
         "context" => "remotelabz",
         "config_script" => "embedded",
-        "ethernet" => 1
+        "ethernet" => 1,
     ];
 
     $yamlContent = Yaml::dump($templateData,2);
