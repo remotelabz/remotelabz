@@ -25,7 +25,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 

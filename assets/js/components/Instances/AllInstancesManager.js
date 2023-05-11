@@ -12,6 +12,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
     
+    console.log(props);
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -100,7 +101,10 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                         <h4 className="mb-0">Instances</h4>
                     </div>
                     <div>
-                    <Button variant="danger" className="ml-2" href={`/labs/${props.labInstance.lab.id}/see/${props.labInstance.id}`}>See Lab</Button>
+                    {
+                        (!props.labInstance.lab.name.startsWith('Sandbox_')) && 
+                        <Button variant="danger" className="ml-2" href={`/labs/${props.labInstance.lab.id}/see/${props.labInstance.id}`}>See Lab</Button>
+                    }
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }
