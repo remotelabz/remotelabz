@@ -146,9 +146,42 @@ class DeviceController extends Controller
                 else if ($deviceInstance->getState() == 'stopping'){
                     $status = 1;
                 }
+                $uuid = $deviceInstance->getUuid();
             }
             else {
                 $status = 0;
+            }
+
+            $controlProtocolTypes = [];
+            $vnc = false;
+            $login = false;
+            $serial = false;
+            foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+                //$controlProtocolTypes[$controlProtocolType->getId()] = $controlProtocolType->getName();
+                array_push($controlProtocolTypes, $controlProtocolType->getId());
+                if ($controlProtocolType->getName() == 'vnc') {
+                    $vnc = true;
+                }
+                if ($vnc == false && $controlProtocolType->getName() == 'login') {
+                    $login = true;
+                }
+                if ($login == false && $vnc == false && $controlProtocolType->getName() == 'serial') {
+                    $serial == true;
+                }
+            }
+            
+            //choose the control protocol to open the console
+            if ($vnc == true) {
+                $finalControlProtocolType = 'vnc';
+            }
+            else if ($login == true) {
+                $finalControlProtocolType = 'login';
+            }
+            else if ($serial == true) {
+                $finalControlProtocolType = 'serial';
+            }
+            else {
+                $finalControlProtocolType = null;
             }
 
             $data[$device->getId()] = [
@@ -165,8 +198,13 @@ class DeviceController extends Controller
                 //"url"=> $device->getUrl(),
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
-                "ethernet"=> $device->getEthernet()
+                "ethernet"=> $device->getEthernet(),
+                "console" => $finalControlProtocolType,
             ];
+
+            if (isset($uuid)) {
+                $data[$device->getId()]["uuid"] = $uuid;
+            }
         }
 
         
@@ -227,6 +265,7 @@ class DeviceController extends Controller
             else if ($deviceInstance->getState() == 'stopping'){
                 $status = 1;
             }
+            $uuid = $deviceInstance->getUuid();
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
             $response->setContent(json_encode([
@@ -239,11 +278,37 @@ class DeviceController extends Controller
             $status = 0;
         }
         $controlProtocolTypes = [];
+        $vnc = false;
+        $login = false;
+        $serial = false;
         foreach($device->getControlProtocolTypes() as $controlProtocolType) {
             //$controlProtocolTypes[$controlProtocolType->getId()] = $controlProtocolType->getName();
             array_push($controlProtocolTypes, $controlProtocolType->getId());
+            if ($controlProtocolType->getName() == 'vnc') {
+                $vnc = true;
+            }
+            if ($vnc == false && $controlProtocolType->getName() == 'login') {
+                $login = true;
+            }
+            if ($login == false && $vnc == false && $controlProtocolType->getName() == 'serial') {
+                $serial == true;
+            }
         }
         
+        //choose the control protocol to open the console
+        if ($vnc == true) {
+            $finalControlProtocolType = 'vnc';
+        }
+        else if ($login == true) {
+            $finalControlProtocolType = 'login';
+        }
+        else if ($serial == true) {
+            $finalControlProtocolType = 'serial';
+        }
+        else {
+            $finalControlProtocolType = null;
+        }
+
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
@@ -267,8 +332,13 @@ class DeviceController extends Controller
             "model"=>$device->getModel(),
             "controlProtocol" => $controlProtocolTypes,
             "hypervisor" => $device->getHypervisor()->getId(),
-            "operatingSystem" => $device->getOperatingSystem()->getId()
+            "operatingSystem" => $device->getOperatingSystem()->getId(),
+            "console" => $finalControlProtocolType,
         ];
+
+        if (isset($uuid)) {
+            $data['uuid'] = $uuid;
+        }
 
         $response = new Response();
         $response->setContent(json_encode([

@@ -3638,7 +3638,15 @@ export function printLabTopology() {
             } else {
                var hrefbuf='<a href="' + value['url'] + '" >' ;
             }*/
-            var hrefbuf='<a href="javascript(0)" >' ;
+            var hrefbuf;
+            if (EDITION == 0 && value['console'] != null) {
+                hrefbuf = '<a href="/instances/' + value['uuid'] +'/view/' + value['console']+ '" target="_blank">';
+                
+            }
+            else {
+                hrefbuf = '<a href="javascript:void(0)" >' ;
+            }
+
             $labViewport.append(
                 '<div id="node' + value['id'] + '" ' +
                 'class="context-menu node node' + value['id'] + ' node_frame "' +
