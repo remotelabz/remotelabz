@@ -826,7 +826,15 @@ $(document).on('click', '.action-labadd', function (e) {
 $(document).on('click', '.action-labbodyget', function (e) {
     logger(1, 'DEBUG: action = labbodyget');
     $.when(getLabInfo($('#lab-viewport').attr('data-path')), getLabBody()).done(function (info, body) {
-        addModalWide(MESSAGES[64], '<h1>' + info['name'] + '</h1><center><p><code>ID: ' + info['id'] + '</code></p><p>' + info['description'] + '</p></center>' + body, '')
+        var html =  '<h1>' + info['name'] + '</h1><center><p><code>ID: ' + info['id'] + '</code></p>';
+        if(info['description'] != null) {
+            html +='<p>' + info['description'] + '</p>';
+        }
+        html += '</center>';
+        if (body != null) {
+            html += body;
+        }
+        addModalWide(MESSAGES[64],html, '')
     }).fail(function (message1, message2) {
         if (message1 != null) {
             addModalError(message1);
