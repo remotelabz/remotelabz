@@ -18,7 +18,7 @@ use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -48,7 +48,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
 
     private $entityManager;
 
-    private $passwordEncoder;
+    private $passwordHasher;
 
     private $JWTManager;
     private $params;
@@ -64,7 +64,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $remoteUserVar = null,
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager = null,
-        UserPasswordEncoderInterface $passwordEncoder = null,
+        UserPasswordHasherInterface $passwordHasher = null,
         JWTTokenManagerInterface $JWTManager,
         LoggerInterface $logger,
         ParameterBagInterface $params,
@@ -74,7 +74,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
         $this->remoteUserVar = $remoteUserVar ?: 'HTTP_EPPN';
         $this->urlGenerator = $urlGenerator;
         $this->entityManager = $entityManager;
-        $this->passwordEncoder = $passwordEncoder;
+        $this->passwordHasher = $passwordHasher;
         $this->JWTManager = $JWTManager;
         $this->logger = $logger;
         $this->params = $params;
@@ -131,7 +131,7 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
                 $role = array("ROLE_USER");
                 $user
                     ->setEmail($email)
-                    ->setPassword($this->passwordEncoder->encodePassword(
+                    ->setPassword($this->passwordHasher->encodePassword(
                         $user,
                         random_bytes(32)
                     ))
@@ -271,12 +271,12 @@ class ShibbolethAuthenticator extends AbstractGuardAuthenticator
     /**
      * @return bool
      */
-    public function supportsRememberMe()
+    public function supportsRememberMe(): bool
     {
         return false;
     }
 
-    public function supports(Request $request)
+    public function supports(Request $request): bool
     {
         if (!$this->params->get("enable_shibboleth")) {
             return false;

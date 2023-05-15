@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserFixtures extends Fixture implements ContainerAwareInterface
 {
@@ -20,11 +20,11 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
      */
     protected $container;
 
-    private $passwordEncoder;
+    private $passwordHasher;
 
-    public function __construct(UserPasswordEncoderInterface $passwordEncoder)
+    public function __construct(UserPasswordHasherInterface $passwordHasher)
     {
-        $this->passwordEncoder = $passwordEncoder;
+        $this->passwordHasher = $passwordHasher;
     }
 
     public function load(ObjectManager $manager)
@@ -36,7 +36,7 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
             ->setFirstName("John")
             ->setEmail("root@localhost")
             ->setRoles(['ROLE_SUPER_ADMINISTRATOR'])
-            ->setPassword($this->passwordEncoder->encodePassword(
+            ->setPassword($this->passwordHasher->hashPassword(
                 $user,
                 'admin'
             ));
