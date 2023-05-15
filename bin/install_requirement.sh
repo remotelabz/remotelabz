@@ -2,7 +2,7 @@
 
 apt-get update
 apt-get -y upgrade
-apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip ntp openvpn libapache2-mod-php7.4 fail2ban
+apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip ntp openvpn libapache2-mod-php7.4 fail2ban exim4
 php -r "copy('https://getcomposer.org/download/2.2.6/composer.phar', 'composer.phar');"
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
@@ -114,12 +114,22 @@ duplicate-cn
 push "route 10.11.0.0 255.255.0.0"
 EOF
 
+chown :www-data /etc/openvpn/client
+chmod g+w /etc/openvpn/client
+
 systemctl enable openvpn-server@server
 service openvpn-server@server start
 
 sysctl -w net.ipv4.ip_forward=1
 sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
+
+# To avoid error message "Too many opened files" and containers don't stop
+sysctl -n -w fs.inotify.max_user_instances=512
+sysctl -n -w fs.inotify.max_user_watches=16384
+echo "fs.inotify.max_user_watches=16384" >> /etc/sysctl.conf
+echo "fs.inotify.max_user_instances=512" >> /etc/sysctl.conf
+
 
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"

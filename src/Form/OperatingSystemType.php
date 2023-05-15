@@ -44,10 +44,11 @@ class OperatingSystemType extends AbstractType
                 'constraints' => [
                     new File([
                         'maxSize' => '3000M',
-                        'mimeTypes' => [
-                            "application/octet-stream"
+                /*        'mimeTypes' => [
+                            'application/octet-stream',
+                            'application/*'
                         ],
-                        'mimeTypesMessage' => "Please upload a valid image file",
+                        'mimeTypesMessage' => "Please upload a valid image file",*/
                     ])
                 ],
             ])
