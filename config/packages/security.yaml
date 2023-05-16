@@ -39,9 +39,7 @@ security:
         api:
             pattern:   ^/api
             stateless: true
-            guard:
-                authenticators:
-                    - lexik_jwt_authentication.jwt_token_authenticator
+            jwt: ~
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -52,10 +50,9 @@ security:
             security: false
 
         default:
-            guard:
-                authenticators:
-                    - App\Security\LoginFormAuthenticator
-                    - App\Security\ShibbolethAuthenticator
+            custom_authenticators:
+                - App\Security\LoginFormAuthenticator
+                - App\Security\ShibbolethAuthenticator
             entry_point: App\Security\LoginFormAuthenticator
 
             logout:

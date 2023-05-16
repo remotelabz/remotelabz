@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -24,10 +25,17 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Http\Logout\LogoutSuccessHandlerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
-use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
+//use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
+use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
+
+class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 {
     use TargetPathTrait;
 
@@ -36,6 +44,8 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
     private $csrfTokenManager;
     private $passwordHasher;
     private $JWTManager;
+    public const LOGIN_ROUTE = 'login';
+
     /**
      * @var RefreshTokenManagerInterface
      */
@@ -49,7 +59,8 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         UserPasswordHasherInterface $passwordHasher,
         JWTTokenManagerInterface $JWTManager,
         RefreshTokenManagerInterface $refreshTokenManager,
-        ContainerBagInterface $config
+        ContainerBagInterface $config,
+        UrlGeneratorInterface $urlGenerator
     ) {
         $this->entityManager = $entityManager;
         $this->router = $router;
@@ -58,6 +69,7 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         $this->JWTManager = $JWTManager;
         $this->refreshTokenManager = $refreshTokenManager;
         $this->config = $config;
+        $this->urlGenerator = $urlGenerator;
     }
 
     public function supports(Request $request): bool
@@ -66,7 +78,22 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
             && $request->isMethod('POST');
     }
 
-    public function getCredentials(Request $request): mixed
+    public function authenticate(Request $request): Passport
+    {
+        $email = $request->request->get('email', '');
+
+        $request->getSession()->set(Security::LAST_USERNAME, $email);
+
+        return new Passport(
+            new UserBadge($email),
+            new PasswordCredentials($request->request->get('password', '')),
+            [
+                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
+            ]
+        );
+    }
+
+    /*public function getCredentials(Request $request)
     {
         $credentials = [
             'email' => $request->request->get('email'),
@@ -79,9 +106,9 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         );
 
         return $credentials;
-    }
+    }*/
 
-    public function getUser($credentials, UserProviderInterface $userProvider): ?UserInterface
+    /*public function getUser($credentials, UserProviderInterface $userProvider): ?UserInterface
     {
         $token = new CsrfToken('authenticate', $credentials['csrf_token']);
         if (!$this->csrfTokenManager->isTokenValid($token)) {
@@ -100,18 +127,18 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         }
 
         return $user;
-    }
+    }*/
 
-    public function checkCredentials($credentials, UserInterface $user): bool
+    /*public function checkCredentials($credentials, UserInterface $user): bool
     {
         return $this->passwordHasher->isPasswordValid($user, $credentials['password']);
-    }
+    }*/
 
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
+    /*public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
     {
         $response = new RedirectResponse('/');
         /** @var User $user */
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+        /*$user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
 
         $jwtToken = $this->JWTManager->create($user);
         $now = new DateTime();
@@ -132,12 +159,37 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         }
 
         return $response;
+    }*/
+
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+    {
+        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+            return new RedirectResponse($targetPath);
+        }
+
+        $response = new RedirectResponse('/');
+        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+
+        $jwtToken = $this->JWTManager->create($user);
+        $now = new DateTime();
+        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
+
+        $response->headers->setCookie($jwtTokenCookie);
+        // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
+        $user->setLastActivity(new DateTime());
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+        // For example:
+        // return new RedirectResponse($this->urlGenerator->generate('some_route'));
+        // throw new \Exception('TODO: provide a valid redirect inside '.__FILE__);
+        return $response;
     }
+
 
     /**
      * @inheritDoc
      */
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
+    /*public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
         if ($request->hasSession()) {
             $request->getSession()->set(Security::AUTHENTICATION_ERROR, $exception);
@@ -147,14 +199,20 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         $url = $this->getLoginUrl($parameters);
 
         return new RedirectResponse($url);
-    }
+    }*/
 
-    protected function getLoginUrl($parameters = []): ?string
+    /*protected function getLoginUrl($parameters = []): ?string
     {
         return $this->router->generate('login', $parameters);
+    }*/
+
+    protected function getLoginUrl(Request $request): string
+    {
+        return $this->urlGenerator->generate(self::LOGIN_ROUTE);
     }
 
-    protected function createRefreshToken($user)
+
+    /*protected function createRefreshToken($user)
     {
         $valid = new \DateTime('now');
         $valid->add(new \DateInterval('P3D'));
@@ -167,5 +225,5 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator
         $this->refreshTokenManager->save($refreshToken);
 
         return $refreshToken->getRefreshToken();
-    }
+    }*/
 }
