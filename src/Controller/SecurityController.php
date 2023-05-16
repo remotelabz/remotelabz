@@ -23,6 +23,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use FOS\RestBundle\Controller\Annotations as Rest;
 
 class SecurityController extends AbstractController
 {
@@ -106,6 +107,24 @@ class SecurityController extends AbstractController
     public function jsonLogin(Request $request)
     {
         // logic is managed by JWT
+    }
+
+
+    /**
+     * @Route("/logout", name="logout")
+     * 
+     * @Rest\Get("/api/logout", name="api_logout")
+     */
+    public function logout()
+    {
+        $response = new Response();
+        $response->headers->clearCookie('bearer', '/', null);
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'logout']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**

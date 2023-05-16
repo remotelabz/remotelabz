@@ -1,0 +1,379 @@
+<div data-ng-include="'/themes/adminLTE/pages/main_layout/constant/header.html'" data-ng-controller="HeaderController">
+</div>
+<div class="wrapper">
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper" ng-controller="mainController">
+   
+      <!-- Content Header (Page header) -->
+      <section class="content-header">
+        <h1>
+          Top Navigation
+          <small>Example 2.0</small>
+        </h1>
+        <ol class="breadcrumb">
+          <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+          <li><a href="#">Layout</a></li>
+          <li class="active">Top Navigation</li>
+        </ol>
+      </section>
+
+    <!-- Main content -->
+<section class="content" ng-controller="ModalDemoCtrl">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="box box-solid">
+            <div class="box-header with-border">
+              <h3 class="box-title">File manager: {{path}}</h3>
+            </div>
+            <div class="box-body no-padding" style="display: block;">
+			  <div class="mailbox-controls">
+                <!-- Check all button -->
+                <button type="button" class="btn btn-default btn-sm checkbox-toggle" data-toggle="tooltip" title="Select All" data-ng-click="selectAll()" data-ng-show="!allCheckedFlag"><i class="fa fa-square-o"></i>
+                </button>
+				<button type="button" class="btn btn-default btn-sm checkbox-toggle" data-toggle="tooltip" title="Deselect All" data-ng-click="selectAll()" data-ng-show="allCheckedFlag"><i class="fa fa-check-square-o"></i>
+                </button>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Add new folder" data-ng-click="newElementName=''; elementToggleFun('Folder')"><i class="fa fa-folder"></i></button>
+                  <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Add new lab" data-ng-click="newElementName=''; elementToggleFun('File')"><i class="fa fa-file"></i></button>
+                  <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Edit selected item" data-ng-click="open()"><i class="fa fa-edit"></i></button>
+                  <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Delete selected items" data-ng-click="deleteALLElement()"><i class="fa fa-trash-o"></i></button>
+                </div>
+                <!-- /.btn-group -->
+                <button type="button" class="btn btn-default btn-sm" data-toggle="tooltip" title="Refresh" data-ng-click="fileMngDraw(path)"><i class="fa fa-refresh"></i></button> 
+                <!-- /.pull-right -->
+              </div>
+			  <div class="mailbox-controls" data-ng-show="newElementToggle">
+				<div class="form-group">
+					<div class="input-group input-group-sm">
+						<input type="text" class="form-control" placeholder="New {{thatCreate}} Name" data-ng-model="newElementName" style="border-radius:0px">
+							<span class="input-group-btn">
+							<button type="button" class="btn btn-success btn-flat" style="border-radius:0px" data-ng-click="createNewElement(thatCreate)">Add</button>
+							</span>
+						</div>
+					</div>
+			  </div>
+			  <div class="table-responsive mailbox-messages">
+                <table class="table table-hover table-striped" id="filesTree">
+                  <tbody>
+                  <tr data-ng-repeat="x in rootDir.folders">
+                    <td width="10%"><input type="checkbox" data-ng-show="x.name != '..'" name="{{x.name}}" class="Folder" data-ng-click="falseForSelAll()"/></td>
+                    <td class="mailbox-star"><a href="" data-ng-click="fileMngDraw(x.path, $event)"><i class="fa fa-folder" style="color:#dfba49"></i> {{x.name}} <img src="/themes/adminLTE/dist/img/waiting.gif" style="width:15px;height:15px;display:none"></a></td>
+                  </tr>
+				   <tr data-ng-repeat="x in rootDir.labs">
+                    <td width="10%"><input type="checkbox" name="{{x.file}}" class="File"/></td>
+                    <td class="mailbox-star"><a href="" data-ng-click="getLabInfo(x.path,  $event)"><i class="fa fa-file"></i> {{x.file}} <img src="/themes/adminLTE/dist/img/waiting.gif" style="width:15px;height:15px;display:none"></a></td>
+                  </tr>
+                  </tbody>
+                </table>
+                <!-- /.table -->
+              </div>
+            </div>
+            <!-- /.box-body -->
+          </div>
+          <!-- /. box -->
+        </div>
+        <!-- /.col -->
+        <div class="col-md-8">
+          <div class="box box-primary">
+            <div class="box-header with-border">
+              <h3 class="box-title">Lab Description</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="container">
+							<div class="form-group" data-ng-show="!fileSelected">
+								<label for="author">Choose a lab for more info</label>
+								<!--<input type="email" class="form-control" id="email">-->
+							</div>
+							<form role="form" data-ng-show="fileSelected">
+							<div class="form-group">
+								<label for="author">Author: {{labInfo.author}}</label>
+								<!--<input type="email" class="form-control" id="email">-->
+							</div>
+							<div class="form-group">
+								<label for="description">Description: {{labInfo.description}}</label>
+								
+							</div>
+							<div class="form-group">
+								<label for="description">Body:  {{labInfo.body}}</label>
+								
+							</div>
+							<div class="form-group">
+								<label for="filename">Filename:  {{labInfo.filename}}</label>
+								
+							</div>
+							<div class="form-group">
+								<label for="id">ID:  {{labInfo.id}}</label>
+								
+							</div>
+							<div class="form-group">
+								<label for="version">Version:  {{labInfo.version}}</label>
+								
+							</div>
+							</form>
+						</div>
+					</div>
+				</div>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer no-padding">
+				<div style="padding:5px;" data-ng-show="fileSelected">
+					<button type="button" class="btn btn-success btn-flat">Edit</button>
+				</div>
+            </div>
+          </div>
+          <!-- /. box -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+   <!-- /.content -->
+    
+  </div>
+  <!-- /.content-wrapper -->
+  
+  
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <!-- To the right -->
+    <div class="pull-right hidden-xs">
+      Anything you want
+    </div>
+    <!-- Default to the left -->
+    <strong>Copyright &copy; 2016 <a href="#">Company</a>.</strong> All rights reserved.
+  </footer>
+</div>
+<!-- ./wrapper -->
+<!-- AdminLTE App -->
+<link rel="stylesheet" href="/themes/adminLTE/dist/css/skins/skin-blue.min.css">
+<script src="/themes/adminLTE/dist/js/app.min.js"></script>
+<script>
+
+	function mainController($scope, $http, $location, $uibModal) {
+		$scope.testAUTH(); //TEST AUTH
+		//Default variables ///START
+		$scope.path='/';
+		$scope.newElementName='';
+		$scope.newElementToggle=false;
+		$scope.fileSelected=false;
+		$scope.allCheckedFlag=false;
+		//Default variables ///END
+		
+		$scope.falseForSelAll = function(){
+			$scope.allCheckedFlag=false;
+		}
+		
+		$('body').removeClass().addClass('hold-transition skin-blue layout-top-nav');
+		
+		//Drawing files tree ///START
+		$scope.fileMngDraw = function (path, $event){
+		if ($event!=='') angular.element($event.target).find( $('img') ).show()
+		$scope.path=path;
+		$http.get('/api/folders'+path).then(
+			function successCallback(response) {
+				$scope.rootDir = response.data.data;
+			}, 
+			function errorCallback(response) {
+				console.log("Unknown Error. Why did API doesn't respond?"); $location.path("/login");}	
+		);
+		}
+		$scope.fileMngDraw($scope.path, '');
+		//Drawing files tree ///END
+		////////////////////////////////////
+		//Get information about lab ///START
+		$scope.getLabInfo = function (name, $event){
+		if ($event!=='') angular.element($event.target).find( $('img') ).show()
+		$http.get('/api/labs'+name).then(
+			function successCallback(response) {
+				$scope.labInfo = response.data.data;
+				//console.log($scope.labInfo)
+				$scope.fileSelected=true;
+				if ($event!=='') angular.element($event.target).find( $('img') ).hide()
+			}, 
+			function errorCallback(response) {
+				console.log("Unknown Error. Why did API doesn't respond?"); $location.path("/login");}	
+		);
+		}
+		//Get information about lab ///END
+		////////////////////////////////////////////////
+		//Toggle view for input file/folder creations ///START
+		$scope.elementToggleFun = function (thatCreate){
+			if (!$scope.newElementToggle) {$scope.newElementToggle=true; $scope.thatCreate = thatCreate; return;}
+			if ($scope.thatCreate == thatCreate && $scope.newElementToggle) {$scope.newElementToggle = false;}
+			if (!$scope.newElementToggle) $scope.thatCreate = ''; 
+			$scope.thatCreate = thatCreate;
+		}
+		//Toggle view for input file/folder creations ///END
+		///////////////////////////////////////////////////
+		//Create NEW Element Folder OR Lab //START
+		$scope.createNewElement = function (element){
+			
+			if ($scope.newElementName=='') return;
+			//Create NEW Folder //START
+			if (element == 'Folder'){
+			$http({
+			method: 'POST',
+			url: '/api/folders',
+			data: {"path":$scope.path,"name":$scope.newElementName}})
+				.then(
+				function successCallback(response) {
+					$scope.fileMngDraw($scope.path, '');
+					$scope.newElementToggle = false;
+					$scope.newElementName='';
+				}, 
+				function errorCallback(response) {
+					console.log(response)
+					if (response.status==400) {toastr["error"]("Name already exist", "Error"); return;}
+					console.log("Unknown Error. Why did API doesn't respond?");
+					$location.path("/login");
+				}
+			);
+			}
+			//Create NEW Folder //END
+			/////////////////////////
+			//Create NEW Lab //START
+			//????????????//
+			//Create NEW Lab //END
+			////////////////////////
+		}
+		//Create NEW Element Folder OR Lab //END
+		///////////////////////////////////////
+		//Delete selected elements //START
+		$scope.deleteElement = function (elementName,thatis){
+			
+			//Delete folder//START
+			if (thatis == 'Folder'){
+				console.log('deleting folder '+elementName)
+				$http({
+				method: 'DELETE',
+				url: '/api/folders'+elementName})
+					.then(
+					function successCallback(response) {
+						//console.log(response)
+					}, 
+					function errorCallback(response) {
+						console.log(response)
+						console.log("Unknown Error. Why did API doesn't respond?");
+						$location.path("/login");
+					}
+				);
+			}
+			//Delete folder//END
+			////////////////////
+			//Delete file//START
+			if (thatis == 'File'){
+				console.log('delete file')
+			}
+			//Delete file//END
+			$scope.fileMngDraw($scope.path, ''); //recreate tree
+		}
+		//Delete selected elements //END
+		//Delete ALL selected elements //START
+		$scope.deleteALLElement = function (){
+			if ($('table#filesTree').find( $(':checked') ).length == 0) {alert('Select elements to delete.'); return;}
+			var folderArray=[];
+			var fileArray=[];
+			for (i = 0; i < $('table#filesTree').find( $(':checked') ).length; i++) {
+				var tempElement = $('table#filesTree').find( $(':checked') ).slice(i);
+				if (tempElement.hasClass('Folder')) { 
+					folderArray[tempElement.attr('name')] = $scope.path
+				}
+				else if (tempElement.hasClass('File')) { 
+					fileArray[tempElement.attr('name')] = $scope.path
+				}
+				tempElement = [];
+			}
+			var tempAllNames = ''
+			for (var foldername in folderArray){
+				tempAllNames += ' '+ foldername;
+			}
+			for (var filename in fileArray){
+				tempAllNames += ' '+ filename;
+			}
+			console.log(tempAllNames)
+			if (confirm('Are you sure you want to delete this item: ' + tempAllNames)){
+				for (var foldername in folderArray){
+					if (folderArray[foldername] != '/') fullpath=folderArray[foldername]+'/'+foldername
+					else fullpath='/'+foldername
+					$scope.deleteElement(fullpath,'Folder')
+				}
+				
+				for (var filename in fileArray){
+					$scope.deleteElement(filename,'File')
+				}
+			} else return;
+		}
+		//Delete ALL selected elements //END
+		//Select all elements //START
+		$scope.selectAll = function(){
+			if (!$scope.allCheckedFlag){
+				$('table#filesTree').find( $(':checkbox:visible') ).prop('checked', true);
+				$scope.allCheckedFlag=true;
+			} else if ($scope.allCheckedFlag){
+				$('table#filesTree').find( $(':checkbox:visible') ).prop('checked', false);
+				$scope.allCheckedFlag=false;
+			}
+		}
+		//Select all elements //END
+		
+		
+		
+		
+		
+		}
+		
+		function ModalDemoCtrl($scope, $uibModal, $log) {
+
+  $scope.items = ['item1', 'item2', 'item3'];
+
+  $scope.animationsEnabled = true;
+
+  $scope.open = function (size) {
+
+    var modalInstance = $uibModal.open({
+      animation: $scope.animationsEnabled,
+      templateUrl: '/themes/adminLTE/pages/modals/addfile.html',
+      controller: 'ModalInstanceCtrl',
+      size: size,
+      resolve: {
+        items: function () {
+          return $scope.items;
+        }
+      }
+    });
+
+    modalInstance.result.then(function (selectedItem) {
+      $scope.selected = selectedItem;
+    }, function () {
+      $log.info('Modal dismissed at: ' + new Date());
+    });
+  };
+
+  $scope.toggleAnimation = function () {
+    $scope.animationsEnabled = !$scope.animationsEnabled;
+  };
+
+};
+
+// Please note that $uibModalInstance represents a modal window (instance) dependency.
+// It is not the same as the $uibModal service used above.
+function ModalInstanceCtrl($scope, $uibModalInstance, items) {
+
+  $scope.items = items;
+  $scope.selected = {
+    item: $scope.items[0]
+  };
+
+  $scope.ok = function () {
+    $uibModalInstance.close($scope.selected.item);
+  };
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+};
+
+
+</script>

@@ -25,7 +25,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 
@@ -40,6 +40,30 @@ class Lab implements InstanciableInterface
      * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
     private $description;
+
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $tasks;
+
+    /**
+     * @ORM\Column(type="string", length=10, options={"default": "1"})
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $version = "1";
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 300})
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $scripttimeout = 300;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     */
+    private $locked = 0;
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
@@ -94,6 +118,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
+     * @ORM\JoinColumn(nullable=true)
      *
      * @var Collection|TextObject[]
      */
@@ -157,7 +182,55 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    /**
+    public function getTasks(): ?string
+    {
+        return $this->tasks;
+    }
+
+    public function setTasks(?string $tasks): self
+    {
+        $this->tasks = $tasks;
+
+        return $this;
+    }
+
+    public function getVersion(): ?string
+    {
+        return $this->version;
+    }
+
+    public function setVersion(?string $version): self
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
+    public function getScripttimeout(): ?int
+    {
+        return $this->scripttimeout;
+    }
+
+    public function setScripttimeout(?int $scripttimeout): self
+    {
+        $this->scripttimeout = $scripttimeout;
+
+        return $this;
+    }
+
+    public function getLocked(): ?int
+    {
+        return $this->locked;
+    }
+
+    public function setLocked(?int $locked): self
+    {
+        $this->locked = $locked;
+
+        return $this;
+    }
+
+    /**y
      * @return Collection|Device[]
      */
     public function getDevices()
@@ -325,4 +398,5 @@ class Lab implements InstanciableInterface
 
         return $this;
     }
+
 }

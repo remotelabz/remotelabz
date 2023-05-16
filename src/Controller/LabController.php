@@ -74,6 +74,7 @@ class LabController extends Controller
     private $operatingSystemRepository;
     private $flavorRepository;
     private $serializer;
+    private $labInstanceRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -81,7 +82,8 @@ class LabController extends Controller
         DeviceRepository $deviceRepository,
         operatingSystemRepository $operatingSystemRepository,
         FlavorRepository $flavorRepository,
-        SerializerInterface $serializerInterface)
+        SerializerInterface $serializerInterface,
+        LabInstanceRepository $labInstanceRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -92,6 +94,7 @@ class LabController extends Controller
         $this->operatingSystemRepository=$operatingSystemRepository;
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
+        $this->labInstanceRepository = $labInstanceRepository;
     }
 
     /**
@@ -260,9 +263,9 @@ class LabController extends Controller
     }
 
     /**
-     * @Route("/labs/test/{id<\d+>}", name="show_lab_test", methods="GET")
+     * @Route("/labs/info/{id<\d+>}", name="show_lab_test", methods="GET")
      * 
-     * @Rest\Get("/api/labs/test/{id<\d+>}", name="api_get_lab_test")
+     * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
      */
     public function showActionTest(
         int $id,
@@ -273,54 +276,89 @@ class LabController extends Controller
         SerializerInterface $serializer)
     {
         $lab = $labRepository->findLabInfoById($id);
-
-        /*if (!$lab) {
-            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
-        }
-
-        // Remove all instances not belongs to current user (changes are not stored in database)
-        $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
-        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
-        $deviceStarted = [];
-
-        foreach ($lab->getDevices()->getValues() as $device) {
-            $deviceStarted[$device->getId()] = false;
-
-            if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
-                $deviceStarted[$device->getId()] = true;
-            }
-        }
-
-        if ('json' === $request->getRequestFormat()) {
-            $context=$request->get('_route');
-            //Change the context value to limit the return information
-            return $this->json($lab, 200, [], [$context]);
-        }
-
-        $instanceManagerProps = [
-            'user' => $this->getUser(),
-            'labInstance' => $userLabInstance,
-            'lab' => $lab,
-            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+        $data = [
+            "id"=>$lab["id"],
+            "name"=>$lab["name"],
+            "description"=>$lab["description"],
+            "body"=>$lab["body"],
+            "author"=>$lab["author"],
+            "version"=>$lab["version"],
+            "scripttimeout"=>$lab["scripttimeout"],
+            "lock"=>$lab["locked"],
         ];
 
-        $props=$serializer->serialize(
-            $instanceManagerProps,
-            'json',
-            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
-        );
-        //$this->logger->debug("show_lab props".$props);
-        return $this->render('lab/view.html.twig', [
-            'lab' => $lab,
-            'labInstance' => $userLabInstance,
-            'deviceStarted' => $deviceStarted,
-            'user' => $user,
-            'props' => $props,
-        ]);*/
         $response = new Response();
-        $response->setContent(json_encode(['status'=>'success','lab' =>$lab]));
+        $response->setContent(json_encode([
+            'code'=>200,
+            'status'=>'success',
+            'data' =>$data]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * @Route("/labs/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab")
+     */
+    public function seeAction(Request $request, int $id, int $instanceId)
+    {
+
+        $lab = $this->labRepository->find($id);
+        $labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
+        if($labInstance == null) {
+            //$redirectTo = $this->getRedirectUrl();
+               /* return new JsonResponse(array(
+                    'status' => 'error',
+                    'message' => 'Forbidden',
+                    //'redirect' => $redirectTo,
+                ), Response::HTTP_FORBIDDEN);*/
+                return new Response('Forbidden', Response::HTTP_FORBIDDEN);
+            //throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+
+        if ( !is_null($lab))
+        {
+            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUsername());
+        
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        };
+
+        if ($request->getContentType() === 'json') {
+            $lab = json_decode($request->getContent(), true);
+        }
+
+        return $this->render('editor.html.twig', ['id' => $id]);
+    }
+    else
+        { 
+            if (!is_null($lab))
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see the lab".$lab->getName());
+            else 
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see a lab");
+            return $this->redirectToRoute('index');
+        }
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/{id<\d+>}/html", name="api_get_lab_details")
+     */
+    public function getLabDetails(
+        int $id,
+        Request $request,
+        UserInterface $user,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
+    {
+        $lab = $labRepository->findLabDetailsById($id);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code '=> 200,
+            'status'=>'success',
+            'data' => $lab['tasks']]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
@@ -387,6 +425,7 @@ class LabController extends Controller
     }
 
     /**
+     * 
      * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
      */
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
@@ -527,7 +566,7 @@ class LabController extends Controller
     }
 
     /**
-     * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
+     * @Route("/admin/labs/{id<\d+>}/edit2", name="edit2_lab")
      */
     public function editAction(Request $request, int $id)
     {
@@ -560,6 +599,39 @@ class LabController extends Controller
                 $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit the lab".$lab->getName());
             else 
                 $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit a lab");
+            return $this->redirectToRoute('index');
+        }
+    }
+
+    /**
+     * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
+     */
+    public function edit2Action(Request $request, int $id)
+    {
+
+        $lab = $this->labRepository->find($id);
+
+        if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
+        {
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+        
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        };
+
+        if ($request->getContentType() === 'json') {
+            $lab = json_decode($request->getContent(), true);
+        }
+
+        return $this->render('editor.html.twig', ['id' => $id]);
+    }
+    else
+        { 
+            if (!is_null($lab))
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+            else 
+                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
             return $this->redirectToRoute('index');
         }
     }
@@ -670,6 +742,38 @@ class LabController extends Controller
 
         return $newDevice;
     }
+
+    /**
+     * @Rest\Put("/api/labs/test/{id<\d+>}", name="api_edit_lab_test")
+     */
+    public function updateActionTest(Request $request, int $id)
+    {
+        $lab = $this->labRepository->find($id);
+
+        $data = json_decode($request->getContent(), true);   
+
+        $lab->setName($data['name']);
+        $lab->setVersion($data['version']);
+        $lab->setShortDescription($data['description']);
+        $lab->setScripttimeout($data['scripttimeout']);
+        $lab->setTasks($data['body']);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+
+        $this->logger->info("Lab named" . $lab->getName() . " modified");
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 201,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
     /**
      * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
      * 
@@ -1047,6 +1151,52 @@ class LabController extends Controller
     {
         $response = new Response();
         $response->setContent(json_encode(['status' => 'success']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * 
+     * @Rest\Put("/api/labs/{id<\d+>}/Lock", name="api_lock_lab")
+     */
+    public function lockLab(
+        Request $request,
+        UserInterface $user,
+        LabRepository $labRepository,
+        int $id)
+    {
+        $lab = $labRepository->find($id);
+
+        $lab->setLocked(1);
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status' => 'success',
+            'message' => 'Lab has been saved (60023).'
+        ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * 
+     * @Rest\Put("/api/labs/{id<\d+>}/Unlock", name="api_unlock_lab")
+     */
+    public function unlockLab(
+        Request $request,
+        UserInterface $user,
+        LabRepository $labRepository,
+        int $id)
+    {
+        $lab = $labRepository->find($id);
+
+        $lab->setLocked(0);
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status' => 'success',
+            'message' => 'Lab has been saved (60023).'
+        ]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }

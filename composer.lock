@@ -4418,7 +4418,7 @@
         },
         {
             "name": "remotelabz/network-bundle",
-            "version": "dev-master",
+            "version": "1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/network-bundle.git",
@@ -4440,7 +4440,6 @@
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/phpunit-bridge": "^5.1"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -4473,7 +4472,7 @@
         },
         {
             "name": "remotelabz/remotelabz-message-bundle",
-            "version": "dev-master",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
@@ -4492,7 +4491,6 @@
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/phpunit-bridge": "^5.1"
             },
-            "default-branch": true,
             "type": "symfony-bundle",
             "autoload": {
                 "psr-4": {
@@ -12914,10 +12912,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "remotelabz/network-bundle": 20,
-        "remotelabz/remotelabz-message-bundle": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
