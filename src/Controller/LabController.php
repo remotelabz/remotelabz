@@ -317,7 +317,7 @@ class LabController extends Controller
 
         if ( !is_null($lab))
         {
-            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUserIdentifier());
         
 
         if (!$lab) {
@@ -333,9 +333,9 @@ class LabController extends Controller
     else
         { 
             if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see the lab".$lab->getName());
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to see the lab".$lab->getName());
             else 
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see a lab");
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to see a lab");
             return $this->redirectToRoute('index');
         }
     }
@@ -613,7 +613,7 @@ class LabController extends Controller
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
         
 
         if (!$lab) {
@@ -629,9 +629,9 @@ class LabController extends Controller
     else
         { 
             if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit the lab".$lab->getName());
             else 
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit a lab");
             return $this->redirectToRoute('index');
         }
     }

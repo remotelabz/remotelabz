@@ -163,9 +163,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+        /*if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
             return new RedirectResponse($targetPath);
-        }
+        }*/
 
         $response = new RedirectResponse('/');
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
@@ -179,9 +179,14 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         $user->setLastActivity(new DateTime());
         $this->entityManager->persist($user);
         $this->entityManager->flush();
-        // For example:
-        // return new RedirectResponse($this->urlGenerator->generate('some_route'));
-        // throw new \Exception('TODO: provide a valid redirect inside '.__FILE__);
+        
+        if ($request->query->has('ref_url')) {
+            $response->setTargetUrl(urldecode($request->query->get('ref_url')));
+        } else if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+            $response->setTargetUrl($targetPath);
+        } else {
+            $response->setTargetUrl($this->router->generate('index'));
+        }
         return $response;
     }
 
