@@ -106,7 +106,7 @@ class User {
     - NetworkInterfaceInstance[] networkInterfaceInstances
     - Lab[] createdLabs
     --
-    + getUsername() : string
+    + getUserIdentifier() : string
     + getName() : string
     + getInstances() : Instance[]
     + getProfilePicture() : string

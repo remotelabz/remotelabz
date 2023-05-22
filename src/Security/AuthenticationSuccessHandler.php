@@ -18,7 +18,7 @@ class AuthenticationSuccessHandler extends \Lexik\Bundle\JWTAuthenticationBundle
     /**
      * {@inheritdoc}
      */
-    public function handleAuthenticationSuccess(UserInterface $user, $jwt = null)
+    public function handleAuthenticationSuccess(UserInterface $user, $jwt = null): Response
     {
         if (null === $jwt) {
             $jwt = $this->jwtManager->create($user);

@@ -581,10 +581,7 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $lab->addDevice($device);
         $entityManager->flush();
-        //$device->setPort(32768 + 128 + $device->getId());
-        //$url = $this->getConsoleUrl(false, $this->getUser()->getUsername(), $device);
         $editorData->setDevice($device);
-        //$device->setUrl($url);
         $entityManager->flush();
 
         $this->logger->info("Device named '" . $device->getName() . "' created");
@@ -1042,7 +1039,7 @@ class DeviceController extends Controller
     public function deleteAction(Request $request, int $id)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-        $username=$user->getUsername();
+        $username=$user->getUserIdentifier();
         $device = $this->deviceRepository->find($id);
 
         $this->delete_device($device);
@@ -1096,7 +1093,7 @@ class DeviceController extends Controller
     public function deleteActionTest(Request $request, int $id)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
-        $username=$user->getUsername();
+        $username=$user->getUserIdentifier();
         $device = $this->deviceRepository->find($id);
 
         $this->delete_device($device);

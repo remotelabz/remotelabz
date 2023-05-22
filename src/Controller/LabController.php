@@ -317,7 +317,7 @@ class LabController extends Controller
 
         if ( !is_null($lab))
         {
-            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is seen by : ".$this->getUser()->getUserIdentifier());
         
 
         if (!$lab) {
@@ -333,9 +333,9 @@ class LabController extends Controller
     else
         { 
             if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see the lab".$lab->getName());
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to see the lab".$lab->getName());
             else 
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to see a lab");
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to see a lab");
             return $this->redirectToRoute('index');
         }
     }
@@ -411,7 +411,7 @@ class LabController extends Controller
         }
         */
 
-        $this->logger->info($this->getUser()->getUsername() . " creates lab named " . $lab->getName());
+        $this->logger->info($this->getUser()->getUserIdentifier() . " creates lab named " . $lab->getName());
         $entityManager->persist($lab);
 
         if ('json' === $request->getRequestFormat()) {
@@ -434,7 +434,7 @@ class LabController extends Controller
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("Add device to a lab from API by : ".$this->getUser()->getUsername());
+            $this->logger->debug("Add device to a lab from API by : ".$this->getUser()->getUserIdentifier());
         
         $device = new Device();
         
@@ -527,7 +527,7 @@ class LabController extends Controller
         return $this->json($deviceForm, 200, [], ['api_get_device']);
     }
         else {
-            $this->logger->warning("User ".$this->getUser()->getUsername()." has tried, via API, to add a device to lab".$lab->getName());
+            $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried, via API, to add a device to lab".$lab->getName());
             return $this->redirectToRoute('index');
         }
     }
@@ -572,11 +572,11 @@ class LabController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
-        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+        $this->logger->debug("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
         
 
         if (!$lab) {
@@ -596,9 +596,9 @@ class LabController extends Controller
     else
         { 
             if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit the lab".$lab->getName());
             else 
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit a lab");
             return $this->redirectToRoute('index');
         }
     }
@@ -613,7 +613,7 @@ class LabController extends Controller
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
-            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUsername());
+            $this->logger->info("Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
         
 
         if (!$lab) {
@@ -629,9 +629,9 @@ class LabController extends Controller
     else
         { 
             if (!is_null($lab))
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit the lab".$lab->getName());
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit the lab".$lab->getName());
             else 
-                $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to edit a lab");
+                $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to edit a lab");
             return $this->redirectToRoute('index');
         }
     }
@@ -789,7 +789,7 @@ class LabController extends Controller
         
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("Lab deletes by : ".$this->getUser()->getUsername());
+            $this->logger->debug("Lab deletes by : ".$this->getUser()->getUserIdentifier());
 
         $return=$this->delete_lab($lab);
         if ($return > 0) {
@@ -802,7 +802,7 @@ class LabController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json();
             }
-            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
+            $this->logger->info($user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
 
             $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');
@@ -810,7 +810,7 @@ class LabController extends Controller
     }
     else 
     { 
-        $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to delete the lab".$lab->getName());
+        $this->logger->warning("User ".$this->getUser()->getUserIdentifier()." has tried to delete the lab".$lab->getName());
         return $this->redirectToRoute('index');
     }
     }
