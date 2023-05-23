@@ -47,7 +47,7 @@ class LabRepository extends ServiceEntityRepository
         $entityManager = $this->getEntityManager();
 
         $query = $entityManager->createQuery(
-            'SELECT L.id, L.name, L.shortDescription as description, L.tasks, CONCAT(A.firstName,\' \',A.lastName) as author
+            'SELECT L.id, L.name, L.shortDescription as description, L.description as tasks, CONCAT(A.firstName,\' \',A.lastName) as author
             FROM App\Entity\Lab L
             LEFT JOIN L.author A
             WHERE L.id = :id'
@@ -66,7 +66,7 @@ class LabRepository extends ServiceEntityRepository
 
         $query = $entityManager->createQuery(
             'SELECT L.id as filename, L.uuid as id, L.name, L.shortDescription as description, 
-            L.tasks as body, CONCAT(A.firstName,\' \',A.lastName) as author, L.version,
+            L.description as body, CONCAT(A.firstName,\' \',A.lastName) as author, L.version,
             L.scripttimeout, L.locked
             FROM App\Entity\Lab L
             LEFT JOIN L.author A

@@ -30,6 +30,7 @@ import './components/Editor2/themes/default/js/messages_en';
 import './components/Editor2/themes/default/js/validate';
 import './components/Editor2/themes/default/js/colorpicker.min';
 import './components/Editor2/themes/default/js/browsers';
+import 'easymde/dist/easymde.min.css';
 //import './components/Editor2/themes/default/js/src/ace';
 //import 'ace-builds/src-noconflict/ace';
 //import './components/Editor2/themes/default/js/src/ext-language_tools';

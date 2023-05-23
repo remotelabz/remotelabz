@@ -34,6 +34,9 @@ import { adjustZoom, readCookie, initTextarea, initEditor } from './ebs/function
 import {ObjectPosUpdate} from './actions';
 //import * as ace from 'ace-builds/src-noconflict/ace';
 import { node } from 'prop-types';
+import EasyMDE from 'easymde';
+import 'easymde/dist/easymde.min.css';
+
 
 // Basename: given /a/b/c return c
 export function basename(path) {
@@ -2567,6 +2570,7 @@ export function printFormLab(action, values) {
     }
     var title = (action == 'add') ? MESSAGES[5] : MESSAGES[87] ;
 
+    //var editor = new EditorJS();
     var html = new EJS({
         url: '/build/editor/ejs/form_lab.ejs'
     }).render({
@@ -2584,6 +2588,7 @@ export function printFormLab(action, values) {
 
     logger(1, 'DEBUG: popping up the lab-add form.');
     addModalWide(title, html, '');
+    var editor = new EasyMDE({ element: $("#editor")[0] });
     validateLabInfo();
 }
 

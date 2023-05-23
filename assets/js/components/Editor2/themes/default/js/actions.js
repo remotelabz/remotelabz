@@ -34,6 +34,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          zoompic, dirname, basename, hex2rgb } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
+import Showdown from 'showdown';
 //import * as ace from 'ace-builds/src-noconflict/ace';
 
 var KEY_CODES = {
@@ -832,7 +833,9 @@ $(document).on('click', '.action-labbodyget', function (e) {
         }
         html += '</center>';
         if (body != null) {
-            html += body;
+            var converter = new Showdown.Converter();
+            var htmlBody = converter.makeHtml(body);
+            html += htmlBody;
         }
         addModalWide(MESSAGES[64],html, '')
     }).fail(function (message1, message2) {
@@ -1185,6 +1188,7 @@ $(document).on('click', '.action-moreactions', function (e) {
     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
     //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
         //body += '<li><a class="action-nodesexport" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a></li>';
+        body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Practical subject edit</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
         //body += '<li><a class="action-nodesbootsaved" href="javascript:void(0)"><i class="glyphicon glyphicon-flash"></i> ' + MESSAGES[139] + '</a></li>';
         //body += '<li><a class="action-nodesbootscratch" href="javascript:void(0)"><i class="glyphicon glyphicon-remove"></i> ' + MESSAGES[140] + '</a></li>';

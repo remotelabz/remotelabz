@@ -76,12 +76,7 @@ Encore
 
     // uncomment if you use TypeScript
     // .enableTypeScriptLoader()
-    /*.addLoader({ test: /\.ejs$/, loader: 'ejs-render-loader' })    
-
-    .addPlugin(new HtmlWebpackPlugin({
-        template: 'Editor2/themes/default/ejs/action_configsget.ejs',
-        filename: 'Editor2/themes/default/ejs/action_configsget.html'
-    }))*/
+    
     // uncomment if you're having problems with a jQuery plugin
     .autoProvidejQuery()
 

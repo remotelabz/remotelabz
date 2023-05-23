@@ -756,7 +756,7 @@ class LabController extends Controller
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
-        $lab->setTasks($data['body']);
+        $lab->setDescription($data['body']);
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
