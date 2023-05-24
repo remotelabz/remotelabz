@@ -25,7 +25,7 @@ import '../bootstrap/js/imageMapResizer.min';
 import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
-import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, logoutUser, getLabInfo, getLabBody, closeLab, 
+import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, 
          lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
@@ -1248,14 +1248,14 @@ $(document).on('click', '.action-labtopologyrefresh', function (e) {
 });
 
 // Logout
-$(document).on('click', '.action-logout', function (e) {
+/*$(document).on('click', '.action-logout', function (e) {
     logger(1, 'DEBUG: action = logout');
     $.when(logoutUser()).done(function () {
         printPageAuthentication();
     }).fail(function (message) {
         addModalError(message);
     });
-});
+});*/
 
 
 // Lock lab

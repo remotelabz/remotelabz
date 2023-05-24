@@ -1266,7 +1266,7 @@ export function logger(severity, message) {
 }
 
 // Logout user
-export function logoutUser() {
+/*export function logoutUser() {
     var deferred = $.Deferred();
     var url = '/api/logout';
     var type = 'GET';
@@ -1299,7 +1299,7 @@ export function logoutUser() {
         }
     });
     return deferred.promise();
-}
+}*/
 
 // Move folder inside a folder
 /*function moveFolder(folder, path) {
@@ -4594,7 +4594,7 @@ function printPageLabOpen(lab) {
                 $('#lab-sidebar ul').append('<li><a class="action-nightmode" href="javascript:void(0)" title="' + MESSAGES[235] + '"><i class="fas fa-moon"></i></a></li>');
         }
          $('#lab-sidebar ul').append('<div id="action-labclose"><li><a class="action-labclose" href="javascript:void(0)" title="' + MESSAGES[60] + '"><i class="glyphicon glyphicon-off"></i></a></li></div>');
-         $('#lab-sidebar ul').append('<li><a class="action-logout" href="javascript:void(0)" title="' + MESSAGES[14] + '"><i class="glyphicon glyphicon-log-out"></i></a></li>');
+         //$('#lab-sidebar ul').append('<li><a class="action-logout" href="javascript:void(0)" title="' + MESSAGES[14] + '"><i class="glyphicon glyphicon-log-out"></i></a></li>');
          $('#lab-sidebar ul a').each(function () {
              var t = $(this).attr("title");
              $(this).append(t);
