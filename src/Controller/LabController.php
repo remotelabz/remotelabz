@@ -756,6 +756,33 @@ class LabController extends Controller
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
+        //$lab->setDescription($data['body']);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($lab);
+        $entityManager->flush();
+
+
+        $this->logger->info("Lab named" . $lab->getName() . " modified");
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 201,
+            'status'=> 'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
+     * @Rest\Put("/api/labs/subject/{id<\d+>}", name="api_edit_lab_subject")
+     */
+    public function updateSubjectAction(Request $request, int $id)
+    {
+        $lab = $this->labRepository->find($id);
+
+        $data = json_decode($request->getContent(), true);   
+
         $lab->setDescription($data['body']);
 
         $entityManager = $this->getDoctrine()->getManager();

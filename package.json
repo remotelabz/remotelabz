@@ -78,6 +78,7 @@
         "select2": "^4.0.6-rc.1",
         "selectize": "^0.12.6",
         "showdown": "^2.1.0",
+        "simplemde": "^1.11.2",
         "timeago.js": "^4.0.1",
         "yup": "^0.27.0"
     },

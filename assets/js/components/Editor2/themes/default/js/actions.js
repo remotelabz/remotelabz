@@ -29,7 +29,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
-         printFormEditText, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
+         printFormEditText, printFormSubjectLab, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
          zoompic, dirname, basename, hex2rgb } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
@@ -832,12 +832,36 @@ $(document).on('click', '.action-labbodyget', function (e) {
             html +='<p>' + info['description'] + '</p>';
         }
         html += '</center>';
+        /*if (body != null) {
+            var converter = new Showdown.Converter();
+            var htmlBody = converter.makeHtml(body);
+            html += htmlBody;
+        }*/
+        addModalWide(MESSAGES[64],html, '')
+    }).fail(function (message1, message2) {
+        if (message1 != null) {
+            addModalError(message1);
+        } else {
+            addModalError(message2)
+        }
+        ;
+    });
+});
+
+// Print lab body
+$(document).on('click', '.action-labsubjectget', function (e) {
+    logger(1, 'DEBUG: action = labbodyget');
+    $.when(getLabBody()).done(function (body) {
+        var html =  '';
         if (body != null) {
             var converter = new Showdown.Converter();
             var htmlBody = converter.makeHtml(body);
             html += htmlBody;
         }
-        addModalWide(MESSAGES[64],html, '')
+        else {
+            html += '<center><p>This lab does not have any subject.</p></center>'
+        }
+        addModalWide('Practical subject',html, '')
     }).fail(function (message1, message2) {
         if (message1 != null) {
             addModalError(message1);
@@ -1134,6 +1158,18 @@ $(document).on('click', '.action-labedit-inline', function (e) {
     $('#context-menu').remove();
 });
 
+
+// Edit practical subject
+$(document).on('click', '.action-subjectedit', function (e) {
+    logger(1, 'DEBUG: action = labedit');
+    $.when(getLabInfo($('#lab-viewport').attr('data-path'))).done(function (values) {
+        values['path'] = dirname($('#lab-viewport').attr('data-path'));
+        printFormSubjectLab('edit', values);
+    }).fail(function (message) {
+        addModalError(message);
+    });
+    $('#context-menu').remove();
+});
 // List all labs
 $(document).on('click', '.action-lablist', function (e) {
     bodyAddClass('folders');
@@ -1188,7 +1224,7 @@ $(document).on('click', '.action-moreactions', function (e) {
     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
     //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
         //body += '<li><a class="action-nodesexport" href="javascript:void(0)"><i class="glyphicon glyphicon-save"></i> ' + MESSAGES[129] + '</a></li>';
-        body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Practical subject edit</a></li>';
+        body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Edit practical subject</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
         //body += '<li><a class="action-nodesbootsaved" href="javascript:void(0)"><i class="glyphicon glyphicon-flash"></i> ' + MESSAGES[139] + '</a></li>';
         //body += '<li><a class="action-nodesbootscratch" href="javascript:void(0)"><i class="glyphicon glyphicon-remove"></i> ' + MESSAGES[140] + '</a></li>';
@@ -2557,6 +2593,82 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
                 } else {
                     addMessage(data['status'], data['message']);
                 }
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                addModal('ERROR', '<p>' + data['message'] + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            addModal('ERROR', '<p>' + message + '</p>', '<button type="button" class="btn btn-aqua" data-dismiss="modal">Close</button>');
+        }
+    });
+    return false;  // Stop to avoid POST
+});
+
+// Submit lab TP subject form
+$(document).on('submit', '#form-subject-lab', function (e) {
+    e.preventDefault();  // Prevent default behaviour
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var form_data = form2Array('lab');
+    //var path = form_data['path'].split(/(\d+)/)[1];
+    logger(1, 'DEBUG: posting form-subject-lab form.');
+    var url = '/api/labs/subject/' + lab_filename;
+    var type = 'PUT';
+
+    /*if ($(this).attr('id') == 'form-node-add') {
+        // If adding need to manage multiple add
+        if (form_data['count'] > 1) {
+            form_data['postfix'] = 1;
+        } else {
+            form_data['postfix'] = 0;
+        }
+    } else {*/
+        // If editing need to post once
+        form_data['count'] = 1;
+        form_data['postfix'] = 0;
+    //}
+
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        dataType: 'json',
+        data: JSON.stringify(form_data),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
+                // Close the modal
+                $(e.target).parents('.modal').attr('skipRedraw', true);
+                $(e.target).parents('.modal').modal('hide');
+                /*if (type == 'POST') {
+                    // Reload the lab list
+                    logger(1, 'DEBUG: lab "' + form_data['name'] + '" renamed.');
+                    printPageLabList(form_data['path']);
+                } else if (basename(form_data['path']) != form_data['name'] + '.unl') {
+                    // Lab has been renamed, need to close it.
+                    logger(1, 'DEBUG: lab "' + form_data['name'] + '" renamed.');
+                    if ($('#lab-viewport').length) {
+                        $('#lab-viewport').attr({'data-path': path});
+                        printLabTopology();
+                    } else {
+                        $.when(closeLab()).done(function () {
+                            postLogin();
+                            printLabPreview(path);
+                        }).fail(function (message) {
+                            addModalError(message);
+                        });
+
+                    }
+
+                } else {*/
+                    addMessage(data['status'], data['message']);
+                //}
             } else {
                 // Application error
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');

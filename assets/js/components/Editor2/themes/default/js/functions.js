@@ -2588,7 +2588,38 @@ export function printFormLab(action, values) {
 
     logger(1, 'DEBUG: popping up the lab-add form.');
     addModalWide(title, html, '');
-    var editor = new EasyMDE({ element: $("#editor")[0] });
+    //var editor = new EasyMDE({ element: $("#editor")[0] });
+    validateLabInfo();
+}
+
+// Edit pratical subject
+export function printFormSubjectLab(action, values) {
+    /*if (action == 'add') {
+        var path = values['path'];
+    } else {
+        var path = (values['path'] == '/') ? '/' + values['name'] + '.unl' : values['path'] + '/' + values['name'] + '.unl';
+    }*/
+    var title = 'Edit practical subject' ;
+
+    //var editor = new EditorJS();
+    var html = new EJS({
+        url: '/build/editor/ejs/form_subject_lab.ejs'
+    }).render({
+        name: (values['name'] != null) ? values['name'] : '',
+        version: (values['version'] != null) ? values['version'] : '',
+        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
+        author: (values['author'] != null) ? values['author'] : '',
+        description: (values['description'] != null) ? values['description'] : '',
+        body: (values['body'] != null) ? values['body'] : '',
+        title: title,
+        //path: path,
+        action: action,
+        MESSAGES: MESSAGES,
+    })
+
+    logger(1, 'DEBUG: popping up the lab-add form.');
+    addModalWide(title, html, '');
+    var subjectEditor = new EasyMDE({ element: $("#editor")[0] });
     validateLabInfo();
 }
 
@@ -4552,6 +4583,7 @@ function printPageLabOpen(lab) {
          //$('#lab-sidebar ul').append('<li><a class="action-freeselect" href="javascript:void(0)" title="' + MESSAGES[151] + '"><i class="glyphicon glyphicon-check"></i></a></li>');
         // $('#lab-sidebar ul').append('<li><a class="action-status" href="javascript:void(0)" title="' + MESSAGES[13] + '"><i class="glyphicon glyphicon-info-sign"></i></a></li>');
          $('#lab-sidebar ul').append('<li><a class="action-labbodyget" href="javascript:void(0)" title="' + MESSAGES[64] + '"><i class="glyphicon glyphicon-list-alt"></i></a></li>');
+         $('#lab-sidebar ul').append('<li><a class="action-labsubjectget" href="javascript:void(0)" title="Practical subject"><i class="glyphicon glyphicon-tasks"></i></a></li>');
          if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
          //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
             $('#lab-sidebar ul').append('<li><a class="action-lock-lab" href="javascript:void(0)" title="' + MESSAGES[166] + '"><i class="glyphicon glyphicon-ok-circle"></i></a></li>');
