@@ -13,11 +13,8 @@ use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessRespon
 use Lexik\Bundle\JWTAuthenticationBundle\Security\Guard\JWTTokenAuthenticator as BaseAuthenticator;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface as ContractsEventDispatcherInterface;
 
-class AuthenticationSuccessHandler extends \Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler
+class AuthenticationSuccessHandler
 {
-    /**
-     * {@inheritdoc}
-     */
     public function handleAuthenticationSuccess(UserInterface $user, $jwt = null): Response
     {
         if (null === $jwt) {
