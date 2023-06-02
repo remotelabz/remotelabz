@@ -3516,7 +3516,7 @@ function printLabPreview(lab_filename) {
 // Jquery-ui freeselect
 
 
-function updateFreeSelect ( e , ui ) {
+export function updateFreeSelect ( e , ui ) {
     if ( $('.node_frame.ui-selected, node_frame.ui-selecting, .network_frame.ui-selected,.network_ui-selecting, .customShape.ui-selected, .customShape.ui-selecting').length > 0 ) {
         $('#lab-viewport').addClass('freeSelectMode')
     }
@@ -3543,6 +3543,11 @@ function updateFreeSelect ( e , ui ) {
     });
 }
 
+
+function cancelLink(event) {
+    event.stopPropagation();
+    return false;
+}
 
 // Print lab topology
 export function printLabTopology() {
