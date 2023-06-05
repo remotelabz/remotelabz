@@ -9,19 +9,22 @@ use FOS\RestBundle\Context\Context;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
+use App\Repository\DeviceRepository;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpFoundation\Response;
 
 class NetworkInterfaceController extends Controller
 {
     public $networkInterfaceRepository;
 
-    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository)
+    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository)
     {
         $this->networkInterfaceRepository = $networkInterfaceRepository;
+        $this->deviceRepository = $deviceRepository;
     }
 
     /**
@@ -65,6 +68,7 @@ class NetworkInterfaceController extends Controller
             'networkInterfaceForm' => $networkInterfaceForm->createView(),
         ]);
     }
+
 
     /**
      * @Rest\Get("/api/network-interfaces/{id<\d+>}", name="api_get_network_interface")
@@ -121,6 +125,124 @@ class NetworkInterfaceController extends Controller
         return $this->render('network_interface/new.html.twig', [
             'networkInterfaceForm' => $networkInterfaceForm->createView()
         ]);
+    }
+
+     /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_update_device_interfaces")
+     */
+    public function updateNetworkInterface(Request $request, int $labId, int $deviceId)
+    {
+        $device = $this->deviceRepository->find($deviceId);
+        $data = json_decode($request->getContent(), true);
+        $i=count($device->getNetworkInterfaces());
+        $networkInterface = new NetworkInterface();
+        //$networkInterface = $this->networkInterfaceRepository->findByDeviceAndName($deviceId, "eth". $data["interface id"]);
+        //$networkInterface->setDevice($device);
+        $networkInterface->setName($device->getName()."_net".$data["interface id"]);
+        $networkSettings = new NetworkSettings();
+        $networkSettings->setName($networkInterface->getName()."_set".$data["interface id"]);
+        $networkInterface->setSettings($networkSettings);
+        $device->addNetworkInterface($networkInterface);
+        //$networkInterface->setName("eth". $data["interface id"]);
+        $networkInterface->setVlan($data["vlan"]);
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($device);
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 201,
+            'status'=>'success',
+            'message' => 'Lab has been saved (60023).',
+            'data' => $data]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+
+    /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{vlan<\d+>}", name="api_remove_connection")
+     */
+    public function removeConnection(int $labId, int $vlan)
+    {
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndVlan($labId, $vlan);
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        foreach($networkInterfaces as $networkInterface) {
+            $device = $networkInterface->getDevice();
+            $device->removeNetworkInterface($networkInterface);
+            $entityManager->remove($networkInterface);
+        }
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 201,
+            'status'=>'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+    
+    /**
+     * @Rest\Get("/api/labs/{labId<\d+>}/vlans", name="api_get_vlan")
+     */
+    public function getVlan(Request $request, int $labId)
+    {
+        //get the vlan id to set to the device
+        $vlans = $this->networkInterfaceRepository->getVlans($labId);
+        if ($vlans == null) {
+            $vlan = 1;
+        }
+        else {
+            $vlan = (int)$vlans[0]['vlan'] +1;
+        }
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed vlan.',
+            'data' => [
+                "vlan"=>$vlan
+            ]
+        ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+
+    /**
+     * @Rest\Get("/api/labs/{labId<\d+>}/topology", name="api_get_topology")
+     */
+    public function getTopology(Request $request, int $labId)
+    {
+        $topology = $this->networkInterfaceRepository->getTopology($labId);
+        $data = [];
+        foreach($topology as $line) {
+            array_push($data, [
+                "type"=>"ethernet",
+                "source"=> "node".explode(",", $line["devices"])[0],
+                "source_type"=> "node",
+                "source_label"=> explode(",", $line["names"])[0],
+                "destination"=> "node".explode(",", $line["devices"])[1],
+                "destination_type"=> "node",
+                "destination_label"=> explode(",", $line["names"])[1],
+                "network_id"=> $line["vlan"],   
+            ]);
+        }
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Topology loaded.',
+            'data' => $data
+        ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
     }
 
     /**

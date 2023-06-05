@@ -19,6 +19,17 @@ class OperatingSystemRepository extends ServiceEntityRepository
         parent::__construct($registry, OperatingSystem::class);
     }
 
+    public function findByName($name)
+    {
+       $operatingSystem = $this->createQueryBuilder('o')
+            ->andWhere('o.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        return $operatingSystem[0];
+    }
     // /**
     //  * @return OperatingSystem[] Returns an array of OperatingSystem objects
     //  */

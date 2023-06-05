@@ -33,7 +33,7 @@ class DeviceRepository extends ServiceEntityRepository
     public function findByTemplate($template = true)
     {
         return $this->createQueryBuilder('l')
-            ->andWhere('l.is_template = :val')
+            ->andWhere('l.isTemplate = :val')
             ->setParameter('val', $template ? 1 : 0)
             ->orderBy('l.id', 'DESC')
             ->getQuery()
@@ -52,6 +52,52 @@ class DeviceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    public function findByLab($id)
+    {
+        /*return $this->createQueryBuilder('d')
+            ->leftjoin('App\Entity\lab l', 'l.id IN d.labs')
+            ->andWhere('l.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getResult()
+        ;*/
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT d
+            FROM App\Entity\Device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id'
+        )->setParameter('id', $id);
+
+        return $query->getResult();
+    }
+
+    public function findByLabInstance($lab)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        /*$query = $entityManager->createQuery(
+            'SELECT IDENTITY(di.device)
+            FROM App\Entity\DeviceInstance di
+            WHERE di.labInstance = :lab'
+        )->setParameter('lab', $lab);*/
+
+        $query = $entityManager->createQuery(
+            'SELECT d
+            FROM App\Entity\Device d
+            WHERE d IN (
+                SELECT IDENTITY(di.device)
+            FROM App\Entity\DeviceInstance di
+            WHERE di.labInstance = :lab
+            )'
+        )->setParameter('lab', $lab);
+
+        return $query->getResult();
     }
 
     // /**

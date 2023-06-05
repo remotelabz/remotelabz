@@ -8,20 +8,20 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class RefreshTokenSubscriber implements EventSubscriberInterface
 {
     private $tokenStorageInterface;
-    /** @var Session $sessionInterface */
-    private $sessionInterface;
+    private $requestStack;
 
-    public function __construct(TokenStorageInterface $tokenStorageInterface, SessionInterface $sessionInterface)
+    public function __construct(TokenStorageInterface $tokenStorageInterface, RequestStack $requestStack)
     {
         $this->tokenStorageInterface = $tokenStorageInterface;
-        $this->sessionInterface = $sessionInterface;
+        $this->requestStack = $requestStack;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             // KernelEvents::REQUEST => ['onKernelRequest', 100],
@@ -35,7 +35,7 @@ class RefreshTokenSubscriber implements EventSubscriberInterface
     //         $refreshTokenCookie = $event->getRequest()->cookies->get('rt');
     //         $refreshToken = $this->refreshTokenManager->get($refreshTokenCookie);
     //         if ($refreshToken && $refreshToken->isValid()) {
-    //             $userEmail = $refreshToken->getUsername();
+    //             $userEmail = $refreshToken->getUserIdentifier();
     //             $user = $this->userRepository->findOneBy(['email' => $userEmail]);
     //             $this->updatedJWTToken = $this->JWTManager->create($user);
     //             $event->getRequest()->cookies->set('bearer', $this->updatedJWTToken);
@@ -47,7 +47,8 @@ class RefreshTokenSubscriber implements EventSubscriberInterface
     {
         if ($event->getResponse()->getStatusCode() == 401) {
             $this->tokenStorageInterface->setToken(null);
-            $this->sessionInterface->getFlashBag()->set('danger', 'You have been disconnected. Please log in again');
+            $session = $this->requestStack->getCurrentRequest()->getSession();
+            $session->getFlashBag()->set('danger', 'You have been disconnected. Please log in again');
             $event->getResponse()->headers->clearCookie('PHPSESSID');
         }
     }

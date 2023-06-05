@@ -21,7 +21,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
     /**
      * @inheritdoc
      */
-    static public function getSubscribedEvents()
+    static public function getSubscribedEvents(): array
     {
         return [
             [

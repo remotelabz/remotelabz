@@ -19,6 +19,17 @@ class FlavorRepository extends ServiceEntityRepository
         parent::__construct($registry, Flavor::class);
     }
 
+    public function findByName($name)
+    {
+       $flavor = $this->createQueryBuilder('f')
+            ->andWhere('f.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getResult()
+        ;
+
+        return $flavor[0];
+    }
     // /**
     //  * @return Flavor[] Returns an array of Flavor objects
     //  */

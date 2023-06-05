@@ -14,6 +14,7 @@ use App\Repository\DeviceInstanceLogRepository;
 use App\Repository\LabRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Repository\DeviceRepository;
 
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
@@ -23,6 +24,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -187,6 +189,60 @@ class InstanceController extends Controller
     }
 
     /**
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/start", name="api_start_instance_by_id")
+     */
+    public function startByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
+    {
+        $lab = $labRepository->find($labId);
+        $device = $deviceRepository->find($deviceId);
+        $data = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($data['edition'] == 0 && $data['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($data['labInstance']);
+            if (!$deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance)) {
+                $response->setContent(json_encode([
+                    'code'=> 404,
+                    'status'=>'Not Found',
+                    'message' => 'Device Instance is not found']));
+                    return $response;
+            }
+        }
+        
+        if($data['edition'] == 0 && $data['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($data['edition'] == 1) {
+            $response->setContent(json_encode([
+                'code '=> 400,
+                'status'=>'fail',
+                'message' => 'You can not start device in edit mode.']));
+                return $response;
+        }
+        $entityManager = $this->getDoctrine()->getManager();
+        //var_dump($deviceInstance->getDevice()); exit;
+        $json = $instanceManager->start($deviceInstance);
+        $status = empty($json) ? 204 : 200;
+        //$device->setStatus(2);
+        $entityManager->flush();
+
+        //return $this->json($json, $status, [], [], true);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> $status,
+            'status'=>'success',
+            'message' => 'Node started (80049).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
@@ -198,6 +254,60 @@ class InstanceController extends Controller
         $instanceManager->stop($deviceInstance);
 
         return $this->json();
+    }
+
+    /**
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/stop", name="api_stop_instance_by_id")
+     */
+    public function stopByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
+    {
+        $lab = $labRepository->find($labId);
+        $device = $deviceRepository->find($deviceId);
+        $data = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($data['edition'] == 0 && $data['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($data['labInstance']);
+            if (!$deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance)) {
+                $response->setContent(json_encode([
+                    'code'=> 404,
+                    'status'=>'Not Found',
+                    'message' => 'Device Instance is not found']));
+                    return $response;
+            }
+        }
+        if($data['edition'] == 0 && $data['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($data['edition'] == 1) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'You can not stop device in edit mode.']));
+                return $response;
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        //var_dump($deviceInstance->getDevice()); exit;
+        $json = $instanceManager->stop($deviceInstance);
+        $status = empty($json) ? 204 : 200;
+        //$device->setStatus(0);
+        $entityManager->flush();
+
+        //return $this->json($json, $status, [], [], true);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> $status,
+            'status'=>'success',
+            'message' => 'Node stoped (80051).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**

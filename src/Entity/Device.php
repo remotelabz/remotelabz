@@ -184,6 +184,62 @@ class Device implements InstanciableInterface
      */
     private $isTemplate;
 
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $delay = 0;
+
+
+    /**
+     * @ORM\Column(type="string", length=100, nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $icon;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $template;
+
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $count;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $postfix;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $config = 0;
+
+    /**
+     * @ORM\Column(type="string", options={"default": ""})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $config_data = "";
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $status = 0;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 1})
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $ethernet = 1;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
@@ -524,5 +580,159 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    
+    public function getDelay(): ?int
+    {
+        return $this->delay;
+    }
+
+    public function setDelay(int $delay): self
+    {
+        $this->delay = $delay;
+
+        return $this;
+    }
+
+    /*public function getConsole(): ?string
+    {
+        return $this->console;
+    }
+
+    public function setConsole(string $console): self
+    {
+        $this->console = $console;
+
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(string $image): self
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(string $url): self
+    {
+        $this->url = $url;
+
+        return $this;
+    }*/
+
+    public function getTemplate(): ?string
+    {
+        return $this->template;
+    }
+
+    public function setTemplate(string $template): self
+    {
+        $this->template = $template;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(string $icon): self
+    {
+        $this->icon = $icon;
+
+        return $this;
+    }
+
+    public function getCount(): ?int
+    {
+        return $this->count;
+    }
+
+    public function setCount(int $count): self
+    {
+        $this->count = $count;
+
+        return $this;
+    }
+
+    public function getPostfix(): ?int
+    {
+        return $this->postfix;
+    }
+
+    public function setPostfix(int $postfix): self
+    {
+        $this->postfix = $postfix;
+
+        return $this;
+    }
+
+    /*public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function setPort(int $port): self
+    {
+        $this->port = $port;
+
+        return $this;
+    }*/
+
+    public function getConfig(): ?int
+    {
+        return $this->config;
+    }
+
+    public function setConfig(int $config): self
+    {
+        $this->config = $config;
+
+        return $this;
+    }
+
+    public function getConfigData(): ?string
+    {
+        return $this->config_data;
+    }
+
+    public function setConfigData(string $config_data): self
+    {
+        $this->config_data = $config_data;
+
+        return $this;
+    }
+
+    public function getStatus(): ?int
+    {
+        return $this->status;
+    }
+
+    public function setStatus(int $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getEthernet(): ?int
+    {
+        return $this->ethernet;
+    }
+
+    public function setEthernet(int $ethernet): self
+    {
+        $this->ethernet = $ethernet;
+
+        return $this;
+    }
 }

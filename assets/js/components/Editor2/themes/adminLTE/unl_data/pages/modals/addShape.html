@@ -1,0 +1,55 @@
+<div class="modal-header">
+    <h3 class="modal-title">Add a new shape</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Type</label>
+            <div class="col-md-9">
+                <select class="form-control shape-type-select" ng-model="shapeProps.shapeType">
+                    <option value="circle">Circle</option>
+                    <option value="square">Square</option>
+                </select>
+            </div>
+        </div> <br>
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Name</label>
+            <div class="col-md-9">
+                <input type="text" class="form-control shape_name" placeholder="Name" ng-model="shapeProps.name">
+            </div>
+        </div> <br>
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Border-type</label>
+            <div class="col-md-9">
+                <select class="form-control border-type-select" ng-model="shapeProps.borderType">
+                    <option value="dashed">Dashed</option>
+                    <option value="solid">Solid</option>
+                </select>
+            </div>
+        </div> <br>
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Border-width</label>
+            <div class="col-md-9">
+                <input type="number" min="0" value="5" class="form-control shape_border_width" ng-model="shapeProps.borderWidth">
+            </div>
+        </div> <br>
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Border-color</label>
+            <div class="col-md-9">
+                <input type="color" class="form-control shape_border_color" ng-model="shapeProps.borderColor">
+            </div>
+        </div> <br>
+        <div class="col-md-10 col-md-offset-1 form-group">
+            <label class="col-md-3 control-label form-group-addon">Background-color</label>
+            <div class="col-md-9">
+                <input type="color" class="form-control shape_background_color" ng-model="shapeProps.bgColor">
+            </div>
+        </div> <br>
+    </div>
+    <input  type="text" class="hide left-coordinate" value="' + left + '">
+    <input  type="text" class="hide top-coordinate" value="' + top + '">
+</div>
+<div class="modal-footer">
+    <button class="btn btn-success btn-flat" type="button" data-ng-click="addShape()">Add</button>
+    <button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>
