@@ -108,7 +108,7 @@
                                 <img src="/users/{{user.id}}/picture?size=32" alt="{{user.name}}" class="rounded-circle s40 mr-3" />
 
                                 <div class="d-flex flex-column">
-                                    <div class="fw600">
+                                    <div class="fw600" id="{{user.id}}-badges">
                                         <span class="fw600">{{ user.name }}</span>
                                         {% if user.id == app.user.id %}
                                             <label class="badge badge-success ml-2 mb-0">It's you!</label>
