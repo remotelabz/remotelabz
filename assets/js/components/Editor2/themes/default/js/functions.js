@@ -424,7 +424,7 @@ export function deleteNode(id) {
     var deferred = $.Deferred();
     var type = 'DELETE';
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/nodes/' + id;
+    var url = '/api/labs/' + lab_filename + '/nodes/' + id;
     $.ajax({
         cache: false,
         timeout: TIMEOUT,

@@ -20,6 +20,7 @@ use App\Repository\ControlProtocolTypeRepository;
 use App\Repository\FlavorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
+use App\Repository\NetworkInterfaceRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -45,6 +46,7 @@ class DeviceController extends Controller
     private $hypervisorRepository;
     private $flavorRepository;
     private $operatingSystemRepository;
+    private $networkInterfaceRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -59,7 +61,8 @@ class DeviceController extends Controller
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         HypervisorRepository $hypervisorRepository,
         OperatingSystemRepository $operatingSystemRepository,
-        FlavorRepository $flavorRepository)
+        FlavorRepository $flavorRepository,
+        NetworkInterfaceRepository $networkInterfaceRepository)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -71,6 +74,7 @@ class DeviceController extends Controller
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
+        $this->networkInterfaceRepository = $networkInterfaceRepository;
     }
 
     /**
@@ -1053,7 +1057,7 @@ class DeviceController extends Controller
         return $this->redirectToRoute('devices');
     }
 
-    public function delete_device(Device $device) {
+    public function delete_device(Device $device, int $labId = null) {
 
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
@@ -1066,6 +1070,11 @@ class DeviceController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
+            if ($labId != null) {
+                foreach($this->networkInterfaceRepository->findByLabAndVlan($labId, $networkInterface->getVlan()) as $otherInterface) {
+                    $entityManager->remove($otherInterface);
+                }
+            }
             $entityManager->remove($networkInterface);
         }
 
@@ -1088,15 +1097,15 @@ class DeviceController extends Controller
 
     /**
      * 
-     * @Rest\Delete("/api/nodes/{id<\d+>}", name="api_delete_device_test")
+     * @Rest\Delete("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_delete_device_test")
      */
-    public function deleteActionTest(Request $request, int $id)
+    public function deleteActionTest(Request $request, int $id, int $labId)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $username=$user->getUserIdentifier();
         $device = $this->deviceRepository->find($id);
 
-        $this->delete_device($device);
+        $this->delete_device($device, $labId);
         $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
 
         $response = new Response();
