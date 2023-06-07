@@ -1435,12 +1435,13 @@ export function postLogin(param) {
 }
 // Post login
 export function newUIreturn(param) {
+    var lab_filename = $('#lab-viewport').attr('data-path');
     if (UPDATEID != null) {
         // Stop updating node_status
         clearInterval(UPDATEID);
     }
     $('body').removeClass('login');
-        window.location.href = "/" ;
+        window.location.href = "/labs/"+ lab_filename ;
 }
 
 //set Network
