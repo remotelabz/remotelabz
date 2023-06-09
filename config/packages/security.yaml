@@ -62,6 +62,8 @@ security:
 
             logout:
                 path: /logout
+
+            switch_user: {role: ROLE_SUPER_ADMINISTRATOR}
             
             access_denied_handler: App\Security\AccessDeniedHandler
             # activate different ways to authenticate
