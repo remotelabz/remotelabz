@@ -303,7 +303,8 @@ class LabController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
-        $labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
+        //$labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
+        $labInstance = $this->labInstanceRepository->find($instanceId);
         if($labInstance == null) {
             //$redirectTo = $this->getRedirectUrl();
                /* return new JsonResponse(array(
