@@ -55,7 +55,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
-
+use App\Service\Instance\InstanceManager;
 
 class LabController extends Controller
 {
@@ -74,6 +74,7 @@ class LabController extends Controller
     private $operatingSystemRepository;
     private $flavorRepository;
     private $serializer;
+    private $instanceManager;
 
     public function __construct(
         LoggerInterface $logger,
@@ -81,7 +82,8 @@ class LabController extends Controller
         DeviceRepository $deviceRepository,
         operatingSystemRepository $operatingSystemRepository,
         FlavorRepository $flavorRepository,
-        SerializerInterface $serializerInterface)
+        SerializerInterface $serializerInterface,
+        InstanceManager $instanceManager)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -92,6 +94,7 @@ class LabController extends Controller
         $this->operatingSystemRepository=$operatingSystemRepository;
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
+        $this->instanceManager = $instanceManager;
     }
 
     /**
@@ -623,9 +626,66 @@ class LabController extends Controller
 
         $return=$this->delete_lab($lab);
         if ($return > 0) {
-            $this->logger->error('This lab is used by an instance');
-            $this->addFlash('danger','This lab '.$lab->getName().' is used by an instance');
+            //$this->logger->error('This lab is used by an instance');
+            //$this->addFlash('danger','This lab '.$lab->getName().' is used by an instance');
             //return $this->redirectToRoute('labs', array('id' => $id));
+            //return $this->redirectToRoute('labs');
+            $response = new Response();
+            $html = $this->renderView('force-delete-lab.html.twig', ['id'=>$id]);
+            $response->setContent(json_encode([
+                'code' => 403,
+                'message'=> 'force',
+                'status'=> 'fail',
+                'data' => [
+                    'html' => $html,
+                ]
+            ]));
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+        else {
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json();
+            }
+            $this->logger->info($user->getUsername() . " has deleted lab \"" . $lab->getName()."\"");
+
+            $this->addFlash('success',$lab->getName() . ' has been deleted.');
+            return $this->redirectToRoute('labs');
+        }
+    }
+    else 
+    { 
+        $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to delete the lab".$lab->getName());
+        return $this->redirectToRoute('index');
+    }
+    }
+
+    /** 
+     * @Route("/admin/labs/{id<\d+>}/delete/force", name="force_delete_lab", methods="GET")
+     * @Rest\Delete("/api/labs/{id<\d+>}/force", name="api_force_delete_lab")
+     */
+    public function forceDeleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository, InstanceManager $instanceManager)
+    {
+        if (!$lab = $this->labRepository->find($id)) {
+            throw new NotFoundHttpException();
+        }
+
+        $lab = $this->labRepository->find($id);
+        $labInstances = $labInstanceRepository->findByLab($lab);
+
+        if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
+        {
+            $em = $this->getDoctrine()->getManager();
+
+        $this->deleteAllLabInstances($labInstances);
+        //$em->flush();
+        $this->logger->debug("Lab deleted by : ".$this->getUser()->getUsername());
+
+        $return=$this->delete_lab($lab);
+        if ($return > 0) {
+            $this->logger->error('This lab has not been deleted');
+            $this->addFlash('danger','This lab '.$lab->getName().' has not been deleted');
+
             return $this->redirectToRoute('labs');
         }
         else {
@@ -643,6 +703,13 @@ class LabController extends Controller
         $this->logger->warning("User ".$this->getUser()->getUsername()." has tried to delete the lab".$lab->getName());
         return $this->redirectToRoute('index');
     }
+    }
+
+    public function deleteAllLabInstances($labInstances) {
+        foreach($labInstances as $labInstance) {
+            $this->instanceManager->delete($labInstance);
+            sleep(3);
+        }
     }
 
     public function delete_lab(Lab $lab){
