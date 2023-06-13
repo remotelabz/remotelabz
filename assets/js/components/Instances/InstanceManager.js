@@ -118,6 +118,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false)
             setLoadingInstanceState(false)
             setLabInstance(response.data)
+            $.ajax({
+                type: "POST",
+                url: `/api/editButton/display`,
+                data: JSON.stringify({
+                    'user': props.user,
+                    'lab': props.lab,
+                    'labInstance': response.data
+                }),
+                dataType:"json",
+                success: function (response) {
+                    console.log(response.data.html);
+                    $("#instanceButtons").html(response.data.html);              
+                }  
+            });  
         } catch (error) {
             console.error(error)
             new Noty({
@@ -135,6 +149,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid)
             setLabInstance({ ...labInstance, state: "deleting" })
+            $.ajax({
+                type: "POST",
+                url: `/api/editButton/display`,
+                data: JSON.stringify({
+                    'user': props.user,
+                    'lab': props.lab,
+                    'labInstance': null
+                }),
+                dataType:"json",
+                success: function (response) {
+                    console.log(response.data.html);
+                    $("#instanceButtons").html(response.data.html);              
+                }  
+            }); 
         } catch (error) {
             console.error(error)
             new Noty({
