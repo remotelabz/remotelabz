@@ -32,6 +32,7 @@ class GroupController extends Controller
 {
     private $logger;
     private $labRepository;
+    private $userRepository;
 
     /** @var GroupRepository */
     protected $groupRepository;
@@ -39,13 +40,14 @@ class GroupController extends Controller
     public function __construct(
         GroupRepository $groupRepository,
         LoggerInterface $logger,
-        LabRepository $labRepository
+        LabRepository $labRepository,
+        UserRepository $userRepository
     )
     {
         $this->groupRepository = $groupRepository;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
-
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -467,6 +469,34 @@ class GroupController extends Controller
                 SerializationContext::create()->setGroups(['api_groups'])
             ),
         ]);
+    }
+
+    /**
+     * @Rest\get("/api/groups/{slug}/members/{id<\d+>}", name="dashboard_group_badges", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function updateRoleDisplay(string $slug, SerializerInterface $serializer, int $id)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+        $user = $this->userRepository->find($id);
+        $html = '<span class="fw600">'. $user->getName() . '</span>';
+        if($group->isOwner($user)) {
+            $html .= '<label class="badge badge-info ml-2 mb-0">Owner</label>';
+        }
+        if($group->isAdmin($user)) {
+            $html .= '<label class="badge badge-warning ml-2 mb-0">Admin</label>';
+        }
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'data' => [
+                'html' => $html,
+                'user' => $user->getId()]
+           ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**
