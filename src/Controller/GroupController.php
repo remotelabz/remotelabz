@@ -27,11 +27,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 class GroupController extends Controller
 {
     private $logger;
     private $labRepository;
+    private $userRepository;
 
     /** @var GroupRepository */
     protected $groupRepository;
@@ -39,13 +42,14 @@ class GroupController extends Controller
     public function __construct(
         GroupRepository $groupRepository,
         LoggerInterface $logger,
-        LabRepository $labRepository
+        LabRepository $labRepository,
+        UserRepository $userRepository
     )
     {
         $this->groupRepository = $groupRepository;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
-
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -453,10 +457,57 @@ class GroupController extends Controller
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
      */
-    public function dashboardMembersAction(string $slug, SerializerInterface $serializer)
+    public function dashboardMembersAction(string $slug, SerializerInterface $serializer, Request $request)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        $addGroupUserFromFileForm = $this->createFormBuilder([])
+            ->add('file', FileType::class, [
+                "help" => "Accepted formats: csv",
+                "attr" => [
+                    "accepted" => ".csv",
+                ]
+            ])
+            ->add('submit', SubmitType::class)
+            ->getForm();
+
+        $addGroupUserFromFileForm->handleRequest($request);
+
+        if ($addGroupUserFromFileForm->isSubmitted() && $addGroupUserFromFileForm->isValid()) {
+            $file = $addGroupUserFromFileForm->getData()['file'];
+
+            $fileExtension = strtolower($file->getClientOriginalExtension());
+
+            if (in_array($fileExtension, ['csv'])) {
+                $fileSocket = fopen($file, 'r');
+
+                $addedUsers = [];
+
+                switch ($fileExtension) {
+                    case 'csv':
+                        $addedUsers = $this->importUserFromCSV($fileSocket,$file,$group);
+                        break;
+                }
+                if ($addedUsers && count($addedUsers) > 0) {
+                    $this->addFlash('success', 'Les utilisateurs ont été ajoutés au groupe');
+                } else {
+                    $this->addFlash(
+                        'warning',
+                        'Aucun utilisateur créé. Veuillez vérifier que les
+                        utilisateurs spécifiés dans le fichier existent ou que le format du fichier est correct.'
+                    );
+                }
+
+                fclose($fileSocket);
+            } else {
+                $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
+            }
+            return $this->redirectToRoute('dashboard_group_members', [
+                'slug'=>$slug,
+            ]);
+
         }
 
         return $this->render('group/dashboard_members.html.twig', [
@@ -466,7 +517,63 @@ class GroupController extends Controller
                 'json',
                 SerializationContext::create()->setGroups(['api_groups'])
             ),
+            'addGroupUserFromFileForm' => $addGroupUserFromFileForm->createView(),
         ]);
+    }
+
+    /**
+     * The CSV must be in the following format :
+     * email
+     * @return array The number of elements added
+     */
+    public function importUserFromCSV($filehandler,$file,$group)
+    {
+        $row = 0;
+        $line = array();
+        $addedUsers = array();
+        $entityManager = $this->getDoctrine()->getManager();
+
+        $error=false;
+
+        if (($data = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
+            if ( in_array("email",array_map('strtolower',$data)) ) {
+                //$this->logger->debug("Find first line in CSV file");
+
+                $csv = array_map('str_getcsv', file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES));
+                array_walk($csv, function(&$a) use ($csv) {
+                    $a = array_combine($csv[0], $a);
+                });
+                $this->logger->debug("email in CSV file :",$csv);
+            }
+            else {
+                $this->addFlash('danger',"File format is incorrect");
+                $error=true;
+            }
+        }
+    
+        if (!$error) {
+            $row=0;
+            foreach ($csv as $line_num => $line) {
+                if ($line_num > 0) {
+                    if (count($line) >= 1) {
+                        $email = $line['email'];
+                        $user=$this->userRepository->findOneByEmail($email);
+                        if ($user != null) {
+                            if (!$group->hasUser($user)) {
+                                $group->addUser($user);
+                                $addedUsers[$row] = $user;
+                                $this->logger->info($this->getUser()->getName()."imported ".$user->getEmail()."in the group ".$group->getName());
+                            }
+                        }
+                        $row++;
+                    }
+                    $entityManager->flush();
+                }
+            }
+    
+        $entityManager->flush();
+        return $addedUsers;
+        }
     }
 
     /**
