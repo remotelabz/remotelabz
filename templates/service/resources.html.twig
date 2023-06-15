@@ -81,10 +81,9 @@ document.getElementById("themeSwitcher").addEventListener('change', () => {
     setTimeout(function() {drawStats()}, 100);
 });
 function drawStats() {
-    var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
-console.log(cpu);
 
-$('.cpu-circle').circleProgress({
+    var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
+    $('.cpu-circle').circleProgress({
         arcCoef: 0.7,
         value: cpu,
         thickness: 10,
@@ -100,8 +99,7 @@ $('.cpu-circle').circleProgress({
     })
 
     var memory = $('#memory').text().split(/(\d+)/)[1] /100;
-console.log(memory);
-$('.memory-circle').circleProgress({
+    $('.memory-circle').circleProgress({
         arcCoef: 0.7,
         value: memory,
         thickness: 10,
@@ -116,9 +114,8 @@ $('.memory-circle').circleProgress({
         }
     })
 
-var disk = $('#disk').text().split(/(\d+)/)[1] /100;
-console.log(disk);
-$('.disk-circle').circleProgress({
+    var disk = $('#disk').text().split(/(\d+)/)[1] /100;
+    $('.disk-circle').circleProgress({
         arcCoef: 0.7,
         value: disk,
         thickness: 10,
@@ -136,7 +133,6 @@ $('.disk-circle').circleProgress({
 
 
 function setGradient(value) {
-    console.log(value);
     if (value > 0.8) {
         color = "#dc3545";
     }
@@ -146,13 +142,11 @@ function setGradient(value) {
     if (value <= 0.4) {
         color = "#28a745";
     }
-    console.log(color);
     return color;
 }
 
 function setCircleColor(value) {
     color = "#adadad";
-    console.log(value);
     if ($.cookie("theme") == "dark") {
         if (value > 0.8) {
             color = "#2c0a0d";
@@ -175,7 +169,6 @@ function setCircleColor(value) {
             color = "#d4edd9";
         }
     }
-    console.log("color ", color)
     return color;
 }
 </script>
