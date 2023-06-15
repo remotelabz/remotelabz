@@ -75,15 +75,14 @@
 <script src="{{asset('build/editor/bootstrap/js/circle-progress-1.1.3.js')}}"></script>
 <script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script>
 <script type="text/javascript">
-var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
+
+drawStats();
+document.getElementById("themeSwitcher").addEventListener('change', () => {
+    setTimeout(function() {drawStats()}, 100);
+});
+function drawStats() {
+    var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
 console.log(cpu);
-/*emptyFill = "#90c9d3"
-if ($.cookie("theme") == "dark") {
-    emptyFill = "#0e2124"
-}
-if ($.cookie("theme") == "light") {
-    emptyFill = "#daedf0"
-}*/
 
 $('.cpu-circle').circleProgress({
         arcCoef: 0.7,
@@ -133,51 +132,51 @@ $('.disk-circle').circleProgress({
             $(this).find('strong').html(parseInt(100 * progress) + '%');
         }
     })
+}
 
-    function setGradient(value) {
-        console.log(value);
+
+function setGradient(value) {
+    console.log(value);
+    if (value > 0.8) {
+        color = "#dc3545";
+    }
+    if (value <= 0.8) {
+        color = "#ffc107";
+    }
+    if (value <= 0.4) {
+        color = "#28a745";
+    }
+    console.log(color);
+    return color;
+}
+
+function setCircleColor(value) {
+    color = "#adadad";
+    console.log(value);
+    if ($.cookie("theme") == "dark") {
         if (value > 0.8) {
-            color = "#dc3545";
+            color = "#2c0a0d";
         }
         if (value <= 0.8) {
-            color = "#ffc107";
+            color = "#332601";
         }
         if (value <= 0.4) {
-            color = "#28a745";
+            color = "#08210d";
         }
-        console.log(color);
-        return color;
     }
-
-    function setCircleColor(value) {
-        color = "#adadad";
-        console.log(value);
-        if ($.cookie("theme") == "dark") {
-            if (value > 0.8) {
-                color = "#2c0a0d";
-            }
-            if (value <= 0.8) {
-                color = "#332601";
-            }
-            if (value <= 0.4) {
-                color = "#08210d";
-            }
-            //emptyFill = "#0e2124"
+    if ($.cookie("theme") == "light") {
+        if (value > 0.8) {
+            color = "#f8d6d9";
         }
-        if ($.cookie("theme") == "light") {
-            if (value > 0.8) {
-                color = "#f8d6d9";
-            }
-            if (value <= 0.8) {
-                color = "#fff2cd";
-            }
-            if (value <= 0.4) {
-                color = "#d4edd9";
-            }
-            //emptyFill = "#daedf0"
+        if (value <= 0.8) {
+            color = "#fff2cd";
         }
-        console.log("color ", color)
-        return color;
+        if (value <= 0.4) {
+            color = "#d4edd9";
+        }
     }
+    console.log("color ", color)
+    return color;
+}
 </script>
 {% endblock %}
