@@ -1222,3 +1222,13 @@ $grid-number: 12;
   text-align: center;
   @include boxShadow(#a10532, 3);
 }
+
+.stats-circle strong {
+	font-size: 20px;
+	left: -15px;
+	line-height: 40px;
+	position: absolute;
+	text-align: center;
+	top: 80px;
+	width: 100%;
+}

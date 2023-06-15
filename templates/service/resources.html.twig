@@ -27,7 +27,10 @@
                         <h4 class="card-title">
                         CPU
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle cpu-circle">
+                        <strong></strong>
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="cpu" style="display: none;">
                             {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
                         </p>
                     </div>
@@ -37,7 +40,10 @@
                         <h4 class="card-title">
                         Memory
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle memory-circle">
+                        <strong></strong>
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="memory" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
 
                         </p>
@@ -48,7 +54,10 @@
                         <h4 class="card-title">
                         Disk
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle disk-circle">
+                        <strong></strong>
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="disk" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
 
                         </p>
@@ -59,4 +68,116 @@
     </div>
 </div>
 
+{% endblock %}
+{% block javascripts %}
+{{ parent() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script src="{{asset('build/editor/bootstrap/js/circle-progress-1.1.3.js')}}"></script>
+<script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script>
+<script type="text/javascript">
+var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
+console.log(cpu);
+/*emptyFill = "#90c9d3"
+if ($.cookie("theme") == "dark") {
+    emptyFill = "#0e2124"
+}
+if ($.cookie("theme") == "light") {
+    emptyFill = "#daedf0"
+}*/
+
+$('.cpu-circle').circleProgress({
+        arcCoef: 0.7,
+        value: cpu,
+        thickness: 10,
+        startAngle: -Math.PI / 2,
+        fill: {gradient: [setGradient(cpu)]},
+        emptyFill: setCircleColor(cpu)
+    }).on('circle-animation-progress', function (event, progress) {
+        if (progress > cpu) {
+            $(this).find('strong').html(parseInt(100 * cpu) + '%');
+        } else {
+            $(this).find('strong').html(parseInt(100 * progress) + '%');
+        }
+    })
+
+    var memory = $('#memory').text().split(/(\d+)/)[1] /100;
+console.log(memory);
+$('.memory-circle').circleProgress({
+        arcCoef: 0.7,
+        value: memory,
+        thickness: 10,
+        startAngle: -Math.PI / 2,
+        fill: {gradient: [setGradient(memory)]},
+        emptyFill: setCircleColor(memory)
+    }).on('circle-animation-progress', function (event, progress) {
+        if (progress > memory) {
+            $(this).find('strong').html(parseInt(100 * memory) + '%');
+        } else {
+            $(this).find('strong').html(parseInt(100 * progress) + '%');
+        }
+    })
+
+var disk = $('#disk').text().split(/(\d+)/)[1] /100;
+console.log(disk);
+$('.disk-circle').circleProgress({
+        arcCoef: 0.7,
+        value: disk,
+        thickness: 10,
+        startAngle: -Math.PI / 2,
+        fill: {gradient: [setGradient(disk)]},
+        emptyFill: setCircleColor(disk)
+    }).on('circle-animation-progress', function (event, progress) {
+        if (progress > disk) {
+            $(this).find('strong').html(parseInt(100 * disk) + '%');
+        } else {
+            $(this).find('strong').html(parseInt(100 * progress) + '%');
+        }
+    })
+
+    function setGradient(value) {
+        console.log(value);
+        if (value > 0.8) {
+            color = "#dc3545";
+        }
+        if (value <= 0.8) {
+            color = "#ffc107";
+        }
+        if (value <= 0.4) {
+            color = "#28a745";
+        }
+        console.log(color);
+        return color;
+    }
+
+    function setCircleColor(value) {
+        color = "#adadad";
+        console.log(value);
+        if ($.cookie("theme") == "dark") {
+            if (value > 0.8) {
+                color = "#2c0a0d";
+            }
+            if (value <= 0.8) {
+                color = "#332601";
+            }
+            if (value <= 0.4) {
+                color = "#08210d";
+            }
+            //emptyFill = "#0e2124"
+        }
+        if ($.cookie("theme") == "light") {
+            if (value > 0.8) {
+                color = "#f8d6d9";
+            }
+            if (value <= 0.8) {
+                color = "#fff2cd";
+            }
+            if (value <= 0.4) {
+                color = "#d4edd9";
+            }
+            //emptyFill = "#daedf0"
+        }
+        console.log("color ", color)
+        return color;
+    }
+</script>
 {% endblock %}
