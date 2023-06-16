@@ -1223,12 +1223,16 @@ $grid-number: 12;
   @include boxShadow(#a10532, 3);
 }
 
-.stats-circle strong {
-	font-size: 20px;
-	left: -15px;
-	line-height: 40px;
-	position: absolute;
-	text-align: center;
-	top: 80px;
-	width: 100%;
+.circle-progress-value {
+	stroke-width: 8px;
+	stroke: white;
+	//stroke-linecap: round;
+}
+.circle-progress-circle {
+	stroke-width: 8px;
+	stroke: #888;
+}
+.circle-progress-text {
+	fill: #fef8f8;
+  font-weight: bold;
 }

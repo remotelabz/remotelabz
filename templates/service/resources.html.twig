@@ -72,7 +72,7 @@
 {% block javascripts %}
 {{ parent() }}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="{{asset('build/editor/bootstrap/js/circle-progress-1.1.3.js')}}"></script>
+<script src="{{asset('build/js/jquery.circle-progress.min.js')}}"></script>
 <script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script>
 <script type="text/javascript">
 
@@ -82,94 +82,75 @@ document.getElementById("themeSwitcher").addEventListener('change', () => {
 });
 function drawStats() {
 
-    var cpu = $('#cpu').text().split(/(\d+)/)[1] /100;
+    var cpu = $('#cpu').text().split(/(\d+)/)[1];
+
     $('.cpu-circle').circleProgress({
-        arcCoef: 0.7,
         value: cpu,
-        thickness: 10,
-        startAngle: -Math.PI / 2,
-        fill: {gradient: [setGradient(cpu)]},
-        emptyFill: setCircleColor(cpu)
-    }).on('circle-animation-progress', function (event, progress) {
-        if (progress > cpu) {
-            $(this).find('strong').html(parseInt(100 * cpu) + '%');
-        } else {
-            $(this).find('strong').html(parseInt(100 * progress) + '%');
-        }
+        min: 0,
+        max:100,
+        textFormat: 'percent'
     })
 
-    var memory = $('#memory').text().split(/(\d+)/)[1] /100;
+    var memory = $('#memory').text().split(/(\d+)/)[1];
     $('.memory-circle').circleProgress({
-        arcCoef: 0.7,
         value: memory,
-        thickness: 10,
-        startAngle: -Math.PI / 2,
-        fill: {gradient: [setGradient(memory)]},
-        emptyFill: setCircleColor(memory)
-    }).on('circle-animation-progress', function (event, progress) {
-        if (progress > memory) {
-            $(this).find('strong').html(parseInt(100 * memory) + '%');
-        } else {
-            $(this).find('strong').html(parseInt(100 * progress) + '%');
-        }
+        min: 0,
+        max: 100,
+        textFormat: 'percent'
     })
 
-    var disk = $('#disk').text().split(/(\d+)/)[1] /100;
+    var disk = $('#disk').text().split(/(\d+)/)[1];
     $('.disk-circle').circleProgress({
-        arcCoef: 0.7,
         value: disk,
-        thickness: 10,
-        startAngle: -Math.PI / 2,
-        fill: {gradient: [setGradient(disk)]},
-        emptyFill: setCircleColor(disk)
-    }).on('circle-animation-progress', function (event, progress) {
-        if (progress > disk) {
-            $(this).find('strong').html(parseInt(100 * disk) + '%');
-        } else {
-            $(this).find('strong').html(parseInt(100 * progress) + '%');
-        }
+        min: 0,
+        max: 100,
+        textFormat: 'percent'
     })
+
+    setTimeout(function() {
+        changeColorProgress(cpu, '.cpu-circle');
+        changeColorProgress(memory, '.memory-circle');
+        changeColorProgress(disk, '.disk-circle');
+    }, 100);
 }
 
-
-function setGradient(value) {
-    if (value > 0.8) {
-        color = "#dc3545";
-    }
-    if (value <= 0.8) {
-        color = "#ffc107";
-    }
-    if (value <= 0.4) {
-        color = "#28a745";
-    }
-    return color;
-}
-
-function setCircleColor(value) {
-    color = "#adadad";
+function changeColorProgress(value, css) {
     if ($.cookie("theme") == "dark") {
-        if (value > 0.8) {
+        if (value > 80) {
             color = "#2c0a0d";
+            $(css + " .circle-progress-value").css({stroke: "#dc3545"});
+            $(css + " .circle-progress-circle").css("stroke", "#2c0a0d");
         }
-        if (value <= 0.8) {
+        if (value <= 80) {
             color = "#332601";
+            $(css + " .circle-progress-value").css("stroke", "#ffc107");
+            $(css + " .circle-progress-circle").css("stroke", "#332601");
         }
-        if (value <= 0.4) {
+        if (value <= 40) {
             color = "#08210d";
+            $(css + " .circle-progress-value").css("stroke", "#28a745");
+            $(css + " .circle-progress-circle").css("stroke", "#08210d");
         }
+            $(css + " .circle-progress-text").css("fill", "#ffffff");
     }
     if ($.cookie("theme") == "light") {
-        if (value > 0.8) {
+        if (value > 80) {
             color = "#f8d6d9";
+            $(css + " .circle-progress-value").css("stroke", "#dc3545");
+            $(css + " .circle-progress-circle").css("stroke", "#f8d6d9");
         }
-        if (value <= 0.8) {
+        if (value <= 80) {
             color = "#fff2cd";
+            $(css + " .circle-progress-value").css("stroke", "#ffc107");
+            $(css + " .circle-progress-circle").css("stroke", "#fff2cd");
         }
-        if (value <= 0.4) {
+        if (value <= 40) {
             color = "#d4edd9";
+            $(css + " .circle-progress-value").css("stroke", "#28a745");
+            $(css + " .circle-progress-circle").css("stroke", "#d4edd9");
         }
+            $(css + " .circle-progress-text").css("fill", "#000000");
     }
-    return color;
 }
 </script>
 {% endblock %}
