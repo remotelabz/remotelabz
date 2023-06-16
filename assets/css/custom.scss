@@ -1222,3 +1222,17 @@ $grid-number: 12;
   text-align: center;
   @include boxShadow(#a10532, 3);
 }
+
+.circle-progress-value {
+	stroke-width: 8px;
+	stroke: white;
+	//stroke-linecap: round;
+}
+.circle-progress-circle {
+	stroke-width: 8px;
+	stroke: #888;
+}
+.circle-progress-text {
+	fill: #fef8f8;
+  font-weight: bold;
+}

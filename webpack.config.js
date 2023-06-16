@@ -122,6 +122,13 @@ Encore
         // only copy files matching this pattern
         pattern: /\.(png|jpg|jpeg|gif)$/
     })
+    .copyFiles({
+        from: './assets/js/plugins',
+        // optional target path, relative to the output dir
+        to: 'js/[path][name].[ext]',
+        // only copy files matching this pattern
+        pattern: /\.(js)$/
+    })
     .addAliases({
         'fos-js-router': path.resolve(__dirname, 'vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.js'),
         'routes': path.resolve(__dirname, 'public/fos_js_routes.json'),
