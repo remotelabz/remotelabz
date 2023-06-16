@@ -5,6 +5,7 @@ import { GroupRoles } from '../Groups/Groups';
 import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
+import moment from 'moment/moment';
 
 function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
@@ -99,6 +100,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
+                        <span>Started: { moment(props.labInstance.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
                     </div>
                     <div>
                     {

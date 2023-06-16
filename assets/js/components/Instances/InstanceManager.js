@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
+import moment from 'moment/moment';
 
 function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
@@ -200,6 +201,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
+                        <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
                     </div>
                     <div>
                     {labInstance.state === "created" &&
