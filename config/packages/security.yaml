@@ -1,7 +1,8 @@
 parameters:
     enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
 security:
-    encoders:
+    enable_authenticator_manager: true
+    password_hashers:
         App\Entity\User:
             algorithm: 'sodium'
 
@@ -22,7 +23,6 @@ security:
         auth:
             pattern:  ^/api/auth
             stateless: true
-            anonymous: true
             json_login:
                 check_path:               /api/auth
                 success_handler:          App\Security\AuthenticationSuccessHandler
@@ -31,7 +31,6 @@ security:
         refresh:
             pattern:  ^/api/auth/refresh
             stateless: true
-            anonymous: true
 
         api_doc:
             pattern:   ^/api/doc
@@ -40,9 +39,7 @@ security:
         api:
             pattern:   ^/api
             stateless: true
-            guard:
-                authenticators:
-                    - lexik_jwt_authentication.jwt_token_authenticator
+            jwt: ~
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -53,15 +50,15 @@ security:
             security: false
 
         default:
-            anonymous: true
-            guard:
-                authenticators:
-                    - App\Security\LoginFormAuthenticator
-                    - App\Security\ShibbolethAuthenticator
-                entry_point: App\Security\LoginFormAuthenticator
+            custom_authenticators:
+                - App\Security\LoginFormAuthenticator
+                - App\Security\ShibbolethAuthenticator
+            entry_point: App\Security\LoginFormAuthenticator
 
             logout:
                 path: /logout
+
+            switch_user: {role: ROLE_SUPER_ADMINISTRATOR}
             
             access_denied_handler: App\Security\AccessDeniedHandler
             # activate different ways to authenticate
@@ -75,9 +72,9 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api/auth, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/password, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }

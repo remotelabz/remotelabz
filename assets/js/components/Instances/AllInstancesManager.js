@@ -5,6 +5,7 @@ import { GroupRoles } from '../Groups/Groups';
 import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
+import moment from 'moment/moment';
 
 function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
@@ -12,6 +13,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
     
+    console.log(props);
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -98,8 +100,13 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
+                        <span>Started: { moment(props.labInstance.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
                     </div>
                     <div>
+                    {
+                        (!props.labInstance.lab.name.startsWith('Sandbox_')) && 
+                        <Button variant="danger" className="ml-2" href={`/labs/${props.labInstance.lab.id}/see/${props.labInstance.id}`}>See Lab</Button>
+                    }
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }

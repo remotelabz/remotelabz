@@ -1,0 +1,71 @@
+<div class="modal-header">
+	<button type="button" class="close" ng-click="closeModal()">&times;</button>
+  <i class="glyphicon glyphicon-certificate pull-right pointer action-changeopacity" ng-click="opacity()"></i>
+	<h3 class="modal-title">System status</h3>
+</div>
+<div class="modal-body">
+	<div class="row">
+		<div class="col-md-3 col-sm-6 col-xs-12 text-center">
+			<ui-knob value="valueCPU" options="optionsCPU"></ui-knob>
+		</div><!-- ./col -->
+		<div class="col-md-3 col-sm-6 col-xs-12 text-center">
+			<ui-knob value="valueMem" options="optionsMem"></ui-knob>
+		</div><!-- ./col -->
+		<div class="col-md-3 col-sm-6 col-xs-12 text-center">
+			<ui-knob value="valueSwap" options="optionsSwap"></ui-knob>
+		</div><!-- ./col -->
+		<div class="col-md-3 col-sm-6 col-xs-12 text-center">
+			<ui-knob value="valueDisk" options="optionsDisk"></ui-knob>
+		</div><!-- ./col -->
+	</div><!-- /.row -->
+	<div class="row">
+        <div class="col-lg-offset-3 col-lg-2 col-md-4 col-xs-12">
+          <!-- small box -->
+            <div style="background-color:#eee;">
+              <h3 class="text-center" style="margin-bottom:0px">running IOL nodes </h3>
+              <h1 class="text-center" data-ng-bind="serverstatus.iol" style="margin-top:10px"></h1>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-2 col-md-4 col-xs-12">
+          <!-- small box -->
+            <div style="background-color:#eee;">
+              <h3 class="text-center" style="margin-bottom:0px">running Dynamips nodes </h3>
+              <h1 class="text-center" data-ng-bind="serverstatus.dynamips" style="margin-top:10px"></h1>
+            </div>
+        </div>
+        <!-- ./col -->
+		<div class="col-lg-2 col-md-4 col-xs-12">
+          <!-- small box -->
+            <div style="background-color:#eee;">
+              <h3 class="text-center" style="margin-bottom:0px">running QEMU nodes </h3>
+              <h1 class="text-center" data-ng-bind="serverstatus.qemu" style="margin-top:10px"></h1>
+            </div>
+        </div>
+        <!-- ./col -->
+		</div>
+		<div class="row">
+		<div class="col-lg-offset-4 col-md-offset-1 col-lg-2 col-md-4 col-xs-12">
+          <!-- small box -->
+            <div style="background-color:#eee;">
+              <h3 class="text-center" style="margin-bottom:0px">running Docker nodes </h3>
+              <h1 class="text-center" data-ng-bind="serverstatus.docker" style="margin-top:10px"></h1>
+            </div>
+        </div>
+        <!-- ./col -->
+		<div class="col-lg-2 col-md-4 col-xs-12">
+          <!-- small box -->
+            <div style="background-color:#eee;">
+              <h3 class="text-center" style="margin-bottom:0px">running VPCS nodes </h3>
+              <h1 class="text-center" data-ng-bind="serverstatus.vpcs" style="margin-top:10px"></h1>
+            </div>
+        </div>
+        <!-- ./col -->
+      </div>
+	 <p class="text-muted">Qemu version: <text data-ng-bind="serverstatus.qemu_version"></text></p>
+	<p class="text-muted" data-ng-bind="versiondata"></p>
+	<p class="text-muted">UKSM status: <text  data-ng-bind="serverstatus.uksm"></text></p>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>

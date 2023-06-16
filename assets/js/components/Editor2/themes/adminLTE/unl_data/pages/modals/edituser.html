@@ -1,0 +1,61 @@
+<div class="modal-header">
+    <h3 class="modal-title">Edit User</h3>
+</div>
+<div class="modal-body">
+    <form role="form" name="form">
+        <div class="form-group required {{ (errorClass == 'has-error username') ? errorClass : ''}}">
+            <label class="control-label">User Name</label>
+            <input type="text" class="form-control" data-ng-model="username" placeholder="Enter username" disabled>
+            <span class="help-block" data-ng-show="errorClass == 'has-error username'" data-ng-bind="errorMessage"></span>
+        </div>
+
+        <div class="form-group required {{ (errorClass == 'has-error passwd') ? errorClass : ''}}">
+            <label class="control-label">Password</label>
+            <input type="password" class="form-control" data-ng-model="passwd" placeholder="Enter password">
+            <span class="help-block" data-ng-show="errorClass == 'has-error passwd'" data-ng-bind="errorMessage"></span>
+        </div>
+
+        <div class="form-group required {{ (errorClass == 'has-error passwdConfirm') ? errorClass : ''}}">
+            <label class="control-label">Password Confirmation</label>
+            <input type="password" class="form-control" data-ng-model="passwdConfirm" placeholder="Enter password">
+            <span class="help-block chars--active" ng-show="passwdConfirm != passwd" >Passwords don't match</span>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" name="email" class="form-control" data-ng-model="email" placeholder="Enter email" ng-pattern="patternEmail"
+                ng-class="{'input--error': form.email.$valid == false, 'input': form.email.$valid == true}">
+                <span class="chars" ng-class="{'chars--active': form.email.$valid == false, 'chars': form.email.$valid == true}">Please enter an valid email</span>
+        </div>
+
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="form-control" name="name" data-ng-model="name" placeholder="Enter name" autofocus ng-pattern="restrictNumber"
+                ng-class="{'input--error': form.name.$valid == false, 'input': form.name.$valid == true}">
+                <span class="chars" ng-class="{'chars--active': form.name.$valid == false, 'chars': form.name.$valid == true}">Use only [A-Za-z0-9_- ]chars</span>
+                <span class="help-block" data-ng-show="errorClass == 'has-error username'" data-ng-bind="errorMessage"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Role</label>
+            <select data-ng-model="selectRole" data-ng-options="y for (x,y) in roles"></select>
+            <!--<label data-ng-bind="selectRole"></label>
+        <label data-ng-bind="roleArray[selectRole]"></label> -->
+        </div>
+
+        <div class="form-group required">
+            <label class="control-label">POD</label>
+            <input type="text" class="form-control"  data-ng-model="pod" placeholder="Enter pod">
+        </div>
+        <div class="row">
+            <div class="col-md-12 parent-required">
+                <p class="p-required"><sup class="sup-required">*</sup>- Required Fields</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-success btn-flat {{blockButtonsClass}}" ng-disabled="!(form.$valid && (passwdConfirm == passwd) && passwdConfirm && username && pod)"
+                type="button" ng-click="editUser()">Edit</button>
+            <button class="btn btn-default btn-flat" type="button" ng-click="closeModal()">Cancel</button>
+        </div>
+    </form>
+</div>

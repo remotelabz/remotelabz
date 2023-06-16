@@ -1,0 +1,104 @@
+ <!-- sidebar: style can be found in sidebar.less -->
+    <section class="sidebar" style="height: auto;z-index: 1048;" data-ng-controller="HeaderController">
+      <!-- sidebar menu: : style can be found in sidebar.less -->
+      <ul class="sidebar-menu">
+        <li class="header">MAIN NAVIGATION</li>
+        <li class="treeview {{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">
+          <a class="pointer">
+            <i class="glyphicon glyphicon-plus"></i> <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Add an object</span> <i class="fa fa-angle-left pull-right"></i>
+          </a>
+          <ul class="treeview-menu">
+            <li><a class="pointer" ng-click="addNewCursor('node')"><i class="glyphicon glyphicon-hdd"></i> Node</a></li>
+            <li><a class="pointer" ng-click="addNewCursor('network')"><i class="glyphicon glyphicon-transfer"></i> Network</a></li>
+            <li><a class="pointer" ng-click="addNewCursor('image')"><i class="glyphicon glyphicon-picture"></i> Picture</a></li>
+            <li><a class="pointer" ng-click="addNewCursor('shape')"><i class="glyphicon glyphicon-unchecked"></i> Custom Shape</a></li>
+            <li><a class="pointer" ng-click="addNewCursor('text')"><i class="glyphicon glyphicon-font"></i> Text</a></li>
+          </ul>
+        </li>
+        
+		 <li>
+          <a class="pointer" ng-click="openModal('nodeList', 'megalg')">
+            <i class="glyphicon glyphicon-hdd"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Nodes</span>
+          </a>
+        </li>
+		 <li>
+          <a class="pointer" ng-click="openModal('netList', 'megalg')">
+            <i class="glyphicon glyphicon-transfer"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Networks</span>
+          </a>
+        </li>
+		 <li>
+          <a class="pointer" ng-click="openModal('startUpConfig', 'megalg')">
+            <i class="glyphicon glyphicon-align-left"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Startup-configs</span>
+          </a>
+        </li>
+		 <li>
+          <a class="pointer">
+            <i class="glyphicon glyphicon-picture"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Pictures</span>
+          </a>
+        </li>
+		 <li>
+          <a class="pointer" ng-click="openModal('configObject', 'megalg')">
+            <i class="glyphicon glyphicon-text-background"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Configured objects</span>
+          </a>
+        </li>
+        <li class="treeview {{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">
+          <a class="pointer">
+            <i class="glyphicon glyphicon-th"></i>
+            <span style="width:228px; z-index: 10000;" class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">More actions</span>
+            <i class="fa fa-angle-left pull-right"></i>
+          </a>
+          <ul class="treeview-menu {{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}" style="width:228px">
+            <li><a class="pointer" ng-click="startAllNode()"><i class="glyphicon glyphicon-play"></i> Start all nodes</a></li>
+            <li><a class="pointer" ng-click="stopAllNode()"><i class="glyphicon glyphicon-stop"></i> Stop all nodes</a></li>
+            <li><a class="pointer" ng-click="wipeAllNode()"><i class="glyphicon glyphicon-erase"></i> Wipe all nodes</a></li>
+            <li><a class="pointer" ng-click="exportAllCFG()"><i class="glyphicon glyphicon-save"></i> Export all CFGs</a></li>
+            <li><a class="pointer" ng-click="openModal('editLab', 'megalg')"><i class="glyphicon glyphicon-pencil"></i> Edit lab</a></li>
+            <li><a class="pointer" ng-click="setAllStartupExport()"><i class="glyphicon glyphicon-floppy-saved" ></i> Set all startup-cfg to exported</a></li>
+            <li><a class="pointer" ng-click="setAllStartupNone()"><i class="glyphicon glyphicon-floppy-save"></i> Set all startup-cfg to none</a></li>
+            <li><a class="pointer" ng-click="deleteAllStartupConfig()"><i class="glyphicon glyphicon-floppy-remove"></i> Delete all startup-cfg</a></li>
+          </ul>
+        </li>
+		<li>
+          <a class="pointer" data-ng-click="topologyRefresh()">
+            <i class="glyphicon glyphicon-refresh"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Refresh topology</span>
+          </a>
+        </li>
+		<li>
+          <a id="freeSelect" class="pointer noneActive" data-ng-click="freeSelect()">
+            <i class="glyphicon glyphicon-check"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Free Select</span>
+          </a>
+        </li>
+		<li>
+          <a class="pointer" ng-click="openModal('sysStat', 'megalg')">
+            <i class="glyphicon glyphicon-info-sign"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Status</span>
+          </a>
+        </li>
+    <li>
+          <a class="pointer" ng-click="openModal('labDetails', 'megalg')">
+            <i class="glyphicon glyphicon-list-alt"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Lab details</span>
+          </a>
+        </li>
+		<li>
+          <a class="pointer" data-ng-click="closeLab()">
+            <i class="glyphicon glyphicon-off"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Close lab</span>
+          </a>
+        </li>
+    <li>
+          <a class="pointer" ng-click="logout()">
+            <i class="fa fa-sign-out"></i>
+            <span class="{{(!changedCursorNode && !changedCursorNet) ? 'openright' : ''}}">Logout</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+    <!-- /.sidebar -->

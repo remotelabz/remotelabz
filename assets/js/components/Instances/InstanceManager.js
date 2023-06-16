@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
+import moment from 'moment/moment';
 
 function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
@@ -118,6 +119,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false)
             setLoadingInstanceState(false)
             setLabInstance(response.data)
+            $.ajax({
+                type: "POST",
+                url: `/api/editButton/display`,
+                data: JSON.stringify({
+                    'user': props.user,
+                    'lab': props.lab,
+                    'labInstance': response.data
+                }),
+                dataType:"json",
+                success: function (response) {
+                    console.log(response.data.html);
+                    $("#instanceButtons").html(response.data.html);              
+                }  
+            });  
         } catch (error) {
             console.error(error)
             new Noty({
@@ -135,6 +150,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid)
             setLabInstance({ ...labInstance, state: "deleting" })
+            $.ajax({
+                type: "POST",
+                url: `/api/editButton/display`,
+                data: JSON.stringify({
+                    'user': props.user,
+                    'lab': props.lab,
+                    'labInstance': null
+                }),
+                dataType:"json",
+                success: function (response) {
+                    console.log(response.data.html);
+                    $("#instanceButtons").html(response.data.html);              
+                }  
+            }); 
         } catch (error) {
             console.error(error)
             new Noty({
@@ -172,6 +201,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
+                        <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
                     </div>
                     <div>
                     {labInstance.state === "created" &&
@@ -187,6 +217,10 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                             isCurrentUserGroupAdmin={isCurrentUserGroupAdmin(viewAs)}
                             onStartCall={onJitsiCallStarted}
                         />
+                    }
+                    {
+                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" &&
+                        <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>

@@ -574,6 +574,32 @@ class GroupController extends Controller
         $entityManager->flush();
         return $addedUsers;
         }
+    /**
+     * @Rest\get("/api/groups/{slug}/members/{id<\d+>}", name="dashboard_group_badges", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function updateRoleDisplay(string $slug, SerializerInterface $serializer, int $id)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+        $user = $this->userRepository->find($id);
+        $html = '<span class="fw600">'. $user->getName() . '</span>';
+        if($group->isOwner($user)) {
+            $html .= '<label class="badge badge-info ml-2 mb-0">Owner</label>';
+        }
+        if($group->isAdmin($user)) {
+            $html .= '<label class="badge badge-warning ml-2 mb-0">Admin</label>';
+        }
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code' => 200,
+            'status'=> 'success',
+            'data' => [
+                'html' => $html,
+                'user' => $user->getId()]
+           ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**

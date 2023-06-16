@@ -20,9 +20,10 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use FOS\RestBundle\Controller\Annotations as Rest;
 
 class SecurityController extends AbstractController
 {
@@ -42,9 +43,9 @@ class SecurityController extends AbstractController
     private $passwordResetRequestRepository;
 
     /**
-     * @var UserPasswordEncoderInterface
+     * @var UserPasswordHasherInterface
      */
-    public $passwordEncoder;
+    public $passwordHasher;
 
     protected $maintenance;
     protected $general_message;
@@ -52,7 +53,7 @@ class SecurityController extends AbstractController
     public function __construct(UrlGeneratorInterface $urlGenerator,
         UserRepository $userRepository,
         PasswordResetRequestRepository $passwordResetRequestRepository,
-        UserPasswordEncoderInterface $passwordEncoder,
+        UserPasswordHasherInterface $passwordHasher,
         bool $maintenance,
         string $general_message = null,
         string $contact_mail
@@ -61,7 +62,7 @@ class SecurityController extends AbstractController
         $this->urlGenerator = $urlGenerator;
         $this->userRepository = $userRepository;
         $this->passwordResetRequestRepository = $passwordResetRequestRepository;
-        $this->passwordEncoder = $passwordEncoder;
+        $this->passwordHasher = $passwordHasher;
         $this->maintenance = $maintenance;
         $this->general_message=$general_message;
         $this->contact_mail = $contact_mail;
@@ -106,6 +107,24 @@ class SecurityController extends AbstractController
     public function jsonLogin(Request $request)
     {
         // logic is managed by JWT
+    }
+
+
+    /**
+     * @Route("/logout", name="logout")
+     * 
+     * @Rest\Get("/api/logout", name="api_logout")
+     */
+    public function logout()
+    {
+        $response = new Response();
+        $response->headers->clearCookie('bearer', '/', null);
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'logout']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**
@@ -199,7 +218,7 @@ class SecurityController extends AbstractController
                     $confirmPassword = $newPasswordForm->get('confirmPassword')->getData();
 
                     if ($newPassword == $confirmPassword) {
-                        $user->setPassword($this->passwordEncoder->encodePassword($user, $newPassword));
+                        $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
 
                         $entityManager = $this->getDoctrine()->getManager();
                         $entityManager->persist($user);

@@ -15,7 +15,7 @@ class GroupVoter extends Voter
     const ADD_MEMBER = 'add_member';
     const CREATE_SUBGROUP = 'create_subgroup';
 
-    protected function supports($attribute, $subject)
+    protected function supports($attribute, $subject): bool
     {
         // only vote on Group objects inside this voter
         if (!$subject instanceof Group) {
@@ -25,7 +25,7 @@ class GroupVoter extends Voter
         return true;
     }
 
-    protected function voteOnAttribute($attribute, $subject, TokenInterface $token)
+    protected function voteOnAttribute($attribute, $subject, TokenInterface $token): bool
     {
         $user = $token->getUser();
 

@@ -17,7 +17,7 @@ use App\Service\Network\NetworkManager;
  */
 class Controller extends AbstractFOSRestController
 {
-    public static function getSubscribedServices()
+    public static function getSubscribedServices(): array
     {
         return array_merge([
             'jms_serializer' => '?' . SerializerInterface::class,

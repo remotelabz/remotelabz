@@ -145,6 +145,9 @@
                             {%- endif -%}
                         </a>
                     </th>
+                    <th scope="col">
+                        <a href="javascript:void(0)">Groups</a>
+                    </th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -196,6 +199,11 @@
                                 Never
                             {% endif %}
                         </td>
+                        <td>
+                            <button class="btn btn-default" onClick="changeGroupDisplay({{user.id}});">
+                                <i class="fa fa-caret-down" id="{{user.id}}-iconDisplayGroup"></i>
+                            </button>
+                        </td>
                         <td class="text-right">
                             <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
                             
@@ -213,12 +221,28 @@
                                 Unblock
                             {% endif %}
                             </a>
+                            <a class="text-info ml-2" href="/?_switch_user={{user.email}}">
+                                <button class="btn btn-info">Impersonate</button>
+                            </a>
                             <div class="dropdown-divider"></div>
                             <button class="btn btn-danger" data-target={{'.delete-user-modal'~loop.index}} data-toggle="modal" type="button">
                                {{ 'Delete'|trans }}
                             </button>                         
                             </div>
                             {% endif %}
+                        </td>
+                    </tr>
+                    <tr id="{{user.id}}-groups" style="display: none;">
+                        <td>
+                            {% for group in user.groupsInfo %}
+                                {% if group.visibility == 2 %}
+                                    <label class="badge badge-success">{{group.name}}</label>
+                                {% elseif group.visibility == 1 %}
+                                    <label class="badge badge-info">{{group.name}}</label>
+                                {% elseif group.visibility == 0 %}
+                                    <label class="badge badge-warning">{{group.name}}</label>
+                                {% endif %}
+                            {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}
@@ -246,4 +270,17 @@
     {{ parent() }}
     {{ encore_entry_script_tags('timeago') }}
     {{ encore_entry_script_tags('user') }}
+
+    <script type="text/javascript">
+        function changeGroupDisplay(id) {
+            if (document.getElementById(id+"-groups").style.display == "none") {
+                document.getElementById(id+"-groups").style.display = "block";
+                document.getElementById(id+"-iconDisplayGroup").className = "fa fa-caret-up";
+            }
+            else {
+                document.getElementById(id+"-groups").style.display = "none";
+                document.getElementById(id+"-iconDisplayGroup").className = "fa fa-caret-down";
+            }
+        }
+    </script>
 {% endblock %}

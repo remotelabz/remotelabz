@@ -1,0 +1,42 @@
+{
+    "name": "toggleswitch",
+    "title": "Toggle Switch - jQuery Toggle Button",
+    "description": "Toggle Switcg is a lightweight jQuery plugin which creates tiny and easy to use toggle buttons.",
+    "keywords": [
+        "toggle",
+        "switch",
+		"checkbox",
+		"check",
+		"on",
+        "off",
+        "yes",
+        "no", 
+        "enable",
+        "ldisable",
+		"ui",
+		"jquery"
+    ],
+    "version": "1.0.1",
+    "author": {
+        "name": "Mehrdad Noroozi Eghbali"
+    },
+    "maintainers": [
+        {
+            "name": "Mehrdad Noroozi Eghbali",
+            "email": "mehrdad@codesells.com"
+        }
+    ],
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "https://github.com/CodeSells/ToggleSwitch/blob/master/LICENSE"
+        }
+    ],
+    "bugs": "http://tinytools.codesells.com/Contact",
+    "homepage": "http://tinytools.codesells.com/ToggleSwitch",
+    "docs": "http://tinytools.codesells.com/ToggleSwitch",
+    "download": "http://tinytools.codesells.com/ToggleSwitch",
+    "dependencies": {
+        "jquery": ">=1.9.1"
+    }
+}

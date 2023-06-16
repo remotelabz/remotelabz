@@ -6,6 +6,7 @@ twig:
         - 'custom.form.html.twig'
     paths:
         'templates/layouts': 'layouts'
+        #"%kernel.project_dir%/../assets/js/components/Editor2":editor
     exception_controller: null
     globals:
         enable_shibboleth: '%app.shibboleth.enable%'
