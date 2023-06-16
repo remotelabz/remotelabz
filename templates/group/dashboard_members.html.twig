@@ -25,6 +25,19 @@
 {% endblock %}
 
 {% block wrapper %}
+{% embed 'modal.html.twig' with {'title': 'Import users from file'|trans, 'class': 'import-group-user-modal'} %}
+        {% block body %}
+            <p>The CSV file, encoded in UTF8, must contains the email user in the following format:
+                <br>
+                <br>
+                <kbd>email</kbd>
+                <br><br>
+                <span class="text-danger">Warning:</span> Lines with an e-mail that does not match any user will be silently ignored.
+            </p>
+            {{ form(addGroupUserFromFileForm, {'id': 'addGroupUserFromFileForm'}) }}
+        {% endblock %}
+    {% endembed %}
+
     {% macro groupParent(group) %}
        {% if group.parent is not null %}{{ _self.groupParent(group.parent) }} <a href="{{ path('admin_show_group', {slug: group.parent.path}) }}">{{ group.parent.name }}</a> /{% endif %}
     {% endmacro %}
@@ -43,6 +56,11 @@
                     </li>
                     <li class="nav-item" role="presentation">
                       <a class="nav-link" id="import-from-group-tab" data-toggle="pill" href="#import-from-group" role="tab" aria-controls="import-from-group" aria-selected="false">Import from group</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-target=".import-group-user-modal" data-toggle="modal" href="#import-from-file" role="tab" aria-controls="import-from-group" aria-selected="false">
+                        <i class="fa fa-upload"></i> {{ 'Import from file'|trans }}
+                    </a>
                     </li>
                 </ul>
                 <div class="tab-content" id="pills-tabContent">
