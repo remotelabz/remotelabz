@@ -28,7 +28,6 @@
                         CPU
                         </h4>
                         <div class="stats-circle cpu-circle">
-                        <strong></strong>
                         </div>
                         <p class="card-text flex-grow-1 text-center" id ="cpu" style="display: none;">
                             {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
@@ -41,7 +40,6 @@
                         Memory
                         </h4>
                         <div class="stats-circle memory-circle">
-                        <strong></strong>
                         </div>
                         <p class="card-text flex-grow-1 text-center" id ="memory" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
@@ -55,7 +53,6 @@
                         Disk
                         </h4>
                         <div class="stats-circle disk-circle">
-                        <strong></strong>
                         </div>
                         <p class="card-text flex-grow-1 text-center" id ="disk" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
@@ -84,28 +81,45 @@ function drawStats() {
 
     var cpu = $('#cpu').text().split(/(\d+)/)[1];
 
-    $('.cpu-circle').circleProgress({
-        value: cpu,
-        min: 0,
-        max:100,
-        textFormat: 'percent'
-    })
+    if (cpu != undefined) {
+        $('.cpu-circle').circleProgress({
+            value: cpu,
+            min: 0,
+            max:100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#cpu').css({display: "block", marginTop: "20%"});
+    }
 
     var memory = $('#memory').text().split(/(\d+)/)[1];
-    $('.memory-circle').circleProgress({
-        value: memory,
-        min: 0,
-        max: 100,
-        textFormat: 'percent'
-    })
+
+    if (memory != undefined) {
+        $('.memory-circle').circleProgress({
+            value: memory,
+            min: 0,
+            max: 100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#memory').css({display: "block", marginTop: "20%"});
+    }
 
     var disk = $('#disk').text().split(/(\d+)/)[1];
-    $('.disk-circle').circleProgress({
-        value: disk,
-        min: 0,
-        max: 100,
-        textFormat: 'percent'
-    })
+
+    if (disk != undefined) {
+        $('.disk-circle').circleProgress({
+            value: disk,
+            min: 0,
+            max: 100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#disk').css({display: "block", marginTop: "20%"});
+    }
 
     setTimeout(function() {
         changeColorProgress(cpu, '.cpu-circle');
