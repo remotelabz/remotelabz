@@ -43,7 +43,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         }
 
         request.then(response => {
-            let promises = []
+
+            setLabInstance({
+                ...response.data,
+                deviceInstances: response.data.deviceInstances
+            })
+            /*let promises = []
             for (const deviceInstance of response.data.deviceInstances) {
                 promises.push(Remotelabz.instances.get(deviceInstance.uuid));
             }
@@ -59,7 +64,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     text: 'An error happened while fetching instances state. Please try refreshing this page. If this error persist, please contact an administrator.',
                     type: 'error'
                 }).show()
-            })
+            })*/
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {

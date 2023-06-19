@@ -12,8 +12,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
-    
-    console.log(props);
+
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -36,7 +35,11 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
         }
         
         request.then(response => {
-            let promises = []
+            setLabInstance({
+                ...response.data,
+                deviceInstances: response.data.deviceInstances
+            })
+            /*let promises = []
             for (const deviceInstance of response.data.deviceInstances) {
                 promises.push(Remotelabz.instances.get(deviceInstance.uuid));
             }
@@ -52,7 +55,7 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                     text: 'An error happened while fetching instances state. Please try refreshing this page. If this error persist, please contact an administrator.',
                     type: 'error'
                 }).show()
-            })
+            })*/
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
