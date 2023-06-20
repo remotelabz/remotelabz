@@ -11,65 +11,6 @@ function AllInstancesManager(props) {
     const [labInstance, setLabInstance] = useState(props.props)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    //const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
-
-    /*useEffect(() => {
-        setLoadingInstanceState(true)
-        //refreshInstance()
-        //const interval = setInterval(refreshInstance, 20000)
-        return () => {
-            //clearInterval(interval)
-            //setLabInstance(null)
-            setLoadingInstanceState(true)
-        }
-    }, [])*/
-
-    /*function refreshInstance() {
-        
-        let request
-
-        if (viewAs.type === 'user') {
-            request = Remotelabz.instances.lab.getByLabAndUser(props.props.labInstance.lab.uuid, viewAs.uuid)
-        } else {
-            request = Remotelabz.instances.lab.getByLabAndGroup(props.props.labInstance.lab.uuid, viewAs.uuid)
-        }
-        
-        request.then(response => {
-            setLabInstance({
-                ...response.data,
-                deviceInstances: response.data.deviceInstances
-            })
-            /*let promises = []
-            for (const deviceInstance of response.data.deviceInstances) {
-                promises.push(Remotelabz.instances.get(deviceInstance.uuid));
-            }
-
-            Promise.all(promises).then(responses => {
-                setLabInstance({
-                    ...response.data,
-                    deviceInstances: responses.map(response => response.data)
-                })
-                setLoadingInstanceState(false)
-            }).catch(error => {
-                new Noty({
-                    text: 'An error happened while fetching instances state. Please try refreshing this page. If this error persist, please contact an administrator.',
-                    type: 'error'
-                }).show()
-            })*/
-        /*}).catch(error => {
-            if (error.response) {
-                if (error.response.status <= 500) {
-                    setLabInstance(null)
-                    setLoadingInstanceState(false)
-                } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
-                }
-            }
-        })
-    }*/
 
     function hasInstancesStillRunning() {
         //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));

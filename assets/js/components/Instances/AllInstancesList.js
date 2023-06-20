@@ -13,7 +13,6 @@ function AllInstancesList(props = {labInstances: []}) {
     const [instancesList, setInstancesList] = useState(null)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    //const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
 
     useEffect(() => {
         setLoadingInstanceState(true)
@@ -30,11 +29,7 @@ function AllInstancesList(props = {labInstances: []}) {
         
         let request
 
-        //if (viewAs.type === 'user') {
-            request = Remotelabz.instances.lab.getAll();
-        /*} else {
-            request = Remotelabz.instances.lab.getByLabAndGroup(props.labInstance.lab.uuid, viewAs.uuid)
-        }*/
+        request = Remotelabz.instances.lab.getAll();
         
         request.then(response => {
             setLabInstances(
@@ -73,33 +68,6 @@ function AllInstancesList(props = {labInstances: []}) {
             }
         })
     }
-
-
-    /*function hasInstancesStillRunning() {
-        //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
-        return false;
-    }
-
-    async function onInstanceStateUpdate() {
-        // const response = await Remotelabz.instances.get(labInstance.uuid, 'lab')
-        // setLabInstance(response.data)
-    }*/
-
-    /*async function onLeaveLab() {
-        setShowLeaveLabModal(false)
-        setLoadingInstanceState(true)
-        try {
-            Remotelabz.instances.lab.delete(labInstance.uuid)
-            setLabInstance({ ...labInstance, state: "deleting" })
-        } catch (error) {
-            console.error(error)
-            new Noty({
-                text: 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show()
-            setLoadingInstanceState(false)
-        }
-    }*/
 
     return (<>
         { 
