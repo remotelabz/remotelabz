@@ -26,7 +26,7 @@ class DeviceInstance extends Instance
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_device_instance","sandbox"})
+     * @Serializer\Groups({"api_get_device_instance","sandbox", "api_get_lab_instance"})
      */
     private $id;
 
@@ -70,7 +70,7 @@ class DeviceInstance extends Instance
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox", "api_get_lab_instance"})
      */
     protected $networkInterfaceInstances;
 

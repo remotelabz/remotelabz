@@ -560,6 +560,17 @@ export class RemotelabzAPI {
             },
 
             /**
+             * Get all lab instance.
+             * 
+             * Implements GET `/api/instances`
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<Array<LabInstance>>>}
+             */
+            getAll() {
+                return axios.get(`/instances`);
+            },
+
+            /**
              * Get a lab instance by lab and user UUID.
              * 
              * Implements GET `/api/instances/lab/{labUuid}/by-user/{userUuid}`
