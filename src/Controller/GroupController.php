@@ -574,6 +574,7 @@ class GroupController extends Controller
         $entityManager->flush();
         return $addedUsers;
         }
+    }
     /**
      * @Rest\get("/api/groups/{slug}/members/{id<\d+>}", name="dashboard_group_badges", requirements={"slug"="[\w\-\/]+"})
      */
