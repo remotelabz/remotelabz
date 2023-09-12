@@ -206,7 +206,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
-                        <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
+                        <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                     </div>
                     <div>
                     {labInstance.state === "created" &&
