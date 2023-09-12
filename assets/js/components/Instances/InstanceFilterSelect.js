@@ -1,7 +1,7 @@
 import React, { useState, useEffect} from 'react';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
-import {Button } from 'react-bootstrap';
+import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 
 export default function InstanceFilterSelect() {
     const [itemFilter, setItemFilter] = useState([]);
@@ -9,6 +9,9 @@ export default function InstanceFilterSelect() {
     const [filter, setFilter] = useState("none");
     const [item, setItem] = useState("allInstances");
     const [instances, setInstances] = useState([]);
+    const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
+
     let teachers = [];
     let students = [];
     let admins = [];
@@ -355,10 +358,35 @@ export default function InstanceFilterSelect() {
         }
     }
 
+    async function onLeaveLab() {
+        setShowLeaveLabModal(false)
+        setLoadingInstanceState(true)
+        const boxes = document.querySelectorAll(".checkLab");
+        let instancesToDelete = [];
+        for (var i=0; i<boxes.length; i++) {
+            // And stick the checked ones onto an array...
+            if (boxes[i].checked) {
+                instancesToDelete.push(boxes[i].value);
+            }
+         }
+        try {
+            Remotelabz.instances.lab.severalDelete(instancesToDelete)
+            //setLabInstance({ ...labInstance, state: "deleting" })
+        } catch (error) {
+            console.error(error)
+            new Noty({
+                text: 'An error happened while leaving the lab. Please try again later.',
+                type: 'error'
+            }).show()
+            setLoadingInstanceState(false)
+        }
+    }
+
     return (
         <div>
-            <div className="d-flex align-items-center mb-2">
-                <div>Filter by : </div>
+            <div>
+                <div><span>Filter by : </span></div>
+                <div className="d-flex align-items-center mb-2">
                 <select className='form-control' id="instanceSelect" onChange={onChange}>
                     <option value="none">None</option>
                     <option value="group">Group</option>
@@ -370,8 +398,9 @@ export default function InstanceFilterSelect() {
                 <select className='form-control' id="itemSelect" onChange={getInstances}>
                     {options}
                 </select>
+                </div>
             </div>
-            <div className="d-flex align-items-center mb-2">
+            <div className="d-flex justify-content-end mb-2">
                 {
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                 }
@@ -380,6 +409,19 @@ export default function InstanceFilterSelect() {
             {instances != undefined  &&  <FilterInstancesList
                 labInstances={instances} filter={filter} itemValue={item} itemFilter={itemFilter}
             ></FilterInstancesList>}
+
+            <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Leave lab</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

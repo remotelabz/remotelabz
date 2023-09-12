@@ -611,6 +611,35 @@ class InstanceController extends Controller
     }
 
     /**
+     * @Rest\Delete("/api/instances/delete", name="api_several_delete_instance")
+     */
+    public function severalDeleteRestAction(Request $request, InstanceManager $instanceManager)
+    {
+        $instancesUuid = json_decode($request->getContent(), true);
+        $instances = [];
+
+        foreach($instancesUuid as $instanceUuid) {
+            if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $instanceUuid])) {
+                throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
+            }
+            array_push($instances, $instance);
+        }
+
+        $lab=$instance->getLab();
+        $device=$lab->getDevices();
+        
+        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        
+            $instanceManager->delete($instance);
+            //$this->logger->debug("Delete from export");
+            /*$instanceManager->entityManager->remove($lab);
+            $instanceManager->entityManager->persist($lab);
+            $instanceManager->entityManager->flush();*/
+
+        return $this->json();
+    }
+
+    /**
      * @Route("/admin/instances/{type}/{id<\d+>}/delete", name="delete_instance", methods="GET")
      */
     public function deleteAction(Request $request, string $type, int $id)
