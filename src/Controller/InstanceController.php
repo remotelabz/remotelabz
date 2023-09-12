@@ -432,6 +432,7 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }
 
+
     /**
      * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
@@ -458,6 +459,130 @@ class InstanceController extends Controller
         }
 
         if (!$data) throw new NotFoundHttpException();
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+     /**
+     * @Rest\Get("/api/instances/lab/by-user/{uuid}", name="api_get_lab_instances_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByUserUuid(Request $request, string $uuid, UserRepository $userRepository)
+    {
+        $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$user) throw new NotFoundHttpException('User not found.');
+
+        $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/owned-by-user-type/{userType}", name="api_get_lab_instances_owned_by_user_type")
+     */
+    public function fetchLabInstancesOwnedByUserType(Request $request, string $userType)
+    {
+
+        $instances = $this->labInstanceRepository->findBy(['ownedBy' => 'user']);
+        $data = [];
+
+        if ($userType == "teacher") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else if ($userType == "admin") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") == true || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR") == true) {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else if ($userType == "student") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else {
+            $data = false;
+        }
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/by-group/{uuid}", name="api_get_lab_instances_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByGroupUuid(Request $request, string $uuid, GroupRepository $groupRepository)
+    {
+        $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$group) throw new NotFoundHttpException('Group not found.');
+
+        $data = $this->labInstanceRepository->findBy(['_group' => $group]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/owned-by-group", name="api_get_lab_instances_owned_by_group")
+     */
+    public function fetchLabInstancesOwnedByGroup(Request $request)
+    {
+
+        $data = $this->labInstanceRepository->findBy(['ownedBy' => 'group']);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/by-lab/{uuid}", name="api_get_lab_instances_by_lab", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByLabUuid(Request $request, string $uuid, LabRepository $labRepository)
+    {
+        $lab = is_numeric($uuid) ? $labRepository->find($uuid) : $labRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$lab) throw new NotFoundHttpException('Lab not found.');
+
+        $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+     /**
+     * @Rest\Get("/api/instances/lab/ordered-by-lab", name="api_get_lab_instances_ordered_by_lab")
+     */
+    public function fetchLabInstancesOrdredByLab(Request $request)
+    {
+       
+        $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
+        $groups = ['api_get_lab_instance'];
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
 
         return $this->json($data, 200, [], $groups);
     }
