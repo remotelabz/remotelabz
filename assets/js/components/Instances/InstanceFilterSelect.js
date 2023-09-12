@@ -1,6 +1,7 @@
 import React, { useState, useEffect} from 'react';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
+import {Button } from 'react-bootstrap';
 
 export default function InstanceFilterSelect() {
     const [itemFilter, setItemFilter] = useState([]);
@@ -338,21 +339,43 @@ export default function InstanceFilterSelect() {
         })
     }
 
+    function checkAll() {
+        const boxes = document.querySelectorAll(".checkLab");
+        let checkAll = document.getElementById("checkAll");
+
+        if (checkAll.checked == true) {
+            for(let box of boxes) {
+                box.checked = true
+            }
+        }
+        else {
+            for(let box of boxes) {
+                box.checked = false
+            }
+        }
+    }
+
     return (
         <div>
-        <div className="d-flex align-items-center mb-2">
-            <div>Filter by : </div>
-            <select className='form-control' id="instanceSelect" onChange={onChange}>
-                <option value="none">None</option>
-                <option value="group">Group</option>
-                <option value="lab">Lab</option>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-                <option value="admin">Administrator</option>
-            </select>
-            <select className='form-control' id="itemSelect" onChange={getInstances}>
-                {options}
-            </select>
+            <div className="d-flex align-items-center mb-2">
+                <div>Filter by : </div>
+                <select className='form-control' id="instanceSelect" onChange={onChange}>
+                    <option value="none">None</option>
+                    <option value="group">Group</option>
+                    <option value="lab">Lab</option>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Administrator</option>
+                </select>
+                <select className='form-control' id="itemSelect" onChange={getInstances}>
+                    {options}
+                </select>
+            </div>
+            <div className="d-flex align-items-center mb-2">
+                {
+                    <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                }
+                <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
             </div>
             {instances != undefined  &&  <FilterInstancesList
                 labInstances={instances} filter={filter} itemValue={item} itemFilter={itemFilter}

@@ -54,6 +54,7 @@ function AllInstancesManager(props) {
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }
+                    <input type="checkbox" value={props.props.id} name="checkLab" class="ml-4 checkLab"></input>
                     </div>
                 </ListGroupItem>
                 {labInstance.state === "creating" &&
