@@ -77,7 +77,7 @@ class Device implements InstanciableInterface
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\NotNull
-     * @Assert\Choice({"vm","container"})
+     * @Assert\Choice({"vm","container", "switch"})
      */
     private $type;
 

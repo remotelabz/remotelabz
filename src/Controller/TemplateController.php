@@ -223,7 +223,7 @@ class TemplateController extends Controller
                 'type' => 'list',
                 'multiple'=> false,
                 'value' => $p['type'] ?? 'container',
-                'list' => Array('vm'=>'vm', 'container'=>'container')
+                'list' => Array('vm'=>'vm', 'container'=>'container', 'switch' => 'switch')
             );
 
             $data['options']['flavor'] = Array(

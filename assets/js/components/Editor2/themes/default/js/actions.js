@@ -26,7 +26,7 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, 
-         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
+         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
@@ -4510,6 +4510,7 @@ $(document).on('submit', '#addConn', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('addConn');
+    console.log(form_data);
     //alert ( JSON.stringify( form_data) )
     var srcType = ( ( (form_data['srcConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
     var dstType = ( ( (form_data['dstConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
@@ -4540,16 +4541,34 @@ $(document).on('submit', '#addConn', function (e) {
              var offset = $('#node' + form_data['srcNodeId'] ).offset()
              var node1 = form_data['srcNodeId']
              var iface1 = form_data['srcConn'].replace(',ethernet','')
+             var type1 = form_data['srcElementType']
              var node2 = form_data['dstNodeId']
              var iface2 = form_data['dstConn'].replace(',ethernet','')
+             var type2 = form_data['dstElementType']
              //$.when(setNetwork(bridgename, offset.left + 20, offset.top + 40)).then( function (response) {
                   //var networkId = response.data.id;
                   //logger(1, 'Link DEBUG: new network created ' + networkId);
+                  $.when(getConnection()).done(function (response){
+                    var connection = response.data.connection;
+                    console.log('connection: ', connection);
+                  if (type1 == "switch" || type2 == "switch") {
+                    console.log('switch')
+                    $.when(setNodeInterface(node1, iface1, 'none', connection) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, 'none', connection)).done( function () {
+                        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+                            $(e.target).parents('.modal').attr('skipRedraw', true);
+                            $(e.target).parents('.modal').modal('hide');
+                        //});
+                        });
+                    });
+                  }
+                  else {
                   $.when(getVlan()).done(function (response){
+                    console.log('no switch')
                     var vlan = response.data.vlan;
                     console.log("response ", vlan);
-                    $.when(setNodeInterface(node1, iface1, vlan) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, vlan)).done( function () {
+                    $.when(setNodeInterface(node1, iface1, vlan, connection) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, vlan, connection)).done( function () {
                         //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
                             $(e.target).parents('.modal').attr('skipRedraw', true);
                             $(e.target).parents('.modal').modal('hide');
@@ -4557,6 +4576,8 @@ $(document).on('submit', '#addConn', function (e) {
                         });
                     });
                     })
+                }
+            });
              //});
 
          }

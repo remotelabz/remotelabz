@@ -1996,13 +1996,14 @@ export function setNodeData(id){
 }
 
 //set note interface
-export function setNodeInterface(node_id,interface_id,vlan){
+export function setNodeInterface(node_id,interface_id,vlan, connection){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data["interface id"] = interface_id;
     form_data["vlan"] = vlan;
+    form_data["connection"] = connection;
 
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id +'/interfaces';
     var type = 'PUT';
@@ -2087,6 +2088,41 @@ export function getVlan(){
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: vlan listed.');
+                deferred.resolve(data);
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                deferred.reject(data['message']);
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            deferred.reject(message);
+        }
+    });
+    return deferred.promise();
+
+}
+
+//get connection
+export function getConnection(){
+
+    var deferred = $.Deferred();
+    var lab_filename = $('#lab-viewport').attr('data-path');
+
+    var url = '/api/labs/' + lab_filename + '/connections';
+    var type = 'Get';
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: connection listed.');
                 deferred.resolve(data);
             } else {
                 // Application error
@@ -5820,6 +5856,8 @@ function newConnModal(info , oe ) {
                            '<input type="hidden" name="addConn[dstNodeId]" value="'+linktargetdata['id']+'">' +
                            '<input type="hidden" name="addConn[srcNodeType]" value="'+linksourcetype+'">' +
                            '<input type="hidden" name="addConn[dstNodeType]" value="'+linktargettype+'">' +
+                           '<input type="hidden" name="addConn[srcElementType]" value="'+linksourcedata['type']+'">' +
+                           '<input type="hidden" name="addConn[dstElementType]" value="'+linktargetdata['type']+'">' +
                            '<div class="row">' +
                             '<div class="col-md-4">' +
                                 '<div style="text-align:center;" >'+ linksourcedata['name']  + '</div>' +

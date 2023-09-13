@@ -144,8 +144,14 @@ class NetworkInterfaceController extends Controller
         $networkInterface->setSettings($networkSettings);
         $device->addNetworkInterface($networkInterface);
         //$networkInterface->setName("eth". $data["interface id"]);
-        $networkInterface->setVlan($data["vlan"]);
+        if ($data["vlan"] == 'none') {
+            $networkInterface->setVlan(null);
+        }
+        else {
+            $networkInterface->setVlan($data["vlan"]);
+        }
 
+        $networkInterface->setConnection($data["connection"]);
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $entityManager->flush();
@@ -207,6 +213,34 @@ class NetworkInterfaceController extends Controller
             'message' => 'Successfully listed vlan.',
             'data' => [
                 "vlan"=>$vlan
+            ]
+        ]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+
+    /**
+     * @Rest\Get("/api/labs/{labId<\d+>}/connections", name="api_get_connection")
+     */
+    public function getConnection(Request $request, int $labId)
+    {
+        //get the connection id to set to the device
+        $connections = $this->networkInterfaceRepository->getConnections($labId);
+        if ($connections == null) {
+            $connection = 1;
+        }
+        else {
+            $connection = (int)$connections[0]['connection'] +1;
+        }
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed connection.',
+            'data' => [
+                "connection"=>$connection
             ]
         ]));
         $response->headers->set('Content-Type', 'application/json');
