@@ -25,6 +25,9 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\CustomCredentials;
+use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 
 use Psr\Log\LoggerInterface;
@@ -163,17 +166,26 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $email = $request->request->get('email', '');
+        $credentials = [
+            'eppn' => $request->server->get($this->remoteUserVar),
+            'email' => $request->server->get('mail'),
+            'firstName' => $request->server->get('givenName'),
+            'lastName' => $request->server->get('sn'),
+            'affiliation' => $request->server->get('o'),
+            'statut' => $request->server->get('eduPersonPrimaryAffiliation')
+        ];
 
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
-        if (! (is_null($email) or $email==="")) {
-            $this->logger->debug("Shibboleth email not null: ".$email);
+        $this->logger->info("User information from getCredentials of shibboleth :", $credentials);
+
+	    $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
+        if (! (is_null($credentials['email']) or $credentials['email']==="")) {
+            $this->logger->debug("Shibboleth email not null: ".$credentials['email']);
             if (!$user) {
-                $this->logger->debug("Shibboleth user doesn't exist in local user base: ".$email);
+                $this->logger->debug("Shibboleth user doesn't exist in local user base: ".$credentials['email']);
                 $user = new User();
-                $email=$email;
-                $firstName=$request->request->get('firstName', '');
-                $lastName=$request->request->get('lastName', '');
+                $email=$credentials['email'];
+                $firstName=$credentials['firstName'];
+                $lastName=$credentials['lastName'];
                 $role = array("ROLE_USER");
                 $user
                     ->setEmail($email)
@@ -199,31 +211,36 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
             if (!$user->isEnabled()) {
                 throw new DisabledException();
             }
+            return new Passport(
+                new UserBadge($credentials['email']),
+                new CustomCredentials(
+                    function ($credentials, UserInterface $user)
+                    {
+                        $this->logger->debug("Check credentials",$credentials);
+                        $authorized=explode(",",$this->authorized_affiliation);
+                        //Looking for affiliation in the string and before, delete all spaces and tab
+    
+                        $affiliation=explode("@",$credentials['email']);//Looking for the domain of the mail
+                        $this->logger->debug("Your affiliation: ".$affiliation[1]);
+                        if (in_array($affiliation[1],preg_replace('/\s+/', '', $authorized))) {
+                            $this->logger->info("This user is from an authorized shibboleth affiliation : ",$credentials);
+                            return true;
+                        }
+                        else {
+                            $this->logger->warning("This user is not in an authorized shibboleth affiliation : ",$credentials);
+                            
+                return false;
+                        }
+                    },
+                    $credentials
+                )
+            );
         }
-
-        return new Passport(
-            new UserBadge($email),
-            new CustomCredentials(
-                function ($credentials, UserInterface $user)
-                {
-                    $this->logger->debug("Check credentials",$credentials);
-                    $authorized=explode(",",$this->authorized_affiliation);
-                    //Looking for affiliation in the string and before, delete all spaces and tab
-
-                    $affiliation=explode("@",$credentials['email']);//Looking for the domain of the mail
-                    $this->logger->debug("Your affiliation: ".$affiliation[1]);
-                    if (in_array($affiliation[1],preg_replace('/\s+/', '', $authorized))) {
-                        $this->logger->info("This user is from an authorized shibboleth affiliation : ",$credentials);
-                        return true;
-                    }
-                    else {
-                        $this->logger->warning("This user is not in an authorized shibboleth affiliation : ",$credentials);
-                        return false;
-                    }
-                },
-                $customCredentials
-            )
+        return new SelfValidatingPassport(
+            new UserBadge("")
         );
+        
+        
     }
 
     /**

@@ -13,6 +13,7 @@ import LabImporter from './Lab/LabImporter';
 import InstanceList from './Instances/InstanceList';
 import Editor from './Editor/Editor';
 import SandboxManager from './Sandbox/SandboxManager';
+import AllInstancesList from './Instances/AllInstancesList';
 
 ReactOnRails.register({
     InstanceOwnerSelect,
@@ -27,5 +28,6 @@ ReactOnRails.register({
     Editor,
     SandboxManager,
     AllInstancesManager,
+    AllInstancesList,
     LabSelect
 });

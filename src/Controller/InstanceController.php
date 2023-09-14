@@ -609,6 +609,35 @@ class InstanceController extends Controller
         return $this->json($logs);
     }
 
+    /**
+    * @Rest\Post("/api/editButton/display", name="api_display_edit_button")
+    */
+    public function displayEditButtonAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $lab = $data['lab'];
+        $user= $data['user'];
+        $labInstance = $data['labInstance'];
+
+        $html = $this->renderView('editButtonDisplay.html.twig', [
+            'lab'=>$lab,
+            'user'=>$user,
+            'labInstance'=>$labInstance
+        ]);
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'data'=>[
+                'lab'=>$lab,
+                'user'=>$user,
+                'labInstance'=>$labInstance,
+                'html'=>$html
+            ]]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
     //DeviceInstance $deviceInstance : a device Instance
     //String $controlprotocoltype : type of control protocol  
     private function isRemoteAccess($deviceInstance,$controlprotocoltype) {

@@ -5,67 +5,12 @@ import { GroupRoles } from '../Groups/Groups';
 import React, { useState, useEffect } from 'react';
 import InstanceOwnerSelect from './InstanceOwnerSelect';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
+import moment from 'moment/moment';
 
-function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) { 
-    const [labInstance, setLabInstance] = useState(props.labInstance)
+function AllInstancesManager(props) { 
+    const [labInstance, setLabInstance] = useState(props.props)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    const [viewAs, setViewAs] = useState({ type: props.labInstance.ownedBy, uuid: props.labInstance.owner.uuid, value: props.labInstance.owner.id, label: props.labInstance.owner.name })
-    
-    console.log(props);
-    useEffect(() => {
-        setLoadingInstanceState(true)
-        refreshInstance()
-        const interval = setInterval(refreshInstance, 20000)
-        return () => {
-            clearInterval(interval)
-            setLabInstance(null)
-            setLoadingInstanceState(true)
-        }
-    }, [viewAs])
-
-    function refreshInstance() {
-        
-        let request
-
-        if (viewAs.type === 'user') {
-            request = Remotelabz.instances.lab.getByLabAndUser(props.labInstance.lab.uuid, viewAs.uuid)
-        } else {
-            request = Remotelabz.instances.lab.getByLabAndGroup(props.labInstance.lab.uuid, viewAs.uuid)
-        }
-        
-        request.then(response => {
-            let promises = []
-            for (const deviceInstance of response.data.deviceInstances) {
-                promises.push(Remotelabz.instances.get(deviceInstance.uuid));
-            }
-
-            Promise.all(promises).then(responses => {
-                setLabInstance({
-                    ...response.data,
-                    deviceInstances: responses.map(response => response.data)
-                })
-                setLoadingInstanceState(false)
-            }).catch(error => {
-                new Noty({
-                    text: 'An error happened while fetching instances state. Please try refreshing this page. If this error persist, please contact an administrator.',
-                    type: 'error'
-                }).show()
-            })
-        }).catch(error => {
-            if (error.response) {
-                if (error.response.status <= 500) {
-                    setLabInstance(null)
-                    setLoadingInstanceState(false)
-                } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
-                }
-            }
-        })
-    }
 
     function hasInstancesStillRunning() {
         //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
@@ -94,16 +39,17 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
     }
 
     return (<>
-        {labInstance ?
+        {
             <ListGroup>
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
+                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
                     </div>
                     <div>
                     {
-                        (!props.labInstance.lab.name.startsWith('Sandbox_')) && 
-                        <Button variant="danger" className="ml-2" href={`/labs/${props.labInstance.lab.id}/see/${props.labInstance.id}`}>See Lab</Button>
+                        (!props.props.lab.name.startsWith('Sandbox_')) && 
+                        <Button variant="danger" className="ml-2" href={`/labs/${props.props.lab.id}/see/${props.props.id}`}>See Lab</Button>
                     }
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
@@ -129,12 +75,9 @@ function AllInstancesManager(props = {lab: {}, user: {}, labInstance: {}}) {
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true}>
+                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true}>
                     </InstanceList>
                 }
-            </ListGroup>
-            :
-            <ListGroup>
             </ListGroup>
         }
         <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>

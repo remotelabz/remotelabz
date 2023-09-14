@@ -22,7 +22,7 @@ class Device implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance"})
      */
     private $id;
 

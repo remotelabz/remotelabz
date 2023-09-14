@@ -27,7 +27,9 @@
                         <h4 class="card-title">
                         CPU
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle cpu-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="cpu" style="display: none;">
                             {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
                         </p>
                     </div>
@@ -37,7 +39,9 @@
                         <h4 class="card-title">
                         Memory
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle memory-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="memory" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
 
                         </p>
@@ -48,7 +52,9 @@
                         <h4 class="card-title">
                         Disk
                         </h4>
-                        <p class="card-text flex-grow-1 text-center">
+                        <div class="stats-circle disk-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="disk" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
 
                         </p>
@@ -59,4 +65,106 @@
     </div>
 </div>
 
+{% endblock %}
+{% block javascripts %}
+{{ parent() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script src="{{asset('build/js/jquery.circle-progress.min.js')}}"></script>
+<script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script>
+<script type="text/javascript">
+
+drawStats();
+document.getElementById("themeSwitcher").addEventListener('change', () => {
+    setTimeout(function() {drawStats()}, 100);
+});
+function drawStats() {
+
+    var cpu = $('#cpu').text().split(/(\d+)/)[1];
+
+    if (cpu != undefined) {
+        $('.cpu-circle').circleProgress({
+            value: cpu,
+            min: 0,
+            max:100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#cpu').css({display: "block", marginTop: "20%"});
+    }
+
+    var memory = $('#memory').text().split(/(\d+)/)[1];
+
+    if (memory != undefined) {
+        $('.memory-circle').circleProgress({
+            value: memory,
+            min: 0,
+            max: 100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#memory').css({display: "block", marginTop: "20%"});
+    }
+
+    var disk = $('#disk').text().split(/(\d+)/)[1];
+
+    if (disk != undefined) {
+        $('.disk-circle').circleProgress({
+            value: disk,
+            min: 0,
+            max: 100,
+            textFormat: 'percent'
+        })
+    }
+    else {
+         $('#disk').css({display: "block", marginTop: "20%"});
+    }
+
+    setTimeout(function() {
+        changeColorProgress(cpu, '.cpu-circle');
+        changeColorProgress(memory, '.memory-circle');
+        changeColorProgress(disk, '.disk-circle');
+    }, 100);
+}
+
+function changeColorProgress(value, css) {
+    if ($.cookie("theme") == "dark") {
+        if (value > 80) {
+            color = "#2c0a0d";
+            $(css + " .circle-progress-value").css({stroke: "#dc3545"});
+            $(css + " .circle-progress-circle").css("stroke", "#2c0a0d");
+        }
+        if (value <= 80) {
+            color = "#332601";
+            $(css + " .circle-progress-value").css("stroke", "#ffc107");
+            $(css + " .circle-progress-circle").css("stroke", "#332601");
+        }
+        if (value <= 40) {
+            color = "#08210d";
+            $(css + " .circle-progress-value").css("stroke", "#28a745");
+            $(css + " .circle-progress-circle").css("stroke", "#08210d");
+        }
+            $(css + " .circle-progress-text").css("fill", "#ffffff");
+    }
+    if ($.cookie("theme") == "light") {
+        if (value > 80) {
+            color = "#f8d6d9";
+            $(css + " .circle-progress-value").css("stroke", "#dc3545");
+            $(css + " .circle-progress-circle").css("stroke", "#f8d6d9");
+        }
+        if (value <= 80) {
+            color = "#fff2cd";
+            $(css + " .circle-progress-value").css("stroke", "#ffc107");
+            $(css + " .circle-progress-circle").css("stroke", "#fff2cd");
+        }
+        if (value <= 40) {
+            color = "#d4edd9";
+            $(css + " .circle-progress-value").css("stroke", "#28a745");
+            $(css + " .circle-progress-circle").css("stroke", "#d4edd9");
+        }
+            $(css + " .circle-progress-text").css("fill", "#000000");
+    }
+}
+</script>
 {% endblock %}
