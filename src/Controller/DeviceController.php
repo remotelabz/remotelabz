@@ -385,7 +385,7 @@ class DeviceController extends Controller
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
-            $this->addNetworkInterface($device);
+            //$this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
             $entityManager = $this->getDoctrine()->getManager();

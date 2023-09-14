@@ -145,7 +145,7 @@ class NetworkInterfaceController extends Controller
         $device->addNetworkInterface($networkInterface);
         //$networkInterface->setName("eth". $data["interface id"]);
         if ($data["vlan"] == 'none') {
-            $networkInterface->setVlan(null);
+            $networkInterface->setVlan(0);
         }
         else {
             $networkInterface->setVlan($data["vlan"]);
