@@ -1,4 +1,5 @@
 import React, { useState, useEffect} from 'react';
+import Noty from 'noty';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
@@ -10,6 +11,7 @@ export default function InstanceFilterSelect() {
     const [item, setItem] = useState("allInstances");
     const [instances, setInstances] = useState([]);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
     let teachers = [];
@@ -17,6 +19,7 @@ export default function InstanceFilterSelect() {
     let admins = [];
     let optionsList = [];
     let instancesList = [];
+    let deviceInstancesToStop = [];
 
     useEffect(() => {
         console.log(filter);
@@ -358,28 +361,79 @@ export default function InstanceFilterSelect() {
         }
     }
 
-    async function onLeaveLab() {
+    function hasInstancesStillRunning(labInstance) {
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));    }
+
+
+    async function onLeaveLab(force = false) {
         setShowLeaveLabModal(false)
-        setLoadingInstanceState(true)
+        //setLoadingInstanceState(true)
         const boxes = document.querySelectorAll(".checkLab");
         let instancesToDelete = [];
+        let running = false;
+        deviceInstancesToStop = [];
+
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
             if (boxes[i].checked) {
                 instancesToDelete.push(boxes[i].value);
             }
-         }
-        try {
-            Remotelabz.instances.lab.severalDelete(instancesToDelete)
-            //setLabInstance({ ...labInstance, state: "deleting" })
-        } catch (error) {
-            console.error(error)
-            new Noty({
-                text: 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show()
-            setLoadingInstanceState(false)
         }
+
+        if (force == false) {
+            for(let instanceToDelete of instancesToDelete) {
+                Remotelabz.instances.lab.get(instanceToDelete)
+                .then((response) => {
+                    if (hasInstancesStillRunning(response.data)) {
+                        running = true;
+                        for(deviceInstance of response.data.deviceInstances) {
+                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error')) {
+                                deviceInstancesToStop.push(deviceInstance);
+                            }
+                        }
+                    }
+                })
+            }
+    
+            if (running == true) {
+                setShowForceLeaveLabModal(true);
+            }
+        }
+
+        else {
+
+            for(let instanceToDelete of instancesToDelete) {
+                try {
+                    Remotelabz.instances.lab.delete(instanceToDelete)
+                    //setLabInstance({ ...labInstance, state: "deleting" })
+                } catch (error) {
+                    console.error(error)
+                    new Noty({
+                        text: 'An error happened while leaving the lab. Please try again later.',
+                        type: 'error'
+                    }).show()
+                    //setLoadingInstanceState(false)
+                }
+            }
+        }
+    
+    }
+
+    function stopDevices() {
+        for(let deviceInstanceToStop of deviceInstancesToStop) {
+            try {
+                Remotelabz.instances.device.stop(deviceInstanceToStop.uuid)
+                //setLabInstance({ ...labInstance, state: "deleting" })
+            } catch (error) {
+                console.error(error)
+                new Noty({
+                    text: 'An error happened while stopping a device. Please try again later.',
+                    type: 'error'
+                }).show()
+                //setLoadingInstanceState(false)
+            }
+        }
+        onLeaveLab(true);
     }
 
     return (
@@ -412,7 +466,7 @@ export default function InstanceFilterSelect() {
 
             <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Leave lab</Modal.Title>
+                    <Modal.Title>Leave labs</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
@@ -420,6 +474,19 @@ export default function InstanceFilterSelect() {
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
                     <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal show={showForceLeaveLabModal} onHide={() => setShowForceLeaveLabModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Force to Leave labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Some instances still have running devices. These devices will be stopped. Do you still want to continue ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={stopDevices}>Leave</Button>
                 </Modal.Footer>
             </Modal>
         </div>
