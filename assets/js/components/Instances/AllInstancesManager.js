@@ -44,7 +44,7 @@ function AllInstancesManager(props) {
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
-                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
+                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                     </div>
                     <div>
                     {
