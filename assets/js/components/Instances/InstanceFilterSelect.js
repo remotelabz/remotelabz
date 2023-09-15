@@ -3,23 +3,35 @@ import Noty from 'noty';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
+import AllInstancesManager from './AllInstancesManager';
 
-export default function InstanceFilterSelect() {
+export default function InstanceFilterSelect(props = {labInstances}) {
     const [itemFilter, setItemFilter] = useState([]);
     const [options, setOptions] = useState();
     const [filter, setFilter] = useState("none");
     const [item, setItem] = useState("allInstances");
-    const [instances, setInstances] = useState([]);
+    const [instances, setInstances] = useState(props.labInstances);
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
+    const [instancesList, setInstancesList] = useState(null)
 
     let teachers = [];
     let students = [];
     let admins = [];
     let optionsList = [];
-    let instancesList = [];
     let deviceInstancesToStop = [];
+
+    useEffect(() => {
+        setLoadingInstanceState(true)
+        refreshInstance()
+        const interval = setInterval(refreshInstance, 20000)
+        return () => {
+            clearInterval(interval)
+            setInstances(null)
+            setLoadingInstanceState(true)
+        }
+    }, [filter, item]);
 
     useEffect(() => {
         console.log(filter);
@@ -88,19 +100,6 @@ export default function InstanceFilterSelect() {
                 setOptions(optionsList);   
         }
       }, [filter]);
-
-      useEffect(() => {
-        /*if (instances) {
-            console.log(instances);
-            console.log(filter);
-            console.log(item);
-            setInstancesList(<FilterInstancesList
-                labInstances={instances} filter={filter} itemValue={item}
-            ></FilterInstancesList>);
-        }*/
-        
-        }
-      , [instances]);
 
     function onChange() {
         let filterValue = document.getElementById("instanceSelect").value;
@@ -173,7 +172,92 @@ export default function InstanceFilterSelect() {
         })
     }
 
-    function getInstances() {
+    function refreshInstance() {
+        
+        let request;
+        console.log(filter);
+        console.log(item);
+
+        if (item == "allGroups") {
+            request = Remotelabz.instances.lab.getOwnedByGroup();  
+            console.log("a");  
+        }
+        else if (filter == "group" && item != "allGroups") {
+            request = Remotelabz.instances.lab.getByGroup(item);
+            console.log("b"); 
+        }
+        else if (item == "allLabs") {
+            request = Remotelabz.instances.lab.getOrderedByLab();
+            console.log("c"); 
+        }
+        else if (filter == "lab" && item != "allLabs") {
+            request = Remotelabz.instances.lab.getByLab(item);
+            console.log("g"); 
+        }
+        else if (item == "allTeachers" || item == "allStudents" || item == "allAdmins") {
+            let userType = "";
+            if(item == "allTeachers") {
+                userType = "teacher"
+            }
+            else if (item == "allStudents") {
+                userType = "student"
+            }
+            else if (item == "allAdmins") {
+                userType = "admin"
+            }
+
+            request = Remotelabz.instances.lab.getOwnedByUserType(userType);
+            console.log("d"); 
+        }
+        else if ((filter == "teacher" && item != "allTeachers") || (filter == "student" && item != "allStudents") || (filter == "admin" && item != "allAdmins")) {
+            request = Remotelabz.instances.lab.getByUser(item);
+            console.log("e"); 
+        }
+        else if (item == "allInstances"){
+            request = Remotelabz.instances.lab.getAll(); 
+            console.log("f"); 
+        }
+        
+        request.then(response => {
+            setInstances(
+                response.data
+            )
+
+            console.log(response.data)
+            const list = response.data.map((labInstance) => {
+                return (
+                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+                    <div>
+                        <div>
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            </a>
+                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
+                        </div>
+                        
+                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                    </div>
+                </div>)
+            });
+
+            setInstancesList(list)
+
+        }).catch(error => {
+            if (error.response) {
+                if (error.response.status <= 500) {
+                    setInstances(null)
+                    setLoadingInstanceState(false)
+                } else {
+                    new Noty({
+                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                        type: 'error'
+                    }).show()
+                }
+            }
+        })
+    }
+
+    /*function getInstances() {
         let itemValue = document.getElementById("itemSelect").value;
         console.log(itemValue);
         return new Promise(resolve => {
@@ -343,7 +427,7 @@ export default function InstanceFilterSelect() {
                 console.log("6"); 
             }
         })
-    }
+    }*/
 
     function checkAll() {
         const boxes = document.querySelectorAll(".checkLab");
@@ -459,7 +543,7 @@ export default function InstanceFilterSelect() {
                     <option value="teacher">Teacher</option>
                     <option value="admin">Administrator</option>
                 </select>
-                <select className='form-control' id="itemSelect" onChange={getInstances}>
+                <select className='form-control' id="itemSelect" onChange={refreshInstance}>
                     {options}
                 </select>
                 </div>
@@ -470,9 +554,7 @@ export default function InstanceFilterSelect() {
                 }
                 <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
             </div>
-            {instances != undefined  &&  <FilterInstancesList
-                labInstances={instances} filter={filter} itemValue={item} itemFilter={itemFilter}
-            ></FilterInstancesList>}
+            {instancesList}
 
             <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
                 <Modal.Header closeButton>

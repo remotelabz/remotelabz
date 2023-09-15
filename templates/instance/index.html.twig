@@ -57,7 +57,7 @@
             </span>
         </div>
         {% else %}
-        <div class="col">{{ react_component('InstanceFilterSelect')}}</div>
+        <div class="col">{{ react_component('InstanceFilterSelect', {'labInstances': labInstances})}}</div>
         {% endif %}
         {#{% for element in labInstances %}
         {{dump(element.instance.id)}}#}
