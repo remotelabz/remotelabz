@@ -19,6 +19,8 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     const [showExport, setShowExport] = useState(false)
     //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' })
+
+    console.log(instance.device);
     
     //console.log("instanceListItem");
     //console.log(instance.device.name);
@@ -303,7 +305,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                             </a>
                         }
 
-                        {showControls &&
+                        {instance.device.type != "switch" && showControls && 
                             controls
                         }
                     </div>
