@@ -56,6 +56,8 @@
                 None
             </span>
         </div>
+        {% else %}
+        <div class="col">{{ react_component('InstanceFilterSelect', {'labInstances': labInstances})}}</div>
         {% endif %}
         {#{% for element in labInstances %}
         {{dump(element.instance.id)}}#}
@@ -105,8 +107,8 @@
                 {#<div class="col">{{ react_component('AllInstancesManager', {'props': element.props}) }}</div>
             </div>
         </div>
-        {% endfor %}#}
-        <div class="col">{{ react_component('AllInstancesList', {'props': labInstances}) }}</div>
+        {% endfor %}
+        <div class="col">{{ react_component('AllInstancesList', {'props': labInstances}) }}</div>#}
     {% endif %}
 
     {# {% if filter == "all" or filter == "devices" %}

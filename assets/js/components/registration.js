@@ -14,6 +14,8 @@ import InstanceList from './Instances/InstanceList';
 import Editor from './Editor/Editor';
 import SandboxManager from './Sandbox/SandboxManager';
 import AllInstancesList from './Instances/AllInstancesList';
+import InstanceFilterSelect from './Instances/InstanceFilterSelect';
+import FilterInstancesList from './Instances/FilterInstancesList';
 
 ReactOnRails.register({
     InstanceOwnerSelect,
@@ -29,5 +31,7 @@ ReactOnRails.register({
     SandboxManager,
     AllInstancesManager,
     AllInstancesList,
+    FilterInstancesList,
+    InstanceFilterSelect,
     LabSelect
 });
