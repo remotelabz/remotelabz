@@ -365,13 +365,15 @@ export default function InstanceFilterSelect() {
         return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));    }
 
 
-    async function onLeaveLab(force = false) {
+    async function onLeaveLab(force) {
         setShowLeaveLabModal(false)
+        setShowForceLeaveLabModal(false)
         //setLoadingInstanceState(true)
         const boxes = document.querySelectorAll(".checkLab");
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
+        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -384,20 +386,28 @@ export default function InstanceFilterSelect() {
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
+                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
-                        for(deviceInstance of response.data.deviceInstances) {
+                        for(let deviceInstance of response.data.deviceInstances) {
                             if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error')) {
                                 deviceInstancesToStop.push(deviceInstance);
                             }
                         }
+
+                        console.log(running);
+    
+                        if (running == true) {
+                            console.log("modal");
+                            setShowForceLeaveLabModal(true);
+                        }
+                    }
+                    else {
+                        onLeaveLab(true);
                     }
                 })
             }
-    
-            if (running == true) {
-                setShowForceLeaveLabModal(true);
-            }
+            
         }
 
         else {
@@ -473,7 +483,7 @@ export default function InstanceFilterSelect() {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+                    <Button variant="danger" onClick={() => onLeaveLab(false)}>Leave</Button>
                 </Modal.Footer>
             </Modal>
 
@@ -486,7 +496,7 @@ export default function InstanceFilterSelect() {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={stopDevices}>Leave</Button>
+                    <Button variant="danger" onClick={stopDevices}>Continue</Button>
                 </Modal.Footer>
             </Modal>
         </div>

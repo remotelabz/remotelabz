@@ -556,7 +556,7 @@ export class RemotelabzAPI {
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
             get(uuid) {
-                return axios.get(`/instances/${uuid}`, { params: { type: 'lab' } });
+                return axios.get(`/instances/by-uuid/${uuid}`, { params: { type: 'lab' } });
             },
 
             /**
