@@ -115,6 +115,25 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         $manager->persist($device);
         $this->addReference('Debian-cnt', $device);
 
+        $device = new Device();
+        $device
+            ->setName('Natif')
+            ->setBrand('Natif')
+            ->setLaunchOrder(0)
+            ->setVirtuality(0)
+            ->setFlavor($this->getReference('flavor-xx-small'))
+            ->setOperatingSystem($this->getReference('Natif'))
+            ->setType('switch')
+            ->setHypervisor($this->getReference('natif'))
+            ->setCreatedAt(new \DateTime())
+            ->setIsTemplate(true)
+            ->setNbCpu(1)
+            ->addControlProtocolType($this->getReference('login'))
+            
+        ;
+        $manager->persist($device);
+        $this->addReference('Migration', $device);
+
         
         $manager->flush();
     }
