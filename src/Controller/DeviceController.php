@@ -141,7 +141,7 @@ class DeviceController extends Controller
                 if($deviceInstance->getState() == 'started') {
                     $status = 2;
                 }
-                else if($deviceInstance->getState() == 'stopped') {
+                else if($deviceInstance->getState() == 'stopped' || $deviceInstance->getState() == 'error') {
                     $status = 0;
                 }
                 else if ($deviceInstance->getState() == 'starting'){
@@ -260,7 +260,7 @@ class DeviceController extends Controller
             if($deviceInstance->getState() == 'started') {
                 $status = 2;
             }
-            else if ($deviceInstance->getState() == 'stopped'){
+            else if ($deviceInstance->getState() == 'stopped'|| $deviceInstance->getState() == 'error'){
                 $status = 0;
             }
             else if ($deviceInstance->getState() == 'starting'){

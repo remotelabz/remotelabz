@@ -2214,6 +2214,9 @@ export function recursive_start(nodes, i) {
     var node_data = {};
     node_data['edition'] = edition;
     node_data['labInstance'] = labInstance;
+    console.log(nodes);
+
+    if (nodes[Object.keys(nodes)[i]].type != "switch") {
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
         var url = '/api/labs/' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
     } else {
@@ -2261,6 +2264,15 @@ export function recursive_start(nodes, i) {
         }
     });
     return deferred.promise();
+    }
+    else {
+        if (i > 0) {
+            recursive_start(nodes, i);
+        } else {
+            addMessage('info', 'Start All: done');
+        }
+    }
+
 }
 
 // Stop node(s)
@@ -3731,6 +3743,7 @@ export function printLabTopology() {
                 'style="top: ' + value['top'] + 'px; left: ' + value['left'] + 'px;" ' +
                 'data-path="' + value['id'] + '" ' +
                 'data-status="' + value['status'] + '" ' +
+                'data-type="' + value['type'] + '" ' +
                 'data-name="' + value['name'] + '">' +
                 '<div class="tag  hidden" title="Connect to another node">'+
                 '<i class="fa fa-plug plug-icon dropdown-toggle ep"></i>'+
@@ -4334,9 +4347,11 @@ function createNodeListRow(template, id){
         //node actions
         html_data += '<td><div class="action-controls">';
         if (EDITION == 0) {
-            html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
-                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
-                         //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
+            if (node_values['type'] != 'switch') {
+                html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
+                            '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
+                            //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
+            }
         }
         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
         //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
