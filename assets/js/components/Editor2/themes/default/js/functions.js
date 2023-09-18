@@ -258,37 +258,33 @@ export function closeLab() {
             }
         });
 
-        if (running_nodes == false) {
-            var url = '/api/labs/close';
-            var type = 'DELETE';
-            $.ajax({
-                cache: false,
-                timeout: TIMEOUT,
-                type: type,
-                url: encodeURI(url),
-                dataType: 'json',
-                success: function (data) {
-                    if (data['status'] == 'success') {
-                        logger(1, 'DEBUG: lab closed.');
-                        setLab(null);
-                        deferred.resolve();
-                    } else {
-                        // Application error
-                        logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                        deferred.reject(data['message']);
-                    }
-                },
-                error: function (data) {
-                    // Server error
-                    var message = getJsonMessage(data['responseText']);
-                    logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-                    logger(1, 'DEBUG: ' + message);
-                    deferred.reject(message);
+        var url = '/api/labs/close';
+        var type = 'DELETE';
+        $.ajax({
+            cache: false,
+            timeout: TIMEOUT,
+            type: type,
+            url: encodeURI(url),
+            dataType: 'json',
+            success: function (data) {
+                if (data['status'] == 'success') {
+                    logger(1, 'DEBUG: lab closed.');
+                    setLab(null);
+                    deferred.resolve();
+                } else {
+                    // Application error
+                    logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                    deferred.reject(data['message']);
                 }
-            });
-        } else {
-            deferred.reject(MESSAGES[131]);
-        }
+            },
+            error: function (data) {
+                // Server error
+                var message = getJsonMessage(data['responseText']);
+                logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+                logger(1, 'DEBUG: ' + message);
+                deferred.reject(message);
+            }
+        });
     }).fail(function (message) {
         // Lab maybe does not exist, closing
         var url = '/api/labs/close';
