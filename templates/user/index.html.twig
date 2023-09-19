@@ -91,6 +91,21 @@
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
+    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ app.user|serialize(type = 'json') }}" data-allUsers="{{users|serialize(type = 'json')}}">
+        <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
+        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-user-cog"></i>
+            <i class="fa fa-caret-down"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
+            <button class="btn btn-warning" onClick="toggleUsers({{users|serialize(type = 'json')}}, 'block')" type="button">Block</button>
+            <button class="btn btn-warning" onClick="toggleUsers({{users|serialize(type = 'json')}},'unblock')" type="button">Unblock</button>
+            <div class="dropdown-divider"></div>
+            <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers({{users|serialize(type = 'json')}})" type="button">
+                {{ 'Delete'|trans }}
+            </button>                         
+        </div>
+    </div>
 
     {% set orderBy = app.request.query.get('orderBy')|default('lastName') %}
     {% set orderDirection = app.request.query.get('orderDirection')|default('ASC') %}
@@ -205,6 +220,7 @@
                             </button>
                         </td>
                         <td class="text-right">
+                            <input type="checkbox" name="selectUser" class="selectUser" value="{{user.id}}"/>
                             <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
                             
                             {% if 'ROLE_SUPER_ADMINISTRATOR' not in user.roles %}
@@ -271,6 +287,7 @@
     {{ encore_entry_script_tags('timeago') }}
     {{ encore_entry_script_tags('user') }}
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script type="text/javascript">
         function changeGroupDisplay(id) {
             if (document.getElementById(id+"-groups").style.display == "none") {
@@ -281,6 +298,105 @@
                 document.getElementById(id+"-groups").style.display = "none";
                 document.getElementById(id+"-iconDisplayGroup").className = "fa fa-caret-down";
             }
+        }
+
+        function checkAll() {
+            const boxes = document.querySelectorAll(".selectUser");
+            let checkAll = document.getElementById("selectAll");
+
+            if (checkAll.checked == true) {
+                for(let box of boxes) {
+                    box.checked = true
+                }
+            }
+            else {
+                for(let box of boxes) {
+                    box.checked = false
+                }
+            }
+        }
+
+        function deleteUsers(users) {
+            const boxes = document.querySelectorAll(".selectUser");
+            var userRating = document.querySelector('.multipleUsersActions');
+            var appUser = JSON.parse(userRating.dataset.user);
+            var usersToDelete = [];
+            console.log(users);
+
+            for (var i=0; i<boxes.length; i++) {
+                if (boxes[i].checked) {
+                    usersToDelete.push(boxes[i].value);
+                }
+            }
+
+            for (var i=0; i<usersToDelete.length; i++) {
+                console.log(usersToDelete)
+                const userToDelete = users.filter((user) => user.id == usersToDelete[i])[0];
+                console.log(userToDelete);
+                let superAdmin = false;
+                for (let role of userToDelete.roles) {
+                    if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                        superAdmin = true;
+                        break;
+                    }
+                }
+                console.log(superAdmin)
+                console.log(userToDelete.instances.length)
+                if (userToDelete.id != appUser.id && superAdmin == false && userToDelete.instances.length == 0) {
+                    $.ajax({
+                        type: "DELETE",
+                        url: `/api/users/${userToDelete.id}`
+                    })
+                    .then(()=> {
+                        document.getElementById("selectAll").checked = false;
+                        checkAll();
+                        location.reload();
+                    });
+                }
+            }
+        }
+
+        function toggleUsers(users, block) {
+            const boxes = document.querySelectorAll(".selectUser");
+            var userRating = document.querySelector('.multipleUsersActions');
+            var appUser = JSON.parse(userRating.dataset.user);
+            var usersToToggle = [];
+            console.log(users);
+
+            for (var i=0; i<boxes.length; i++) {
+                if (boxes[i].checked) {
+                    usersToToggle.push(boxes[i].value);
+                }
+            }
+
+            for (var i=0; i<usersToToggle.length; i++) {
+                console.log(usersToToggle)
+                const userToToggle = users.filter((user) => user.id == usersToToggle[i])[0];
+                console.log(userToToggle);
+                let superAdmin = false;
+                for (let role of userToToggle.roles) {
+                    if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                        superAdmin = true;
+                        break;
+                    }
+                }
+                console.log(superAdmin)
+                console.log(userToToggle.instances.length)
+                if (userToToggle.id != appUser.id && superAdmin == false) {
+                    var request = block;
+                    $.ajax({
+                        type: "PATCH",
+                        url: `/api/users/${userToToggle.id}`,
+                        data: JSON.stringify(request)
+                    })
+                    .then(()=> {
+                        document.getElementById("selectAll").checked = false;
+                        checkAll();
+                        location.reload();
+                    })
+                }
+            }
+            
         }
     </script>
 {% endblock %}
