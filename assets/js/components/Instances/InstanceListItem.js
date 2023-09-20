@@ -228,9 +228,15 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
             <div>
                 <div className="d-flex justify-content-between">
                     <div className="d-flex flex-column">
+                        {instance.device.type != "switch" ?
                         <div>
                             {device.name} <InstanceStateBadge state={instance.state} className="ml-1" />
+                        </div> :
+                        <div>
+                            {device.name} <InstanceStateBadge state={"started"} className="ml-1" />
                         </div>
+                        }
+                        
                         <div className="text-muted small">
                             {instance.uuid}
                         </div>
