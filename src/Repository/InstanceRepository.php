@@ -44,6 +44,25 @@ class InstanceRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findByGroup($group)
+    {
+        $entityManager = $this->getEntityManager();
+        
+        $query = $entityManager->createQuery(
+            'SELECT i
+            FROM App\Entity\LabInstance i
+            JOIN i.user u
+            JOIN u._groups gu
+            JOIN gu.group g
+            JOIN g.labs l
+            WHERE g = :group
+            AND i.user MEMBER OF g.users
+            AND i.lab MEMBER OF g.labs'
+        )
+        ->setParameter('group', $group);
+
+        return  $query->getResult();
+    }
     // /**
     //  * @return Instance[] Returns an array of Instance objects
     //  */

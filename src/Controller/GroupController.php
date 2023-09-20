@@ -10,6 +10,7 @@ use App\Form\GroupType;
 use App\Repository\GroupRepository;
 use App\Repository\UserRepository;
 use App\Repository\LabRepository;
+use App\Repository\InstanceRepository;
 use App\Security\ACL\GroupVoter;
 use App\Service\GroupPictureFileUploader;
 use App\Utils\Uuid;
@@ -160,6 +161,52 @@ class GroupController extends Controller
             'search' => $search,
             'limit' => $limit,
             'page' => $page,
+        ]);
+    }
+
+    /**
+     * @Route("/group/{slug}/instances", name="dashboard_group_instances", requirements={"slug"="[\w\-\/]+"})
+     *
+     * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances")
+     */
+    public function dashboardGroupInstancesAction(Request $request , string $slug, InstanceRepository $instanceRepository)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+        $labs = [];
+
+        $instances = $instanceRepository->findByGroup($group);
+
+        /*if (is_array($instances) == false) {
+            $instance = $instances;
+            $instances = [];
+            array_push($instances, $instance);
+        }*/
+        foreach ($instances as $instance) {
+            $exists = false;
+            foreach($labs as $lab) {
+                if ($instance->getLab() == $lab) {
+                    $exists = true;
+                }
+            }
+            if ($exists == false) {
+                array_push($labs, $instance->getLab());
+            }
+        }
+        $data = [
+            'instances'=> $instances,
+            'labs'=> $labs,
+            'group'=> $group
+        ];
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($data, 200, [], ['api_get_lab_instance']);
+        }
+
+        return $this->render('group/dashboard_group_instances.html.twig', [
+            'labInstances' => $instances,
+            'group' => $group,
+            'labs' => $labs
         ]);
     }
 

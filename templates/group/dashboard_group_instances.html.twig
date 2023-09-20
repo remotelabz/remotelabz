@@ -1,0 +1,70 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Group Instances': path('dashboard_group_instances', {'slug': group.path}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'dashboard_groups' %}
+    {% include "group.sidebar.html.twig" %}
+{% endblock %}
+
+{% set filter = filter|default('all') %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
+
+{% block wrapper %}
+    <div class="top-panel">
+            <div class="quick-actions">
+                {% if is_granted('ROLE_ADMINISTRATOR') %}
+                {% endif %}
+            </div>
+        <ul class="nav-links nav nav-tabs">
+            {# <li class="active"><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
+            <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
+            <li {% if filter == "all" %}class="active"{% endif %}>
+                <a href="?filter=all">
+                    {#<span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>#}
+                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length}}</span>
+                </a>
+            </li>
+            <li {% if filter == "labs" %}class="active"{% endif %}>
+                <a href="?filter=labs">
+                    <span>Labs</span> <span class="badge badge-pill">{{ labInstances|length }}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    {# <div class="search-panel">
+        <form action="{{ path('instances') }}" method="GET">
+            <input type="search" class="form-control input-sm" name="search"
+            placeholder="Search by name"
+            spellcheck="false" value="{{ search|default('') }}" type="search">
+        </form>
+    </div> #}
+    <div class="labs-panel">
+
+    {% if filter == "all" or filter == "labs" %}
+        {#- Lab instances -#}
+
+        <h4 class="p-3 border-bottom">Lab instances of {{group.name}}
+        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+            {{ svg('question') }} </span>
+        {% if labInstances is empty %}
+        <div class="wrapper align-items-center p-3 border-bottom lab-item">
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
+        {% else %}
+        <div class="col">{{ react_component('GroupInstancesList', {props: {'labInstances': labInstances, 'labs': labs, 'group': group}}) }}</div>
+        {% endif %}
+
+    {% endif %}
+    </div>
+    
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
