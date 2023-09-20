@@ -169,7 +169,7 @@ class GroupController extends Controller
      *
      * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances")
      */
-    public function dashboardGroupInstancesAction(Request $request , string $slug, InstanceRepository $instanceRepository)
+    public function dashboardGroupInstancesAction(Request $request , string $slug, InstanceRepository $instanceRepository, SerializerInterface $serializer)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
@@ -194,20 +194,52 @@ class GroupController extends Controller
                 array_push($labs, $instance->getLab());
             }
         }
-        $data = [
+
+        $GroupInstancesProps = [
             'instances'=> $instances,
             'labs'=> $labs,
             'group'=> $group
         ];
+
+        $props=$serializer->serialize(
+            $GroupInstancesProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            //SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+        );
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($data, 200, [], ['api_get_lab_instance']);
+            return $this->json($instances, 200, [], ['api_get_lab_instance']);
         }
 
         return $this->render('group/dashboard_group_instances.html.twig', [
             'labInstances' => $instances,
             'group' => $group,
-            'labs' => $labs
+            'labs' => $labs,
+            'props' => $props
         ]);
+    }
+
+    /**
+     *
+     * @Rest\Get("/api/groups/{slug}/lab/{uuid}/instances", name="api_group_instances_by_lab", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchGroupInstancesByLabUuid(Request $request , string $slug, string $uuid, InstanceRepository $instanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+        $lab = $labRepository->findOneBy(['uuid' => $uuid]);
+        $instances = $instanceRepository->findByGroupAndLabUuid($group, $lab);
+
+        /*if (is_array($instances) == false) {
+            $instance = $instances;
+            $instances = [];
+            array_push($instances, $instance);
+        }*/
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($instances, 200, [], ['api_get_lab_instance']);
+        }
+
     }
 
     private function filterAccessDeniedGroups($groups) {

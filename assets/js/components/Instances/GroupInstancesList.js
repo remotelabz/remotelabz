@@ -5,38 +5,17 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {labInstances, labs, group}) {
+export default function GroupInstancesList(props = {labInstances, labs, groups}) {
     const [options, setOptions] = useState();
-    //const [instances, setInstances] = useState();
+    const [instances, setInstances] = useState(props.labInstances);
     const [filter, setFilter] = useState("allLabs");
-    //const [labs, setLabs] = useState();
+    //const [labs, setLabs] = useState(props.labs);
     //const [group, setGroup] = useState();
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [instancesList, setInstancesList] = useState(null)
-    //console.log(props);
-    console.log(props.labInstances);
-    console.log(props.labs);
-    console.log(props.group);
-    
 
-    let teachers = [];
-    let students = [];
-    let admins = [];
-    let optionsList = [];
-    let deviceInstancesToStop = [];
-
-    /*useEffect(()=> {
-        /*setInstances(labInstances);
-        setLabs(labs);
-        setGroup(props.group)*/
-        /*console.log(labInstances);
-        console.log(labs);
-        console.log(group);
-    }, [labInstances, props.labs, props.group])*/
-
-    /*useEffect(() => {
-        getLabs()
+    useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
         const interval = setInterval(refreshInstance, 20000)
@@ -49,10 +28,11 @@ export default function GroupInstancesList(props = {labInstances, labs, group}) 
 
     useEffect(() => {
         let optionsList = props.labs.map((lab) => {
+            return(
             <><option
                   key={lab.id}
                   value={lab.uuid}
-                >{lab.name}</option></>
+                >{lab.name}</option></>)
         });
 
         optionsList.unshift(<><option
@@ -61,16 +41,7 @@ export default function GroupInstancesList(props = {labInstances, labs, group}) 
           >All Labs</option></>);
 
         setOptions(optionsList);
-
     }, []);
-
-    function getLabs() {
-        Remotelabz.instances.lab.getGroupInstances(props.group.slug)
-        .then((response)=> {
-            setLabs(response.labs);
-            console.log(response.labs);
-        })
-    }
 
     function onChange() {
         let filterValue = document.getElementById("labSelect").value;
@@ -81,15 +52,14 @@ export default function GroupInstancesList(props = {labInstances, labs, group}) 
         
         let request;
 
+        console.log(filter);
         if(filter == "allLabs") {
             request = Remotelabz.instances.lab.getGroupInstances(props.group.slug);  
         }
+        else {
+            request = Remotelabz.instances.lab.getGroupInstancesByLab(props.group.slug, filter)
+        }
         request.then(response => {
-            setInstances(
-                response.data
-            )
-
-            console.log(response.data)
             const list = response.data.map((labInstance) => {
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
@@ -127,17 +97,14 @@ export default function GroupInstancesList(props = {labInstances, labs, group}) 
         <div>
             <div>
                 <div><span>Filter by lab : </span></div>
-                <div className="d-flex align-items-center mb-2">
-                <select className='form-control' id="labSelect">
+                <div className="d-flex align-items-center mb-2 mt-2">
+                <select className='form-control' id="labSelect" onChange={onChange}>
                     {options}
                 </select>
                 </div>
             </div>
-        </div>
-    );*/
-
-    return (
-        <div>
+            {instancesList}
         </div>
     );
+
 }

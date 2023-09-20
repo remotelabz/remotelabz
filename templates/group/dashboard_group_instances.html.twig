@@ -57,7 +57,7 @@
             </span>
         </div>
         {% else %}
-        <div class="col">{{ react_component('GroupInstancesList', {props: {'labInstances': labInstances, 'labs': labs, 'group': group}}) }}</div>
+        <div class="col">{{ react_component('GroupInstancesList', {'props': props}) }}</div>
         {% endif %}
 
     {% endif %}
