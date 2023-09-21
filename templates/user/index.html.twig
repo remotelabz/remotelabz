@@ -322,7 +322,7 @@
             var userRating = document.querySelector('.multipleUsersActions');
             var appUser = JSON.parse(userRating.dataset.user);
             var usersToDelete = [];
-            var promises = [];
+            var i = 0;
 
             for (let box of boxes) {
                 if (box.checked) {
@@ -331,34 +331,33 @@
             }
 
             for (let userId of usersToDelete) {
-                var request = $.ajax({
-                        type: "GET",
-                        url: `/api/users/${userId}`
-                    }).then((response)=> {
-                        console.log(response)
-                        const userToDelete = response;
-                        console.log(userToDelete);
-                        let superAdmin = false;
-                        for (let role of userToDelete.roles) {
-                            if (role == "ROLE_SUPER_ADMINISTRATOR") {
-                                superAdmin = true;
-                                break;
+                $.ajax({
+                    type: "GET",
+                    url: `/api/users/${userId}`
+                }).then((response)=> {
+                    i++;
+                    const userToDelete = response;
+                    let superAdmin = false;
+                    for (let role of userToDelete.roles) {
+                        if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                            superAdmin = true;
+                            break;
+                        }
+                    }
+                    if (userToDelete.id != appUser.id && superAdmin == false && userToDelete.labInstances.length == 0) {
+                        $.ajax({
+                            type: "DELETE",
+                            url: `/api/users/${userToDelete.id}`
+                        }).then(()=> {
+                            console.log(i)
+                            console.log(usersToDelete.length)
+                            if (i == usersToDelete.length) {
+                                location.href = "{{ path('users') }}"; 
                             }
-                        }
-                        console.log(superAdmin)
-                        console.log(userToDelete.labInstances.length)
-                        if (userToDelete.id != appUser.id && superAdmin == false && userToDelete.labInstances.length == 0) {
-                            $.ajax({
-                                type: "DELETE",
-                                url: `/api/users/${userToDelete.id}`
-                            })
-                        }
-                    })  
-                promises.push(request);
+                        })
+                    }
+                })  
             }
-            $.when.apply(null, promises).done(function(){
-                location.href = "{{ path('users') }}"; 
-            }) 
         }
 
         function toggleUsers(block) {
@@ -366,8 +365,8 @@
             var userRating = document.querySelector('.multipleUsersActions');
             var appUser = JSON.parse(userRating.dataset.user);
             var usersToToggle = [];
-            var promises = [];
             var request = block;
+            var i = 0;
 
             for (let box of boxes) {
                 if (box.checked) {
@@ -376,34 +375,35 @@
             }
 
             for (let userId of usersToToggle) {
-                var request = $.ajax({
-                        type: "GET",
-                        url: `/api/users/${userId}`
-                    }).then((response) => {
-                        const userToToggle = response;
-                        console.log(userToToggle);
-                        let superAdmin = false;
-                        for (let role of userToToggle.roles) {
-                            if (role == "ROLE_SUPER_ADMINISTRATOR") {
-                                superAdmin = true;
-                                break;
+                $.ajax({
+                    type: "GET",
+                    url: `/api/users/${userId}`
+                }).then((response) => {
+                    i++;
+                    const userToToggle = response;
+                    console.log(userToToggle);
+                    let superAdmin = false;
+                    for (let role of userToToggle.roles) {
+                        if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                            superAdmin = true;
+                            break;
+                        }
+                    }
+                    console.log(superAdmin)
+                    console.log(userToToggle.labInstances.length)
+                    if (userToToggle.id != appUser.id && superAdmin == false) {
+                        $.ajax({
+                            type: "PATCH",
+                            url: `/api/users/${userToToggle.id}`,
+                            data: JSON.stringify(request)
+                        }).then(()=> {
+                            if (i == usersToToggle.length) {
+                                location.href = "{{ path('users') }}"; 
                             }
-                        }
-                        console.log(superAdmin)
-                        console.log(userToToggle.labInstances.length)
-                        if (userToToggle.id != appUser.id && superAdmin == false) {
-                            $.ajax({
-                                type: "PATCH",
-                                url: `/api/users/${userToToggle.id}`,
-                                data: JSON.stringify(request)
-                            })
-                        }
-                    }) 
-                promises.push(request);
+                        })
+                    }
+                }) 
             }
-            $.when.apply(null, promises).done(function(){
-                location.href = "{{ path('users') }}"; 
-            }) 
         }
     </script>
 {% endblock %}
