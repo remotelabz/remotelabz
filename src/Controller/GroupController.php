@@ -177,12 +177,6 @@ class GroupController extends Controller
         $labs = [];
 
         $instances = $instanceRepository->findByGroup($group);
-
-        /*if (is_array($instances) == false) {
-            $instance = $instances;
-            $instances = [];
-            array_push($instances, $instance);
-        }*/
         foreach ($instances as $instance) {
             $exists = false;
             foreach($labs as $lab) {
@@ -195,6 +189,10 @@ class GroupController extends Controller
             }
         }
 
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($instances, 200, [], ['api_get_lab_instance']);
+        }
+
         $GroupInstancesProps = [
             'instances'=> $instances,
             'labs'=> $labs,
@@ -205,11 +203,8 @@ class GroupController extends Controller
             $GroupInstancesProps,
             'json',
             //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            //SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_lab', 'api_get_group'])
         );
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($instances, 200, [], ['api_get_lab_instance']);
-        }
 
         return $this->render('group/dashboard_group_instances.html.twig', [
             'labInstances' => $instances,
@@ -231,11 +226,6 @@ class GroupController extends Controller
         $lab = $labRepository->findOneBy(['uuid' => $uuid]);
         $instances = $instanceRepository->findByGroupAndLabUuid($group, $lab);
 
-        /*if (is_array($instances) == false) {
-            $instance = $instances;
-            $instances = [];
-            array_push($instances, $instance);
-        }*/
         if ('json' === $request->getRequestFormat()) {
             return $this->json($instances, 200, [], ['api_get_lab_instance']);
         }

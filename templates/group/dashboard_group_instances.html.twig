@@ -19,32 +19,10 @@
                 {% if is_granted('ROLE_ADMINISTRATOR') %}
                 {% endif %}
             </div>
-        <ul class="nav-links nav nav-tabs">
-            {# <li class="active"><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
-            <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
-            <li {% if filter == "all" %}class="active"{% endif %}>
-                <a href="?filter=all">
-                    {#<span>All</span> <span class="badge badge-pill">{{ labInstances|length + deviceInstances|length + networkInterfaceInstances|length }}</span>#}
-                    <span>All</span> <span class="badge badge-pill">{{ labInstances|length}}</span>
-                </a>
-            </li>
-            <li {% if filter == "labs" %}class="active"{% endif %}>
-                <a href="?filter=labs">
-                    <span>Labs</span> <span class="badge badge-pill">{{ labInstances|length }}</span>
-                </a>
-            </li>
-        </ul>
     </div>
-    {# <div class="search-panel">
-        <form action="{{ path('instances') }}" method="GET">
-            <input type="search" class="form-control input-sm" name="search"
-            placeholder="Search by name"
-            spellcheck="false" value="{{ search|default('') }}" type="search">
-        </form>
-    </div> #}
+
     <div class="labs-panel">
 
-    {% if filter == "all" or filter == "labs" %}
         {#- Lab instances -#}
 
         <h4 class="p-3 border-bottom">Lab instances of {{group.name}}
@@ -57,10 +35,9 @@
             </span>
         </div>
         {% else %}
-        <div class="col">{{ react_component('GroupInstancesList', {'props': props}) }}</div>
+         <div class="col">{{ react_component('GroupInstancesList', {'props': props}) }}</div>
         {% endif %}
 
-    {% endif %}
     </div>
     
 {% endblock %}
