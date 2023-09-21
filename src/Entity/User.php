@@ -78,7 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({})
+     * @Serializer\Groups({"api_get_user"})
      *
      * @var Collection|LabInstance[]
      */

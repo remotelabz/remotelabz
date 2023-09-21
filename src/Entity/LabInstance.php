@@ -20,7 +20,7 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox"})
+     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox", "api_get_user"})
      */
     private $id;
 
