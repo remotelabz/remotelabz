@@ -55,3 +55,4 @@ vagrant/provision_prod.sh
 .phpunit.result.cache
 ###< phpunit/phpunit ###
 config/templates/
+composer.lock
