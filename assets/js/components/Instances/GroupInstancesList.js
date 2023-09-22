@@ -9,11 +9,12 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
     const [options, setOptions] = useState();
     const [instances, setInstances] = useState(props.labInstances);
     const [filter, setFilter] = useState("allLabs");
-    //const [labs, setLabs] = useState(props.labs);
-    //const [group, setGroup] = useState();
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [instancesList, setInstancesList] = useState(null)
+
+    let deviceInstancesToStop = [];
 
     useEffect(() => {
         setLoadingInstanceState(true)
@@ -93,6 +94,107 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
         })
     }
 
+    function checkAll() {
+        const boxes = document.querySelectorAll(".checkLab");
+        let checkAll = document.getElementById("checkAll");
+
+        if (checkAll.checked == true) {
+            for(let box of boxes) {
+                box.checked = true
+            }
+        }
+        else {
+            for(let box of boxes) {
+                box.checked = false
+            }
+        }
+    }
+
+    function hasInstancesStillRunning(labInstance) {
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
+    }
+
+    async function onLeaveLab(force) {
+        setShowLeaveLabModal(false)
+        setShowForceLeaveLabModal(false)
+        //setLoadingInstanceState(true)
+        const boxes = document.querySelectorAll(".checkLab");
+        let instancesToDelete = [];
+        let running = false;
+        deviceInstancesToStop = [];
+        console.log(force);
+
+        for (var i=0; i<boxes.length; i++) {
+            // And stick the checked ones onto an array...
+            if (boxes[i].checked) {
+                instancesToDelete.push(boxes[i].value);
+            }
+        }
+
+        if (force == false) {
+            for(let instanceToDelete of instancesToDelete) {
+                Remotelabz.instances.lab.get(instanceToDelete)
+                .then((response) => {
+                    console.log(hasInstancesStillRunning(response.data));
+                    if (hasInstancesStillRunning(response.data)) {
+                        running = true;
+                        for(let deviceInstance of response.data.deviceInstances) {
+                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error')) {
+                                deviceInstancesToStop.push(deviceInstance);
+                            }
+                        }
+
+                        console.log(running);
+    
+                        if (running == true) {
+                            console.log("modal");
+                            setShowForceLeaveLabModal(true);
+                        }
+                    }
+                    else {
+                        onLeaveLab(true);
+                    }
+                })
+            }
+            
+        }
+
+        else {
+
+            for(let instanceToDelete of instancesToDelete) {
+                try {
+                    Remotelabz.instances.lab.delete(instanceToDelete)
+                    //setLabInstance({ ...labInstance, state: "deleting" })
+                } catch (error) {
+                    console.error(error)
+                    new Noty({
+                        text: 'An error happened while leaving the lab. Please try again later.',
+                        type: 'error'
+                    }).show()
+                    //setLoadingInstanceState(false)
+                }
+            }
+        }
+    
+    }
+
+    function stopDevices() {
+        for(let deviceInstanceToStop of deviceInstancesToStop) {
+            try {
+                Remotelabz.instances.device.stop(deviceInstanceToStop.uuid)
+                //setLabInstance({ ...labInstance, state: "deleting" })
+            } catch (error) {
+                console.error(error)
+                new Noty({
+                    text: 'An error happened while stopping a device. Please try again later.',
+                    type: 'error'
+                }).show()
+                //setLoadingInstanceState(false)
+            }
+        }
+        onLeaveLab(true);
+    }
+
     return (
         <div>
             <div>
@@ -103,7 +205,39 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
                 </select>
                 </div>
             </div>
+            <div className="d-flex justify-content-end mb-2">
+                {
+                    <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                }
+                <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+            </div>
             {instancesList}
+
+            <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Leave labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={() => onLeaveLab(false)}>Leave</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal show={showForceLeaveLabModal} onHide={() => setShowForceLeaveLabModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Force to Leave labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Some instances still have running devices. These devices will be stopped. Do you still want to continue ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={stopDevices}>Continue</Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 
