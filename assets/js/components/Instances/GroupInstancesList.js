@@ -5,9 +5,9 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {labInstances, labs, groups}) {
+export default function GroupInstancesList(props = {instances, labs, groups}) {
     const [options, setOptions] = useState();
-    const [instances, setInstances] = useState(props.labInstances);
+    const [instances, setInstances] = useState();
     const [filter, setFilter] = useState("allLabs");
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
@@ -44,6 +44,44 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
         setOptions(optionsList);
     }, []);
 
+    useEffect(() => {
+        console.log("instances");
+        console.log(instances);
+
+        if (instances != undefined && instances !== "") {
+            const list = instances.map((labInstance) => {
+                console.log(labInstance);
+                return (
+                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+                    <div>
+                        <div>
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            </a>
+                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
+                        </div>
+                        
+                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                    </div>
+                </div>)
+            });
+    
+            setInstancesList(list);
+        }
+
+        if (instances === "") {
+            const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
+
+            setInstancesList(list);
+        }
+        
+        
+    }, [instances]);
+
     function onChange() {
         let filterValue = document.getElementById("labSelect").value;
         setFilter(filterValue);
@@ -61,6 +99,7 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
             request = Remotelabz.instances.lab.getGroupInstancesByLab(props.group.slug, filter)
         }
         request.then(response => {
+            setInstances(response.data);
             const list = response.data.map((labInstance) => {
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
@@ -163,8 +202,16 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
 
             for(let instanceToDelete of instancesToDelete) {
                 try {
+
                     Remotelabz.instances.lab.delete(instanceToDelete)
-                    //setLabInstance({ ...labInstance, state: "deleting" })
+                    let newInstances = instances.map((instance)=>{
+                        if (instance.uuid == instanceToDelete) {
+                            instance.state = "deleting"
+                        }
+                        return instance;
+                    });
+                    setInstances(newInstances)
+                    //console.log(instances);
                 } catch (error) {
                     console.error(error)
                     new Noty({
@@ -206,10 +253,12 @@ export default function GroupInstancesList(props = {labInstances, labs, groups})
                 </div>
             </div>
             <div className="d-flex justify-content-end mb-2">
-                {
+                {instances !== "" &&
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                 }
-                <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                {instances !== "" &&
+                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                }
             </div>
             {instancesList}
 
