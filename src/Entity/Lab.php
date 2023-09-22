@@ -9,6 +9,7 @@ use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
@@ -123,6 +124,20 @@ class Lab implements InstanciableInterface
      * @var Collection|TextObject[]
      */
     private $textobjects;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"api_get_lab"})
+     */
+    private $hasTimer = false;
+
+    /**
+     * @ORM\Column(type="string", nullable="true")
+     * @Serializer\Groups({"api_get_lab"})
+     * @Assert\Time
+     * @var string A "H:i:s" formatted value 
+     */
+    private $timer;
 
     public function __construct()
     {
@@ -395,6 +410,30 @@ class Lab implements InstanciableInterface
                 $textobject->setLab(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getTimer(): ?string
+    {
+        return $this->timer;
+    }
+
+    public function setTimer(?string $timer): self
+    {
+        $this->timer = $timer;
+
+        return $this;
+    }
+
+    public function getHasTimer(): bool
+    {
+        return $this->hasTimer;
+    }
+
+    public function setHasTimer(bool $hasTimer): self
+    {
+        $this->hasTimer = $hasTimer;
 
         return $this;
     }

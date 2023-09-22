@@ -285,6 +285,7 @@ class LabController extends Controller
             "version"=>$lab["version"],
             "scripttimeout"=>$lab["scripttimeout"],
             "lock"=>$lab["locked"],
+            "timer"=>$lab["timer"]
         ];
 
         $response = new Response();
@@ -751,12 +752,20 @@ class LabController extends Controller
     {
         $lab = $this->labRepository->find($id);
 
-        $data = json_decode($request->getContent(), true);   
+        $data = json_decode($request->getContent(), true); 
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
+        if ($data['timer'] !== "" && $data['timer'] != "00:00:00") {
+            $lab->setHasTimer(true);
+            $lab->setTimer($data['timer']);
+        }
+        else {
+            $lab->setHasTimer(false);
+            $lab->setTimer(null);          
+        }
         //$lab->setDescription($data['body']);
 
         $entityManager = $this->getDoctrine()->getManager();

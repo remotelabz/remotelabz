@@ -2610,6 +2610,10 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
     return false;  // Stop to avoid POST
 });
 
+$(document).on('click', '#resetTimer', function(e) {
+    document.getElementById('timer').value = "";
+})
+
 // Submit lab TP subject form
 $(document).on('submit', '#form-subject-lab', function (e) {
     e.preventDefault();  // Prevent default behaviour

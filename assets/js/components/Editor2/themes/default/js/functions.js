@@ -2571,6 +2571,8 @@ export function printFormLab(action, values) {
     }
     var title = (action == 'add') ? MESSAGES[5] : MESSAGES[87] ;
 
+    console.log(values['timer']);
+
     //var editor = new EditorJS();
     var html = new EJS({
         url: '/build/editor/ejs/form_lab.ejs'
@@ -2581,6 +2583,7 @@ export function printFormLab(action, values) {
         author: (values['author'] != null) ? values['author'] : '',
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
+        timer: (values['timer'] != null) ? values['timer'] : '',
         title: title,
         path: path,
         action: action,
