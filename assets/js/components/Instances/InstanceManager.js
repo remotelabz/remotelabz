@@ -14,6 +14,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
+    const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox=props.isSandbox
     
     //console.log("instancemanage");
@@ -24,6 +25,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         setLoadingInstanceState(true)
         refreshInstance()
         const interval = setInterval(refreshInstance, 5000)
+        
         return () => {
             clearInterval(interval)
             setLabInstance(null)
@@ -31,7 +33,50 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         }
     }, [viewAs])
 
-    
+    useEffect(()=> {
+        if (props.lab.hasTimer == true) {
+            countdown()
+        }
+    }, [labInstance]);
+
+    function countdown() {
+        if (labInstance) {
+            var timerEnd = new Date(labInstance.timerEnd).getTime();
+            const timer = setInterval(function () {
+            var now = new Date().getTime();
+            var timeInterval = timerEnd - now;
+
+            var hours = Math.floor((timeInterval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((timeInterval % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((timeInterval % (1000 * 60)) / 1000);
+
+            let intervalResult = 'Timer: '+ hours+':'+ minutes+':'+seconds;
+            setTimerCountDown(intervalResult);
+            if (timeInterval < 0) {
+                clearInterval(timer);
+                setTimerCountDown('Timer: STOPPED');
+                stopDevices()
+            }
+            },1000)
+        }
+    }
+
+    function stopDevices() {
+
+        for(let deviceInstance of labInstance.deviceInstances) {
+            if (deviceInstance.state != 'stopped') {
+                try {
+                    Remotelabz.instances.device.stop(deviceInstance.uuid)
+                } catch (error) {
+                    console.error(error)
+                    new Noty({
+                        text: 'An error happened while stopping a device. Please try again later.',
+                        type: 'error'
+                    }).show()
+                }
+            }
+        }
+    }
 
     function refreshInstance() {
         let request
@@ -207,6 +252,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     <div>
                         <h4 className="mb-0">Instances</h4>
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
+                    </div>
+                    <div>
+                        {props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
+                        }
+                        {props.lab.hasTimer == false && <span>No timer</span>
+                        }
                     </div>
                     <div>
                     {labInstance.state === "created" &&
