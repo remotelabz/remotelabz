@@ -50,6 +50,15 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             var minutes = Math.floor((timeInterval % (1000 * 60 * 60)) / (1000 * 60));
             var seconds = Math.floor((timeInterval % (1000 * 60)) / 1000);
 
+            if (hours.toString().length == 1) {
+                hours = '0'+hours
+            }
+            if (minutes.toString().length <= 1) {
+                minutes = '0'+minutes
+            }
+            if (seconds.toString().length <= 1) {
+                seconds = '0'+seconds
+            }
             let intervalResult = 'Timer: '+ hours+':'+ minutes+':'+seconds;
             setTimerCountDown(intervalResult);
             if (timeInterval < 0) {
