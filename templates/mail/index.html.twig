@@ -1,0 +1,15 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Mail': path('admin_write_mail') }) %}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title"><h1>Write a new Email</h1></div>
+<div class="content-body">
+    {{ form_start(form) }}
+    {{ form_end(form) }}
+</div>
+
+    
+{% endblock %}
