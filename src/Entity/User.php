@@ -422,6 +422,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     }
 
     /**
+     * @return bool whether the user is active or not
+     */
+    public function isActiveNow()
+    {
+        // delay during wich the user will be considered as still active
+        $delay = new \DateTime('2 minutes ago');
+
+        return ( $this->getLastActivity() > $delay );
+    }
+
+    /**
      * @return Collection|Group[]
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")

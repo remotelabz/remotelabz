@@ -31,3 +31,5 @@ doctrine:
         dql:
             string_functions:
                 GROUP_CONCAT: App\Orm\GroupConcat
+            numeric_functions:
+                TIMEDIFF: App\Orm\TimeDiff

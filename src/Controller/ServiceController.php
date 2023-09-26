@@ -14,6 +14,9 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
+use App\Repository\LabInstanceRepository;
+use App\Repository\DeviceInstanceRepository;
+use App\Repository\UserRepository;
 
 
 /**
@@ -164,10 +167,27 @@ class ServiceController extends Controller
          /**
      * @Route("/resources", name="resources", methods="GET")
      */
-    public function RessourceAction(Request $request)
+    public function RessourceAction(Request $request, UserRepository $userRepository, LabInstanceRepository $labInstanceRepository, 
+                                    DeviceInstanceRepository $deviceInstanceRepository)
     {
         $client = new Client();
         $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+        $users = $userRepository->findAll();
+        $authenticatedUsers = count($userRepository->findAllAuthenticatedUsers(new \DateTime()));
+        $startedVms = count($deviceInstanceRepository->findStartedByType('vm'));
+        $startedContainers = count($deviceInstanceRepository->findStartedByType('container'));
+        $labInstances = count($labInstanceRepository->findBy(['state'=> 'created']));
+        $labsWithInstance = count($labInstanceRepository->countLabWithInstance());
+
+        $dbData = [
+            'users' => $users,
+            'authenticatedUsers' => $authenticatedUsers,
+            'startedVms' => $startedVms,
+            'startedContainers' => $startedContainers,
+            'labInstances' => $labInstances,
+            'labsWithInstance' =>$labsWithInstance
+        ];
+
         try {
             $response = $client->get($url);
             $usage = json_decode($response->getBody()->getContents(), true);
@@ -178,7 +198,8 @@ class ServiceController extends Controller
         }
 
         return $this->render('service/resources.html.twig', [
-            'value' => $usage
+            'value' => $usage,
+            'dbData' => $dbData
         ]);
     }
 }

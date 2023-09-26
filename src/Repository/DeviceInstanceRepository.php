@@ -92,6 +92,20 @@ class DeviceInstanceRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+    public function findStartedbyType($type)
+    {
+        return $this->createQueryBuilder('l')
+            ->where('l.state = :started')
+            ->join('l.device', 'd')
+            ->andWhere('d.type = :type')
+            ->setParameter('started', 'started')
+            ->setParameter('type', $type)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     public function findByLabInstance($lab)
     {
 

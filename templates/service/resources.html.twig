@@ -17,8 +17,10 @@
     </div>
 </div>
 <div class="content-body">
-<div class="row">
-</div>
+
+    <div class="row">
+        <h2>Hardware</h2>
+    </div>
     <div class="row">
         <div class="col-xl-8 col-lg-12">
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
@@ -57,6 +59,84 @@
                         <p class="card-text flex-grow-1 text-center" id ="disk" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
 
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <h2>Devices</h2>
+    </div>
+    <div class="row">
+        <div class="col-xl-8 col-lg-12">
+            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Started VMs
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center" id ="startedVms">
+                            {% if dbData is null %} NA {% else %} {{ dbData['startedVms'] }} VM(s) {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Started containers
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center" id ="startedContainers">
+                        {% if dbData is null %} NA {% else %} {{ dbData['startedContainers'] }} container(s) {% endif %}
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <h2>Labs</h2>
+    </div>
+    <div class="row">
+        <div class="col-xl-8 col-lg-12">
+            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Number of created lab instances
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center" id ="startedVms">
+                            {% if dbData is null %} NA {% else %} {{ dbData['labInstances'] }} instance(s) {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Number of started labs
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center" id ="startedVms">
+                            {% if dbData is null %} NA {% else %} {{ dbData['labsWithInstance'] }} lab(s) {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <h2>Users</h2>
+    </div>
+    <div class="row">
+        <div class="col-xl-8 col-lg-12">
+            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Number of authenticated users
+                        </h4>
+                        <p class="card-text flex-grow-1 text-center" id ="startedVms">
+                            {% if dbData is null %} NA {% else %} {{ dbData['authenticatedUsers'] }} user(s) {% endif %}
                         </p>
                     </div>
                 </div>

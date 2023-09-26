@@ -95,6 +95,18 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+    public function countLabwithInstance()
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT COUNT(DISTINCT l.lab)
+            FROM App\Entity\LabInstance l'
+        );
+
+        return $query->getResult();
+    }
     
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects

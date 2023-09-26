@@ -19,6 +19,21 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    public function findAllAuthenticatedUsers($now)
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT u
+            FROM App\Entity\User u
+            WHERE TIMEDIFF(:now, u.lastActivity) < :val'
+        )
+        ->setParameter('now', $now)
+        ->setParameter('val', '00:02:00');
+
+        return $query->getResult();
+    }
+
     // /**
     //  * @return User[] Returns an array of User objects
     //  */
