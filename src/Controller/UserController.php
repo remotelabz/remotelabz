@@ -321,6 +321,7 @@ class UserController extends Controller
     public function toggleAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
+        $data = json_decode($request->getContent(), true);
 
         if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
@@ -329,7 +330,16 @@ class UserController extends Controller
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
             throw new UnauthorizedHttpException('You cannot lock root account.');
         } else {
-            $user->setEnabled(!$user->isEnabled());
+            if ($data == 'block') {
+                $user->setEnabled(0);
+            }
+            else if ($data == 'unblock') {
+                $user->setEnabled(1);
+            }
+            else {
+                $user->setEnabled(!$user->isEnabled());
+            }
+            
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);

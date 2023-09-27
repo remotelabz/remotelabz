@@ -44,7 +44,7 @@ function AllInstancesManager(props) {
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
-                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm:ss") }</span>
+                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                     </div>
                     <div>
                     {
@@ -54,6 +54,7 @@ function AllInstancesManager(props) {
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }
+                    <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
                     </div>
                 </ListGroupItem>
                 {labInstance.state === "creating" &&

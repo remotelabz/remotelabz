@@ -4026,6 +4026,7 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
+
             "version": "1.24.1",
             "source": {
                 "type": "git",

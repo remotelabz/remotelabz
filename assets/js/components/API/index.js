@@ -556,7 +556,7 @@ export class RemotelabzAPI {
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
             get(uuid) {
-                return axios.get(`/instances/${uuid}`, { params: { type: 'lab' } });
+                return axios.get(`/instances/by-uuid/${uuid}`, { params: { type: 'lab' } });
             },
 
             /**
@@ -585,6 +585,32 @@ export class RemotelabzAPI {
             },
 
             /**
+             * Get lab instances by user UUID.
+             * 
+             * Implements GET `/api/instances/lab/by-user/{userUuid}`
+             * 
+             * @param {string} userUuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getByUser(userUuid) {
+                return axios.get(`/instances/lab/by-user/${userUuid}`);
+            },
+
+            /**
+             * Get lab instances owned by user type.
+             * 
+             * Implements GET `/api/instances/lab/owned-by-user-type/{userType}`
+             * 
+             * @param {string} userType
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getOwnedByUserType(userType) {
+                return axios.get(`/instances/lab/owned-by-user-type/${userType}`);
+            },
+
+            /**
              * Get a lab instance by lab and group UUID.
              * 
              * Implements GET `/api/instances/lab/{labUuid}/by-group/{groupUuid}`
@@ -596,6 +622,56 @@ export class RemotelabzAPI {
              */
             getByLabAndGroup(labUuid, groupUuid) {
                 return axios.get(`/instances/lab/${labUuid}/by-group/${groupUuid}`);
+            },
+
+            /**
+             * Get lab instances by group UUID.
+             * 
+             * Implements GET `/api/instances/lab/by-group/{groupUuid}`
+             * 
+             * @param {string} groupUuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getByGroup(groupUuid) {
+                return axios.get(`/instances/lab/by-group/${groupUuid}`);
+            },
+
+            /**
+             * Get lab instances owned by group.
+             * 
+             * Implements GET `/api/instances/lab/owned-by-group`
+             * 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getOwnedByGroup() {
+                return axios.get(`/instances/lab/owned-by-group`);
+            },
+
+            /**
+             * Get lab instances by lab UUID.
+             * 
+             * Implements GET `/api/instances/lab/by-lab/{labUuid}`
+             * 
+             * @param {string} labUuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getByLab(labUuid) {
+                return axios.get(`/instances/lab/by-lab/${labUuid}`);
+            },
+
+            /**
+             * Get lab instances by ordered by lab.
+             * 
+             * Implements GET `/api/instances/lab/ordered-by-lab`
+             * 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getOrderedByLab() {
+                return axios.get(`/instances/lab/ordered-by-lab`);
             },
 
             /**
