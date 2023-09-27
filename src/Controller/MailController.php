@@ -12,6 +12,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints\Email as EmailConstraint;
 use Psr\Log\LoggerInterface;
+use App\Repository\UserRepository;
 
 class MailController extends Controller
 {
@@ -34,10 +35,22 @@ class MailController extends Controller
     /**
      * @Route("/admin/mail/", name="admin_write_mail")
      */
-    public function indexAction(Request $request) {
+    public function indexAction(Request $request, UserRepository $userRepository) {
 
         $mailForm = $this->createForm(MailType::class);
         $mailForm->handleRequest($request);
+
+        $value = $request->get('u');
+
+        $users = $userRepository->findByEmail('%'.$value.'%');
+
+        $json = array();
+        foreach ($users as $user) {
+            $json[] = $user->getEmail();
+        }
+
+        $response = new Response();
+        $response->setContent(json_encode($json));
 
         if ($request->getContentType() === 'json') {
             $mail = json_decode($request->getContent(), true);
@@ -69,7 +82,6 @@ class MailController extends Controller
 
                 array_push($badAdresses, $toAdresse);
                 $errorsString = (string) $errors;
-                var_dump($errorsString);
             }
         }
 
