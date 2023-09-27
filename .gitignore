@@ -56,5 +56,3 @@ vagrant/provision_prod.sh
 ###< phpunit/phpunit ###
 config/templates/
 composer.lock
-package-lock.json
-yarn.lock

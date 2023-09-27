@@ -25,6 +25,13 @@ class HypervisorFixtures extends Fixture
 
         $manager->persist($hypervisor);
         $this->addReference('lxc', $hypervisor);
+        $hypervisor = new Hypervisor();
+        $hypervisor
+            ->setName('natif')
+        ;
+
+        $manager->persist($hypervisor);
+        $this->addReference('natif', $hypervisor);
         $manager->flush();
     }
 

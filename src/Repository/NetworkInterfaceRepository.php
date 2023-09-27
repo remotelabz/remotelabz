@@ -49,19 +49,35 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    public function getConnections($id)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT MAX(n.connection) as connection
+            FROM App\Entity\NetworkInterface n
+            LEFT JOIN n.device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id'
+        )
+        ->setParameter('id', $id);
+
+        return $query->getResult();
+    }
+
     public function getTopology($id)
     {
 
         $entityManager = $this->getEntityManager();
 
         $query = $entityManager->createQuery(
-            'SELECT n.vlan, GROUP_CONCAT(n.name) AS names, GROUP_CONCAT(d.id) AS devices
+            'SELECT n.connection, n.vlan, GROUP_CONCAT(n.name) AS names, GROUP_CONCAT(d.id) AS devices
             FROM App\Entity\NetworkInterface n
             LEFT JOIN n.device d
             LEFT JOIN d.labs l
             WHERE l.id = :id
-            AND n.vlan >0
-            GROUP BY n.vlan'
+            GROUP BY n.connection, n.vlan'
         )
         ->setParameter('id', $id);
 
