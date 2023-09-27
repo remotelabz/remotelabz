@@ -25,7 +25,8 @@ class MailController extends Controller
     public function __construct(
         MailerInterface $mailer,
         ValidatorInterface $validator,
-        LoggerInterface $logger)
+        LoggerInterface $logger
+        )
     {
         $this->mailer = $mailer;
         $this->validator = $validator;
@@ -40,18 +41,6 @@ class MailController extends Controller
         $mailForm = $this->createForm(MailType::class);
         $mailForm->handleRequest($request);
 
-        $value = $request->get('u');
-
-        $users = $userRepository->findByEmail('%'.$value.'%');
-
-        $json = array();
-        foreach ($users as $user) {
-            $json[] = $user->getEmail();
-        }
-
-        $response = new Response();
-        $response->setContent(json_encode($json));
-
         if ($request->getContentType() === 'json') {
             $mail = json_decode($request->getContent(), true);
             $mailForm->submit($mail, false);
@@ -59,63 +48,76 @@ class MailController extends Controller
 
         if ($mailForm->isSubmitted() && $mailForm->isValid()) {
             $mail = $mailForm->getData();
-            $this->checkAction($mail);
+            $this->checkAction($mail, $userRepository);
         }
 
         return $this->render('mail/index.html.twig', ['form'=>$mailForm->createView()]);
     }
 
 
-    public function checkAction($mail) {
+    public function checkAction($mail, UserRepository $userRepository) {
 
         $toAdresses = [];
         $badAdresses = [];
         $emailConstraint = new EmailConstraint();
-        foreach($mail['to'] as $toAdresse) {
 
-            $errors = $this->validator->validate($toAdresse, $emailConstraint);
-            if (count($errors) == 0) {
+        if(count($mail['to']) == 1 && $mail['to'][0] == "All users") {
 
-                array_push($toAdresses, $toAdresse);
+            $bccAdresses = [];
+            $users = $userRepository->findAll();
+
+            foreach($users as $user){
+
+                $errors = $this->validator->validate($user->getEmail(), $emailConstraint);
+                if (count($errors) == 0) {
+
+                    array_push($bccAdresses, $user->getEmail());
+                }
+                else {
+
+                    array_push($badAdresses, $user->getEmail());
+                    $errorsString = (string) $errors;
+                }
             }
-            else {
 
-                array_push($badAdresses, $toAdresse);
-                $errorsString = (string) $errors;
+            if (count($users) != count($bccAdresses)) {
+                $this->logger->debug("Some addresses are not valid: ".print_r($badAdresses, true));
             }
+
+            $checkedEmail = [
+                'to' => [$this->getParameter('app.general.contact_mail')],
+                'cci' => $bccAdresses,
+                'subject' => $mail['subject'],
+                'content' => $mail['content']
+            ];
+
         }
+        else {
+            foreach($mail['to'] as $toAdresse) {
 
-        if (count($mail['to']) != count($toAdresses)) {
-            $this->logger->debug("Some addresses are not valid: ".print_r($badAdresses, true));
-        }
-
-        /*$ccAdresses = [];
-        foreach($mail['cc'] as $ccAdresse) {
-
-            $errors = $this->validator->validate($ccAdresse, $emailConstraint);
-            if (count($errors) == 0) {
-
-                array_push($ccAdresses, $ccAdresse);
+                $errors = $this->validator->validate($toAdresse, $emailConstraint);
+                if (count($errors) == 0) {
+    
+                    array_push($toAdresses, $toAdresse);
+                }
+                else {
+    
+                    array_push($badAdresses, $toAdresse);
+                    $errorsString = (string) $errors;
+                }
             }
-        }
-
-        $bccAdresses = [];
-        foreach($mail['cci'] as $bccAdresse) {
-
-            $errors = $this->validator->validate($bccAdresse, $emailConstraint);
-            if (count($errors) == 0) {
-
-                array_push($bccAdresses, $bccAdresse);
+    
+            if (count($mail['to']) != count($toAdresses)) {
+                $this->logger->debug("Some addresses are not valid: ".print_r($badAdresses, true));
             }
-        }*/
 
-        $checkedEmail = [
-            'to' => $toAdresses,
-            /*'cc' => $ccAdresses,
-            'cci' => $bccAdresses,*/
-            'subject' => $mail['subject'],
-            'content' => $mail['content']
-        ];
+            $checkedEmail = [
+                'to' => $toAdresses,
+                'subject' => $mail['subject'],
+                'content' => $mail['content']
+            ];
+        }
+        
 
         $this->sendMail($checkedEmail);
         
@@ -123,18 +125,15 @@ class MailController extends Controller
 
     public function sendMail($mail) {
 
-        //var_dump($mail['to']);exit;
         $emailToSend = (new Email())
-            ->from('test@exemple.org')
+            ->from($this->getParameter('app.general.contact_mail'))
             ->to(...$mail['to']);
-        /*if ($mail['cc']) {
-            $emailToSend->cc($mail['cc']);
+
+        if (isset($mail['cci'])) {
+            $emailToSend->bcc(...$mail['cci']);
         }
-        if ($mail['cci']) {
-            $emailToSend->bcc($mail['cci']);
-        }*/
         $emailToSend->subject($mail['subject'])
-            ->html('<p>'.$mail['content'].'</p>');
+            ->html('<p>'.$mail['content'].'</p>'.print_r($mail, true));
 
         $this->mailer->send($emailToSend);
     }
