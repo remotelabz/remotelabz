@@ -57,7 +57,7 @@ class MailController extends Controller
 
     public function checkAction($mail, UserRepository $userRepository) {
 
-        $toAdresses = [];
+        $bccAdresses = [];
         $badAdresses = [];
         $emailConstraint = new EmailConstraint();
 
@@ -82,42 +82,37 @@ class MailController extends Controller
 
             if (count($users) != count($bccAdresses)) {
                 $this->logger->debug("Some addresses are not valid: ".print_r($badAdresses, true));
+                $this->addFlash('warning','Certaines adresses de sont pas valides');
             }
-
-            $checkedEmail = [
-                'to' => [$this->getParameter('app.general.contact_mail')],
-                'cci' => $bccAdresses,
-                'subject' => $mail['subject'],
-                'content' => $mail['content']
-            ];
 
         }
         else {
-            foreach($mail['to'] as $toAdresse) {
+            foreach($mail['to'] as $bccAdresse) {
 
-                $errors = $this->validator->validate($toAdresse, $emailConstraint);
+                $errors = $this->validator->validate($bccAdresse, $emailConstraint);
                 if (count($errors) == 0) {
     
-                    array_push($toAdresses, $toAdresse);
+                    array_push($bccAdresses, $bccAdresse);
                 }
                 else {
     
-                    array_push($badAdresses, $toAdresse);
+                    array_push($badAdresses, $bccAdresse);
                     $errorsString = (string) $errors;
                 }
             }
     
-            if (count($mail['to']) != count($toAdresses)) {
+            if (count($mail['to']) != count($bccAdresses)) {
                 $this->logger->debug("Some addresses are not valid: ".print_r($badAdresses, true));
+                $this->addFlash('warning','Certaines adresses de sont pas valides');
             }
-
-            $checkedEmail = [
-                'to' => $toAdresses,
-                'subject' => $mail['subject'],
-                'content' => $mail['content']
-            ];
         }
         
+        $checkedEmail = [
+            'to' => [$this->getParameter('app.general.contact_mail')],
+            'cci' => $bccAdresses,
+            'subject' => $mail['subject'],
+            'content' => $mail['content']
+        ];
 
         $this->sendMail($checkedEmail);
         
@@ -127,14 +122,13 @@ class MailController extends Controller
 
         $emailToSend = (new Email())
             ->from($this->getParameter('app.general.contact_mail'))
-            ->to(...$mail['to']);
+            ->to(...$mail['to'])
+            ->bcc(...$mail['cci']);
 
-        if (isset($mail['cci'])) {
-            $emailToSend->bcc(...$mail['cci']);
-        }
         $emailToSend->subject($mail['subject'])
-            ->html('<p>'.$mail['content'].'</p>'.print_r($mail, true));
+            ->html('<p>'.$mail['content'].'</p>');
 
         $this->mailer->send($emailToSend);
+        $this->addFlash('success','L\'email a été envoyé');
     }
 }
