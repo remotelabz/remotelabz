@@ -32,9 +32,10 @@
     ></script>
     <script>
     var select = $('#invitation_code_emailAdresses').selectize({
-            plugins: ["restore_on_backspace", "remove_button"],
+            plugins: ["restore_on_backspace", "remove_button",],
             delimiter: ",",
             persist: false,
+            showAddOptionOnCreate: false,
             create: function (input) {
                 return {
                   value: input,
