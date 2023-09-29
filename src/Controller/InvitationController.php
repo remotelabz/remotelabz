@@ -16,6 +16,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
 
 class InvitationController extends Controller
 {
@@ -35,11 +37,12 @@ class InvitationController extends Controller
         $this->mailer = $mailer;
         $this->invitationCodeRepository = $invitationCodeRepository;
     }
+
     /**
     * @Route("/labs/code/{id<\d+>}", name="create_code_lab")
     * 
     */
-    public function createCodeAction(Request $request, int $id)
+    public function createCodeAction(Request $request, int $id, SerializerInterface $serializer)
     {
 
         $lab = $this->labRepository->find($id);
@@ -56,10 +59,34 @@ class InvitationController extends Controller
             $this->checkAction($data, $lab);
         }
 
+        $props=$serializer->serialize(
+            ['lab' => $lab],
+            'json',
+            SerializationContext::create()->setGroups(['api_get_lab'])
+        );
+
         return $this->render('lab/create_code_lab.html.twig', [
             'lab' => $lab,
-            'form'=> $invitationForm->createView()
+            'form'=> $invitationForm->createView(),
+            'props' =>$props
+
         ]);
+    }
+
+    /**
+    * @Rest\Get("api/codes/by-lab/{id<\d+>}", name="api_invitation_codes_by_lab")
+    * 
+    */
+    public function fetchByLab(Request $request, int $id)
+    {
+
+        $lab = $this->labRepository->find($id);
+        $invitationCodes = $this->invitationCodeRepository->findBy(['lab'=> $lab]);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($invitationCodes, 200, [], ["api_invitation_codes"]);
+        }
+
     }
 
     public function checkAction($data, $lab) {

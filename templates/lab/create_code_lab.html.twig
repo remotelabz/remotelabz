@@ -15,9 +15,9 @@
 <div class="content-body">
     {{ form_start(form) }}
     {{ form_end(form) }}
-    {#<div class="row">
-        <div class="col">{{ react_component('CodeManager') }}</div>
-    </div>#}
+    <div class="row">
+        <div class="col">{{ react_component('CodeManager', {'props': props}) }}</div>
+    </div>
 </div>
 {% endblock %}
 

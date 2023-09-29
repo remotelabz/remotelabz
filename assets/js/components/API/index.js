@@ -138,6 +138,13 @@ const url = require('url');
  * @property {{id: number, name: string, role: UserGroupRole}} users
  * @property {Group[]} children
  * 
+ * @typedef {Object} InvitationCode
+ * @property {number} id
+ * @property {string} mail
+ * @property {string} code
+ * @property {string} expiryDate Datetime format.
+ * @property {{id: number, name: string}} lab
+ * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
@@ -433,6 +440,24 @@ export class RemotelabzAPI {
             return axios.post(`/labs/${id}/devices`,options);
         }
 
+    }
+
+    /**
+     * InvitationCode endpoint.
+     */
+    invitationCode = {
+        /**
+         * Get a invotation code by lab ID.
+         * 
+         * Implements GET `/api/codes/by-lab/{id}`
+         * 
+         * @param {number} id 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<InvitationCode>>}
+         */
+        getByLab(id) {
+            return axios.get(`/codes/by-lab/${id}`);
+        }
     }
 
     /**
