@@ -132,7 +132,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             
         ;
         $manager->persist($device);
-        $this->addReference('Migration', $device);
+        $this->addReference('dev_natif', $device);
 
         
         $manager->flush();

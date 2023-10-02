@@ -27,7 +27,7 @@ final class Version20230913123745 extends AbstractMigration
         $this->addSql('ALTER TABLE lab DROP network_settings_id');
         $this->addSql('ALTER TABLE lab_instance ADD CONSTRAINT FK_983C9A4334128B91 FOREIGN KEY (network_id) REFERENCES network (id)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_983C9A4334128B91 ON lab_instance (network_id)');
-        $this->addSql('ALTER TABLE network_interface CHANGE vlan vlan INT DEFAULT NULL');
+        $this->addSql('ALTER TABLE network_interface ADD connection INT DEFAULT 0 NOT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -40,6 +40,6 @@ final class Version20230913123745 extends AbstractMigration
         $this->addSql('CREATE UNIQUE INDEX UNIQ_61D6B1C49B9A36D0 ON lab (network_settings_id)');
         $this->addSql('ALTER TABLE lab_instance DROP FOREIGN KEY FK_983C9A4334128B91');
         $this->addSql('DROP INDEX UNIQ_983C9A4334128B91 ON lab_instance');
-        $this->addSql('ALTER TABLE network_interface CHANGE vlan vlan VARCHAR(255) CHARACTER SET utf8mb4 NOT NULL COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('ALTER TABLE network_interface DROP connection');
     }
 }
