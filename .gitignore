@@ -41,7 +41,6 @@ yarn-error.log
 .env.prod
 /images/
 vagrant/provision_prod.sh
-/config/templates/*
 ###> friendsofphp/php-cs-fixer ###
 /.php_cs
 /.php_cs.cache
