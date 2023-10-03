@@ -117,12 +117,7 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
         $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
 
         $response->headers->setCookie($jwtTokenCookie);
-        
-         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            $response->setTargetUrl($targetPath);
-        } else {
-            $response->setTargetUrl($this->router->generate('show_lab_to_guest', ['id'=> $user->getLab()->getId()]));
-        }
+        $response->setTargetUrl($this->router->generate('show_lab_to_guest', ['id'=> $user->getLab()->getId()]));
         return $response;
     }
 

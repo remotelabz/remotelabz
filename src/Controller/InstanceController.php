@@ -409,10 +409,10 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
-        if (!$labInstance = $this->labInstanceRepository->findOneBy(['user' => $guest, 'lab' => $lab])) {
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['guest' => $guest, 'lab' => $lab])) {
             throw new NotFoundHttpException();
         }
-
+   
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
@@ -634,7 +634,6 @@ class InstanceController extends Controller
         if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }
-
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         

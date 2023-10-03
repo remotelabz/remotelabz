@@ -25,7 +25,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_invitation_codes"})
+     * @Serializer\Groups({"api_invitation_codes", "worker"})
      *
      * @var int
      */
@@ -41,7 +41,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
 
     /**
      * @ORM\Column(type="string", length=180)
-     * @Serializer\Groups({"api_invitation_codes"})
+     * @Serializer\Groups({"api_invitation_codes", "worker"})
      * @Assert\Email
      * 
      * @var string
@@ -62,7 +62,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_invitation_codes"})
+     * @Serializer\Groups({"api_invitation_codes", "worker"})
      */
     private $uuid;
 
@@ -151,7 +151,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
     {
         //$roles = $this->roles;
         // guarantee every user at least has ROLE_USER
-        $roles = ['ROLE_GUEST','ROLE_USER'];
+        $roles = ['ROLE_GUEST'];
 
         return array_unique($roles);
     }

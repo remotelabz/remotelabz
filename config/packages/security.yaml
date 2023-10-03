@@ -90,8 +90,8 @@ security:
         - { path: ^/password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs/guest/[1-9]*, roles: ['ROLE_GUEST'] }
+        - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
