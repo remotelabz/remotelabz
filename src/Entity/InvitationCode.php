@@ -10,13 +10,16 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Utils\Uuid;
 
 /**
  * @ORM\Table(uniqueConstraints={@ORM\UniqueConstraint(name="IDX_LAB_MAIL", columns={"lab_id", "mail"})})
  * @ORM\Entity
  * @UniqueEntity(fields={"mail","lab"})
  */
-class InvitationCode
+class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterface, InstancierInterface
 {
     /**
      * @ORM\Id()
@@ -57,8 +60,16 @@ class InvitationCode
      */
     private $expiryDate;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"api_invitation_codes"})
+     */
+    private $uuid;
+
     public function __construct()
-    {}
+    {
+        $this->uuid = (string) new Uuid();
+    }
 
     public function getId(): ?int
     {
@@ -113,4 +124,88 @@ class InvitationCode
         return $this;
     }
 
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUsername(): string
+    {
+        return (string) $this->mail;
+    }
+
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->mail;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        //$roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles = ['ROLE_GUEST','ROLE_USER'];
+
+        return array_unique($roles);
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return in_array($role, $this->getRoles());
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
+    {
+        return (string) $this->code;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getSalt(): ?string
+    {
+        // not needed when using the "bcrypt" algorithm in security.yaml
+        return null;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getType(): string
+    {
+        return 'guest';
+    }
+
+    public function getName(): string
+    {
+        return $this->mail;
+    }
 }
