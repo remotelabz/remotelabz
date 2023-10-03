@@ -15,7 +15,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [viewAs, setViewAs] = useState({ type: props.user.code ? 'guest' : 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
     const isSandbox=props.isSandbox
-    
+
     //console.log("instancemanage");
     //console.log(props.labInstance);
     //console.log("instancemanage labinstance after function");
@@ -39,7 +39,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         if (viewAs.type === 'user') {
            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
         } 
-        if (viewAs.type === 'guest') {
+        else if (viewAs.type === 'guest') {
             request = Remotelabz.instances.lab.getByLabAndGuest(props.lab.uuid, viewAs.uuid)
          }
         else {
