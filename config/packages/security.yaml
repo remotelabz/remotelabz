@@ -93,6 +93,7 @@ security:
         - { path: ^/labs/guest/[1-9]*, roles: ['ROLE_GUEST'] }
         - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
+        - { path: '^/instances/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/view/(vnc|login|serial)', roles: ['ROLE_USER', 'ROLE_GUEST'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin/devices_sandbox, roles: ['ROLE_TEACHER'] }
