@@ -128,6 +128,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
+            ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login'))
             
         ;
