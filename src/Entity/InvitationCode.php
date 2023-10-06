@@ -25,7 +25,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_invitation_codes", "worker"})
+     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
      *
      * @var int
      */
@@ -41,7 +41,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
 
     /**
      * @ORM\Column(type="string", length=180)
-     * @Serializer\Groups({"api_invitation_codes", "worker"})
+     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
      * @Assert\Email
      * 
      * @var string
@@ -62,7 +62,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_invitation_codes", "worker"})
+     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
      */
     private $uuid;
 

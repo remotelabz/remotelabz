@@ -283,7 +283,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                     :
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {viewAs.type === 'user' ?
+                        {viewAs.type === 'user' || viewAs.type === 'guest' ?
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You haven&apos;t joined this lab yet.
 
