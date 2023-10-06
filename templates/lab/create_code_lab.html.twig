@@ -31,8 +31,26 @@
     referrerpolicy="no-referrer"
     ></script>
     <script>
+
+
+    Selectize.define('enter_key_delimiter', function (options) {
+        var self = this
+
+        this.onKeyDown = (function (e) {
+        var original = self.onKeyDown
+        return function (e) {
+            if (e.keyCode === 13) {
+                self.createItem();
+                e.preventDefault();
+            } else {
+                return original.apply(this, arguments);
+            }
+        }
+        })()
+    })
+    
     var select = $('#invitation_code_emailAdresses').selectize({
-            plugins: ["restore_on_backspace", "remove_button",],
+            plugins: ["restore_on_backspace", "remove_button", "enter_key_delimiter"],
             delimiter: ",",
             persist: false,
             showAddOptionOnCreate: false,
