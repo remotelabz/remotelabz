@@ -89,6 +89,7 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: PUBLIC_ACCESS, ips: [127.0.0.1, '%env(IP_ADDRESS)%'] }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/labs/guest/[1-9]*, roles: ['ROLE_GUEST'] }
         - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }

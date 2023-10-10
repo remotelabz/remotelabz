@@ -89,6 +89,84 @@ class InvitationController extends Controller
 
     }
 
+    /**
+    * @Rest\Get("api/expiredToken/instances", name="api_expired_invitation_codes_instances")
+    * 
+    */
+    public function fetchExpiredTokenInstances(Request $request)
+    {
+        $invitationCodes = $this->invitationCodeRepository->findExpiredCodeInstances(new \DateTime());
+        $guests = [];
+        $deviceInstances = [];
+
+        foreach ($invitationCodes as $invitationCode) {
+            $isGuest = false;
+            foreach($guests as $guest) {
+                if ($guest['guest_id'] == $invitationCode['guest_id']) {
+                    $isGuest = true;
+                    array_push($guest['device_instances'], [
+                        'device_instance_id'=> $invitationCode['device_instance_id'],
+                        'device_instance_uuid'=> $invitationCode['device_instance_uuid'],
+                        'hypervisor_id'=> $invitationCode['hypervisor_id']
+                    ]);
+
+                    $guests[$invitationCode['guest_id']] = $guest;
+                    break;
+                }
+            }
+            if ($isGuest == false) {
+                $guests[$invitationCode["guest_id"]] = [
+                    'guest_id' => $invitationCode["guest_id"],
+                    'guest_uuid' => $invitationCode["guest_uuid"],
+                    'code' => $invitationCode["code"],
+                    'lab_instance_id' => $invitationCode["lab_instance_id"],
+                    'lab_instance_uuid' => $invitationCode["lab_instance_uuid"],
+                    'device_instances' => [[
+                        'device_instance_id' => $invitationCode['device_instance_id'],
+                        'device_instance_uuid' => $invitationCode['device_instance_uuid'],
+                        'hypervisor_id' => $invitationCode['hypervisor_id']
+                    ]
+                ]];
+                
+            }
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($guests, 200, [], []);
+        }
+
+    }
+
+    /**
+    * @Rest\Get("api/expiredToken", name="api_expired_invitation_codes")
+    * 
+    */
+    public function fetchExpiredToken(Request $request)
+    {
+        $invitationCodes = $this->invitationCodeRepository->findExpiredCodes(new \DateTime());
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($invitationCodes, 200, [], []);
+        }
+
+    }
+
+    /**
+    * @Rest\Delete("api/codes/{uuid}", name="api_delete_invitation_codes", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+    * 
+    */
+    public function deleteCodeAction(Request $request, string $uuid)
+    {
+        $invitationCode = $this->invitationCodeRepository->findBy(['uuid'=>$uuid]);
+        $entityManager = $this->getDoctrine()->getManager();
+        $this->logger->info("User ".$invitationCode[0]->getMail()." is deleted");
+        $entityManager->remove($invitationCode[0]);
+        $entityManager->flush();
+
+        return $this->json();
+
+    }
+
     public function checkAction($data, $lab) {
 
         $validatedEmails = [];
