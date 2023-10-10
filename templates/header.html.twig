@@ -30,7 +30,7 @@
           </a>
         </ul>
         {% if is_granted('ROLE_TEACHER') and not is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2 {% if '/devices_sandbox' in app.request.uri %}active{% endif %}" href="{{ path('devices_sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">
+          <a class="nav-link ml-2 {% if '/sandbox' in app.request.uri %}active{% endif %}" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">
             {{ svg('documents', 's16') }}
           </a>
           {% endif %}
