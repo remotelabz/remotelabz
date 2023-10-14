@@ -38,7 +38,7 @@ class DeviceType extends AbstractType
                 'empty_data' => ''
             ])
             ->add('type', ChoiceType::class, [
-                 'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container'],
+                 'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container', 'Switch' => 'switch'],
                  'help' => 'Nature of the device.',
                  'empty_data' => 'vm'
              ])

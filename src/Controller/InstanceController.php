@@ -14,6 +14,7 @@ use App\Repository\DeviceInstanceLogRepository;
 use App\Repository\LabRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Repository\DeviceRepository;
 
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
@@ -23,6 +24,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -187,6 +189,60 @@ class InstanceController extends Controller
     }
 
     /**
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/start", name="api_start_instance_by_id")
+     */
+    public function startByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
+    {
+        $lab = $labRepository->find($labId);
+        $device = $deviceRepository->find($deviceId);
+        $data = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($data['edition'] == 0 && $data['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($data['labInstance']);
+            if (!$deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance)) {
+                $response->setContent(json_encode([
+                    'code'=> 404,
+                    'status'=>'Not Found',
+                    'message' => 'Device Instance is not found']));
+                    return $response;
+            }
+        }
+        
+        if($data['edition'] == 0 && $data['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($data['edition'] == 1) {
+            $response->setContent(json_encode([
+                'code '=> 400,
+                'status'=>'fail',
+                'message' => 'You can not start device in edit mode.']));
+                return $response;
+        }
+        $entityManager = $this->getDoctrine()->getManager();
+        //var_dump($deviceInstance->getDevice()); exit;
+        $json = $instanceManager->start($deviceInstance);
+        $status = empty($json) ? 204 : 200;
+        //$device->setStatus(2);
+        $entityManager->flush();
+
+        //return $this->json($json, $status, [], [], true);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> $status,
+            'status'=>'success',
+            'message' => 'Node started (80049).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
@@ -198,6 +254,60 @@ class InstanceController extends Controller
         $instanceManager->stop($deviceInstance);
 
         return $this->json();
+    }
+
+    /**
+     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/stop", name="api_stop_instance_by_id")
+     */
+    public function stopByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
+    {
+        $lab = $labRepository->find($labId);
+        $device = $deviceRepository->find($deviceId);
+        $data = json_decode($request->getContent(), true);
+        $response = new Response();
+        $response->headers->set('Content-Type', 'application/json');
+
+        if($data['edition'] == 0 && $data['labInstance'] != null) {
+            $labInstance = $this->labInstanceRepository->find($data['labInstance']);
+            if (!$deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance)) {
+                $response->setContent(json_encode([
+                    'code'=> 404,
+                    'status'=>'Not Found',
+                    'message' => 'Device Instance is not found']));
+                    return $response;
+            }
+        }
+        if($data['edition'] == 0 && $data['labInstance'] == null) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'Lab Instance is null']));
+                return $response;
+        }
+        if($data['edition'] == 1) {
+            $response->setContent(json_encode([
+                'code'=> 400,
+                'status'=>'fail',
+                'message' => 'You can not stop device in edit mode.']));
+                return $response;
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        //var_dump($deviceInstance->getDevice()); exit;
+        $json = $instanceManager->stop($deviceInstance);
+        $status = empty($json) ? 204 : 200;
+        //$device->setStatus(0);
+        $entityManager->flush();
+
+        //return $this->json($json, $status, [], [], true);
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> $status,
+            'status'=>'success',
+            'message' => 'Node stoped (80051).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     /**
@@ -322,6 +432,7 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }
 
+
     /**
      * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
@@ -352,6 +463,130 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }
 
+     /**
+     * @Rest\Get("/api/instances/lab/by-user/{uuid}", name="api_get_lab_instances_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByUserUuid(Request $request, string $uuid, UserRepository $userRepository)
+    {
+        $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$user) throw new NotFoundHttpException('User not found.');
+
+        $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/owned-by-user-type/{userType}", name="api_get_lab_instances_owned_by_user_type")
+     */
+    public function fetchLabInstancesOwnedByUserType(Request $request, string $userType)
+    {
+
+        $instances = $this->labInstanceRepository->findBy(['ownedBy' => 'user']);
+        $data = [];
+
+        if ($userType == "teacher") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else if ($userType == "admin") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") == true || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR") == true) {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else if ($userType == "student") {
+            foreach($instances as $instance) {
+                if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
+                    array_push($data, $instance);
+                }
+            }
+        }
+        else {
+            $data = false;
+        }
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/by-group/{uuid}", name="api_get_lab_instances_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByGroupUuid(Request $request, string $uuid, GroupRepository $groupRepository)
+    {
+        $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$group) throw new NotFoundHttpException('Group not found.');
+
+        $data = $this->labInstanceRepository->findBy(['_group' => $group]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/owned-by-group", name="api_get_lab_instances_owned_by_group")
+     */
+    public function fetchLabInstancesOwnedByGroup(Request $request)
+    {
+
+        $data = $this->labInstanceRepository->findBy(['ownedBy' => 'group']);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/by-lab/{uuid}", name="api_get_lab_instances_by_lab", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstancesByLabUuid(Request $request, string $uuid, LabRepository $labRepository)
+    {
+        $lab = is_numeric($uuid) ? $labRepository->find($uuid) : $labRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$lab) throw new NotFoundHttpException('Lab not found.');
+
+        $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        $groups = ['api_get_lab_instance'];
+
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
+     /**
+     * @Rest\Get("/api/instances/lab/ordered-by-lab", name="api_get_lab_instances_ordered_by_lab")
+     */
+    public function fetchLabInstancesOrdredByLab(Request $request)
+    {
+       
+        $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
+        $groups = ['api_get_lab_instance'];
+
+        if (!$data) throw new NotFoundHttpException('No instance found.');
+
+        return $this->json($data, 200, [], $groups);
+    }
+
     /**
      * @Rest\Delete("/api/instances/{uuid}", name="api_delete_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
@@ -364,7 +599,7 @@ class InstanceController extends Controller
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         
-        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        $from_export=strstr($request->headers->get('referer'),"sandbox");
         
             $instanceManager->delete($instance);
             //$this->logger->debug("Delete from export");
@@ -497,6 +732,35 @@ class InstanceController extends Controller
         ]);
 
         return $this->json($logs);
+    }
+
+    /**
+    * @Rest\Post("/api/editButton/display", name="api_display_edit_button")
+    */
+    public function displayEditButtonAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $lab = $data['lab'];
+        $user= $data['user'];
+        $labInstance = $data['labInstance'];
+
+        $html = $this->renderView('editButtonDisplay.html.twig', [
+            'lab'=>$lab,
+            'user'=>$user,
+            'labInstance'=>$labInstance
+        ]);
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'data'=>[
+                'lab'=>$lab,
+                'user'=>$user,
+                'labInstance'=>$labInstance,
+                'html'=>$html
+            ]]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 
     //DeviceInstance $deviceInstance : a device Instance

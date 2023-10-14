@@ -35,7 +35,7 @@ class OperatingSystemSerializationListener implements JMSEventSubscriberInterfac
     /**
      * @inheritdoc
      */
-    static public function getSubscribedEvents()
+    static public function getSubscribedEvents(): array
     {
         return [
             [

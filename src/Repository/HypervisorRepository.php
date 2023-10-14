@@ -45,6 +45,19 @@ class HypervisorRepository extends ServiceEntityRepository
         }
     }
 
+    public function findByName($name)
+    {
+       $hypervisor = $this->createQueryBuilder('h')
+            ->andWhere('h.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getResult()
+        ;
+        var_dump($hypervisor); exit;
+
+        return $hypervisor[0];
+    }
+
     // /**
     //  * @return Hypervisor[] Returns an array of Hypervisor objects
     //  */

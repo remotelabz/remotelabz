@@ -18,7 +18,7 @@ class NetworkInterface implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance","api_get_device"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance","api_get_device", "api_get_lab_instance"})
      */
     private $id;
 
@@ -53,10 +53,16 @@ class NetworkInterface implements InstanciableInterface
     private $uuid;
 
     /**
-     * @ORM\Column(type="integer", options={"default": 0})
+     * @ORM\Column(type="integer", nullable=true)
      * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
      */
     private $vlan;
+
+    /**
+     * @ORM\Column(type="integer", options={"default": 0})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     */
+    private $connection;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
@@ -72,7 +78,7 @@ class NetworkInterface implements InstanciableInterface
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
-        $this->vlan = 0;
+        $this->connection = 0;
         $this->isTemplate=false;
     }
 
@@ -155,9 +161,21 @@ class NetworkInterface implements InstanciableInterface
         return $this->vlan;
     }
 
-    public function setVlan(int $vlan): self
+    public function setVlan(?int $vlan): self
     {
         $this->vlan = $vlan;
+
+        return $this;
+    }
+
+    public function getConnection(): ?int
+    {
+        return $this->connection;
+    }
+
+    public function setConnection(int $connection): self
+    {
+        $this->connection = $connection;
 
         return $this;
     }

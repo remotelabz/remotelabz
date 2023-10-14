@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html data-ng-app="unlMainApp">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title data-ng-bind="'EVE | ' + $state.current.data.pageTitle"></title>
+	<link rel="apple-touch-icon" sizes="57x57" href="/favicon/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/favicon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/favicon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/favicon/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/favicon/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/favicon/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/favicon/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png">
+	<link rel="icon" type="image/png" sizes="192x192"  href="/favicon/android-icon-192x192.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+	<link rel="shortcut icon" href="/favicon/favicon.ico">
+	<link rel="manifest" href="/favicon/manifest.json">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png">
+	<meta name="theme-color" content="#ffffff">
+  <!-- Tell the browser to be responsive to screen width -->
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <!-- Bootstrap 3.3.6 -->
+  <link rel="stylesheet" href="/themes/adminLTE/bootstrap/css/bootstrap.min.css">
+  <!-- jQuery toggleswitch plugin css -->
+  <link rel="stylesheet" href="/themes/adminLTE/plugins/ToggleSwitch/css/tinytools.toggleswitch.min.css">
+  <!-- Font Awesome -->
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css"> -->
+  <link rel="stylesheet" href="/themes/adminLTE/unl_data/css/css/font-awesome.css">
+  <!-- Ionicons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Toastr -->
+  <link rel="stylesheet" href="/themes/adminLTE/plugins/toastr/toastr.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="/themes/adminLTE/dist/css/AdminLTE.min.css">
+  <!-- Custom UNL Style -->
+  <link rel="stylesheet" href="/themes/adminLTE/unl_data/css/custom_unl.css">
+	<!-- jQuery 2.2.0 -->
+	<script src="/themes/adminLTE/plugins/jQuery/jQuery-2.2.0.min.js"></script>
+        <!-- jQuery toggleswitch plugin -->
+	<script src="/themes/adminLTE/plugins/ToggleSwitch/tinytools.toggleswitch.min.js"></script>
+	<!-- Bootstrap 3.3.6 -->
+	<script src="/themes/adminLTE/bootstrap/js/bootstrap.min.js"></script>
+	<!-- angularJS -->
+	<script src="/themes/adminLTE/plugins/angularJS/angular.js"></script>
+	<script src="/themes/adminLTE/unl_data/js/custom_unl.js"></script>
+	<!-- Libs -->
+	<script src="/themes/adminLTE/plugins/b64encode/b64encoder.js"></script>
+	<!-- BEGIN CORE ANGULARJS PLUGINS -->
+	<script src="/themes/adminLTE/plugins/angularJS/angular-sanitize.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/ui-bootstrap-tpls.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/angular-touch.min.js" type="text/javascript"></script>	
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/angular-ui-router.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/ocLazyLoad.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/angular-animate.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/contextMenu.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="/themes/adminLTE/plugins/angularJS/plugins/ui-select/select.min.css">
+	<script src="/themes/adminLTE/plugins/angularJS/plugins/ui-select/select.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/angularJS/angular-cookies.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/ng-knob/ng-knob.js" type="text/javascript"></script>
+	<!-- END CORE ANGULARJS PLUGINS -->
+	<!-- Toastr -->
+	<script src="/themes/adminLTE/plugins/toastr/toastr.min.js" type="text/javascript"></script>
+	<script src="/themes/adminLTE/plugins/jsPlumb/jsPlumb-2x.js" type="text/javascript"></script>
+	<!-- angularJS App -->
+	<script src="/themes/adminLTE/unl_data/js/angularjs/app.js"></script>
+	<!-- Block UI -->
+	<script src="/themes/adminLTE/plugins/block-ui/block-ui.js"></script>
+	<!-- Custom UNL js -->
+	<link id="load_files_before"/>
+</head>
+<body data-ng-controller="unlMainController" class="page-loading">
+<div ui-view></div>
+<script>
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip({trigger: "click"}); 
+    $('[data-toggle="tooltip"]').tooltip('show');
+	
+	$('[data-toggle="popover"]').popover({
+    trigger: 'hover',
+        'placement': 'top'
+	});
+});
+
+toastr.options = {
+  "closeButton": false,
+  "debug": false,
+  "newestOnTop": true,
+  "progressBar": true,
+  "positionClass": "toast-top-right",
+  "preventDuplicates": false,
+  "onclick": null,
+  "showDuration": "300",
+  "hideDuration": "1000",
+  "timeOut": "2000",
+  "extendedTimeOut": "1000",
+  "showEasing": "swing",
+  "hideEasing": "linear",
+  "showMethod": "fadeIn",
+  "hideMethod": "fadeOut"
+}
+var blockUI = function(options) {
+			$.blockUI({
+                message: '<h4 style="margin:0px; padding:15px; background-color:#fff;"><img src="/themes/adminLTE/dist/img/waiting.gif" style="width:16px;height:16px"/> <text class="hidden-xs">Loading...</text></h4>',
+                css: {
+					
+                },
+                overlayCSS: {
+                    backgroundColor: '#444',
+                    opacity: 0.8,
+                    cursor: 'wait'
+                }
+            });
+}
+</script>
+</body>
+</html>

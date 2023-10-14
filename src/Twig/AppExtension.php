@@ -12,7 +12,7 @@ use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 
 class AppExtension extends AbstractExtension
 {
-    public function getFilters()
+    public function getFilters(): array
     {
         return [
             new TwigFilter('cast_to_array', [$this, 'stdClassObject']),
@@ -20,7 +20,7 @@ class AppExtension extends AbstractExtension
         ];
     }
 
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('svg', [$this, 'renderSvg'], ['is_safe' => ['html']]),

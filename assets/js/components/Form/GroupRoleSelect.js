@@ -47,7 +47,16 @@ export default class GroupRoleSelect extends Component {
                 timeout: 2000
             }).show();
         })
-        .finally(() => this.setState({isLoading: false}));
+        .finally(() => {
+            this.setState({isLoading: false});
+            $.ajax({
+                type: "GET",
+                url: `/api/groups/${this.props.group}/members/${this.props.user}`,
+                success: function (response) {
+                    $(`#${response.data.user}-badges`).html(response.data.html);              
+                }  
+            });
+        });
     };
 
     /**

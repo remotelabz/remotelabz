@@ -91,6 +91,21 @@
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
+    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ app.user|serialize('json')}}">
+        <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
+        <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-user-cog"></i>
+            <i class="fa fa-caret-down"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownUserSettings" style="position: absolute; will-change: transform;">
+            <button class="btn btn-warning" onClick="toggleUsers('block')" type="button">Block</button>
+            <button class="btn btn-warning" onClick="toggleUsers('unblock')" type="button">Unblock</button>
+            <div class="dropdown-divider"></div>
+            <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers()" type="button">
+                {{ 'Delete'|trans }}
+            </button>                         
+        </div>
+    </div>
 
     {% set orderBy = app.request.query.get('orderBy')|default('lastName') %}
     {% set orderDirection = app.request.query.get('orderDirection')|default('ASC') %}
@@ -145,6 +160,9 @@
                             {%- endif -%}
                         </a>
                     </th>
+                    <th scope="col">
+                        <a href="javascript:void(0)">Groups</a>
+                    </th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -196,7 +214,13 @@
                                 Never
                             {% endif %}
                         </td>
+                        <td>
+                            <button class="btn btn-default" onClick="changeGroupDisplay({{user.id}});">
+                                <i class="fa fa-caret-down" id="{{user.id}}-iconDisplayGroup"></i>
+                            </button>
+                        </td>
                         <td class="text-right">
+                            <input type="checkbox" name="selectUser" class="selectUser" value="{{user.id}}"/>
                             <a class="btn btn-default" href="/admin/users/{{user.id}}/edit">Edit</a>
                             
                             {% if 'ROLE_SUPER_ADMINISTRATOR' not in user.roles %}
@@ -213,12 +237,28 @@
                                 Unblock
                             {% endif %}
                             </a>
+                            <a class="text-info ml-2" href="/?_switch_user={{user.email}}">
+                                <button class="btn btn-info">Impersonate</button>
+                            </a>
                             <div class="dropdown-divider"></div>
                             <button class="btn btn-danger" data-target={{'.delete-user-modal'~loop.index}} data-toggle="modal" type="button">
                                {{ 'Delete'|trans }}
                             </button>                         
                             </div>
                             {% endif %}
+                        </td>
+                    </tr>
+                    <tr id="{{user.id}}-groups" style="display: none;">
+                        <td>
+                            {% for group in user.groupsInfo %}
+                                {% if group.visibility == 2 %}
+                                    <label class="badge badge-success">{{group.name}}</label>
+                                {% elseif group.visibility == 1 %}
+                                    <label class="badge badge-info">{{group.name}}</label>
+                                {% elseif group.visibility == 0 %}
+                                    <label class="badge badge-warning">{{group.name}}</label>
+                                {% endif %}
+                            {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}
@@ -246,4 +286,124 @@
     {{ parent() }}
     {{ encore_entry_script_tags('timeago') }}
     {{ encore_entry_script_tags('user') }}
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script type="text/javascript">
+        function changeGroupDisplay(id) {
+            if (document.getElementById(id+"-groups").style.display == "none") {
+                document.getElementById(id+"-groups").style.display = "block";
+                document.getElementById(id+"-iconDisplayGroup").className = "fa fa-caret-up";
+            }
+            else {
+                document.getElementById(id+"-groups").style.display = "none";
+                document.getElementById(id+"-iconDisplayGroup").className = "fa fa-caret-down";
+            }
+        }
+
+        function checkAll() {
+            const boxes = document.querySelectorAll(".selectUser");
+            let checkAll = document.getElementById("selectAll");
+
+            if (checkAll.checked == true) {
+                for(let box of boxes) {
+                    box.checked = true
+                }
+            }
+            else {
+                for(let box of boxes) {
+                    box.checked = false
+                }
+            }
+        }
+
+
+        function deleteUsers() {
+            const boxes = document.querySelectorAll(".selectUser");
+            var userRating = document.querySelector('.multipleUsersActions');
+            var appUser = JSON.parse(userRating.dataset.user);
+            var usersToDelete = [];
+            var i = 0;
+
+            for (let box of boxes) {
+                if (box.checked) {
+                    usersToDelete.push(box.value);
+                }
+            }
+
+            for (let userId of usersToDelete) {
+                $.ajax({
+                    type: "GET",
+                    url: `/api/users/${userId}`
+                }).then((response)=> {
+                    i++;
+                    const userToDelete = response;
+                    let superAdmin = false;
+                    for (let role of userToDelete.roles) {
+                        if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                            superAdmin = true;
+                            break;
+                        }
+                    }
+                    if (userToDelete.id != appUser.id && superAdmin == false && userToDelete.labInstances.length == 0) {
+                        $.ajax({
+                            type: "DELETE",
+                            url: `/api/users/${userToDelete.id}`
+                        }).then(()=> {
+                            console.log(i)
+                            console.log(usersToDelete.length)
+                            if (i == usersToDelete.length) {
+                                location.href = "{{ path('users') }}"; 
+                            }
+                        })
+                    }
+                })  
+            }
+        }
+
+        function toggleUsers(block) {
+            const boxes = document.querySelectorAll(".selectUser");
+            var userRating = document.querySelector('.multipleUsersActions');
+            var appUser = JSON.parse(userRating.dataset.user);
+            var usersToToggle = [];
+            var request = block;
+            var i = 0;
+
+            for (let box of boxes) {
+                if (box.checked) {
+                    usersToToggle.push(box.value);
+                }
+            }
+
+            for (let userId of usersToToggle) {
+                $.ajax({
+                    type: "GET",
+                    url: `/api/users/${userId}`
+                }).then((response) => {
+                    i++;
+                    const userToToggle = response;
+                    console.log(userToToggle);
+                    let superAdmin = false;
+                    for (let role of userToToggle.roles) {
+                        if (role == "ROLE_SUPER_ADMINISTRATOR") {
+                            superAdmin = true;
+                            break;
+                        }
+                    }
+                    console.log(superAdmin)
+                    console.log(userToToggle.labInstances.length)
+                    if (userToToggle.id != appUser.id && superAdmin == false) {
+                        $.ajax({
+                            type: "PATCH",
+                            url: `/api/users/${userToToggle.id}`,
+                            data: JSON.stringify(request)
+                        }).then(()=> {
+                            if (i == usersToToggle.length) {
+                                location.href = "{{ path('users') }}"; 
+                            }
+                        })
+                    }
+                }) 
+            }
+        }
+    </script>
 {% endblock %}

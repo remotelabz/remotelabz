@@ -20,7 +20,7 @@ class LabInstance extends Instance
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox"})
+     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox", "api_get_user"})
      */
     private $id;
 
@@ -41,6 +41,12 @@ class LabInstance extends Instance
      * @Serializer\Groups({"api_get_lab_instance", "worker"})
      */
     private $isInterconnected;
+
+    /**
+    * @ORM\Column(type="datetime")
+    * @Serializer\Groups({"api_get_lab_instance"})
+    */
+    private $createdAt;
 
     /**
      * @ORM\Column(type="boolean")
@@ -81,6 +87,7 @@ class LabInstance extends Instance
         $this->deviceInstances = new ArrayCollection();
         $this->scope = self::SCOPE_STANDALONE;
         $this->state = InstanceStateMessage::STATE_CREATING;
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -166,6 +173,18 @@ class LabInstance extends Instance
         $deviceInstances = $this->deviceInstances->matching($criteria);
 
         return $deviceInstances;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
     }
 
     public function isInternetConnected(): ?bool

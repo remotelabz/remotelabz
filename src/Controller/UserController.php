@@ -29,7 +29,7 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email as Email;
@@ -38,7 +38,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class UserController extends Controller
 {
-    protected $passwordEncoder;
+    protected $passwordHasher;
     protected $userRepository;
     protected $mailer;
     protected $serializer;
@@ -47,7 +47,7 @@ class UserController extends Controller
      private $logger;
 
     public function __construct(
-        UserPasswordEncoderInterface $passwordEncoder,
+        UserPasswordHasherInterface $passwordHasher,
         UserRepository $userRepository,
         GroupRepository $groupRepository,
         MailerInterface $mailer,
@@ -57,7 +57,7 @@ class UserController extends Controller
         string $remotevpn_addr,
         string $contact_mail)
     {
-        $this->passwordEncoder = $passwordEncoder;
+        $this->passwordHasher = $passwordHasher;
         $this->userRepository = $userRepository;
         $this->groupRepository = $groupRepository;
         $this->mailer = $mailer;
@@ -232,7 +232,7 @@ class UserController extends Controller
             if (!$password) {
                 $this->addFlash('danger', "You must provide a password.");
             } elseif ($password === $confirmPassword) {
-                $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
+                $user->setPassword($this->passwordHasher->hashPassword($user, $password));
                 $entityManager = $this->getDoctrine()->getManager();
             try {
                 $entityManager->persist($user);
@@ -290,7 +290,7 @@ class UserController extends Controller
 
             if ($password) {
                 if ($password === $confirmPassword) {
-                    $user->setPassword($this->passwordEncoder->encodePassword($user, $password));
+                    $user->setPassword($this->passwordHasher->hashPassword($user, $password));
                 } else {
                     $this->addFlash('danger', "Passwords doesn't match. If you don't want to change user's password, please leave password field empty.");
 
@@ -321,6 +321,7 @@ class UserController extends Controller
     public function toggleAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
+        $data = json_decode($request->getContent(), true);
 
         if (!$user) {
             throw new NotFoundHttpException('This user does not exist.');
@@ -329,7 +330,16 @@ class UserController extends Controller
         } elseif ($user->hasRole('ROLE_SUPER_ADMINISTRATOR')) {
             throw new UnauthorizedHttpException('You cannot lock root account.');
         } else {
-            $user->setEnabled(!$user->isEnabled());
+            if ($data == 'block') {
+                $user->setEnabled(0);
+            }
+            else if ($data == 'unblock') {
+                $user->setEnabled(1);
+            }
+            else {
+                $user->setEnabled(!$user->isEnabled());
+            }
+            
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($user);
@@ -450,7 +460,7 @@ class UserController extends Controller
                                 ->setLastName($lastName)
                                 ->setFirstName($firstName)
                                 ->setEmail($email)
-                                ->setPassword($this->passwordEncoder->encodePassword($user, $password));
+                                ->setPassword($this->passwordHasher->hashPassword($user, $password));
 
                             $this->logger->info("User importation by ".$this->getUser()->getName().": ".$firstName." ".$lastName." ".$email);
 
@@ -556,9 +566,9 @@ class UserController extends Controller
             $newPassword = $passwordForm->get('newPassword')->getData();
             $confirmPassword = $passwordForm->get('confirmPassword')->getData();
 
-            if ($this->passwordEncoder->isPasswordValid($user, $password)) {
+            if ($this->passwordHasher->isPasswordValid($user, $password)) {
                 if ($newPassword == $confirmPassword) {
-                    $user->setPassword($this->passwordEncoder->encodePassword($user, $newPassword));
+                    $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
 
                     $entityManager = $this->getDoctrine()->getManager();
                     $entityManager->persist($user);
@@ -756,13 +766,13 @@ class UserController extends Controller
         $x509 = null;
         $privateKey = null;
         $certsDir = $VPNConfigurationGenerator->getExportPath();
-        $certPath = $certsDir.'/'.$user->getUsername().'.crt';
-        $pkeyPath = $certsDir.'/'.$user->getUsername().'.key';
+        $certPath = $certsDir.'/'.$user->getUserIdentifier().'.crt';
+        $pkeyPath = $certsDir.'/'.$user->getUserIdentifier().'.key';
         $filesystem = new Filesystem();
 
         if ($filesystem->exists($certPath)) {
             if (!$this->IsCertValid($certPath)) {
-                $this->logger->debug("Certificate of ".$user->getUsername()." is expired ");
+                $this->logger->debug("Certificate of ".$user->getUserIdentifier()." is expired ");
                 unlink($certPath);
                 unlink($pkeyPath);
             }
@@ -783,7 +793,7 @@ class UserController extends Controller
         $config = $VPNConfigurationGenerator->generateConfig($privateKey, $x509);
 
         $response = new Response($config);
-        $filename=$this->remotevpn_addr.'-'.$user->getUsername().'.ovpn';
+        $filename=$this->remotevpn_addr.'-'.$user->getUserIdentifier().'.ovpn';
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
