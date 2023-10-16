@@ -179,20 +179,16 @@ export default function InstanceFilterSelect(props = {labInstances}) {
         console.log(item);
 
         if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();  
-            console.log("a");  
+            request = Remotelabz.instances.lab.getOwnedByGroup();    
         }
         else if (filter == "group" && item != "allGroups") {
             request = Remotelabz.instances.lab.getByGroup(item);
-            console.log("b"); 
         }
         else if (item == "allLabs") {
             request = Remotelabz.instances.lab.getOrderedByLab();
-            console.log("c"); 
         }
         else if (filter == "lab" && item != "allLabs") {
             request = Remotelabz.instances.lab.getByLab(item);
-            console.log("g"); 
         }
         else if (item == "allTeachers" || item == "allStudents" || item == "allAdmins") {
             let userType = "";
@@ -207,15 +203,12 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
 
             request = Remotelabz.instances.lab.getOwnedByUserType(userType);
-            console.log("d"); 
         }
         else if ((filter == "teacher" && item != "allTeachers") || (filter == "student" && item != "allStudents") || (filter == "admin" && item != "allAdmins")) {
             request = Remotelabz.instances.lab.getByUser(item);
-            console.log("e"); 
         }
         else if (item == "allInstances"){
             request = Remotelabz.instances.lab.getAll(); 
-            console.log("f"); 
         }
         
         request.then(response => {
@@ -256,178 +249,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
         })
     }
-
-    /*function getInstances() {
-        let itemValue = document.getElementById("itemSelect").value;
-        console.log(itemValue);
-        return new Promise(resolve => {
-            if (itemValue == "allGroups") {
-                    Remotelabz.instances.lab.getOwnedByGroup()
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                setItem(itemValue);
-                console.log("1"); 
-            }
-            else if (filter == "group" && itemValue != "allGroups") {
-                console.log("2"); 
-                Remotelabz.instances.lab.getByGroup(itemValue)
-                .then(response => {
-                    if (response == null || response == undefined) {
-                        console.log("no instance of this group")
-                    }
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-            }
-            else if (itemValue == "allLabs") {
-                Remotelabz.instances.lab.getOrderedByLab()
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                console.log("3"); 
-                setItem(itemValue);
-            }
-            else if (filter == "lab" && itemValue != "allLabs") {
-                Remotelabz.instances.lab.getByLab(itemValue)
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                })
-                .catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                });
-                console.log("g"); 
-            }
-            else if (itemValue == "allTeachers" || itemValue == "allStudents" || itemValue == "allAdmins") {
-                let userType = ""
-                if(itemValue == "allTeachers") {
-                    userType = "teacher"
-                }
-                else if (itemValue == "allStudents") {
-                    userType = "student"
-                }
-                else if (itemValue == "allAdmins") {
-                    userType = "admin"
-                }
-                Remotelabz.instances.lab.getOwnedByUserType(userType)
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                setItem(itemValue);
-                console.log("4"); 
-                
-            }
-            else if ((filter == "teacher" && itemValue != "allTeachers") || (filter == "student" && itemValue != "allStudents") || (filter == "admin" && itemValue != "allAdmins")) {
-                Remotelabz.instances.lab.getByUser(itemValue)
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-                console.log("5"); 
-            }
-            else if (itemValue == "allInstances"){
-                Remotelabz.instances.lab.getAll()
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-                console.log("6"); 
-            }
-        })
-    }*/
 
     function checkAll() {
         const boxes = document.querySelectorAll(".checkLab");

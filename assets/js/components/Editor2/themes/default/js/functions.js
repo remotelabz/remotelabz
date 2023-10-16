@@ -12,8 +12,8 @@
  * @version 20160719
  */
 
-import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION,
-      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, 
+import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION, TEMPLATE,
+      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate,
       LONGTIMEOUT, STATUSINTERVAL, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION, setEditon, setAuthor} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
@@ -1191,12 +1191,17 @@ export function getUserInfo() {
                 setRole(data['data']['role']);
                 console.log(pathname);
                 console.log('/labs/' + LAB + '/see/' + labInstance);
-                if(pathname == '/admin/labs/' + LAB + '/edit') {
+                if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
                 }
                 else if(pathname == '/labs/' + LAB + '/see/' + labInstance) {
-                    console.log('see!')
                     setEditon(0);
+                }
+                if (pathname == '/admin/labs_template/' + LAB + '/edit') {
+                    setTemplate(1);
+                }
+                else {
+                    setTemplate(0);
                 }
                 setAuthor(data['data']['author']);
                 deferred.resolve(data['data']);
@@ -1436,8 +1441,15 @@ export function newUIreturn(param) {
         // Stop updating node_status
         clearInterval(UPDATEID);
     }
-    $('body').removeClass('login');
+    if (TEMPLATE == 1) {
+        $('body').removeClass('login');
+        window.location.href = "/admin/devices_sandbox/"+ lab_filename ;
+    }
+    else {
+        $('body').removeClass('login');
         window.location.href = "/labs/"+ lab_filename ;
+    }
+    
 }
 
 //set Network

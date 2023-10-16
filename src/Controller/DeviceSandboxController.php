@@ -52,19 +52,28 @@ class DeviceSandboxController extends Controller
             ]);
 
         $devices = $this->deviceRepository->matching($criteria);
+        $labs = $this->labRepository->findBy(['isTemplate' => true]);
         $deviceArray = array();
+        $labArray = array();
 
         foreach ($devices as $device) {
-            array_push($deviceArray, $device);
+            if (count($device->getLabs()) == 0) {
+                array_push($deviceArray, $device);
+            }
+        }
+        foreach ($labs as $lab) {
+            array_push($labArray, $lab);
         }
 
         $deviceProps = [
             'user' => $this->getUser(),
-            'devices' => $deviceArray
+            'devices' => $deviceArray,
+            'labs' => $labArray
         ];
         
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $devices,
+            'labs' => $labs,
             'search' => $search,
             'props' => $serializer->serialize(
                 $deviceProps,

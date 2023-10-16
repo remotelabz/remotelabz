@@ -19,27 +19,33 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
     private $shortDescription;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
     private $description;
+
+    /**
+     * @ORM\Column(type="boolean", options={"default": 0})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
+     */
+    private $isTemplate;
 
     /**
      * @ORM\Column(type="text", nullable=true)
@@ -71,7 +77,7 @@ class Lab implements InstanciableInterface
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
      * ))
-     * @Serializer\Groups({"api_get_lab", "export_lab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab","sandbox"})
      */
     private $devices;
 
@@ -134,6 +140,7 @@ class Lab implements InstanciableInterface
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
+        $this->isTemplate = 0;
     }
 
     public static function create(): self
@@ -178,6 +185,18 @@ class Lab implements InstanciableInterface
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getIsTemplate(): ?bool
+    {
+        return $this->isTemplate;
+    }
+
+    public function setIsTemplate(bool $isTemplate): self
+    {
+        $this->isTemplate = $isTemplate;
 
         return $this;
     }

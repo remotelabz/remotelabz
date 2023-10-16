@@ -8,6 +8,7 @@ use App\Entity\Device;
 use App\Entity\Network;
 use App\Entity\Activity;
 use App\Entity\LabInstance;
+use App\Entity\EditorData;
 use App\Entity\DeviceInstance;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\NetworkInterface;
@@ -135,6 +136,7 @@ class LabController extends Controller
         }
 
         $criteria
+            ->andWhere(Criteria::expr()->eq('isTemplate', false))
             ->orderBy([
                 $orderBy => $sortDirection
             ])
@@ -198,6 +200,34 @@ class LabController extends Controller
             'page' => $page,
             'author' => $author,
         ]);
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/template", name="api_get_labs_template")
+     */
+    public function getLabTemplates(Request $request, UserRepository $userRepository)
+    {
+
+        $labs = $this->labRepository->findBy(["isTemplate" => true]);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($labs, 200, [], ["api_get_lab"]);
+        }
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/template/{id<\d+>}", name="api_get_lab_template_by_uuid")
+     */
+    public function getOneLabTemplate(Request $request, int $id)
+    {
+
+        $labs = $this->labRepository->find($id);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($labs, 200, [], ["api_get_lab_template"]);
+        }
     }
 
     /**
@@ -366,6 +396,7 @@ class LabController extends Controller
 
     /**
      * @Route("/labs/new", name="new_lab")
+     * @Route("/labsSandbox/new", name="new_lab_template")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
      */
@@ -394,6 +425,10 @@ class LabController extends Controller
         $entityManager->persist($lab);
         $entityManager->flush();
 
+        if ('new_lab_template' == $request->get('_route')) {
+            $lab->setIsTemplate(true);
+        }
+
         $filesystem = new Filesystem();
             try {
                 $src=$this->getParameter('directory.public.images').'/logo/nopic.jpg';
@@ -419,6 +454,12 @@ class LabController extends Controller
             return $this->json($lab, 200, [], ['api_get_lab']);
         }
         $entityManager->flush();
+
+        if ('new_lab_template' == $request->get('_route')) {
+            return $this->redirectToRoute('edit_lab_template', [
+                'id' => $lab->getId()
+            ]);
+        }
 
         return $this->redirectToRoute('edit_lab', [
             'id' => $lab->getId()
@@ -480,13 +521,24 @@ class LabController extends Controller
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
+                $entityManager = $this->getDoctrine()->getManager();
                 $this->logger->debug("Add device in lab form submitted is valid");
+
+                $editorData = new EditorData();
+                $editorData->setX($device_array['editorData']['x']);
+                $editorData->setY($device_array['editorData']['y']);
+                $entityManager->persist($editorData);
+
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
+                $new_device->setEditorData($editorData);
+                //$new_device->setCount($device_array['count']);
+                $new_device->setIcon($device_array['icon']);
+                $new_device->setVirtuality($device_array['virtuality']);
                 $this->logger->debug("Device added : ".$new_device->getName());
                 
-                $entityManager = $this->getDoctrine()->getManager();
                 $entityManager->persist($new_device);
+                $editorData->setDevice($new_device);
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
                 $this->logger->debug("Source device id adds is :".$device_array['id']);
@@ -500,6 +552,7 @@ class LabController extends Controller
                         $new_network_inter->setName($device->getName()."_"."int".$i);
                         $i=$i+1;
                         $new_network_inter->setIsTemplate(true);
+                        $new_network_inter->setVlan($network_int->getVlan());
                         $new_device->addNetworkInterface($new_network_inter);
                         $new_setting->setName($new_network_inter->getName());
                         $entityManager->persist($new_network_inter);
@@ -606,6 +659,7 @@ class LabController extends Controller
 
     /**
      * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
+     * @Route("/admin/labs_template/{id<\d+>}/edit", name="edit_lab_template")
      */
     public function edit2Action(Request $request, int $id)
     {

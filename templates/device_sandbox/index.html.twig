@@ -15,6 +15,9 @@
     <div class="content-title-infos">
         <h1>{{ 'Device Sandbox'|trans }}</h1>
     </div>
+    <div class="content-title-actions">
+        <a class="btn btn-success"  href="{{path('new_lab_template') }}">{{ 'New Lab'|trans }}</a>
+    </div>
 </div>
 <div class="content-body">
     <form action="{{ path('devices_sandbox') }}" method="GET">

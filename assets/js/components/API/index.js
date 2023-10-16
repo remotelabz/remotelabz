@@ -374,6 +374,31 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template/{id}`
+         * 
+         *  @param {number} id  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplate(id) {
+            return axios.get(`/labs/template/${id}`);
+        },
+
+        /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template`
+         *  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplates() {
+            return axios.get(`/labs/template`);
+        },
+
+        /**
          * Updates a lab by ID.
          * 
          * Implements PUT `/api/labs/{id}`
@@ -517,6 +542,22 @@ export class RemotelabzAPI {
         get(uuid) {
             return axios.get(`/instances/by-uuid/${uuid}`);
         },
+
+        /**
+             * Request an async instance by UUID.
+             * 
+             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid
+             * @param {string} name
+             * @param {string} type
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+        export(uuid,new_name,type) {
+            return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_name, type: type}});
+        },
+
         /**
          * Lab instances methods
          */
@@ -733,20 +774,6 @@ export class RemotelabzAPI {
 
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
-            },
-            
-            /**
-             * Request an async device instance stop by UUID.
-             * 
-             * Implements GET `/api/instances/export/by-uuid/{uuid}`
-             * 
-             * @param {string} uuid
-             * @param {string} name
-             * 
-             * @returns {Promise<import('axios').AxiosResponse<void>>}
-             */
-            export(uuid,new_device_name) {
-                return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_device_name}});
             }
         },
     }

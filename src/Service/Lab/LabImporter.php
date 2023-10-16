@@ -9,6 +9,7 @@ use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\OperatingSystem;
 use App\Repository\FlavorRepository;
+use App\Repository\HypervisorRepository;
 use App\Repository\LabRepository;
 use App\Repository\OperatingSystemRepository;
 use Doctrine\Common\Collections\Criteria;
@@ -18,6 +19,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use function Symfony\Component\String\u;
 
 class LabImporter
 {
@@ -36,7 +38,8 @@ class LabImporter
         FlavorRepository $flavorRepository,
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager,
-        OperatingSystemRepository $operatingSystemRepository
+        OperatingSystemRepository $operatingSystemRepository,
+        HypervisorRepository $hypervisorRepository
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -45,6 +48,7 @@ class LabImporter
         $this->labRepository = $labRepository;
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
+        $this->hypervisorRepository = $hypervisorRepository;
     }
 
     /**
@@ -75,22 +79,31 @@ class LabImporter
             throw new InvalidArgumentException("Invalid JSON was provided!");
         }
 
+
         $lab = new Lab();
         if (array_key_exists("description",$labJson)) {
             $this->logger->debug("Lab description found");
             $lab->setDescription($labJson['description']);
         }
-
-            else {
+        else {
             $this->logger->debug("No lab description found");
-            $lab->setDescription("");
-            
-            }
+            $lab->setDescription("");        
+        }
+
+        if (array_key_exists("shortDescription",$labJson)) {
+            $this->logger->debug("Lab short description found");
+            $lab->setShortDescription($labJson['shortDescription']);
+        }
+        else {
+            $this->logger->debug("No lab short description found");
+            $lab->setShortDescription("");
+        }
         $lab
             ->setName($labJson['name'])
             ->setAuthor($this->tokenStorage->getToken()->getUser())
-            ->setDescription($labJson['description'])
-            ->setShortDescription($labJson['shortDescription'])
+            ->setIsTemplate(false)
+            //->setDescription($labJson['description'])
+            //->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
         ;
 
@@ -152,6 +165,10 @@ class LabImporter
 
             $this->entityManager->persist($editorData);
 
+            if (!$hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+                $hypervisor = NULL;
+            }
+
             // creating device
             $device = new Device();
 
@@ -160,14 +177,29 @@ class LabImporter
                 ->setBrand($deviceJson['brand'])
                 ->setModel($deviceJson['model'])
                 ->setType($deviceJson['type'])
-                ->setVirtuality($deviceJson['virtuality'])
-                ->setHypervisor($deviceJson['hypervisor'])
-                ->setVnc($deviceJson['vnc'])
+                ->setIcon($deviceJson['icon'])
+                ->setVirtuality(0)
+                ->setHypervisor($hypervisor)
+                ->setNbCpu($deviceJson['nbCpu'])
+                ->setTemplate($deviceJson['id']."_".u($deviceJson['name'])->camel())
+                //->setVnc($deviceJson['vnc'])
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)
                 ->setEditorData($editorData)
                 ->setIsTemplate(false);
             ;
+
+            if(isset($deviceJson['nbSocket'])) {
+                $device->setNbSocket($deviceJson['nbSocket']);
+            }
+
+            if(isset($deviceJson['nbCore'])) {
+                $device->setNbCore($deviceJson['nbCore']);
+            }
+
+            if(isset($deviceJson['nbThread'])) {
+                $device->setNbThread($deviceJson['nbThread']);
+            }
 
             foreach ($deviceJson['networkInterfaces'] as $networkInterfaceJson) {
                 $networkInterface = new NetworkInterface();
