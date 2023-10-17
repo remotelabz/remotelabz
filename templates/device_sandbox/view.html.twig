@@ -1,19 +1,19 @@
 {% extends 'dashboard.base.html.twig' %}
 
 {% block breadcrumbs %}
-    {%- set breadcrumbs = breadcrumbs|merge({ ("Sandbox"): path('devices_sandbox') }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ ("Sandbox"): path('sandbox') }) -%}
     {{ parent() }}
 {% endblock %}
 
 {% block sidebar %}
-    {% set category = 'devices_sandbox' %}
+    {% set category = 'sandbox' %}
     {{ parent() }}
 {% endblock %}
 
 {% block wrapper %}
 <div class="content-title">
     <div class="content-title-infos">
-        <h1>{{ 'Device Sandbox'|trans }}</h1>
+        <h1>{{ 'Sandbox'|trans }}</h1>
     </div>
 </div>
 <div class="content-body">

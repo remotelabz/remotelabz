@@ -616,7 +616,7 @@ class InstanceController extends Controller
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         
-        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        $from_export=strstr($request->headers->get('referer'),"sandbox");
         
             $instanceManager->delete($instance);
             //$this->logger->debug("Delete from export");
