@@ -8,6 +8,8 @@ use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
 use App\Entity\EditorData;
 use App\Entity\Lab;
+use App\Entity\Picture;
+use App\Entity\TextObject;
 use App\Entity\LabInstance;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
@@ -19,6 +21,8 @@ use App\Instance\InstanceState;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
 use App\Repository\DeviceRepository;
+use App\Repository\TextObjectRepository;
+use App\Repository\PictureRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
@@ -80,6 +84,8 @@ class InstanceManager
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         ControlProtocolTypeInstanceRepository $controlProtocolTypeInstanceRepository,
         DeviceRepository $DeviceRepository,
+        TextObjectRepository $TextObjectRepository,
+        PictureRepository $PictureRepository,
         OperatingSystemRepository $OperatingSystemRepository,
         string $workerServer,
         string $workerPort,
@@ -96,6 +102,8 @@ class InstanceManager
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->controlProtocolTypeInstanceRepository = $controlProtocolTypeInstanceRepository;
         $this->DeviceRepository=$DeviceRepository;
+        $this->TextObjectRepository=$TextObjectRepository;
+        $this->PictureRepository=$PictureRepository;
         $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
@@ -291,6 +299,10 @@ class InstanceManager
         $lab = $this->copyLab($labInstance->getLab(), $name);
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
+        foreach($lab->getPictures() as $picture) {
+            $type = explode("image/",$picture->getType())[1];
+            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+        }
         foreach($labInstance->getDeviceInstances() as $deviceInstance) {
             $device = $deviceInstance->getDevice();
             $osName = $device->getOperatingSystem()->getName()."_".$name;
@@ -414,9 +426,37 @@ class InstanceManager
         $newLab->setLocked($lab->getLocked());
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
-        foreach($lab->getTextObjects() as $textObject) {
-            $newLab->addTextObject($textObject);
+
+        foreach($lab->getTextobjects() as $textObject) {
+            $newTextObject = new TextObject();
+            $newTextObject->setName($textObject->getName());
+            $newTextObject->setType($textObject->getType());
+            $newTextObject->setData($textObject->getData());
+            $newTextObject->setLab($newLab);
+            $this->entityManager->persist($newTextObject);
+            $newLab->addTextobject($newTextObject);
         }
+       
+        foreach($lab->getPictures() as $picture) {
+            $newPicture = new Picture();
+            $newPicture->setName($picture->getName());
+            $newPicture->setHeight($picture->getHeight());
+            $newPicture->setWidth($picture->getWidth());
+            $newPicture->setMap($picture->getMap());
+            $newPicture->setType($picture->getType());
+
+            $type = explode("image/",$picture->getType())[1];
+            $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
+            $fp = fopen($fileName, 'r');
+            $size = filesize($fileName);
+            if ($fp !== False) {
+                $data = fread($fp, $size);
+                $newPicture->setData($data);
+            }
+            $this->entityManager->persist($newPicture);
+            $newLab->addPicture($newPicture);
+        }
+        
         $newLab->setAuthor($lab->getAuthor());
 
         return $newLab;
@@ -448,7 +488,7 @@ class InstanceManager
             $new_setting=clone $network_int->getSettings();
             
             $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName("int".$i."_".$name);
+            $new_network_inter->setName($name."_net".$i);
             $new_network_inter->setVlan($network_int->getVlan());
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);

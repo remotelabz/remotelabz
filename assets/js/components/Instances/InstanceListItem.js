@@ -19,8 +19,6 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox, la
     const [showExport, setShowExport] = useState(false)
     //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' })
-
-    console.log(instance.device);
     
     //console.log("instanceListItem");
     //console.log(instance.device.name);

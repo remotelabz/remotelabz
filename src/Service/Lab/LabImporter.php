@@ -4,6 +4,8 @@ namespace App\Service\Lab;
 
 use App\Entity\Device;
 use App\Entity\EditorData;
+use App\Entity\TextObject;
+use App\Entity\Picture;
 use App\Entity\Lab;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
@@ -97,6 +99,41 @@ class LabImporter
         else {
             $this->logger->debug("No lab short description found");
             $lab->setShortDescription("");
+        }
+        if (array_key_exists("textobjects",$labJson)) {
+            $this->logger->debug("Lab textobjects found");
+            foreach ($labJson['textobjects'] as $textobject) {
+                $newTextObject = new TextObject();
+                $newTextObject->setName($textobject['name']);
+                $newTextObject->setType($textobject['type']);
+                $newTextObject->setData($textobject['data']);
+                $newTextObject->setLab($lab);
+                $this->entityManager->persist($newTextObject);
+                $lab->addTextobject($newTextObject);
+            }
+        }
+        if (array_key_exists("pictures",$labJson)) {
+            $this->logger->debug("Lab pictures found");
+            foreach ($labJson['pictures'] as $picture) {
+                $newPicture = new Picture();
+                $newPicture->setName($picture['name']);
+                $newPicture->setHeight($picture['height']);
+                $newPicture->setWidth($picture['width']);
+                $newPicture->setMap($picture['map']);
+                $newPicture->setType($picture['type']);
+                $newPicture->setLab($lab);
+                
+                $type = explode("image/",$picture['type'])[1];
+                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labJson['id'].'-'.$picture['name'].'.'.$type;
+                $fp = fopen($fileName, 'r');
+                $size = filesize($fileName);
+                if ($fp !== False) {
+                    $data = fread($fp, $size);
+                    $newPicture->setData($data);
+                }
+                $this->entityManager->persist($newPicture);
+                $lab->addPicture($newPicture);
+            }
         }
         $lab
             ->setName($labJson['name'])
@@ -231,6 +268,10 @@ class LabImporter
 
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
+        foreach($lab->getPictures() as $picture) {
+            $type = explode("image/",$picture->getType())[1];
+            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+        }
 
         $createdLab = $this->labRepository->findOneBy(['uuid' => $lab->getUuid()]);
 

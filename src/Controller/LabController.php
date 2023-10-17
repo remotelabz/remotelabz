@@ -917,10 +917,20 @@ class LabController extends Controller
                 $entityManager->remove($device);
                 //$entityManager->flush();
             }
+
+            if (null !== $lab->getPictures()) {
+                foreach($lab->getPictures() as $picture) {
+                    $type = explode("image/",$picture->getType())[1];
+                    if(is_file('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                        unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                    }
+                }
+            }
             $entityManager->remove($lab);
             $entityManager->flush();
             return 0;
         }
+
     }
 
     /**

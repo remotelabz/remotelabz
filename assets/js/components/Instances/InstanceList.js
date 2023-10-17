@@ -42,7 +42,7 @@ const InstanceList = (props) => {
 
     return (
         <>{instancesList}
-            {( allDevicesStopped &&  (props.lab.devices.length > 1) && props.isSandbox) &&
+            {( allDevicesStopped &&  props.isSandbox && (props.lab.devices.length > 1) ) &&
                 <div class="d-flex justify-content-center mt-2" onClick={() => setShowExport(!showExport)}>
                     {showExport ?
                         <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>

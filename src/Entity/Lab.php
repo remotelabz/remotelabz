@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\User;
+use App\Entity\TextObject;
+use App\Entity\Picture;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -19,7 +21,7 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template"})
      */
     private $id;
 
@@ -77,7 +79,7 @@ class Lab implements InstanciableInterface
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
      * ))
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab","sandbox", "api_get_lab_instance"})
      */
     private $devices;
 
@@ -125,10 +127,20 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
      * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
      *
      * @var Collection|TextObject[]
      */
     private $textobjects;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Picture", mappedBy="lab")
+     * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
+     *
+     * @var Collection|Picture[]
+     */
+    private $pictures;
 
     public function __construct()
     {
@@ -140,6 +152,7 @@ class Lab implements InstanciableInterface
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
+        $this->pictures = new ArrayCollection();
         $this->isTemplate = 0;
     }
 
@@ -395,7 +408,7 @@ class Lab implements InstanciableInterface
         return $this->textobjects;
     }
 
-    public function addTextobject(Lab $textobject): self
+    public function addTextobject(TextObject $textobject): self
     {
         if (!$this->textobjects->contains($textobject)) {
             $this->textobjects[] = $textobject;
@@ -405,13 +418,44 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function removeTextobject(Lab $textobject): self
+    public function removeTextobject(TextObject $textobject): self
     {
         if ($this->textobjects->contains($textobject)) {
             $this->textobjects->removeElement($textobject);
             // set the owning side to null (unless already changed)
             if ($textobject->getLab() === $this) {
                 $textobject->setLab(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Picture[]
+     */
+    public function getPictures()
+    {
+        return $this->pictures;
+    }
+
+    public function addPicture(Picture $picture): self
+    {
+        if (!$this->pictures->contains($picture)) {
+            $this->pictures[] = $picture;
+            $picture->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removePicture(Picture $textobject): self
+    {
+        if ($this->pictures->contains($picture)) {
+            $this->pictures->removeElement($picture);
+            // set the owning side to null (unless already changed)
+            if ($picture->getLab() === $this) {
+                $picture->setLab(null);
             }
         }
 
