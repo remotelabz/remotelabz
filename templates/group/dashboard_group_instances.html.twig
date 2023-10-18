@@ -1,0 +1,47 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Group Instances': path('dashboard_group_instances', {'slug': group.path}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'dashboard_groups' %}
+    {% include "group.sidebar.html.twig" %}
+{% endblock %}
+
+{% set filter = filter|default('all') %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
+
+{% block wrapper %}
+    <div class="top-panel">
+            <div class="quick-actions">
+                {% if is_granted('ROLE_ADMINISTRATOR') %}
+                {% endif %}
+            </div>
+    </div>
+
+    <div class="labs-panel">
+
+        {#- Lab instances -#}
+
+        <h4 class="p-3 border-bottom">Lab instances of {{group.name}}
+        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+            {{ svg('question') }} </span>
+        {% if labInstances is empty %}
+        <div class="wrapper align-items-center p-3 border-bottom lab-item">
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
+        {% else %}
+         <div class="col">{{ react_component('GroupInstancesList', {'props': props}) }}</div>
+        {% endif %}
+
+    </div>
+    
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
