@@ -5,21 +5,15 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function InstanceFilterSelect(props = {labInstances}) {
-    const [itemFilter, setItemFilter] = useState([]);
+export default function GroupInstancesList(props = {instances, labs, groups}) {
     const [options, setOptions] = useState();
-    const [filter, setFilter] = useState("none");
-    const [item, setItem] = useState("allInstances");
-    const [instances, setInstances] = useState(props.labInstances);
+    const [instances, setInstances] = useState();
+    const [filter, setFilter] = useState("allLabs");
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [instancesList, setInstancesList] = useState(null)
 
-    let teachers = [];
-    let students = [];
-    let admins = [];
-    let optionsList = [];
     let deviceInstancesToStop = [];
 
     useEffect(() => {
@@ -31,12 +25,32 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             setInstances(null)
             setLoadingInstanceState(true)
         }
-    }, [filter, item]);
+    }, [filter]);
 
     useEffect(() => {
+        let optionsList = props.labs.map((lab) => {
+            return(
+            <><option
+                  key={lab.id}
+                  value={lab.uuid}
+                >{lab.name}</option></>)
+        });
+
+        optionsList.unshift(<><option
+            key={"0"}
+            value ="allLabs"
+          >All Labs</option></>);
+
+        setOptions(optionsList);
+    }, []);
+
+    useEffect(() => {
+        console.log("instances");
         console.log(instances);
+
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
+                console.log(labInstance);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -52,213 +66,41 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                 </div>)
             });
     
-            setInstancesList(list)
+            setInstancesList(list);
         }
+
         if (instances === "") {
             const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
-                            <span class="lab-item-name">
-                                None
-                            </span>
-                        </div>
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
 
-            setInstancesList(list)
+            setInstancesList(list);
         }
+        
         
     }, [instances]);
 
-    useEffect(() => {
-        console.log(filter);
-        if (filter == "group") {
-            optionsList = itemFilter.map((group) => (
-                <><option
-                  key={group.id}
-                  value={group.uuid}
-                >{group.name}</option></>
-              ))
-            
-              optionsList.unshift(<><option
-                key={"0"}
-                value ="allGroups"
-              >All Groups</option></>);
-              setOptions(optionsList);
-        }
-        else if (filter == "lab") {
-            optionsList = itemFilter.map((lab) => (
-                <><option
-                  key={lab.id}
-                  value={lab.uuid}
-                >{lab.name}</option></>
-              ))
-            
-              optionsList.unshift(<><option
-                key={"0"}
-                value ="allLabs"
-              >All Labs</option></>);
-              setOptions(optionsList);
-        }
-        else if (filter == "teacher" || filter == "student" || filter == "admin") {
-            optionsList = itemFilter.map((user) => (
-                <><option
-                  key={user.id}
-                  value={user.uuid}
-                >{user.name}</option></>
-              ))
-
-              if (filter == "teacher") {
-                optionsList.unshift(<><option
-                    key={"0"}
-                    value ="allTeachers"
-                  >All Teachers</option></>);
-              }
-              else if (filter == "admin") {
-                optionsList.unshift(<><option
-                    key={"0"}
-                    value ="allAdmins"
-                  >All Administrators</option></>);
-              }
-              else {
-                optionsList.unshift(<><option
-                    key={"0"}
-                    value ="allStudents"
-                  >All Students</option></>);
-              }
-              setOptions(optionsList);
-        }
-        else if (filter == "none") {
-            optionsList = 
-                <><option
-                  key={"0"}
-                  value ="allInstances"
-                >All Instances</option></>;
-                setOptions(optionsList);   
-        }
-      }, [filter]);
-
     function onChange() {
-        let filterValue = document.getElementById("instanceSelect").value;
-        return new Promise(resolve => {
-            if (filterValue == "group") {
-                Remotelabz.groups.all()
-                .then(response => {
-                    setItemFilter(response.data);
-                    setFilter(filterValue);
-                    setItem("allGroups");
-                })
-            }
-            else if (filterValue == "lab") {
-                Remotelabz.labs.all()
-                .then(response => {
-                    setItemFilter(response.data);
-                    setFilter(filterValue);
-                    setItem("allLabs");
-                })
-            }
-            else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
-                Remotelabz.users.all()
-                .then(response => {
-                    const usersList = response.data;
-                    for(let user of usersList) {
-                        let teacher = false;
-                        let admin = false;
-                        for(let role of user.roles) {
-                            if (role == "ROLE_TEACHER") {
-                                teacher = true;
-                                break;
-                            }
-                            if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
-                                admin = true;
-                                break;
-                            }
-                        }
-
-                        if (teacher == true) {
-                            teachers.push(user);
-                        }
-                        else if (admin == true) {
-                            admins.push(user)
-                        }
-                        else {
-                            students.push(user);
-                        }
-                    }
-
-                    if (filterValue == "teacher") {
-                        setItemFilter(teachers);
-                        setItem("allTeachers");
-                    }
-                    else if (filterValue == "admin") {
-                        setItemFilter(admins);
-                        setItem("allAdmins");
-                    }
-                    else {
-                        setItemFilter(students);
-                        setItem("allStudents");
-                    }
-                    setFilter(filterValue);
-                })
-            }
-            else if (filterValue == "none"){
-                setItem("allInstances");
-                setFilter(filterValue);
-                
-            }
-        })
+        let filterValue = document.getElementById("labSelect").value;
+        setFilter(filterValue);
     }
 
     function refreshInstance() {
         
         let request;
+
         console.log(filter);
-        console.log(item);
-
-        if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();  
-            console.log("a");  
+        if(filter == "allLabs") {
+            request = Remotelabz.instances.lab.getGroupInstances(props.group.slug);  
         }
-        else if (filter == "group" && item != "allGroups") {
-            request = Remotelabz.instances.lab.getByGroup(item);
-            console.log("b"); 
+        else {
+            request = Remotelabz.instances.lab.getGroupInstancesByLab(props.group.slug, filter)
         }
-        else if (item == "allLabs") {
-            request = Remotelabz.instances.lab.getOrderedByLab();
-            console.log("c"); 
-        }
-        else if (filter == "lab" && item != "allLabs") {
-            request = Remotelabz.instances.lab.getByLab(item);
-            console.log("g"); 
-        }
-        else if (item == "allTeachers" || item == "allStudents" || item == "allAdmins") {
-            let userType = "";
-            if(item == "allTeachers") {
-                userType = "teacher"
-            }
-            else if (item == "allStudents") {
-                userType = "student"
-            }
-            else if (item == "allAdmins") {
-                userType = "admin"
-            }
-
-            request = Remotelabz.instances.lab.getOwnedByUserType(userType);
-            console.log("d"); 
-        }
-        else if ((filter == "teacher" && item != "allTeachers") || (filter == "student" && item != "allStudents") || (filter == "admin" && item != "allAdmins")) {
-            request = Remotelabz.instances.lab.getByUser(item);
-            console.log("e"); 
-        }
-        else if (item == "allInstances"){
-            request = Remotelabz.instances.lab.getAll(); 
-            console.log("f"); 
-        }
-        
         request.then(response => {
-            setInstances(
-                response.data
-            )
-
-            console.log(response.data)
+            setInstances(response.data);
             const list = response.data.map((labInstance) => {
-                console.log(labInstance.owner);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -266,8 +108,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
                             </a>
                             Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                            {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` :
-                            labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
                         <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
@@ -281,13 +122,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             if (error.response) {
                 if (error.response.status <= 500) {
                     setInstances(null)
-                    const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
-                            <span class="lab-item-name">
-                                None
-                            </span>
-                        </div>
-
-                    setInstancesList(list)
                     setLoadingInstanceState(false)
                 } else {
                     new Noty({
@@ -316,8 +150,8 @@ export default function InstanceFilterSelect(props = {labInstances}) {
     }
 
     function hasInstancesStillRunning(labInstance) {
-        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));    }
-
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
+    }
 
     async function onLeaveLab(force) {
         setShowLeaveLabModal(false)
@@ -368,13 +202,16 @@ export default function InstanceFilterSelect(props = {labInstances}) {
 
             for(let instanceToDelete of instancesToDelete) {
                 try {
+
                     Remotelabz.instances.lab.delete(instanceToDelete)
-                    setInstances(instances.map((instance)=> {
+                    let newInstances = instances.map((instance)=>{
                         if (instance.uuid == instanceToDelete) {
                             instance.state = "deleting"
                         }
-                        return instance
-                    }))
+                        return instance;
+                    });
+                    setInstances(newInstances)
+                    //console.log(instances);
                 } catch (error) {
                     console.error(error)
                     new Noty({
@@ -408,26 +245,18 @@ export default function InstanceFilterSelect(props = {labInstances}) {
     return (
         <div>
             <div>
-                <div><span>Filter by : </span></div>
-                <div className="d-flex align-items-center mb-2">
-                <select className='form-control' id="instanceSelect" onChange={onChange}>
-                    <option value="none">None</option>
-                    <option value="group">Group</option>
-                    <option value="lab">Lab</option>
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                    <option value="admin">Administrator</option>
-                </select>
-                <select className='form-control' id="itemSelect" onChange={refreshInstance}>
+                <div><span>Filter by lab : </span></div>
+                <div className="d-flex align-items-center mb-2 mt-2">
+                <select className='form-control' id="labSelect" onChange={onChange}>
                     {options}
                 </select>
                 </div>
             </div>
             <div className="d-flex justify-content-end mb-2">
-                {instances &&
+                {instances !== "" &&
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                 }
-                {instances &&
+                {instances !== "" &&
                     <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
                 }
             </div>
@@ -460,4 +289,5 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             </Modal>
         </div>
     );
+
 }

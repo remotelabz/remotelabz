@@ -17,6 +17,7 @@ import AllInstancesList from './Instances/AllInstancesList';
 import InstanceFilterSelect from './Instances/InstanceFilterSelect';
 import FilterInstancesList from './Instances/FilterInstancesList';
 import CodeManager from './Lab/CodeManager';
+import GroupInstancesList from './Instances/GroupInstancesList'
 
 ReactOnRails.register({
     InstanceOwnerSelect,
@@ -35,5 +36,6 @@ ReactOnRails.register({
     AllInstancesList,
     FilterInstancesList,
     InstanceFilterSelect,
+    GroupInstancesList,
     LabSelect
 });

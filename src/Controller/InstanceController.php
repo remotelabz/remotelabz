@@ -637,7 +637,7 @@ class InstanceController extends Controller
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         
-        $from_export=strstr($request->headers->get('referer'),"devices_sandbox");
+        $from_export=strstr($request->headers->get('referer'),"sandbox");
         
             $instanceManager->delete($instance);
             //$this->logger->debug("Delete from export");
@@ -694,9 +694,28 @@ class InstanceController extends Controller
      * )
      */
     public function viewInstanceAction(Request $request, string $uuid, string $type)
-    {
+    {        
+        
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException();
+        }
+
+        $user = $this->getUser();
+        $isOwner;
+        $isAdmin = false;
+        $isAuthor = false;
+        if ($deviceInstance->getOwnedBy() == 'group'){
+            $isOwner = $user->isMemberOf($deviceInstance->getOwner());
+        }
+        else {
+            $isOwner = ($deviceInstance->getOwner() == $user);
+        }
+
+        $isAuthor = ($deviceInstance->getLabInstance()->getLab()->getAuthor() == $user);
+        $isAdmin =  $user->isAdministrator();
+
+        if(!$isAdmin && !$isAuthor && !$isOwner) {
+            return $this->redirectToRoute("index");
         }
 
         $lab = $deviceInstance->getLab();

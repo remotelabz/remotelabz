@@ -128,11 +128,12 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
+            ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login'))
             
         ;
         $manager->persist($device);
-        $this->addReference('Migration', $device);
+        $this->addReference('dev_natif', $device);
 
         
         $manager->flush();

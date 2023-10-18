@@ -97,6 +97,6 @@ security:
         - { path: '^/instances/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/view/(vnc|login|serial)', roles: ['ROLE_USER', 'ROLE_GUEST'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
-        - { path: ^/admin/devices_sandbox, roles: ['ROLE_TEACHER'] }
+        - { path: ^/admin/sandbox, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }

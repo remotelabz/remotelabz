@@ -677,6 +677,33 @@ export class RemotelabzAPI {
             },
 
             /**
+             * Get lab instances of group.
+             * 
+             * Implements GET `/api/groups/{slug}/instances`
+             * 
+             * @param {string} slug
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstances(slug) {
+                return axios.get(`/groups/${slug}/instances`);
+            },
+
+            /**
+             * Get lab instances of group by lab.
+             * 
+             * Implements GET `/api/groups/{slug}/lab/{uuid}/instances`
+             * 
+             * @param {string} slug
+             * @param {string} uuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstancesByLab(slug, uuid) {
+                return axios.get(`/groups/${slug}/lab/${uuid}/instances`);
+            },
+
+            /**
              * Get lab instances owned by group.
              * 
              * Implements GET `/api/instances/lab/owned-by-group`
