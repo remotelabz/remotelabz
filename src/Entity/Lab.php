@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\User;
+use App\Entity\InvitationCode;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -123,6 +124,12 @@ class Lab implements InstanciableInterface
      * @var Collection|TextObject[]
      */
     private $textobjects;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\InvitationCode", mappedBy="lab", cascade={"persist", "remove"})
+     * @Serializer\Groups({})
+     */
+    private $invitationCodes;
 
     public function __construct()
     {
@@ -393,6 +400,37 @@ class Lab implements InstanciableInterface
             // set the owning side to null (unless already changed)
             if ($textobject->getLab() === $this) {
                 $textobject->setLab(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|InvitationCode[]
+     */
+    public function getInvitationCodes()
+    {
+        return $this->invitationCodes;
+    }
+
+    public function addInvitationCode(InvitationCode $invitationCode): self
+    {
+        if (!$this->invitationCodes->contains($invitationCode)) {
+            $this->invitationCodes[] = $invitationCode;
+            $invitationCode->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvitationCode(InvitationCode $invitationCode): self
+    {
+        if ($this->invitationCodes->contains($invitationCode)) {
+            $this->invitationCodes->removeElement($invitationCode);
+            // set the owning side to null (unless already changed)
+            if ($invitationCode->getLab() === $this) {
+                $invitationCode->setLab(null);
             }
         }
 

@@ -16,6 +16,7 @@ import SandboxManager from './Sandbox/SandboxManager';
 import AllInstancesList from './Instances/AllInstancesList';
 import InstanceFilterSelect from './Instances/InstanceFilterSelect';
 import FilterInstancesList from './Instances/FilterInstancesList';
+import CodeManager from './Lab/CodeManager';
 import GroupInstancesList from './Instances/GroupInstancesList'
 
 ReactOnRails.register({
@@ -28,6 +29,7 @@ ReactOnRails.register({
     InstanceManager,
     InstanceList,
     LabImporter,
+    CodeManager,
     Editor,
     SandboxManager,
     AllInstancesManager,

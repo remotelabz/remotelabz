@@ -15,6 +15,7 @@ use App\Repository\LabRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\DeviceRepository;
+use App\Repository\InvitationCodeRepository;
 
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
@@ -137,7 +138,7 @@ class InstanceController extends Controller
     /**
      * @Rest\Post("/api/instances/create", name="api_create_instance")
      */
-    public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, GroupRepository $groupRepository, LabRepository $labRepository)
+    public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
         $labUuid = $request->request->get('lab');
         $instancierUuid = $request->request->get('instancier');
@@ -146,6 +147,9 @@ class InstanceController extends Controller
         switch ($instancierType) {
             case 'user':
                 $repository = $userRepository;
+                break;
+            case 'guest':
+                $repository = $invitationCodeRepository;
                 break;
             case 'group':
                 $repository = $groupRepository;
@@ -163,9 +167,19 @@ class InstanceController extends Controller
         }*/
         try {
             $this->logger->debug("Lab instance creation: ".$lab->getName());
-            $this->logger->info($this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
+            if ($instancierType == "guest") {
+                $this->logger->info($this->getUser()->getMail()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
+            }
+            else {
+                $this->logger->info($this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
+            }
             $instance = $instanceManager->create($lab, $instancier);
-            $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." Wait ack created message");
+            if ($instancierType == "guest") {
+                $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." Wait ack created message");
+            }
+            else {
+                $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." Wait ack created message");
+            }
         } catch (Exception $e) {
             throw $e;
         }
@@ -374,6 +388,31 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
+        return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
+    }
+
+    /**
+     * @Rest\Get("/api/instances/lab/{labUuid}/by-guest/{guestUuid}", name="api_get_lab_instance_by_guest", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function fetchLabInstanceByGuestAction(
+        Request $request,
+        string $labUuid,
+        string $guestUuid,
+        InvitationCodeRepository $invitationCodeRepository,
+        LabRepository $labRepository
+    ) {
+        if (!$guest = $invitationCodeRepository->findOneBy(['uuid' => $guestUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$lab = $labRepository->findOneBy(['uuid' => $labUuid])) {
+            throw new NotFoundHttpException();
+        }
+
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['guest' => $guest, 'lab' => $lab])) {
+            throw new NotFoundHttpException();
+        }
+   
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
@@ -595,7 +634,6 @@ class InstanceController extends Controller
         if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }
-
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         

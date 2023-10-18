@@ -5,6 +5,8 @@ security:
     password_hashers:
         App\Entity\User:
             algorithm: 'sodium'
+        App\Entity\InvitationCode:
+            algorithm: 'plaintext'
 
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
@@ -13,6 +15,15 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+
+        invited_users:
+            entity:
+                class: App\Entity\InvitationCode
+                property: mail
+
+        all_users:
+            chain:
+                providers: ['app', 'invited_users']
 
     role_hierarchy:
         ROLE_TEACHER: [ROLE_USER]
@@ -23,6 +34,7 @@ security:
         auth:
             pattern:  ^/api/auth
             stateless: true
+            provider: all_users
             json_login:
                 check_path:               /api/auth
                 success_handler:          App\Security\AuthenticationSuccessHandler
@@ -39,6 +51,7 @@ security:
         api:
             pattern:   ^/api
             stateless: true
+            provider: all_users
             jwt: ~
 
         dev:
@@ -53,12 +66,13 @@ security:
             custom_authenticators:
                 - App\Security\LoginFormAuthenticator
                 - App\Security\ShibbolethAuthenticator
+                - App\Security\CodeLoginAuthenticator
             entry_point: App\Security\LoginFormAuthenticator
 
             logout:
                 path: /logout
 
-            switch_user: {role: ROLE_SUPER_ADMINISTRATOR}
+            switch_user: {role: ROLE_SUPER_ADMINISTRATOR, provider: app}
             
             access_denied_handler: App\Security\AccessDeniedHandler
             # activate different ways to authenticate
@@ -75,9 +89,12 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: PUBLIC_ACCESS, ips: [127.0.0.1, '%env(IP_ADDRESS)%'] }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/labs/guest/[1-9]*, roles: ['ROLE_GUEST'] }
         - { path: ^/labs/[1-9]*, roles: ['ROLE_USER'] }
         - { path: ^/labs, roles: ['ROLE_TEACHER'] }
+        - { path: '^/instances/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/view/(vnc|login|serial)', roles: ['ROLE_USER', 'ROLE_GUEST'] }
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin/sandbox, roles: ['ROLE_TEACHER'] }

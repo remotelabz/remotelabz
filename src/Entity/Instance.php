@@ -37,8 +37,14 @@ class Instance implements InstanciableInterface
      */
     protected $_group;
 
+     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\InvitationCode", inversedBy="labInstances")
+     */
+    protected $guest;
+
     public const OWNED_BY_USER  = 'user';
     public const OWNED_BY_GROUP = 'group';
+    public const OWNED_BY_GUEST = 'guest';
 
     public function __construct()
     {
@@ -94,6 +100,11 @@ class Instance implements InstanciableInterface
         return self::OWNED_BY_GROUP === $this->ownedBy;
     }
 
+    public function isOwnedByGuest(): bool
+    {
+        return self::OWNED_BY_GUEST === $this->ownedBy;
+    }
+
     /**
      * Return the owner entity.
      *
@@ -103,8 +114,17 @@ class Instance implements InstanciableInterface
      * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "api_get_user", "api_get_instance_by_uuid", "worker"})
      */
     public function getOwner(): InstancierInterface
-    {
-        return $this->isOwnedByUser() ? $this->getUser() : $this->getGroup();
+    { 
+        if ($this->isOwnedByUser()){
+            return $this->getUser();
+        }
+        else if ($this->isOwnedByGuest()) {
+            return $this->getGuest();
+        }
+        else {
+            return $this->getGroup();
+        }
+        //return $this->isOwnedByUser() ? $this->getUser() : $this->getGroup();
     }
 
     public function setOwner(string $uuid)
@@ -134,6 +154,18 @@ class Instance implements InstanciableInterface
     public function setGroup(?Group $_group)
     {
         $this->_group = $_group;
+
+        return $this;
+    }
+
+    public function getGuest(): ?InvitationCode
+    {
+        return $this->guest;
+    }
+
+    public function setGuest(?InvitationCode $guest)
+    {
+        $this->guest = $guest;
 
         return $this;
     }

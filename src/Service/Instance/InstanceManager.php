@@ -122,6 +122,11 @@ class InstanceManager
                     ->setOwnedBy($instancier->getType());
                 break;
 
+            case 'guest':
+                $labInstance->setGuest($instancier)
+                    ->setOwnedBy($instancier->getType());
+                break;
+
             case 'group':
                 $labInstance->setGroup($instancier);
                 break;

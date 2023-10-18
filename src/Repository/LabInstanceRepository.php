@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Lab;
 use App\Entity\User;
+use App\Entity\InvitationCode;
 use App\Entity\LabInstance;
 use App\Entity\Group;
 use App\Entity\GroupUser;
@@ -30,6 +31,18 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->andWhere('l.user = :user')
             ->andWhere('l.lab = :lab')
             ->setParameter('user', $user)
+            ->setParameter('lab', $lab)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function findByGuestAndLab(InvitationCode $guest, Lab $lab)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.guest = :guest')
+            ->andWhere('l.lab = :lab')
+            ->setParameter('guest', $guest)
             ->setParameter('lab', $lab)
             ->getQuery()
             ->getOneOrNullResult()
