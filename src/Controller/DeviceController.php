@@ -532,14 +532,16 @@ class DeviceController extends Controller
             $data = json_decode($request->getContent(), true);
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
             $entityManager = $this->getDoctrine()->getManager();
-            if(!$operatingSystem = $this->operatingSystemRepository->findByName($data['os'])) {
+            $osName = ucfirst($data['os']);
+            if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
                 $newOs = new OperatingSystem();
-                $newOs->setName($data["os"]);
+                $newOs->setName($osName);
                 $newOs->setHypervisor($hypervisor);
+                $newOs->setImageFilename($osName);
                 $entityManager->persist($newOs);
                 $entityManager->flush();
             }
-            $values = ['os'=> $data["os"], 'model'=> $data['version']];
+            $values = ['os'=> $osName, 'model'=> $data['version']];
             return $this->json($values, 200, [], []);
         }
 
