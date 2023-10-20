@@ -8,6 +8,7 @@ use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\EditorData;
 use App\Entity\ControlProtocolType;
+use App\Entity\OperatingSystem;
 use App\Form\DeviceType;
 use App\Form\EditorDataType;
 use App\Form\ControlProtocolTypeType;
@@ -34,6 +35,8 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
+use JMS\Serializer\SerializationContext;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 
 class DeviceController extends Controller
@@ -375,7 +378,21 @@ class DeviceController extends Controller
     {
 
         $device = new Device();
+
+        if(($params = $request->query->all()) && (isset($params['os'])) && (isset($params['model']))) {
+            $hypervisor = $this->hypervisorRepository->findByName('lxc');
+            $type = "container"; 
+            $device->setType($type);
+            $device->setHypervisor($hypervisor);
+            if ($operatingSystem = $this->operatingSystemRepository->findByName($params['os'])) {
+                $device->setModel($params['model']);
+                $device->setOperatingSystem($operatingSystem);
+            }
+            
+        }
+
         $deviceForm = $this->createForm(DeviceType::class, $device);
+        
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
@@ -452,6 +469,83 @@ class DeviceController extends Controller
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
             'data' => $device
+        ]);
+    }
+
+    /**
+     * @Route("/admin/devices/new_lxc", name="new_lxc_device")
+     * 
+     * @Rest\Post("/api/devices/lxc_params", name="api_new_lxc_device_params")
+     * @Rest\Post("/api/devices/lxc", name="api_new_lxc_device")
+     */
+    public function newLxcAction(Request $request, UrlGeneratorInterface $router)
+    {
+        $file=file_get_contents("https://images.linuxcontainers.org/images");
+        $dom = new \DOMDocument();
+        $dom->loadHtml($file);
+        $links = $dom->getElementsByTagName('a');
+        $os = [];
+        foreach($links as $link){
+            if($link->nodeValue !== "../") {
+                array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
+            }
+        }
+        //$os = ["Almalinux","Alpine","Alt","Amazonlinux","Archlinux","Busybox","Centos","Debian","Devuan","Fedora","Funtoo","Gentoo","Kali","Mint","Openeuler","Opensuse","Openwrt","Oracle","Plamo","Rockylinux","Slackware","Springdalelinux","Ubuntu","Voidlinux"];
+
+        $os_json = json_encode($os);
+
+        if ('json' === $request->getRequestFormat()) {
+            if ($request->get("_route") == "api_new_lxc_device_params") {
+                $data = json_decode($request->getContent(), true);
+                if (!isset($data['version']) && isset($data['os'])) {
+                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os']);
+                    $dom = new \DOMDocument();
+                    $dom->loadHtml($fileVersion);
+                    $links = $dom->getElementsByTagName('a');
+                    $versions = [];
+                    foreach($links as $link){
+                        if($link->nodeValue !== "../") {
+                            array_push($versions, substr($link->nodeValue, 0, -1));
+                        }
+                    }
+                    return $this->json($versions, 200, [], []);
+                }
+                if (!isset($data['date']) && isset($data['version'])) {
+                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os'].$data['version']."amd64/default/");
+                    $dom = new \DOMDocument();
+                    $dom->loadHtml($fileVersion);
+                    $links = $dom->getElementsByTagName('a');
+                    $updates = [];
+                    foreach($links as $link){
+                        if($link->nodeValue !== "../") {
+                            array_push($updates, $link->nodeValue);
+                        }
+                    }
+                    $update = end($updates);
+                    return $this->json($update, 200, [], []);
+                }
+            }
+            //return $this->json($deviceForm, 200, [], ['api_get_device']);
+        }
+
+        if ($request->get("_route") == "api_new_lxc_device") {
+            $data = json_decode($request->getContent(), true);
+            $hypervisor = $this->hypervisorRepository->findByName('lxc');
+            $entityManager = $this->getDoctrine()->getManager();
+            if(!$operatingSystem = $this->operatingSystemRepository->findByName($data['os'])) {
+                $newOs = new OperatingSystem();
+                $newOs->setName($data["os"]);
+                $newOs->setHypervisor($hypervisor);
+                $entityManager->persist($newOs);
+                $entityManager->flush();
+            }
+            $values = ['os'=> $data["os"], 'model'=> $data['version']];
+            return $this->json($values, 200, [], []);
+        }
+
+        return $this->render('device/newLxc.html.twig', [
+            'os' => $os,
+            'props' => $os_json,
         ]);
     }
 

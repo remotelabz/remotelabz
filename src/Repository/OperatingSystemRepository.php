@@ -28,6 +28,9 @@ class OperatingSystemRepository extends ServiceEntityRepository
             ->getResult()
         ;
 
+        if ($operatingSystem == NULL) {
+            return null;
+        }
         return $operatingSystem[0];
     }
     // /**
