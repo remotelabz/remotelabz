@@ -36,7 +36,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
      * @Assert\Type(type="string")
      */
     private $brand;

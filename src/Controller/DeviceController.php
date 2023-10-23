@@ -384,8 +384,11 @@ class DeviceController extends Controller
             $type = "container"; 
             $device->setType($type);
             $device->setHypervisor($hypervisor);
-            if ($operatingSystem = $this->operatingSystemRepository->findByName($params['os'])) {
+            $osName = $params['os']."-".$params['model'];
+            if ($operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
+                $device->setName($osName);
                 $device->setModel($params['model']);
+                $device->setBrand($params['os']);
                 $device->setOperatingSystem($operatingSystem);
             }
             
@@ -532,7 +535,7 @@ class DeviceController extends Controller
             $data = json_decode($request->getContent(), true);
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
             $entityManager = $this->getDoctrine()->getManager();
-            $osName = ucfirst($data['os']);
+            $osName = ucfirst($data['os'])."-".$data['version'];
             if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
                 $newOs = new OperatingSystem();
                 $newOs->setName($osName);
@@ -541,7 +544,7 @@ class DeviceController extends Controller
                 $entityManager->persist($newOs);
                 $entityManager->flush();
             }
-            $values = ['os'=> $osName, 'model'=> $data['version']];
+            $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version']];
             return $this->json($values, 200, [], []);
         }
 
