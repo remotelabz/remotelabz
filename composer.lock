@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8b934e7e7f99792a2dfaf961487dfe28",
+    "content-hash": "31930d34eacd02d00f5de44bb47e8f13",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -568,16 +568,16 @@
         },
         {
             "name": "doctrine/dbal",
-            "version": "3.7.0",
+            "version": "3.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/dbal.git",
-                "reference": "00d03067f07482f025d41ab55e4ba0db5eca2cdf"
+                "reference": "5b7bd66c9ff58c04c5474ab85edce442f8081cb2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/dbal/zipball/00d03067f07482f025d41ab55e4ba0db5eca2cdf",
-                "reference": "00d03067f07482f025d41ab55e4ba0db5eca2cdf",
+                "url": "https://api.github.com/repos/doctrine/dbal/zipball/5b7bd66c9ff58c04c5474ab85edce442f8081cb2",
+                "reference": "5b7bd66c9ff58c04c5474ab85edce442f8081cb2",
                 "shasum": ""
             },
             "require": {
@@ -661,7 +661,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/dbal/issues",
-                "source": "https://github.com/doctrine/dbal/tree/3.7.0"
+                "source": "https://github.com/doctrine/dbal/tree/3.7.1"
             },
             "funding": [
                 {
@@ -677,7 +677,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-09-26T20:56:55+00:00"
+            "time": "2023-10-06T05:06:20+00:00"
         },
         {
             "name": "doctrine/deprecations",
@@ -4488,16 +4488,16 @@
         },
         {
             "name": "remotelabz/remotelabz-message-bundle",
-            "version": "1.0.5",
+            "version": "dev-9-add-export-lab-message",
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
-                "reference": "babcf2593140268a0df75d0bc24e923184f3579a"
+                "reference": "d3c53053b030d31910c03cf0f33852f6fded3548"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/babcf2593140268a0df75d0bc24e923184f3579a",
-                "reference": "babcf2593140268a0df75d0bc24e923184f3579a",
+                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/d3c53053b030d31910c03cf0f33852f6fded3548",
+                "reference": "d3c53053b030d31910c03cf0f33852f6fded3548",
                 "shasum": ""
             },
             "require": {
@@ -4540,10 +4540,10 @@
             ],
             "description": "Shared messages between remotelabz components.",
             "support": {
-                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/1.0.5",
+                "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/9-add-export-lab-message",
                 "issues": "https://github.com/remotelabz/remotelabz-message-bundle/issues"
             },
-            "time": "2023-03-31T09:50:48+00:00"
+            "time": "2023-10-17T11:43:54+00:00"
         },
         {
             "name": "s1lentium/iptools",
@@ -12929,7 +12929,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "remotelabz/remotelabz-message-bundle": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -12938,5 +12940,5 @@
         "ext-iconv": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.2.0"
 }
