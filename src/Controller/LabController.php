@@ -293,6 +293,67 @@ class LabController extends Controller
     }
 
     /**
+     * @Route("/labs/guest/{id<\d+>}", name="show_lab_to_guest", methods="GET")
+     * 
+     */
+    public function showToGuestAction(
+        int $id,
+        Request $request,
+        UserInterface $guestUser,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
+    {
+        $lab = $labRepository->find($id);
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+
+        // Remove all instances not belongs to current user (changes are not stored in database)
+        $userLabInstance = $labInstanceRepository->findByGuestAndLab($guestUser, $lab);
+        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
+        $deviceStarted = [];
+
+        foreach ($lab->getDevices()->getValues() as $device) {
+            $deviceStarted[$device->getId()] = false;
+
+            if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
+                $deviceStarted[$device->getId()] = true;
+            }
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            $context=$request->get('_route');
+            //Change the context value to limit the return information
+            return $this->json($lab, 200, [], [$context]);
+        }
+
+        $instanceManagerProps = [
+            'user' => $this->getUser(),
+            'labInstance' => $userLabInstance,
+            'lab' => $lab,
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
+            'isSandbox' => false
+        ];
+
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            SerializationContext::create()->setGroups(['api_invitation_codes','api_get_lab','api_get_lab_instance'])
+        );
+        //$this->logger->debug("show_lab props".$props);
+        return $this->render('lab/guest_view.html.twig', [
+            'lab' => $lab,
+            'labInstance' => $userLabInstance,
+            'deviceStarted' => $deviceStarted,
+            'user' => $guestUser,
+            'props' => $props,
+        ]);
+    }
+
+    /**
      * @Route("/labs/info/{id<\d+>}", name="show_lab_test", methods="GET")
      * 
      * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
@@ -315,6 +376,7 @@ class LabController extends Controller
             "version"=>$lab["version"],
             "scripttimeout"=>$lab["scripttimeout"],
             "lock"=>$lab["locked"],
+            "timer"=>$lab["timer"]
         ];
 
         $response = new Response();
@@ -807,12 +869,20 @@ class LabController extends Controller
     {
         $lab = $this->labRepository->find($id);
 
-        $data = json_decode($request->getContent(), true);   
+        $data = json_decode($request->getContent(), true); 
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
+        if ($data['timer'] !== "" && $data['timer'] != "00:00:00") {
+            $lab->setHasTimer(true);
+            $lab->setTimer($data['timer']);
+        }
+        else {
+            $lab->setHasTimer(false);
+            $lab->setTimer(null);          
+        }
         //$lab->setDescription($data['body']);
 
         $entityManager = $this->getDoctrine()->getManager();

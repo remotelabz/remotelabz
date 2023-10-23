@@ -3,7 +3,11 @@
 {% set breadcrumbs = breadcrumbs | default({}) %}
 
 {% block header %}
+  {% if is_granted('ROLE_GUEST') %}
+  {% include "header_guest.html.twig" %}
+  {% else %}
   {% include "header.html.twig" %}
+  {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -11,10 +15,10 @@
     {% block sidebar %}
     {% if is_granted('ROLE_ADMINISTRATOR') %}
       {% include "sidebar.admin.html.twig" %}
+    {% elseif is_granted('ROLE_GUEST') %}
     {% else %}
         {% include "sidebar.html.twig" %}
       {% endif %}
-    #}
     {% endblock %}
 
     {% set wrapper_fluid = block('wrapper_fluid') is defined %}

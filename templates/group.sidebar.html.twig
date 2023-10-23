@@ -27,7 +27,9 @@
                 {{ sidebar.link("Labs", 'dashboard_add_lab_group', {slug: group.path}, 'monitor', 'dashboard_add_lab_group', _context) }}
                 {{ sidebar.link("Settings", 'dashboard_edit_group', {slug: group.path}, 'settings', 'dashboard_edit_group', _context) }}
             {% endif %}
-
+            {% if (group.isElevatedUser(app.user) or is_granted('ROLE_ADMINISTRATOR'))%}
+                {{ sidebar.link("Group instances", 'dashboard_group_instances', {slug: group.path}, 'monitor', 'dashboard_group_instances', _context) }}
+            {% endif %}
             <div class="nav-item">
             <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
                 <span class="toggle-sidebar-hide">{{ svg('angle-double-left') }}Collapse sidebar</span>

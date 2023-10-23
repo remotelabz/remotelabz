@@ -1,0 +1,46 @@
+{% import "dashboard.base.html.twig" as dashboard %}
+
+{% macro navlink(name, link, expandable, c, variables) %}
+  <li class="nav-item ml-2">
+    <a class="nav-link d-flex align-items-center {%- if c == variables.category %} active{%endif%}" href="{{ path(link) }}">
+      <span class="menu-title mr-1">{{name}}</span>
+      {%- if expandable == true %}{{- svg('angle-down', 's11') -}}{% endif -%}
+    </a>
+  </li>
+{% endmacro %}
+
+{% block header %}
+    {% set category = category|default('dashboard') %}
+  <nav class="navbar">
+    <div class="navbar-menu-wrapper">
+      <div class="navbar-menu-element">
+        <a class="nav-link"><img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" /></a>
+      </div>
+      <div class="navbar-menu-element">
+      </div>
+      <div class="separator flex-grow-1"></div>
+      <div class="navbar-menu-element">
+        {{ app.user.mail }}
+        <ul class="navbar-nav ml-lg-auto">
+          <li class="nav-item d-sm-block profile-img dropdown">
+            <a class="nav-link profile-image" href="#" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{ svg('angle-down', 'image-sm') }}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink" style="position: absolute;will-change: transform;">
+              <div class="dropdown-header">
+                {{ app.user.mail }}
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item d-flex justify-content-between align-items-center" id="themeSwitcherDiv">Dark theme
+                <input id="themeSwitcher" class="tgl tgl-ios" type="checkbox" {% if app.request.cookies.get('theme') == "dark" %}checked{% endif %} />
+                <label class="tgl-btn mb-0" for="themeSwitcher"></label>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{{ path('logout') }}">Sign out</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+{% endblock %}
