@@ -166,7 +166,17 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             if ($instance->getState() === InstanceStateMessage::STATE_DELETED) {
                 $this->logger->debug("Instance state deleted received");
                 //When the instance is from a sandbox, we can delete the lab and its devices.
+                
                 $lab=$instance->getLab();
+                if (null !== $lab->getPictures()) {
+                    
+                    foreach($lab->getPictures() as $picture) {
+                        $type = explode("image/",$picture->getType())[1];
+                        if(is_file('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                            unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                        }
+                    }
+                }
                 $this->entityManager->remove($instance);
                 $this->entityManager->flush();
 

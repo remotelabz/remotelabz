@@ -212,20 +212,16 @@ export default function InstanceFilterSelect(props = {labInstances}) {
         console.log(item);
 
         if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();  
-            console.log("a");  
+            request = Remotelabz.instances.lab.getOwnedByGroup();    
         }
         else if (filter == "group" && item != "allGroups") {
             request = Remotelabz.instances.lab.getByGroup(item);
-            console.log("b"); 
         }
         else if (item == "allLabs") {
             request = Remotelabz.instances.lab.getOrderedByLab();
-            console.log("c"); 
         }
         else if (filter == "lab" && item != "allLabs") {
             request = Remotelabz.instances.lab.getByLab(item);
-            console.log("g"); 
         }
         else if (item == "allTeachers" || item == "allStudents" || item == "allAdmins") {
             let userType = "";
@@ -240,15 +236,12 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
 
             request = Remotelabz.instances.lab.getOwnedByUserType(userType);
-            console.log("d"); 
         }
         else if ((filter == "teacher" && item != "allTeachers") || (filter == "student" && item != "allStudents") || (filter == "admin" && item != "allAdmins")) {
             request = Remotelabz.instances.lab.getByUser(item);
-            console.log("e"); 
         }
         else if (item == "allInstances"){
             request = Remotelabz.instances.lab.getAll(); 
-            console.log("f"); 
         }
         
         request.then(response => {

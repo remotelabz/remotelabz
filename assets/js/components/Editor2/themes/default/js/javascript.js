@@ -38,6 +38,7 @@ export var isIE = getInternetExplorerVersion() > -1;
 export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
 export var EVE_VERSION = "5.0.1-19";
 export var AUTHOR;
+export var TEMPLATE;
 
 export function setFolder(value){
 	FOLDER = value;
@@ -80,6 +81,10 @@ export function setEditon(value) {
 
 export function setAuthor(value) {
 	AUTHOR = value;
+}
+
+export function setTemplate(value) {
+	TEMPLATE = value;
 }
 
 $(document).ready(function() {

@@ -381,6 +381,31 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template/{id}`
+         * 
+         *  @param {number} id  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplate(id) {
+            return axios.get(`/labs/template/${id}`);
+        },
+
+        /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template`
+         *  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplates() {
+            return axios.get(`/labs/template`);
+        },
+
+        /**
          * Updates a lab by ID.
          * 
          * Implements PUT `/api/labs/{id}`
@@ -438,8 +463,21 @@ export class RemotelabzAPI {
 
         addDeviceInLab(id,options) {
             return axios.post(`/labs/${id}/devices`,options);
-        }
+        },
 
+        /**
+         * 
+         * Add device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}`
+         * @param {int} id
+         * @returns 
+         */
+
+        delete(id) {
+            return axios.delete(`/labs/${id}`);
+        }
+        
     }
 
     /**
@@ -542,6 +580,22 @@ export class RemotelabzAPI {
         get(uuid) {
             return axios.get(`/instances/by-uuid/${uuid}`);
         },
+
+        /**
+             * Request an async instance by UUID.
+             * 
+             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid
+             * @param {string} name
+             * @param {string} type
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+        export(uuid,new_name,type) {
+            return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_name, type: type}});
+        },
+
         /**
          * Lab instances methods
          */
@@ -799,20 +853,6 @@ export class RemotelabzAPI {
 
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
-            },
-            
-            /**
-             * Request an async device instance stop by UUID.
-             * 
-             * Implements GET `/api/instances/export/by-uuid/{uuid}`
-             * 
-             * @param {string} uuid
-             * @param {string} name
-             * 
-             * @returns {Promise<import('axios').AxiosResponse<void>>}
-             */
-            export(uuid,new_device_name) {
-                return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_device_name}});
             }
         },
     }
@@ -847,6 +887,50 @@ export class RemotelabzAPI {
          */
         join(labUuid, groupUuid) {
             return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/join`);
+        }
+    }
+
+    /**
+     * textObject endpoint.
+     */
+    textObjects = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements POST `/api/labs/{labid}/textobjects
+         * 
+         * @typedef {Object} newTextObjectParams
+         * @property {number} id ID of the lab of the textobject
+         * @property {Object} fields Fields of textobject
+         * 
+         * @param {newTextObjectParams} params 
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        new(params) {
+            return axios.post(`/labs/${params.labid}/textobjects`, params.fields);
+        }
+    }
+
+    /**
+     * picture endpoint.
+     */
+    pictures = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements POST `/api/labs/{labid}/pictures
+         * 
+         * @typedef {Object} newPictureParams
+         * @property {number} id ID of the lab of the picture
+         * @property {Object} fields Fields of picture
+         * 
+         * @param {newPictureParams} params 
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        new(params) {
+            return axios.post(`/labs/${params.labid}/pictures`, params.fields);
         }
     }
 }

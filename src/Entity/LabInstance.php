@@ -66,6 +66,12 @@ class LabInstance extends Instance
      */
     private $state;
 
+    /**
+     * @ORM\Column(type="datetime", nullable="true")
+     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     */
+    private $timerEnd;
+
 
     //TODO add hypervisor IP to manage cluster of hypervisor
     //@ORM\Column(type=.., length=)
@@ -259,6 +265,18 @@ class LabInstance extends Instance
     public function setState(?string $state): self
     {
         $this->state = $state;
+
+        return $this;
+    }
+
+    public function getTimerEnd(): ?\DateTimeInterface
+    {
+        return $this->timerEnd;
+    }
+
+    public function setTimerEnd(\DateTimeInterface $timerEnd): self
+    {
+        $this->timerEnd = $timerEnd;
 
         return $this;
     }

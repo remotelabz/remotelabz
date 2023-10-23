@@ -6,7 +6,10 @@ use DateTime;
 use App\Entity\Device;
 use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
+use App\Entity\EditorData;
 use App\Entity\Lab;
+use App\Entity\Picture;
+use App\Entity\TextObject;
 use App\Entity\LabInstance;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
@@ -18,6 +21,8 @@ use App\Instance\InstanceState;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Remotelabz\Message\Message\InstanceStateMessage;
 use App\Repository\DeviceRepository;
+use App\Repository\TextObjectRepository;
+use App\Repository\PictureRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
@@ -79,6 +84,8 @@ class InstanceManager
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         ControlProtocolTypeInstanceRepository $controlProtocolTypeInstanceRepository,
         DeviceRepository $DeviceRepository,
+        TextObjectRepository $TextObjectRepository,
+        PictureRepository $PictureRepository,
         OperatingSystemRepository $OperatingSystemRepository,
         string $workerServer,
         string $workerPort,
@@ -95,6 +102,8 @@ class InstanceManager
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->controlProtocolTypeInstanceRepository = $controlProtocolTypeInstanceRepository;
         $this->DeviceRepository=$DeviceRepository;
+        $this->TextObjectRepository=$TextObjectRepository;
+        $this->PictureRepository=$PictureRepository;
         $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
@@ -145,6 +154,11 @@ class InstanceManager
             ->setState(InstanceStateMessage::STATE_CREATING)
             ->setNetwork($network)
             ->populate();
+
+        if ($lab->getHasTimer() == true) {
+            $timer = explode(":",$lab->getTimer());
+            $labInstance->setTimerEnd(new \DateTime('@'.strtotime( '+' .$timer[0].' hours ' . $timer[1]. ' minutes ' .$timer[2]. ' seconds')));
+        }
 
         $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
@@ -234,7 +248,7 @@ class InstanceManager
     /**
      * Export a device template to new device template.
      */
-    public function export(DeviceInstance $deviceInstance, string $name)
+    public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
         $deviceInstance->setState(InstanceState::EXPORTING);
@@ -282,8 +296,71 @@ class InstanceManager
 
         $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV)
         );
+    }
+
+    function exportlab(LabInstance $labInstance, string $name) {
+        $uuid = $labInstance->getUuid();
+        $this->logger->debug('Exporting lab instance with UUID ' . $uuid . '.');
+
+        $now = new DateTime();
+
+        $lab = $this->copyLab($labInstance->getLab(), $name);
+        $this->entityManager->persist($lab);
+        $this->entityManager->flush();
+        foreach($lab->getPictures() as $picture) {
+            $type = explode("image/",$picture->getType())[1];
+            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+        }
+        foreach($labInstance->getDeviceInstances() as $deviceInstance) {
+            $device = $deviceInstance->getDevice();
+            $osName = $device->getOperatingSystem()->getName()."_".$name;
+            $deviceName = $device->getName()."_".$name;
+            $deviceInstanceUuid = $deviceInstance->getUuid();
+            $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
+            $id = uniqid();
+            $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+
+            $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
+
+            $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
+            $newDevice = $this->copyDevice($device, $newOS, $deviceName);
+            $this->entityManager->persist($newOS);
+
+            $newEditorData = new EditorData();
+            $newEditorData->setY($device->getEditorData()->getY());
+            $newEditorData->setX($device->getEditorData()->getX());
+            $this->entityManager->persist($newEditorData);
+            $newDevice->setEditorData($newEditorData);
+            $this->entityManager->persist($newDevice);
+            $newEditorData->setDevice($newDevice);
+
+            $lab->addDevice($newDevice);
+            $this->entityManager->flush();
+
+            $context = SerializationContext::create()->setGroups('api_get_lab_instance');
+            $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+            $this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
+
+            $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+            for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
+                if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
+                    $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
+                    $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
+                    $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
+                    $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
+                }
+            }
+
+            $labJson = json_encode($tmp, 0, 4096);
+
+        }
+        $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB)
+            );
+        
     }
 
     public function setStopped(DeviceInstance $deviceInstance)
@@ -346,6 +423,55 @@ class InstanceManager
         return $newOS;
     }
 
+    public function copyLab(Lab $lab, string $name): Lab
+    {
+        $newLab = new Lab();
+        $newLab->setName($name);
+        $newLab->setShortDescription($lab->getShortDescription());
+        $newLab->setDescription($lab->getDescription());
+        $newLab->setIsTemplate(true);
+        $newLab->setTasks($lab->getTasks());
+        $newLab->setVersion($lab->getVersion());
+        $newLab->setScripttimeout($lab->getScripttimeout());
+        $newLab->setLocked($lab->getLocked());
+        $newLab->setBanner($lab->getBanner());
+        $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
+
+        foreach($lab->getTextobjects() as $textObject) {
+            $newTextObject = new TextObject();
+            $newTextObject->setName($textObject->getName());
+            $newTextObject->setType($textObject->getType());
+            $newTextObject->setData($textObject->getData());
+            $newTextObject->setLab($newLab);
+            $this->entityManager->persist($newTextObject);
+            $newLab->addTextobject($newTextObject);
+        }
+       
+        foreach($lab->getPictures() as $picture) {
+            $newPicture = new Picture();
+            $newPicture->setName($picture->getName());
+            $newPicture->setHeight($picture->getHeight());
+            $newPicture->setWidth($picture->getWidth());
+            $newPicture->setMap($picture->getMap());
+            $newPicture->setType($picture->getType());
+
+            $type = explode("image/",$picture->getType())[1];
+            $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
+            $fp = fopen($fileName, 'r');
+            $size = filesize($fileName);
+            if ($fp !== False) {
+                $data = fread($fp, $size);
+                $newPicture->setData($data);
+            }
+            $this->entityManager->persist($newPicture);
+            $newLab->addPicture($newPicture);
+        }
+        
+        $newLab->setAuthor($lab->getAuthor());
+
+        return $newLab;
+    }
+
     public function copyDevice(Device $device, OperatingSystem $os, string $name): Device
     {
         $newDevice = new Device();
@@ -358,6 +484,12 @@ class InstanceManager
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+        if($device->getIcon() != NULL) {
+            $newDevice->setIcon($device->getIcon());
+        }
+        $newDevice->setNbSocket($device->getNbSocket());
+        $newDevice->setNbCore($device->getNbCore());
+        $newDevice->setNbThread($device->getNbThread());
 
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
@@ -366,12 +498,12 @@ class InstanceManager
             $new_setting=clone $network_int->getSettings();
             
             $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName("int".$i."_".$name);
+            $new_network_inter->setName($name."_net".$i);
+            $new_network_inter->setVlan($network_int->getVlan());
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);
         }
-
         foreach ($device->getControlProtocolTypes() as $control_protocol) {
             $newDevice->addControlProtocolType($control_protocol);
         }

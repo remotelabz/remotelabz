@@ -4,11 +4,14 @@ namespace App\Service\Lab;
 
 use App\Entity\Device;
 use App\Entity\EditorData;
+use App\Entity\TextObject;
+use App\Entity\Picture;
 use App\Entity\Lab;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\OperatingSystem;
 use App\Repository\FlavorRepository;
+use App\Repository\HypervisorRepository;
 use App\Repository\LabRepository;
 use App\Repository\OperatingSystemRepository;
 use Doctrine\Common\Collections\Criteria;
@@ -18,6 +21,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use function Symfony\Component\String\u;
 
 class LabImporter
 {
@@ -36,7 +40,8 @@ class LabImporter
         FlavorRepository $flavorRepository,
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager,
-        OperatingSystemRepository $operatingSystemRepository
+        OperatingSystemRepository $operatingSystemRepository,
+        HypervisorRepository $hypervisorRepository
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -45,6 +50,7 @@ class LabImporter
         $this->labRepository = $labRepository;
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
+        $this->hypervisorRepository = $hypervisorRepository;
     }
 
     /**
@@ -75,22 +81,66 @@ class LabImporter
             throw new InvalidArgumentException("Invalid JSON was provided!");
         }
 
+
         $lab = new Lab();
         if (array_key_exists("description",$labJson)) {
             $this->logger->debug("Lab description found");
             $lab->setDescription($labJson['description']);
         }
-
-            else {
+        else {
             $this->logger->debug("No lab description found");
-            $lab->setDescription("");
-            
+            $lab->setDescription("");        
+        }
+
+        if (array_key_exists("shortDescription",$labJson)) {
+            $this->logger->debug("Lab short description found");
+            $lab->setShortDescription($labJson['shortDescription']);
+        }
+        else {
+            $this->logger->debug("No lab short description found");
+            $lab->setShortDescription("");
+        }
+        if (array_key_exists("textobjects",$labJson)) {
+            $this->logger->debug("Lab textobjects found");
+            foreach ($labJson['textobjects'] as $textobject) {
+                $newTextObject = new TextObject();
+                $newTextObject->setName($textobject['name']);
+                $newTextObject->setType($textobject['type']);
+                $newTextObject->setData($textobject['data']);
+                $newTextObject->setLab($lab);
+                $this->entityManager->persist($newTextObject);
+                $lab->addTextobject($newTextObject);
             }
+        }
+        if (array_key_exists("pictures",$labJson)) {
+            $this->logger->debug("Lab pictures found");
+            foreach ($labJson['pictures'] as $picture) {
+                $newPicture = new Picture();
+                $newPicture->setName($picture['name']);
+                $newPicture->setHeight($picture['height']);
+                $newPicture->setWidth($picture['width']);
+                $newPicture->setMap($picture['map']);
+                $newPicture->setType($picture['type']);
+                $newPicture->setLab($lab);
+                
+                $type = explode("image/",$picture['type'])[1];
+                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labJson['id'].'-'.$picture['name'].'.'.$type;
+                $fp = fopen($fileName, 'r');
+                $size = filesize($fileName);
+                if ($fp !== False) {
+                    $data = fread($fp, $size);
+                    $newPicture->setData($data);
+                }
+                $this->entityManager->persist($newPicture);
+                $lab->addPicture($newPicture);
+            }
+        }
         $lab
             ->setName($labJson['name'])
             ->setAuthor($this->tokenStorage->getToken()->getUser())
-            ->setDescription($labJson['description'])
-            ->setShortDescription($labJson['shortDescription'])
+            ->setIsTemplate(false)
+            //->setDescription($labJson['description'])
+            //->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
         ;
 
@@ -152,6 +202,10 @@ class LabImporter
 
             $this->entityManager->persist($editorData);
 
+            if (!$hypervisor = $this->hypervisorRepository->find($deviceJson['hypervisor']['id'])) {
+                $hypervisor = NULL;
+            }
+
             // creating device
             $device = new Device();
 
@@ -160,14 +214,29 @@ class LabImporter
                 ->setBrand($deviceJson['brand'])
                 ->setModel($deviceJson['model'])
                 ->setType($deviceJson['type'])
-                ->setVirtuality($deviceJson['virtuality'])
-                ->setHypervisor($deviceJson['hypervisor'])
-                ->setVnc($deviceJson['vnc'])
+                ->setIcon($deviceJson['icon'])
+                ->setVirtuality(0)
+                ->setHypervisor($hypervisor)
+                ->setNbCpu($deviceJson['nbCpu'])
+                ->setTemplate($deviceJson['id']."_".u($deviceJson['name'])->camel())
+                //->setVnc($deviceJson['vnc'])
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)
                 ->setEditorData($editorData)
                 ->setIsTemplate(false);
             ;
+
+            if(isset($deviceJson['nbSocket'])) {
+                $device->setNbSocket($deviceJson['nbSocket']);
+            }
+
+            if(isset($deviceJson['nbCore'])) {
+                $device->setNbCore($deviceJson['nbCore']);
+            }
+
+            if(isset($deviceJson['nbThread'])) {
+                $device->setNbThread($deviceJson['nbThread']);
+            }
 
             foreach ($deviceJson['networkInterfaces'] as $networkInterfaceJson) {
                 $networkInterface = new NetworkInterface();
@@ -199,6 +268,10 @@ class LabImporter
 
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
+        foreach($lab->getPictures() as $picture) {
+            $type = explode("image/",$picture->getType())[1];
+            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+        }
 
         $createdLab = $this->labRepository->findOneBy(['uuid' => $lab->getUuid()]);
 
