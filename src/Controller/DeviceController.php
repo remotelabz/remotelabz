@@ -138,18 +138,24 @@ class DeviceController extends Controller
 
             if($nodeData['edition'] == 0) {
                 $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
-                if($deviceInstance->getState() == 'started') {
+                if ($device->getType() != "switch") {
+                    if($deviceInstance->getState() == 'started') {
+                        $status = 2;
+                    }
+                    else if($deviceInstance->getState() == 'stopped' || $deviceInstance->getState() == 'error') {
+                        $status = 0;
+                    }
+                    else if ($deviceInstance->getState() == 'starting'){
+                        $status = 3;
+                    }
+                    else if ($deviceInstance->getState() == 'stopping'){
+                        $status = 1;
+                    }
+                }
+                else {
                     $status = 2;
                 }
-                else if($deviceInstance->getState() == 'stopped') {
-                    $status = 0;
-                }
-                else if ($deviceInstance->getState() == 'starting'){
-                    $status = 3;
-                }
-                else if ($deviceInstance->getState() == 'stopping'){
-                    $status = 1;
-                }
+                
                 $uuid = $deviceInstance->getUuid();
             }
             else {
@@ -257,18 +263,24 @@ class DeviceController extends Controller
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] != null) {
             $labInstance = $this->labInstanceRepository->find($nodeData['labInstance']);
             $deviceInstance = $this->deviceInstanceRepository->findByDeviceAndLabInstance($device, $labInstance);
-            if($deviceInstance->getState() == 'started') {
+            if ($device->getType() != "switch") {
+                if($deviceInstance->getState() == 'started') {
+                    $status = 2;
+                }
+                else if ($deviceInstance->getState() == 'stopped'|| $deviceInstance->getState() == 'error'){
+                    $status = 0;
+                }
+                else if ($deviceInstance->getState() == 'starting'){
+                    $status = 3;
+                }
+                else if ($deviceInstance->getState() == 'stopping'){
+                    $status = 1;
+                }
+            }
+            else {
                 $status = 2;
             }
-            else if ($deviceInstance->getState() == 'stopped'){
-                $status = 0;
-            }
-            else if ($deviceInstance->getState() == 'starting'){
-                $status = 3;
-            }
-            else if ($deviceInstance->getState() == 'stopping'){
-                $status = 1;
-            }
+            
             $uuid = $deviceInstance->getUuid();
         }
         if($nodeData['edition'] == 0 && $nodeData['labInstance'] == null) {
@@ -385,7 +397,7 @@ class DeviceController extends Controller
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
-            $this->addNetworkInterface($device);
+            //$this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
             $entityManager = $this->getDoctrine()->getManager();

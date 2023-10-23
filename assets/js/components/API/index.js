@@ -138,6 +138,13 @@ const url = require('url');
  * @property {{id: number, name: string, role: UserGroupRole}} users
  * @property {Group[]} children
  * 
+ * @typedef {Object} InvitationCode
+ * @property {number} id
+ * @property {string} mail
+ * @property {string} code
+ * @property {string} expiryDate Datetime format.
+ * @property {{id: number, name: string}} lab
+ * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
@@ -436,6 +443,24 @@ export class RemotelabzAPI {
     }
 
     /**
+     * InvitationCode endpoint.
+     */
+    invitationCode = {
+        /**
+         * Get a invotation code by lab ID.
+         * 
+         * Implements GET `/api/codes/by-lab/{id}`
+         * 
+         * @param {number} id 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<InvitationCode>>}
+         */
+        getByLab(id) {
+            return axios.get(`/codes/by-lab/${id}`);
+        }
+    }
+
+    /**
      * Network interfaces endpoint.
      */
     networkInterfaces = {
@@ -585,6 +610,20 @@ export class RemotelabzAPI {
             },
 
             /**
+             * Get a lab instance by lab and user UUID.
+             * 
+             * Implements GET `/api/instances/lab/{labUuid}/by-guest/{guestUuid}`
+             * 
+             * @param {string} labUuid
+             * @param {string} guestUuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getByLabAndGuest(labUuid, guestUuid) {
+                return axios.get(`/instances/lab/${labUuid}/by-guest/${guestUuid}`);
+            },
+
+            /**
              * Get lab instances by user UUID.
              * 
              * Implements GET `/api/instances/lab/by-user/{userUuid}`
@@ -635,6 +674,33 @@ export class RemotelabzAPI {
              */
             getByGroup(groupUuid) {
                 return axios.get(`/instances/lab/by-group/${groupUuid}`);
+            },
+
+            /**
+             * Get lab instances of group.
+             * 
+             * Implements GET `/api/groups/{slug}/instances`
+             * 
+             * @param {string} slug
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstances(slug) {
+                return axios.get(`/groups/${slug}/instances`);
+            },
+
+            /**
+             * Get lab instances of group by lab.
+             * 
+             * Implements GET `/api/groups/{slug}/lab/{uuid}/instances`
+             * 
+             * @param {string} slug
+             * @param {string} uuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstancesByLab(slug, uuid) {
+                return axios.get(`/groups/${slug}/lab/${uuid}/instances`);
             },
 
             /**

@@ -258,37 +258,33 @@ export function closeLab() {
             }
         });
 
-        if (running_nodes == false) {
-            var url = '/api/labs/close';
-            var type = 'DELETE';
-            $.ajax({
-                cache: false,
-                timeout: TIMEOUT,
-                type: type,
-                url: encodeURI(url),
-                dataType: 'json',
-                success: function (data) {
-                    if (data['status'] == 'success') {
-                        logger(1, 'DEBUG: lab closed.');
-                        setLab(null);
-                        deferred.resolve();
-                    } else {
-                        // Application error
-                        logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                        deferred.reject(data['message']);
-                    }
-                },
-                error: function (data) {
-                    // Server error
-                    var message = getJsonMessage(data['responseText']);
-                    logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-                    logger(1, 'DEBUG: ' + message);
-                    deferred.reject(message);
+        var url = '/api/labs/close';
+        var type = 'DELETE';
+        $.ajax({
+            cache: false,
+            timeout: TIMEOUT,
+            type: type,
+            url: encodeURI(url),
+            dataType: 'json',
+            success: function (data) {
+                if (data['status'] == 'success') {
+                    logger(1, 'DEBUG: lab closed.');
+                    setLab(null);
+                    deferred.resolve();
+                } else {
+                    // Application error
+                    logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                    deferred.reject(data['message']);
                 }
-            });
-        } else {
-            deferred.reject(MESSAGES[131]);
-        }
+            },
+            error: function (data) {
+                // Server error
+                var message = getJsonMessage(data['responseText']);
+                logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+                logger(1, 'DEBUG: ' + message);
+                deferred.reject(message);
+            }
+        });
     }).fail(function (message) {
         // Lab maybe does not exist, closing
         var url = '/api/labs/close';
@@ -1996,13 +1992,14 @@ export function setNodeData(id){
 }
 
 //set note interface
-export function setNodeInterface(node_id,interface_id,vlan){
+export function setNodeInterface(node_id,interface_id,vlan, connection){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = {};
     form_data["interface id"] = interface_id;
     form_data["vlan"] = vlan;
+    form_data["connection"] = connection;
 
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id +'/interfaces';
     var type = 'PUT';
@@ -2106,6 +2103,41 @@ export function getVlan(){
 
 }
 
+//get connection
+export function getConnection(){
+
+    var deferred = $.Deferred();
+    var lab_filename = $('#lab-viewport').attr('data-path');
+
+    var url = '/api/labs/' + lab_filename + '/connections';
+    var type = 'Get';
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: connection listed.');
+                deferred.resolve(data);
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                deferred.reject(data['message']);
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            deferred.reject(message);
+        }
+    });
+    return deferred.promise();
+
+}
+
 // Start node(s)
 export function start(node_id) {
     var deferred = $.Deferred();
@@ -2178,6 +2210,9 @@ export function recursive_start(nodes, i) {
     var node_data = {};
     node_data['edition'] = edition;
     node_data['labInstance'] = labInstance;
+    console.log(nodes);
+
+    if (nodes[Object.keys(nodes)[i]].type != "switch") {
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
         var url = '/api/labs/' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/start';
     } else {
@@ -2225,6 +2260,15 @@ export function recursive_start(nodes, i) {
         }
     });
     return deferred.promise();
+    }
+    else {
+        if (i > 0) {
+            recursive_start(nodes, i);
+        } else {
+            addMessage('info', 'Start All: done');
+        }
+    }
+
 }
 
 // Stop node(s)
@@ -3698,6 +3742,7 @@ export function printLabTopology() {
                 'style="top: ' + value['top'] + 'px; left: ' + value['left'] + 'px;" ' +
                 'data-path="' + value['id'] + '" ' +
                 'data-status="' + value['status'] + '" ' +
+                'data-type="' + value['type'] + '" ' +
                 'data-name="' + value['name'] + '">' +
                 '<div class="tag  hidden" title="Connect to another node">'+
                 '<i class="fa fa-plug plug-icon dropdown-toggle ep"></i>'+
@@ -4301,9 +4346,11 @@ function createNodeListRow(template, id){
         //node actions
         html_data += '<td><div class="action-controls">';
         if (EDITION == 0) {
-            html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
-                         '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
-                         //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
+            if (node_values['type'] != 'switch') {
+                html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
+                            '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';
+                            //'<a class="action-nodewipe" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[68] + '"><i class="glyphicon glyphicon-erase"></i></a>'
+            }
         }
         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
         //if ((ROLE != 'ROLE_USER') && LOCK == 0 ) {
@@ -5823,6 +5870,8 @@ function newConnModal(info , oe ) {
                            '<input type="hidden" name="addConn[dstNodeId]" value="'+linktargetdata['id']+'">' +
                            '<input type="hidden" name="addConn[srcNodeType]" value="'+linksourcetype+'">' +
                            '<input type="hidden" name="addConn[dstNodeType]" value="'+linktargettype+'">' +
+                           '<input type="hidden" name="addConn[srcElementType]" value="'+linksourcedata['type']+'">' +
+                           '<input type="hidden" name="addConn[dstElementType]" value="'+linktargetdata['type']+'">' +
                            '<div class="row">' +
                             '<div class="col-md-4">' +
                                 '<div style="text-align:center;" >'+ linksourcedata['name']  + '</div>' +

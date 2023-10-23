@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\User;
+use App\Entity\InvitationCode;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
 use Doctrine\Common\Collections\Collection;
@@ -138,6 +139,12 @@ class Lab implements InstanciableInterface
      * @var string A "H:i:s" formatted value 
      */
     private $timer;
+  
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\InvitationCode", mappedBy="lab", cascade={"persist", "remove"})
+     * @Serializer\Groups({})
+     */
+    private $invitationCodes;
 
     public function __construct()
     {
@@ -414,6 +421,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
+
     public function getTimer(): ?string
     {
         return $this->timer;
@@ -422,6 +430,24 @@ class Lab implements InstanciableInterface
     public function setTimer(?string $timer): self
     {
         $this->timer = $timer;
+      
+        return $this;
+    }
+
+    /**
+     * @return Collection|InvitationCode[]
+     */
+    public function getInvitationCodes()
+    {
+        return $this->invitationCodes;
+    }
+
+    public function addInvitationCode(InvitationCode $invitationCode): self
+    {
+        if (!$this->invitationCodes->contains($invitationCode)) {
+            $this->invitationCodes[] = $invitationCode;
+            $invitationCode->setLab($this);
+        }
 
         return $this;
     }
@@ -434,6 +460,19 @@ class Lab implements InstanciableInterface
     public function setHasTimer(bool $hasTimer): self
     {
         $this->hasTimer = $hasTimer;
+      
+        return $this;
+    }
+  
+    public function removeInvitationCode(InvitationCode $invitationCode): self
+    {
+        if ($this->invitationCodes->contains($invitationCode)) {
+            $this->invitationCodes->removeElement($invitationCode);
+            // set the owning side to null (unless already changed)
+            if ($invitationCode->getLab() === $this) {
+                $invitationCode->setLab(null);
+            }
+        }
 
         return $this;
     }

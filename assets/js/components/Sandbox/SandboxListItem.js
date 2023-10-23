@@ -67,7 +67,7 @@ class SandboxListItem extends Component {
   
         this.setState({ isLoading: false, exist: true, lab: lab});
         // Redirect to Sandbox
-        window.location.href = "/admin/devices_sandbox/" + lab.id; 
+        window.location.href = "/admin/sandbox/" + lab.id; 
     }
 
     render() {
@@ -102,9 +102,9 @@ class SandboxListItem extends Component {
                     <div>
                     { this.state.exist ?
                         <a 
-                            href={"/admin/devices_sandbox/" + this.state.lab.id}
+                            href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3"
-                            title="Open Device Sandbox"
+                            title="Open Sandbox"
                             data-toggle="tooltip"
                             data-placement="top"
                         >
@@ -135,9 +135,9 @@ class SandboxListItem extends Component {
                     <div>
                     { this.state.exist ?
                         <a 
-                            href={"/admin/devices_sandbox/" + this.state.lab.id}
+                            href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3"
-                            title="Open Device Sandbox"
+                            title="Open Sandbox"
                             data-toggle="tooltip"
                             data-placement="top"
                         >

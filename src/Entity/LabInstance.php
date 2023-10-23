@@ -319,6 +319,10 @@ class LabInstance extends Instance
                     $deviceInstance->setUser($this->user);
                     break;
 
+                case self::OWNED_BY_GUEST:
+                    $deviceInstance->setGuest($this->guest);
+                    break;
+
                 case self::OWNED_BY_GROUP:
                     $deviceInstance->setGroup($this->_group);
                     break;

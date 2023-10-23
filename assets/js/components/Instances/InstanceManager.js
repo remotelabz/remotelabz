@@ -13,10 +13,10 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
+    const [viewAs, setViewAs] = useState({ type: props.user.code ? 'guest' : 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
     const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox=props.isSandbox
-    
+
     //console.log("instancemanage");
     //console.log(props.labInstance);
     //console.log("instancemanage labinstance after function");
@@ -92,7 +92,11 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
         if (viewAs.type === 'user') {
            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
-        } else {
+        } 
+        else if (viewAs.type === 'guest') {
+            request = Remotelabz.instances.lab.getByLabAndGuest(props.lab.uuid, viewAs.uuid)
+         }
+        else {
            request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
         }
 
@@ -142,6 +146,10 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
     function isCurrentUserGroupAdmin(group) {
         if (group.type === 'user') {
+            return true
+        }
+
+        if (props.user.code) {
             return true
         }
         /*console.log("props.user:")
@@ -241,7 +249,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     return (<>
-        {!isSandbox &&
+        {!isSandbox && props.user.name &&
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -335,7 +343,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                     :
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {viewAs.type === 'user' ?
+                        {viewAs.type === 'user' || viewAs.type === 'guest' ?
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You haven&apos;t joined this lab yet.
 

@@ -26,7 +26,7 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, 
-         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, removeConnection, setNodeInterface,
+         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
@@ -411,14 +411,18 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
     var node_id = $(this).attr('data-path');
         if(parseInt($('#node'+node_id).attr('data-status')) != 2){
-            content = '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
-                    '<i class="glyphicon glyphicon-play"></i> ' + MESSAGES[66] +
-                    '</a>' +
-                    '</li>';
+            if ($(this).attr('data-type') != "switch") {
+                content += '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
+                '<i class="glyphicon glyphicon-play"></i> ' + MESSAGES[66] +
+                '</a>' +
+                '</li>';
+            }
+            
         }
 
             var title = $(this).attr('data-name') + " (" + node_id + ")";
             if(EDITION == 0) {
+                if ($(this).attr('data-type') != "switch") {
                 body +=
                     content+
                     '<li>' +
@@ -434,7 +438,9 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                     '</li>';
                     }*/
                     body += '</li>';
-    }
+                }
+            
+            }
         //if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
         //if ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
                  /*body +=   '<li>' +
@@ -2051,31 +2057,40 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
     $.when(getNodes(null)).done(function (nodes) {
         if (isFreeSelectMode) {
             nodeLenght = window.freeSelectedNodes.length;
+            let nodesToStart = [];
+            $.each(window.freeSelectedNodes, function (i, node) {
+                if (nodes[node.path]['type'] != 'switch') {
+                    nodesToStart.push(node);
+                }
+            })
+
             addMessage('info', 'Start selected nodes...');
-            $.when(recursive_start(window.freeSelectedNodes, nodeLenght)).done(function () {
+            $.when(recursive_start(nodesToStart, nodesToStart.length)).done(function () {
             }).fail(function (message) {
                 addMessage('danger', 'Start all: Error');
             });
 
         }
         else if (node_id != null) {
-            $.when(start(node_id)).done(function () {
-                // Node started -> print a small green message
-                addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[76]);
-                if($('input[data-path='+node_id+'][name="node[type]"]') &&
-                   $('input[data-path='+node_id+'][name="node[type]"]').parent()){
-                       $('input[data-path='+node_id+'][name="node[type]"]').parent().addClass('node-running')
-                       $('input[data-path='+node_id+']').prop('disabled', true)
-                       $('select[data-path='+node_id+']').prop('disabled', true)
-                       $("a[data-path="+node_id+"].action-nodeedit").addClass('disabled')
-                       $("a[data-path="+node_id+"].action-nodedelete").addClass('disabled')
-                       $("a[data-path="+node_id+"].action-nodeinterfaces").attr('data-status', 2)
-                   }
-                printLabStatus();
-            }).fail(function (message) {
-                // Cannot start
-                addMessage('danger', nodes[node_id]['name'] + ': ' + message);
-            });
+            if (nodes[node_id]['type'] != 'switch') {
+                $.when(start(node_id)).done(function () {
+                    // Node started -> print a small green message
+                    addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[76]);
+                    if($('input[data-path='+node_id+'][name="node[type]"]') &&
+                    $('input[data-path='+node_id+'][name="node[type]"]').parent()){
+                        $('input[data-path='+node_id+'][name="node[type]"]').parent().addClass('node-running')
+                        $('input[data-path='+node_id+']').prop('disabled', true)
+                        $('select[data-path='+node_id+']').prop('disabled', true)
+                        $("a[data-path="+node_id+"].action-nodeedit").addClass('disabled')
+                        $("a[data-path="+node_id+"].action-nodedelete").addClass('disabled')
+                        $("a[data-path="+node_id+"].action-nodeinterfaces").attr('data-status', 2)
+                    }
+                    printLabStatus();
+                }).fail(function (message) {
+                    // Cannot start
+                    addMessage('danger', nodes[node_id]['name'] + ': ' + message);
+                });
+            }
         }
         else if (startAll) {
             var nodesLenght = Object.keys(nodes).length;
@@ -2086,6 +2101,8 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             });
             
              $.each(nodes, function(key, values) {
+                if(values['type'] != "switch") {
+                    console.log(values['type'], key)
              $.when(start(key)).done(function() {
              // Node started -> print a small green message
              addMessage('success', values['name'] + ': ' + MESSAGES[76]);
@@ -2105,11 +2122,17 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
              }).fail(function(message) {
              // Cannot start
              addMessage('danger', values['name'] + ': ' + message);
-             nodeLenght--;
-             if(nodeLenght < 1){
-             printLabStatus();
-             }
+             
              });
+             
+            }
+
+            else {
+                nodeLenght--;
+                if(nodeLenght < 1){
+                printLabStatus();
+                }
+             }
              });
              
         }
@@ -2142,65 +2165,78 @@ $(document).on('click', '.action-nodestop, .action-nodesstop, .action-nodestop-g
         if (isFreeSelectMode) {
             nodeLenght = window.freeSelectedNodes.length;
             $.each(window.freeSelectedNodes, function (i, node) {
-                $.when(stop(node.path)).done(function () {
-                    // Node stopped -> print a small green message
-                    addMessage('success', node.name + ': ' + MESSAGES[77]);
+                console.log(node.type);
+                if (nodes[node.path]['type'] != 'switch') {
+                    $.when(stop(node.path)).done(function () {
+                        // Node stopped -> print a small green message
+                        addMessage('success', node.name + ': ' + MESSAGES[77]);
+                        nodeLenght--;
+                        if (nodeLenght < 1) {
+                            setTimeout(printLabStatus, 3000);
+                        }
+                    }).fail(function (message) {
+                        // Cannot stopped
+                        addMessage('danger', node.name + ': ' + message);
+                        nodeLenght--;
+                        if (nodeLenght < 1) {
+                            setTimeout(printLabStatus, 3000);
+                        }
+                    });
+                }
+                else {
                     nodeLenght--;
                     if (nodeLenght < 1) {
                         setTimeout(printLabStatus, 3000);
                     }
-                }).fail(function (message) {
-                    // Cannot stopped
-                    addMessage('danger', node.name + ': ' + message);
-                    nodeLenght--;
-                    if (nodeLenght < 1) {
-                        setTimeout(printLabStatus, 3000);
-                    }
-                });
+                }
             });
         }
         else if (node_id != null) {
-            $.when(stop(node_id)).done(function () {
-                // Node stopped -> print a small green message
-                addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[77])
+            if (nodes[node_id]['type'] != 'switch') {
+                $.when(stop(node_id)).done(function () {
+                    // Node stopped -> print a small green message
+                    addMessage('success', nodes[node_id]['name'] + ': ' + MESSAGES[77])
 
-                // remove blue background in node-list
-                if($('input[data-path='+node_id+'][name="node[type]"]') &&
-                   $('input[data-path='+node_id+'][name="node[type]"]').parent()){
-                       $('input[data-path='+node_id+'][name="node[type]"]').parent().removeClass('node-running')
-                       $('input[data-path='+node_id+'][disabled]').prop('disabled', false)
-                       $('select[data-path='+node_id+'][disabled]').prop('disabled', false)
-                       $("a[data-path="+node_id+"].action-nodeedit").removeClass('disabled')
-                       $("a[data-path="+node_id+"].action-nodedelete").removeClass('disabled')
-                       $("a[data-path="+node_id+"].action-nodeinterfaces").attr('data-status', 0)
-                   }
-                $('#node' + node_id + ' img').addClass('grayscale')
-                printLabStatus();
-            }).fail(function (message) {
-                // Cannot stop
-                addMessage('danger', nodes[node_id]['name'] + ': ' + message);
-            });
+                    // remove blue background in node-list
+                    if($('input[data-path='+node_id+'][name="node[type]"]') &&
+                    $('input[data-path='+node_id+'][name="node[type]"]').parent()){
+                        $('input[data-path='+node_id+'][name="node[type]"]').parent().removeClass('node-running')
+                        $('input[data-path='+node_id+'][disabled]').prop('disabled', false)
+                        $('select[data-path='+node_id+'][disabled]').prop('disabled', false)
+                        $("a[data-path="+node_id+"].action-nodeedit").removeClass('disabled')
+                        $("a[data-path="+node_id+"].action-nodedelete").removeClass('disabled')
+                        $("a[data-path="+node_id+"].action-nodeinterfaces").attr('data-status', 0)
+                    }
+                    $('#node' + node_id + ' img').addClass('grayscale')
+                    printLabStatus();
+                }).fail(function (message) {
+                    // Cannot stop
+                    addMessage('danger', nodes[node_id]['name'] + ': ' + message);
+                });
+            }
         }
         else if (stopAll) {
             nodeLenght = Object.keys(nodes).length;
             $.each(nodes, function (key, values) {
-                $.when(stop(key)).done(function () {
-                    // Node stopped -> print a small green message
-                    addMessage('success', values['name'] + ': ' + MESSAGES[77]);
-                    nodeLenght--;
-                    if (nodeLenght < 1) {
-                        setTimeout(printLabStatus, 3000);
-                    }
+                if (values['type'] != 'switch') {
+                    $.when(stop(key)).done(function () {
+                        // Node stopped -> print a small green message
+                        addMessage('success', values['name'] + ': ' + MESSAGES[77]);
+                        nodeLenght--;
+                        if (nodeLenght < 1) {
+                            setTimeout(printLabStatus, 3000);
+                        }
 
-                    $('#node' + values['id']).attr('data-status', 0);
-                }).fail(function (message) {
-                    // Cannot stopped
-                    addMessage('danger', values['name'] + ': ' + message);
-                    nodeLenght--;
-                    if (nodeLenght < 1) {
-                        setTimeout(printLabStatus, 3000);
-                    }
-                });
+                        $('#node' + values['id']).attr('data-status', 0);
+                    }).fail(function (message) {
+                        // Cannot stopped
+                        addMessage('danger', values['name'] + ': ' + message);
+                        nodeLenght--;
+                        if (nodeLenght < 1) {
+                            setTimeout(printLabStatus, 3000);
+                        }
+                    });
+                }
             });
         }
     }).fail(function (message) {
@@ -4490,9 +4526,11 @@ $(document).on('click', '.node.node_frame a', function (e) {
             .then(function (node) {
 
                 if (EDITION == 0) {
-                var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
-                    '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
-                    printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
+                    if (node.type != "switch") {
+                        var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
+                        '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';
+                        printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
+                    }
                 }
                 if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
                 //if  ((ROLE != 'ROLE_USER') &&  LOCK == 0  ) {
@@ -4514,6 +4552,7 @@ $(document).on('submit', '#addConn', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('addConn');
+    console.log(form_data);
     //alert ( JSON.stringify( form_data) )
     var srcType = ( ( (form_data['srcConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
     var dstType = ( ( (form_data['dstConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
@@ -4544,16 +4583,34 @@ $(document).on('submit', '#addConn', function (e) {
              var offset = $('#node' + form_data['srcNodeId'] ).offset()
              var node1 = form_data['srcNodeId']
              var iface1 = form_data['srcConn'].replace(',ethernet','')
+             var type1 = form_data['srcElementType']
              var node2 = form_data['dstNodeId']
              var iface2 = form_data['dstConn'].replace(',ethernet','')
+             var type2 = form_data['dstElementType']
              //$.when(setNetwork(bridgename, offset.left + 20, offset.top + 40)).then( function (response) {
                   //var networkId = response.data.id;
                   //logger(1, 'Link DEBUG: new network created ' + networkId);
+                  $.when(getConnection()).done(function (response){
+                    var connection = response.data.connection;
+                    console.log('connection: ', connection);
+                  if (type1 == "switch" || type2 == "switch") {
+                    console.log('switch')
+                    $.when(setNodeInterface(node1, iface1, 'none', connection) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, 'none', connection)).done( function () {
+                        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+                            $(e.target).parents('.modal').attr('skipRedraw', true);
+                            $(e.target).parents('.modal').modal('hide');
+                        //});
+                        });
+                    });
+                  }
+                  else {
                   $.when(getVlan()).done(function (response){
+                    console.log('no switch')
                     var vlan = response.data.vlan;
                     console.log("response ", vlan);
-                    $.when(setNodeInterface(node1, iface1, vlan) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, vlan)).done( function () {
+                    $.when(setNodeInterface(node1, iface1, vlan, connection) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, vlan, connection)).done( function () {
                         //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
                             $(e.target).parents('.modal').attr('skipRedraw', true);
                             $(e.target).parents('.modal').modal('hide');
@@ -4561,6 +4618,8 @@ $(document).on('submit', '#addConn', function (e) {
                         });
                     });
                     })
+                }
+            });
              //});
 
          }

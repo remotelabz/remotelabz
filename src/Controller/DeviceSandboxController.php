@@ -37,7 +37,7 @@ class DeviceSandboxController extends Controller
     }
 
     /**
-     * @Route("/admin/devices_sandbox", name="devices_sandbox")
+     * @Route("/admin/sandbox", name="sandbox")
      */
      public function indexAction(Request $request, SerializerInterface $serializer)
     {
@@ -47,6 +47,7 @@ class DeviceSandboxController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
+            ->andWhere(Criteria::expr()->neq('type', 'switch'))
             ->orderBy([
                 'id' => Criteria::DESC
             ]);
@@ -75,7 +76,7 @@ class DeviceSandboxController extends Controller
     }
 
     /**
-     * @Route("/admin/devices_sandbox/{id<\d+>}", name="devices_sandbox_view")
+     * @Route("/admin/sandbox/{id<\d+>}", name="sandbox_view")
      */
     public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {

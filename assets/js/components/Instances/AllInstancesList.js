@@ -44,7 +44,8 @@ function AllInstancesList(props = {labInstances: []}) {
                             <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
                             </a>
                             Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` : 
+                            labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` : ` group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
                         <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
