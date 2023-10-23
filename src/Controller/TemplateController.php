@@ -106,8 +106,10 @@ class TemplateController extends Controller
 
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
-            if (!is_file('/opt/remotelabz/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
-               $this->newAction($template);
+            if (count($template->getLabs())==0) {
+                if (!is_file('/opt/remotelabz/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
+                    $this->newAction($template);
+                 }
             }
         }
         $node_templates = Array();

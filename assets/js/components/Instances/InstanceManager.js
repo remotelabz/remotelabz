@@ -319,7 +319,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
+                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
                     </InstanceList>
                 }
                 {labInstance.state === "exporting" &&

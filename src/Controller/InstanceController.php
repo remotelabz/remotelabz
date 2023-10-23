@@ -330,16 +330,33 @@ class InstanceController extends Controller
     public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         $name = $request->query->get('name', '');
+        $type = $request->query->get('type', '');
 
         if($name == '') {
             throw new BadRequestHttpException('Name must not be empty.');
         }
-        
-        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
-            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
-        }
 
-        $instanceManager->export($deviceInstance, $name);
+        if($type == '') {
+            throw new BadRequestHttpException('Instance type must not be empty.');
+        }
+        
+        if ($type == "device") {
+            if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+            }
+
+            $instanceManager->exportDevice($deviceInstance, $name);
+        }
+        else if ($type == "lab") {
+            if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+            }
+
+            $instanceManager->exportLab($labInstance, $name);
+        }
+        else {
+            throw new BadRequestHttpException('Instance type must be device or lab.');
+        }
 
         return $this->json();
     }

@@ -10,7 +10,7 @@ import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) {
+function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox, lab }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -19,8 +19,6 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     const [showExport, setShowExport] = useState(false)
     //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' })
-
-    console.log(instance.device);
     
     //console.log("instanceListItem");
     //console.log(instance.device.name);
@@ -105,7 +103,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
     function exportDeviceTemplate(deviceInstance, name) {
         setExporting(true)
         
-        Remotelabz.instances.device.export(deviceInstance.uuid, name).then(() => {
+        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then(() => {
             new Noty({
                 type: 'success',
                 text: 'Instance export requested.',
@@ -243,7 +241,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported')&& isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (lab.devices.length == 1) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>
                                 {showExport ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
@@ -325,7 +323,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox }) 
                 }
 
                 {(instance.state == 'stopped' && showExport) &&
-                    <InstanceExport deviceInstance={instance} exportDeviceTemplate={exportDeviceTemplate} ></InstanceExport>
+                    <InstanceExport instance={instance} exportTemplate={exportDeviceTemplate} type="device"></InstanceExport>
                 }
 
             </div>

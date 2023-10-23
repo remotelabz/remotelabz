@@ -22,13 +22,13 @@ class Device implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance", "api_get_lab_template"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -36,14 +36,14 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      * @Assert\Type(type="string")
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      * @Assert\Type(type="string")
      */
     private $model;
@@ -63,7 +63,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist","remove"})
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      */
     private $networkInterfaces;
 
@@ -75,7 +75,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Choice({"vm","container", "switch"})
      */
@@ -83,39 +83,39 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      * @Assert\NotNull
      */
     private $nbCpu;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbCore;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbSocket;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbThread;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $virtuality;
 
     /**
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
-     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -123,7 +123,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -136,7 +136,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -144,7 +144,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "worker"})
+     * @Serializer\Groups({"api_get_device", "worker", "api_get_lab_template"})
      */
     private $uuid;
 
@@ -172,7 +172,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
      * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      */
     private $editorData;
 
@@ -193,7 +193,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template"})
      */
     private $icon;
 

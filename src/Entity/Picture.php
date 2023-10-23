@@ -26,7 +26,7 @@ class Picture implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_picture", "api_get_lab"})
+     * @Serializer\Groups({"api_get_picture", "api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -34,39 +34,39 @@ class Picture implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_picture", "export_lab"})
+     * @Serializer\Groups({"api_get_picture", "export_lab", "api_get_lab_instance", "api_get_lab", "api_get_lab_template"})
      */
     private $height;
 
     /**
      * @ORM\Column(type="blob",  nullable=true)
-     * @Serializer\Groups({"api_get_picture", "export_lab"})
+     * @Serializer\Groups({"api_get_picture", "export_lab", "api_get_lab_instance", "api_get_lab", "api_get_lab_template"})
      */
     private $data;
 
     /**
      * @ORM\Column(type="string", length=255, options={"default": ""})
-     * @Serializer\Groups({"api_get_picture", "export_lab"})
+     * @Serializer\Groups({"api_get_picture", "export_lab", "api_get_lab_instance", "api_get_lab", "api_get_lab_template"})
      * @Assert\Type(type="string")
      */
     private $map = "";
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_picture", "export_lab"})
+     * @Serializer\Groups({"api_get_picture", "export_lab", "api_get_lab_instance", "api_get_lab", "api_get_lab_template"})
      * @Assert\Type(type="string")
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_picture", "export_lab"})
+     * @Serializer\Groups({"api_get_picture", "export_lab", "api_get_lab_instance", "api_get_lab", "api_get_lab_template"})
      */
     private $width;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="textobjects", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=true, onDelete="SET NULL")
+     * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
      */
     private $lab;
 

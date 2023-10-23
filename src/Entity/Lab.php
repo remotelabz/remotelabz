@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Utils\Uuid;
 use App\Entity\User;
+use App\Entity\TextObject;
+use App\Entity\Picture;
 use App\Entity\InvitationCode;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
@@ -21,27 +23,33 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
     private $shortDescription;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
     private $description;
+
+    /**
+     * @ORM\Column(type="boolean", options={"default": 0})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
+     */
+    private $isTemplate;
 
     /**
      * @ORM\Column(type="text", nullable=true)
@@ -73,7 +81,7 @@ class Lab implements InstanciableInterface
      *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
      *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
      * ))
-     * @Serializer\Groups({"api_get_lab", "export_lab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab","sandbox", "api_get_lab_instance"})
      */
     private $devices;
 
@@ -121,10 +129,20 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
      * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
      *
      * @var Collection|TextObject[]
      */
     private $textobjects;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Picture", mappedBy="lab")
+     * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
+     *
+     * @var Collection|Picture[]
+     */
+    private $pictures;
 
     /**
      * @ORM\Column(type="boolean")
@@ -156,6 +174,8 @@ class Lab implements InstanciableInterface
         $this->createdAt = new \DateTime();
         $this->lastUpdated = new \DateTime();
         $this->textobjects = new ArrayCollection();
+        $this->pictures = new ArrayCollection();
+        $this->isTemplate = 0;
     }
 
     public static function create(): self
@@ -200,6 +220,18 @@ class Lab implements InstanciableInterface
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getIsTemplate(): ?bool
+    {
+        return $this->isTemplate;
+    }
+
+    public function setIsTemplate(bool $isTemplate): self
+    {
+        $this->isTemplate = $isTemplate;
 
         return $this;
     }
@@ -398,7 +430,7 @@ class Lab implements InstanciableInterface
         return $this->textobjects;
     }
 
-    public function addTextobject(Lab $textobject): self
+    public function addTextobject(TextObject $textobject): self
     {
         if (!$this->textobjects->contains($textobject)) {
             $this->textobjects[] = $textobject;
@@ -408,7 +440,7 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
-    public function removeTextobject(Lab $textobject): self
+    public function removeTextobject(TextObject $textobject): self
     {
         if ($this->textobjects->contains($textobject)) {
             $this->textobjects->removeElement($textobject);
@@ -421,6 +453,23 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
+    /**
+     * @return Collection|Picture[]
+     */
+    public function getPictures()
+    {
+        return $this->pictures;
+    }
+
+    public function addPicture(Picture $picture): self
+    {
+        if (!$this->pictures->contains($picture)) {
+            $this->pictures[] = $picture;
+            $picture->setLab($this);
+           }
+
+        return $this;
+    }
 
     public function getTimer(): ?string
     {
@@ -447,6 +496,19 @@ class Lab implements InstanciableInterface
         if (!$this->invitationCodes->contains($invitationCode)) {
             $this->invitationCodes[] = $invitationCode;
             $invitationCode->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removePicture(Picture $textobject): self
+    {
+        if ($this->pictures->contains($picture)) {
+            $this->pictures->removeElement($picture);
+            // set the owning side to null (unless already changed)
+            if ($picture->getLab() === $this) {
+                $picture->setLab(null);
+              }
         }
 
         return $this;

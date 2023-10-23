@@ -86,6 +86,7 @@ class DeviceController extends Controller
     {
         $search = $request->query->get('search', '');
         $template = $request->query->get('template', true);
+        $deviceArray = [];
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
@@ -95,13 +96,19 @@ class DeviceController extends Controller
             ]);
 
         $devices = $this->deviceRepository->matching($criteria);
+    
+        foreach($devices as $device) {
+            if (count($device->getLabs()) == 0) {
+                array_push($deviceArray, $device);
+            }
+        }
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($devices->getValues(), 200, [], ['api_get_device']);
         }
 
         return $this->render('device/index.html.twig', [
-            'devices' => $devices,
+            'devices' => $deviceArray,
             'search' => $search
         ]);
     }
@@ -535,6 +542,13 @@ class DeviceController extends Controller
         else {
             $device->setName('Unamed device');
         }
+
+        if($lab->getIsTemplate() == true) {
+            $device->setIsTemplate(true);
+        }
+        else {
+            $device->setIsTemplate(false);
+        }
         $device->setType($data['type']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
@@ -551,7 +565,6 @@ class DeviceController extends Controller
             $device->setDelay(0);
         }
         $device->setPostFix($data['postfix']);
-        $device->setIsTemplate(false);
         $device->setLaunchOrder(0);
         $device->setVirtuality(0);
         if($data['cpu'] != '') {
@@ -1074,7 +1087,7 @@ class DeviceController extends Controller
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
-        if($device->getIsTemplate()== true) {
+        if($device->getIsTemplate() == true && count($device->getLabs()) == 0) {
             $fileName = u($device->getName())->camel();
             unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml");
         }

@@ -199,44 +199,60 @@ class PictureController extends Controller
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
 
-        $data = $_POST;
-        if (!empty($_FILES)) {
-			foreach ($_FILES as $file) {
-				if (file_exists($file['tmp_name'])) {
-					$fp = fopen($file['tmp_name'], 'r');
-					$size = filesize($file['tmp_name']);
-					if ($fp !== False) {
-						//$finfo = new finfo(FILEINFO_MIME);
-						$data['data'] = fread($fp, $size);
-                        $data['type'] = mime_content_type($file['tmp_name']);
-					}
-				}
-			}
-		}
-        else {
-            $response->setContent(json_encode([
-                'code' => 400,
-                'status'=> 'fail',
-                'message' => 'No attachment has been done']));
-            return $response;
+        if(null == ($data = json_decode($request->getContent(), true))) {
+            $data = $_POST;
+            if (!empty($_FILES)) {
+                foreach ($_FILES as $file) {
+                    if (file_exists($file['tmp_name'])) {
+                        $fp = fopen($file['tmp_name'], 'r');
+                        $size = filesize($file['tmp_name']);
+                        if ($fp !== False) {
+                            //$finfo = new finfo(FILEINFO_MIME);
+                            $data['data'] = fread($fp, $size);
+                            $data['type'] = mime_content_type($file['tmp_name']);
+                        }
+                    }
+                }
+            }
+            else {
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'No attachment has been done']));
+                return $response;
+            }
+            if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'This is not a valid picture type']));
+                return $response;
+            }
+            list($width, $height) = getimagesizefromstring($data['data']);
+            $picture->setWidth($width);
+            $picture->setHeight($height);
+
         }
-        if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
-            $response->setContent(json_encode([
-                'code' => 400,
-                'status'=> 'fail',
-                'message' => 'This is not a valid picture type']));
-            return $response;
+        else {
+            $data = json_decode($request->getContent(), true);
+            $picture->setWidth($data['width']);
+            $picture->setHeight($data['height']);
+            $type = explode("image/",$data['type'])[1];
+            $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$data['labid'].'-'.$data['name'].'.'.$type;
+            $fp = fopen($fileName, 'r');
+            $size = filesize($fileName);
+            if ($fp !== False) {
+                //$finfo = new finfo(FILEINFO_MIME);
+                $data['data'] = fread($fp, $size);
+            }
         }
         $type = explode("image/",$data['type'])[1];
         $picture->setLab($lab);
+        $picture->setData($data['data']);
         $picture->setName($data['name']);
         $picture->setType($data['type']);
-        $picture->setData($data['data']);
         file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
 
-        list($width, $height) = getimagesizefromstring($data['data']);
-        $picture->setWidth($width);
-        $picture->setHeight($height);
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($picture);

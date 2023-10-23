@@ -9,7 +9,7 @@ class SandboxManager extends Component {
 
     render() {
         return (
-            <SandboxList devices={this.props.devices} user={this.props.user}></SandboxList>
+            <SandboxList devices={this.props.devices} user={this.props.user} labs={this.props.labs}></SandboxList>
         )
     }
 }
