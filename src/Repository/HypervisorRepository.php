@@ -53,7 +53,6 @@ class HypervisorRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
-        var_dump($hypervisor); exit;
 
         return $hypervisor[0];
     }
