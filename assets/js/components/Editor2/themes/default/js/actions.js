@@ -4557,6 +4557,7 @@ $(document).on('submit', '#addConn', function (e) {
     var srcType = ( ( (form_data['srcConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
     var dstType = ( ( (form_data['dstConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
     var connector = form_data['connector'];
+    var connector_label = form_data['connector_label'];
     // Get src dst type information and check compatibility
     if ( srcType != dstType )  {
          addModalError("Serial and Ethernet cannot be interconnected !!!!" )
@@ -4593,11 +4594,10 @@ $(document).on('submit', '#addConn', function (e) {
                   //logger(1, 'Link DEBUG: new network created ' + networkId);
                   $.when(getConnection()).done(function (response){
                     var connection = response.data.connection;
-                    console.log('connection: ', connection);
                   if (type1 == "switch" || type2 == "switch") {
                     console.log('switch')
-                    $.when(setNodeInterface(node1, iface1, 'none', connection) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, 'none', connection)).done( function () {
+                    $.when(setNodeInterface(node1, iface1, 'none', connection, connector, connector_label) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, 'none', connection, connector, connector_label)).done( function () {
                         //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
                             $(e.target).parents('.modal').attr('skipRedraw', true);
                             $(e.target).parents('.modal').modal('hide');
@@ -4607,11 +4607,10 @@ $(document).on('submit', '#addConn', function (e) {
                   }
                   else {
                   $.when(getVlan()).done(function (response){
-                    console.log('no switch')
                     var vlan = response.data.vlan;
                     console.log("response ", vlan);
-                    $.when(setNodeInterface(node1, iface1, vlan, connection, connector) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, vlan, connection, connector)).done( function () {
+                    $.when(setNodeInterface(node1, iface1, vlan, connection, connector, connector_label) ).done( function () {
+                        $.when(setNodeInterface(node2, iface2, vlan, connection, connector, connector_label)).done( function () {
                         //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
                             $(e.target).parents('.modal').attr('skipRedraw', true);
                             $(e.target).parents('.modal').modal('hide');

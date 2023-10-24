@@ -72,7 +72,7 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         $entityManager = $this->getEntityManager();
 
         $query = $entityManager->createQuery(
-            'SELECT n.connection, n.vlan, GROUP_CONCAT(n.connectorType) as connectors, GROUP_CONCAT(n.name) AS names, GROUP_CONCAT(d.id) AS devices
+            'SELECT n.connection, n.vlan, GROUP_CONCAT(n.connectorLabel) as connectorsLabel, GROUP_CONCAT(n.connectorType) as connectors, GROUP_CONCAT(n.name) AS names, GROUP_CONCAT(d.id) AS devices
             FROM App\Entity\NetworkInterface n
             LEFT JOIN n.device d
             LEFT JOIN d.labs l

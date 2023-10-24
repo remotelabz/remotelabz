@@ -152,7 +152,12 @@ class NetworkInterfaceController extends Controller
         }
 
         $networkInterface->setConnection($data["connection"]);
-        $networkInterface->setConnectorType($data["connector"]);
+        if (isset($data["connector"])) {
+            $networkInterface->setConnectorType($data["connector"]);
+        }
+        if (isset($data["connector_label"]) && $data["connector_label"]!== "") {
+            $networkInterface->setConnectorLabel($data["connector_label"]);
+        }
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $entityManager->flush();
@@ -295,6 +300,19 @@ class NetworkInterfaceController extends Controller
                     }
                 }
             }
+
+            if ($line['connectorsLabel'] == NULL) {
+                $connectorLabel = NULL;
+            }
+            else {
+                if (count(explode(",", $line["connectorsLabel"]))==1) {
+                    $connectorLabel = $line["connectorsLabel"];
+                }
+                else {
+                    $connectorsLabel = explode(",", $line["connectorsLabel"]);
+                    $connectorLabel = $connectorsLabel[0];
+                }
+            }
             
             array_push($data, [
                 "type"=>"ethernet",
@@ -306,6 +324,7 @@ class NetworkInterfaceController extends Controller
                 "destination_label"=> explode(",", $line["names"])[1],
                 "network_id"=> $line["vlan"], 
                 "connector" => $connector,  
+                "connector_label" => $connectorLabel,  
             ]);
         }
         $response = new Response();

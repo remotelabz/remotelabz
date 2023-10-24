@@ -424,6 +424,15 @@ body.login {
     font-weight: bold;
     padding: 0px 2px 0px 2px;
 }
+
+#lab-viewport .node_interface_label {
+	background-color: #e6f5ff;
+	border: 2px solid #346789;
+    font-family: helvetica;
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 0px 2px 0px 2px;
+}
 #lab-viewport .node_interface:hover {
     z-index: 9000;
 	
