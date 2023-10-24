@@ -2004,7 +2004,7 @@ export function setNodeData(id){
 }
 
 //set note interface
-export function setNodeInterface(node_id,interface_id,vlan, connection){
+export function setNodeInterface(node_id,interface_id,vlan, connection, connector){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -2012,6 +2012,7 @@ export function setNodeInterface(node_id,interface_id,vlan, connection){
     form_data["interface id"] = interface_id;
     form_data["vlan"] = vlan;
     form_data["connection"] = connection;
+    form_data["connector"] = connector;
 
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id +'/interfaces';
     var type = 'PUT';
@@ -3943,7 +3944,8 @@ export function printLabTopology() {
                         destination = link['destination'],
                         destination_label = link['destination_label'],
                         src_label = ["Label"],
-                        dst_label = ["Label"];
+                        dst_label = ["Label"],
+                        connector = link['connector'];
 
                     if (type == 'ethernet') {
                         if (source_label != '') {
@@ -3971,7 +3973,8 @@ export function printLabTopology() {
                             target: destination,  // Must attach to the IMG's parent or not printed correctly
                             cssClass: source + ' ' + destination + ' frame_ethernet',
                             paintStyle: {strokeWidth: 2, stroke: '#0066aa'},
-                            overlays: [src_label, dst_label]
+                            overlays: [src_label, dst_label],
+                            connector: [connector]
                         });
                         if (destination.substr(0, 7) == 'network') {
                               $.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
@@ -5958,7 +5961,16 @@ function newConnModal(info , oe ) {
                                         '<div style="width:3px;height:30px;"></div>' +
                                     '</div>' +
                                 '</div>' +
-                                '<div style="width:3px;height:30px;"></div>' +
+                                '<div style="width:3px;height:10px;"></div>' +
+                                '<div class="form-group">'+
+                                '<label>Choose connector to link nodes</label>' +
+                                    '<select name="addConn[connector]" class="form-control">' +
+                                        '<option value="Straight">Straight</option>' +
+                                        '<option value="Bezier">Bezier</option>' +
+                                        '<option value="Flowchart">Flowchart</option>' +
+                                    '</select>'+
+                                '</div>' +
+                                '<div style="width:3px;height:10px;"></div>' +
                                 '<div class="form-group">' +
                                     '<div class="form-group ' + (( linktargettype == 'net') ? 'hidden' : '')  +  '">'  +
                                         '<label>Choose Interface for '+ linktargetdata['name'] +'</label>' +

@@ -152,6 +152,7 @@ class NetworkInterfaceController extends Controller
         }
 
         $networkInterface->setConnection($data["connection"]);
+        $networkInterface->setConnectorType($data["connector"]);
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $entityManager->flush();
@@ -256,6 +257,45 @@ class NetworkInterfaceController extends Controller
         $topology = $this->networkInterfaceRepository->getTopology($labId);
         $data = [];
         foreach($topology as $line) {
+            if ($line['connectors'] == NULL) {
+                $connector = 'Straight';
+            }
+            else {
+                if (count(explode(",", $line["connectors"]))==1) {
+                    $connector = $line["connectors"];
+                }
+                else {
+                    $connectors = explode(",", $line["connectors"]);
+                    if($connectors[0] == $connectors[1]) {
+                        $connector = $connectors[0];
+                    }
+                    else {
+                        $bezier = false;
+                        $flowchart = false;
+                        foreach($connectors as $connectorType) {
+                            if ($connectorType == 'Bezier') {
+                                $bezier = true;
+                            }
+                            if ($connectorType == 'Flowchart') {
+                                $flowchart = true;
+                            }
+                        }
+                        if ($bezier == true && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else if ($bezier == true && $flowchart == false) {
+                            $connector = 'Bezier';
+                        }
+                        else if ($bezier == false && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else {
+                            $connector = 'Straight';
+                        }
+                    }
+                }
+            }
+            
             array_push($data, [
                 "type"=>"ethernet",
                 "source"=> "node".explode(",", $line["devices"])[0],
@@ -264,7 +304,8 @@ class NetworkInterfaceController extends Controller
                 "destination"=> "node".explode(",", $line["devices"])[1],
                 "destination_type"=> "node",
                 "destination_label"=> explode(",", $line["names"])[1],
-                "network_id"=> $line["vlan"],   
+                "network_id"=> $line["vlan"], 
+                "connector" => $connector,  
             ]);
         }
         $response = new Response();
