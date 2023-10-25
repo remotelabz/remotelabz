@@ -116,6 +116,23 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         ->getResult();
     }
 
+    public function findByLabAndConnection($labId, $connection)
+    {
+        $entityManager = $this->getEntityManager();
+
+        return $entityManager->createQuery(
+            'SELECT n
+            FROM App\Entity\NetworkInterface n
+            LEFT JOIN n.device d
+            LEFT JOIN d.labs l
+            WHERE l.id = :id
+            AND n.connection = :connection'
+        )
+        ->setParameter('id', $labId)
+        ->setParameter('connection', $connection)
+        ->getResult();
+    }
+
     // /**
     //  * @return NetworkInterface[] Returns an array of NetworkInterface objects
     //  */

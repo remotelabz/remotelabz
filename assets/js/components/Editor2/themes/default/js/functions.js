@@ -984,7 +984,7 @@ export function getPictures(picture_id) {
 
 
 // Get lab topology
-function getTopology() {
+export function getTopology() {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/topology';
@@ -2046,12 +2046,49 @@ export function setNodeInterface(node_id,interface_id,vlan, connection, connecto
 
 }
 
-//set note interface
-export function removeConnection(vlan){
+//edit node interface
+export function editConnection(connection, connector, connector_label){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs/' + lab_filename + '/interfaces/' + vlan;
+    var url = '/api/labs/' + lab_filename + '/interfaces/' + connection + '/edit';
+    var type = 'PUT';
+    var form_data = {"connector": connector, "connector_label": connector_label}
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        dataType: 'json',
+        data: JSON.stringify(form_data),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: connection edited.');
+                deferred.resolve(data);
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                deferred.reject(data['message']);
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            deferred.reject(message);
+        }
+    });
+    return deferred.promise();
+
+}
+
+//set note interface
+export function removeConnection(connection){
+
+    var deferred = $.Deferred();
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/interfaces/' + connection;
     var type = 'PUT';
     $.ajax({
         cache: false,
