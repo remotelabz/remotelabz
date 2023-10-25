@@ -152,6 +152,12 @@ class NetworkInterfaceController extends Controller
         }
 
         $networkInterface->setConnection($data["connection"]);
+        if (isset($data["connector"])) {
+            $networkInterface->setConnectorType($data["connector"]);
+        }
+        if (isset($data["connector_label"]) && $data["connector_label"]!== "") {
+            $networkInterface->setConnectorLabel($data["connector_label"]);
+        }
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $entityManager->flush();
@@ -168,11 +174,37 @@ class NetworkInterfaceController extends Controller
     }
 
     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{vlan<\d+>}", name="api_remove_connection")
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}/edit", name="api_edit_connection")
      */
-    public function removeConnection(int $labId, int $vlan)
+    public function editConnection(Request $request, int $labId, int $connection)
     {
-        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndVlan($labId, $vlan);
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
+        $data = json_decode($request->getContent(), true);
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        foreach($networkInterfaces as $networkInterface) {
+            $networkInterface->setConnectorType($data["connector"]);
+            $networkInterface->setConnectorLabel($data["connector_label"]);
+            
+        }
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 201,
+            'status'=>'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+
+    /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}", name="api_remove_connection")
+     */
+    public function removeConnection(int $labId, int $connection)
+    {
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
         
         $entityManager = $this->getDoctrine()->getManager();
         foreach($networkInterfaces as $networkInterface) {
@@ -256,7 +288,59 @@ class NetworkInterfaceController extends Controller
         $topology = $this->networkInterfaceRepository->getTopology($labId);
         $data = [];
         foreach($topology as $line) {
-            array_push($data, [
+            if ($line['connectors'] == NULL) {
+                $connector = 'Straight';
+            }
+            else {
+                if (count(explode(",", $line["connectors"]))==1) {
+                    $connector = $line["connectors"];
+                }
+                else {
+                    $connectors = explode(",", $line["connectors"]);
+                    if($connectors[0] == $connectors[1]) {
+                        $connector = $connectors[0];
+                    }
+                    else {
+                        $bezier = false;
+                        $flowchart = false;
+                        foreach($connectors as $connectorType) {
+                            if ($connectorType == 'Bezier') {
+                                $bezier = true;
+                            }
+                            if ($connectorType == 'Flowchart') {
+                                $flowchart = true;
+                            }
+                        }
+                        if ($bezier == true && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else if ($bezier == true && $flowchart == false) {
+                            $connector = 'Bezier';
+                        }
+                        else if ($bezier == false && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else {
+                            $connector = 'Straight';
+                        }
+                    }
+                }
+            }
+
+            if ($line['connectorsLabel'] == NULL) {
+                $connectorLabel = NULL;
+            }
+            else {
+                if (count(explode(",", $line["connectorsLabel"]))==1) {
+                    $connectorLabel = $line["connectorsLabel"];
+                }
+                else {
+                    $connectorsLabel = explode(",", $line["connectorsLabel"]);
+                    $connectorLabel = $connectorsLabel[0];
+                }
+            }
+            
+            /*array_push($data, [
                 "type"=>"ethernet",
                 "source"=> "node".explode(",", $line["devices"])[0],
                 "source_type"=> "node",
@@ -264,8 +348,25 @@ class NetworkInterfaceController extends Controller
                 "destination"=> "node".explode(",", $line["devices"])[1],
                 "destination_type"=> "node",
                 "destination_label"=> explode(",", $line["names"])[1],
-                "network_id"=> $line["vlan"],   
-            ]);
+                "network_id"=> $line["connection"], 
+                "vlan"=> $line["vlan"], 
+                "connector" => $connector,  
+                "connector_label" => $connectorLabel,  
+            ]);*/
+
+            $data[$line['connection']] = [
+                "type"=>"ethernet",
+                "source"=> "node".explode(",", $line["devices"])[0],
+                "source_type"=> "node",
+                "source_label"=> explode(",", $line["names"])[0],
+                "destination"=> "node".explode(",", $line["devices"])[1],
+                "destination_type"=> "node",
+                "destination_label"=> explode(",", $line["names"])[1],
+                "network_id"=> $line["connection"], 
+                "vlan"=> $line["vlan"], 
+                "connector" => $connector,  
+                "connector_label" => $connectorLabel,  
+            ];
         }
         $response = new Response();
         $response->setContent(json_encode([

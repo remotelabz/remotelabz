@@ -31,10 +31,10 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         zoompic, dirname, basename, hex2rgb, updateFreeSelect } from'./functions.js';
+         zoompic, dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
-import Showdown from 'showdown';
+import Showdown, { extension } from 'showdown';
 //import * as ace from 'ace-builds/src-noconflict/ace';
 
 var KEY_CODES = {
@@ -176,7 +176,7 @@ $(document).on('click', 'a.folder, a.lab, tr.user', function (e) {
 
 // Remove modal on close
 $(document).on('hidden.bs.modal', '.modal', function (e) {
-    if ( $(".addConn-form").length > 0 ) {
+    if ( $(".addConn-form").length > 0 || $(".editConn-form").length > 0) {
         $('.action-labtopologyrefresh').click();
     }
     $(this).remove();
@@ -361,6 +361,7 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
            if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 || EDITION == 0) return;
            //if (ROLE == "ROLE_USER" || LOCK == 1 ) return;
            body = '';
+           body += '<li><a class="action-connedit" href="javascript:void(0)"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
            body += '<li><a class="action-conndelete" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
            printContextMenu('Connection', body, e.pageX, e.pageY,false,"menu");
            return;
@@ -937,6 +938,58 @@ $(document).on('click', '.action-networkdelete', function (e) {
     var title = "Warning"
     addModal(title, body, "", "make-red make-small");
 })
+
+$(document).on('click', '.action-connedit', function (e) {
+    var id = window.connToDel.id.replace('network_id:','')
+    console.log(id);
+    let lab = $('#lab-viewport').attr('data-path');
+    $.when(getTopology(lab)).done( function (topology) {
+        let network = topology[id];
+        let bezier="";
+        let flowchart="";
+        let straight="";
+        let label = "";
+        if (network['connector'] == 'Flowchart') {
+            flowchart = "selected";
+        }
+        else if (network['connector'] == 'Bezier') {
+            bezier = "selected";
+        }
+        else {
+            straight = "selected";
+        }
+        if (network['connector_label'] != null) {
+            label = network['connector_label'];
+        }
+        var body = '<form id="editConn" class="editConn-form">' +
+                    '<input type="hidden" name="editConn[srcNodeId]" value="'+network['source'].split('node')[0]+'">' +
+                    '<input type="hidden" name="editConn[dstNodeId]" value="'+network['destination'].split('node')[0]+'">' +
+                    '<input type="hidden" name="editConn[networkId]" value="'+id+'">' +
+                    '<div class="form-group">'+
+                    '<label>Connector type</label>' +
+                    '<select name="editConn[connector]" class="form-control">' +
+                        '<option value="Straight" '+straight+'>Straight</option>' +
+                        '<option value="Bezier" '+bezier+'>Bezier</option>' +
+                        '<option value="Flowchart" '+flowchart+'>Flowchart</option>' +
+                    '</select>'+
+                '</div>' +
+                '<div class="form-group">'+
+                    '<label>Connector label</label>' +
+                    '<input type="text" name="editConn[connector_label]" value="'+label+'" class="form-control"/>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<div class="col-md-5 col-md-offset-3">' +
+                    '<button type="submit" class="btn btn-success editConn-form-save">' + MESSAGES[47] + '</button>' +
+                    '<button type="button" class="btn cancelForm" data-dismiss="modal">' + MESSAGES[18] + '</button>' +
+                    '</div>' +
+                '</div>' +
+                '</form>'
+        var title = "Warning"
+        addModal(title, body, "", "make-red make-small");
+     }).fail(function (message) {
+        addModalError(message);
+     });
+});
 
 $(document).on('click', '.action-conndelete', function (e) {
      var id = window.connToDel.id
@@ -4548,6 +4601,23 @@ $(document).on('click', '.node.node_frame a', function (e) {
 
 })
 
+$(document).on('submit', '#editConn', function (e) {
+    e.preventDefault();  // Prevent default behaviour
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var form_data = form2Array('editConn');
+    var connection = form_data['networkId'];
+    var connector = form_data['connector'];
+    var connector_label = form_data['connector_label'];
+    $.when(editConnection(connection, connector, connector_label) ).done( function () {
+        $.when(editConnection(connection, connector, connector_label)).done( function () {
+        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+            $(e.target).parents('.modal').attr('skipRedraw', true);
+            $(e.target).parents('.modal').modal('hide');
+        //});
+        });
+    });
+})
+
 $(document).on('submit', '#addConn', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -4556,6 +4626,8 @@ $(document).on('submit', '#addConn', function (e) {
     //alert ( JSON.stringify( form_data) )
     var srcType = ( ( (form_data['srcConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
     var dstType = ( ( (form_data['dstConn']+'').search("serial")  != -1 ) ? 'serial' : 'ethernet' )
+    var connector = form_data['connector'];
+    var connector_label = form_data['connector_label'];
     // Get src dst type information and check compatibility
     if ( srcType != dstType )  {
          addModalError("Serial and Ethernet cannot be interconnected !!!!" )
@@ -4592,33 +4664,29 @@ $(document).on('submit', '#addConn', function (e) {
                   //logger(1, 'Link DEBUG: new network created ' + networkId);
                   $.when(getConnection()).done(function (response){
                     var connection = response.data.connection;
-                    console.log('connection: ', connection);
-                  if (type1 == "switch" || type2 == "switch") {
-                    console.log('switch')
-                    $.when(setNodeInterface(node1, iface1, 'none', connection) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, 'none', connection)).done( function () {
-                        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
-                            $(e.target).parents('.modal').attr('skipRedraw', true);
-                            $(e.target).parents('.modal').modal('hide');
-                        //});
+                    if (type1 == "switch" || type2 == "switch") {
+                        $.when(setNodeInterface(node1, iface1, 'none', connection, connector, connector_label) ).done( function () {
+                            $.when(setNodeInterface(node2, iface2, 'none', connection, connector, connector_label)).done( function () {
+                            //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+                                $(e.target).parents('.modal').attr('skipRedraw', true);
+                                $(e.target).parents('.modal').modal('hide');
+                            //});
+                            });
                         });
-                    });
-                  }
-                  else {
-                  $.when(getVlan()).done(function (response){
-                    console.log('no switch')
-                    var vlan = response.data.vlan;
-                    console.log("response ", vlan);
-                    $.when(setNodeInterface(node1, iface1, vlan, connection) ).done( function () {
-                        $.when(setNodeInterface(node2, iface2, vlan, connection)).done( function () {
-                        //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
-                            $(e.target).parents('.modal').attr('skipRedraw', true);
-                            $(e.target).parents('.modal').modal('hide');
-                        //});
-                        });
-                    });
-                    })
-                }
+                    }
+                    else {
+                        $.when(getVlan()).done(function (response){
+                            var vlan = response.data.vlan;
+                            $.when(setNodeInterface(node1, iface1, vlan, connection, connector, connector_label) ).done( function () {
+                                $.when(setNodeInterface(node2, iface2, vlan, connection, connector, connector_label)).done( function () {
+                                //$.when(setNetworkiVisibility( networkId , 0 )).done( function () {
+                                    $(e.target).parents('.modal').attr('skipRedraw', true);
+                                    $(e.target).parents('.modal').modal('hide');
+                                //});
+                                });
+                            });
+                        })
+                    }
             });
              //});
 

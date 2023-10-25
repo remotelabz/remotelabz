@@ -984,7 +984,7 @@ export function getPictures(picture_id) {
 
 
 // Get lab topology
-function getTopology() {
+export function getTopology() {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     var url = '/api/labs/' + lab_filename + '/topology';
@@ -2004,7 +2004,7 @@ export function setNodeData(id){
 }
 
 //set note interface
-export function setNodeInterface(node_id,interface_id,vlan, connection){
+export function setNodeInterface(node_id,interface_id,vlan, connection, connector, connector_label){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
@@ -2012,6 +2012,8 @@ export function setNodeInterface(node_id,interface_id,vlan, connection){
     form_data["interface id"] = interface_id;
     form_data["vlan"] = vlan;
     form_data["connection"] = connection;
+    form_data["connector"] = connector;
+    form_data["connector_label"] = connector_label;
 
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id +'/interfaces';
     var type = 'PUT';
@@ -2044,12 +2046,49 @@ export function setNodeInterface(node_id,interface_id,vlan, connection){
 
 }
 
-//set note interface
-export function removeConnection(vlan){
+//edit node interface
+export function editConnection(connection, connector, connector_label){
 
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs/' + lab_filename + '/interfaces/' + vlan;
+    var url = '/api/labs/' + lab_filename + '/interfaces/' + connection + '/edit';
+    var type = 'PUT';
+    var form_data = {"connector": connector, "connector_label": connector_label}
+    $.ajax({
+        cache: false,
+        timeout: TIMEOUT,
+        type: type,
+        url: encodeURI(url),
+        dataType: 'json',
+        data: JSON.stringify(form_data),
+        success: function (data) {
+            if (data['status'] == 'success') {
+                logger(1, 'DEBUG: connection edited.');
+                deferred.resolve(data);
+            } else {
+                // Application error
+                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                deferred.reject(data['message']);
+            }
+        },
+        error: function (data) {
+            // Server error
+            var message = getJsonMessage(data['responseText']);
+            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            logger(1, 'DEBUG: ' + message);
+            deferred.reject(message);
+        }
+    });
+    return deferred.promise();
+
+}
+
+//set note interface
+export function removeConnection(connection){
+
+    var deferred = $.Deferred();
+    var lab_filename = $('#lab-viewport').attr('data-path');
+    var url = '/api/labs/' + lab_filename + '/interfaces/' + connection;
     var type = 'PUT';
     $.ajax({
         cache: false,
@@ -3943,7 +3982,9 @@ export function printLabTopology() {
                         destination = link['destination'],
                         destination_label = link['destination_label'],
                         src_label = ["Label"],
-                        dst_label = ["Label"];
+                        dst_label = ["Label"],
+                        connector = link['connector'],
+                        connector_label = link['connector_label'];
 
                     if (type == 'ethernet') {
                         if (source_label != '') {
@@ -3965,13 +4006,20 @@ export function printLabTopology() {
                             dst_label.push(Object());
                         }
 
+                        let overlays = [src_label, dst_label];
+
+                        if (connector_label != null && connector_label !== "") {
+                            let conn_label = ["Label", { label:connector_label, location:0.5, cssClass: 'node_interface_label ' + source + ' ' + destination} ];
+                            overlays.push(conn_label);
+                        }
 
                         var tmp_conn = lab_topology.connect({
                             source: source,       // Must attach to the IMG's parent or not printed correctly
                             target: destination,  // Must attach to the IMG's parent or not printed correctly
                             cssClass: source + ' ' + destination + ' frame_ethernet',
                             paintStyle: {strokeWidth: 2, stroke: '#0066aa'},
-                            overlays: [src_label, dst_label]
+                            overlays: overlays,
+                            connector: [connector]
                         });
                         if (destination.substr(0, 7) == 'network') {
                               $.when( getNodeInterfaces(source.replace('node',''))).done( function ( ifaces ) {
@@ -5955,10 +6003,21 @@ function newConnModal(info , oe ) {
                                          }
                                         html += '</option>'
                                         html += '</select>' +
-                                        '<div style="width:3px;height:30px;"></div>' +
+                                        '<div style="width:3px;height:5px;"></div>' +
                                     '</div>' +
                                 '</div>' +
-                                '<div style="width:3px;height:30px;"></div>' +
+                                '<div class="form-group">'+
+                                    '<label>Choose connector to link nodes</label>' +
+                                    '<select name="addConn[connector]" class="form-control">' +
+                                        '<option value="Straight">Straight</option>' +
+                                        '<option value="Bezier">Bezier</option>' +
+                                        '<option value="Flowchart">Flowchart</option>' +
+                                    '</select>'+
+                                '</div>' +
+                                '<div class="form-group">'+
+                                    '<label>Write a label for the connector</label>' +
+                                    '<input type="text" name="addConn[connector_label]" class="form-control"/>' +
+                                '</div>' +
                                 '<div class="form-group">' +
                                     '<div class="form-group ' + (( linktargettype == 'net') ? 'hidden' : '')  +  '">'  +
                                         '<label>Choose Interface for '+ linktargetdata['name'] +'</label>' +
