@@ -10,15 +10,14 @@ use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
+use FOS\RestBundle\Controller\Annotations as Rest;
 
 
-/**
- * @Route("/admin")
- */
 class ServiceController extends Controller
 {
     protected $workerPort;
@@ -51,7 +50,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/services", name="services")
+     * @Route("/admin/services", name="services")
      */
     public function index()
     {
@@ -80,7 +79,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/service/start", name="start_service", methods="GET")
+     * @Route("/admin/service/start", name="start_service", methods="GET")
      */
     public function startServiceAction(Request $request)
     {
@@ -119,7 +118,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/service/stop", name="stop_service", methods="GET")
+     * @Route("/admin/service/stop", name="stop_service", methods="GET")
      */
     public function stopServiceAction(Request $request)
     {
@@ -162,23 +161,93 @@ class ServiceController extends Controller
         return $this->redirectToRoute('services');
     }
          /**
-     * @Route("/resources", name="resources", methods="GET")
+     * @Route("/admin/resources", name="resources", methods="GET")
      */
     public function RessourceAction(Request $request)
     {
-        $client = new Client();
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
-        try {
-            $response = $client->get($url);
-            $usage = json_decode($response->getBody()->getContents(), true);
-        } catch (Exception $exception) {
-            $this->addFlash('danger', 'Worker is not available');
-            $this->logger->error('Usage resources error - Web service or Worker is not available');
-            $usage=null;
+
+        $workers = explode(',', $this->workerServer);
+        $nbWorkers = count($workers);
+        if ( $nbWorkers > 1) {
+            $usage = $this->checkWorkersAction();
         }
+        else {
+            $client = new Client();
+            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+            try {
+                $response = $client->get($url);
+                $usage = json_decode($response->getBody()->getContents(), true);
+            } catch (Exception $exception) {
+                $this->addFlash('danger', 'Worker is not available');
+                $this->logger->error('Usage resources error - Web service or Worker is not available');
+                $usage=null;
+            }
+        }
+        
 
         return $this->render('service/resources.html.twig', [
-            'value' => $usage
+            'value' => $usage,
+            'nbworkers' => $nbWorkers
         ]);
+    }
+
+    public function checkWorkersAction()
+    {
+        $client = new Client();
+        $workers = explode(',', $this->getParameter('app.worker_server'));
+        $usage = [];
+        foreach($workers as $worker) {
+            $url = 'http://'.$worker.':'.$this->getParameter('app.worker_port').'/stats/hardware';
+            try {
+                $response = $client->get($url);
+                $content = json_decode($response->getBody()->getContents(), true);
+                $content['worker'] = $worker;
+                array_push($usage, $content);
+            } catch (Exception $exception) {
+                $this->addFlash('danger', 'Worker is not available');
+                $this->logger->error('Usage resources error - Web service or Worker is not available');
+                $content['disk'] = $content['cpu'] = $content['memory'] = null;
+                $content['worker'] = $worker;
+                array_push($usage, $content);
+            }
+        }
+
+        
+       // if ('json' !== $request->getRequestFormat()) {
+            return $usage;
+        /*}
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed textobjects (60062).',
+            'data' => $usage]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;*/
+    }
+
+    /**
+     * @Rest\Get("/api/free/worker", name="api_get_right_worker")
+     */
+    public function getFreeWorker(Request $request)
+    {
+        $usages = $this->checkWorkersAction();
+        $disk = 100;
+        $worker ="";
+        foreach($usages as $usage) {
+            if ($usage['disk'] < $disk) {
+                $disk = $usage['disk'];
+                $worker = $usage['worker'];
+            }
+        }
+        $freeWorker = ['disk'=> $disk, 'worker'=> $worker];
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 200,
+            'status'=>'success',
+            'message' => 'Successfully listed textobjects (60062).',
+            'data' => $usage]));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 }
