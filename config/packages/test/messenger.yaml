@@ -3,5 +3,4 @@ framework:
         transports:
             async: 'in-memory://'
             worker: 'in-memory://'
-            worker2: 'in-memory://'
             front: 'in-memory://'

@@ -145,7 +145,7 @@ function drawStats() {
             })
         }
         else {
-            cpu.css({display: "block", marginTop: "20%"});
+            $(cpu).css({display: "block", marginTop: "20%"});
         }
         index = [...cpus].indexOf(cpu);
         $(circle).addClass('worker-'+ index);
@@ -165,7 +165,7 @@ function drawStats() {
             })
         }
         else {
-            memory.css({display: "block", marginTop: "20%"});
+            $(memory).css({display: "block", marginTop: "20%"});
         }
         index = [...memories].indexOf(memory);
         $(circle).addClass('worker-'+ index);
@@ -185,7 +185,7 @@ function drawStats() {
             })
         }
         else {
-            disk.css({display: "block", marginTop: "20%"});
+            $(disk).css({display: "block", marginTop: "20%"});
         }
         index = [...disks].indexOf(disk);
         $(circle).addClass('worker-'+ index);

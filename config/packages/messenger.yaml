@@ -6,31 +6,17 @@ framework:
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            worker2: 
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    exchange:
-                            name: worker2
-                    queues:
-                        messages_worker2: ~
-                retry_strategy:
-                    max_retries: 3
-                    # milliseconds delay
-                    delay: 5000
-                    # causes the delay to be higher before each retry
-                    # e.g. 1 second delay, 2 seconds, 4 seconds
-                    multiplier: 1
-                    max_delay: 0
-                    # override all of this with a service that
-                    # implements Symfony\Component\Messenger\Retry\RetryStrategyInterface
-                    # service: null
             worker: 
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     exchange:
-                            name: worker
+                        name: worker
+                        type: direct
                     queues:
-                        messages_worker: ~
+                        messages_worker: 
+                            binding_keys: ['ip address 1']
+                        messages_worker2: 
+                            binding_keys: ['ip address 2']
                 retry_strategy:
                     max_retries: 3
                     # milliseconds delay
@@ -56,5 +42,5 @@ framework:
 
         routing:
             # Route your messages to the transports
-            'Remotelabz\Message\Message\InstanceActionMessage': [worker,worker2]
+            'Remotelabz\Message\Message\InstanceActionMessage': worker
             'Remotelabz\Message\Message\InstanceStateMessage': front

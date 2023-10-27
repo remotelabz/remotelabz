@@ -178,6 +178,12 @@ services:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
 
+    App\Service\Worker\WorkerManager:
+        arguments:
+            $workerServer: '%app.worker_server%'
+            $workerPort: '%app.worker_port%'
+            $publicAddress: '%app.general.public_address%'
+
     App\Controller\SecurityController:
         arguments:
             $maintenance: '%app.general.maintenance%'
