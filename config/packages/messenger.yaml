@@ -14,9 +14,9 @@ framework:
                         type: direct
                     queues:
                         messages_worker: 
-                            binding_keys: ['ip address 1']
+                            binding_keys: ['%env(WORKER_SERVER1)%']
                         messages_worker2: 
-                            binding_keys: ['ip address 2']
+                            binding_keys: ['%env(WORKER_SERVER2)%']
                 retry_strategy:
                     max_retries: 3
                     # milliseconds delay
