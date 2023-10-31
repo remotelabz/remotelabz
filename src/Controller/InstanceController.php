@@ -745,11 +745,13 @@ class InstanceController extends Controller
                 if ($type=="vnc")
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $port_number
+                    $port_number,
+                    $deviceInstance->getLabInstance()->getWorkerIp()
                 );
                 else $this->proxyManager->createContainerInstanceProxyRoute(
                     $deviceInstance->getUuid(),
-                    $port_number
+                    $port_number,
+                    $deviceInstance->getLabInstance()->getWorkerIp()
                 );
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());

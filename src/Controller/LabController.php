@@ -1184,7 +1184,7 @@ class LabController extends Controller
     {
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInsatance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1216,7 +1216,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInsatance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1250,7 +1250,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInsatance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");
@@ -1279,7 +1279,7 @@ class LabController extends Controller
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
 
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInsatance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");

@@ -8,30 +8,33 @@ use App\Service\Monitor\MessageServiceMonitor;
 use App\Service\Monitor\ProxyServiceMonitor;
 use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
+use App\Service\Worker\WorkerManager;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
+use FOS\RestBundle\Controller\Annotations as Rest;
 
 
-/**
- * @Route("/admin")
- */
 class ServiceController extends Controller
 {
     protected $workerPort;
     protected $workerServer;
     private $logger;
+    protected $workerManager;
 
     public function __construct(
         string $workerPort,
         string $workerServer,
-        LoggerInterface $logger=null
+        LoggerInterface $logger=null,
+        WorkerManager $workerManager
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
+        $this->workerManager = $workerManager;
         $this->logger = $logger;
         if ($logger == null) {
             $this->logger = new Logger();
@@ -51,7 +54,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/services", name="services")
+     * @Route("/admin/services", name="services")
      */
     public function index()
     {
@@ -80,7 +83,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/service/start", name="start_service", methods="GET")
+     * @Route("/admin/service/start", name="start_service", methods="GET")
      */
     public function startServiceAction(Request $request)
     {
@@ -119,7 +122,7 @@ class ServiceController extends Controller
     }
 
     /**
-     * @Route("/service/stop", name="stop_service", methods="GET")
+     * @Route("/admin/service/stop", name="stop_service", methods="GET")
      */
     public function stopServiceAction(Request $request)
     {
@@ -162,23 +165,33 @@ class ServiceController extends Controller
         return $this->redirectToRoute('services');
     }
          /**
-     * @Route("/resources", name="resources", methods="GET")
+     * @Route("/admin/resources", name="resources", methods="GET")
      */
     public function RessourceAction(Request $request)
     {
-        $client = new Client();
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
-        try {
-            $response = $client->get($url);
-            $usage = json_decode($response->getBody()->getContents(), true);
-        } catch (Exception $exception) {
-            $this->addFlash('danger', 'Worker is not available');
-            $this->logger->error('Usage resources error - Web service or Worker is not available');
-            $usage=null;
+
+        $workers = explode(',', $this->workerServer);
+        $nbWorkers = count($workers);
+        if ( $nbWorkers > 1) {
+            $usage = $this->workerManager->checkWorkersAction();
         }
+        else {
+            $client = new Client();
+            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+            try {
+                $response = $client->get($url);
+                $usage = json_decode($response->getBody()->getContents(), true);
+            } catch (Exception $exception) {
+                $this->addFlash('danger', 'Worker is not available');
+                $this->logger->error('Usage resources error - Web service or Worker is not available');
+                $usage=null;
+            }
+        }
+        
 
         return $this->render('service/resources.html.twig', [
-            'value' => $usage
+            'value' => $usage,
+            'nbworkers' => $nbWorkers
         ]);
     }
 }

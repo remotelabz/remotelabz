@@ -67,7 +67,7 @@ class ProxyManager
      * @param string $uuid UUID of the device instance
      * @param int $remotePort Port used by websockify
      */
-    public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort)
+    public function createDeviceInstanceProxyRoute(string $uuid, int $remotePort, string $worker)
     {
         $client = new Client();
 
@@ -78,7 +78,7 @@ class ProxyManager
 
         $client->post($url, [
             'body' => json_encode([
-                'target' => ($this->remotelabzProxyUseWss ? 'wss' : 'ws').'://'.$this->workerServer.':'.($remotePort + 1000).'',
+                'target' => ($this->remotelabzProxyUseWss ? 'wss' : 'ws').'://'.$worker.':'.($remotePort + 1000).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -92,7 +92,7 @@ class ProxyManager
      * @param string $uuid UUID of the device instance
      * @param int $remotePort Port used by websockify
      */
-    public function createContainerInstanceProxyRoute(string $uuid, int $remotePort)
+    public function createContainerInstanceProxyRoute(string $uuid, int $remotePort, string $worker)
     {
         $client = new Client();
 
@@ -103,7 +103,7 @@ class ProxyManager
 
         $client->post($url, [
             'body' => json_encode([
-                'target' => ($this->remotelabzProxyUseWss ? 'http' : 'http').'://'.$this->workerServer.':'.($remotePort).'',
+                'target' => ($this->remotelabzProxyUseWss ? 'http' : 'http').'://'.$worker.':'.($remotePort).'',
             ]),
             'headers' => [
                 'Content-Type' => 'application/json',

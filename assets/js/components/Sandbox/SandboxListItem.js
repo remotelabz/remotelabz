@@ -117,7 +117,7 @@ class SandboxListItem extends Component {
 
     async deleteLab(id) {
         await Remotelabz.labs.delete(id);
-        window.location.href = "/admin/devices_sandbox"
+        window.location.href = "/admin/sandbox"
     }
 
     render() {

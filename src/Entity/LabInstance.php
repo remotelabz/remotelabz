@@ -72,6 +72,12 @@ class LabInstance extends Instance
      */
     private $timerEnd;
 
+    /**
+     * @ORM\Column(type="string", nullable="true")
+     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     */
+    private $workerIp;
+
 
     //TODO add hypervisor IP to manage cluster of hypervisor
     //@ORM\Column(type=.., length=)
@@ -277,6 +283,18 @@ class LabInstance extends Instance
     public function setTimerEnd(\DateTimeInterface $timerEnd): self
     {
         $this->timerEnd = $timerEnd;
+
+        return $this;
+    }
+
+    public function getWorkerIp(): ?string
+    {
+        return $this->workerIp;
+    }
+
+    public function setWorkerIp(?string $workerIp): self
+    {
+        $this->workerIp = $workerIp;
 
         return $this;
     }

@@ -20,7 +20,6 @@ use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
 use App\Repository\TextObjectRepository;
 use App\Repository\LabRepository;
-use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
@@ -66,12 +65,6 @@ use function Symfony\Component\String\u;
 
 class TemplateController extends Controller
 {
-    private $workerServer;
-
-    private $workerPort;
-
-    private $workerAddress;
-
     /** @var LoggerInterface $logger */
     private $logger;
 
@@ -84,9 +77,6 @@ class TemplateController extends Controller
         DeviceRepository $deviceRepository
         )
     {
-        $this->workerServer = (string) getenv('WORKER_SERVER');
-        $this->workerPort = (int) getenv('WORKER_PORT');
-        $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;

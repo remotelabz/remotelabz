@@ -25,50 +25,118 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
 
     public function start()
     {
-        $client = new Client();
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
-        try {
-            $response = $client->get($url, [
-                'query' => [
-                    'action' => 'start'
-                ]
-            ]);
-        } catch (Exception $exception) {
-            return false;
+        $workers = explode(',', $this->workerServer);
+        $nbWorkers = count($workers);
+        if ($nbWorkers > 1) {
+            foreach($workers as $worker) {
+                $client = new Client();
+                $url = 'http://'.$worker.':'.$this->workerPort.'/service/remotelabz-worker';
+                try {
+                    $response = $client->get($url, [
+                        'query' => [
+                            'action' => 'start'
+                        ]
+                    ]);
+                } catch (Exception $exception) {
+                    return false;
+                }
+            }
         }
+        else {
+            $client = new Client();
+            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
+            try {
+                $response = $client->get($url, [
+                    'query' => [
+                        'action' => 'start'
+                    ]
+                ]);
+            } catch (Exception $exception) {
+                return false;
+            }
+        }
+        
 
         return true;
     }
 
     public function stop()
     {
-        $client = new Client();
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
-        try {
-            $response = $client->get($url, [
-                'query' => [
-                    'action' => 'stop'
-                ]
-            ]);
-        } catch (Exception $exception) {
-            return false;
+        $workers = explode(',', $this->workerServer);
+        $nbWorkers = count($workers);
+        if ($nbWorkers > 1) {
+            foreach($workers as $worker) {
+                $client = new Client();
+                $url = 'http://'.$worker.':'.$this->workerPort.'/service/remotelabz-worker';
+                try {
+                    $response = $client->get($url, [
+                        'query' => [
+                            'action' => 'stop'
+                        ]
+                    ]);
+                } catch (Exception $exception) {
+                    return false;
+                }
+            }
         }
+        else {
+            $client = new Client();
+            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/service/remotelabz-worker';
+            try {
+                $response = $client->get($url, [
+                    'query' => [
+                        'action' => 'stop'
+                    ]
+                ]);
+            } catch (Exception $exception) {
+                return false;
+            }
+        }
+        
 
         return true;
     }
 
     public function isStarted(): bool
     {
-        $client = new Client();
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/healthcheck';
-        try {
-            $response = $client->get($url);
-        } catch (Exception $exception) {
-            return false;
+        $workers = explode(',', $this->workerServer);
+        $nbWorkers = count($workers);
+        if ($nbWorkers > 1) {
+            $healths = [];
+            foreach($workers as $worker) {
+                $client = new Client();
+                $url = 'http://'.$worker.':'.$this->workerPort.'/healthcheck';
+                try {
+                    $response = $client->get($url, [
+                        'query' => [
+                            'action' => 'start'
+                        ]
+                    ]);
+                } catch (Exception $exception) {
+                    return false;
+                }
+                $health = json_decode($response->getBody()->getContents(), true);
+                array_push($healths, $health['remotelabz-worker']['isStarted']);
+            }
+            if (in_array(false, $healths)) {
+                return $health['remotelabz-worker']['isStarted'] = false;
+            }
+            else {
+                return $health['remotelabz-worker']['isStarted'] = true;
+            }
         }
+        else {
+            $client = new Client();
+            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/healthcheck';
+            try {
+                $response = $client->get($url);
+            } catch (Exception $exception) {
+                return false;
+            }
 
-        $health = json_decode($response->getBody()->getContents(), true);
+            $health = json_decode($response->getBody()->getContents(), true);
 
-        return $health['remotelabz-worker']['isStarted'];
+            return $health['remotelabz-worker']['isStarted'];
+        }
     }
 }

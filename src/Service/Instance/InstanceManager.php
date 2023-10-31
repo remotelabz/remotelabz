@@ -43,6 +43,8 @@ use Psr\Log\LoggerInterface;
 use Remotelabz\NetworkBundle\Exception\NoNetworkAvailableException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use App\Service\Worker\WorkerManager;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 
 
 /**
@@ -65,6 +67,7 @@ class InstanceManager
     protected $controlProtocolTypeInstanceRepository;
     protected $workerServer;
     protected $workerPort;
+    protected $publicAddress;
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
@@ -89,7 +92,8 @@ class InstanceManager
         OperatingSystemRepository $OperatingSystemRepository,
         string $workerServer,
         string $workerPort,
-        ProxyManager $proxyManager
+        ProxyManager $proxyManager,
+        WorkerManager $workerManager
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -108,6 +112,7 @@ class InstanceManager
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
         $this->proxyManager = $proxyManager;
+        $this->workerManager = $workerManager;
     }
 
     /**
@@ -120,8 +125,12 @@ class InstanceManager
      */
     public function create(Lab $lab, InstancierInterface $instancier)
     {
+        
+        $worker = $this->workerManager->getFreeWorker();
+
         $labInstance = LabInstance::create()
             ->setLab($lab)
+            ->setworkerIp($worker)
             ->setInternetConnected(false)
             ->setInterconnected(false);
 
@@ -165,8 +174,11 @@ class InstanceManager
 
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+ 
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE)
+            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE), [
+                new AmqpStamp($worker, AMQP_NOPARAM, []),
+            ]
         );
 
         return $labInstance;
@@ -184,10 +196,13 @@ class InstanceManager
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($labInstance, 'json', $context);
         $labInstance->setState(InstanceStateMessage::STATE_DELETING);
+        $worker = $labInstance->getWorkerIp();
         $this->entityManager->persist($labInstance);
         $this->entityManager->flush();
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_DELETE)
+            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_DELETE), [
+                new AmqpStamp($worker, AMQP_NOPARAM, []),
+            ]
         );
     }
 
@@ -201,8 +216,9 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
+        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
         foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
-            $control_protocol_instance->setPort($this->getRemoteAvailablePort());
+            $control_protocol_instance->setPort($this->getRemoteAvailablePort($worker));
             $this->entityManager->persist($control_protocol_instance);
         }
 
@@ -216,7 +232,9 @@ class InstanceManager
         $this->logger->info('Sending device instance '.$uuid.' start message');
         $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
+                new AmqpStamp($worker, AMQP_NOPARAM, []),
+            ]
         );
 
         return $labJson;
@@ -238,10 +256,13 @@ class InstanceManager
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
+        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
         $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
         $this->logger->info('Sending device instance '.$uuid.' stop message.');
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP), [
+                new AmqpStamp($worker, AMQP_NOPARAM, []),
+            ]
         );
     }
 
@@ -294,9 +315,12 @@ class InstanceManager
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
+        $worker = $this->workerManager->getFreeWorker();
         $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV)
+            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV), [
+                new AmqpStamp($worker, AMQP_NOPARAM, []),
+            ]
         );
     }
 
@@ -309,56 +333,64 @@ class InstanceManager
         $lab = $this->copyLab($labInstance->getLab(), $name);
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
-        foreach($lab->getPictures() as $picture) {
-            $type = explode("image/",$picture->getType())[1];
-            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
-        }
-        foreach($labInstance->getDeviceInstances() as $deviceInstance) {
-            $device = $deviceInstance->getDevice();
-            $osName = $device->getOperatingSystem()->getName()."_".$name;
-            $deviceName = $device->getName()."_".$name;
-            $deviceInstanceUuid = $deviceInstance->getUuid();
-            $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
-            $id = uniqid();
-            $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
-
-            $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
-
-            $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
-            $newDevice = $this->copyDevice($device, $newOS, $deviceName);
-            $this->entityManager->persist($newOS);
-
-            $newEditorData = new EditorData();
-            $newEditorData->setY($device->getEditorData()->getY());
-            $newEditorData->setX($device->getEditorData()->getX());
-            $this->entityManager->persist($newEditorData);
-            $newDevice->setEditorData($newEditorData);
-            $this->entityManager->persist($newDevice);
-            $newEditorData->setDevice($newDevice);
-
-            $lab->addDevice($newDevice);
-            $this->entityManager->flush();
-
-            $context = SerializationContext::create()->setGroups('api_get_lab_instance');
-            $labJson = $this->serializer->serialize($labInstance, 'json', $context);
-            $this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
-
-            $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-            for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
-                if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
-                    $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
-                    $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
-                    $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
-                    $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
-                }
+        if (count($lab->getPictures()) >= 1) {
+            foreach($lab->getPictures() as $picture) {
+                $type = explode("image/",$picture->getType())[1];
+                file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
             }
-
-            $labJson = json_encode($tmp, 0, 4096);
-
         }
+        if (count($labInstance->getDeviceInstances()) >= 1) {
+            foreach($labInstance->getDeviceInstances() as $deviceInstance) {
+                $device = $deviceInstance->getDevice();
+                $osName = $device->getOperatingSystem()->getName()."_".$name;
+                $deviceName = $device->getName()."_".$name;
+                $deviceInstanceUuid = $deviceInstance->getUuid();
+                $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
+                $id = uniqid();
+                $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+    
+                $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
+    
+                $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
+                $newDevice = $this->copyDevice($device, $newOS, $deviceName);
+                $this->entityManager->persist($newOS);
+    
+                $newEditorData = new EditorData();
+                $newEditorData->setY($device->getEditorData()->getY());
+                $newEditorData->setX($device->getEditorData()->getX());
+                $this->entityManager->persist($newEditorData);
+                $newDevice->setEditorData($newEditorData);
+                $this->entityManager->persist($newDevice);
+                $newEditorData->setDevice($newDevice);
+    
+                $lab->addDevice($newDevice);
+                $this->entityManager->flush();
+    
+                $context = SerializationContext::create()->setGroups('api_get_lab_instance');
+                $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+                $this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
+    
+                $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
+                    if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
+                        $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
+                        $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
+                        $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
+                        $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
+                    }
+                }
+    
+                $labJson = json_encode($tmp, 0, 4096);
+    
+            }
+        }
+
+        $worker = $this->workerManager->getFreeWorker();
         $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
             $this->bus->dispatch(
-                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB)
+                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB), [
+                    new AmqpStamp($worker, AMQP_NOPARAM, []),
+                ]
             );
         
     }
@@ -400,9 +432,9 @@ class InstanceManager
         $this->logger->info('Device instance state changed.');
     }
 
-    public function getRemoteAvailablePort(): int
+    public function getRemoteAvailablePort($worker): int
     {
-        $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/worker/port/free';
+        $url = 'http://'.$worker.':'.$this->workerPort.'/worker/port/free';
         $this->logger->debug('Request the remote available port at '.$url);
         try {
             $response = $this->client->get($url);
@@ -437,34 +469,37 @@ class InstanceManager
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
 
-        foreach($lab->getTextobjects() as $textObject) {
-            $newTextObject = new TextObject();
-            $newTextObject->setName($textObject->getName());
-            $newTextObject->setType($textObject->getType());
-            $newTextObject->setData($textObject->getData());
-            $newTextObject->setLab($newLab);
-            $this->entityManager->persist($newTextObject);
-            $newLab->addTextobject($newTextObject);
-        }
-       
-        foreach($lab->getPictures() as $picture) {
-            $newPicture = new Picture();
-            $newPicture->setName($picture->getName());
-            $newPicture->setHeight($picture->getHeight());
-            $newPicture->setWidth($picture->getWidth());
-            $newPicture->setMap($picture->getMap());
-            $newPicture->setType($picture->getType());
-
-            $type = explode("image/",$picture->getType())[1];
-            $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
-            $fp = fopen($fileName, 'r');
-            $size = filesize($fileName);
-            if ($fp !== False) {
-                $data = fread($fp, $size);
-                $newPicture->setData($data);
+        if (count($lab->getTextobjects()) >= 1) {
+            foreach($lab->getTextobjects() as $textObject) {
+                $newTextObject = new TextObject();
+                $newTextObject->setName($textObject->getName());
+                $newTextObject->setType($textObject->getType());
+                $newTextObject->setData($textObject->getData());
+                $newTextObject->setLab($newLab);
+                $this->entityManager->persist($newTextObject);
+                $newLab->addTextobject($newTextObject);
             }
-            $this->entityManager->persist($newPicture);
-            $newLab->addPicture($newPicture);
+        }
+        if (count($lab->getPictures()) >= 1) {
+            foreach($lab->getPictures() as $picture) {
+                $newPicture = new Picture();
+                $newPicture->setName($picture->getName());
+                $newPicture->setHeight($picture->getHeight());
+                $newPicture->setWidth($picture->getWidth());
+                $newPicture->setMap($picture->getMap());
+                $newPicture->setType($picture->getType());
+    
+                $type = explode("image/",$picture->getType())[1];
+                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
+                $fp = fopen($fileName, 'r');
+                $size = filesize($fileName);
+                if ($fp !== False) {
+                    $data = fread($fp, $size);
+                    $newPicture->setData($data);
+                }
+                $this->entityManager->persist($newPicture);
+                $newLab->addPicture($newPicture);
+            }
         }
         
         $newLab->setAuthor($lab->getAuthor());

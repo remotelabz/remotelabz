@@ -19,6 +19,7 @@
 <div class="content-body">
 <div class="row">
 </div>
+    {% if nbworkers == 1 %}  
     <div class="row">
         <div class="col-xl-8 col-lg-12">
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
@@ -29,7 +30,7 @@
                         </h4>
                         <div class="stats-circle cpu-circle">
                         </div>
-                        <p class="card-text flex-grow-1 text-center" id ="cpu" style="display: none;">
+                        <p class="card-text flex-grow-1 text-center" id ="cpu" name="cpu" style="display: none;">
                             {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
                         </p>
                     </div>
@@ -41,7 +42,7 @@
                         </h4>
                         <div class="stats-circle memory-circle">
                         </div>
-                        <p class="card-text flex-grow-1 text-center" id ="memory" style="display: none;">
+                        <p class="card-text flex-grow-1 text-center" id ="memory" name="memory" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
 
                         </p>
@@ -54,7 +55,7 @@
                         </h4>
                         <div class="stats-circle disk-circle">
                         </div>
-                        <p class="card-text flex-grow-1 text-center" id ="disk" style="display: none;">
+                        <p class="card-text flex-grow-1 text-center" id ="disk" name="disk" style="display: none;">
                         {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
 
                         </p>
@@ -63,6 +64,57 @@
             </div>
         </div>
     </div>
+    {% else %}
+    {% for worker in value %}
+    <div class="row">
+    <h2>{{worker['worker']}}</h2>
+    </div>
+    <div class="row">
+        <div class="col-xl-8 col-lg-12">
+            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        CPU
+                        </h4>
+                        <div class="stats-circle cpu-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="cpu" name="cpu" style="display: none;">
+                            {% if worker is null %} NA {% else %} {{ worker['cpu'] }}% {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Memory
+                        </h4>
+                        <div class="stats-circle memory-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="memory" name="memory" style="display: none;">
+                        {% if worker is null %} NA {% else %} {{ worker['memory'] }}% {% endif %}
+
+                        </p>
+                    </div>
+                </div>
+                <div class="card m-4">
+                    <div class="card-body d-flex flex-column">
+                        <h4 class="card-title">
+                        Disk
+                        </h4>
+                        <div class="stats-circle disk-circle">
+                        </div>
+                        <p class="card-text flex-grow-1 text-center" id ="disk" name="disk" style="display: none;">
+                        {% if worker is null %} NA {% else %} {{ worker['disk'] }}% {% endif %}
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
 </div>
 
 {% endblock %}
@@ -79,52 +131,87 @@ document.getElementById("themeSwitcher").addEventListener('change', () => {
 });
 function drawStats() {
 
-    var cpu = $('#cpu').text().split(/(\d+)/)[1];
+    var cpus = $('p[name="cpu"]');
+    for (cpu of cpus) {
+        cpuText = cpu.textContent.split(/(\d+)/)[1];
+        circle = $(cpu).prev();
 
-    if (cpu != undefined) {
-        $('.cpu-circle').circleProgress({
-            value: cpu,
-            min: 0,
-            max:100,
-            textFormat: 'percent'
-        })
-    }
-    else {
-         $('#cpu').css({display: "block", marginTop: "20%"});
-    }
-
-    var memory = $('#memory').text().split(/(\d+)/)[1];
-
-    if (memory != undefined) {
-        $('.memory-circle').circleProgress({
-            value: memory,
-            min: 0,
-            max: 100,
-            textFormat: 'percent'
-        })
-    }
-    else {
-         $('#memory').css({display: "block", marginTop: "20%"});
+        if (cpuText != undefined) {
+            $(circle).circleProgress({
+                value: cpuText,
+                min: 0,
+                max:100,
+                textFormat: 'percent'
+            })
+        }
+        else {
+            $(cpu).css({display: "block", marginTop: "20%"});
+        }
+        index = [...cpus].indexOf(cpu);
+        $(circle).addClass('worker-'+ index);
     }
 
-    var disk = $('#disk').text().split(/(\d+)/)[1];
+    var memories = $('p[name="memory"]');
+    for (memory of memories) {
+        memoryText = memory.textContent.split(/(\d+)/)[1];
+        circle = $(memory).prev();
 
-    if (disk != undefined) {
-        $('.disk-circle').circleProgress({
-            value: disk,
-            min: 0,
-            max: 100,
-            textFormat: 'percent'
-        })
+        if (memoryText != undefined) {
+            $(circle).circleProgress({
+                value: memoryText,
+                min: 0,
+                max:100,
+                textFormat: 'percent'
+            })
+        }
+        else {
+            $(memory).css({display: "block", marginTop: "20%"});
+        }
+        index = [...memories].indexOf(memory);
+        $(circle).addClass('worker-'+ index);
     }
-    else {
-         $('#disk').css({display: "block", marginTop: "20%"});
+
+    var disks = $('p[name="disk"]');
+    for (disk of disks) {
+        diskText = disk.textContent.split(/(\d+)/)[1];
+        circle = $(disk).prev();
+
+        if (diskText != undefined) {
+            $(circle).circleProgress({
+                value: diskText,
+                min: 0,
+                max:100,
+                textFormat: 'percent'
+            })
+        }
+        else {
+            $(disk).css({display: "block", marginTop: "20%"});
+        }
+        index = [...disks].indexOf(disk);
+        $(circle).addClass('worker-'+ index);
     }
 
     setTimeout(function() {
-        changeColorProgress(cpu, '.cpu-circle');
-        changeColorProgress(memory, '.memory-circle');
-        changeColorProgress(disk, '.disk-circle');
+        let cpus = $('p[name="cpu"]');
+        for (cpu of cpus) {
+            index = [...cpus].indexOf(cpu);
+            cpuText = cpu.textContent.split(/(\d+)/)[1];
+            changeColorProgress(cpuText, '.cpu-circle.worker-' +index);
+        }
+
+        let memories = $('p[name="memory"]');
+        for (memory of memories) {
+            index = [...memories].indexOf(memory);
+            memoryText = memory.textContent.split(/(\d+)/)[1];
+            changeColorProgress(memoryText, '.memory-circle.worker-' +index);
+        }
+        
+        let disks = $('p[name="disk"]');
+        for (disk of disks) {
+            index = [...disks].indexOf(disk);
+            diskText = disk.textContent.split(/(\d+)/)[1];
+            changeColorProgress(diskText, '.disk-circle.worker-' +index);
+        }
     }, 100);
 }
 

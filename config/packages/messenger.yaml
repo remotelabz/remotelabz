@@ -10,9 +10,13 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     exchange:
-                            name: worker
+                        name: worker
+                        type: direct
                     queues:
-                        messages_worker: ~
+                        messages_worker: 
+                            binding_keys: ['%env(WORKER_SERVER1)%']
+                        messages_worker2: 
+                            binding_keys: ['%env(WORKER_SERVER2)%']
                 retry_strategy:
                     max_retries: 3
                     # milliseconds delay
@@ -24,6 +28,7 @@ framework:
                     # override all of this with a service that
                     # implements Symfony\Component\Messenger\Retry\RetryStrategyInterface
                     # service: null
+            
             front: 
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
