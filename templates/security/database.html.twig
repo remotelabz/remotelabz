@@ -36,6 +36,7 @@
                 <tr>
                     <th>Backups</th>
                     <th>Download</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,6 +46,11 @@
                     <td>
                         <button class="btn btn-info" type="button" onClick="downloadBackup('{{backup}}')">
                         Download
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" type="button" onClick="deleteBackup('{{backup}}')">
+                        Delete
                         </button>
                     </td>
                 </tr>
@@ -60,6 +66,11 @@
         function downloadBackup(backup) {
             var name = backup.split('.')[0];
             location.href = `/admin/database/backup/download/${name}`;
+        }
+
+        function deleteBackup(backup) {
+            var name = backup.split('.')[0];
+            location.href = `/admin/database/backup/delete/${name}`;
         }
     </script>
 {% endblock %}

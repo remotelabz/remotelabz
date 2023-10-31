@@ -78,7 +78,7 @@ class DatabaseController extends Controller
 
     /**
     * 
-    * @Route("/admin/database/backup/download/{name}", name="admin_database_backup_download", requirements={"name"="database_backup_[\d]{2}_[\d]{2}_[\d]{4}_[\d]{2}_[\d]{2}_[\d]{2}"})
+    * @Route("/admin/database/backup/download/{name}", name="admin_database_backup_download", requirements={"name"="database_backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
     * 
     */
     public function downloadBackup(Request $request, string $name)
@@ -94,6 +94,20 @@ class DatabaseController extends Controller
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
+
+    }
+
+    /**
+    * 
+    * @Route("/admin/database/backup/delete/{name}", name="admin_database_backup_delete", requirements={"name"="database_backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
+    * 
+    */
+    public function deleteBackup(Request $request, string $name)
+    {
+        $file = $name .".sql";
+        unlink('/opt/remotelabz/backups/'.$file);
+
+        return $this->redirectToRoute('admin_database');
 
     }
 
