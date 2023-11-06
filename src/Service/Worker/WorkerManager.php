@@ -38,7 +38,6 @@ class WorkerManager
                 $content['worker'] = $worker;
                 array_push($usage, $content);
             } catch (Exception $exception) {
-                $this->addFlash('danger', 'Worker is not available');
                 $this->logger->error('Usage resources error - Web service or Worker is not available');
                 $content['disk'] = $content['cpu'] = $content['memory'] = null;
                 $content['worker'] = $worker;
