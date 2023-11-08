@@ -228,9 +228,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 dataType:"json",
                 success: function (response) {
                     console.log(response.data.html);
-                    $("#instanceButtons").html(response.data.html);              
+                    $("#instanceButtons").html(response.data.html);    
+                            
                 }  
             }); 
+            if(isSandbox) {
+                setTimeout(function() {window.location.href="/admin/sandbox"}, 1000);
+            }  
+            
         } catch (error) {
             console.error(error)
             new Noty({
