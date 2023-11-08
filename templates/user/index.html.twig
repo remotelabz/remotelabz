@@ -91,7 +91,7 @@
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
-    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ app.user|serialize('json')}}">
+    <div class="multipleUsersActions d-flex justify-content-end align-items-center mt-3 mr-3" data-user="{{ currentUser }}">
         <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
         <a class="btn btn-default" href="#" id="dropdownUserSettings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-user-cog"></i>
@@ -289,6 +289,7 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script type="text/javascript">
+    console.log(JSON.parse(document.querySelector('.multipleUsersActions').dataset.user));
         function changeGroupDisplay(id) {
             if (document.getElementById(id+"-groups").style.display == "none") {
                 document.getElementById(id+"-groups").style.display = "block";
