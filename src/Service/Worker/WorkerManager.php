@@ -46,8 +46,8 @@ class WorkerManager
                 array_push($usage, $content);
             } catch (Exception $exception) {
                 $this->logger->error('Usage resources error - Web service or Worker is not available');
-                $content['disk'] = $content['cpu'] = $content['memory'] = null;
-                $content['worker'] = $worker;
+                $content['disk'] = $content['cpu'] = $content['memory'] = $content['memoryAvailable'] = null;
+                $content['worker'] = $worker->getIPv4();
                 array_push($usage, $content);
             }
         }

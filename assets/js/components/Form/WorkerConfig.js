@@ -96,7 +96,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                         </div>
                         <div className='row g-2'>
                             <div className='col-10'>
-                                <input type="text" id={worker.id} className="form-control mb-2" name="workers" defaultValue={worker.IPv4} readOnly={worker.available}/>
+                                <input type="text" id={worker.id} className="form-control mb-2" name="workers" defaultValue={worker.IPv4} readOnly={!worker.available}/>
                             </div>
                             <div className="col-2">
                                     {worker.available == true ? <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
@@ -127,17 +127,18 @@ function WorkerConfig(props = {workers, nbWorkers}) {
             }
             else {
                 let exists = false;
-                Remotelabz.configWorker.all().then((result)=> {
-                    setWorkers(result.data)
-                });
-                console.group(workers);
-                 for (let i =0; i < workers.length; i++) {
-                    if (workerElement.value == workers[i].IPv4) {
+                let workersToAdd = [...workers];
+                 for (let i =0; i < workersToAdd.length; i++) {
+                    if (workerElement.value == workersToAdd[i].IPv4) {
                         exists = true;
                     }
                 }
                 if (exists == false) {
-                    Remotelabz.configWorker.new({"IPv4": workerElement.value});
+                    console.log('new: ' + workerElement.value);
+                    Remotelabz.configWorker.new({"IPv4": workerElement.value}).then((result)=> {
+                        workersToAdd.push(result.data);
+                        setWorkers(workersToAdd);
+                    });
                 }
                 else {
                     new Noty({ type: 'error', text: 'worker IP ' + workerElement.value +' already exists.' }).show();

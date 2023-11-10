@@ -77,18 +77,38 @@ class ConfigWorkerController extends Controller
         $worker = new ConfigWorker();
         $worker->setIPv4($data['IPv4']);
         $worker->setAvailable(true);
-        $worker->setQueueName("");
+        $worker->setQueueName($this->getQueueName());
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($worker);
-        $entityManager->flush();
-        $worker->setQueueName("messages_worker".$worker->getId());
         $entityManager->flush();
         $this->logger->debug("worker ". $worker->getIPv4(). " has been created.");
 
         $this->createQueue($worker->getIPv4(), $worker->getQueueName());
 
         return $this->json($worker, 200, [], ['api_get_worker_config']);
+    }
+
+    private function getQueueName() {
+        $workers = $this->configWorkerRepository->findAll();
+        $numbers = [];
+        foreach ($workers as $worker) {
+            $number = preg_replace("/messages_worker/", "", $worker->getQueueName());
+            array_push($numbers, $number);
+        }
+        $exit = false;
+        $i = 1;
+
+        while($exit == false) {
+            if (in_array($i, $numbers)) {
+                $i++;
+            }
+            else {
+                $exit = true;
+            }
+        }
+        $queueName = "messages_worker".$i;
+        return $queueName;
     }
 
     /**
