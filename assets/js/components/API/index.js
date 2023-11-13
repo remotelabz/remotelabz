@@ -207,6 +207,17 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of users.
+         * 
+         * Implements GET `/api/fetch/users`
+
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchAll() {
+            return axios.get('/fetch/users')
+        },
+
+        /**
          * Get an user by its ID.
          * 
          * Implements GET `/api/users/{id}`
