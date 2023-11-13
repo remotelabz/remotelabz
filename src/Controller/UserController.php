@@ -195,6 +195,21 @@ class UserController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Get("/api/fetch/users", name="api_fetch_users")
+     */
+    public function fetchUsersAction(Request $request)
+    {
+        $users = $this->userRepository->findAll();
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
+    }
+
+    /**
      * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
      */
     public function showAction(Request $request, int $id)
