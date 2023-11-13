@@ -1443,7 +1443,7 @@ export function newUIreturn(param) {
     }
     if (TEMPLATE == 1) {
         $('body').removeClass('login');
-        window.location.href = "/admin/sandbox/"+ lab_filename ;
+        window.location.href = "/admin/sandbox";
     }
     else {
         $('body').removeClass('login');
