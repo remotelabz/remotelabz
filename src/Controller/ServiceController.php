@@ -69,14 +69,20 @@ class ServiceController extends Controller
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService();
                 $serviceStatus[$service::getServiceName()] = $service->isStarted();
+                $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
 
             }
             if ($type === 'distant') {
-                /** @var ServiceMonitorInterface */
-                $service = new $registeredService($this->workerPort, $this->workerServer);
-                $serviceStatus[$service::getServiceName()] = $service->isStarted();
+                $workers = $this->configWorkerRepository->findBy(['available' => true]);
+                foreach($workers as $worker) {
+                    /** @var ServiceMonitorInterface */
+                    $service = new $registeredService($this->workerPort, $worker->getIPv4());
+                    $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service->isStarted();
+                    $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+                }
+                
             }
-            $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+           
 
         }
 

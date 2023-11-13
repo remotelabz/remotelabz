@@ -67,21 +67,23 @@
         <div class="col">
             <div class="card">
                 <ul class="list-group list-group-flush">
+                {% for key, worker in serviceStarted['remotelabz-worker'] -%}
                     <li class="list-group-item">
-                        <span class="fw600">Worker Service</span>
-                        {% if serviceStarted['remotelabz-worker'] %}
+                        <span class="fw600">Worker Service: {{key}}</span>
+                        {% if worker %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
-                        {% if serviceStarted['remotelabz-worker'] %}
+                        {% if worker %}
                             <a href="{{ path('stop_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-danger">Stop</a>
                         {% else %}
                             <a href="{{ path('start_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-success">Start</a>
                         {% endif %}
                         </div>
                     </li>
+                    {% endfor %}
                 </ul>
               </div>
         </div>

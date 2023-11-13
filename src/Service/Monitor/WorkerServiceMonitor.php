@@ -23,6 +23,11 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
         return 'remotelabz-worker';
     }
 
+    public function getServiceSubName(): string
+    {
+        return 'worker '.$this->workerServer;
+    }
+
     public function start()
     {
         $workers = explode(',', $this->workerServer);
