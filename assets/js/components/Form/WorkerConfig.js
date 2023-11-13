@@ -116,6 +116,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
     function handleSubmit(e) {
         e.preventDefault();
         let workerElements = [];
+        let promises = [];
         for (let el of e.target.elements) {
             if (el.name == "workers") {
                 workerElements.push(el);
@@ -123,7 +124,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         }
         for(let workerElement of workerElements) {
             if (workerElement.id !== "") {
-                Remotelabz.configWorker.update(workerElement.id, {"IPv4": workerElement.value});
+                promises.push(Remotelabz.configWorker.update(workerElement.id, {"IPv4": workerElement.value}));
             }
             else {
                 let exists = false;
@@ -135,19 +136,25 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                 }
                 if (exists == false) {
                     console.log('new: ' + workerElement.value);
-                    Remotelabz.configWorker.new({"IPv4": workerElement.value}).then((result)=> {
-                        workersToAdd.push(result.data);
-                        setWorkers(workersToAdd);
-                    });
+                    promises.push(Remotelabz.configWorker.new({"IPv4": workerElement.value}));
+                    workersToAdd.push({"IPv4": workerElement.value});
                 }
                 else {
                     new Noty({ type: 'error', text: 'worker IP ' + workerElement.value +' already exists.' }).show();
                     
                 }
             }
+            Promise.all(promises).then(() => {
+                refresh();
+            }).catch(error => {
+                new Noty({
+                    text: 'An error happened while updating workers',
+                    type: 'error'
+                }).show()
+            })
 
         }
-        setTimeout(refresh(), 1000);
+        //setTimeout(refresh(), 1000);
  
     }
 
