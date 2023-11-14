@@ -25,7 +25,7 @@ import '../bootstrap/js/imageMapResizer.min';
 import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
-import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, 
+import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, postBanner,
          lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
@@ -2655,6 +2655,7 @@ $(document).on('submit', '#form-lab-add, #form-lab-edit', function (e) {
         data: JSON.stringify(form_data),
         success: function (data) {
             if (data['status'] == 'success') {
+                postBanner(form_data["banner"], attachments);
                 logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
                 // Close the modal
                 $(e.target).parents('.modal').attr('skipRedraw', true);

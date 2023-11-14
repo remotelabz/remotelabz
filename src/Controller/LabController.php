@@ -56,6 +56,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 
 class LabController extends Controller
@@ -376,6 +377,7 @@ class LabController extends Controller
             "version"=>$lab["version"],
             "scripttimeout"=>$lab["scripttimeout"],
             "lock"=>$lab["locked"],
+            "banner"=>$lab["banner"],
             "timer"=>$lab["timer"]
         ];
 
@@ -865,7 +867,7 @@ class LabController extends Controller
     /**
      * @Rest\Put("/api/labs/test/{id<\d+>}", name="api_edit_lab_test")
      */
-    public function updateActionTest(Request $request, int $id)
+    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
 
