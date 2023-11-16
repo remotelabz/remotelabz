@@ -38,6 +38,7 @@ use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
+use App\Service\Lab\BannerManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
@@ -1092,6 +1093,15 @@ class LabController extends Controller
         }
 
         return new JsonResponse(null, 400);
+    }
+
+    /**
+     * @Rest\Get("/api/labs/{id<\d+>}/banner/{newId<\d+>}", name="api_copy_lab_banner")
+     */
+    public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
+       
+        return $bannerManager->copyBanner($id, $newId);
+
     }
 
     /**

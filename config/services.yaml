@@ -184,6 +184,10 @@ services:
             $workerPort: '%app.worker_port%'
             $publicAddress: '%app.general.public_address%'
 
+    App\Service\Lab\BannerManager:
+        arguments:
+            $bannerDirectory: '%directory.public.upload.lab.banner%'
+
     App\Controller\SecurityController:
         arguments:
             $maintenance: '%app.general.maintenance%'

@@ -447,6 +447,20 @@ export class RemotelabzAPI {
         },
 
         /**
+         * copy a banner by lab ID.
+         * 
+         * Implements GET `/api/labs/{id}/banner/{newId}`
+         * 
+         * @param {number} id 
+         * @param {number} newId 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{url: string}>>}
+         */
+        copyBanner(id, newId) {
+            return axios.get(`/labs/${id}/banner/${newId}`);
+        },
+
+        /**
          * Updates a banner for a lab by ID.
          * 
          * Implements PUT `/api/labs/{id}/banner`
