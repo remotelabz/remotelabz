@@ -41,8 +41,9 @@ class DatabaseController extends Controller
             }
         }
 
+        $listBackups= array_reverse($backups);
         return $this->render('security/database.html.twig', [
-            'backups' => $backups
+            'backups' => $listBackups
         ]);
     }
 
@@ -55,6 +56,7 @@ class DatabaseController extends Controller
     {
 
         $result=exec('php /opt/remotelabz/scripts/backupDatabase.php', $output);
+        //var_dump($result);exit;
 
         if ($result !== false) {
 
