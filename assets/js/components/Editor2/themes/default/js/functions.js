@@ -2678,6 +2678,7 @@ export function printFormLab(action, values) {
         author: (values['author'] != null) ? values['author'] : '',
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
+        banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '',
         title: title,
         path: path,
@@ -2689,6 +2690,26 @@ export function printFormLab(action, values) {
     addModalWide(title, html, '');
     //var editor = new EasyMDE({ element: $("#editor")[0] });
     validateLabInfo();
+}
+
+export function postBanner(banner, attachments) {
+    console.log(attachments);
+    var formData = new FormData();
+    $.each(attachments, function (key, value) {
+        formData.append("banner", value);
+    });
+    var lab_filename = $('#lab-viewport').attr('data-path');
+
+    var url = "/api/labs/" + lab_filename +"/banner";
+    var type = 'POST';
+    $.ajax({
+        cache: false,
+        type: type,
+        url: encodeURI(url),
+        processData: false,
+        contentType: false,
+        data: formData
+    });
 }
 
 // Edit pratical subject

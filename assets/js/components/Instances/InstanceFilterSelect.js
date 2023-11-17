@@ -34,6 +34,10 @@ export default function InstanceFilterSelect(props = {labInstances}) {
     }, [filter, item]);
 
     useEffect(() => {
+        refreshInstance();
+    }, [item]);
+
+    useEffect(() => {
         console.log(instances);
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
@@ -154,7 +158,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                 })
             }
             else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
-                Remotelabz.users.all()
+                Remotelabz.users.fetchAll()
                 .then(response => {
                     const usersList = response.data;
                     for(let user of usersList) {
@@ -203,6 +207,11 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                 
             }
         })
+    }
+    function changeItem() {
+        let itemValue = document.getElementById("itemSelect").value;
+        setItem(itemValue);
+        //refreshInstance();
     }
 
     function refreshInstance() {
@@ -411,7 +420,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                     <option value="teacher">Teacher</option>
                     <option value="admin">Administrator</option>
                 </select>
-                <select className='form-control' id="itemSelect" onChange={refreshInstance}>
+                <select className='form-control' id="itemSelect" onChange={changeItem}>
                     {options}
                 </select>
                 </div>

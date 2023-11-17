@@ -138,7 +138,12 @@ class NetworkInterfaceController extends Controller
         $networkInterface = new NetworkInterface();
         //$networkInterface = $this->networkInterfaceRepository->findByDeviceAndName($deviceId, "eth". $data["interface id"]);
         //$networkInterface->setDevice($device);
-        $networkInterface->setName($device->getName()."_net".$data["interface id"]);
+        if ($device->getNetworkInterfaceTemplate() == "") {
+            $networkInterface->setName("eth".$data["interface id"]);
+        }
+        else {
+            $networkInterface->setName($device->getNetworkInterfaceTemplate().$data["interface id"]);
+        }
         $networkSettings = new NetworkSettings();
         $networkSettings->setName($networkInterface->getName()."_set".$data["interface id"]);
         $networkInterface->setSettings($networkSettings);

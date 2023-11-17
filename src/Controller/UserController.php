@@ -14,6 +14,7 @@ use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 use Doctrine\Common\Collections\Criteria;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
@@ -178,8 +179,14 @@ class UserController extends Controller
             return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], [$request->get('_route')]);
         }
 
+        $currentUser=$this->serializer->serialize(
+            $this->getUser(),
+            'json',
+            SerializationContext::create()->setGroups(['api_users'])
+        );
         return $this->render('user/index.html.twig', [
             'users' => $users->slice($page * $limit - $limit, $limit),
+            'currentUser' => $currentUser,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
             'search' => $search,
             'count' => [
@@ -192,6 +199,21 @@ class UserController extends Controller
             'limit' => $limit,
             'page' => $page,
         ]);
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/fetch/users", name="api_fetch_users")
+     */
+    public function fetchUsersAction(Request $request)
+    {
+        $users = $this->userRepository->findAll();
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
     }
 
     /**

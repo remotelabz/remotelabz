@@ -218,6 +218,14 @@ class TemplateController extends Controller
                 'list' => Array('vm'=>'vm', 'container'=>'container', 'switch' => 'switch')
             );
 
+            $data['options']['networkInterfaceTemplate'] = Array(
+                'name' => 'Network interface template',
+                'type' => 'list',
+                'multiple'=> false,
+                'value' => $p['networkInterfaceTemplate'] ?? 'eth',
+                'list' => Array('eth'=>'eth', 'ens'=>'ens', 'enp0s' => 'enp0s')
+            );
+
             $data['options']['flavor'] = Array(
                 'name' => 'Ram',
                 'type' => 'list',
@@ -377,6 +385,7 @@ class TemplateController extends Controller
         "brand" => $template->getBrand(),
         "model" => $template->getModel(),
         "description" => $template->getName(),
+        "networkInterfaceTemplate" => $template->getNetworkInterfaceTemplate(),
         "cpu" => $template->getNbCpu(),
         "core" => $template->getNbCore(),
         "socket" => $template->getNbSocket(),

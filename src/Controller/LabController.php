@@ -38,6 +38,7 @@ use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
+use App\Service\Lab\BannerManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,6 +57,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 
 class LabController extends Controller
@@ -376,6 +378,7 @@ class LabController extends Controller
             "version"=>$lab["version"],
             "scripttimeout"=>$lab["scripttimeout"],
             "lock"=>$lab["locked"],
+            "banner"=>$lab["banner"],
             "timer"=>$lab["timer"]
         ];
 
@@ -613,7 +616,7 @@ class LabController extends Controller
                         $new_setting=new NetworkSettings();
                         $new_setting=clone $network_int->getSettings();
                         $new_network_inter->setSettings($new_setting);
-                        $new_network_inter->setName($device->getName()."_"."int".$i);
+                        $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
                         $i=$i+1;
                         $new_network_inter->setIsTemplate(true);
                         $new_network_inter->setVlan($network_int->getVlan());
@@ -865,7 +868,7 @@ class LabController extends Controller
     /**
      * @Rest\Put("/api/labs/test/{id<\d+>}", name="api_edit_lab_test")
      */
-    public function updateActionTest(Request $request, int $id)
+    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
 
@@ -1090,6 +1093,15 @@ class LabController extends Controller
         }
 
         return new JsonResponse(null, 400);
+    }
+
+    /**
+     * @Rest\Get("/api/labs/{id<\d+>}/banner/{newId<\d+>}", name="api_copy_lab_banner")
+     */
+    public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
+       
+        return $bannerManager->copyBanner($id, $newId);
+
     }
 
     /**

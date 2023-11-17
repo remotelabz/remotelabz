@@ -44,6 +44,7 @@ use Remotelabz\NetworkBundle\Exception\NoNetworkAvailableException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use App\Service\Worker\WorkerManager;
+use App\Service\Lab\BannerManager;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 
 
@@ -71,6 +72,7 @@ class InstanceManager
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
+    protected $bannerManager;
     protected $workerSerializationGroups = [
         'worker'
     ];
@@ -93,7 +95,8 @@ class InstanceManager
         string $workerServer,
         string $workerPort,
         ProxyManager $proxyManager,
-        WorkerManager $workerManager
+        WorkerManager $workerManager,
+        BannerManager $bannerManager
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -113,6 +116,7 @@ class InstanceManager
         $this->workerPort = $workerPort;
         $this->proxyManager = $proxyManager;
         $this->workerManager = $workerManager;
+        $this->bannerManager = $bannerManager;
     }
 
     /**
@@ -339,6 +343,7 @@ class InstanceManager
                 file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
             }
         }
+        $this->bannerManager->copyBanner($labInstance->getLab()->getId(), $lab->getId());
         if (count($labInstance->getDeviceInstances()) >= 1) {
             foreach($labInstance->getDeviceInstances() as $deviceInstance) {
                 $device = $deviceInstance->getDevice();
@@ -520,6 +525,7 @@ class InstanceManager
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+        $newDevice->setNetworkInterfaceTemplate($device->getNetworkInterfaceTemplate());
         if($device->getIcon() != NULL) {
             $newDevice->setIcon($device->getIcon());
         }
@@ -534,7 +540,7 @@ class InstanceManager
             $new_setting=clone $network_int->getSettings();
             
             $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($name."_net".$i);
+            $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
             $new_network_inter->setVlan($network_int->getVlan());
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
