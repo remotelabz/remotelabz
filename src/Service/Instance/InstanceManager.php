@@ -126,7 +126,7 @@ class InstanceManager
     public function create(Lab $lab, InstancierInterface $instancier)
     {
         
-        $worker = $this->workerManager->getFreeWorker($lab)
+        $worker = $this->workerManager->getFreeWorker($lab);
 
         $labInstance = LabInstance::create()
             ->setLab($lab)
