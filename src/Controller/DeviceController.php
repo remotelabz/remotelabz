@@ -220,6 +220,7 @@ class DeviceController extends Controller
                 "status"=> $status,
                 "ethernet"=> $device->getEthernet(),
                 "console" => $finalControlProtocolType,
+                "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
             ];
 
             if (isset($uuid)) {
@@ -360,6 +361,7 @@ class DeviceController extends Controller
             "hypervisor" => $device->getHypervisor()->getId(),
             "operatingSystem" => $device->getOperatingSystem()->getId(),
             "console" => $finalControlProtocolType,
+            "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate()
         ];
 
         if (isset($uuid)) {
@@ -449,6 +451,7 @@ class DeviceController extends Controller
                     "brand" => $device->getBrand(),
                     "model" => $device->getModel(),
                     "description" => $device->getName(),
+                    "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
                     "cpu" => $device->getNbCpu(),
                     "core" => $device->getNbCore(),
                     "socket" => $device->getNbSocket(),
@@ -649,6 +652,7 @@ class DeviceController extends Controller
             $device->setIsTemplate(false);
         }
         $device->setType($data['type']);
+        $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
@@ -843,6 +847,7 @@ class DeviceController extends Controller
                 "brand" => $device->getBrand(),
                 "model" => $device->getModel(),
                 "description" => $device->getName(),
+                "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
                 "cpu" => $device->getNbCpu(),
                 "core" => $device->getNbCore(),
                 "socket" => $device->getNbSocket(),
@@ -918,13 +923,6 @@ class DeviceController extends Controller
                 $oldDeviceName = $device->getName();
                 $device->setName($data['name']);
 
-                if($device->getNetworkInterfaces() != null) {
-                    foreach($device->getNetworkInterfaces() as $interface) {
-                        $oldInterfaceNameId = explode($oldDeviceName."_net", $interface->getName())[1];
-                        $newInterfaceName = $device->getName()."_net".$oldInterfaceNameId;
-                        $interface->setName($newInterfaceName);                       
-                    }
-                }
             }
         }
         if(isset($data['postfix'])) {
@@ -937,6 +935,22 @@ class DeviceController extends Controller
 
         if(isset($data['type'])) {
             $device->setType($data['type']);
+        }
+
+        if(isset($data['networkInterfaceTemplate'])) {
+            $oldTemplate = $device->getNetworkInterfaceTemplate();
+            $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
+            foreach($device->getNetworkInterfaces() as $networkInterface) {
+                if ($oldTemplate == "") {
+                    preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
+                    $netId = (int)$numbers[count($numbers) - 1];
+                    //$netId = explode($device->getName()."_net", $networkInterface->getName())[1];
+                }
+                else {
+                    $netId = (int)explode($oldTemplate, $networkInterface->getName())[1];
+                }
+                $networkInterface->setName($device->getNetworkInterfaceTemplate().$netId);
+            }
         }
         
         if(isset($data['controlProtocol'])) {
@@ -1244,7 +1258,7 @@ class DeviceController extends Controller
     private function addNetworkInterface(Device $device) {
         $i=count($device->getNetworkInterfaces());
         $networkInterface = new NetworkInterface();
-        $networkInterface->setName($device->getName()."_net".($i+1));
+        $networkInterface->setName($device->getNetworkInterfaceTemplate().($i+1));
         $networkInterface->setIsTemplate(true);
         $networkSettings = new NetworkSettings();
         $networkSettings->setName($networkInterface->getName()."_set".($i+1));
@@ -1305,11 +1319,27 @@ class DeviceController extends Controller
                         "name"=> $networkInterface->getName(),
                         "network_id"=> $networkInterface->getVlan(),
                     ]);*/
-                    $ethernet[(int)explode($device->getName()."_net", $networkInterface->getName())[1]]= [
-                        "name"=> $networkInterface->getName(),
-                        "network_id"=> $networkInterface->getVlan(),
-                    ];
-                array_push($i, (int)explode($device->getName()."_net", $networkInterface->getName())[1]);
+                    /*var_dump($device->getNetworkInterfaceTemplate());
+                    var_dump(explode($device->getNetworkInterfaceTemplate(), $networkInterface->getName()));
+                    exit;*/
+                    if ($device->getNetworkInterfaceTemplate() == "") {
+                        preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
+                        $netId = $numbers[count($numbers) - 1];
+                        $ethernet[(int)$netId]= [
+                            "name"=> $networkInterface->getName(),
+                            "network_id"=> $networkInterface->getVlan(),
+                        ];
+                        array_push($i, (int)$netId);
+                    }
+                    else {
+                        $ethernet[(int)explode($device->getNetworkInterfaceTemplate(), $networkInterface->getName())[1]]= [
+                            "name"=> $networkInterface->getName(),
+                            "network_id"=> $networkInterface->getVlan(),
+                        ];
+                        array_push($i, (int)explode($device->getNetworkInterfaceTemplate(), $networkInterface->getName())[1]);
+                    }
+                    
+                
             }
 
             //sort the array to get the next interface number
