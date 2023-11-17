@@ -32,7 +32,7 @@ class GroupUser
     private $group;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="_groups")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="_groups", cascade={"persist"})
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      * @Serializer\Groups({"group_users", "group_tree", "group_explore", "api_groups", "api_get_group"})
      * @Serializer\Inline
