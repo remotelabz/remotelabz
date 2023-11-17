@@ -6,6 +6,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use Exception;
 use Psr\Log\LoggerInterface;
+use App\Repository\ConfigWorkerRepository;
+use App\Entity\ConfigWorker;
+use App\Entity\Device;
 
 class WorkerManager
 {
@@ -16,32 +19,35 @@ class WorkerManager
         string $workerServer,
         string $workerPort,
         LoggerInterface $logger,
-        ClientInterface $client
+        ClientInterface $client,
+        ConfigWorkerRepository $configWorkerRepository
     ) {
         $this->publicAddress = $publicAddress;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
         $this->logger = $logger;
         $this->client = $client;
+        $this->configWorkerRepository = $configWorkerRepository;
     }
 
     public function checkWorkersAction()
     {
         $client = new Client();
-        $workers = explode(',', $this->workerServer);
+        //$workers = explode(',', $this->workerServer);
+        $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $usage = [];
         foreach($workers as $worker) {
-            $url = 'http://'.$worker.':'.$this->workerPort.'/stats/hardware';
+            $url = 'http://'.$worker->getIPv4().':'.$this->workerPort.'/stats/hardware';
             try {
                 $response = $client->get($url);
                 $content = json_decode($response->getBody()->getContents(), true);
-                $content['worker'] = $worker;
+                $this->logger->debug('Get '. $url);
+                $content['worker'] = $worker->getIPv4();
                 array_push($usage, $content);
             } catch (Exception $exception) {
-                $this->addFlash('danger', 'Worker is not available');
                 $this->logger->error('Usage resources error - Web service or Worker is not available');
-                $content['disk'] = $content['cpu'] = $content['memory'] = null;
-                $content['worker'] = $worker;
+                $content['disk'] = $content['cpu'] = $content['memory'] = $content['memoryAvailable'] = null;
+                $content['worker'] = $worker->getIPv4();
                 array_push($usage, $content);
             }
         }
@@ -49,19 +55,45 @@ class WorkerManager
             return $usage;
     }
 
-    public function getFreeWorker()
+    public function getFreeWorker($item)
     {
         $usages = $this->checkWorkersAction();
-        $disk = 100;
+        if ($item instanceof Device) {
+            $memory = $item->getFlavor()->getMemory() / 2;
+        }
+        else {
+            $memory = 0;
+            foreach($item->getDevices() as $device) {
+                $memory += ($device->getFlavor()->getMemory() / 2) ;
+            }
+            
+        }
+        $memoryFreeUsages = $this->checkMemory($usages, $memory);
+        $worker = $this->checkCPU($memoryFreeUsages);
+
+        return $worker;
+    }
+
+    public function checkMemory($usages, $memory) {
+        $workers = [];
+        foreach ($usages as $usage) {
+            if ($usage['memoryAvailable'] > $memory) {
+                array_push($workers, $usage);
+            }
+        }
+        return $workers;
+    }
+
+    public function checkCPU($usages) {
+        $cpu = 100;
         $worker ="";
         foreach($usages as $usage) {
-            if ($usage['disk'] < $disk) {
-                $disk = $usage['disk'];
+            if ($usage['cpu'] < $cpu) {
+                $disk = $usage['cpu'];
                 $worker = $usage['worker'];
             }
         }
-        //$freeWorker = ['disk'=> $disk, 'worker'=> $worker];
-
+        $this->logger->debug("worker: ".$worker);
         return $worker;
     }
 }

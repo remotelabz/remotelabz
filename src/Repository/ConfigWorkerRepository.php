@@ -2,32 +2,32 @@
 
 namespace App\Repository;
 
-use App\Entity\Worker;
+use App\Entity\ConfigWorker;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Worker>
+ * @extends ServiceEntityRepository<ConfigWorker>
  *
- * @method Worker|null find($id, $lockMode = null, $lockVersion = null)
- * @method Worker|null findOneBy(array $criteria, array $orderBy = null)
- * @method Worker[]    findAll()
- * @method Worker[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method ConfigWorker|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ConfigWorker|null findOneBy(array $criteria, array $orderBy = null)
+ * @method ConfigWorker[]    findAll()
+ * @method ConfigWorker[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class WorkerRepository extends ServiceEntityRepository
+class ConfigWorkerRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Worker::class);
+        parent::__construct($registry, ConfigWorker::class);
     }
 
     /**
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function add(Worker $entity, bool $flush = true): void
+    public function add(ConfigWorker $entity, bool $flush = true): void
     {
         $this->_em->persist($entity);
         if ($flush) {
@@ -39,7 +39,7 @@ class WorkerRepository extends ServiceEntityRepository
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function remove(Worker $entity, bool $flush = true): void
+    public function remove(ConfigWorker $entity, bool $flush = true): void
     {
         $this->_em->remove($entity);
         if ($flush) {

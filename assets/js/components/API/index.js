@@ -145,6 +145,12 @@ const url = require('url');
  * @property {string} expiryDate Datetime format.
  * @property {{id: number, name: string}} lab
  * 
+ * @typedef {Object} ConfigWorker
+ * @property {number} id
+ * @property {string} IPv4
+ * @property {string} queueName
+ * @property {boolean} available
+ * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
@@ -912,6 +918,60 @@ export class RemotelabzAPI {
          */
         join(labUuid, groupUuid) {
             return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/join`);
+        }
+    }
+
+    /**
+     * configWorker endpoint.
+     */
+    configWorker = {
+        /**
+         * Get a collection of workers.
+         * 
+         * Implements GET `/api/config/workers`
+         * 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker[]>>}
+         */
+        all() {
+            return axios.get('/config/workers')
+        },
+        /**
+             * Add a worker.
+             * 
+             * Implements POST `/api/config/worker/new`
+             * 
+             * @param {ConfigWorker} options Fields to set and their values
+            * 
+            * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+             */
+        new(options) {
+            return axios.post(`/config/worker/new`, options);
+        },
+         /**
+         * Updates a worker.
+         * 
+         * Implements PUT `/api/config/worker/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * @param {ConfigWorker} options Fields to set and their values
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+         */
+         update(id, options) {
+            return axios.put(`/config/worker/${id}`, options)
+        },
+        /**
+         * Updates a worker.
+         * 
+         * Implements PUT `/api/config/worker/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+         */
+        delete(id) {
+            return axios.delete(`/config/worker/${id}`)
         }
     }
 

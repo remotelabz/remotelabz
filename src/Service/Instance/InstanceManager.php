@@ -130,7 +130,7 @@ class InstanceManager
     public function create(Lab $lab, InstancierInterface $instancier)
     {
         
-        $worker = $this->workerManager->getFreeWorker();
+        $worker = $this->workerManager->getFreeWorker($lab);
 
         $labInstance = LabInstance::create()
             ->setLab($lab)
@@ -319,7 +319,7 @@ class InstanceManager
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $worker = $this->workerManager->getFreeWorker();
+        $worker = $this->workerManager->getFreeWorker($newDevice);
         $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV), [
@@ -390,7 +390,8 @@ class InstanceManager
             }
         }
 
-        $worker = $this->workerManager->getFreeWorker();
+        $worker = $this->workerManager->getFreeWorker($lab);
+
         $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB), [

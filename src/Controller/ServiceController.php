@@ -17,6 +17,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use App\Repository\ConfigWorkerRepository;
+use App\Entity\ConfigWorker;
 
 
 class ServiceController extends Controller
@@ -30,11 +32,13 @@ class ServiceController extends Controller
         string $workerPort,
         string $workerServer,
         LoggerInterface $logger=null,
-        WorkerManager $workerManager
+        WorkerManager $workerManager,
+        ConfigWorkerRepository $configWorkerRepository
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
         $this->workerManager = $workerManager;
+        $this->configWorkerRepository = $configWorkerRepository;
         $this->logger = $logger;
         if ($logger == null) {
             $this->logger = new Logger();
@@ -65,14 +69,20 @@ class ServiceController extends Controller
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService();
                 $serviceStatus[$service::getServiceName()] = $service->isStarted();
+                $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
 
             }
             if ($type === 'distant') {
-                /** @var ServiceMonitorInterface */
-                $service = new $registeredService($this->workerPort, $this->workerServer);
-                $serviceStatus[$service::getServiceName()] = $service->isStarted();
+                $workers = $this->configWorkerRepository->findBy(['available' => true]);
+                foreach($workers as $worker) {
+                    /** @var ServiceMonitorInterface */
+                    $service = new $registeredService($this->workerPort, $worker->getIPv4());
+                    $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service->isStarted();
+                    $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+                }
+                
             }
-            $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+           
 
         }
 
@@ -169,15 +179,15 @@ class ServiceController extends Controller
      */
     public function RessourceAction(Request $request)
     {
-
-        $workers = explode(',', $this->workerServer);
+        $workers = $this->configWorkerRepository->findBy(['available' => true]);
+        //$workers = explode(',', $this->workerServer);
         $nbWorkers = count($workers);
         if ( $nbWorkers > 1) {
             $usage = $this->workerManager->checkWorkersAction();
         }
         else {
             $client = new Client();
-            $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/stats/hardware';
+            $url = 'http://'.$workers[0].':'.$this->workerPort.'/stats/hardware';
             try {
                 $response = $client->get($url);
                 $usage = json_decode($response->getBody()->getContents(), true);
