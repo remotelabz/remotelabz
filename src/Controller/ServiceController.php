@@ -187,7 +187,9 @@ class ServiceController extends Controller
         }
         else {
             $client = new Client();
-            $url = 'http://'.$workers[0].':'.$this->workerPort.'/stats/hardware';
+            $this->logger->debug("worker:".$workers[0]->getIPv4());
+
+            $url = 'http://'.$workers[0]->getIPv4().':'.$this->workerPort.'/stats/hardware';
             try {
                 $response = $client->get($url);
                 $usage = json_decode($response->getBody()->getContents(), true);
