@@ -68,6 +68,13 @@ class Device implements InstanciableInterface
     private $networkInterfaces;
 
     /**
+     * @ORM\Column(type="string", length=20)
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
+     * @Assert\NotNull
+     */
+    private $networkInterfaceTemplate;
+
+    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
      * @Serializer\Groups({"api_get_device"})
      */
@@ -347,6 +354,18 @@ class Device implements InstanciableInterface
                 $networkInterface->setDevice(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getNetworkInterfaceTemplate(): ?string
+    {
+        return $this->networkInterfaceTemplate;
+    }
+
+    public function setNetworkInterfaceTemplate(string $networkInterfaceTemplate): self
+    {
+        $this->networkInterfaceTemplate = $networkInterfaceTemplate;
 
         return $this;
     }

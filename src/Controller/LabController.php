@@ -616,7 +616,7 @@ class LabController extends Controller
                         $new_setting=new NetworkSettings();
                         $new_setting=clone $network_int->getSettings();
                         $new_network_inter->setSettings($new_setting);
-                        $new_network_inter->setName($device->getName()."_"."int".$i);
+                        $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
                         $i=$i+1;
                         $new_network_inter->setIsTemplate(true);
                         $new_network_inter->setVlan($network_int->getVlan());

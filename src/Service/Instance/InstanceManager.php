@@ -524,6 +524,7 @@ class InstanceManager
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
         $newDevice->setIsTemplate(true);
+        $newDevice->setNetworkInterfaceTemplate($device->getNetworkInterfaceTemplate());
         if($device->getIcon() != NULL) {
             $newDevice->setIcon($device->getIcon());
         }
@@ -538,7 +539,7 @@ class InstanceManager
             $new_setting=clone $network_int->getSettings();
             
             $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($name."_net".$i);
+            $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
             $new_network_inter->setVlan($network_int->getVlan());
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
