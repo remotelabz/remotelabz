@@ -108,6 +108,14 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+    public function findByWorkerIP(string $workerIP) {
+        return $this->createQueryBuilder('l')
+            ->where("l.workerIp = :workerIp")
+            ->setParameter("workerIp", $workerIP)
+            ->getQuery()
+            ->getResult();
+    }
     
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects

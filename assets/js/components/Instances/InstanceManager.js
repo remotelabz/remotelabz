@@ -202,10 +202,18 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             });  
         } catch (error) {
             console.error(error)
-            new Noty({
-                text: 'There was an error creating an instance. Please try again later.',
-                type: 'error'
-            }).show()
+            if (error.response.data.message.includes("No worker available")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error'
+                }).show()
+            }
+            else {
+                new Noty({
+                    text: 'There was an error creating an instance. Please try again later.',
+                    type: 'error'
+                }).show()
+            }
             setLoadingInstanceState(false)
         }
     }
@@ -238,10 +246,18 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             
         } catch (error) {
             console.error(error)
-            new Noty({
-                text: 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show()
+            if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error'
+                }).show()
+            }
+            else {
+                new Noty({
+                    text: 'An error happened while leaving the lab. Please try again later.',
+                    type: 'error'
+                }).show()
+            }
             setLoadingInstanceState(false)
         }
         

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\ConfigWorkerRepository;
+use App\Repository\LabInstanceRepository;
 use App\Entity\ConfigWorker;
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ use GuzzleHttp\Client;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 
 
@@ -24,10 +26,12 @@ class ConfigWorkerController extends Controller
     private $logger;
     private $workerRepository;
     private $serializer;
+    private $labInstanceRepository;
 
     public function __construct(
         LoggerInterface $logger=null,
         ConfigWorkerRepository $configWorkerRepository,
+        LabInstanceRepository $labInstanceRepository,
         SerializerInterface $serializer
     ) {
         $this->logger = $logger;
@@ -35,6 +39,7 @@ class ConfigWorkerController extends Controller
             $this->logger = new Logger();
         }
         $this->configWorkerRepository = $configWorkerRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
         $this->serializer = $serializer;
     }
 
@@ -143,6 +148,12 @@ class ConfigWorkerController extends Controller
         $data = json_decode($request->getContent(), true);
 
         $worker = $this->configWorkerRepository->find(["id" => $id]);
+        $labInstances = $this->labInstanceRepository->findByWorkerIP($worker->getIPv4());
+        if (count($labInstances) != 0) {
+            
+            $this->logger->error('Worker '.$worker->getIPv4().' is used by an instance');
+            throw new BadRequestHttpException('Worker '.$worker->getIPv4().' is used by an instance');
+        }
         $queueName = $worker->getQueueName();
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -152,7 +163,7 @@ class ConfigWorkerController extends Controller
 
         $this->deleteQueue($queueName);
 
-        return $this->json();
+        return $this->json($labInstances);
     }
 
     private function createQueue($ipAdress, $queueName) {
