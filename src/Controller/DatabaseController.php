@@ -13,6 +13,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use ZipArchive;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 
 class DatabaseController extends Controller
 {
@@ -56,15 +61,54 @@ class DatabaseController extends Controller
     {
 
         $result=exec('php /opt/remotelabz/scripts/backupDatabase.php', $output);
-        //var_dump($result);exit;
-
+        
         if ($result !== false) {
 
-            $response = new Response(file_get_contents('/opt/remotelabz/backups/'.$result));
+            $fileSystem = new FileSystem();
+
+            //copy banner folder
+            $bannerSrc=$this->getParameter('directory.public.upload.lab.banner');
+            $bannerDst='/opt/remotelabz/backups/'.$result.'/banner';
+            $fileSystem->mirror($bannerSrc,$bannerDst);
+
+            //copy picture folder
+            $pictureSrc='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
+            $pictureDst='/opt/remotelabz/backups/'.$result.'/pictures';
+            $fileSystem->mirror($pictureSrc,$pictureDst);
+
+            $zip = new ZipArchive();
+            $rootPath = realpath('/opt/remotelabz/backups/'.$result);
+            $zip->open('/opt/remotelabz/backups/' .$result.'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($rootPath),
+                RecursiveIteratorIterator::LEAVES_ONLY
+            );
+            
+
+            foreach ($files as $name => $file)
+            {
+                // Skip directories (they would be added automatically)
+                if (!$file->isDir())
+                {
+                    // Get real and relative path for current file
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($rootPath) + 1);
+
+                    // Add current file to archive
+                    $zip->addFile($filePath, $relativePath);
+                }
+            }
+
+            // Zip archive will be created only after closing object
+            $zip->close();
+            $fileSystem->remove('/opt/remotelabz/backups/database_'.$result.'.sql');
+            $fileSystem->remove('/opt/remotelabz/backups/'.$result);
+
+            $response = new Response(file_get_contents('/opt/remotelabz/backups/' .$result.'.zip'));
 
             $disposition = HeaderUtils::makeDisposition(
                 HeaderUtils::DISPOSITION_ATTACHMENT,
-                $result
+                $result.'.zip'
             );
 
             //$response->headers->set('Content-Type', 'application/json');
@@ -80,12 +124,12 @@ class DatabaseController extends Controller
 
     /**
     * 
-    * @Route("/admin/database/backup/download/{name}", name="admin_database_backup_download", requirements={"name"="database_backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
+    * @Route("/admin/database/backup/download/{name}", name="admin_database_backup_download", requirements={"name"="backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
     * 
     */
     public function downloadBackup(Request $request, string $name)
     {
-        $file = $name .".sql";
+        $file = $name .".zip";
         $response = new Response(file_get_contents('/opt/remotelabz/backups/'.$file));
 
         $disposition = HeaderUtils::makeDisposition(
@@ -101,12 +145,12 @@ class DatabaseController extends Controller
 
     /**
     * 
-    * @Route("/admin/database/backup/delete/{name}", name="admin_database_backup_delete", requirements={"name"="database_backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
+    * @Route("/admin/database/backup/delete/{name}", name="admin_database_backup_delete", requirements={"name"="backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
     * 
     */
     public function deleteBackup(Request $request, string $name)
     {
-        $file = $name .".sql";
+        $file = $name .".zip";
         unlink('/opt/remotelabz/backups/'.$file);
 
         return $this->redirectToRoute('admin_database');
