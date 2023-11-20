@@ -941,14 +941,9 @@ class DeviceController extends Controller
             $oldTemplate = $device->getNetworkInterfaceTemplate();
             $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
             foreach($device->getNetworkInterfaces() as $networkInterface) {
-                if ($oldTemplate == "") {
-                    preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
-                    $netId = (int)$numbers[count($numbers) - 1];
-                    //$netId = explode($device->getName()."_net", $networkInterface->getName())[1];
-                }
-                else {
-                    $netId = (int)explode($oldTemplate, $networkInterface->getName())[1];
-                }
+                preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
+                $netId = (int)$numbers[count($numbers) - 1];
+
                 $networkInterface->setName($device->getNetworkInterfaceTemplate().$netId);
             }
         }
