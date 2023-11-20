@@ -79,7 +79,7 @@ class WorkerManager
         $this->logger->debug("checkMemory memory param:".$memory);
 
         foreach ($usages as $usage) {
-            if ($usage['memory'] > $memory) {
+            if ($usage['memory_total'] > $memory) {
                 array_push($workers, $usage);
             }
         }
