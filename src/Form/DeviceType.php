@@ -37,16 +37,6 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'empty_data' => ''
             ])
-            ->add('type', ChoiceType::class, [
-                 'choices' => ['Virtual Machine' => 'vm', 'Container' => 'container', 'Switch' => 'switch'],
-                 'help' => 'Nature of the device.',
-                 'empty_data' => 'vm'
-             ])
-            ->add('hypervisor', EntityType::class, [
-                'class' => Hypervisor::class,
-                'choice_label' => 'name',
-                'help' => 'Type of hypervisor.',
-            ])
             
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
@@ -72,13 +62,6 @@ class DeviceType extends AbstractType
             ->add('nbThread', NumberType::class, [
                 'empty_data' => null,
                 'required' => false
-            ])
-            ->add('networkInterfaces', NumberType::class, [
-                'data' => $options["nb_network_interface"],
-                'help' => "Limit to 19 interfaces",
-                'required' => true,
-                'empty_data' => 1,
-                'mapped' => false
             ])
             ->add('networkInterfaceTemplate', ChoiceType::class, [
                 'choices' => ['eth' => 'eth', 'ens' => 'ens', 'enp0s' => 'enp0s'],

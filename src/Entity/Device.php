@@ -83,8 +83,6 @@ class Device implements InstanciableInterface
     /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance", "api_get_lab_template"})
-     * @Assert\NotNull
-     * @Assert\Choice({"vm","container", "switch"})
      */
     private $type;
 
@@ -123,8 +121,6 @@ class Device implements InstanciableInterface
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
      * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox", "api_get_lab_template"})
-     * @Assert\NotNull
-     * @Assert\Valid
      */
     private $hypervisor;
 
