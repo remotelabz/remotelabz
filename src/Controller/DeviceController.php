@@ -942,7 +942,7 @@ class DeviceController extends Controller
             $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
             foreach($device->getNetworkInterfaces() as $networkInterface) {
                 preg_match_all('!\d+!', $networkInterface->getName(), $numbers);
-                $netId = (int)$numbers[0][0];
+                $netId = (int)$numbers[0][count($numbers[0]) -1];
 
                 $networkInterface->setName($device->getNetworkInterfaceTemplate().$netId);
             }
@@ -1319,7 +1319,7 @@ class DeviceController extends Controller
                     exit;*/
                     if ($device->getNetworkInterfaceTemplate() == "") {
                         preg_match_all('!\d+!', $networkInterface->getName(), $numbers);
-                        $netId = $numbers[0][0];
+                        $netId = $numbers[0][count($numbers[0]) -1];
                         $ethernet[(int)$netId]= [
                             "name"=> $networkInterface->getName(),
                             "network_id"=> $networkInterface->getVlan(),
