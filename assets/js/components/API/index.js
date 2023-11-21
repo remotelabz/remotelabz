@@ -213,6 +213,17 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of users.
+         * 
+         * Implements GET `/api/fetch/users`
+
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchAll() {
+            return axios.get('/fetch/users')
+        },
+
+        /**
          * Get an user by its ID.
          * 
          * Implements GET `/api/users/{id}`
@@ -439,6 +450,20 @@ export class RemotelabzAPI {
          */
         import(json) {
             return axios.post(`/labs/import`, { json });
+        },
+
+        /**
+         * copy a banner by lab ID.
+         * 
+         * Implements GET `/api/labs/{id}/banner/{newId}`
+         * 
+         * @param {number} id 
+         * @param {number} newId 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{url: string}>>}
+         */
+        copyBanner(id, newId) {
+            return axios.get(`/labs/${id}/banner/${newId}`);
         },
 
         /**
