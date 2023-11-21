@@ -48,8 +48,8 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name'
             ])
             ->add('nbCpu', NumberType::class, [
-                'empty_data' => 1,
-                'required' => true,
+                'empty_data' => '1',
+                'required' => false,
             ])
             ->add('nbCore', NumberType::class, [
                 'empty_data' => null,
