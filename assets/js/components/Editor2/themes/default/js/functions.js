@@ -4273,7 +4273,7 @@ function createNodeListRow(template, id){
         var value_ram       = node_values['ram'] || "n/a";*/
         //var value_ethernet  = node_values['ethernet'] || "n/a";
         //var value_console   = checkTemplateValue(template_values,'console') || node_values['console'] || ""
-        var value_type = node_values['type'] || 'n/a';
+        //var value_type = node_values['type'] || 'n/a';
         //var value_serial    = "";
         /*if(node_values['serial']){
             value_serial = node_values['serial'];
@@ -4382,14 +4382,14 @@ function createNodeListRow(template, id){
         /*readonlyAttr = (value_type != "n/a") ? "" : "readonly";
         html_data += '<td><input class="configured-nodes-input short-input ' + readonlyAttr + ' ' + userRight + '" data-path="' + id + '" name="node[type]" value="' + value_type + '" type="text" ' + readonlyAttr + ' ' + disabledAttr + ' /></td>';*/
 
-        html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[type]" data-container="body">'
+       /* html_data += '<td><select class="selectpicker configured-nods-select form-control"' + disabledAttr + ' data-path="' + id + '" data-size="5" name="node[type]" data-container="body">'
         value_set = (node_values != null && node_values['type'] != null) ? node_values['type'] : value['value'];
         $.each(template_values['options']['type']['list'], function (list_key, list_value) {
             var selected = (list_key == value_set) ? 'selected ' : '';
             //var iconselect = 'data-content="&nbsp;&nbsp;'+list_value+'&nbsp;&nbsp;"';
             html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
         });
-        html_data += '</select></td>';
+        html_data += '</select></td>';*/
         //node console
         /*if(template == "iol"){
             html_data += '<td><input class="hide-border"  data-path="' + id + '" value="telnet" readonly/></td>';
@@ -4460,7 +4460,7 @@ function createNodeListRow(template, id){
 export function printListNodes(nodes) {
     logger(1, 'DEBUG: printing node list');
     //var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[163] + '</th><th>' + MESSAGES[105] + '</th><th>' + MESSAGES[203] + '</th><th>' + MESSAGES[106] + '</th><th>'+ MESSAGES[107] + '</th><th>' + MESSAGES[108] + '</th><th>' + MESSAGES[109] + '</th><th>' + MESSAGES[110] + '</th><th>' + MESSAGES[112] + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[123] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
-    var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[105] + '</th><th>' + 'Core' + '</th><th>' + 'Socket' + '</th><th>'+ 'Thread' + '</th><th>' + 'Flavor' + '</th><th>' + 'Type' + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
+    var body = '<div class="table-responsive"><form id="form-node-edit-table" ><table class="configured-nodes table"><thead><tr><th>' + MESSAGES[92] + '</th><th>' + MESSAGES[19] + '</th><th>' + MESSAGES[111] + '</th><th>' + MESSAGES[105] + '</th><th>' + 'Core' + '</th><th>' + 'Socket' + '</th><th>'+ 'Thread' + '</th><th>' + 'Flavor' + '</th><th>' + MESSAGES[164] + '</th><th>' + MESSAGES[99] + '</th></tr></thead><tbody>';
     
     var html_rows = [];
     var promises = [];
@@ -4473,7 +4473,7 @@ export function printListNodes(nodes) {
         //var idlepc = (value['idlepc'] != null) ? value['idlepc'] : '';
         //var image = (value['image'] != null) ? value['image'] : '';
         //var nvram = (value['nvram'] != null) ? value['nvram'] : '';
-        var type = (value['type'] != null) ?value['type'] : '';
+        //var type = (value['type'] != null) ?value['type'] : '';
         var core = (value['core'] != null) ?value['core'] : '';
         var socket = (value['socket'] != null) ?value['socket'] : '';
         var thread = (value['thread'] != null) ?value['thread'] : '';
@@ -5992,8 +5992,8 @@ function newConnModal(info , oe ) {
                                             for ( key in ordered_name ) {
                                                 var okey = reversetab[ordered_name[key]] ;
                                                 if ( linksourcedata['interfaces'][okey]['type'] == 'ethernet' ) {
-                                                    html += '<option value="' + okey + ',ethernet' +'" '+((linksourcedata['interfaces'][okey]['network_id'] != 0) ? 'disabled="true"' : '' ) +'>' + linksourcedata['interfaces'][okey]['name']
-                                                    if ( linksourcedata['interfaces'][okey]['network_id'] != 0) {
+                                                    html += '<option value="' + okey + ',ethernet' +'" '+((linksourcedata['interfaces'][okey]['network_id'] != -1) ? 'disabled="true"' : '' ) +'>' + linksourcedata['interfaces'][okey]['name']
+                                                    if ( linksourcedata['interfaces'][okey]['network_id'] != -1) {
                                                         html += ' connected to '
                                                         for ( var tkey in topology ) {
                                                             if ( ( topology[tkey]['source'] == ( 'node' + linksourcedata['id'] ))  && ( topology[tkey]['source_label'] == linksourcedata['interfaces'][okey]['name'] )) {
@@ -6013,8 +6013,8 @@ function newConnModal(info , oe ) {
                                             for ( var key in ordered_name ) {
                                                 okey = reversetab[ordered_name[key]] ;
                                                 if ( linksourcedata['interfaces'][okey]['type'] == 'serial' ) {
-                                                    html += '<option value="' + okey + ',serial' +'" '+ ((linksourcedata['interfaces'][okey]['remote_id'] != 0) ? 'disabled="true"' : '' )  +'>' + linksourcedata['interfaces'][okey]['name']
-                                                    if ( linksourcedata['interfaces'][okey]['remote_id'] != 0) {
+                                                    html += '<option value="' + okey + ',serial' +'" '+ ((linksourcedata['interfaces'][okey]['remote_id'] != -1) ? 'disabled="true"' : '' )  +'>' + linksourcedata['interfaces'][okey]['name']
+                                                    if ( linksourcedata['interfaces'][okey]['remote_id'] != -1) {
                                                     html += ' connected to '
                                                     html += nodes[ linksourcedata['interfaces'][okey]['remote_id'] ]['name']
                                                     html += ' ' + linksourcedata['interfaces'][okey]['remote_if_name']
@@ -6055,8 +6055,8 @@ function newConnModal(info , oe ) {
                                             for ( key in ordered_name ) {
                                             okey = reversetab[ordered_name[key]] ;
                                                 if ( linktargetdata['interfaces'][okey]['type'] == 'ethernet' ) {
-                                                    html += '<option value="' + okey + ',ethernet' +'" '+((linktargetdata['interfaces'][okey]['network_id'] != 0) ? 'disabled="true"' : '' ) +'>' + linktargetdata['interfaces'][okey]['name']
-                                                    if ( linktargetdata['interfaces'][okey]['network_id'] != 0) {
+                                                    html += '<option value="' + okey + ',ethernet' +'" '+((linktargetdata['interfaces'][okey]['network_id'] != -1) ? 'disabled="true"' : '' ) +'>' + linktargetdata['interfaces'][okey]['name']
+                                                    if ( linktargetdata['interfaces'][okey]['network_id'] != -1) {
                                                         html += ' connected to '
                                                         for ( tkey in topology ) {
                                                             if ( ( topology[tkey]['source'] == ( 'node' + linktargetdata['id'] ))  && ( topology[tkey]['source_label'] == linktargetdata['interfaces'][okey]['name'] )) {
@@ -6077,8 +6077,8 @@ function newConnModal(info , oe ) {
                                             for ( key in ordered_name ) {
                                             okey = reversetab[ordered_name[key]] ;
                                                 if ( linktargetdata['interfaces'][okey]['type'] == 'serial' ) {
-                                                    html += '<option value="' + okey + ',serial' +'" '+ ((linktargetdata['interfaces'][okey]['remote_id'] != 0) ? 'disabled="true"' : '' )  +'>' + linktargetdata['interfaces'][okey]['name']
-                                                    if ( linktargetdata['interfaces'][okey]['remote_id'] != 0) {
+                                                    html += '<option value="' + okey + ',serial' +'" '+ ((linktargetdata['interfaces'][okey]['remote_id'] != -1) ? 'disabled="true"' : '' )  +'>' + linktargetdata['interfaces'][okey]['name']
+                                                    if ( linktargetdata['interfaces'][okey]['remote_id'] != -1) {
                                                     html += ' connected to '
                                                     html += nodes[ linktargetdata['interfaces'][okey]['remote_id'] ]['name']
                                                     html += ' ' + linktargetdata['interfaces'][okey]['remote_if_name']
