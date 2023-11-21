@@ -33,6 +33,9 @@ if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
 fi
 rabbitmqctl set_permissions -p '/' 'remotelabz-amqp' '.*' '.*' '.*'
 service rabbitmq-server restart
+rabbitmqctl set_user_tags remotelabz-amqp administrator
+
+rabbitmq-plugins enable rabbitmq_management
 
 #To test if the connexion to the RabbitMQ works fine
 #rabbitmqctl authenticate_user 'remotelabz-amqp' "password-amqp"

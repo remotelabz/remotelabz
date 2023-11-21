@@ -141,6 +141,7 @@ class InstanceManager
             throw new BadRequestHttpException('No worker available');
         }
 
+        $this->logger->debug("worker avalaible from create function in InstanceManager:".$worker);
         $labInstance = LabInstance::create()
             ->setLab($lab)
             ->setworkerIp($worker)

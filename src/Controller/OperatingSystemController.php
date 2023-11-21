@@ -125,7 +125,8 @@ class OperatingSystemController extends Controller
                         $entityManager->flush();
 
                         $this->addFlash('success', 'Operating system has been created.');
-                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$imageFileName);
+                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$operatingSystem->getImageFilename());
+
 
                     }
                 return $this->redirectToRoute('operating_systems');

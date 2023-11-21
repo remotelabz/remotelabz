@@ -51,7 +51,7 @@ class WorkerManager
                 array_push($usage, $content);
             }
         }
-
+        $this->logger->debug('Usage return from checkWorkersAction :',$usage);
             return $usage;
     }
 
@@ -70,17 +70,21 @@ class WorkerManager
         }
         $memoryFreeUsages = $this->checkMemory($usages, $memory);
         $worker = $this->checkCPU($memoryFreeUsages);
-
+        $this->logger->debug("worker chosen from getFreeWorker :".$worker);
         return $worker;
     }
 
     public function checkMemory($usages, $memory) {
         $workers = [];
+        $this->logger->debug("checkMemory memory param:".$memory);
+
         foreach ($usages as $usage) {
-            if ($usage['memoryAvailable'] > $memory) {
+            if ($usage['memory_total'] > $memory) {
                 array_push($workers, $usage);
             }
         }
+        $this->logger->debug("worker chosen from checkMemory :",$workers);
+
         return $workers;
     }
 
@@ -93,7 +97,7 @@ class WorkerManager
                 $worker = $usage['worker'];
             }
         }
-        $this->logger->debug("worker: ".$worker);
+        $this->logger->debug("worker chosen from checkCPU :".$worker);
         return $worker;
     }
 }

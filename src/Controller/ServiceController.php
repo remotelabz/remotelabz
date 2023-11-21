@@ -177,7 +177,7 @@ class ServiceController extends Controller
          /**
      * @Route("/admin/resources", name="resources", methods="GET")
      */
-    public function RessourceAction(Request $request)
+    public function ResourceAction(Request $request)
     {
         $workers = $this->configWorkerRepository->findBy(['available' => true]);
         //$workers = explode(',', $this->workerServer);
@@ -187,7 +187,9 @@ class ServiceController extends Controller
         }
         else {
             $client = new Client();
-            $url = 'http://'.$workers[0].':'.$this->workerPort.'/stats/hardware';
+            $this->logger->debug("worker:".$workers[0]->getIPv4());
+
+            $url = 'http://'.$workers[0]->getIPv4().':'.$this->workerPort.'/stats/hardware';
             try {
                 $response = $client->get($url);
                 $usage = json_decode($response->getBody()->getContents(), true);
@@ -197,7 +199,7 @@ class ServiceController extends Controller
                 $usage=null;
             }
         }
-        
+        $this->logger->debug("worker usage:",$usage);
 
         return $this->render('service/resources.html.twig', [
             'value' => $usage,

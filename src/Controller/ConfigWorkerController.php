@@ -21,6 +21,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 
 
+
 class ConfigWorkerController extends Controller
 {
     private $logger;
@@ -163,7 +164,7 @@ class ConfigWorkerController extends Controller
 
         $this->deleteQueue($queueName);
 
-        return $this->json($labInstances);
+        return $this->json();
     }
 
     private function createQueue($ipAdress, $queueName) {
