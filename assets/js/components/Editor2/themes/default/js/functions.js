@@ -1193,7 +1193,7 @@ export function getUserInfo() {
                 if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
                 }
-                else if(pathname == '/labs/' + LAB + '/see/' + labInstance) {
+                else if(pathname == '/labs/' + LAB + '/see/' + labInstance || pathname == '/labs/guest/' + LAB + '/see/' + labInstance) {
                     setEditon(0);
                 }
                 if (pathname == '/admin/labs_template/' + LAB + '/edit') {
