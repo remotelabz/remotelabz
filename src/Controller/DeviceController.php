@@ -178,7 +178,7 @@ class DeviceController extends Controller
             $serial = false;
             foreach($device->getControlProtocolTypes() as $controlProtocolType) {
                 //$controlProtocolTypes[$controlProtocolType->getId()] = $controlProtocolType->getName();
-                array_push($controlProtocolTypes, $controlProtocolType->getId());
+                array_push($controlProtocolTypes, $controlProtocolType->getName());
                 if ($controlProtocolType->getName() == 'vnc') {
                     $vnc = true;
                 }
@@ -219,7 +219,7 @@ class DeviceController extends Controller
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
                 "ethernet"=> $device->getEthernet(),
-                "console" => $finalControlProtocolType,
+                "console" => $controlProtocolTypes,
                 "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
             ];
 
@@ -305,12 +305,14 @@ class DeviceController extends Controller
             $status = 0;
         }
         $controlProtocolTypes = [];
+        $controlProtocolTypesName = [];
         $vnc = false;
         $login = false;
         $serial = false;
         foreach($device->getControlProtocolTypes() as $controlProtocolType) {
             //$controlProtocolTypes[$controlProtocolType->getId()] = $controlProtocolType->getName();
             array_push($controlProtocolTypes, $controlProtocolType->getId());
+            array_push($controlProtocolTypesName, $controlProtocolType->getName());
             if ($controlProtocolType->getName() == 'vnc') {
                 $vnc = true;
             }
@@ -360,7 +362,7 @@ class DeviceController extends Controller
             "controlProtocol" => $controlProtocolTypes,
             "hypervisor" => $device->getHypervisor()->getId(),
             "operatingSystem" => $device->getOperatingSystem()->getId(),
-            "console" => $finalControlProtocolType,
+            "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate()
         ];
 
