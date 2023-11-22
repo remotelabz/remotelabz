@@ -297,8 +297,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         />
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" &&
+                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
                         <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                    }
+                    {
+                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && viewAs.type === "guest" &&
+                        <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>

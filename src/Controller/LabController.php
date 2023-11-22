@@ -393,6 +393,7 @@ class LabController extends Controller
 
     /**
      * @Route("/labs/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab")
+     * @Route("/labs/guest/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab_guest")
      */
     public function seeAction(Request $request, int $id, int $instanceId)
     {
