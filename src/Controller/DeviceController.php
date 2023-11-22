@@ -943,18 +943,13 @@ class DeviceController extends Controller
             $oldTemplate = $device->getNetworkInterfaceTemplate();
             $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
             foreach($device->getNetworkInterfaces() as $networkInterface) {
-                if ($oldTemplate == "") {
-                    preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
-                    $netId = (int)$numbers[count($numbers) - 1];
-                    //$netId = explode($device->getName()."_net", $networkInterface->getName())[1];
-                }
-                else {
-                    $netId = (int)explode($oldTemplate, $networkInterface->getName())[1];
-                }
+                preg_match_all('!\d+!', $networkInterface->getName(), $numbers);
+                $netId = (int)$numbers[0][count($numbers[0]) -1];
+
                 $networkInterface->setName($device->getNetworkInterfaceTemplate().$netId);
             }
+            
         }
-        
         if(isset($data['controlProtocol'])) {
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->removeDevice($device);
@@ -1325,8 +1320,8 @@ class DeviceController extends Controller
                     var_dump(explode($device->getNetworkInterfaceTemplate(), $networkInterface->getName()));
                     exit;*/
                     if ($device->getNetworkInterfaceTemplate() == "") {
-                        preg_match_all('!\+d!', $networkInterface->getName(), $numbers);
-                        $netId = $numbers[count($numbers) - 1];
+                        preg_match_all('!\d+!', $networkInterface->getName(), $numbers);
+                        $netId = $numbers[0][count($numbers[0]) -1];
                         $ethernet[(int)$netId]= [
                             "name"=> $networkInterface->getName(),
                             "network_id"=> $networkInterface->getVlan(),
@@ -1354,7 +1349,7 @@ class DeviceController extends Controller
                 if (!isset($ethernet[$j])) {
                     $ethernet[$j] = [
                         "name"=> "new network interface",
-                        "network_id"=> 0,
+                        "network_id"=> -1,
                     ];
                     break;
                 }
@@ -1372,7 +1367,7 @@ class DeviceController extends Controller
                 //$interface = ($i[sizeof((array)$i)-1] +1);
                 array_push($ethernet, [
                     "name"=> "new network interface",
-                    "network_id"=> 0,
+                    "network_id"=> -1,
                 ]);
             }
 
