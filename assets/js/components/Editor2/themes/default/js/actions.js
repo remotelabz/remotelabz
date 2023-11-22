@@ -4602,6 +4602,27 @@ $(document).on('click', '.node.node_frame a', function (e) {
 
 })
 
+//show context when node is started and has multiple console
+$(document).on('click', '.openControlProtocolMenu', function (e) {
+    var node_id = $(this).attr("id");
+
+    e.preventDefault();
+
+    $.when(getNodes(node_id))
+        .then(function (node) {
+                var contextBody ="";
+                for(let controlProtocol of node.console) {
+                    contextBody += '<li><a href="/instances/' + node.uuid +'/view/' + controlProtocol+ '" target="_blank">'+ controlProtocol +'</a></li>';
+                }
+
+                printContextMenu(node.name, contextBody, e.pageX, e.pageY,false,"menu");
+        })
+        .fail(function (message) {
+            addMessage('danger', message);
+        });
+
+})
+
 $(document).on('submit', '#editConn', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');

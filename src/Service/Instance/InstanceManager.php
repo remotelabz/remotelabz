@@ -130,8 +130,8 @@ class InstanceManager
     public function create(Lab $lab, InstancierInterface $instancier)
     {
         
-        $worker = $this->workerManager->getFreeWorker();
-
+        $worker = $this->workerManager->getFreeWorker($lab);
+        $this->logger->debug("worker avalaible from create function in InstanceManager:".$worker);
         $labInstance = LabInstance::create()
             ->setLab($lab)
             ->setworkerIp($worker)
@@ -170,7 +170,9 @@ class InstanceManager
 
         if ($lab->getHasTimer() == true) {
             $timer = explode(":",$lab->getTimer());
-            $labInstance->setTimerEnd(new \DateTime('@'.strtotime( '+' .$timer[0].' hours ' . $timer[1]. ' minutes ' .$timer[2]. ' seconds')));
+            $date = new \DateTime();
+            $date->modify('+ '.$timer[0].' hours + ' . $timer[1]. ' minutes + ' .$timer[2]. ' seconds');
+            $labInstance->setTimerEnd($date);
         }
 
         $this->entityManager->persist($labInstance);
@@ -319,7 +321,7 @@ class InstanceManager
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $worker = $this->workerManager->getFreeWorker();
+        $worker = $this->workerManager->getFreeWorker($newDevice);
         $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV), [
@@ -390,7 +392,8 @@ class InstanceManager
             }
         }
 
-        $worker = $this->workerManager->getFreeWorker();
+        $worker = $this->workerManager->getFreeWorker($lab);
+
         $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB), [

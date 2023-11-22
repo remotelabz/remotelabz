@@ -23,7 +23,6 @@ final class Version20230922121127 extends AbstractMigration
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE lab ADD has_timer TINYINT(1) NOT NULL, ADD timer TIME DEFAULT NULL');
-        $this->addSql('ALTER TABLE network_interface DROP connection, CHANGE vlan vlan INT DEFAULT 0 NOT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -32,6 +31,5 @@ final class Version20230922121127 extends AbstractMigration
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE lab DROP has_timer, DROP timer');
-        $this->addSql('ALTER TABLE network_interface ADD connection INT DEFAULT 0 NOT NULL, CHANGE vlan vlan INT DEFAULT NULL');
     }
 }

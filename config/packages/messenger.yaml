@@ -1,46 +1,27 @@
 framework:
     messenger:
-        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-        # failure_transport: failed
-
         transports:
-            # https://symfony.com/doc/current/messenger.html#transport-configuration
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            worker: 
+            worker:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     exchange:
                         name: worker
                         type: direct
-                    queues:
-                        messages_worker: 
-                            binding_keys: ['%env(WORKER_SERVER1)%']
-                        messages_worker2: 
-                            binding_keys: ['%env(WORKER_SERVER2)%']
+                    queues: {  }
                 retry_strategy:
                     max_retries: 3
-                    # milliseconds delay
                     delay: 5000
-                    # causes the delay to be higher before each retry
-                    # e.g. 1 second delay, 2 seconds, 4 seconds
                     multiplier: 1
                     max_delay: 0
-                    # override all of this with a service that
-                    # implements Symfony\Component\Messenger\Retry\RetryStrategyInterface
-                    # service: null
-            
-            front: 
+            front:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     exchange:
                         name: front
                     queues:
-                        messages_front: ~
+                        messages_front: null
             failed: 'doctrine://default?queue_name=failed'
-            # failed: 'doctrine://default?queue_name=failed'
-            # sync: 'sync://'
-
         routing:
-            # Route your messages to the transports
-            'Remotelabz\Message\Message\InstanceActionMessage': worker
-            'Remotelabz\Message\Message\InstanceStateMessage': front
+            Remotelabz\Message\Message\InstanceActionMessage: worker
+            Remotelabz\Message\Message\InstanceStateMessage: front
