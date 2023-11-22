@@ -788,7 +788,6 @@ export function getNodes(node_id) {
     var labInstance;
     var edition;
     var pathname = window.location.pathname;
-    console.log(EDITION);
     if(EDITION == 1) {
         labInstance = null;
         edition = EDITION;
@@ -3800,9 +3799,13 @@ export function printLabTopology() {
                var hrefbuf='<a href="' + value['url'] + '" >' ;
             }*/
             var hrefbuf;
-            if (EDITION == 0 && value['console'] != null) {
-                hrefbuf = '<a href="/instances/' + value['uuid'] +'/view/' + value['console']+ '" target="_blank">';
-                
+            if (EDITION == 0 && value['console'].length > 0 && value['status'] == 2 && value['type'] != "switch") {
+                if (value['console'].length > 1 ) {
+                    hrefbuf = '<a class="openControlProtocolMenu" id="'+ value['id']+'" href="javascript:void(0)" >'
+                }
+                else {
+                    hrefbuf = '<a href="/instances/' + value['uuid'] +'/view/' + value['console']+ '" target="_blank">';
+                }                
             }
             else {
                 hrefbuf = '<a href="javascript:void(0)" >' ;
