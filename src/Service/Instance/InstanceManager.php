@@ -170,7 +170,9 @@ class InstanceManager
 
         if ($lab->getHasTimer() == true) {
             $timer = explode(":",$lab->getTimer());
-            $labInstance->setTimerEnd(new \DateTime('@'.strtotime( '+' .$timer[0].' hours ' . $timer[1]. ' minutes ' .$timer[2]. ' seconds')));
+            $date = new \DateTime();
+            $date->modify('+ '.$timer[0].' hours + ' . $timer[1]. ' minutes + ' .$timer[2]. ' seconds');
+            $labInstance->setTimerEnd($date);
         }
 
         $this->entityManager->persist($labInstance);
