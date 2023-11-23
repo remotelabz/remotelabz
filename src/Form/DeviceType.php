@@ -63,9 +63,8 @@ class DeviceType extends AbstractType
                 'empty_data' => null,
                 'required' => false
             ])
-            ->add('networkInterfaceTemplate', ChoiceType::class, [
-                'choices' => ['eth' => 'eth', 'ens' => 'ens', 'enp0s' => 'enp0s'],
-                'help' => 'Scheme of network interfaces name.',
+            ->add('networkInterfaceTemplate', TextType::class, [
+                'help' => 'Scheme of network interfaces name. exemple: eth',
                 'empty_data' => 'eth'
             ])
            ->add('controlProtocolTypes', EntityType::class, [

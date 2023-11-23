@@ -6,6 +6,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use App\Entity\DeviceInstanceLog;
 use App\Entity\InstancierInterface;
+use App\Entity\InvitationCode;
 
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
@@ -729,7 +730,12 @@ class InstanceController extends Controller
         }
 
         $isAuthor = ($deviceInstance->getLabInstance()->getLab()->getAuthor() == $user);
-        $isAdmin =  $user->isAdministrator();
+        if ($user instanceof InvitationCode) {
+            $isAdmin = false;
+        }
+        else {
+            $isAdmin =  $user->isAdministrator();
+        }
 
         if(!$isAdmin && !$isAuthor && !$isOwner) {
             return $this->redirectToRoute("index");

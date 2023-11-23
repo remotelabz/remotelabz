@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\LabRepository;
+use App\Entity\InvitationCode;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -50,17 +51,33 @@ class EditorController extends Controller
                 $author = 0;
             }
 
-            $response->setContent(json_encode([
-                'code'=> 200,
-                'status'=>'success',
-                'message' => 'User connected',
-                'data' => [
-                    "token"=> $token, 
-                    "role" => $user->getHighestRole(), 
-                    "email"=>$user->getEmail(), 
-                    "username" => $user->getName(),
-                    "author" => $author
-                ]]));
+            if ($user instanceof InvitationCode) {
+                $response->setContent(json_encode([
+                    'code'=> 200,
+                    'status'=>'success',
+                    'message' => 'User connected',
+                    'data' => [
+                        "token"=> $token, 
+                        "role" => "ROLE_USER", 
+                        "email"=>$user->getMail(), 
+                        "username" => $user->getName(),
+                        "author" => $author
+                    ]]));
+            }
+            else {
+                $response->setContent(json_encode([
+                    'code'=> 200,
+                    'status'=>'success',
+                    'message' => 'User connected',
+                    'data' => [
+                        "token"=> $token, 
+                        "role" => $user->getHighestRole(), 
+                        "email"=>$user->getEmail(), 
+                        "username" => $user->getName(),
+                        "author" => $author
+                    ]]));
+            }
+
         }
         else {
 

@@ -212,10 +212,8 @@ class TemplateController extends Controller
 
             $data['options']['networkInterfaceTemplate'] = Array(
                 'name' => 'Network interface template',
-                'type' => 'list',
-                'multiple'=> false,
-                'value' => $p['networkInterfaceTemplate'] ?? 'eth',
-                'list' => Array('eth'=>'eth', 'ens'=>'ens', 'enp0s' => 'enp0s')
+                'type' => 'input',
+                'value' => $p['networkInterfaceTemplate'] ?? 'eth'
             );
 
             $data['options']['flavor'] = Array(
