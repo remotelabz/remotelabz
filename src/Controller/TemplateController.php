@@ -210,14 +210,6 @@ class TemplateController extends Controller
                 'value' => $p['model'] ?? ''
             );
 
-            $data['options']['type'] = Array(
-                'name' => 'Type',
-                'type' => 'list',
-                'multiple'=> false,
-                'value' => $p['type'] ?? 'container',
-                'list' => Array('vm'=>'vm', 'container'=>'container', 'switch' => 'switch')
-            );
-
             $data['options']['networkInterfaceTemplate'] = Array(
                 'name' => 'Network interface template',
                 'type' => 'input',
@@ -262,15 +254,6 @@ class TemplateController extends Controller
                 'multiple'=> false,
                 'value' => $p['operatingSystem'] ?? '',
                 'list' => $this->listOperatingSystems()
-            );
-
-            
-            $data['options']['hypervisor'] = Array(
-                'name' => 'Hypervisor',
-                'type' => 'list',
-                'multiple'=> false,
-                'value' => $p['hypervisor'] ?? '',
-                'list' => $this->listHypervisors()
             );
 
             $data['options']['controlProtocol'] = Array(

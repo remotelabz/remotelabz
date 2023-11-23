@@ -340,7 +340,7 @@ class DeviceController extends Controller
 
         $data = [
             "name"=> $device->getName(),
-            "type"=> $device->getType(),
+            //"type"=> $device->getType(),
             //"console"=> $device->getConsole(),
             "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
@@ -360,7 +360,7 @@ class DeviceController extends Controller
             "brand"=>$device->getBrand(),
             "model"=>$device->getModel(),
             "controlProtocol" => $controlProtocolTypes,
-            "hypervisor" => $device->getHypervisor()->getId(),
+            //"hypervisor" => $device->getHypervisor()->getId(),
             "operatingSystem" => $device->getOperatingSystem()->getId(),
             "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate()
@@ -444,12 +444,12 @@ class DeviceController extends Controller
                 }
                 $deviceData = [
                     "name" => $device->getName(),
-                    "type" => $device->getType(),
+                    //"type" => $device->getType(),
                     "icon" => $device->getIcon(),
                     "operatingSystem" => $device->getOperatingSystem()->getId(),
                     "flavor" => $device->getFlavor()->getId(),
                     "controlProtocol" => $controlProtocolTypes,
-                    "hypervisor" => $device->getHypervisor()->getId(),
+                    //"hypervisor" => $device->getHypervisor()->getId(),
                     "brand" => $device->getBrand(),
                     "model" => $device->getModel(),
                     "description" => $device->getName(),
@@ -574,6 +574,7 @@ class DeviceController extends Controller
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
+        
         $lab = $this->labRepository->findById($id);
 
         $no_array = true;
@@ -612,7 +613,7 @@ class DeviceController extends Controller
         $device = new Device();
         $editorData = new EditorData();
         
-        $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
+        //$hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
         //$controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
         foreach($data['controlProtocol'] as $controlProtocolTypeId) {
             $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
@@ -653,13 +654,13 @@ class DeviceController extends Controller
         else {
             $device->setIsTemplate(false);
         }
-        $device->setType($data['type']);
+        //$device->setType($data['type']);
         $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
         $device->setIcon($data['icon']);
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
         $device->setOperatingSystem($operatingSystem[0]);
-        $device->setHypervisor($hypervisor[0]);
+        $this->setDeviceHypervisorToOS($device);
         /*if($controlProtocolType != null) {
             $device->addControlProtocolType($controlProtocolType[0]);
         }*/
@@ -780,31 +781,7 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
-            /*if ($device->getIsTemplate() == true) {
-                foreach (scandir('/opt/remotelabz/config/templates') as $filename) {
-                    if(u($oldName)->camel() != u($device->getName())->camel()) {
-                        if(is_file('/opt/remotelabz/config/templates/'. u($device->getName())->camel() . '.yaml')) {
-                            throw new NotFoundHttpException("The name " . $device->getName() . " already exists as a template");
-                        }
-                    }
-                }
-            }*/
-            $nbNetworkInterface=count($device->getNetworkInterfaces());
-            $wanted_nbNetworkInterface=$deviceForm->get("networkInterfaces")->getData();
-            if (!is_int($wanted_nbNetworkInterface) || ($wanted_nbNetworkInterface > 19)) {
-                if ($nbNetworkInterface < $wanted_nbNetworkInterface ){
-                    for ($j=0; $j<($wanted_nbNetworkInterface-$nbNetworkInterface); $j++)
-                        $this->addNetworkInterface($device);
-                }
-                elseif ($nbNetworkInterface > $wanted_nbNetworkInterface){
-                    for ($j=0; $j<($nbNetworkInterface-$wanted_nbNetworkInterface); $j++)
-                        $this->removeNetworkInterface($device);
-                }
-            } else {
-                $this->logger->error("Value in interface number field in edit device form is not integer");
-                $this->addFlash('error', 'Incorrect value.');
-                return $this->redirectToRoute('show_device', ['id' => $id]);
-            }
+
             
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
@@ -840,12 +817,12 @@ class DeviceController extends Controller
             
             $deviceData = [
                 "name" => $device->getName(),
-                "type" => $device->getType(),
+                //"type" => $device->getType(),
                 "icon" => $device->getIcon(),
                 "operatingSystem" => $device->getOperatingSystem()->getId(),
                 "flavor" => $device->getFlavor()->getId(),
                 "controlProtocol" => $controlProtocolTypes,
-                "hypervisor" => $device->getHypervisor()->getId(),
+                //"hypervisor" => $device->getHypervisor()->getId(),
                 "brand" => $device->getBrand(),
                 "model" => $device->getModel(),
                 "description" => $device->getName(),
@@ -935,10 +912,6 @@ class DeviceController extends Controller
             $device->setConfig($data['config']);
         }
 
-        if(isset($data['type'])) {
-            $device->setType($data['type']);
-        }
-
         if(isset($data['networkInterfaceTemplate'])) {
             $oldTemplate = $device->getNetworkInterfaceTemplate();
             $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
@@ -1016,10 +989,7 @@ class DeviceController extends Controller
         if(isset($data['operatingSystem'])) {
             $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
             $device->setOperatingSystem($operatingSystem[0]);
-        }
-        if(isset($data['hypervisor'])) {
-            $hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
-            $device->setHypervisor($hypervisor[0]);
+            $this->setDeviceHypervisorToOS($device);
         }
         if(isset($data['delay'])) {
             if($data['delay'] != '') {
@@ -1410,6 +1380,9 @@ class DeviceController extends Controller
                 break;
                 case 'qemu':
                     $device->setType('vm');
+                break;
+                case 'natif':
+                    $device->setType('switch');
                 break;
             }
     }
