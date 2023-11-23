@@ -98,7 +98,6 @@ class WorkerManager
             }
         }
         $this->logger->debug("worker chosen from checkCPU :".$worker);
-
         return $worker;
     }
 }

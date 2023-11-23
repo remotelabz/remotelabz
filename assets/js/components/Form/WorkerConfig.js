@@ -72,6 +72,14 @@ function WorkerConfig(props = {workers, nbWorkers}) {
     function deleteWorker(id) {
         Remotelabz.configWorker.delete(id).then(()=> {
             refresh();
+        })
+        .catch((error)=> {
+            if (error.response.data.message.includes("is used by an instance")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error'
+                }).show()
+            }
         });
     }
     function changeAvailable(id, available) {
