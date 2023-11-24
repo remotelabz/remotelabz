@@ -32,12 +32,20 @@ const InstanceList = (props) => {
 
             props.onStateUpdate();
             location.href ="/admin/sandbox";
-        }).catch(() => {
-            new Noty({
-                type: 'error',
-                text: 'Error while requesting instance export. Please try again later.',
-                timeout: 5000
-            }).show();
+        }).catch((error) => {
+            if (error.response.data.message.includes("No worker available")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error'
+                }).show()
+            }
+            else {
+                new Noty({
+                    type: 'error',
+                    text: 'Error while requesting instance export. Please try again later.',
+                    timeout: 5000
+                }).show();
+            }
         })
     }
 

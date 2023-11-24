@@ -26,6 +26,7 @@ use App\Repository\PictureRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabInstanceRepository;
 use App\Repository\NetworkInterfaceInstanceRepository;
+use App\Repository\ConfigWorkerRepository;
 use App\Repository\ControlProtocolTypeRepository;
 use App\Repository\ControlProtocolTypeInstanceRepository;
 use App\Repository\OperatingSystemRepository;
@@ -46,6 +47,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use App\Service\Worker\WorkerManager;
 use App\Service\Lab\BannerManager;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 
 /**
@@ -72,6 +74,7 @@ class InstanceManager
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
+    protected $configWorkerRepository;
     protected $bannerManager;
     protected $workerSerializationGroups = [
         'worker'
@@ -92,6 +95,7 @@ class InstanceManager
         TextObjectRepository $TextObjectRepository,
         PictureRepository $PictureRepository,
         OperatingSystemRepository $OperatingSystemRepository,
+        ConfigWorkerRepository $configWorkerRepository,
         string $workerServer,
         string $workerPort,
         ProxyManager $proxyManager,
@@ -116,6 +120,7 @@ class InstanceManager
         $this->workerPort = $workerPort;
         $this->proxyManager = $proxyManager;
         $this->workerManager = $workerManager;
+        $this->configWorkerRepository = $configWorkerRepository;
         $this->bannerManager = $bannerManager;
     }
 
@@ -131,6 +136,11 @@ class InstanceManager
     {
         
         $worker = $this->workerManager->getFreeWorker($lab);
+        if ($worker == "") {
+            $this->logger->error('Could not create instance. No worker available');
+            throw new BadRequestHttpException('No worker available');
+        }
+
         $this->logger->debug("worker avalaible from create function in InstanceManager:".$worker);
         $labInstance = LabInstance::create()
             ->setLab($lab)
@@ -199,17 +209,25 @@ class InstanceManager
      */
     public function delete(LabInstance $labInstance)
     {
-        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
-        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
-        $labInstance->setState(InstanceStateMessage::STATE_DELETING);
-        $worker = $labInstance->getWorkerIp();
-        $this->entityManager->persist($labInstance);
-        $this->entityManager->flush();
-        $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_DELETE), [
-                new AmqpStamp($worker, AMQP_NOPARAM, []),
-            ]
-        );
+        $workerIP = $labInstance->getWorkerIp();
+        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+        if ($worker->getAvailable() == true) {
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+            $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+            $labInstance->setState(InstanceStateMessage::STATE_DELETING);
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_DELETE), [
+                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                ]
+            );
+        }
+        else {
+            $this->logger->error('Could not delete instance. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
+        
     }
 
     /**
@@ -222,28 +240,35 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $device = $deviceInstance->getDevice();
 
-        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
-        foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
-            $control_protocol_instance->setPort($this->getRemoteAvailablePort($worker));
-            $this->entityManager->persist($control_protocol_instance);
+        $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+        if ($worker->getAvailable() == true) {
+            foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
+                $control_protocol_instance->setPort($this->getRemoteAvailablePort($workerIP));
+                $this->entityManager->persist($control_protocol_instance);
+            }
+
+            $deviceInstance->setState(InstanceState::STARTING);
+            $this->entityManager->flush();
+
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+            $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+            //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+
+            $this->logger->info('Sending device instance '.$uuid.' start message');
+            $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
+                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                ]
+            );
+
+            return $labJson;
         }
-
-        $deviceInstance->setState(InstanceState::STARTING);
-        $this->entityManager->flush();
-
-        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
-        $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-        //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
-
-        $this->logger->info('Sending device instance '.$uuid.' start message');
-        $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
-        $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
-                new AmqpStamp($worker, AMQP_NOPARAM, []),
-            ]
-        );
-
-        return $labJson;
+        else {
+            $this->logger->error('Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
     }
 
     /**
@@ -252,24 +277,32 @@ class InstanceManager
     public function stop(DeviceInstance $deviceInstance)
     {
         $uuid = $deviceInstance->getUuid();
+        $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
 
-        $deviceInstance->setState(InstanceState::STOPPING);
-        $this->entityManager->persist($deviceInstance);
-        $this->entityManager->flush();
+        if ($worker->getAvailable() == true) {
+            $deviceInstance->setState(InstanceState::STOPPING);
+            $this->entityManager->persist($deviceInstance);
+            $this->entityManager->flush();
 
-        $this->logger->debug('Stopping device instance with UUID '.$uuid.'.');
+            $this->logger->debug('Stopping device instance with UUID '.$uuid.'.');
 
-        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
-        $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+            $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
-        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
-        $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
-        $this->logger->info('Sending device instance '.$uuid.' stop message.');
-        $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP), [
-                new AmqpStamp($worker, AMQP_NOPARAM, []),
-            ]
-        );
+            
+            $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
+            $this->logger->info('Sending device instance '.$uuid.' stop message.');
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP), [
+                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                ]
+            );
+        }
+        else {
+            $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
     }
 
     /**
@@ -278,6 +311,12 @@ class InstanceManager
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
+        $worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
+
+        if ($worker == "") {
+            $this->logger->error('Could not export device. No worker available');
+            throw new BadRequestHttpException('No worker available');
+        }
         $deviceInstance->setState(InstanceState::EXPORTING);
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
@@ -321,7 +360,6 @@ class InstanceManager
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $worker = $this->workerManager->getFreeWorker($newDevice);
         $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV), [
@@ -337,6 +375,13 @@ class InstanceManager
         $now = new DateTime();
 
         $lab = $this->copyLab($labInstance->getLab(), $name);
+
+        $worker = $this->workerManager->getFreeWorker($lab);
+        if ($worker == "") {
+            $this->logger->error('Could not export lab. No worker available');
+            throw new BadRequestHttpException('No worker available');
+        }
+        
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
         if (count($lab->getPictures()) >= 1) {
@@ -394,8 +439,6 @@ class InstanceManager
     
             }
         }
-
-        $worker = $this->workerManager->getFreeWorker($lab);
 
         $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
             $this->bus->dispatch(
