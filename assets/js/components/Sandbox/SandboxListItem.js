@@ -95,7 +95,6 @@ class SandboxListItem extends Component {
         }
         else if (this.props.itemType == "lab") {
             for(var device of item.devices) {
-                console.log(item.devices);
                 device.flavor = device.flavor.id;
                 device.operatingSystem = device.operatingSystem.id;
                 device.hypervisor = device.hypervisor.id;

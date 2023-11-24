@@ -68,11 +68,11 @@ class Device implements InstanciableInterface
     private $networkInterfaces;
 
     /**
-     * @ORM\Column(type="string", length=20)
+     * @ORM\Column(type="string", length=20, options={"default": "eth"})
      * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      * @Assert\NotNull
      */
-    private $networkInterfaceTemplate;
+    private $networkInterfaceTemplate = "eth";
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
@@ -201,7 +201,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template"})
      */
     private $template;
 

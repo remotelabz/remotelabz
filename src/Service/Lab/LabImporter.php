@@ -218,7 +218,7 @@ class LabImporter
                 ->setVirtuality(0)
                 ->setHypervisor($hypervisor)
                 ->setNbCpu($deviceJson['nbCpu'])
-                ->setTemplate($deviceJson['id']."_".u($deviceJson['name'])->camel())
+                ->setTemplate($deviceJson['template'])
                 //->setVnc($deviceJson['vnc'])
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)

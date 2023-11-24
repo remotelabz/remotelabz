@@ -20,7 +20,7 @@ framework:
                     exchange:
                         name: front
                     queues:
-                        messages_front: null
+                        messages_front: ~
             failed: 'doctrine://default?queue_name=failed'
         routing:
             Remotelabz\Message\Message\InstanceActionMessage: worker

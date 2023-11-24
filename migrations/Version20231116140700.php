@@ -20,7 +20,7 @@ final class Version20231116140700 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE device ADD network_interface_template VARCHAR(20) NOT NULL');
+        $this->addSql('ALTER TABLE device ADD network_interface_template VARCHAR(20) DEFAULT \'eth\' NOT NULL');
     }
 
     public function down(Schema $schema): void
