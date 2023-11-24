@@ -31,6 +31,7 @@ const InstanceList = (props) => {
             }).show();
 
             props.onStateUpdate();
+            location.href ="/admin/sandbox";
         }).catch(() => {
             new Noty({
                 type: 'error',
