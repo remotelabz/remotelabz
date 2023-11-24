@@ -62,7 +62,7 @@
                                 name="{{ form.visibility.children[0].vars.full_name }}"
                                 required="required"
                                 class="form-check-input"
-                                value="{{ form.visibility.children[1].vars.value }}"
+                                value="{{ form.visibility.children[0].vars.value }}"
                                 {%- if app.request.attributes.get('_route') == 'new_group' -%}
                                  checked  
                                 {%- elseif group.visibility is not null and group.visibility == '0' -%}
