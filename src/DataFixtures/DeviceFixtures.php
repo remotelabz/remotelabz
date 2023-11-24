@@ -30,6 +30,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('vnc'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
 
@@ -52,6 +53,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
@@ -73,6 +75,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
@@ -94,6 +97,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
@@ -115,6 +119,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
 
         ;
         $manager->persist($device);
@@ -136,6 +141,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login'))
             ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Switch.png")
             
         ;
         $manager->persist($device);
