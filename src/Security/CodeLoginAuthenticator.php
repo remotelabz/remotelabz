@@ -83,7 +83,6 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
     {
         $code = $request->request->get('code', '');
         $invitedUser = $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['code' => $code]);
-
         /*var_dump(new Passport(
             new UserBadge($invitedUser->getMail(), function($invitedUser) {
                 return $this->entityManager->getReposiory(InvitationCode::class)->findOneBy(['mail'=>$invitedUser]);
@@ -94,8 +93,11 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
             ]
             ));exit;*/
         return new Passport(
-            new UserBadge($invitedUser->getMail(),  function($invitedUser) {
-                return $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['mail'=>$invitedUser]);
+            new UserBadge($invitedUser->getMail()." ".$code,  function($credentials) {
+                $mail = explode(" ", $credentials)[0];
+                $userCode = explode(" ", $credentials)[1];
+
+                return $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['mail'=>$mail, "code"=>$userCode]);
             }),
             new PasswordCredentials($code),
             [
