@@ -206,7 +206,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template"})
      */
     private $template;
 

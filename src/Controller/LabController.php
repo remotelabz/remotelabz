@@ -602,6 +602,9 @@ class LabController extends Controller
                 if (isset($device_array['icon'])) {
                     $new_device->setIcon($device_array['icon']);
                 }
+                if (isset($device_array['template'])) {
+                    $new_device->setTemplate($device_array['template']);
+                }
                 $new_device->setVirtuality($device_array['virtuality']);
                 $this->logger->debug("Device added : ".$new_device->getName());
                 

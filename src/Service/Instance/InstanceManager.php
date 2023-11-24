@@ -360,6 +360,7 @@ class InstanceManager
     
                 $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
                 $newDevice = $this->copyDevice($device, $newOS, $deviceName);
+                $newDevice->setTemplate($device->getTemplate());
                 $this->entityManager->persist($newOS);
     
                 $newEditorData = new EditorData();
