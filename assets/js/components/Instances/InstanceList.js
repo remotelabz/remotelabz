@@ -31,6 +31,7 @@ const InstanceList = (props) => {
             }).show();
 
             props.onStateUpdate();
+            location.href ="/admin/sandbox";
         }).catch((error) => {
             if (error.response.data.message.includes("No worker available")) {
                 new Noty({
