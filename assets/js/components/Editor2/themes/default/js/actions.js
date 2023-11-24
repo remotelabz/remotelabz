@@ -2991,13 +2991,13 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
                     $("#node" + form_data['id'] + " a img").attr("src", "/build/editor/images/icons/" + form_data['icon'])
 
                     $("#form-node-edit-table input[name='node[name]'][data-path='" + form_data['id'] + "']").val(form_data["name"])
-                    $("#form-node-edit-table select[name='node[image]'][data-path='" + form_data['id'] + "']").val(form_data["image"])
+                    $("#form-node-edit-table input[name='node[template]'][data-path='" + form_data['id'] + "']").val(form_data["template"])
                     $("#form-node-edit-table input[name='node[cpu]'][data-path='" + form_data['id'] + "']").val(form_data["cpu"])
-                    $("#form-node-edit-table input[name='node[nvram]'][data-path='" + form_data['id'] + "']").val(form_data["nvram"])
-                    $("#form-node-edit-table input[name='node[serial]'][data-path='" + form_data['id'] + "']").val(form_data["serial"])
-                    $("#form-node-edit-table input[name='node[ethernet]'][data-path='" + form_data['id'] + "']").val(form_data["ethernet"])
-                    $("#form-node-edit-table select[name='node[console]'][data-path='" + form_data['id'] + "']").val(form_data["console"])
-                    $("#form-node-edit-table select[name='node[icon]'][data-path='" + form_data['id'] + "']").val(form_data["icon"])
+                    $("#form-node-edit-table input[name='node[core]'][data-path='" + form_data['id'] + "']").val(form_data["core"])
+                    $("#form-node-edit-table input[name='node[socket]'][data-path='" + form_data['id'] + "']").val(form_data["socket"])
+                    $("#form-node-edit-table input[name='node[thread]'][data-path='" + form_data['id'] + "']").val(form_data["thread"])
+                    $("#form-node-edit-table select[name='node[flavor]'][data-path='" + form_data['id'] + "']").val(form_data["flavor"]).change()
+                    $("#form-node-edit-table select[name='node[icon]'][data-path='" + form_data['id'] + "']").val(form_data["icon"]).change()
                     printLabTopology();
                 } else {
                     // Application error
