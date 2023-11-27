@@ -1282,13 +1282,6 @@ class DeviceController extends Controller
 
             //get all network Interfaces of the device
             foreach($networkInterfaces as $networkInterface){
-                /*array_push($ethernet, [
-                        "name"=> $networkInterface->getName(),
-                        "network_id"=> $networkInterface->getVlan(),
-                    ]);*/
-                    /*var_dump($device->getNetworkInterfaceTemplate());
-                    var_dump(explode($device->getNetworkInterfaceTemplate(), $networkInterface->getName()));
-                    exit;*/
                     if ($device->getNetworkInterfaceTemplate() == "") {
                         preg_match_all('!\d+!', $networkInterface->getName(), $numbers);
                         $netId = $numbers[0][count($numbers[0]) -1];
@@ -1355,7 +1348,7 @@ class DeviceController extends Controller
                 "ethernet"=>[
                     0 => [
                         "name"=> "new network interface",
-                        "network_id"=> 0,
+                        "network_id"=> -1,
                     ],
                 ]
             ];
