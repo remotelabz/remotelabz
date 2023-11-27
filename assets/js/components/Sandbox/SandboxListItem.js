@@ -105,10 +105,10 @@ class SandboxListItem extends Component {
                 device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
                 device.controlProtocolTypes.forEach(element => console.log(element.id));
                 device.controlProtocolTypes = controlProtocolTypes;
+                console.log(device);
                 await this.api.post('/api/labs/' + lab.id + '/devices', device);
             }
         }
-
         // Create and start a lab instance
         await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
   

@@ -613,7 +613,6 @@ class LabController extends Controller
                 $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);
                 $this->logger->debug("Device added : ".$new_device->getName());
-                
                 $entityManager->persist($new_device);
                 $editorData->setDevice($new_device);
                 $entityManager->flush();
@@ -643,7 +642,6 @@ class LabController extends Controller
                 }
                 $entityManager->persist($new_device);
                 $entityManager->flush();
-
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
@@ -669,25 +667,10 @@ class LabController extends Controller
             $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
-        else 
-            $new_device->setType('vm');
 
         $entityManager = $this->getDoctrine()->getManager();
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
-/*        foreach ($new_device->getNetworkInterfaces() as $network_int) {
-            $this->logger->debug("Add Network interface".$network_int->getName());
-            $new_network_inter=new NetworkInterface();
-            $new_setting=new NetworkSettings();
-            $new_setting=clone $network_int->getSettings();
-            $entityManager->persist($new_setting);
-            $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($new_device->getName());
-            $new_network_inter->setIsTemplate(true);
-            $new_device->addNetworkInterface($new_network_inter);
-            $entityManager->persist($new_network_inter);
-        }*/
-
 
         $entityManager->flush();
         $lab->addDevice($new_device);
