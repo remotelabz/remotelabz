@@ -10,7 +10,7 @@ import { ListGroupItem, Button, Spinner } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox, lab }) {
+function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -263,7 +263,7 @@ function InstanceListItem({ instance, showControls, onStateUpdate, isSandbox, la
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (lab.devices.length == 1) && isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (lab.devices.length == labDeviceLength) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>
                                 {showExport ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
