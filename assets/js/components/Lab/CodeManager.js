@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Remotelabz from '../API';
 import moment from 'moment/moment';
+import { Button, Modal} from 'react-bootstrap';
 
 export default function CodeManager(props = {lab}) {
     const [invitationCodes, setInvitationCodes] = useState();
@@ -17,6 +18,18 @@ export default function CodeManager(props = {lab}) {
         }
     }, [])
 
+    function deleteCode(uuid) {
+        Remotelabz.invitationCode.delete(uuid).then(()=> {
+            refreshInstance()
+        })
+        .catch((error)=>{
+            new Noty({
+                text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
+                type: 'error'
+            }).show()
+        })
+    }
+
     function refreshInstance() {
         let request
 
@@ -31,6 +44,7 @@ export default function CodeManager(props = {lab}) {
                         <td>{invitation.mail}</td>
                         <td>{invitation.code}</td>
                         <td>{moment(invitation.expiryDate).format("DD/MM/YYYY HH:mm:ss")}</td>
+                        <td><button class="btn btn-danger" type="button" onClick={()=>deleteCode(invitation.uuid)}>Delete</button></td>
                     </tr>
                 );
             })
@@ -44,7 +58,7 @@ export default function CodeManager(props = {lab}) {
                     setLoadingInstanceState(false)
                 } else {
                     new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
+                        text: 'An error happened while fetching codes. If this error persist, please contact an administrator.',
                         type: 'error'
                     }).show()
                 }
@@ -62,6 +76,7 @@ export default function CodeManager(props = {lab}) {
                             <th>Mail</th>
                             <th>Code</th>
                             <th>Expiration Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
