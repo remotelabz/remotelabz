@@ -35,6 +35,7 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
 use App\Repository\OperatingSystemRepository;
+use App\Repository\HypervisorRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
@@ -84,6 +85,7 @@ class LabController extends Controller
         LabRepository $labRepository,
         DeviceRepository $deviceRepository,
         operatingSystemRepository $operatingSystemRepository,
+        HypervisorRepository $hypervisorRepository,
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
         LabInstanceRepository $labInstanceRepository)
@@ -95,6 +97,7 @@ class LabController extends Controller
         $this->labRepository = $labRepository;
         $this->deviceRepository = $deviceRepository;
         $this->operatingSystemRepository=$operatingSystemRepository;
+        $this->hypervisorRepository=$hypervisorRepository;
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -605,6 +608,9 @@ class LabController extends Controller
                 if (isset($device_array['template'])) {
                     $new_device->setTemplate($device_array['template']);
                 }
+                $new_device->setType($device_array['type']);
+                $hypervisor = $this->hypervisorRepository->find($device_array['hypervisor']);
+                $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);
                 $this->logger->debug("Device added : ".$new_device->getName());
                 
@@ -788,7 +794,7 @@ class LabController extends Controller
 
             $lab_name=$lab->getName();
             $this->logger->debug("API Lab updated: ".$lab_name);
-            if (strstr($lab_name,"Sandbox_")) 
+            if (strstr($lab_name,"Sandbox_Device_")) 
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();

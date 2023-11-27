@@ -11,8 +11,17 @@ const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false)
     //console.log("instancelist");
     //console.log(props);
+    let deviceLengthMax = 1;
+
+    if (props.isSandbox) {
+        for(var device of props.lab.devices) {
+            if (device.name == "Service_sandbox") {
+                deviceLengthMax = 2;
+            }
+        }
+    }
     let instancesList =  props.instances.map(
-        (deviceInstance, index) => <InstanceListItem instance={deviceInstance} key={index} {...props} />
+        (deviceInstance, index) => <InstanceListItem instance={deviceInstance} labDeviceLength={deviceLengthMax} key={index} {...props} />
     );
     let allDevicesStopped = true;
 
@@ -21,6 +30,7 @@ const InstanceList = (props) => {
             allDevicesStopped = true;
         }
     }
+
     function exportLabTemplate(labInstance, name) {
         
         Remotelabz.instances.export(labInstance.uuid, name, "lab").then(() => {
@@ -32,26 +42,18 @@ const InstanceList = (props) => {
 
             props.onStateUpdate();
             location.href ="/admin/sandbox";
-        }).catch((error) => {
-            if (error.response.data.message.includes("No worker available")) {
-                new Noty({
-                    text: error.response.data.message,
-                    type: 'error'
-                }).show()
-            }
-            else {
-                new Noty({
-                    type: 'error',
-                    text: 'Error while requesting instance export. Please try again later.',
-                    timeout: 5000
-                }).show();
-            }
+        }).catch(() => {
+            new Noty({
+                type: 'error',
+                text: 'Error while requesting instance export. Please try again later.',
+                timeout: 5000
+            }).show();
         })
     }
 
     return (
         <>{instancesList}
-            {( allDevicesStopped &&  props.isSandbox && (props.lab.devices.length > 1) ) &&
+            {( allDevicesStopped &&  props.isSandbox && (props.lab.devices.length > deviceLengthMax) ) &&
                 <div class="d-flex justify-content-center mt-2" onClick={() => setShowExport(!showExport)}>
                     {showExport ?
                         <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
