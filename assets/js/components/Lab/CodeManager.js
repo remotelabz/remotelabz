@@ -7,6 +7,8 @@ export default function CodeManager(props = {lab}) {
     const [invitationCodes, setInvitationCodes] = useState();
     const [loadingInstanceState, setLoadingInstanceState] = useState();
     const [codeList, setCodeList] = useState();
+    const [showDeleteCodeModal, setShowDeleteCodeModal] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     useEffect(() => {
         setLoadingInstanceState(true)
@@ -20,7 +22,9 @@ export default function CodeManager(props = {lab}) {
 
     function deleteCode(uuid) {
         Remotelabz.invitationCode.delete(uuid).then(()=> {
-            refreshInstance()
+            setItemToDelete(null);
+            setShowDeleteCodeModal(false);
+            refreshInstance();
         })
         .catch((error)=>{
             new Noty({
@@ -28,6 +32,11 @@ export default function CodeManager(props = {lab}) {
                 type: 'error'
             }).show()
         })
+    }
+
+    function openModalWithUuid(uuid) {
+        setItemToDelete(uuid);
+        setShowDeleteCodeModal(true);
     }
 
     function refreshInstance() {
@@ -44,7 +53,7 @@ export default function CodeManager(props = {lab}) {
                         <td>{invitation.mail}</td>
                         <td>{invitation.code}</td>
                         <td>{moment(invitation.expiryDate).format("DD/MM/YYYY HH:mm:ss")}</td>
-                        <td><button class="btn btn-danger" type="button" onClick={()=>deleteCode(invitation.uuid)}>Delete</button></td>
+                        <td><button class="btn btn-danger" type="button" onClick={()=>openModalWithUuid(invitation.uuid)}>Delete</button></td>
                     </tr>
                 );
             })
@@ -84,6 +93,18 @@ export default function CodeManager(props = {lab}) {
                     </tbody>
                 </table>  
             }
+            <Modal show={showDeleteCodeModal} onHide={() => setShowDeleteCodeModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Leave labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowDeleteCodeModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={() => deleteCode(itemToDelete)}>Leave</Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     )
 }
