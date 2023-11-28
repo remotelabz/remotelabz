@@ -2658,6 +2658,7 @@ function printFormImport(path) {
 
 // Add a new lab
 export function printFormLab(action, values) {
+    
     if (action == 'add') {
         var path = values['path'];
     } else {
@@ -2665,7 +2666,8 @@ export function printFormLab(action, values) {
     }
     var title = (action == 'add') ? MESSAGES[5] : MESSAGES[87] ;
 
-    console.log(values['timer']);
+    var id = $('#lab-viewport').attr('data-path');
+    var currentTime = performance.now();
 
     //var editor = new EditorJS();
     var html = new EJS({
@@ -2679,6 +2681,7 @@ export function printFormLab(action, values) {
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '',
+        srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
         path: path,
         action: action,

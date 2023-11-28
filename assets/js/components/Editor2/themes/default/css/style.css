@@ -450,3 +450,25 @@ li.plus-minus-slider #zoomslide{
 #form-picture-add button:first-of-type{
  margin-right: 10px;
 }
+
+#bannerImageContainer {
+	width: 70%;
+	background-color: white;
+	margin-bottom: 25px;
+	border: 1px solid rgb(214, 211, 211);
+	border-radius: 2% 2% 2% 2%;
+  }
+#bannerImageContainer img{
+	border: 0px;
+}
+
+#bannerImageText {
+	text-align: center;
+	padding-bottom: 5px;
+		
+}
+
+#bannerImageText p {
+	color: black;
+		
+}
