@@ -22,6 +22,7 @@ use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use function Symfony\Component\String\u;
+use App\Service\Lab\BannerManager;
 
 class LabImporter
 {
@@ -32,6 +33,7 @@ class LabImporter
     protected $labRepository;
     protected $flavorRepository;
     protected $operatingSystemRepository;
+    protected $bannerManager;
 
     public function __construct(
         LoggerInterface $logger,
@@ -41,7 +43,8 @@ class LabImporter
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager,
         OperatingSystemRepository $operatingSystemRepository,
-        HypervisorRepository $hypervisorRepository
+        HypervisorRepository $hypervisorRepository,
+        BannerManager $bannerManager
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -51,6 +54,7 @@ class LabImporter
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
+        $this->bannerManager = $bannerManager;
     }
 
     /**
@@ -143,6 +147,7 @@ class LabImporter
             //->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
         ;
+
 
         foreach ($labJson['devices'] as $deviceJson) {
             // find similar operating system
@@ -268,6 +273,7 @@ class LabImporter
 
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
+        $this->bannerManager->copyBanner($labJson['id'], $lab->getId());
         foreach($lab->getPictures() as $picture) {
             $type = explode("image/",$picture->getType())[1];
             file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
