@@ -36,6 +36,7 @@ import {ObjectPosUpdate} from './actions';
 import { node } from 'prop-types';
 import EasyMDE from 'easymde';
 import 'easymde/dist/easymde.min.css';
+import Dropzone from 'dropzone';
 
 
 // Basename: given /a/b/c return c
@@ -2687,10 +2688,31 @@ export function printFormLab(action, values) {
         action: action,
         MESSAGES: MESSAGES,
     })
-
+    
     logger(1, 'DEBUG: popping up the lab-add form.');
     addModalWide(title, html, '');
-    //var editor = new EasyMDE({ element: $("#editor")[0] });
+
+    Dropzone.autoDiscover= false;
+    var bannerDropzone = new Dropzone("div#bannerDropzone",{
+       url: "#",
+        uploadMultiple: false,
+        method: function (file){
+            return postBanner("banner",file);
+        },
+        disablePreviews: true,
+        acceptedFiles: "image/jpg, image/png, image/jpeg",
+        createImageThumbnails:false,
+        //addRemoveLinks: true,
+        success: function (file, response) {
+           let newTime=performance.now()
+            $("img.bannerDropzone.data-dz-thumbnail").attr("src", "/labs/"+ id+"/banner?"+newTime)
+           
+        },
+        error: function (file, response) {
+            file.previewElement.classList.add("dz-error");
+        }
+    });
+ 
     validateLabInfo();
 }
 

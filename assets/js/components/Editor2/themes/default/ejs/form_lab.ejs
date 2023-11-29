@@ -46,17 +46,15 @@
             </div>
             <div class="form-group">
                 <label class="col-md-2 control-label">Banner</label>
-                <div class="col-md-4">
-                    <input type="file" name="lab[banner]" id="file-input" value="<%=banner%>" style="display:none;" accept=".jpg, .jpeg, .png"/>
-                    <label for="file-input">
-                        <div id="bannerImageContainer">
-                            <img src="<%=srcBanner%>" class="img-thumbnail" alt="banner"/>
-                            <div id="bannerImageText">
-                                <p>Parcourir...</p>
-                            </div>
+                <div class="col-md-3">
+                    <div id="bannerDropzone" class="dropzone">
+                        <div class="dz-default dz-message" id="bannerDropzoneText">
+                            <img src="<%=srcBanner%>" class="bannerDropzone data-dz-thumbnail" width="160px" height="105px" style="object-fit: cover;">
+                            <span>Drop files here</span>
                         </div>
-                    </label>
+                    </div>
                 </div>
+                
             </div>
             <div class="form-group">
                 <label class="col-md-2 control-label">Timer</label>

@@ -451,24 +451,23 @@ li.plus-minus-slider #zoomslide{
  margin-right: 10px;
 }
 
-#bannerImageContainer {
-	width: 70%;
-	background-color: white;
-	margin-bottom: 25px;
-	border: 1px solid rgb(214, 211, 211);
+#bannerDropzone {
+	margin-bottom: 20px;
+	border: 1px solid #d2d6de;
 	border-radius: 2% 2% 2% 2%;
-  }
-#bannerImageContainer img{
-	border: 0px;
 }
 
-#bannerImageText {
-	text-align: center;
+#bannerDropzoneText {
+	background-color: #eee;
 	padding-bottom: 5px;
-		
+	text-align:center;
 }
 
-#bannerImageText p {
-	color: black;
-		
+#bannerDropzoneText:hover {
+	cursor:pointer;
+}
+
+#bannerDropzoneText img {
+	margin-bottom: 5px;
+	background-color: white;
 }
