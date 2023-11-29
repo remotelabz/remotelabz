@@ -90,10 +90,10 @@ class WorkerManager
 
     public function checkCPU($usages) {
         $cpu = 100;
-        $worker ="";
+        $worker =null;
         foreach($usages as $usage) {
             if ($usage['cpu'] < $cpu) {
-                $disk = $usage['cpu'];
+                $cpu = $usage['cpu'];
                 $worker = $usage['worker'];
             }
         }
