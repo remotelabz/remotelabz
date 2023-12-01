@@ -16,7 +16,8 @@ class SandboxListItem extends Component {
             lab: {},
             isLoading: false,
             exist: false,
-            showDeleteLabModal: false
+            showDeleteLabModal: false,
+            showDeleteDeviceModal: false
         }
 
         this.fetchLabInstance();
@@ -122,6 +123,11 @@ class SandboxListItem extends Component {
         window.location.href = "/admin/sandbox"
     }
 
+    async deleteDevice(id) {
+        await Remotelabz.devices.delete(id);
+        window.location.href = "/admin/sandbox"
+    }
+
     render() {
         let divBorder;
         let button;
@@ -159,6 +165,10 @@ class SandboxListItem extends Component {
                         <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
+                    }
+
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                        <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
                     { this.state.exist ?
@@ -202,6 +212,10 @@ class SandboxListItem extends Component {
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
+
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                        <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
+                    }
                     { this.state.exist ?
                         <a 
                             href={"/admin/sandbox/" + this.state.lab.id}
@@ -233,7 +247,19 @@ class SandboxListItem extends Component {
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={()=>this.setState({showDeleteLabModal: false})}>Close</Button>
-                <Button variant="danger" onClick={()=>this.deleteLab(this.props.item.id)}>Leave</Button>
+                <Button variant="danger" onClick={()=>this.deleteDevice(this.props.item.id)}>Leave</Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal show={this.state.showDeleteDeviceModal} onHide={()=>this.setState({showDeleteDeviceModal: false})}>
+            <Modal.Header closeButton>
+                <Modal.Title>Leave lab</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+            Do you confirm you want to delete this lab ?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="default" onClick={()=>this.setState({showDeleteDeviceModal: false})}>Close</Button>
+                <Button variant="danger" onClick={()=>this.deleteDevice(this.props.item.id)}>Leave</Button>
             </Modal.Footer>
         </Modal>
         </>

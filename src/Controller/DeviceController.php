@@ -431,6 +431,7 @@ class DeviceController extends Controller
             //$this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
+            $device->setAuthor($this->getUser());
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -657,6 +658,7 @@ class DeviceController extends Controller
         //$device->setType($data['type']);
         $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
         $device->setIcon($data['icon']);
+        $device->setAuthor($this->getUser());
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
         $device->setOperatingSystem($operatingSystem[0]);

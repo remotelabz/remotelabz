@@ -241,7 +241,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 }  
             }); 
             if(isSandbox) {
-                setTimeout(function() {window.location.href="/admin/sandbox"}, 1000);
+                setTimeout(function() {window.location.href="/admin/sandbox"}, 1500);
             }  
             
         } catch (error) {
