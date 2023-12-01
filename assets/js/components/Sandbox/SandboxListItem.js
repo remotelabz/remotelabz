@@ -22,6 +22,7 @@ class SandboxListItem extends Component {
 
         this.fetchLabInstance();
     }
+    
 
     fetchLabInstance = () => {
         if(this.props.itemType == "device") {
@@ -160,7 +161,7 @@ class SandboxListItem extends Component {
 
                 <div class="lab-item-right d-flex flex-column text-right">
                     <div>
-                    {this.props.itemType == "lab" &&
+                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (this.props.item.author.roles.includes("ROLE_TEACHER") && this.props.item.author.id == this.props.user.id)) &&
                         <>
                         <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
@@ -206,7 +207,7 @@ class SandboxListItem extends Component {
 
                 <div class="lab-item-right d-flex flex-column text-right">
                     <div>
-                    {this.props.itemType == "lab" &&
+                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (this.props.item.author.roles.includes("ROLE_TEACHER") && this.props.item.author.id == this.props.user.id)) &&
                         <>
                         <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
@@ -247,7 +248,7 @@ class SandboxListItem extends Component {
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={()=>this.setState({showDeleteLabModal: false})}>Close</Button>
-                <Button variant="danger" onClick={()=>this.deleteDevice(this.props.item.id)}>Leave</Button>
+                <Button variant="danger" onClick={()=>this.deleteLab(this.props.item.id)}>Leave</Button>
             </Modal.Footer>
         </Modal>
         <Modal show={this.state.showDeleteDeviceModal} onHide={()=>this.setState({showDeleteDeviceModal: false})}>
