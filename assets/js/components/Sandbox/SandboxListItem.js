@@ -167,7 +167,7 @@ class SandboxListItem extends Component {
                         </>
                     }
 
-                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
@@ -213,7 +213,7 @@ class SandboxListItem extends Component {
                         </>
                     }
 
-                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     { this.state.exist ?
