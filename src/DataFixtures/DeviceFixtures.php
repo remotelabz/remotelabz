@@ -83,13 +83,13 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
         $device = new Device();
         $device
-            ->setName('Alpine3.15-cnt')
+            ->setName('Alpine3.16-cnt')
             ->setBrand('Alpine')
-            ->setModel('Version 3.15')
+            ->setModel('Version 3.16')
             ->setLaunchOrder(0)
             ->setVirtuality(0)
             ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Alpine3.15OS'))
+            ->setOperatingSystem($this->getReference('Alpine3.16OS'))
             ->setType('container')
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
@@ -101,7 +101,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             
         ;
         $manager->persist($device);
-        $this->addReference('Alpine3.15-cnt', $device);
+        $this->addReference('Alpine3.16-cnt', $device);
 
         $device = new Device();
         $device

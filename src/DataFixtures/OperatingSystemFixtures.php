@@ -84,12 +84,12 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Alpine3.15')
-            ->setImageFilename('Alpine3.15')
+            ->setName('Alpine3.16')
+            ->setImageFilename('Alpine3.16')
             ->setHypervisor($this->getReference('lxc'))
         ;
         $manager->persist($operatingSystem);
-        $this->setReference('Alpine3.15OS', $operatingSystem);
+        $this->setReference('Alpine3.16OS', $operatingSystem);
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
