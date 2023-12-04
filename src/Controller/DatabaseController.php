@@ -112,19 +112,23 @@ class DatabaseController extends Controller
             $fileSystem = new FileSystem();
 
             //copy banner folder
-            $bannerSrc=$this->getParameter('directory.public.upload.lab.banner');
-            $bannerDst='/opt/remotelabz/backups/'.$result.'/banner';
-            $fileSystem->mirror($bannerSrc,$bannerDst);
-
+            if ( file_exists( $this->getParameter('directory.public.upload.lab.banner') ) && is_dir( $this->getParameter('directory.public.upload.lab.banner') ) ) {
+                $bannerSrc=$this->getParameter('directory.public.upload.lab.banner');
+                $bannerDst='/opt/remotelabz/backups/'.$result.'/banner';
+                $fileSystem->mirror($bannerSrc,$bannerDst); 
+            } 
+            
             //copy picture folder
             $pictureSrc='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
             $pictureDst='/opt/remotelabz/backups/'.$result.'/pictures';
             $fileSystem->mirror($pictureSrc,$pictureDst);
 
             //copy vm images
-            $imageSrc=$this->getParameter('image_directory');
-            $imageDst='/opt/remotelabz/backups/'.$result.'/images';
-            $fileSystem->mirror($imageSrc,$imageDst);
+            if ( file_exists( $this->getParameter('image_directory') ) && is_dir( $this->getParameter('image_directory') ) ) {
+                $imageSrc=$this->getParameter('image_directory');
+                $imageDst='/opt/remotelabz/backups/'.$result.'/images';
+                $fileSystem->mirror($imageSrc,$imageDst);      
+            } 
 
             $zip = new ZipArchive();
             $rootPath = realpath('/opt/remotelabz/backups/'.$result);
