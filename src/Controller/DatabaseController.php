@@ -18,6 +18,8 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use ZipArchive;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
 class DatabaseController extends Controller
 {
@@ -41,14 +43,57 @@ class DatabaseController extends Controller
         $files = scandir('/opt/remotelabz/backups/');
         $backups = [];
         foreach ($files as $file) {
-            if ($file !== '.' && $file !== '..'&& $file !== '.gitignore') {
+            if (preg_match('/^.+\.zip$/', $file)) {
                 array_push($backups, $file);
             }
         }
 
+        
+        $importBackupForm = $this->createFormBuilder([])
+        ->add('file', FileType::class, [
+            "help" => "Accepted formats: zip",
+            "attr" => [
+                "accepted" => ".zip",
+            ]
+        ])
+        ->add('submit', SubmitType::class)
+        ->getForm();
+
+        $importBackupForm->handleRequest($request);
+
+        if ($importBackupForm->isSubmitted() && $importBackupForm->isValid()) {
+            $file = $importBackupForm->getData()['file'];
+
+            $fileExtension = strtolower($file->getClientOriginalExtension());
+
+            if (in_array($fileExtension, ['zip'])) {
+
+                switch ($fileExtension) {
+                    case 'zip':
+                        $import = $this->importBackup($file);
+                        break;
+                }
+
+                if ($import) {
+                    $this->addFlash('success', 'Import succeed');
+                } else {
+                    $this->addFlash(
+                        'warning',
+                        'Import failed. Please try again.'
+                    );
+                }
+
+            } else {
+                $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
+            }
+            return $this->redirectToRoute('admin_database');
+
+        }
+
         $listBackups= array_reverse($backups);
         return $this->render('security/database.html.twig', [
-            'backups' => $listBackups
+            'backups' => $listBackups,
+            'importBackupForm' => $importBackupForm->createView(),
         ]);
     }
 
@@ -75,6 +120,11 @@ class DatabaseController extends Controller
             $pictureSrc='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
             $pictureDst='/opt/remotelabz/backups/'.$result.'/pictures';
             $fileSystem->mirror($pictureSrc,$pictureDst);
+
+            //copy vm images
+            $imageSrc=$this->getParameter('image_directory');
+            $imageDst='/opt/remotelabz/backups/'.$result.'/images';
+            $fileSystem->mirror($imageSrc,$imageDst);
 
             $zip = new ZipArchive();
             $rootPath = realpath('/opt/remotelabz/backups/'.$result);
@@ -155,6 +205,64 @@ class DatabaseController extends Controller
 
         return $this->redirectToRoute('admin_database');
 
+    }
+
+    public function importBackup($file)
+    {
+        $fileSystem = new FileSystem();
+        $zip = new ZipArchive();
+        $zip->open($file);
+        $zip->extractTo('/opt/remotelabz/backups/import/');
+        $zip->close();
+
+        $result=exec('php /opt/remotelabz/bin/console doctrine:migrations:migrate --no-interaction', $output);
+
+        if ($result !== false) {
+            $resultImport=exec('php /opt/remotelabz/scripts/importDatabase.php', $output);
+            if ($resultImport !== false) {
+
+                $files = scandir('/opt/remotelabz/backups/import/');
+
+                foreach ($files as $file) {
+                    if (is_dir($file)) {
+                        if ($file == "banner") {
+                            //copy banner folder
+                            $bannerSrc='/opt/remotelabz/backups/import/banner';
+                            $bannerDst=$this->getParameter('directory.public.upload.lab.banner');
+                            $fileSystem->mirror($bannerSrc,$bannerDst);
+                        }
+                        else if ($file == "pictures") {
+                            //copy picture folder
+                            $pictureSrc='/opt/remotelabz/backups/import/pictures';
+                            $pictureDst='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
+                            $fileSystem->mirror($pictureSrc,$pictureDst);
+                        }
+                        else if ($file == "images") {
+                            //copy vm images
+                            $imageSrc='/opt/remotelabz/backups/import/images';
+                            $imageDst=$this->getParameter('image_directory');
+                            $fileSystem->mirror($imageSrc,$imageDst);
+                        }
+                    }
+                }               
+
+            }
+            else {
+                $fileSystem->remove('/opt/remotelabz/backups/import');
+                $this->addFlash('danger',"The database import failed. Please try again later");
+                $this->logger->error('Migration failed: '.$output);
+                return false;
+            }
+        }
+        else {
+            $fileSystem->remove('/opt/remotelabz/backups/import');
+            $this->addFlash('danger',"The database import failed. Please try again later");
+            $this->logger->error('Database import failed: '.$output);
+            return false;
+        }
+
+        $fileSystem->remove('/opt/remotelabz/backups/import');
+        return true;
     }
 
 }

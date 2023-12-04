@@ -19,6 +19,12 @@
             </button>
         {% endblock %}
 {% endembed %}
+{% embed 'modal.html.twig' with {'title': 'Import backup'|trans, 'class': 'import-backup-modal'} %}
+        {% block body %}
+            <p>You are about to import a backup of Remotelabz. If you continue the <strong>current data and files will be lost.</strong></p>
+            {{ form(importBackupForm, {'id': 'importBackupForm'}) }}
+        {% endblock %}
+    {% endembed %}
 
 <div class="content-title">
         <div class="content-title-infos">
@@ -27,6 +33,9 @@
             </h1>
         </div>
         <div class="content-title-actions">
+        <button class="btn btn-info" data-target=".import-backup-modal" data-toggle="modal" type="button">
+                <i class="fa fa-upload"></i> Import
+            </button>
             <a class="btn btn-success" role="button" href="{{path('admin_database_backup')}}">Make a backup</a>
         </div>
     </div>
