@@ -326,6 +326,21 @@ class InstanceController extends Controller
     }
 
     /**
+     * @Rest\Get("/api/instances/reset/by-uuid/{uuid}", name="api_reset_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function resetByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->reset($deviceInstance);
+
+        return $this->json();
+    }
+
+
+    /**
      * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)

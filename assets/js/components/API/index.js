@@ -882,6 +882,19 @@ export class RemotelabzAPI {
                 return axios.get(`/instances/stop/by-uuid/${uuid}`);
             },
 
+            /**
+             * Request an async device instance reset by UUID.
+             * 
+             * Implements GET `/api/instances/reset/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            reset(uuid) {
+                return axios.get(`/instances/reset/by-uuid/${uuid}`);
+            },
+
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
             }
