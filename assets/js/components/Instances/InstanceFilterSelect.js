@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function InstanceFilterSelect(props = {labInstances}) {
+export default function InstanceFilterSelect(props) {
     const [itemFilter, setItemFilter] = useState([]);
     const [options, setOptions] = useState();
     const [filter, setFilter] = useState("none");
@@ -52,7 +52,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance}  user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -273,7 +273,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -410,7 +410,8 @@ export default function InstanceFilterSelect(props = {labInstances}) {
 
     return (
         <div>
-            <div>
+            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINSTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINSTRATOR')) &&
+            <><div>
                 <div><span>Filter by : </span></div>
                 <div className="d-flex align-items-center mb-2">
                 <select className='form-control' id="instanceSelect" onChange={onChange}>
@@ -433,7 +434,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                 {instances &&
                     <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
                 }
-            </div>
+            </div></>}
             {instancesList}
 
             <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
