@@ -131,8 +131,18 @@ class InstanceController extends Controller
             ]);
         }
         
+        $instanceManagerProps = [
+            'labInstances' =>$AllLabInstances,
+            'user'=>$this->getUser()
+        ];
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_user'])
+        );
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $labInstances
+            'labInstances' => $labInstances,
+            'props'=> $props
         ]);
     }
 
