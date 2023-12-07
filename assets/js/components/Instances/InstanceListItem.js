@@ -10,7 +10,7 @@ import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab }) {
+function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, user }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -21,8 +21,6 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     
-    //console.log("instanceListItem");
-    //console.log(instance.device.name);
    
     useEffect(() => {
         fetchLogs()
@@ -325,8 +323,26 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             </div>
                         }
 
-                        {(instance.state === 'stopped' || instance.state === 'error') && instance.device.type == 'container' && 
+                        {(instance.state === 'stopped' || instance.state === 'error') && instance.device.type == 'container' && !isSandbox &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id)) &&
                             <Button variant="danger" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                        }
+
+                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
+                         && is_login()) && !isSandbox && (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id))
+                         )
+                         &&
+                            <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + instance.uuid + "/view/admin"}
+                                className="btn btn-primary ml-3"
+                                title="Open VNC console"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                            >
+                                <SVG name="incognito" />
+                            </a>
                         }
 
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0

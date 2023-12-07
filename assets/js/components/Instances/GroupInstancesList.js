@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {instances, labs, groups}) {
+export default function GroupInstancesList(props = {instances, labs, groups, user}) {
     const [options, setOptions] = useState();
     const [instances, setInstances] = useState();
     const [filter, setFilter] = useState("allLabs");
@@ -61,7 +61,7 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });

@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function InstanceFilterSelect(props = {labInstances}) {
+export default function InstanceFilterSelect(props) {
     const [itemFilter, setItemFilter] = useState([]);
     const [options, setOptions] = useState();
     const [filter, setFilter] = useState("none");
@@ -52,7 +52,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user} ></AllInstancesManager></div>
                     </div>
                 </div>)
             });

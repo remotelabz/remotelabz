@@ -131,8 +131,18 @@ class InstanceController extends Controller
             ]);
         }
         
+        $instanceManagerProps = [
+            'labInstances' =>$AllLabInstances,
+            'user'=>$this->getUser()
+        ];
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_user'])
+        );
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $labInstances
+            'labInstances' => $labInstances,
+            'props'=> $props
         ]);
     }
 
@@ -722,7 +732,7 @@ class InstanceController extends Controller
 
     /**
      * @Route("/instances/{uuid}/view/{type}", name="view_instance", requirements={
-     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial"
+     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial|admin"
      * }
      * )
      */
@@ -737,6 +747,8 @@ class InstanceController extends Controller
         $isOwner;
         $isAdmin = false;
         $isAuthor = false;
+        $isTeacher = false;
+        $adminConnection = false;
         if ($deviceInstance->getOwnedBy() == 'group'){
             $isOwner = $user->isMemberOf($deviceInstance->getOwner());
         }
@@ -756,9 +768,13 @@ class InstanceController extends Controller
             return $this->redirectToRoute("index");
         }
 
+        $isTeacherAuthor = ($user->hasRole('ROLE_TEACHER') && $isAuthor); 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
-
+        if ($type == "admin") {
+            $adminConnection = true;
+            $type = "login";
+        }
         $port_number=$this->isRemoteAccess($deviceInstance,$type);
         if ($port_number) {
             $this->logger->debug("Creation proxy rule to port ".$port_number);
@@ -767,6 +783,12 @@ class InstanceController extends Controller
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
                     $port_number,
+                    $deviceInstance->getLabInstance()->getWorkerIp()
+                );
+                elseif ($type =="login" && $adminConnection && ($isAdmin || $isAuthor))
+                $this->proxyManager->createContainerInstanceProxyRoute(
+                    $deviceInstance->getUuid(),
+                    $port_number+1,
                     $deviceInstance->getLabInstance()->getWorkerIp()
                 );
                 else $this->proxyManager->createContainerInstanceProxyRoute(
