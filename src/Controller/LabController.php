@@ -236,6 +236,25 @@ class LabController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Get("/api/labs/teacher/{id<\d+>}", name="api_get_lab_by_teacher")
+     */
+    public function getTeacherLabs(Request $request, int $id, UserRepository $userRepository)
+    {
+        $user = $userRepository->find(['id' => $id]);
+        if ($user && $user->hasRole("ROLE_TEACHER")) {
+            $labs = $this->labRepository->findByAuthorAndGroups($user);
+
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($labs, 200, [], ["api_get_lab_template"]);
+            }
+        }
+        else {
+            throw new BadRequestException("User ".$id." is not a teacher");
+        }
+    }
+
+    /**
      * @Route("/labs/{id<\d+>}", name="show_lab", methods="GET")
      * 
      * @Rest\Get("/api/labs/{id<\d+>}", name="api_get_lab")

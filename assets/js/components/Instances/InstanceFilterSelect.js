@@ -143,64 +143,110 @@ export default function InstanceFilterSelect(props) {
         let filterValue = document.getElementById("instanceSelect").value;
         return new Promise(resolve => {
             if (filterValue == "group") {
-                Remotelabz.groups.all()
-                .then(response => {
-                    setItemFilter(response.data);
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.groups.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allGroups");
+                    })
+                }
+                else {
+                    setItemFilter(props.user.groups);
                     setFilter(filterValue);
                     setItem("allGroups");
-                })
+                }
+                
             }
             else if (filterValue == "lab") {
-                Remotelabz.labs.all()
-                .then(response => {
-                    setItemFilter(response.data);
-                    setFilter(filterValue);
-                    setItem("allLabs");
-                })
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.labs.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
+                else {
+                    Remotelabz.labs.getByTeacher(props.user.id)
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
             }
             else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
-                Remotelabz.users.fetchAll()
-                .then(response => {
-                    const usersList = response.data;
-                    for(let user of usersList) {
-                        let teacher = false;
-                        let admin = false;
-                        for(let role of user.roles) {
-                            if (role == "ROLE_TEACHER") {
-                                teacher = true;
-                                break;
-                            }
-                            if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
-                                admin = true;
-                                break;
-                            }
-                        }
 
-                        if (teacher == true) {
-                            teachers.push(user);
+                if (props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) {
+                    console.log("admin")
+                    Remotelabz.users.fetchAll()
+                    .then(response => {
+                        const usersList = response.data;
+                        for(let user of usersList) {
+                            let teacher = false;
+                            let admin = false;
+                            for(let role of user.roles) {
+                                if (role == "ROLE_TEACHER") {
+                                    teacher = true;
+                                    break;
+                                }
+                                if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
+                                    admin = true;
+                                    break;
+                                }
+                            }
+    
+                            if (teacher == true) {
+                                teachers.push(user);
+                            }
+                            else if (admin == true) {
+                                admins.push(user)
+                            }
+                            else {
+                                students.push(user);
+                            }
                         }
-                        else if (admin == true) {
-                            admins.push(user)
+    
+                        if (filterValue == "teacher") {
+                            setItemFilter(teachers);
+                            setItem("allTeachers");
+                        }
+                        else if (filterValue == "admin") {
+                            setItemFilter(admins);
+                            setItem("allAdmins");
                         }
                         else {
-                            students.push(user);
+                            setItemFilter(students);
+                            setItem("allStudents");
                         }
-                    }
-
+                        setFilter(filterValue);
+                    })
+                }
+                else {
+                    console.log("teacher")
                     if (filterValue == "teacher") {
-                        setItemFilter(teachers);
+                        setItemFilter([props.user]);
                         setItem("allTeachers");
-                    }
-                    else if (filterValue == "admin") {
-                        setItemFilter(admins);
-                        setItem("allAdmins");
+                        setFilter(filterValue);
                     }
                     else {
-                        setItemFilter(students);
-                        setItem("allStudents");
+                        Remotelabz.users.fetchStudentsByGroupOwner(props.user.id)
+                        .then(response => {
+                            console.log(response)
+                            setItemFilter(response.data);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        })
                     }
-                    setFilter(filterValue);
-                })
+                }
+                
             }
             else if (filterValue == "none"){
                 setItem("allInstances");
@@ -259,9 +305,7 @@ export default function InstanceFilterSelect(props) {
                 response.data
             )
 
-            console.log(response.data)
             const list = response.data.map((labInstance) => {
-                console.log(labInstance.owner);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -420,7 +464,10 @@ export default function InstanceFilterSelect(props) {
                     <option value="lab">Lab</option>
                     <option value="student">Student</option>
                     <option value="teacher">Teacher</option>
-                    <option value="admin">Administrator</option>
+                    {
+                        (!props.user.roles.includes('ROLE_TEACHER')) &&
+                        <option value="admin">Administrator</option>
+                    }  
                 </select>
                 <select className='form-control' id="itemSelect" onChange={changeItem}>
                     {options}

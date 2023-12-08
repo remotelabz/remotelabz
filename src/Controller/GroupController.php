@@ -196,7 +196,8 @@ class GroupController extends Controller
         $GroupInstancesProps = [
             'instances'=> $instances,
             'labs'=> $labs,
-            'group'=> $group
+            'group'=> $group,
+            'user'=>$this->getUser()
         ];
 
         $props=$serializer->serialize(

@@ -224,6 +224,19 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of users in group of $user.
+         * 
+         * Implements GET `/api/fetch/students/by-group-owner/{id}`
+         * 
+         * @param {number} id ID of the user
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchStudentsByGroupOwner(id) {
+            return axios.get(`/fetch/students/by-group-owner/${id}`)
+        },
+
+        /**
          * Get an user by its ID.
          * 
          * Implements GET `/api/users/{id}`
@@ -382,6 +395,17 @@ export class RemotelabzAPI {
                     search
                 }
             })
+        },
+
+        /**
+         * Get a collection of labs by teacher ID.
+         * 
+         * Implements GET `/api/labs/teacher/{id}`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
+         */
+        getByTeacher(id) {
+            return axios.get(`/labs/teacher/${id}`)
         },
 
         /**
