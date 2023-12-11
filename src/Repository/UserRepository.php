@@ -19,15 +19,21 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    public function findStudentsByGroups(User $owner)
+    public function findUserTypesByGroups(string $userType, User $owner)
     {
         $users = $this->findAll();
         $result = [];
+        if ($userType == "teachers") {
+            $highestRole = "ROLE_TEACHER";
+        }
+        else {
+            $highestRole = "ROLE_USER";
+        }
         foreach ($owner->getGroups() as $groupuser) {
             $group=$groupuser->getGroup();
             if ($group->isElevatedUser($owner)) {
                 foreach($users as $user){
-                    if ($user->isMemberOf($group) && $user->getHighestRole() === "ROLE_USER") {
+                    if ($user->isMemberOf($group) && $user->getHighestRole() === $highestRole) {
                         array_push($result, $user);
                     }
                 }

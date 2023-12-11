@@ -539,7 +539,13 @@ class InstanceController extends Controller
 
         if (!$user) throw new NotFoundHttpException('User not found.');
 
-        $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        $currentUser = $this->getUser();
+        if ($currentUser->isAdministrator() || $currentUser == $user) {
+            $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        }
+        else {
+            $data = $this->labInstanceRepository->findByUserOfOwnerGroup($user, $currentUser);
+        }
         $groups = ['api_get_lab_instance'];
 
 
@@ -556,31 +562,50 @@ class InstanceController extends Controller
 
         $instances = $this->labInstanceRepository->findBy(['ownedBy' => 'user']);
         $data = [];
+        $user = $this->getUser();
 
-        if ($userType == "teacher") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
-                    array_push($data, $instance);
+        if ($user->isAdministrator()) {
+            if ($userType == "teacher") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
+                        array_push($data, $instance);
+                    }
                 }
             }
-        }
-        else if ($userType == "admin") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") == true || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR") == true) {
-                    array_push($data, $instance);
+            else if ($userType == "admin") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR")) {
+                        array_push($data, $instance);
+                    }
                 }
             }
-        }
-        else if ($userType == "student") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
-                    array_push($data, $instance);
+            else if ($userType == "student") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
+                        array_push($data, $instance);
+                    }
                 }
+            }
+            else {
+                $data = false;
             }
         }
         else {
-            $data = false;
+            if ($userType == "teacher") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner() == $user) {
+                        array_push($data, $instance);
+                    }
+                }
+            }
+            else if ($userType == "student") {
+                $data = $this->labInstanceRepository->findByUserAndGroupStudents($user);
+            }
+            else {
+                $data = false;
+            }
         }
+        
         $groups = ['api_get_lab_instance'];
 
 
@@ -631,7 +656,13 @@ class InstanceController extends Controller
 
         if (!$lab) throw new NotFoundHttpException('Lab not found.');
 
-        $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        $user = $this->getUser();
+        if ($user->isAdministrator() || $user == $lab->getAuthor()) {
+            $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        }
+        else {
+            $data = $this->labInstanceRepository->findByLabAndUserGroup($lab, $user);
+        }
         $groups = ['api_get_lab_instance'];
 
 
@@ -645,11 +676,16 @@ class InstanceController extends Controller
      */
     public function fetchLabInstancesOrdredByLab(Request $request)
     {
-       
-        $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
-        $groups = ['api_get_lab_instance'];
-
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+       $user = $this->getUser();
+       if ($user->isAdministrator())
+       {
+            $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
+       }
+       else {
+            $data = $this->labInstanceRepository->findByLabAuthorAndGroups($user);
+       }
+       if (!$data) throw new NotFoundHttpException('No instance found.');
+       $groups = ['api_get_lab_instance'];
 
         return $this->json($data, 200, [], $groups);
     }

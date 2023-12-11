@@ -38,7 +38,6 @@ export default function InstanceFilterSelect(props) {
     }, [item]);
 
     useEffect(() => {
-        console.log(instances);
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
                 return (
@@ -72,7 +71,6 @@ export default function InstanceFilterSelect(props) {
     }, [instances]);
 
     useEffect(() => {
-        console.log(filter);
         if (filter == "group") {
             optionsList = itemFilter.map((group) => (
                 <><option
@@ -181,7 +179,6 @@ export default function InstanceFilterSelect(props) {
             else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
 
                 if (props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) {
-                    console.log("admin")
                     Remotelabz.users.fetchAll()
                     .then(response => {
                         const usersList = response.data;
@@ -226,16 +223,21 @@ export default function InstanceFilterSelect(props) {
                     })
                 }
                 else {
-                    console.log("teacher")
                     if (filterValue == "teacher") {
-                        setItemFilter([props.user]);
-                        setItem("allTeachers");
-                        setFilter(filterValue);
+                        Remotelabz.users.fetchUserTypeByGroupOwner("teachers", props.user.id)
+                        .then(response => {
+                            setItemFilter(response.data);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        })
                     }
                     else {
-                        Remotelabz.users.fetchStudentsByGroupOwner(props.user.id)
+                        Remotelabz.users.fetchUserTypeByGroupOwner("students", props.user.id)
                         .then(response => {
-                            console.log(response)
                             setItemFilter(response.data);
                             setItem("allStudents");
                             setFilter(filterValue);
@@ -264,8 +266,6 @@ export default function InstanceFilterSelect(props) {
     function refreshInstance() {
         
         let request;
-        console.log(filter);
-        console.log(item);
 
         if (item == "allGroups") {
             request = Remotelabz.instances.lab.getOwnedByGroup();    
@@ -374,7 +374,6 @@ export default function InstanceFilterSelect(props) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -387,7 +386,6 @@ export default function InstanceFilterSelect(props) {
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
-                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
@@ -396,10 +394,8 @@ export default function InstanceFilterSelect(props) {
                             }
                         }
 
-                        console.log(running);
     
                         if (running == true) {
-                            console.log("modal");
                             setShowForceLeaveLabModal(true);
                         }
                     }
@@ -454,7 +450,7 @@ export default function InstanceFilterSelect(props) {
 
     return (
         <div>
-            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINSTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINSTRATOR')) &&
+            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
             <><div>
                 <div><span>Filter by : </span></div>
                 <div className="d-flex align-items-center mb-2">

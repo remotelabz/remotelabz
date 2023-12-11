@@ -226,14 +226,15 @@ export class RemotelabzAPI {
         /**
          * Get a collection of users in group of $user.
          * 
-         * Implements GET `/api/fetch/students/by-group-owner/{id}`
+         * Implements GET `/api/fetch/{userType}/by-group-owner/{id}`
          * 
          * @param {number} id ID of the user
+         * @param {string} userType type of the users to search
          * 
          * @returns {Promise<import('axios').AxiosResponse<User[]>>}
          */
-        fetchStudentsByGroupOwner(id) {
-            return axios.get(`/fetch/students/by-group-owner/${id}`)
+        fetchUserTypeByGroupOwner(userType, id) {
+            return axios.get(`/fetch/${userType}/by-group-owner/${id}`)
         },
 
         /**

@@ -246,7 +246,7 @@ class LabController extends Controller
             $labs = $this->labRepository->findByAuthorAndGroups($user);
 
             if ('json' === $request->getRequestFormat()) {
-                return $this->json($labs, 200, [], ["api_get_lab_template"]);
+                return $this->json($labs, 200, [], ["api_get_lab"]);
             }
         }
         else {

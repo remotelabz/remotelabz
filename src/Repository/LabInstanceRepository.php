@@ -87,12 +87,18 @@ class LabInstanceRepository extends ServiceEntityRepository
         foreach ($user->getGroups() as $groupuser) {
             $group=$groupuser->getGroup();
             if ($group->isElevatedUser($user)) {
-                foreach ($group->getUsers() as $user_member)
-                    if ($user_member != $user)
-                        foreach ($this->findByUser($user_member) as $labinstance)
-                            array_push($result,$labinstance);
-                foreach ($group->getLabInstances() as $labinstance)
+                foreach ($group->getUsers() as $user_member) {
+                    if ($user_member != $user) {
+                        foreach ($this->findByUser($user_member) as $labinstance) {
+                            if ($labinstance->getLab()->getGroups()->contains($group)) {
+                                array_push($result,$labinstance);
+                            }
+                        }
+                    }
+                }
+                foreach ($group->getLabInstances() as $labinstance) {
                     array_push($result,$labinstance);
+                }
             }
         }
         return $result;
@@ -115,6 +121,92 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->setParameter("workerIp", $workerIP)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findByLabAuthor(User $user)
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT li
+            FROM App\Entity\LabInstance li
+            LEFT JOIN li.lab l
+            WHERE l.author = :user'
+        )->setParameter('user', $user);
+
+        return $query->getResult();
+    }
+
+    public function findByLabAuthorAndGroups(User $user)
+    {
+        $result = $this->findByLabAuthor($user);
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            if ($group->isElevatedUser($user)) {
+                foreach ($group->getUsers() as $user_member){
+                    if ($user_member != $user) {
+                        foreach ($this->findByUser($user_member) as $labinstance) {
+                            if ($labinstance->getLab()->getAuthor() !== $user && $labinstance->getLab()->getGroups()->contains($group)){
+                                array_push($result, $labinstance);
+                            }
+                        }
+                    }
+                }
+                foreach ($group->getLabInstances() as $labinstance){
+                    if ($labinstance->getLab()->getAuthor() !== $user){
+                        array_push($result, $labinstance);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function findByLabAndUserGroup(Lab $lab, User $user)
+    {
+        $labinstances = $this->findBy(['lab'=>$lab]);
+        $result = [];
+        foreach($labinstances as $labinstance) {
+            foreach ($user->getGroups() as $groupuser) {
+                $group = $groupuser->getGroup();
+                if ($labinstance->getLab()->getGroups()->contains($group)) {
+                    array_push($result, $labinstance);
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function findByUserAndGroupStudents(User $user)
+    {
+        $instances = $this->findBy(['ownedBy' => 'user']);
+        $result = [];
+        foreach($instances as $instance) {
+            if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
+                foreach ($user->getGroups() as $groupuser) {
+                    $group = $groupuser->getGroup();
+                    if ($instance->getOwner()->isMemberOf($group) && $instance->getlab()->getGroups()->contains($group)) {
+                        array_push($result, $instance);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function findByUserOfOwnerGroup(User $user, User $owner)
+    {
+        $instances = $this->findBy(['user'=> $user]);
+        $result = [];
+        foreach ($instances as $instance) {
+            foreach($owner->getGroups() as $groupuser){
+                $group = $groupuser->getGroup();
+                if ($instance->getLab()->getGroups()->contains($group)) {
+                    array_push($result, $instance);
+                }
+            }
+        }
+        return $result;
     }
     
     // /**

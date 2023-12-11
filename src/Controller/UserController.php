@@ -218,12 +218,12 @@ class UserController extends Controller
 
     /**
      * 
-     * @Rest\Get("/api/fetch/students/by-group-owner/{id<\d+>}", name="api_fetch_students_by_group_owner")
+     * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
      */
-    public function fetchStudentsByGroupOwner(Request $request, int $id)
+    public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
     {
         $owner = $this->userRepository->find($id);
-        $users = $this->userRepository->findStudentsByGroups($owner);
+        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
 
         if (!$users) {
             throw new NotFoundHttpException();
