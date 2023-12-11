@@ -217,6 +217,26 @@ class UserController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
+     */
+    public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
+    {
+        $owner = $this->userRepository->find($id);
+        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
+
+        if (!$users) {
+            throw new NotFoundHttpException();
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
+    }
+
+    /**
      * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
      */
     public function showAction(Request $request, int $id)

@@ -38,7 +38,6 @@ export default function InstanceFilterSelect(props) {
     }, [item]);
 
     useEffect(() => {
-        console.log(instances);
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
                 return (
@@ -72,7 +71,6 @@ export default function InstanceFilterSelect(props) {
     }, [instances]);
 
     useEffect(() => {
-        console.log(filter);
         if (filter == "group") {
             optionsList = itemFilter.map((group) => (
                 <><option
@@ -143,64 +141,114 @@ export default function InstanceFilterSelect(props) {
         let filterValue = document.getElementById("instanceSelect").value;
         return new Promise(resolve => {
             if (filterValue == "group") {
-                Remotelabz.groups.all()
-                .then(response => {
-                    setItemFilter(response.data);
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.groups.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allGroups");
+                    })
+                }
+                else {
+                    setItemFilter(props.user.groups);
                     setFilter(filterValue);
                     setItem("allGroups");
-                })
+                }
+                
             }
             else if (filterValue == "lab") {
-                Remotelabz.labs.all()
-                .then(response => {
-                    setItemFilter(response.data);
-                    setFilter(filterValue);
-                    setItem("allLabs");
-                })
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.labs.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
+                else {
+                    Remotelabz.labs.getByTeacher(props.user.id)
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
             }
             else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
-                Remotelabz.users.fetchAll()
-                .then(response => {
-                    const usersList = response.data;
-                    for(let user of usersList) {
-                        let teacher = false;
-                        let admin = false;
-                        for(let role of user.roles) {
-                            if (role == "ROLE_TEACHER") {
-                                teacher = true;
-                                break;
-                            }
-                            if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
-                                admin = true;
-                                break;
-                            }
-                        }
 
-                        if (teacher == true) {
-                            teachers.push(user);
+                if (props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) {
+                    Remotelabz.users.fetchAll()
+                    .then(response => {
+                        const usersList = response.data;
+                        for(let user of usersList) {
+                            let teacher = false;
+                            let admin = false;
+                            for(let role of user.roles) {
+                                if (role == "ROLE_TEACHER") {
+                                    teacher = true;
+                                    break;
+                                }
+                                if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
+                                    admin = true;
+                                    break;
+                                }
+                            }
+    
+                            if (teacher == true) {
+                                teachers.push(user);
+                            }
+                            else if (admin == true) {
+                                admins.push(user)
+                            }
+                            else {
+                                students.push(user);
+                            }
                         }
-                        else if (admin == true) {
-                            admins.push(user)
+    
+                        if (filterValue == "teacher") {
+                            setItemFilter(teachers);
+                            setItem("allTeachers");
+                        }
+                        else if (filterValue == "admin") {
+                            setItemFilter(admins);
+                            setItem("allAdmins");
                         }
                         else {
-                            students.push(user);
+                            setItemFilter(students);
+                            setItem("allStudents");
                         }
-                    }
-
+                        setFilter(filterValue);
+                    })
+                }
+                else {
                     if (filterValue == "teacher") {
-                        setItemFilter(teachers);
-                        setItem("allTeachers");
-                    }
-                    else if (filterValue == "admin") {
-                        setItemFilter(admins);
-                        setItem("allAdmins");
+                        Remotelabz.users.fetchUserTypeByGroupOwner("teachers", props.user.id)
+                        .then(response => {
+                            setItemFilter(response.data);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        })
                     }
                     else {
-                        setItemFilter(students);
-                        setItem("allStudents");
+                        Remotelabz.users.fetchUserTypeByGroupOwner("students", props.user.id)
+                        .then(response => {
+                            setItemFilter(response.data);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        })
                     }
-                    setFilter(filterValue);
-                })
+                }
+                
             }
             else if (filterValue == "none"){
                 setItem("allInstances");
@@ -218,11 +266,9 @@ export default function InstanceFilterSelect(props) {
     function refreshInstance() {
         
         let request;
-        console.log(filter);
-        console.log(item);
 
         if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();    
+            request = Remotelabz.instances.lab.getByGroups();    
         }
         else if (filter == "group" && item != "allGroups") {
             request = Remotelabz.instances.lab.getByGroup(item);
@@ -259,9 +305,7 @@ export default function InstanceFilterSelect(props) {
                 response.data
             )
 
-            console.log(response.data)
             const list = response.data.map((labInstance) => {
-                console.log(labInstance.owner);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -330,7 +374,6 @@ export default function InstanceFilterSelect(props) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -343,7 +386,6 @@ export default function InstanceFilterSelect(props) {
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
-                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
@@ -352,10 +394,8 @@ export default function InstanceFilterSelect(props) {
                             }
                         }
 
-                        console.log(running);
     
                         if (running == true) {
-                            console.log("modal");
                             setShowForceLeaveLabModal(true);
                         }
                     }
@@ -410,7 +450,7 @@ export default function InstanceFilterSelect(props) {
 
     return (
         <div>
-            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINSTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINSTRATOR')) &&
+            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
             <><div>
                 <div><span>Filter by : </span></div>
                 <div className="d-flex align-items-center mb-2">
@@ -420,7 +460,10 @@ export default function InstanceFilterSelect(props) {
                     <option value="lab">Lab</option>
                     <option value="student">Student</option>
                     <option value="teacher">Teacher</option>
-                    <option value="admin">Administrator</option>
+                    {
+                        (!props.user.roles.includes('ROLE_TEACHER')) &&
+                        <option value="admin">Administrator</option>
+                    }  
                 </select>
                 <select className='form-control' id="itemSelect" onChange={changeItem}>
                     {options}

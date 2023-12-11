@@ -224,6 +224,20 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of users in group of $user.
+         * 
+         * Implements GET `/api/fetch/{userType}/by-group-owner/{id}`
+         * 
+         * @param {number} id ID of the user
+         * @param {string} userType type of the users to search
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchUserTypeByGroupOwner(userType, id) {
+            return axios.get(`/fetch/${userType}/by-group-owner/${id}`)
+        },
+
+        /**
          * Get an user by its ID.
          * 
          * Implements GET `/api/users/{id}`
@@ -382,6 +396,17 @@ export class RemotelabzAPI {
                     search
                 }
             })
+        },
+
+        /**
+         * Get a collection of labs by teacher ID.
+         * 
+         * Implements GET `/api/labs/teacher/{id}`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
+         */
+        getByTeacher(id) {
+            return axios.get(`/labs/teacher/${id}`)
         },
 
         /**
@@ -789,15 +814,15 @@ export class RemotelabzAPI {
             },
 
             /**
-             * Get lab instances owned by group.
+             * Get lab instances of user group.
              * 
-             * Implements GET `/api/instances/lab/owned-by-group`
+             * Implements GET `/api/instances/lab/by-group`
              * 
              * 
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
-            getOwnedByGroup() {
-                return axios.get(`/instances/lab/owned-by-group`);
+            getByGroups() {
+                return axios.get(`/instances/lab/by-group`);
             },
 
             /**

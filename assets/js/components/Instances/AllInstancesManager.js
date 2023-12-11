@@ -11,7 +11,6 @@ function AllInstancesManager(props) {
     const [labInstance, setLabInstance] = useState(props.props)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    console.log(props)
 
     function hasInstancesStillRunning() {
         //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
