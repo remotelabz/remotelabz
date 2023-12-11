@@ -31,6 +31,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 
@@ -620,10 +621,16 @@ class InstanceController extends Controller
     public function fetchLabInstancesByGroupUuid(Request $request, string $uuid, GroupRepository $groupRepository)
     {
         $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
-
+        
         if (!$group) throw new NotFoundHttpException('Group not found.');
-
-        $data = $this->labInstanceRepository->findBy(['_group' => $group]);
+        $user = $this->getUser();
+        if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+            $data = $this->labInstanceRepository->findByGroup($group);
+        }
+        else {
+            throw new AccessDeniedHttpException();
+        }
+       
         $groups = ['api_get_lab_instance'];
 
 
@@ -633,12 +640,12 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/owned-by-group", name="api_get_lab_instances_owned_by_group")
+     * @Rest\Get("/api/instances/lab/by-group", name="api_get_lab_instances_owned_by_group")
      */
-    public function fetchLabInstancesOwnedByGroup(Request $request)
+    public function fetchLabInstancesByGroup(Request $request)
     {
-
-        $data = $this->labInstanceRepository->findBy(['ownedBy' => 'group']);
+        $user = $this->getUser();
+        $data = $this->labInstanceRepository->findByUserGroups($user);
         $groups = ['api_get_lab_instance'];
 
 

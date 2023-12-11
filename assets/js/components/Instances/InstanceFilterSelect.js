@@ -268,7 +268,7 @@ export default function InstanceFilterSelect(props) {
         let request;
 
         if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();    
+            request = Remotelabz.instances.lab.getByGroups();    
         }
         else if (filter == "group" && item != "allGroups") {
             request = Remotelabz.instances.lab.getByGroup(item);

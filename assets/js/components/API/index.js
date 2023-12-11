@@ -814,15 +814,15 @@ export class RemotelabzAPI {
             },
 
             /**
-             * Get lab instances owned by group.
+             * Get lab instances of user group.
              * 
-             * Implements GET `/api/instances/lab/owned-by-group`
+             * Implements GET `/api/instances/lab/by-group`
              * 
              * 
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
-            getOwnedByGroup() {
-                return axios.get(`/instances/lab/owned-by-group`);
+            getByGroups() {
+                return axios.get(`/instances/lab/by-group`);
             },
 
             /**

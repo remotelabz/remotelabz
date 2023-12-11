@@ -208,6 +208,45 @@ class LabInstanceRepository extends ServiceEntityRepository
         }
         return $result;
     }
+
+    public function findByUserGroups(User $user)
+    {
+        $instances = $this->findAll();
+        $result = [];
+        foreach ($instances as $instance) {
+            foreach ($user->getGroups() as $groupuser){
+                $group = $groupuser->getGroup();
+                if ($instance->getLab()->getGroups()->contains($group)) {
+                    array_push($result, $instance);
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function findByGroup(Group $group)
+    {
+        $instances = $this->findAll();
+        $result = [];
+        foreach ($instances as $instance) {
+            if ($instance->getLab()->getGroups()->contains($group)) {
+                array_push($result, $instance);
+            }
+        }
+        return $result;
+    }
+
+    public function findByGroupAndLabUuid($group, $lab)
+    {
+        $instances = $this->findBy(['lab'=> $lab]);
+        $result = [];
+        foreach ($instances as $instance) {
+            if ($instance->getLab()->getGroups()->contains($group)) {
+                array_push($result, $instance);
+            }
+        }
+        return $result;
+    }
     
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects
