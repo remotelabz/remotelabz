@@ -541,7 +541,7 @@ export class RemotelabzAPI {
      */
     invitationCode = {
         /**
-         * Get a invotation code by lab ID.
+         * Get a invitation code by lab ID.
          * 
          * Implements GET `/api/codes/by-lab/{id}`
          * 
@@ -551,6 +551,18 @@ export class RemotelabzAPI {
          */
         getByLab(id) {
             return axios.get(`/codes/by-lab/${id}`);
+        },
+        /**
+         * delete an invitation code by lab UUID.
+         * 
+         * Implements DELETE `/api/codes/{uuid}`
+         * 
+         * @param {number} uuid 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        delete(uuid) {
+            return axios.delete(`/codes/${uuid}`);
         }
     }
 

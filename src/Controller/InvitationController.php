@@ -172,7 +172,6 @@ class InvitationController extends Controller
         $validatedEmails = [];
         $badEmails = [];
         $emailConstraint = new EmailConstraint();
-
         foreach($data['emailAdresses'] as $address) {
             $errors = $this->validator->validate($address, $emailConstraint);
             if (count($errors) == 0) {
@@ -186,19 +185,18 @@ class InvitationController extends Controller
                 $this->logger->debug($address. ' n\'est pas valide');
             }
         }
-
         if (count($data['emailAdresses']) != count($validatedEmails)) {
             $this->logger->debug("Some addresses are not valid: ".print_r($badEmails, true));
             $this->addFlash('warning','Certaines adresses ne sont pas valides');
         }
-        $this->sendMail($validatedEmails, $lab);
+        $this->sendMail($validatedEmails, $lab, $data['duration']);
     }
 
-    public function sendMail($validatedEmails, $lab) {
+    public function sendMail($validatedEmails, $lab, $duration) {
         
         foreach($validatedEmails as $email) {
             $code = $this->generateCode();
-            $isCodeRegistered = $this->registerCode($email, $lab, $code);
+            $isCodeRegistered = $this->registerCode($email, $lab, $code, $duration);
         
             if ($isCodeRegistered == true) {
                 $emailToSend = (new Email)
@@ -239,7 +237,7 @@ class InvitationController extends Controller
         return $code;
     }
 
-    public function registerCode($email, $lab, $code) {
+    public function registerCode($email, $lab, $code, $duration) {
         $entityManager = $this->getDoctrine()->getManager();
 
         $invitationCode = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
@@ -249,7 +247,7 @@ class InvitationController extends Controller
             $invitation->setCode($code);
             $invitation->setMail($email);
             $invitation->setLab($lab);
-            $invitation->setExpiryDate(new \DateTime('@'.strtotime('+4 hours')));
+            $invitation->setExpiryDate(new \DateTime('@'.strtotime('+'.$duration['hour'].' hours '.$duration['minute'].' minutes')));
             $entityManager->persist($invitation);
             $entityManager->flush();
 
