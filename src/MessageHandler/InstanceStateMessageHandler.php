@@ -83,6 +83,11 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                         $instance->setState(InstanceStateMessage::STATE_STARTED);
                         break;
                     
+                    case InstanceStateMessage::STATE_RESETTING:
+                        $this->logger->debug('Instance in '.$instance->getState());
+                        $instance->setState(InstanceStateMessage::STATE_STOPPED);
+                        break;
+
                     case InstanceStateMessage::STATE_CREATING:
                         $this->logger->debug('Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);

@@ -310,6 +310,38 @@ class InstanceManager
     }
 
     /**
+     * Reset a device instance.
+     */
+    public function reset(DeviceInstance $deviceInstance)
+    {
+        $uuid = $deviceInstance->getUuid();
+        $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+        $deviceJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+
+        if ($worker->getAvailable() == true) {
+            $deviceInstance->setState(InstanceState::RESETTING);
+            $this->entityManager->persist($deviceInstance);
+            $this->entityManager->flush();
+
+            $this->logger->debug('Resetting device instance with UUID '.$uuid.'.');
+
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+
+            $this->bus->dispatch(
+                new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_RESET), [
+                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                ]
+            );
+        }
+        else {
+            $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
+    }
+
+    /**
      * Export a device template to new device template.
      */
     public function exportDevice(DeviceInstance $deviceInstance, string $name)

@@ -50,8 +50,7 @@ export default function InstanceFilterSelect(props) {
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` :
                             labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
                         </div>
-                        
-                        <div className="col"><AllInstancesManager props={labInstance}  user={props.user}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user} ></AllInstancesManager></div>
                     </div>
                 </div>)
             });

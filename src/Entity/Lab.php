@@ -87,7 +87,7 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\Groups({"api_get_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance"})
      */
     private $author;
 
