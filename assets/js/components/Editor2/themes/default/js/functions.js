@@ -36,6 +36,7 @@ import {ObjectPosUpdate} from './actions';
 import { node } from 'prop-types';
 import EasyMDE from 'easymde';
 import 'easymde/dist/easymde.min.css';
+import Dropzone from 'dropzone';
 
 
 // Basename: given /a/b/c return c
@@ -2658,6 +2659,7 @@ function printFormImport(path) {
 
 // Add a new lab
 export function printFormLab(action, values) {
+    
     if (action == 'add') {
         var path = values['path'];
     } else {
@@ -2665,7 +2667,8 @@ export function printFormLab(action, values) {
     }
     var title = (action == 'add') ? MESSAGES[5] : MESSAGES[87] ;
 
-    console.log(values['timer']);
+    var id = $('#lab-viewport').attr('data-path');
+    var currentTime = performance.now();
 
     //var editor = new EditorJS();
     var html = new EJS({
@@ -2679,15 +2682,37 @@ export function printFormLab(action, values) {
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '',
+        srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
         path: path,
         action: action,
         MESSAGES: MESSAGES,
     })
-
+    
     logger(1, 'DEBUG: popping up the lab-add form.');
     addModalWide(title, html, '');
-    //var editor = new EasyMDE({ element: $("#editor")[0] });
+
+    Dropzone.autoDiscover= false;
+    var bannerDropzone = new Dropzone("div#bannerDropzone",{
+       url: "#",
+        uploadMultiple: false,
+        method: function (file){
+            return postBanner("banner",file);
+        },
+        disablePreviews: true,
+        acceptedFiles: "image/jpg, image/png, image/jpeg",
+        createImageThumbnails:false,
+        //addRemoveLinks: true,
+        success: function (file, response) {
+           let newTime=performance.now()
+            $("img.bannerDropzone.data-dz-thumbnail").attr("src", "/labs/"+ id+"/banner?"+newTime)
+           
+        },
+        error: function (file, response) {
+            file.previewElement.classList.add("dz-error");
+        }
+    });
+ 
     validateLabInfo();
 }
 

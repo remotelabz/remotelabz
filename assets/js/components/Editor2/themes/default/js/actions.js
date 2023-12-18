@@ -834,16 +834,15 @@ $(document).on('click', '.action-labadd', function (e) {
 $(document).on('click', '.action-labbodyget', function (e) {
     logger(1, 'DEBUG: action = labbodyget');
     $.when(getLabInfo($('#lab-viewport').attr('data-path')), getLabBody()).done(function (info, body) {
-        var html =  '<h1>' + info['name'] + '</h1><center><p><code>ID: ' + info['id'] + '</code></p>';
+        var currentTime = performance.now();
+        var labId = $('#lab-viewport').attr('data-path');
+        var html =  '<div class="row"><div class="col-md-10"><h1>' + info['name'] + '</h1> </br><center><p><code>ID: ' + info['id'] + '</code></p>';
+        
         if(info['description'] != null) {
             html +='<p>' + info['description'] + '</p>';
         }
-        html += '</center>';
-        /*if (body != null) {
-            var converter = new Showdown.Converter();
-            var htmlBody = converter.makeHtml(body);
-            html += htmlBody;
-        }*/
+        html += '</center></div>';
+        html += '<div class="col-sm-2"><img src="/labs/'+labId+'/banner?'+currentTime+'" alt="banner" class="img-thumbnail" /></div></div>';
         addModalWide(MESSAGES[64],html, '')
     }).fail(function (message1, message2) {
         if (message1 != null) {
