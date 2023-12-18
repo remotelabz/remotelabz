@@ -242,6 +242,12 @@ class Device implements InstanciableInterface
      */
     private $ethernet = 1;
 
+     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdDevices")
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $author;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
@@ -606,41 +612,17 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    /*public function getConsole(): ?string
+    public function getAuthor(): ?User
     {
-        return $this->console;
+        return $this->author;
     }
 
-    public function setConsole(string $console): self
+    public function setAuthor(?User $author): self
     {
-        $this->console = $console;
+        $this->author = $author;
 
         return $this;
     }
-
-    public function getImage(): ?string
-    {
-        return $this->image;
-    }
-
-    public function setImage(string $image): self
-    {
-        $this->image = $image;
-
-        return $this;
-    }
-
-    public function getUrl(): ?string
-    {
-        return $this->url;
-    }
-
-    public function setUrl(string $url): self
-    {
-        $this->url = $url;
-
-        return $this;
-    }*/
 
     public function getTemplate(): ?string
     {
@@ -689,18 +671,6 @@ class Device implements InstanciableInterface
 
         return $this;
     }
-
-    /*public function getPort(): ?int
-    {
-        return $this->port;
-    }
-
-    public function setPort(int $port): self
-    {
-        $this->port = $port;
-
-        return $this;
-    }*/
 
     public function getConfig(): ?int
     {

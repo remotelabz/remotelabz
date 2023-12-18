@@ -88,6 +88,7 @@ class DeviceController extends Controller
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
+        $type = $request->query->get('type');
         $template = $request->query->get('template', true);
         $deviceArray = [];
 
@@ -98,11 +99,30 @@ class DeviceController extends Controller
                 'id' => Criteria::DESC
             ]);
 
-        $devices = $this->deviceRepository->matching($criteria);
+        $allDevices = $this->deviceRepository->matching($criteria);
+        $devices = $allDevices->filter(function ($device) {
+            return  count($device->getLabs()) == 0;
+        });
+        $count = $devices->count();
+        $vmCount = $devices->filter(function ($device) {
+            return $device->getType() === 'vm';
+        })->count();
+        $containerCount = $devices->filter(function ($device) {
+            return $device->getType() === 'container';
+        })->count();
     
-        foreach($devices as $device) {
-            if (count($device->getLabs()) == 0) {
-                array_push($deviceArray, $device);
+        if ($type) {
+            switch ($type) {
+                case 'vm':
+                    $devices = $devices->filter(function ($device) {
+                        return $device->getType() === 'vm';
+                    });
+                break;
+                case 'container':
+                    $devices = $devices->filter(function ($device) {
+                        return $device->getType() === 'container';
+                    });
+                break;
             }
         }
 
@@ -111,7 +131,12 @@ class DeviceController extends Controller
         }
 
         return $this->render('device/index.html.twig', [
-            'devices' => $deviceArray,
+            'devices' => $devices,
+            'count' => [
+                'total' => $count,
+                'vms' => $vmCount,
+                'containers' => $containerCount
+            ],
             'search' => $search
         ]);
     }
@@ -431,6 +456,7 @@ class DeviceController extends Controller
             //$this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
+            $device->setAuthor($this->getUser());
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -657,6 +683,7 @@ class DeviceController extends Controller
         //$device->setType($data['type']);
         $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
         $device->setIcon($data['icon']);
+        $device->setAuthor($this->getUser());
         $device->setBrand($data['brand']);
         $device->setFlavor($flavor[0]);
         $device->setOperatingSystem($operatingSystem[0]);

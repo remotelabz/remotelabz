@@ -9,8 +9,6 @@ import Noty from 'noty';
 
 const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false)
-    //console.log("instancelist");
-    //console.log(props);
     let deviceLengthMax = 1;
 
     if (props.isSandbox) {

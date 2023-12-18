@@ -45,12 +45,9 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
     }, []);
 
     useEffect(() => {
-        console.log("instances");
-        console.log(instances);
 
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
-                console.log(labInstance);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -91,7 +88,6 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
         
         let request;
 
-        console.log(filter);
         if(filter == "allLabs") {
             request = Remotelabz.instances.lab.getGroupInstances(props.group.slug);  
         }
@@ -111,7 +107,7 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -161,7 +157,6 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -174,7 +169,6 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
-                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
@@ -182,11 +176,8 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
                                 deviceInstancesToStop.push(deviceInstance);
                             }
                         }
-
-                        console.log(running);
     
                         if (running == true) {
-                            console.log("modal");
                             setShowForceLeaveLabModal(true);
                         }
                     }
@@ -211,7 +202,6 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
                         return instance;
                     });
                     setInstances(newInstances)
-                    //console.log(instances);
                 } catch (error) {
                     console.error(error)
                     new Noty({

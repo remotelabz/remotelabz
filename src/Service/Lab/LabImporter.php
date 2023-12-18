@@ -216,6 +216,7 @@ class LabImporter
 
             $device
                 ->setName($deviceJson['name'])
+                ->setAuthor($this->tokenStorage->getToken()->getUser())
                 ->setBrand($deviceJson['brand'])
                 ->setModel($deviceJson['model'])
                 ->setType($deviceJson['type'])

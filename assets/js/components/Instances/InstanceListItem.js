@@ -20,7 +20,6 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
-    
    
     useEffect(() => {
         fetchLogs()
@@ -28,7 +27,6 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
         Remotelabz.devices.get(instance.device.id).then(response => {
             setDevice(response.data)
             setLoading(false)
-        //console.log(response.data)
         })
         return () => {
             clearInterval(interval)
@@ -209,7 +207,6 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
         return result;
     }
     
-    //console.log(instance);
     let controls;
     
     switch (instance.state) {

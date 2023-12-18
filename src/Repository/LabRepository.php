@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Lab;
+use App\Entity\User;
+use App\Entity\Group;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -78,6 +80,54 @@ class LabRepository extends ServiceEntityRepository
 
         // returns an array of Product objects
         return $lab[0];
+    }
+
+    /* Return all labs created by the $user and labs used by groups for which
+    the $user is the owner or the admin
+    */
+    public function findByAuthorAndGroups(User $user)
+    {
+        $result=$this->findByAuthor($user);
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            if ($group->isElevatedUser($user)) {
+                $labs = $this->findByGroup($group);
+                foreach ($labs as $lab) {
+                    if ($lab->getAuthor() != $user){
+                        array_push($result, $lab);
+                    }
+                } 
+            }
+        }
+        return $result;
+    }
+
+    /* Return all labs created by the $user
+    */
+    public function findByAuthor(User $user)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.author = :user')
+            ->andWhere('l.isTemplate = :val')
+            ->setParameter('user', $user)
+            ->setParameter('val', false)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /* Return all labs which includes $group
+    */
+    public function findByGroup(Group $group)
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere(':group MEMBER OF l.groups')
+            ->andWhere('l.isTemplate = :val')
+            ->setParameter('group', $group)
+            ->setParameter('val', false)
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
     // /**

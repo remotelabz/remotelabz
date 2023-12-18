@@ -48,6 +48,7 @@ use App\Service\Worker\WorkerManager;
 use App\Service\Lab\BannerManager;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 
 /**
@@ -79,6 +80,7 @@ class InstanceManager
     protected $workerSerializationGroups = [
         'worker'
     ];
+    protected $tokenStorage;
 
     public function __construct(
         LoggerInterface $logger,
@@ -100,7 +102,8 @@ class InstanceManager
         string $workerPort,
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
-        BannerManager $bannerManager
+        BannerManager $bannerManager,
+        TokenStorageInterface $tokenStorage
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -122,6 +125,7 @@ class InstanceManager
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->bannerManager = $bannerManager;
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -588,7 +592,7 @@ class InstanceManager
             }
         }
         
-        $newLab->setAuthor($lab->getAuthor());
+        $newLab->setAuthor($this->tokenStorage->getToken()->getUser());
 
         return $newLab;
     }
@@ -612,6 +616,7 @@ class InstanceManager
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
+        $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
 
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
