@@ -821,11 +821,11 @@ class UserController extends Controller
         $filesystem = new Filesystem();
 
         if ($filesystem->exists($certPath)) {
-            if (!$this->IsCertValid($certPath)) {
-                $this->logger->debug("Certificate of ".$user->getUserIdentifier()." is expired ");
+            //if (!$this->IsCertValid($certPath)) {
+            //    $this->logger->debug("Certificate of ".$user->getUserIdentifier()." is expired ");
                 unlink($certPath);
                 unlink($pkeyPath);
-            }
+           // }
         }
 
         if (!$filesystem->exists($certPath))
