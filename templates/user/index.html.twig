@@ -289,7 +289,6 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script type="text/javascript">
-    console.log(JSON.parse(document.querySelector('.multipleUsersActions').dataset.user));
         function changeGroupDisplay(id) {
             if (document.getElementById(id+"-groups").style.display == "none") {
                 document.getElementById(id+"-groups").style.display = "block";
@@ -350,8 +349,6 @@
                             type: "DELETE",
                             url: `/api/users/${userToDelete.id}`
                         }).then(()=> {
-                            console.log(i)
-                            console.log(usersToDelete.length)
                             if (i == usersToDelete.length) {
                                 location.href = "{{ path('users') }}"; 
                             }
@@ -382,7 +379,6 @@
                 }).then((response) => {
                     i++;
                     const userToToggle = response;
-                    console.log(userToToggle);
                     let superAdmin = false;
                     for (let role of userToToggle.roles) {
                         if (role == "ROLE_SUPER_ADMINISTRATOR") {
@@ -390,8 +386,6 @@
                             break;
                         }
                     }
-                    console.log(superAdmin)
-                    console.log(userToToggle.labInstances.length)
                     if (userToToggle.id != appUser.id && superAdmin == false) {
                         $.ajax({
                             type: "PATCH",

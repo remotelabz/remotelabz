@@ -119,7 +119,6 @@ export function addModalWide(title, body, footer, property) {
     // avoid open wide modal twice
     if ( $('.modal.fade.in').length > 0 && property.match('/second-win/') != null ) return ;
     var prop = property || "";
-    console.log("### title is", title);
     var addittionalHeaderBtns = "";
     if (title.toUpperCase() == "STARTUP-CONFIGS" || title.toUpperCase() == "CONFIGURED NODES" ||
         title.toUpperCase() == "CONFIGURED TEXT OBJECTS" ||
@@ -379,7 +378,6 @@ export function getLabInfo(labId) {
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                console.log(data);
                 logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
@@ -687,8 +685,6 @@ export function getUserInfo() {
                 setLab(lab);
                 setTenant("0");
                 setRole(data['data']['role']);
-                console.log(pathname);
-                console.log('/labs/' + LAB + '/see/' + labInstance);
                 if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
                 }
@@ -847,7 +843,6 @@ export function setNodeData(id){
     form_data['id'] = id;
     form_data['count'] = 1;
     form_data['postfix'] = 0;
-    console.log(form_data);
     for (var i = 0; i < form_data['count']; i++) {
         form_data['left'] = parseInt(form_data['left']) + i * 10;
         form_data['top'] = parseInt(form_data['top']) + i * 10;
@@ -1075,7 +1070,6 @@ export function start(node_id) {
     var labInstance;
     var edition;
     var pathname = window.location.pathname;
-    console.log(EDITION);
     if(EDITION == 1) {
         labInstance = null;
         edition = EDITION;
@@ -1087,7 +1081,6 @@ export function start(node_id) {
     var node_data = {};
     node_data['edition'] = edition;
     node_data['labInstance'] = labInstance;
-    console.log(node_data);
     var url = '/api/labs/' + lab_filename + '/nodes/' + node_id + '/start';
     var type = 'POST';
     $.ajax({
@@ -1126,7 +1119,6 @@ export function recursive_start(nodes, i) {
     var labInstance;
     var edition;
     var pathname = window.location.pathname;
-    console.log(EDITION);
     if(EDITION == 1) {
         labInstance = null;
         edition = EDITION;
@@ -1138,7 +1130,6 @@ export function recursive_start(nodes, i) {
     var node_data = {};
     node_data['edition'] = edition;
     node_data['labInstance'] = labInstance;
-    console.log(nodes);
 
     if (nodes[Object.keys(nodes)[i]].type != "switch") {
     if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
@@ -1146,7 +1137,6 @@ export function recursive_start(nodes, i) {
     } else {
         var url = '/api/labs/' + lab_filename + '/nodes/' + nodes[Object.keys(nodes)[i]]['path'] + '/start';
     }
-    console.log("Object keys :",Object.keys(nodes))
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -1383,7 +1373,6 @@ export function printFormLab(action, values) {
 }
 
 export function postBanner(banner, attachments) {
-    console.log(attachments);
     var formData = new FormData();
     $.each(attachments, function (key, value) {
         formData.append("banner", value);
@@ -1468,7 +1457,6 @@ export function printFormNode(action, values, fromNodeList) {
             id = (id == '') ? null : id;    // Ugly fix for change template after selection
             template = $(this).find("option:selected").val();
             var idTemplate = template.split(/(\d+)/)[1];
-            console.log(template);
             if (template != '') {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
                 $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
@@ -1497,7 +1485,6 @@ export function printFormNode(action, values, fromNodeList) {
                         if(key == 'nvram') postName = '(KB)';
                         // Print all options from template
                         var value_set = (node_values != null && node_values[key] != null) ? node_values[key] : value['value'];
-                        console.log("value_set ", value_set);
                         if (value['type'] == 'list') {
                             var select = '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
                             if (value['multiple'] != false) {
@@ -2583,13 +2570,9 @@ function createNodeListRow(template, id){
          userRight = "";
          disabledAttr = ""
     }
-    console.log("template", template);
     var idTemplate = template.split(/(\d+)/)[1];
-    console.log("templateid", idTemplate);
 
     $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
-        console.log("template_values", template_values);
-        console.log("node_values", node_values);
         var value_set = "";
         var readonlyAttr = "";
         var value_name      = node_values['name'];
@@ -2842,7 +2825,6 @@ export function getTextObjects() {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
-                console.log('textobjects: ', data['data']);
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -2916,7 +2898,6 @@ export function createTextObject(newData) {
     if (newData.data) {
         newData.data = fromByteArray(new TextEncoderLite('utf-8').encode(newData.data));
     }
-    console.log(newData);
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
@@ -2927,7 +2908,6 @@ export function createTextObject(newData) {
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: create shape ' + 'for lab "' + lab_filename + '".');
-                console.log("add text objects: ", data)
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -3491,14 +3471,12 @@ function newConnModal(info , oe ) {
         $('#'+info.source.id).addClass("startNode")
             if ( info.source.id.search('node')  != -1  ) {
                   var linksourcedata =  nodes[ info.source.id.replace('node','') ] ;
-                  console.log("cas1 ",linksourcedata );
                   var linksourcetype = 'node' ;
                   linksourcedata['interfaces'] = getNodeInterfaces(linksourcedata['id'])
                   if ( linksourcedata['status'] == 0 ) linksourcestyle = 'grayscale'
              } 
              if ( info.target.id.search('node')  != -1  ) {
                   var linktargetdata =  nodes[ info.target.id.replace('node','') ] ;
-                  console.log("cas3 ",linktargetdata );
                   var linktargettype = 'node' ;
                   linktargetdata['interfaces'] = getNodeInterfaces(linktargetdata['id'])
                   if ( linktargetdata['status'] == 0 ) linktargetstyle = 'grayscale'
@@ -3510,9 +3488,7 @@ function newConnModal(info , oe ) {
                        logger(1,'DEBUG: looking interfaces... ');
                    linksourcedata['selectedif'] = '' ;
                        var tmp_interfaces = {} ;
-                       console.log(sourceif);
                        for ( var key in sourceif['ethernet'] ) {
-                        console.log("key ", key);
                  logger(1,'DEBUG: interface id ' + key + ' named ' + sourceif['ethernet'][key]['name']  + ' ' + sourceif['ethernet'][key]['network_id'])
                              tmp_interfaces[key] = sourceif['ethernet'][key]
                              tmp_interfaces[key]['type'] = 'ethernet'
@@ -3520,7 +3496,6 @@ function newConnModal(info , oe ) {
                                     linksourcedata['selectedif'] = key ;
                              }
                        }
-                       console.log("tmp_interfaces ", tmp_interfaces);
                        for ( var key in sourceif['serial'] ) {
                              logger(1,'DEBUG: interface id ' + key + ' named ' + sourceif['serial'][key]['name']  + ' ' + sourceif['serial'][key]['remote_id'])
                              tmp_interfaces[key] =  sourceif['serial'][key]
@@ -3557,7 +3532,6 @@ function newConnModal(info , oe ) {
                   }
                   if ( linktargetdata['selectedif'] == '' ) linktargetdata['selectedif'] = 0 ;
                   if ( linksourcedata['status'] == 2 || linktargetdata['status'] == 2 ) { lab_topology.detach( info.connection ) ; return }
-                  console.log("link source: ",linksourcedata['interfaces'])
                   window.tmpconn = info.connection
                   var html = '<form id="addConn" class="addConn-form">' +
                            '<input type="hidden" name="addConn[srcNodeId]" value="'+linksourcedata['id']+'">' +

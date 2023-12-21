@@ -15,14 +15,9 @@ export default function DownloadLxcDevice(props) {
 
     useEffect(()=>{
         var list = [];
-        console.log(props.length);
-        console.log(Object.keys(props).length)
         for(let i=0; i< Object.keys(props).length; i++) {
-            console.log(props[i])
             list.push(props[i])
         }
-        console.log(list)
-        //console.log(Array.from(props));
         setOsList(list.map((os)=>{
             return (<option value={`${os.toLowerCase()}/`}>{os}</option>)
         }));
@@ -30,7 +25,6 @@ export default function DownloadLxcDevice(props) {
 
     function onOsChange() {
         var os = document.getElementById("os").value;
-        console.log(os);
         setOsChoice(os);
         let data = {"os": os};
         $.ajax({
@@ -47,7 +41,6 @@ export default function DownloadLxcDevice(props) {
 
     /*function onVersionChange() {
         var version = document.getElementById("version").value;
-        console.log(version);
         setVersionChoice(version);
         let data = {"os": osChoice, "version": version};
         $.ajax({

@@ -16,16 +16,13 @@ function WorkerConfig(props = {workers, nbWorkers}) {
     }, [])
 
     useEffect(()=> {
-        console.log(newFields);
         printNewWorkers()
     }, [newFields]);
 
     function addField() {
         let fields = newFields;
-        console.log(fields.length);
         if (fields.length != 0) {
             fields.sort();
-            console.log(fields);
             var i = fields[fields.length -1] +1;
         }
         else {
@@ -39,18 +36,14 @@ function WorkerConfig(props = {workers, nbWorkers}) {
     function removeField(i) {
         const index = newFields.indexOf(i);
         if (index > -1) { 
-            console.log(index);
            let fields =  [...newFields];
            fields.splice(index, 1); 
-           console.log(fields);
-           console.log(newFields);
            setNewFields(fields);
            setNbNewWorker(nbNewWorker - 1);
         }
     }
 
     function printNewWorkers() {
-        console.log(newFields);
         let elements = newFields.map((i)=> {
             return (<div id={`workerField${i}`} key={`workerField${i}`}>
                 <div className='row' >
@@ -92,7 +85,6 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         Remotelabz.configWorker.all().then((result)=> {
             setWorkers(result.data);
             setNbWorkers(result.data.length);
-            console.log(result.data);
             let dbWorkers = result.data;
             let nbDbWorkers = result.data.length;
 
@@ -143,7 +135,6 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                     }
                 }
                 if (exists == false) {
-                    console.log('new: ' + workerElement.value);
                     promises.push(Remotelabz.configWorker.new({"IPv4": workerElement.value}));
                     workersToAdd.push({"IPv4": workerElement.value});
                 }

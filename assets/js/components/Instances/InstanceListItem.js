@@ -17,7 +17,6 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     const [logs, setLogs] = useState([])
     const [showLogs, setShowLogs] = useState(false)
     const [showExport, setShowExport] = useState(false)
-    //console.log("isSandbox",isSandbox);
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
    

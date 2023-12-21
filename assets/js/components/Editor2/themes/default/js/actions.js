@@ -308,7 +308,6 @@ $(document).on('click', '.menu-appear, .menu-appear i', function (e) {
                             'overflow': 'hidden',
                             'overflow-y': 'scroll'
                         })
-                console.log('hei2', windowHeight - contextMenuClickY - 145)
             }
 
         }
@@ -634,7 +633,6 @@ $(window).resize(function () {
 // disable submit button if count addition nodes more than 50
 $(document).on('change input', 'input[name="node[count]"]', function(e){
     var count = $(this).val()
-    console.log('val', count)
     if( count > 50){
         $("#form-node-add button[type='submit']").attr('disabled', true)
     } else {
@@ -669,7 +667,6 @@ $(document).on('click', '.action-configsget', function (e) {
         var configTable= [];
         for (var i  in configs) {
             configs[i] = { ...configs[i], key: i };
-            console.log(i);
             configTable.push(configs[i]);
         }
         printConfigEjs(configTable);
@@ -862,7 +859,6 @@ $(document).on('click', '.action-labsubjectget', function (e) {
 
 $(document).on('click', '.action-connedit', function (e) {
     var id = window.connToDel.id.replace('network_id:','')
-    console.log(id);
     let lab = $('#lab-viewport').attr('data-path');
     $.when(getTopology(lab)).done( function (topology) {
         let network = topology[id];
@@ -1045,7 +1041,6 @@ function recursionNodeDelete(restOfList) {
         return 1;
     }
 
-    console.log("Deleting... ", node.path);
     $.when(deleteNode(node.path)).then(function (values) {
         $('.node' + node.path).remove();
         recursionNodeDelete(restOfList);
@@ -1229,13 +1224,11 @@ $(document).on('click', '.action-unlock-lab', function (e) {
 
 // hotkey for lock lab
 $(document).on('keyup', null, 'alt+l', function(){
-    console.log('lock')
     lockLab();
 })
 
 // hotkey for unlock lab
 $(document).on('keyup', null, 'alt+u', function(){
-    console.log('unlock')
     unlockLab();
 })
 
@@ -1283,7 +1276,6 @@ $(document).on('click', '.action-nodeplace, .action-networkplace, .action-custom
     $("#lab-viewport").data("prevent-contextmenu", false);
     // ESC not pressed
     var values = {};
-    console.log($("#lab-viewport").data('contextClickXY'));
     if ( $("#lab-viewport").data('contextClickXY') ) {
             values['left'] = $("#lab-viewport").data('contextClickXY').x - 30;
             values['top'] = $("#lab-viewport").data('contextClickXY').y;
@@ -1467,7 +1459,6 @@ $('body').on('submit', '#form-picture-add', function (e) {
         form_data.append(key, value);
     });
 
-    console.log("form_data: ",form_data)
     // Get action URL
     var url = '/api/labs/' + lab_file + '/pictures';
     $.ajax({
@@ -1913,7 +1904,6 @@ $(document).on('click', '.action-nodestart, .action-nodesstart, .action-nodestar
             
              $.each(nodes, function(key, values) {
                 if(values['type'] != "switch") {
-                    console.log(values['type'], key)
              $.when(start(key)).done(function() {
              // Node started -> print a small green message
              addMessage('success', values['name'] + ': ' + MESSAGES[76]);
@@ -1976,7 +1966,6 @@ $(document).on('click', '.action-nodestop, .action-nodesstop, .action-nodestop-g
         if (isFreeSelectMode) {
             nodeLenght = window.freeSelectedNodes.length;
             $.each(window.freeSelectedNodes, function (i, node) {
-                console.log(node.type);
                 if (nodes[node.path]['type'] != 'switch') {
                     $.when(stop(node.path)).done(function () {
                         // Node stopped -> print a small green message
@@ -2231,7 +2220,6 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
     var self = $(this);
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('node');
-    console.log('form data ', form_data)
     var promises = [];
 
     if ( form_data['template'] == "" ) {
@@ -2330,7 +2318,6 @@ $(document).on('focusout', '.configured-nodes-input', function(e){
 
 
 $(document).on('focusout', '.configured-nods-select', function(e){
-    console.log("here")
     var id = $(this).attr('data-path')
     $('input[data-path='+id+'][name="node[type]"]').parent().removeClass('node-editing')
 })
@@ -2358,7 +2345,6 @@ $(document).on('submit', '#form-node-config', function (e) {
         var editor_data = ace.edit('editor').getValue();
         $('#nodeconfig').val(editor_data);
         //$('#nodeconfig').show()
-        console.log($('#nodeconfig').val())
     }
     //saveLab('form-node-config');
     saveEditorLab('form-node-config', true)
@@ -2787,7 +2773,6 @@ $('body').on('click', '.action-textobjectduplicate', function (e) {
             $duplicated_shape.attr("id", "customText" + new_id);
             $duplicated_shape.attr("data-path", new_id);
 
-            console.log(textObjects);
             new_data_html = $duplicated_shape[0].outerHTML;
             form_data['data'] = new_data_html;
             form_data['name'] = 'txt ' + new_id;

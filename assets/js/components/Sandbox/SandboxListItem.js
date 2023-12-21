@@ -10,7 +10,6 @@ class SandboxListItem extends Component {
 
     constructor(props) {
         super(props);
-        console.log(props.item);
 
         this.state = {
             lab: {},
@@ -64,7 +63,6 @@ class SandboxListItem extends Component {
 
         if (this.props.itemType == "lab") {
             Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{$
-                console.log(response);
             })
             for(var textobject of item.textobjects){
                 var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
@@ -107,7 +105,6 @@ class SandboxListItem extends Component {
                 device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
                 device.controlProtocolTypes.forEach(element => console.log(element.id));
                 device.controlProtocolTypes = controlProtocolTypes;
-                console.log(device);
                 await this.api.post('/api/labs/' + lab.id + '/devices', device);
             }
         }
