@@ -365,7 +365,7 @@ class DeviceController extends Controller
 
         $data = [
             "name"=> $device->getName(),
-            //"type"=> $device->getType(),
+            "type"=> $device->getType(),
             //"console"=> $device->getConsole(),
             "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
