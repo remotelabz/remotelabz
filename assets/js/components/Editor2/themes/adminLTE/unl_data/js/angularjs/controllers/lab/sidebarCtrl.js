@@ -1,3 +1,0 @@
-function sidebarCtrl($scope){
-	
-}
