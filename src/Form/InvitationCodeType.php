@@ -5,7 +5,8 @@ namespace App\Form;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\CallbackTransformer;
 
@@ -14,8 +15,14 @@ class InvitationCodeType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('emailAdresses', TextType::class, [
+            ->add('emailAdresses', TextareaType::class, [
             ])
+            ->add('duration', TimeType::class, [
+                'placeholder' => [
+                    'hour' => 'Hour', 'minute' => 'Minute',
+                ],
+                'input' => 'array',
+                ])
             ->add('submit', SubmitType::class)
         ;
 
@@ -27,7 +34,8 @@ class InvitationCodeType extends AbstractType
                 },
                 function ($emailsAsString): array {
                     // transform the string back to an array
-                    return explode(',', (string)$emailsAsString);
+                    $line = preg_replace("(\n|\r|\r\n)",',',(string)$emailsAsString);
+                    return array_filter(explode(',', (string)$line));
                 }
             ));
     }

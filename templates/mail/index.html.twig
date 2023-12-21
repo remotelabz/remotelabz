@@ -32,7 +32,7 @@ let usersEmail = [
 ];
 $.ajax({
         type: "GET",
-        url: `/api/users`
+        url: `/api/fetch/users`
     }).then((response) => {
       for(let user of response) {
         usersEmail.push({email: user.email})

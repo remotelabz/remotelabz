@@ -12,6 +12,7 @@ function AllInstancesManager(props) {
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
+    console.log(props)
     function hasInstancesStillRunning() {
         //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
         return false;
@@ -54,7 +55,9 @@ function AllInstancesManager(props) {
                     {
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
                     }
-                    <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                    {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
+                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                    }
                     </div>
                 </ListGroupItem>
                 {labInstance.state === "creating" &&
@@ -76,7 +79,7 @@ function AllInstancesManager(props) {
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true}>
+                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true} user={props.user}>
                     </InstanceList>
                 }
             </ListGroup>

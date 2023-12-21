@@ -31,6 +31,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 
@@ -131,8 +132,18 @@ class InstanceController extends Controller
             ]);
         }
         
+        $instanceManagerProps = [
+            'labInstances' =>$AllLabInstances,
+            'user'=>$this->getUser()
+        ];
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_user'])
+        );
         return $this->render('instance/index.html.twig', [
-            'labInstances' => $labInstances
+            'labInstances' => $labInstances,
+            'props'=> $props
         ]);
     }
 
@@ -324,6 +335,21 @@ class InstanceController extends Controller
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
+
+    /**
+     * @Rest\Get("/api/instances/reset/by-uuid/{uuid}", name="api_reset_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     */
+    public function resetByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
+    {
+        if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        }
+
+        $instanceManager->reset($deviceInstance);
+
+        return $this->json();
+    }
+
 
     /**
      * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
@@ -529,7 +555,13 @@ class InstanceController extends Controller
 
         if (!$user) throw new NotFoundHttpException('User not found.');
 
-        $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        $currentUser = $this->getUser();
+        if ($currentUser->isAdministrator() || $currentUser == $user) {
+            $data = $this->labInstanceRepository->findBy(['user' => $user]);
+        }
+        else {
+            $data = $this->labInstanceRepository->findByUserOfOwnerGroup($user, $currentUser);
+        }
         $groups = ['api_get_lab_instance'];
 
 
@@ -546,31 +578,50 @@ class InstanceController extends Controller
 
         $instances = $this->labInstanceRepository->findBy(['ownedBy' => 'user']);
         $data = [];
+        $user = $this->getUser();
 
-        if ($userType == "teacher") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
-                    array_push($data, $instance);
+        if ($user->isAdministrator()) {
+            if ($userType == "teacher") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
+                        array_push($data, $instance);
+                    }
                 }
             }
-        }
-        else if ($userType == "admin") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") == true || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR") == true) {
-                    array_push($data, $instance);
+            else if ($userType == "admin") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR")) {
+                        array_push($data, $instance);
+                    }
                 }
             }
-        }
-        else if ($userType == "student") {
-            foreach($instances as $instance) {
-                if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
-                    array_push($data, $instance);
+            else if ($userType == "student") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
+                        array_push($data, $instance);
+                    }
                 }
+            }
+            else {
+                $data = false;
             }
         }
         else {
-            $data = false;
+            if ($userType == "teacher") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner() == $user) {
+                        array_push($data, $instance);
+                    }
+                }
+            }
+            else if ($userType == "student") {
+                $data = $this->labInstanceRepository->findByUserAndGroupStudents($user);
+            }
+            else {
+                $data = false;
+            }
         }
+        
         $groups = ['api_get_lab_instance'];
 
 
@@ -585,10 +636,16 @@ class InstanceController extends Controller
     public function fetchLabInstancesByGroupUuid(Request $request, string $uuid, GroupRepository $groupRepository)
     {
         $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
-
+        
         if (!$group) throw new NotFoundHttpException('Group not found.');
-
-        $data = $this->labInstanceRepository->findBy(['_group' => $group]);
+        $user = $this->getUser();
+        if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+            $data = $this->labInstanceRepository->findByGroup($group);
+        }
+        else {
+            throw new AccessDeniedHttpException();
+        }
+       
         $groups = ['api_get_lab_instance'];
 
 
@@ -598,12 +655,12 @@ class InstanceController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/instances/lab/owned-by-group", name="api_get_lab_instances_owned_by_group")
+     * @Rest\Get("/api/instances/lab/by-group", name="api_get_lab_instances_owned_by_group")
      */
-    public function fetchLabInstancesOwnedByGroup(Request $request)
+    public function fetchLabInstancesByGroup(Request $request)
     {
-
-        $data = $this->labInstanceRepository->findBy(['ownedBy' => 'group']);
+        $user = $this->getUser();
+        $data = $this->labInstanceRepository->findByUserGroups($user);
         $groups = ['api_get_lab_instance'];
 
 
@@ -621,7 +678,13 @@ class InstanceController extends Controller
 
         if (!$lab) throw new NotFoundHttpException('Lab not found.');
 
-        $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        $user = $this->getUser();
+        if ($user->isAdministrator() || $user == $lab->getAuthor()) {
+            $data = $this->labInstanceRepository->findBy(['lab' => $lab]);
+        }
+        else {
+            $data = $this->labInstanceRepository->findByLabAndUserGroup($lab, $user);
+        }
         $groups = ['api_get_lab_instance'];
 
 
@@ -635,11 +698,16 @@ class InstanceController extends Controller
      */
     public function fetchLabInstancesOrdredByLab(Request $request)
     {
-       
-        $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
-        $groups = ['api_get_lab_instance'];
-
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+       $user = $this->getUser();
+       if ($user->isAdministrator())
+       {
+            $data = $this->labInstanceRepository->findBy([], ['lab'=> 'ASC']);
+       }
+       else {
+            $data = $this->labInstanceRepository->findByLabAuthorAndGroups($user);
+       }
+       if (!$data) throw new NotFoundHttpException('No instance found.');
+       $groups = ['api_get_lab_instance'];
 
         return $this->json($data, 200, [], $groups);
     }
@@ -707,7 +775,7 @@ class InstanceController extends Controller
 
     /**
      * @Route("/instances/{uuid}/view/{type}", name="view_instance", requirements={
-     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial"
+     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial|admin"
      * }
      * )
      */
@@ -722,6 +790,8 @@ class InstanceController extends Controller
         $isOwner;
         $isAdmin = false;
         $isAuthor = false;
+        $isTeacher = false;
+        $adminConnection = false;
         if ($deviceInstance->getOwnedBy() == 'group'){
             $isOwner = $user->isMemberOf($deviceInstance->getOwner());
         }
@@ -741,9 +811,13 @@ class InstanceController extends Controller
             return $this->redirectToRoute("index");
         }
 
+        $isTeacherAuthor = ($user->hasRole('ROLE_TEACHER') && $isAuthor); 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
-
+        if ($type == "admin") {
+            $adminConnection = true;
+            $type = "login";
+        }
         $port_number=$this->isRemoteAccess($deviceInstance,$type);
         if ($port_number) {
             $this->logger->debug("Creation proxy rule to port ".$port_number);
@@ -752,6 +826,12 @@ class InstanceController extends Controller
                 $this->proxyManager->createDeviceInstanceProxyRoute(
                     $deviceInstance->getUuid(),
                     $port_number,
+                    $deviceInstance->getLabInstance()->getWorkerIp()
+                );
+                elseif ($type =="login" && $adminConnection && ($isAdmin || $isAuthor))
+                $this->proxyManager->createContainerInstanceProxyRoute(
+                    $deviceInstance->getUuid(),
+                    $port_number+1,
                     $deviceInstance->getLabInstance()->getWorkerIp()
                 );
                 else $this->proxyManager->createContainerInstanceProxyRoute(

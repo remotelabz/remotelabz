@@ -92,6 +92,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     private $createdLabs;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Device", mappedBy="author")
+     *
+     * @var Collection|Device[]
+     */
+    private $createdDevices;
+
+    /**
      * @ORM\Column(type="string", nullable=true)
      * @Serializer\Exclude
      *
@@ -136,6 +143,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         $this->courses = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
+        $this->createdDevices = new ArrayCollection();
         $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->ownedGroups = new ArrayCollection();
@@ -368,6 +376,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
             // set the owning side to null (unless already changed)
             if ($createdLab->getAuthor() === $this) {
                 $createdLab->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Device[]
+     */
+    public function getCreatedDevices()
+    {
+        return $this->createdDevices;
+    }
+
+    public function addCreatedDevices(Lab $createdDevice): self
+    {
+        if (!$this->createdDevices->contains($createdDevice)) {
+            $this->createdDevices[] = $createdDevice;
+            $createdDevice->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatedDevices(Lab $createdDevice): self
+    {
+        if ($this->createdDevices->contains($createdDevice)) {
+            $this->createdDevices->removeElement($createdDevice);
+            // set the owning side to null (unless already changed)
+            if ($createdDevice->getAuthor() === $this) {
+                $createdDevice->setAuthor(null);
             }
         }
 

@@ -48,6 +48,7 @@ use App\Service\Worker\WorkerManager;
 use App\Service\Lab\BannerManager;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 
 /**
@@ -79,6 +80,7 @@ class InstanceManager
     protected $workerSerializationGroups = [
         'worker'
     ];
+    protected $tokenStorage;
 
     public function __construct(
         LoggerInterface $logger,
@@ -100,7 +102,8 @@ class InstanceManager
         string $workerPort,
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
-        BannerManager $bannerManager
+        BannerManager $bannerManager,
+        TokenStorageInterface $tokenStorage
     ) {
         $this->bus = $bus;
         $this->logger = $logger;
@@ -122,6 +125,7 @@ class InstanceManager
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->bannerManager = $bannerManager;
+        $this->tokenStorage = $tokenStorage;
     }
 
     /**
@@ -136,7 +140,7 @@ class InstanceManager
     {
         
         $worker = $this->workerManager->getFreeWorker($lab);
-        if ($worker == "") {
+        if ($worker == null) {
             $this->logger->error('Could not create instance. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
@@ -306,6 +310,38 @@ class InstanceManager
     }
 
     /**
+     * Reset a device instance.
+     */
+    public function reset(DeviceInstance $deviceInstance)
+    {
+        $uuid = $deviceInstance->getUuid();
+        $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+        $deviceJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+
+        if ($worker->getAvailable() == true) {
+            $deviceInstance->setState(InstanceState::RESETTING);
+            $this->entityManager->persist($deviceInstance);
+            $this->entityManager->flush();
+
+            $this->logger->debug('Resetting device instance with UUID '.$uuid.'.');
+
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+
+            $this->bus->dispatch(
+                new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_RESET), [
+                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                ]
+            );
+        }
+        else {
+            $this->logger->error('Could not stop device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+        }
+    }
+
+    /**
      * Export a device template to new device template.
      */
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
@@ -313,7 +349,7 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
 
-        if ($worker == "") {
+        if ($worker == null) {
             $this->logger->error('Could not export device. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
@@ -377,7 +413,7 @@ class InstanceManager
         $lab = $this->copyLab($labInstance->getLab(), $name);
 
         $worker = $this->workerManager->getFreeWorker($lab);
-        if ($worker == "") {
+        if ($worker == null) {
             $this->logger->error('Could not export lab. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
@@ -556,7 +592,7 @@ class InstanceManager
             }
         }
         
-        $newLab->setAuthor($lab->getAuthor());
+        $newLab->setAuthor($this->tokenStorage->getToken()->getUser());
 
         return $newLab;
     }
@@ -580,6 +616,7 @@ class InstanceManager
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
+        $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
 
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {

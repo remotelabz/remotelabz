@@ -17,10 +17,6 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox=props.isSandbox
 
-    //console.log("instancemanage");
-    //console.log(props.labInstance);
-    //console.log("instancemanage labinstance after function");
-    //console.log(labInstance);
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
@@ -152,13 +148,9 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         if (props.user.code) {
             return true
         }
-        /*console.log("props.user:")
-        console.log(props.user)
-        console.log("group:")
-        console.log(group)*/
+  
         const _group = props.user.groups.find(g => g.uuid === group.uuid);
-        /*console.log("_group")
-        console.log(_group)*/
+
         return _group ? (_group.role == 'admin' || _group.role == 'owner') : false
     }
 
@@ -196,7 +188,6 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 }),
                 dataType:"json",
                 success: function (response) {
-                    console.log(response.data.html);
                     $("#instanceButtons").html(response.data.html);              
                 }  
             });  
@@ -235,13 +226,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 }),
                 dataType:"json",
                 success: function (response) {
-                    console.log(response.data.html);
                     $("#instanceButtons").html(response.data.html);    
                             
                 }  
             }); 
             if(isSandbox) {
-                setTimeout(function() {window.location.href="/admin/sandbox"}, 1000);
+                setTimeout(function() {window.location.href="/admin/sandbox"}, 1500);
             }  
             
         } catch (error) {
@@ -344,7 +334,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
+                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)} user={props.user}>
                     </InstanceList>
                 }
                 {labInstance.state === "exporting" &&

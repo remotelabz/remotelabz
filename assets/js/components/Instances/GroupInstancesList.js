@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {instances, labs, groups}) {
+export default function GroupInstancesList(props = {instances, labs, groups, user}) {
     const [options, setOptions] = useState();
     const [instances, setInstances] = useState();
     const [filter, setFilter] = useState("allLabs");
@@ -45,12 +45,9 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
     }, []);
 
     useEffect(() => {
-        console.log("instances");
-        console.log(instances);
 
         if (instances != undefined && instances !== "") {
             const list = instances.map((labInstance) => {
-                console.log(labInstance);
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                     <div>
@@ -61,7 +58,7 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -91,7 +88,6 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
         
         let request;
 
-        console.log(filter);
         if(filter == "allLabs") {
             request = Remotelabz.instances.lab.getGroupInstances(props.group.slug);  
         }
@@ -111,7 +107,7 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
                             {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -161,7 +157,6 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -174,7 +169,6 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
-                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
@@ -182,11 +176,8 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
                                 deviceInstancesToStop.push(deviceInstance);
                             }
                         }
-
-                        console.log(running);
     
                         if (running == true) {
-                            console.log("modal");
                             setShowForceLeaveLabModal(true);
                         }
                     }
@@ -211,7 +202,6 @@ export default function GroupInstancesList(props = {instances, labs, groups}) {
                         return instance;
                     });
                     setInstances(newInstances)
-                    //console.log(instances);
                 } catch (error) {
                     console.error(error)
                     new Noty({

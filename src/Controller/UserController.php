@@ -217,6 +217,26 @@ class UserController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
+     */
+    public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
+    {
+        $owner = $this->userRepository->find($id);
+        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
+
+        if (!$users) {
+            throw new NotFoundHttpException();
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
+    }
+
+    /**
      * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
      */
     public function showAction(Request $request, int $id)
@@ -412,6 +432,14 @@ class UserController extends Controller
                         $this->logger->debug("Modify lab's author: ".$lab->getName());
                         $this->addFlash('success', "The author of laboratory ".$lab->getName()." is modified to ".$this->getUser()->getName());
                         $lab->setAuthor($this->getUser());
+                    }
+                }
+                $devices = $user->getCreatedDevices();
+                if ($devices->count() > 0) {
+                    foreach ($devices as $device) {
+                        $this->logger->debug("Modify device's author: ".$device->getName());
+                        $this->addFlash('success', "The author of device ".$device->getName()." is modified to ".$this->getUser()->getName());
+                        $device->setAuthor($this->getUser());
                     }
                 }
                 $this->logger->info("User ".$user->getName()." is deleted by user ".$this->getUser()->getName());

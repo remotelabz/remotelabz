@@ -224,6 +224,20 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of users in group of $user.
+         * 
+         * Implements GET `/api/fetch/{userType}/by-group-owner/{id}`
+         * 
+         * @param {number} id ID of the user
+         * @param {string} userType type of the users to search
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchUserTypeByGroupOwner(userType, id) {
+            return axios.get(`/fetch/${userType}/by-group-owner/${id}`)
+        },
+
+        /**
          * Get an user by its ID.
          * 
          * Implements GET `/api/users/{id}`
@@ -385,6 +399,17 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of labs by teacher ID.
+         * 
+         * Implements GET `/api/labs/teacher/{id}`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
+         */
+        getByTeacher(id) {
+            return axios.get(`/labs/teacher/${id}`)
+        },
+
+        /**
          * Get a lab by ID.
          * 
          * Implements GET `/api/labs/{id}`
@@ -516,7 +541,7 @@ export class RemotelabzAPI {
      */
     invitationCode = {
         /**
-         * Get a invotation code by lab ID.
+         * Get a invitation code by lab ID.
          * 
          * Implements GET `/api/codes/by-lab/{id}`
          * 
@@ -526,6 +551,18 @@ export class RemotelabzAPI {
          */
         getByLab(id) {
             return axios.get(`/codes/by-lab/${id}`);
+        },
+        /**
+         * delete an invitation code by lab UUID.
+         * 
+         * Implements DELETE `/api/codes/{uuid}`
+         * 
+         * @param {number} uuid 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        delete(uuid) {
+            return axios.delete(`/codes/${uuid}`);
         }
     }
 
@@ -789,15 +826,15 @@ export class RemotelabzAPI {
             },
 
             /**
-             * Get lab instances owned by group.
+             * Get lab instances of user group.
              * 
-             * Implements GET `/api/instances/lab/owned-by-group`
+             * Implements GET `/api/instances/lab/by-group`
              * 
              * 
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
-            getOwnedByGroup() {
-                return axios.get(`/instances/lab/owned-by-group`);
+            getByGroups() {
+                return axios.get(`/instances/lab/by-group`);
             },
 
             /**
@@ -880,6 +917,19 @@ export class RemotelabzAPI {
              */
             stop(uuid) {
                 return axios.get(`/instances/stop/by-uuid/${uuid}`);
+            },
+
+            /**
+             * Request an async device instance reset by UUID.
+             * 
+             * Implements GET `/api/instances/reset/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid 
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            reset(uuid) {
+                return axios.get(`/instances/reset/by-uuid/${uuid}`);
             },
 
             logs(uuid) {
