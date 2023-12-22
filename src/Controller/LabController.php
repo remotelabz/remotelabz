@@ -628,6 +628,7 @@ class LabController extends Controller
                     $new_device->setTemplate($device_array['template']);
                 }
                 $new_device->setType($device_array['type']);
+                $new_device->setAuthor($this->getUser());
                 $hypervisor = $this->hypervisorRepository->find($device_array['hypervisor']);
                 $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);

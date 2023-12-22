@@ -231,7 +231,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 }  
             }); 
             if(isSandbox) {
-                setTimeout(function() {window.location.href="/admin/sandbox"}, 1000);
+                setTimeout(function() {window.location.href="/admin/sandbox"}, 1500);
             }  
             
         } catch (error) {
@@ -334,7 +334,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
+                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)} user={props.user}>
                     </InstanceList>
                 }
                 {labInstance.state === "exporting" &&
