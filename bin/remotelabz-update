@@ -1,4 +1,8 @@
 #!/bin/bash
+if  [ -f package-lock.json ]; then
+    rm package-lock.json
+fi;
+exit 0
 composer update
 yarn
 yarn encore prod
