@@ -1,6 +1,6 @@
 #!/bin/bash
 composer update
-yarn encore
+yarn
 yarn encore prod
 php bin/console doctrine:migrations:migrate
 #npx browserslist@latest --update-db
