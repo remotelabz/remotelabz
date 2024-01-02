@@ -51,7 +51,7 @@ monolog:
             type: fingers_crossed
             action_level: notice
             # log error-level messages and higher
-            #excluded_http_codes: [403, 404]
+            excluded_http_codes: [403, 404]
             handler:    deduplicated
         deduplicated:
             type:    deduplication

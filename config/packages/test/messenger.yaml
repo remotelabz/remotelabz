@@ -1,6 +1,0 @@
-framework:
-    messenger:
-        transports:
-            async: 'in-memory://'
-            worker: 'in-memory://'
-            front: 'in-memory://'
