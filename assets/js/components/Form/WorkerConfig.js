@@ -85,14 +85,13 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         Remotelabz.configWorker.all().then((result)=> {
             setWorkers(result.data);
             setNbWorkers(result.data.length);
-            let dbWorkers = result.data;
-            let nbDbWorkers = result.data.length;
+            let dbWorkers = result.data.sort((a,b)=>{return a.queueName.replace(/messages_worker/,"") - b.queueName.replace(/messages_worker/,"")});
 
-            var list = dbWorkers.map((worker, id) => {
+            var list = dbWorkers.map((worker) => {
                 return (
                     <div key={worker.id}>
                         <div className="row" >
-                            <label for={`worker${id+1}`} className='form-label'>Worker {id+1}</label>
+                            <label for={`worker${worker.queueName.replace(/messages_worker/,"")}`} className='form-label'>Worker {worker.queueName.replace(/messages_worker/,"")}</label>
                         </div>
                         <div className='row g-2'>
                             <div className='col-10'>
