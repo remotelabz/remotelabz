@@ -124,7 +124,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         }
         for(let workerElement of workerElements) {
             if (workerElement.id !== "") {
-                promises.push(Remotelabz.configWorker.update(workerElement.id, {"IPv4": workerElement.value}));
+                promises.push(()=>Remotelabz.configWorker.update(workerElement.id, {"IPv4": workerElement.value}));
             }
             else {
                 let exists = false;
@@ -135,7 +135,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                     }
                 }
                 if (exists == false) {
-                    promises.push(Remotelabz.configWorker.new({"IPv4": workerElement.value}));
+                    promises.push(()=>Remotelabz.configWorker.new({"IPv4": workerElement.value}));
                     workersToAdd.push({"IPv4": workerElement.value});
                 }
                 else {
@@ -143,18 +143,21 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                     
                 }
             }
-            Promise.all(promises).then(() => {
-                refresh();
-            }).catch(error => {
-                new Noty({
-                    text: 'An error happened while updating workers',
-                    type: 'error'
-                }).show()
-            })
-
         }
-        //setTimeout(refresh(), 1000);
- 
+        const requests = () => {
+            promises.push(()=>{
+                setNewFields([])
+                refresh()
+            });
+            return promises.reduce((prev, promise) => {
+                return prev
+                  .then(promise)
+                  .catch(err => {
+                    console.warn('err', err.message);
+                  });
+              }, Promise.resolve());
+        }
+        requests();
     }
 
     return (<form onSubmit={handleSubmit}>
