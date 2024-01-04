@@ -250,14 +250,14 @@ class SandboxListItem extends Component {
         </Modal>
         <Modal show={this.state.showDeleteDeviceModal} onHide={()=>this.setState({showDeleteDeviceModal: false})}>
             <Modal.Header closeButton>
-                <Modal.Title>Leave lab</Modal.Title>
+                <Modal.Title>Delete device</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-            Do you confirm you want to delete this lab ?
+            Do you confirm you want to delete this device ?
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={()=>this.setState({showDeleteDeviceModal: false})}>Close</Button>
-                <Button variant="danger" onClick={()=>this.deleteDevice(this.props.item.id)}>Leave</Button>
+                <Button variant="danger" onClick={()=>this.deleteDevice(this.props.item.id)}>Delete</Button>
             </Modal.Footer>
         </Modal>
         </>
