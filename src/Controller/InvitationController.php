@@ -57,6 +57,8 @@ class InvitationController extends Controller
         if ($invitationForm->isSubmitted() && $invitationForm->isValid()) {
             $data = $invitationForm->getData();
             $this->checkAction($data, $lab);
+            unset($invitationForm);
+            $invitationForm = $this->createForm(InvitationCodeType::class);
         }
 
         $props=$serializer->serialize(

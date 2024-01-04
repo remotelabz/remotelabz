@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Remotelabz from '../API';
 import moment from 'moment/moment';
 import { Button, Modal} from 'react-bootstrap';
+import Noty from 'noty';
 
 export default function CodeManager(props = {lab}) {
     const [invitationCodes, setInvitationCodes] = useState();
@@ -21,17 +22,47 @@ export default function CodeManager(props = {lab}) {
     }, [])
 
     function deleteCode(uuid) {
-        Remotelabz.invitationCode.delete(uuid).then(()=> {
-            setItemToDelete(null);
-            setShowDeleteCodeModal(false);
-            refreshInstance();
-        })
-        .catch((error)=>{
-            new Noty({
-                text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
-                type: 'error'
-            }).show()
-        })
+        Remotelabz.instances.lab.getByLabAndGuest(props.lab.uuid, uuid)
+            .then((response)=> {
+                let promises = [];
+                for(let deviceInstance of response.data.deviceInstances) {
+                    promises.push(Remotelabz.instances.device.stop(deviceInstance.uuid))
+                }
+                var instance = response.data
+                Promise.all(promises).then(()=>{
+                    Remotelabz.instances.lab.delete(instance.uuid)
+                    .then((response) => {
+                        setTimeout(function(){
+                            Remotelabz.invitationCode.delete(uuid).then(()=> {
+                                setItemToDelete(null);
+                                setShowDeleteCodeModal(false);
+                                refreshInstance();
+                            })
+                            .catch((error)=>{
+                                new Noty({
+                                    text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
+                                    type: 'error'
+                                }).show()
+                            });
+                        }, 5000) 
+                    })
+                })  
+            })
+            .catch((error)=> {
+                if (error.response.status <= 500) {
+                    Remotelabz.invitationCode.delete(uuid).then(()=> {
+                        setItemToDelete(null);
+                        setShowDeleteCodeModal(false);
+                        refreshInstance();
+                    })
+                    .catch((error)=>{
+                        new Noty({
+                            text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
+                            type: 'error'
+                        }).show()
+                    })
+                }
+            })
     }
 
     function openModalWithUuid(uuid) {
@@ -95,14 +126,14 @@ export default function CodeManager(props = {lab}) {
             }
             <Modal show={showDeleteCodeModal} onHide={() => setShowDeleteCodeModal(false)}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Leave labs</Modal.Title>
+                    <Modal.Title>Delete code</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
+                    The user might still have some instances running. Are you sure you want to delete this code ?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowDeleteCodeModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={() => deleteCode(itemToDelete)}>Leave</Button>
+                    <Button variant="danger" onClick={() => deleteCode(itemToDelete)}>Delete</Button>
                 </Modal.Footer>
             </Modal>
         </div>
