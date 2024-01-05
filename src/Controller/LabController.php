@@ -434,7 +434,7 @@ class LabController extends Controller
         $lab = $this->labRepository->find($id);
         //$labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
         $labInstance = $this->labInstanceRepository->find($instanceId);
-        if($labInstance == null) {
+        if($labInstance == null || $labInstance->getLab() != $lab) {
             //$redirectTo = $this->getRedirectUrl();
                /* return new JsonResponse(array(
                     'status' => 'error',
