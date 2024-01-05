@@ -272,7 +272,16 @@ class LabController extends Controller
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
-
+        
+        $isMember = false;
+        foreach($lab->getGroups() as $group) {
+            if ($this->getUser()->isMemberOf($group)) {
+                $isMember = true;
+            }
+        }
+        if (!$this->getUser()->isAdministrator() && $this->getUser() != $lab->getAuthor() && !$isMember) {
+            return $this->redirectToRoute("index");
+        }
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
@@ -438,6 +447,34 @@ class LabController extends Controller
         if ($request->get('_route') == "see_lab_guest") {
             if ($lab != $this->getUser()->getLab() || $labInstance->getOwner() != $this->getUser()) {
                 return $this->redirectToRoute("show_lab_to_guest", ["id"=>$this->getUser()->getLab()->getId()]);
+            }
+        }
+        else {
+            $isMember = false;
+            $isGroupAdmin = false;
+            foreach($lab->getGroups() as $group) {
+                if ($this->getUser()->isMemberOf($group)) {
+                    $isMember = true;
+                }
+                if ($group->isElevatedUser($this->getUser())) {
+                    $isGroupAdmin = true;
+                }
+            }
+            $isAdmin = ($this->getUser()->isAdministrator());
+            $isLabAuthor = ($lab->getAuthor() == $this->getUser());
+            if (!$isAdmin && !$isLabAuthor && !$isMember) {
+                return $this->redirectToRoute("index");
+            }
+            $isOwner = false;
+            if ($labInstance->getOwnedBy() == "group") {
+                $isOwner = $this->getUser()->isMemberOf($labInstance->getOwner());
+            }
+            else if ($labInstance->getOwnedBy() == "user"){
+                $isOwner = ($this->getUser() == $labInstance->getOwner());
+            }
+                 
+            if (!$isAdmin && !$isLabAuthor && !$isGroupAdmin && !$isOwner) {
+                return $this->redirectToRoute("index");
             }
         }
 
@@ -1216,7 +1253,7 @@ class LabController extends Controller
     {
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
-        $workerUrl = $labInsatance->getWorketIp();
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1248,7 +1285,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = $labInsatance->getWorketIp();
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1282,7 +1319,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = $labInsatance->getWorketIp();
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");
@@ -1311,7 +1348,7 @@ class LabController extends Controller
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
 
-        $workerUrl = $labInsatance->getWorketIp();
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");
