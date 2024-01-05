@@ -333,7 +333,9 @@ class LabController extends Controller
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
-
+        if ($lab != $this->getUser()->getLab()) {
+            return $this->redirectToRoute("show_lab_to_guest", ["id" => $this->getUser()->getLab()->getId()]);
+        }
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByGuestAndLab($guestUser, $lab);
         // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
@@ -432,6 +434,11 @@ class LabController extends Controller
                 ), Response::HTTP_FORBIDDEN);*/
                 return new Response('Forbidden', Response::HTTP_FORBIDDEN);
             //throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+        if ($request->get('_route') == "see_lab_guest") {
+            if ($lab != $this->getUser()->getLab() || $labInstance->getOwner() != $this->getUser()) {
+                return $this->redirectToRoute("show_lab_to_guest", ["id"=>$this->getUser()->getLab()->getId()]);
+            }
         }
 
         if ( !is_null($lab))
