@@ -2,4 +2,4 @@
 git fetch
 git reset --hard
 git pull
-/opt/remotelabz/bin/remotelabz-update
+bin/remotelabz-update

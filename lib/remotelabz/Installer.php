@@ -250,6 +250,11 @@ class Installer
             @mkdir($this->installPath."/public/uploads/lab");
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
+            chmod($this->installPath."/config/packages/messenger.yaml", 0664);
+            $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
+            chmod($this->installPath."/config/templates", 0664);
+            @mkdir($this->installPath."/backups");
+            chmod($this->installPath."/backups", 0664);
             echo "Right modified ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring right on directories.", 0, $e);
