@@ -40,7 +40,7 @@ class DatabaseController extends Controller
     */
     public function indexAction(Request $request, SerializerInterface $serializer)
     {
-        $files = scandir('/opt/remotelabz/backups/');
+        $files = scandir($this->getParameter('kernel.project_dir').'/backups/');
         $backups = [];
         foreach ($files as $file) {
             if (preg_match('/^.+\.zip$/', $file)) {
@@ -105,7 +105,7 @@ class DatabaseController extends Controller
     public function databaseBackup(Request $request)
     {
 
-        $result=exec('php /opt/remotelabz/scripts/backupDatabase.php', $output);
+        $result=exec('php '.$this->getParameter('kernel.project_dir').'/scripts/backupDatabase.php', $output);
         
         if ($result !== false) {
 
@@ -114,25 +114,25 @@ class DatabaseController extends Controller
             //copy banner folder
             if ( file_exists( $this->getParameter('directory.public.upload.lab.banner') ) && is_dir( $this->getParameter('directory.public.upload.lab.banner') ) ) {
                 $bannerSrc=$this->getParameter('directory.public.upload.lab.banner');
-                $bannerDst='/opt/remotelabz/backups/'.$result.'/banner';
+                $bannerDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/banner';
                 $fileSystem->mirror($bannerSrc,$bannerDst); 
             } 
             
             //copy picture folder
-            $pictureSrc='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
-            $pictureDst='/opt/remotelabz/backups/'.$result.'/pictures';
+            $pictureSrc=$this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures';
+            $pictureDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/pictures';
             $fileSystem->mirror($pictureSrc,$pictureDst);
 
             //copy vm images
             if ( file_exists( $this->getParameter('image_directory') ) && is_dir( $this->getParameter('image_directory') ) ) {
                 $imageSrc=$this->getParameter('image_directory');
-                $imageDst='/opt/remotelabz/backups/'.$result.'/images';
+                $imageDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/images';
                 $fileSystem->mirror($imageSrc,$imageDst);      
             } 
 
             $zip = new ZipArchive();
-            $rootPath = realpath('/opt/remotelabz/backups/'.$result);
-            $zip->open('/opt/remotelabz/backups/' .$result.'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
+            $rootPath = realpath($this->getParameter('kernel.project_dir').'/backups/'.$result);
+            $zip->open($this->getParameter('kernel.project_dir').'/backups/' .$result.'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
             $files = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($rootPath),
                 RecursiveIteratorIterator::LEAVES_ONLY
@@ -155,10 +155,10 @@ class DatabaseController extends Controller
 
             // Zip archive will be created only after closing object
             $zip->close();
-            $fileSystem->remove('/opt/remotelabz/backups/database_'.$result.'.sql');
-            $fileSystem->remove('/opt/remotelabz/backups/'.$result);
+            $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/database_'.$result.'.sql');
+            $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/'.$result);
 
-            $response = new Response(file_get_contents('/opt/remotelabz/backups/' .$result.'.zip'));
+            $response = new Response(file_get_contents($this->getParameter('kernel.project_dir').'/backups/' .$result.'.zip'));
 
             $disposition = HeaderUtils::makeDisposition(
                 HeaderUtils::DISPOSITION_ATTACHMENT,
@@ -184,7 +184,7 @@ class DatabaseController extends Controller
     public function downloadBackup(Request $request, string $name)
     {
         $file = $name .".zip";
-        $response = new Response(file_get_contents('/opt/remotelabz/backups/'.$file));
+        $response = new Response(file_get_contents($this->getParameter('kernel.project_dir').'/backups/'.$file));
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
@@ -205,7 +205,7 @@ class DatabaseController extends Controller
     public function deleteBackup(Request $request, string $name)
     {
         $file = $name .".zip";
-        unlink('/opt/remotelabz/backups/'.$file);
+        unlink($this->getParameter('kernel.project_dir').'/backups/'.$file);
 
         return $this->redirectToRoute('admin_database');
 
@@ -216,34 +216,34 @@ class DatabaseController extends Controller
         $fileSystem = new FileSystem();
         $zip = new ZipArchive();
         $zip->open($file);
-        $zip->extractTo('/opt/remotelabz/backups/import/');
+        $zip->extractTo($this->getParameter('kernel.project_dir').'/backups/import/');
         $zip->close();
 
-        $result=exec('php /opt/remotelabz/bin/console doctrine:migrations:migrate --no-interaction', $output);
+        $result=exec('php '.$this->getParameter('kernel.project_dir').'/bin/console doctrine:migrations:migrate --no-interaction', $output);
 
         if ($result !== false) {
-            $resultImport=exec('php /opt/remotelabz/scripts/importDatabase.php', $output);
+            $resultImport=exec('php '.$this->getParameter('kernel.project_dir').'/scripts/importDatabase.php', $output);
             if ($resultImport !== false) {
 
-                $files = scandir('/opt/remotelabz/backups/import/');
+                $files = scandir($this->getParameter('kernel.project_dir').'/backups/import/');
 
                 foreach ($files as $file) {
                     if (is_dir($file)) {
                         if ($file == "banner") {
                             //copy banner folder
-                            $bannerSrc='/opt/remotelabz/backups/import/banner';
+                            $bannerSrc=$this->getParameter('kernel.project_dir').'/backups/import/banner';
                             $bannerDst=$this->getParameter('directory.public.upload.lab.banner');
                             $fileSystem->mirror($bannerSrc,$bannerDst);
                         }
                         else if ($file == "pictures") {
                             //copy picture folder
-                            $pictureSrc='/opt/remotelabz/backups/import/pictures';
-                            $pictureDst='/opt/remotelabz/assets/js/components/Editor2/images/pictures/';
+                            $pictureSrc=$this->getParameter('kernel.project_dir').'/backups/import/pictures';
+                            $pictureDst=$this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures';
                             $fileSystem->mirror($pictureSrc,$pictureDst);
                         }
                         else if ($file == "images") {
                             //copy vm images
-                            $imageSrc='/opt/remotelabz/backups/import/images';
+                            $imageSrc=$this->getParameter('kernel.project_dir').'/backups/import/images';
                             $imageDst=$this->getParameter('image_directory');
                             $fileSystem->mirror($imageSrc,$imageDst);
                         }
@@ -252,20 +252,20 @@ class DatabaseController extends Controller
 
             }
             else {
-                $fileSystem->remove('/opt/remotelabz/backups/import');
+                $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/import');
                 $this->addFlash('danger',"The database import failed. Please try again later");
                 $this->logger->error('Migration failed: '.$output);
                 return false;
             }
         }
         else {
-            $fileSystem->remove('/opt/remotelabz/backups/import');
+            $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/import');
             $this->addFlash('danger',"The database import failed. Please try again later");
             $this->logger->error('Database import failed: '.$output);
             return false;
         }
 
-        $fileSystem->remove('/opt/remotelabz/backups/import');
+        $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/import');
         return true;
     }
 

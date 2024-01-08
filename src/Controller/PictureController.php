@@ -181,7 +181,7 @@ class PictureController extends Controller
 		}
 
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        $file = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName;      
+        $file = $this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName;      
 
         $response = new BinaryFileResponse($file);
         return $response;
@@ -238,7 +238,7 @@ class PictureController extends Controller
             $picture->setWidth($data['width']);
             $picture->setHeight($data['height']);
             $type = explode("image/",$data['type'])[1];
-            $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$data['labid'].'-'.$data['name'].'.'.$type;
+            $fileName = $this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$data['labid'].'-'.$data['name'].'.'.$type;
             $fp = fopen($fileName, 'r');
             $size = filesize($fileName);
             if ($fp !== False) {
@@ -251,7 +251,7 @@ class PictureController extends Controller
         $picture->setData($data['data']);
         $picture->setName($data['name']);
         $picture->setType($data['type']);
-        file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
+        file_put_contents($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
 
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -296,8 +296,8 @@ class PictureController extends Controller
         }
         if(isset($data['name']) && $data['name'] !== $picture->getName()){
             $type = explode("image/",$picture->getType())[1];
-            unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$picture->getName().'.'.$type);
-            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$data['name'].'.'.$type, $picture->getData());
+            unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$picture->getName().'.'.$type);
+            file_put_contents($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$data['name'].'.'.$type, $picture->getData());
             $picture->setName($data['name']);
         }
         $picture->setMap($data['map']);
@@ -325,7 +325,7 @@ class PictureController extends Controller
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
+        unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
 
         $entityManager = $doctrine->getManager();
         $entityManager->remove($picture);

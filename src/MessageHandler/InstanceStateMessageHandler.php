@@ -23,6 +23,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     private $instanceManager;
     private $entityManager;
     private $logger;
+    private $rootDirectory;
     //private $router;
 
     public function __construct(
@@ -31,7 +32,8 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         OperatingSystemRepository $operatingSystemRepository,
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        string $rootDirectory
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -39,6 +41,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         $this->instanceManager = $instanceManager;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
+        $this->rootDirectory = $rootDirectory;
     }
 
     public function __invoke(InstanceStateMessage $message)
@@ -173,15 +176,6 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                 //When the instance is from a sandbox, we can delete the lab and its devices.
                 
                 $lab=$instance->getLab();
-                if (null !== $lab->getPictures()) {
-                    
-                    foreach($lab->getPictures() as $picture) {
-                        $type = explode("image/",$picture->getType())[1];
-                        if(is_file('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
-                            unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
-                        }
-                    }
-                }
                 $this->entityManager->remove($instance);
                 $this->entityManager->flush();
 
@@ -194,6 +188,15 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                         $this->logger->debug("Delete device name: ".$device->getName());
                         $this->entityManager->remove($device);
+                    }
+                    if (null !== $lab->getPictures()) {
+                    
+                        foreach($lab->getPictures() as $picture) {
+                            $type = explode("image/",$picture->getType())[1];
+                            if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                                unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                            }
+                        }
                     }
                     $this->entityManager->remove($lab);
 

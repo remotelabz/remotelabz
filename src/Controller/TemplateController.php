@@ -97,17 +97,17 @@ class TemplateController extends Controller
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
             if (count($template->getLabs())==0) {
-                if (!is_file('/opt/remotelabz/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
+                if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
                     $this->newAction($template);
                  }
             }
         }
         $node_templates = Array();
         $node_config = Array();
-        foreach ( scandir('/opt/remotelabz/config/templates/') as $element ) {
-                if (is_file('/opt/remotelabz/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
+        foreach ( scandir($this->getParameter('kernel.project_dir').'/config/templates/') as $element ) {
+                if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
                         $cur_name = preg_replace('/.yaml/','',$element ) ;
-                        $cur_templ = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$element));
+                        $cur_templ = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$element));
                         if ( isset($cur_templ['description']) ) {
                                 $node_templates[$cur_name] =  $cur_templ['description'] ;
                         }
@@ -148,10 +148,10 @@ class TemplateController extends Controller
         $device = $this->deviceRepository->find($id);
         $deviceName = u($device->getName())->camel();
  
-        if (!is_file('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
+        if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
             $this->newAction($device);
          }
-        $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml'));
+        $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
         $p['template'] = $deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
@@ -277,8 +277,8 @@ class TemplateController extends Controller
 
     public function listNodeIcons() {
         $results = Array();
-        foreach (scandir('/opt/remotelabz/assets/images/icons') as $filename) {
-            if (is_file('/opt/remotelabz/assets/images/icons/'.$filename) && preg_match('/^.+\.[png$\|jpg$]/', $filename)) {
+        foreach (scandir($this->getParameter('kernel.project_dir').'/assets/images/icons') as $filename) {
+            if (is_file($this->getParameter('kernel.project_dir').'/assets/images/icons/'.$filename) && preg_match('/^.+\.[png$\|jpg$]/', $filename)) {
                 $patterns[0] = '/^(.+)\.\(png$\|jpg$\)/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);
@@ -290,8 +290,8 @@ class TemplateController extends Controller
 
     function listNodeConfigTemplates() {
         $results = Array();
-        foreach (scandir('/opt/remotelabz/assets/js/components/Editor2/configs') as $filename) {
-            if (is_file('/opt/remotelabz/assets/js/components/Editor2/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
+        foreach (scandir($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/configs') as $filename) {
+            if (is_file($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
                 $patterns[0] = '/^(.+)\.php$/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);
@@ -378,6 +378,6 @@ class TemplateController extends Controller
 
     $yamlContent = Yaml::dump($templateData,2);
 
-    file_put_contents("/opt/remotelabz/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
+    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
     }
 }
