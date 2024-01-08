@@ -1053,8 +1053,8 @@ class LabController extends Controller
             if (null !== $lab->getPictures()) {
                 foreach($lab->getPictures() as $picture) {
                     $type = explode("image/",$picture->getType())[1];
-                    if(is_file('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
-                        unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                    if(is_file($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                        unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
                     }
                 }
             }

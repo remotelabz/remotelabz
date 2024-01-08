@@ -72,6 +72,7 @@ class InstanceManager
     protected $workerServer;
     protected $workerPort;
     protected $publicAddress;
+    protected $rootDirectory;
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
@@ -100,6 +101,7 @@ class InstanceManager
         ConfigWorkerRepository $configWorkerRepository,
         string $workerServer,
         string $workerPort,
+        string $rootDirectory,
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
         BannerManager $bannerManager,
@@ -121,6 +123,7 @@ class InstanceManager
         $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
+        $this->rootDirectory = $rootDirectory;
         $this->proxyManager = $proxyManager;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
@@ -423,7 +426,7 @@ class InstanceManager
         if (count($lab->getPictures()) >= 1) {
             foreach($lab->getPictures() as $picture) {
                 $type = explode("image/",$picture->getType())[1];
-                file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+                file_put_contents($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
             }
         }
         $this->bannerManager->copyBanner($labInstance->getLab()->getId(), $lab->getId());
@@ -580,7 +583,7 @@ class InstanceManager
                 $newPicture->setType($picture->getType());
     
                 $type = explode("image/",$picture->getType())[1];
-                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
+                $fileName = $this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
                 $fp = fopen($fileName, 'r');
                 $size = filesize($fileName);
                 if ($fp !== False) {

@@ -8,7 +8,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
 
-$files = scandir('/opt/remotelabz/backups/import/');
+$files = scandir(dirname(__DIR__).'/backups/import/');
 $databases = [];
 foreach ($files as $file) {
     if (preg_match('/^.+\.sql$/', $file)) {
@@ -19,5 +19,5 @@ if (count($databases) <1){
     return false;
 }
 
-$result=exec('mysql --user='.$_SERVER['MYSQL_USER'].' --password='.$_SERVER['MYSQL_PASSWORD'].' --host='.$_SERVER['MYSQL_SERVER'].'  '.$_SERVER['MYSQL_DATABASE'].' </opt/remotelabz/backups/import/'.$databases[0],$output);
+$result=exec('mysql --user='.$_SERVER['MYSQL_USER'].' --password='.$_SERVER['MYSQL_PASSWORD'].' --host='.$_SERVER['MYSQL_SERVER'].'  '.$_SERVER['MYSQL_DATABASE'].' <'.dirname(__DIR__).'/backups/import/'.$databases[0],$output);
 return $output;
