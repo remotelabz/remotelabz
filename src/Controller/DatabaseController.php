@@ -248,7 +248,14 @@ class DatabaseController extends Controller
                             $fileSystem->mirror($imageSrc,$imageDst);
                         }
                     }
-                }               
+                }
+                
+                $templates = scandir($this->getParameter('kernel.project_dir').'/config/templates/');
+                foreach($templates as $template) {                
+                    if(is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$template) && preg_match('/^.+\.yaml$/', $template)) {
+                        $fileSystem->remove($this->getParameter('kernel.project_dir').'/config/templates/'.$template);
+                    } 
+                }
 
             }
             else {
