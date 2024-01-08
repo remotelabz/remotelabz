@@ -321,7 +321,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
 
                         {(instance.state === 'stopped' || instance.state === 'error') && instance.device.type == 'container' && !isSandbox && user.roles &&
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id)) &&
-                            <Button variant="danger" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                            <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
 
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
