@@ -204,6 +204,7 @@ class InvitationController extends Controller
                 $emailToSend = (new Email)
                 ->from($this->getParameter('app.general.contact_mail'))
                 ->to($email)
+                ->subject($this->getParameter('app.general.public_address')." Access code for lab ". $lab->getName())
                 ->html(
                     $this->renderView(
                         'emails/invitation.html.twig',
