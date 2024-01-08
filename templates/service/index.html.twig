@@ -67,6 +67,7 @@
         <div class="col">
             <div class="card">
                 <ul class="list-group list-group-flush">
+                {% if serviceStarted['remotelabz-worker'] is defined %}
                 {% for key, worker in serviceStarted['remotelabz-worker'] -%}
                     <li class="list-group-item">
                         <span class="fw600">Worker Service: {{key}}</span>
@@ -83,7 +84,10 @@
                         {% endif %}
                         </div>
                     </li>
-                    {% endfor %}
+                {% endfor %}
+                {% else %}
+                <li class="list-group-item">None</li>
+                {% endif %}
                 </ul>
               </div>
         </div>
