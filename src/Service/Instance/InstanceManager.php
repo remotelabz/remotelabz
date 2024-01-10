@@ -321,7 +321,13 @@ class InstanceManager
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+        
         $deviceJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+        $tmp = json_decode($deviceJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+        $tmp['labInstance']['uuid'] = $deviceInstance->getLabInstance()->getUuid();
+        $tmp['labInstance']['ownedBy'] = $deviceInstance->getLabInstance()->getOwnedBy();
+        $tmp['labInstance']['owner']['uuid'] = $deviceInstance->getLabInstance()->getOwner()->getUuid();
+        $deviceJson = json_encode($tmp, 0, 4096);
 
         if ($worker->getAvailable() == true) {
             $deviceInstance->setState(InstanceState::RESETTING);
@@ -329,8 +335,6 @@ class InstanceManager
             $this->entityManager->flush();
 
             $this->logger->debug('Resetting device instance with UUID '.$uuid.'.');
-
-            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
 
             $this->bus->dispatch(
                 new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_RESET), [
