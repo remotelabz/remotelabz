@@ -205,7 +205,7 @@ class GroupController extends Controller
             $GroupInstancesProps,
             'json',
             //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_lab', 'api_get_group', 'api_get_user'])
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_lab',])
         );
 
         return $this->render('group/dashboard_group_instances.html.twig', [

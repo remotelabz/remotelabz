@@ -70,7 +70,7 @@ class Group implements InstancierInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"group_tree","api_groups", "api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"group_tree","api_groups", "api_get_group", "api_users", "api_get_user", "api_get_lab_instance"})
      */
     private $slug;
 

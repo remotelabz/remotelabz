@@ -34,6 +34,7 @@ class LabImporter
     protected $flavorRepository;
     protected $operatingSystemRepository;
     protected $bannerManager;
+    private $rootDirectory;
 
     public function __construct(
         LoggerInterface $logger,
@@ -44,7 +45,8 @@ class LabImporter
         EntityManagerInterface $entityManager,
         OperatingSystemRepository $operatingSystemRepository,
         HypervisorRepository $hypervisorRepository,
-        BannerManager $bannerManager
+        BannerManager $bannerManager,
+        string $rootDirectory
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -55,6 +57,7 @@ class LabImporter
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
         $this->bannerManager = $bannerManager;
+        $this->rootDirectory = $rootDirectory;
     }
 
     /**
@@ -128,7 +131,7 @@ class LabImporter
                 $newPicture->setLab($lab);
                 
                 $type = explode("image/",$picture['type'])[1];
-                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labJson['id'].'-'.$picture['name'].'.'.$type;
+                $fileName = $this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$labJson['id'].'-'.$picture['name'].'.'.$type;
                 $fp = fopen($fileName, 'r');
                 $size = filesize($fileName);
                 if ($fp !== False) {
@@ -277,7 +280,7 @@ class LabImporter
         $this->bannerManager->copyBanner($labJson['id'], $lab->getId());
         foreach($lab->getPictures() as $picture) {
             $type = explode("image/",$picture->getType())[1];
-            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+            file_put_contents($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
         }
 
         $createdLab = $this->labRepository->findOneBy(['uuid' => $lab->getUuid()]);

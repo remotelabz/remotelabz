@@ -13,54 +13,11 @@
     <h1>Invite users to {{lab.name}}</h1>
 </div>
 <div class="content-body">
-    <p class="text-muted">List of emails separated by a a comma.</p>
+    <p class="text-muted">List of emails separated by a comma. No spaces must be between the comma and the email.</p>
     {{ form_start(form) }}
     {{ form_end(form) }}
     <div class="row">
         <div class="col">{{ react_component('CodeManager', {'props': props}) }}</div>
     </div>
 </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js"
-    integrity="sha512-IOebNkvA/HZjMM7MxL0NYeLYEalloZ8ckak+NDtOViP7oiYzG5vn6WVXyrJDiJPhl4yRdmNAG49iuLmhkUdVsQ=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-    ></script>
-    <script>
-
-
-    /*Selectize.define('enter_key_delimiter', function (options) {
-        var self = this
-
-        this.onKeyDown = (function (e) {
-        var original = self.onKeyDown
-        return function (e) {
-            if (e.keyCode === 13) {
-                self.createItem();
-                e.preventDefault();
-            } else {
-                return original.apply(this, arguments);
-            }
-        }
-        })()
-    })
-    
-    var select = $('#invitation_code_emailAdresses').selectize({
-            plugins: ["restore_on_backspace", "remove_button", "enter_key_delimiter"],
-            delimiter: ",",
-            persist: false,
-            showAddOptionOnCreate: false,
-            create: function (input) {
-                return {
-                  value: input,
-                  text: input,
-                };
-              }
-        });*/
-    </script>
 {% endblock %}

@@ -442,13 +442,6 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
            $device = $deviceForm->getData();
-           /*if ($device->getIsTemplate() == true) {
-            foreach (scandir('/opt/remotelabz/config/templates') as $filename) {
-                if(is_file('/opt/remotelabz/config/templates/'. u($device->getName())->camel() . '.yaml')) {
-                    throw new NotFoundHttpException("The name " . $device->getName() . " already exists as a template");
-                }
-            }
-            }*/
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
@@ -491,7 +484,7 @@ class DeviceController extends Controller
 
                 $yamlContent = Yaml::dump($deviceData,2);
                 $fileName = u($device->getName())->camel();
-                file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+                file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
             
             if ('json' === $request->getRequestFormat()) {
@@ -868,18 +861,22 @@ class DeviceController extends Controller
             $oldFileName = u($oldName)->camel();
             if ($isTemplate == true && $device->getIsTemplate() == true) {
                 if ($oldName == $device->getName()) {
-                    file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+                    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
                 }
                 else {
-                    unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $oldFileName . ".yaml");
-                    file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+                    if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml")) {
+                        unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml");
+                    }
+                    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
                 }
             }
             else if($isTemplate == true && $device->getIsTemplate() == false) {
-                unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $oldName . ".yaml");
+                if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml")) {
+                    unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml");
+                }
             }
             else if($isTemplate == false && $device->getIsTemplate() == true) {
-                file_put_contents("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+                file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
 
             $entityManager = $this->getDoctrine()->getManager();
@@ -1196,7 +1193,9 @@ class DeviceController extends Controller
         }
         if($device->getIsTemplate() == true && count($device->getLabs()) == 0) {
             $fileName = u($device->getName())->camel();
-            unlink("/opt/remotelabz/config/templates/".$device->getId()."-". $fileName . ".yaml");
+            if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml")) {
+                unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml");
+            }
         }
 
         $entityManager = $this->getDoctrine()->getManager();

@@ -464,7 +464,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      * @return Collection|Group[]
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"api_get_lab","group_details", "user", "api_users", "api_get_user"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "group_details", "user", "api_users", "api_get_user"})
      */
     public function getGroups()
     {

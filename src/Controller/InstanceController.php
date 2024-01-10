@@ -139,7 +139,7 @@ class InstanceController extends Controller
         $props=$serializer->serialize(
             $instanceManagerProps,
             'json',
-            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_user'])
+            SerializationContext::create()->setGroups(['api_get_lab_instance'])
         );
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
