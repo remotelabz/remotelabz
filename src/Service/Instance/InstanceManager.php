@@ -72,6 +72,7 @@ class InstanceManager
     protected $workerServer;
     protected $workerPort;
     protected $publicAddress;
+    protected $rootDirectory;
     protected $proxyManager;
     protected $OperatingSystemRepository;
     protected $DeviceRepository;
@@ -100,6 +101,7 @@ class InstanceManager
         ConfigWorkerRepository $configWorkerRepository,
         string $workerServer,
         string $workerPort,
+        string $rootDirectory,
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
         BannerManager $bannerManager,
@@ -121,6 +123,7 @@ class InstanceManager
         $this->OperatingSystemRepository=$OperatingSystemRepository;
         $this->workerServer = $workerServer;
         $this->workerPort = $workerPort;
+        $this->rootDirectory = $rootDirectory;
         $this->proxyManager = $proxyManager;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
@@ -318,7 +321,13 @@ class InstanceManager
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+        
         $deviceJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+        $tmp = json_decode($deviceJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+        $tmp['labInstance']['uuid'] = $deviceInstance->getLabInstance()->getUuid();
+        $tmp['labInstance']['ownedBy'] = $deviceInstance->getLabInstance()->getOwnedBy();
+        $tmp['labInstance']['owner']['uuid'] = $deviceInstance->getLabInstance()->getOwner()->getUuid();
+        $deviceJson = json_encode($tmp, 0, 4096);
 
         if ($worker->getAvailable() == true) {
             $deviceInstance->setState(InstanceState::RESETTING);
@@ -326,8 +335,6 @@ class InstanceManager
             $this->entityManager->flush();
 
             $this->logger->debug('Resetting device instance with UUID '.$uuid.'.');
-
-            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
 
             $this->bus->dispatch(
                 new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_RESET), [
@@ -423,7 +430,7 @@ class InstanceManager
         if (count($lab->getPictures()) >= 1) {
             foreach($lab->getPictures() as $picture) {
                 $type = explode("image/",$picture->getType())[1];
-                file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
+                file_put_contents($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());
             }
         }
         $this->bannerManager->copyBanner($labInstance->getLab()->getId(), $lab->getId());
@@ -580,7 +587,7 @@ class InstanceManager
                 $newPicture->setType($picture->getType());
     
                 $type = explode("image/",$picture->getType())[1];
-                $fileName = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
+                $fileName = $this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type;
                 $fp = fopen($fileName, 'r');
                 $size = filesize($fileName);
                 if ($fp !== False) {

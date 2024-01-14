@@ -106,6 +106,10 @@ services:
         arguments:
             $targetDirectory: '%launch_scripts_directory%'
 
+    App\Service\Lab\LabImporter:
+        arguments:
+            $rootDirectory: '%kernel.project_dir%'
+
     App\Service\ImageFileUploader:
         arguments:
             $targetDirectory: '%image_directory%'
@@ -177,6 +181,7 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+            $rootDirectory: '%kernel.project_dir%'
 
     App\Service\Worker\WorkerManager:
         arguments:
@@ -218,6 +223,10 @@ services:
     App\Controller\InstanceController:
         arguments:
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
+
+    App\MessageHandler\InstanceStateMessageHandler:
+        arguments:
+            $rootDirectory: '%kernel.project_dir%'
 
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'

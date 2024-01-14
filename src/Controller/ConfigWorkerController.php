@@ -226,7 +226,7 @@ class ConfigWorkerController extends Controller
     }
 
     private function modifyMessengerConfig() {
-        $yaml = Yaml::parse(file_get_contents('/opt/remotelabz/config/packages/messenger.yaml'));
+        $yaml = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/packages/messenger.yaml'));
 
         $queues = [];
         $workers = $this->configWorkerRepository->findAll();
@@ -239,7 +239,7 @@ class ConfigWorkerController extends Controller
 
         
         $new_yaml = Yaml::dump($yaml, 8);
-        file_put_contents('/opt/remotelabz/config/packages/messenger.yaml', $new_yaml);
+        file_put_contents($this->getParameter('kernel.project_dir').'/config/packages/messenger.yaml', $new_yaml);
     }
 
 }

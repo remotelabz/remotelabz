@@ -13,18 +13,35 @@
             {{ sidebar.link("User", 'users', null, 'user', 'users', _context) }}
             {{ sidebar.link("Mail", 'admin_write_mail', null, 'mail', 'mail', _context) }}
             {# {{ sidebar.link("Groups", 'groups', null, 'group', 'groups', _context) }} #}
-            {{ sidebar.link("Flavor", 'flavors', null, 'disk', 'flavors', _context) }}
-            {{ sidebar.link("Control Protocol", 'controlProtocolType', null, 'disk', 'controlProtocolType', _context) }}
-            {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
-            {{ sidebar.link("Hypervisor", 'hypervisor', null, 'cloud-gear', 'hypervisor', _context) }}
-            {{ sidebar.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" href="#deviceSubmenu" data-toggle="collapse" aria-expanded="false">
+                    {{- svg('pod', 'image-sm') -}}
+                    <span class="menu-title">Device components</span>
+                </a>
+                <ul class="collapse list-unstyled" id="deviceSubmenu">
+                    {{ sidebar.link("Flavor", 'flavors', null, 'disk', 'flavors', _context) }}
+                    {{ sidebar.link("Control Protocol", 'controlProtocolType', null, 'disk', 'controlProtocolType', _context) }}
+                    {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
+                    {{ sidebar.link("Hypervisor", 'hypervisor', null, 'cloud-gear', 'hypervisor', _context) }}
+                    {{ sidebar.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
+                </ul>
+            </li>
             {{ sidebar.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
             {{ sidebar.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
             {{ sidebar.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
-            {{ sidebar.link("Workers", 'admin_config', null, 'settings', 'config', _context) }}
-            {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
+            {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
             {{ sidebar.link("Database", 'admin_database', null, 'redo', 'database', _context) }}
-            {{ sidebar.link("Usage", 'resources', null, 'tachometer', 'resources', _context) }}
+            <li class="nav-item">
+                <a class="nav-link dropdown-toggle" href="#systemSubmenu" data-toggle="collapse" aria-expanded="false">
+                    {{- svg('api', 'image-sm') -}}
+                    <span class="menu-title">System</span>
+                </a>
+                <ul class="collapse list-unstyled" id="systemSubmenu">
+                    {{ sidebar.link("Workers", 'admin_config', null, 'settings', 'config', _context) }}
+                    {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
+                    {{ sidebar.link("Usage", 'resources', null, 'tachometer', 'resources', _context) }}
+                </ul>
+            </li>
 
 
             <div class="nav-item">
@@ -36,3 +53,4 @@
         </ul>
     </nav>
 {% endblock %}
+

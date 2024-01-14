@@ -39,6 +39,35 @@ class InvitationController extends Controller
     }
 
     /**
+    * @Route("/codes", name="codes")
+    * 
+    */
+    public function indexAction(Request $request)
+    {
+        $search = $request->query->get('search', '');
+
+        $codes = $this->invitationCodeRepository->findCodesGroupByLab(new \DateTime(), $search);
+
+        $limit = $request->query->get('limit', 10);
+        $page = $request->query->get('page', 1);
+        $count = count($codes);
+
+        try {
+            $codes = array_slice($codes, $page * $limit - $limit, $limit);
+        } catch (ORMException $e) {
+            throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
+        }
+
+        return $this->render('lab/codes_management.html.twig', [
+            'codes' => $codes,
+            'count' => $count,
+            'page' => $page,
+            'limit' => $limit,
+            'search' => $search
+        ]);
+    }
+
+    /**
     * @Route("/labs/code/{id<\d+>}", name="create_code_lab")
     * 
     */
@@ -57,6 +86,8 @@ class InvitationController extends Controller
         if ($invitationForm->isSubmitted() && $invitationForm->isValid()) {
             $data = $invitationForm->getData();
             $this->checkAction($data, $lab);
+            unset($invitationForm);
+            $invitationForm = $this->createForm(InvitationCodeType::class);
         }
 
         $props=$serializer->serialize(
@@ -202,6 +233,7 @@ class InvitationController extends Controller
                 $emailToSend = (new Email)
                 ->from($this->getParameter('app.general.contact_mail'))
                 ->to($email)
+                ->subject($this->getParameter('app.general.public_address')." Access code for lab ". $lab->getName())
                 ->html(
                     $this->renderView(
                         'emails/invitation.html.twig',
