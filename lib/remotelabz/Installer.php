@@ -248,6 +248,7 @@ class Installer
         try{
             @mkdir($this->installPath."/public/uploads");
             @mkdir($this->installPath."/public/uploads/lab");
+            @mkdir($this->installPath."/public/uploads/user");
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
             chmod($this->installPath."/config/packages/messenger.yaml", 0664);
