@@ -21,6 +21,8 @@ use App\Repository\InvitationCodeRepository;
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
 
+use App\Form\InstanceType;
+
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -32,6 +34,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use App\EventSubscriber\AddFilterInstanceSubscriber;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 
@@ -45,6 +53,8 @@ class InstanceController extends Controller
     private $labInstanceRepository;
     private $deviceInstanceRepository;
     private $networkInterfaceInstanceRepository;
+    private $groupRepository;
+    private $userRepository;
     private $serializer;
     protected $remotelabzProxyUseWss;
     
@@ -58,6 +68,8 @@ class InstanceController extends Controller
         DeviceInstanceRepository $deviceInstanceRepository,
         LabRepository $labRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
+        GroupRepository $groupRepository,
+        UserRepository $userRepository,
         SerializerInterface $serializerInterface,
         bool $remotelabzProxyUseWss
     ) {
@@ -66,6 +78,8 @@ class InstanceController extends Controller
         $this->labRepository = $labRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
+        $this->groupRepository = $groupRepository;
+        $this->userRepository = $userRepository;
         $this->proxyManager = $proxyManager;
         $this->serializer = $serializerInterface;
         $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
@@ -87,30 +101,48 @@ class InstanceController extends Controller
         $user=$this->getUser();
 
         $search = $request->query->get('search', '');
-        $filter = $request->query->get('filter', '');
-        $type = $request->query->get('type', 'lab');
+        $filter = $request->query->get('filter', 'none');
+        $subFilter = $request->query->get('subFilter', 'allInstances');
+        $page = (int)$request->query->get('page', 1);
+        $limit = 10;
 
-        //Only fetch the instance of the user and in which it is group admin or group owner
-        if ($user->isAdministrator()) {
-            $AllLabInstances=$this->labInstanceRepository->findAll();
+        $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET"]);
+        $addFilterForm->handleRequest($request);
+        if ($addFilterForm->isSubmitted() && $addFilterForm->isValid()) {
+            $data = $addFilterForm->getData();
+            $filter = $data['filter'];
+            $subFilter = $data['subFilter'];
+        }
+
+
+        if($subFilter == "allInstances") {
+            if ($user->isAdministrator()) {
+                $instances=$this->labInstanceRepository->findAll();
+            }
+            else {
+                //$AllLabInstances=$this->labInstanceRepository->findByUserAndGroups($user);
+                $instances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            }
         }
         else {
-            //Return all instances of the 
-            //$AllLabInstances=$this->labInstanceRepository->findByUserAndGroups($user);
-            $AllLabInstances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
-        }
-        
-        switch ($type) {
-            case 'lab':
-                $data = $AllLabInstances;
-                $groups = ['api_get_lab_instance'];
-                break;
-            default:
-                throw new BadRequestHttpException('Unknown instance type.');
+            $instances = $this->getLabInstances($filter, $subFilter);
         }
 
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($data, 200, [], $groups);
+        $AllLabInstances = [];
+        foreach ($instances as $instance) {
+            
+            array_push($AllLabInstances, $instance);
+        }
+
+        $count = count($AllLabInstances);
+        try {
+            $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
+        } catch (ORMException $e) {
+            throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
+        }
+
+        if ('json' === $request->getRequestFormat()) {            
+            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
         }
 
         $labInstances=[];
@@ -134,7 +166,7 @@ class InstanceController extends Controller
         
         $instanceManagerProps = [
             'labInstances' =>$AllLabInstances,
-            'user'=>$this->getUser()
+            'user'=> $this->getUser()
         ];
         $props=$serializer->serialize(
             $instanceManagerProps,
@@ -143,8 +175,156 @@ class InstanceController extends Controller
         );
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
-            'props'=> $props
+            'props'=> $props,
+            'addFilterForm' => $addFilterForm->createView(),
+            'count'=> $count,
+            'page' => $page,
+            'limit' => $limit,
+            'filter' => $filter,
+            'subFilter' => $subFilter,
         ]);
+    }
+
+    private function getLabInstances($filter, $subFilter) {
+        if ($subFilter == "allGroups") {
+            $instances = $this->fetchLabInstancesByGroup();   
+        }
+        else if ($filter == "group" && $subFilter != "allGroups") {
+            $instances = $this->fetchLabInstancesByGroupUuid($subFilter);
+        }
+        else if ($subFilter == "allLabs") {
+            $instances = $this->fetchLabInstancesOrdredByLab();
+        }
+        else if ($filter == "lab" && $subFilter != "allLabs") {
+            $instances = $this->fetchLabInstancesByLabUuid($subFilter);
+        }
+        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allAdmins") {
+            $userType = "";
+            if($subFilter == "allTeachers") {
+                $userType = "teacher";
+            }
+            else if ($subFilter == "allStudents") {
+                $userType = "student";
+            }
+            else if ($subFilter == "allAdmins") {
+                $userType = "admin";
+            }
+
+            $instances = $this->fetchLabInstancesOwnedByUserType($userType);
+        }
+        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins")) {//done
+            $instances = $this->fetchLabInstancesByUserUuid($subFilter);
+        }
+        return $instances;
+    }
+
+    /**
+     * @Rest\Get("/api/filter", name="api_list_instances_filter")
+     */
+    public function listInstancesFilterAction(
+        Request $request)
+    {
+        $filter = $request->query->get("filter");
+        $user=$this->getUser();
+        $subFilter = [];
+
+        if ($filter == "group") {
+            array_push($subFilter, [
+                "uuid" => "allGroups",
+                "name" => "All groups"
+            ]);
+            if ($user->isAdministrator()) {
+                $groups = $this->groupRepository->findAll();
+            }
+            else {
+                $groups = $user->getGroupsInfo();
+            }
+
+            foreach ($groups as $group) {
+                array_push($subFilter, [
+                    "uuid" => $group->getUuid(),
+                    "name" => $group->getName()
+                ]);
+            }
+        }
+        else if ($filter == "lab") {
+            array_push($subFilter, [
+                "uuid" => "allLabs",
+                "name" => "All labs"
+            ]);
+            if ($user->isAdministrator()) {
+                $labs = $this->labRepository->findBy(["isTemplate"=>false]);
+            }
+            else if ($user->hasRole("ROLE_TEACHER")){
+                $labs = $this->labRepository->findByAuthorAndGroups($user);
+            }
+
+            foreach ($labs as $lab) {
+                array_push($subFilter, [
+                    "uuid" => $lab->getUuid(),
+                    "name" => $lab->getName()
+                ]);
+            }
+        }
+        else if ($filter == "student" || $filter == "teacher" || $filter == "admin") {
+            if ($user->isAdministrator()) {
+                if ($filter == "admin") {
+                    $role = "ADMIN";
+                    array_push($subFilter, [
+                        "uuid" => "allAdmins",
+                        "name" => "All administrators"
+                    ]);
+                }
+                else if ($filter == "teacher") {
+                    $role = "TEACHER";
+                    array_push($subFilter, [
+                        "uuid" => "allTeachers",
+                        "name" => "All teachers"
+                    ]);
+                }
+                else {
+                    $role = "USER";
+                    array_push($subFilter, [
+                        "uuid" => "allStudents",
+                        "name" => "All students"
+                    ]);
+                }
+
+                $users = $this->userRepository->findByRole($role);
+
+            }
+            else {
+                if ($filter == "teacher") {
+                    $role = "teachers";
+                    array_push($subFilter, [
+                        "uuid" => "allTeachers",
+                        "name" => "All teachers"
+                    ]);
+                }
+                else {
+                    $role = "students";
+                    array_push($subFilter, [
+                        "uuid" => "allStudents",
+                        "name" => "All students"
+                    ]);
+                }
+                $users = $this->userRepository->findUserTypesByGroups($role, $user);
+            }
+            foreach ($users as $user) {
+                array_push($subFilter, [
+                    "uuid" => $user->getUuid(),
+                    "name" => $user->getName()
+                ]);
+            }
+           
+        }
+        else if ($filter == "none") {
+            array_push($subFilter, [
+                "uuid" => "allInstances",
+                "name" => "All instances"
+            ]);
+        }
+        return new JsonResponse($subFilter);
     }
 
     /**
@@ -546,12 +726,9 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }
 
-     /**
-     * @Rest\Get("/api/instances/lab/by-user/{uuid}", name="api_get_lab_instances_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    public function fetchLabInstancesByUserUuid(Request $request, string $uuid, UserRepository $userRepository)
+    public function fetchLabInstancesByUserUuid(string $uuid)
     {
-        $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
+        $user = is_numeric($uuid) ? $this->userRepository->find($uuid) : $this->userRepository->findOneBy(['uuid' => $uuid]);
 
         if (!$user) throw new NotFoundHttpException('User not found.');
 
@@ -562,18 +739,14 @@ class InstanceController extends Controller
         else {
             $data = $this->labInstanceRepository->findByUserOfOwnerGroup($user, $currentUser);
         }
-        $groups = ['api_get_lab_instance'];
 
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/owned-by-user-type/{userType}", name="api_get_lab_instances_owned_by_user_type")
-     */
-    public function fetchLabInstancesOwnedByUserType(Request $request, string $userType)
+    public function fetchLabInstancesOwnedByUserType(string $userType)
     {
 
         $instances = $this->labInstanceRepository->findBy(['ownedBy' => 'user']);
@@ -622,20 +795,16 @@ class InstanceController extends Controller
             }
         }
         
-        $groups = ['api_get_lab_instance'];
 
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/by-group/{uuid}", name="api_get_lab_instances_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    public function fetchLabInstancesByGroupUuid(Request $request, string $uuid, GroupRepository $groupRepository)
+    public function fetchLabInstancesByGroupUuid(string $uuid)
     {
-        $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
+        $group = is_numeric($uuid) ? $this->groupRepository->find($uuid) : $this->groupRepository->findOneBy(['uuid' => $uuid]);
         
         if (!$group) throw new NotFoundHttpException('Group not found.');
         $user = $this->getUser();
@@ -646,35 +815,27 @@ class InstanceController extends Controller
             throw new AccessDeniedHttpException();
         }
        
-        $groups = ['api_get_lab_instance'];
 
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/by-group", name="api_get_lab_instances_owned_by_group")
-     */
-    public function fetchLabInstancesByGroup(Request $request)
+    public function fetchLabInstancesByGroup()
     {
         $user = $this->getUser();
         $data = $this->labInstanceRepository->findByUserGroups($user);
-        $groups = ['api_get_lab_instance'];
 
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/by-lab/{uuid}", name="api_get_lab_instances_by_lab", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    public function fetchLabInstancesByLabUuid(Request $request, string $uuid, LabRepository $labRepository)
+    public function fetchLabInstancesByLabUuid(string $uuid)
     {
-        $lab = is_numeric($uuid) ? $labRepository->find($uuid) : $labRepository->findOneBy(['uuid' => $uuid]);
+        $lab = is_numeric($uuid) ? $this->labRepository->find($uuid) : $this->labRepository->findOneBy(['uuid' => $uuid]);
 
         if (!$lab) throw new NotFoundHttpException('Lab not found.');
 
@@ -685,18 +846,14 @@ class InstanceController extends Controller
         else {
             $data = $this->labInstanceRepository->findByLabAndUserGroup($lab, $user);
         }
-        $groups = ['api_get_lab_instance'];
 
 
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
-     /**
-     * @Rest\Get("/api/instances/lab/ordered-by-lab", name="api_get_lab_instances_ordered_by_lab")
-     */
-    public function fetchLabInstancesOrdredByLab(Request $request)
+    public function fetchLabInstancesOrdredByLab()
     {
        $user = $this->getUser();
        if ($user->isAdministrator())
@@ -707,9 +864,8 @@ class InstanceController extends Controller
             $data = $this->labInstanceRepository->findByLabAuthorAndGroups($user);
        }
        if (!$data) throw new NotFoundHttpException('No instance found.');
-       $groups = ['api_get_lab_instance'];
 
-        return $this->json($data, 200, [], $groups);
+        return $data;
     }
 
     /**

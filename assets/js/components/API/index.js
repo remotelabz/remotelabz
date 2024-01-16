@@ -713,8 +713,8 @@ export class RemotelabzAPI {
              * 
              * @returns {Promise<import('axios').AxiosResponse<Array<LabInstance>>>}
              */
-            getAll() {
-                return axios.get(`/instances`);
+            getAll(filter="none", subFilter="allInstances", page=1) {
+                return axios.get(`/instances`, {params: {filter, subFilter, page}});
             },
 
             /**
