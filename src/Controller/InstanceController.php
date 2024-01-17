@@ -107,9 +107,13 @@ class InstanceController extends Controller
         $page = (int)$request->query->get('page', 1);
         $limit = 10;
 
-        $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET", "filter"=>$filter, "subFilter" => $subFilter]);
-        $addFilterForm->handleRequest($request);
-
+        if ($user->getHighestRole() != "ROLE_USER") {
+            $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET", "filter"=>$filter, "subFilter" => $subFilter]);
+            $addFilterForm->handleRequest($request);
+        }
+        else {
+            $addFilterForm = null;
+        }
 
         if($subFilter == "allInstances") {
             if ($user->isAdministrator()) {
@@ -121,7 +125,14 @@ class InstanceController extends Controller
             }
         }
         else {
-            $instances = $this->getLabInstances($filter, $subFilter);
+            if ($user->getHighestRole() == "ROLE_USER") {
+                $filter = "none";
+                $subFilter = "allInstances";
+                $instances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            }
+            else {
+                $instances = $this->getLabInstances($filter, $subFilter);
+            }
         }
 
         $AllLabInstances = [];
@@ -172,7 +183,7 @@ class InstanceController extends Controller
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
             'props'=> $props,
-            'addFilterForm' => $addFilterForm->createView(),
+            'addFilterForm' => $addFilterForm == null ? "": $addFilterForm->createView(),
             'count'=> $count,
             'page' => $page,
             'limit' => $limit,

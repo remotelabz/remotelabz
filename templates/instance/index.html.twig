@@ -35,32 +35,34 @@
         <h4 class="p-3 border-bottom">Lab instances
         <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
             {{ svg('question') }} </span></h4>
-        <div>
-            {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
-            {#-<div class="row">
-                <div class="col-lg">{{form_row(addFilterForm.filter)}}</div>
-                <div class="col-lg">{{form_row(addFilterForm.subFilter)}}</div>
-                <div class="col-sm">{{form_row(addFilterForm.submit)}}</div>
-            </div>#}
-            
-            <div class="d-flex align-items-center mb-2">
-                <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
+            {% if is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')%}
+            <div>
+                {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
+                 
+                <div class="d-flex align-items-center mb-2">
+                    <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
 
-                {% for label, value in field_choices(addFilterForm.filter) %}
-                    <option {% if value == field_value(addFilterForm.filter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-                </select>
-                <select name="{{ field_name(addFilterForm.subFilter) }}" id="instance_subFilter" class="mr-3 subFilter form-control"> 
-
-                    {% for label, value in field_choices(addFilterForm.subFilter) %}
-                        <option {% if value == field_value(addFilterForm.subFilter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
+                    {% for label, value in field_choices(addFilterForm.filter) %}
+                        <option {% if value == field_value(addFilterForm.filter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
                     {% endfor %}
-                </select>
-                
-                <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
+                    </select>
+                    <select name="{{ field_name(addFilterForm.subFilter) }}" id="instance_subFilter" class="mr-3 subFilter form-control"> 
+
+                        {% for label, value in field_choices(addFilterForm.subFilter) %}
+                            <option {% if value == field_value(addFilterForm.subFilter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
+                </div>
+                {{ form_end(addFilterForm) }}
             </div>
-            {{ form_end(addFilterForm) }}
-        </div>
+        {% else %}
+            <div>
+            <input type="hidden" id="instance_filter" value="none"/>
+            <input type="hidden" id="instance_subFilter" value="allInstances"/>
+            </div>
+        {% endif %}
         {% if labInstances is empty %}
         <div class="wrapper align-items-center p-3 border-bottom lab-item">
             <span class="lab-item-name">
@@ -218,27 +220,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
         const filterSelector = document.getElementById('instance_filter');
-        filterSelector.addEventListener('change', ()=> {
-             $.ajax({
-                url: "{{ path('api_list_instances_filter') }}",
-                type: "GET",
-                dataType: "JSON",
-                data: {
-                    filter: filterSelector.value
-                },
-                success: function (choices) {
-                    const subFilterSelect = document.getElementById('instance_subFilter');
+        if (filterSelector.nodeName == "SELECT") {
+            filterSelector.addEventListener('change', ()=> {
+                $.ajax({
+                    url: "{{ path('api_list_instances_filter') }}",
+                    type: "GET",
+                    dataType: "JSON",
+                    data: {
+                        filter: filterSelector.value
+                    },
+                    success: function (choices) {
+                        const subFilterSelect = document.getElementById('instance_subFilter');
 
-                    subFilterSelect.innerHTML = '';
+                        subFilterSelect.innerHTML = '';
 
-                    for(let choice of choices){
-                        subFilterSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
+                        for(let choice of choices){
+                            subFilterSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err.response);
                     }
-                },
-                error: function (err) {
-                    console.log(err.response);
-                }
-            });
-        })
+                });
+            })
+        }
+        
     </script>
 {% endblock %}

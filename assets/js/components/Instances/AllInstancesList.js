@@ -197,7 +197,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 None
             </span>
         </div>}
-        {instancesList && 
+        {instancesList && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
         <div className="d-flex justify-content-end mb-2">
             <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
             <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
