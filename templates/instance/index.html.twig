@@ -36,14 +36,14 @@
         <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
             {{ svg('question') }} </span></h4>
         <div>
-            {{ form_start(addFilterForm) }}
-            <div class="row">
+            {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
+            {#-<div class="row">
                 <div class="col-lg">{{form_row(addFilterForm.filter)}}</div>
                 <div class="col-lg">{{form_row(addFilterForm.subFilter)}}</div>
                 <div class="col-sm">{{form_row(addFilterForm.submit)}}</div>
-            </div>
+            </div>#}
             
-            {#-<div class="d-flex align-items-center mb-2">
+            <div class="d-flex align-items-center mb-2">
                 <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
 
                 {% for label, value in field_choices(addFilterForm.filter) %}
@@ -58,7 +58,7 @@
                 </select>
                 
                 <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
-            </div>#}
+            </div>
             {{ form_end(addFilterForm) }}
         </div>
         {% if labInstances is empty %}

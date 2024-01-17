@@ -101,18 +101,14 @@ class InstanceController extends Controller
         $user=$this->getUser();
 
         $search = $request->query->get('search', '');
-        $filter = $request->query->get('filter', 'none');
-        $subFilter = $request->query->get('subFilter', 'allInstances');
+        $instance = $request->query->get('instance');
+        $filter = $instance ? $instance['filter'] : "none";
+        $subFilter = $instance ? $instance['subFilter'] : "allInstances";
         $page = (int)$request->query->get('page', 1);
         $limit = 10;
 
-        $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET"]);
+        $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET", "filter"=>$filter, "subFilter" => $subFilter]);
         $addFilterForm->handleRequest($request);
-        if ($addFilterForm->isSubmitted() && $addFilterForm->isValid()) {
-            $data = $addFilterForm->getData();
-            $filter = $data['filter'];
-            $subFilter = $data['subFilter'];
-        }
 
 
         if($subFilter == "allInstances") {
