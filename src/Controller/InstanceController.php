@@ -737,7 +737,7 @@ class InstanceController extends Controller
         }
 
 
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+        if (!$data) $data=[];
 
         return $data;
     }
@@ -793,7 +793,7 @@ class InstanceController extends Controller
         
 
 
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+        if (!$data) $data= [];
 
         return $data;
     }
@@ -813,7 +813,7 @@ class InstanceController extends Controller
        
 
 
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+        if (!$data) $data =[];
 
         return $data;
     }
@@ -824,7 +824,7 @@ class InstanceController extends Controller
         $data = $this->labInstanceRepository->findByUserGroups($user);
 
 
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+        if (!$data) $data=[];
 
         return $data;
     }
@@ -844,7 +844,7 @@ class InstanceController extends Controller
         }
 
 
-        if (!$data) throw new NotFoundHttpException('No instance found.');
+        if (!$data) $data=[];
 
         return $data;
     }
@@ -859,7 +859,7 @@ class InstanceController extends Controller
        else {
             $data = $this->labInstanceRepository->findByLabAuthorAndGroups($user);
        }
-       if (!$data) throw new NotFoundHttpException('No instance found.');
+       if (!$data) $data= [];
 
         return $data;
     }
