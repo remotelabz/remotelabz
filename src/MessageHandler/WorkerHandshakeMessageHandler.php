@@ -12,6 +12,7 @@ use JMS\Serializer\SerializerInterface;
 use Remotelabz\Message\Message\WorkerHandshakeMessage;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 
 class WorkerHandshakeMessageHandler implements MessageHandlerInterface
 {
@@ -44,6 +45,7 @@ class WorkerHandshakeMessageHandler implements MessageHandlerInterface
         $deviceInstances = $this->deviceInstanceRepository->findAllStartingOrStarted();
 
         foreach ($deviceInstances as $deviceInstance) {
+            $workerIp = $deviceInstance->getLabInstance()->getWorkerIp();         
             $deviceInstance->setState(InstanceState::STARTING);
             $this->entityManager->flush();
             $uuid = $deviceInstance->getUuid();
@@ -52,7 +54,9 @@ class WorkerHandshakeMessageHandler implements MessageHandlerInterface
             $this->logger->info('Sending device instance '.$uuid.' start message.');
             $this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
             $this->bus->dispatch(
-                new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START)
+                new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START), [
+                    new AmqpStamp($workerIp, AMQP_NOPARAM, []),
+                ]
             );
         }
     }
