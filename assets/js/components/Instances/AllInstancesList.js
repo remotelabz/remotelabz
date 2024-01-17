@@ -106,6 +106,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
+        let promises = []
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -116,26 +117,35 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
 
         if (force == false) {
             for(let instanceToDelete of instancesToDelete) {
-                Remotelabz.instances.lab.get(instanceToDelete)
-                .then((response) => {
-                    if (hasInstancesStillRunning(response.data)) {
-                        running = true;
-                        for(let deviceInstance of response.data.deviceInstances) {
-                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
-                                deviceInstancesToStop.push(deviceInstance);
-                            }
-                        }
-
-    
-                        if (running == true) {
-                            setShowForceLeaveLabModal(true);
-                        }
-                    }
-                    else {
-                        onLeaveLab(true);
-                    }
+                promises.push(()=> {return Remotelabz.instances.lab.get(instanceToDelete)
+                    .then((response) => {
+                        if (hasInstancesStillRunning(response.data)) {
+                            running = true;
+                            for(let deviceInstance of response.data.deviceInstances) {
+                                if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
+                                    deviceInstancesToStop.push(deviceInstance);
+                                }
+                            }  
+                            
+                        }                    
+                    })
                 })
             }
+            promises.push(()=>{
+                if (running == true) {
+                    setShowForceLeaveLabModal(true);
+                }
+                else {
+                    onLeaveLab(true);
+                }
+            })
+            promises.reduce((prev, promise) => {
+                return prev
+                  .then(promise)
+                  .catch(err => {
+                    console.warn('err', err.message);
+                  });
+              }, Promise.resolve());         
             
         }
 
@@ -144,7 +154,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
             for(let instanceToDelete of instancesToDelete) {
                 try {
                     Remotelabz.instances.lab.delete(instanceToDelete)
-                    setLabInstances(instances.map((instance)=> {
+                    setLabInstances(labInstances.map((instance)=> {
                         if (instance.uuid == instanceToDelete) {
                             instance.state = "deleting"
                         }
