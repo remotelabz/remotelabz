@@ -10,8 +10,8 @@
     {{ parent() }}
 {% endblock %}
 
-{% set filter = filter|default('all') %}
-{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
+{# {% set filter = filter|default('all') %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}#}
 
 {% block wrapper %}
     <div class="top-panel">
@@ -19,22 +19,50 @@
                 {% if is_granted('ROLE_ADMINISTRATOR') %}
                 {% endif %}
             </div>
+            <input type="hidden" id="instance_page" value={{page}}/>
     </div>
-    {# <div class="search-panel">
+     {#<div class="search-panel">
         <form action="{{ path('instances') }}" method="GET">
             <input type="search" class="form-control input-sm" name="search"
             placeholder="Search by name"
             spellcheck="false" value="{{ search|default('') }}" type="search">
         </form>
+        
     </div> #}
     <div class="labs-panel">
-
-    {% if filter == "all" or filter == "labs" %}
+   {# {% if filter == "all" or filter == "labs" %}
         {#- Lab instances -#}
-
         <h4 class="p-3 border-bottom">Lab instances
         <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
             {{ svg('question') }} </span></h4>
+            {% if is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_TEACHER')%}
+            <div>
+                {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
+                 
+                <div class="d-flex align-items-center mb-2">
+                    <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
+
+                    {% for label, value in field_choices(addFilterForm.filter) %}
+                        <option {% if value == field_value(addFilterForm.filter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                    </select>
+                    <select name="{{ field_name(addFilterForm.subFilter) }}" id="instance_subFilter" class="mr-3 subFilter form-control"> 
+
+                        {% for label, value in field_choices(addFilterForm.subFilter) %}
+                            <option {% if value == field_value(addFilterForm.subFilter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
+                </div>
+                {{ form_end(addFilterForm) }}
+            </div>
+        {% else %}
+            <div>
+            <input type="hidden" id="instance_filter" value="none"/>
+            <input type="hidden" id="instance_subFilter" value="allInstances"/>
+            </div>
+        {% endif %}
         {% if labInstances is empty %}
         <div class="wrapper align-items-center p-3 border-bottom lab-item">
             <span class="lab-item-name">
@@ -42,10 +70,11 @@
             </span>
         </div>
         {% else %}
-        <div class="col">{{ react_component('InstanceFilterSelect', {'props': props})}}</div>
+        <div class="col">{{ react_component('AllInstancesList', {"props": props})}}</div>
         {% endif %}
         {#{% for element in labInstances %}
-        {{dump(element.instance.id)}}#}
+        {{dump(element.instance.id)}}
+        #}
             
         {#TODO: #666 Create a component for this element to manage all the instance in React and avoid to refresh the page when we have to delete an instance or to detect a new instance  
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">#}
@@ -93,8 +122,8 @@
             </div>
         </div>
         {% endfor %}
-        <div class="col">{{ react_component('AllInstancesList', {'props': labInstances}) }}</div>#}
-    {% endif %}
+        <div class="col">{{ react_component('AllInstancesList', {'props': labInstances}) }}</div>
+    {% endif %}#}
 
     {# {% if filter == "all" or filter == "devices" %}
         
@@ -170,9 +199,51 @@
     {% endif %}
     #}
     </div>
-    
+    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    <nav aria-label="Page navigation example">
+        <ul class="pagination mt-3 justify-content-center">
+            <li class="page-item {% if page <= 1 %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('instances', app.request.query|merge({page: page-1})) }}">Previous</a>
+            </li>
+            {% for i in 1.. pagesNumber %}
+                <li class="page-item {% if i == page %}active{%endif%}"><a class="page-link" href="{{ path('instances', app.request.query|merge({page: i})) }}">{{ i }}</a></li>
+            {% endfor %}
+            <li class="page-item {% if page >= pagesNumber %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('instances', app.request.query|merge({page: page+1})) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        const filterSelector = document.getElementById('instance_filter');
+        if (filterSelector.nodeName == "SELECT") {
+            filterSelector.addEventListener('change', ()=> {
+                $.ajax({
+                    url: "{{ path('api_list_instances_filter') }}",
+                    type: "GET",
+                    dataType: "JSON",
+                    data: {
+                        filter: filterSelector.value
+                    },
+                    success: function (choices) {
+                        const subFilterSelect = document.getElementById('instance_subFilter');
+
+                        subFilterSelect.innerHTML = '';
+
+                        for(let choice of choices){
+                            subFilterSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err.response);
+                    }
+                });
+            })
+        }
+        
+    </script>
 {% endblock %}
