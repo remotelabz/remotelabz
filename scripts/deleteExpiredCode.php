@@ -8,7 +8,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 // get expired codes with lab and devices instances
 $curl = curl_init();
-curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/expiredToken/instances");
+curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/expiredToken/instances");
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
 curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -27,7 +27,7 @@ if ($codes !== null) {
         foreach($code['device_instances'] as $deviceInstance) {
             //stop device instances linked to the user
             $curl = curl_init();
-            curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/instances/stop/by-uuid/".$deviceInstance['device_instance_uuid']);
+            curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/instances/stop/by-uuid/".$deviceInstance['device_instance_uuid']);
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
             curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
             curl_exec($curl);
@@ -40,7 +40,7 @@ if ($codes !== null) {
     
         //delete lab instance linked to the user
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/instances/".$code['lab_instance_uuid']);
+        curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/instances/".$code['lab_instance_uuid']);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
         curl_exec($curl);
@@ -52,7 +52,7 @@ if ($codes !== null) {
         sleep(3);
         //delete user
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/codes/".$code['guest_uuid']);
+        curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/codes/".$code['guest_uuid']);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
         curl_exec($curl);
@@ -67,7 +67,7 @@ if ($codes !== null) {
 
 // get expired codes without instance
 $curl = curl_init();
-curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/expiredToken");
+curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/expiredToken");
 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
 curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -86,7 +86,7 @@ if ($codesWithoutInstance !== null) {
     foreach($codesWithoutInstance as $code) {
         //delete user
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $_SERVER['PUBLIC_ADDRESS']."/api/codes/".$code['guest_uuid']);
+        curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/codes/".$code['guest_uuid']);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["cachecontrol: no-cache"]);
         curl_exec($curl);
