@@ -14,6 +14,7 @@ use App\Repository\FlavorRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\LabRepository;
 use App\Repository\OperatingSystemRepository;
+use App\Repository\ControlProtocolTypeRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -45,6 +46,7 @@ class LabImporter
         EntityManagerInterface $entityManager,
         OperatingSystemRepository $operatingSystemRepository,
         HypervisorRepository $hypervisorRepository,
+        ControlProtocolTypeRepository $controlProtocolTypeRepository,
         BannerManager $bannerManager,
         string $rootDirectory
     ) {
@@ -56,6 +58,7 @@ class LabImporter
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
+        $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->bannerManager = $bannerManager;
         $this->rootDirectory = $rootDirectory;
     }
@@ -87,7 +90,6 @@ class LabImporter
 
             throw new InvalidArgumentException("Invalid JSON was provided!");
         }
-
 
         $lab = new Lab();
         if (array_key_exists("description",$labJson)) {
@@ -232,8 +234,14 @@ class LabImporter
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)
                 ->setEditorData($editorData)
-                ->setIsTemplate(false);
+                ->setIsTemplate(false)
+                ->setNetworkInterfaceTemplate($deviceJson['networkInterfaceTemplate'])
             ;
+            
+            foreach($deviceJson["controlProtocolTypes"] as $controlProtocolTypeJson){
+                $controlProtocolType = $this->controlProtocolTypeRepository->find($controlProtocolTypeJson["id"]);
+                $device->addControlProtocolType($controlProtocolType);
+            }
 
             if(isset($deviceJson['nbSocket'])) {
                 $device->setNbSocket($deviceJson['nbSocket']);
@@ -260,6 +268,9 @@ class LabImporter
                     ->setName($networkInterfaceJson['name'])
                     ->setType($networkInterfaceJson['type'])
                     ->setVlan($networkInterfaceJson['vlan'])
+                    ->setConnection($networkInterfaceJson['connection'])
+                    ->setConnectorType($networkInterfaceJson['connectorType'])
+                    ->setConnectorLabel($networkInterfaceJson['connectorLabel'])
                     ->setSettings($networkSettings)
                     ->setIsTemplate(false)
                 ;

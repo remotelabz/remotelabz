@@ -901,8 +901,8 @@ $(document).on('click', '.action-connedit', function (e) {
                     '</div>' +
                 '</div>' +
                 '</form>'
-        var title = "Warning"
-        addModal(title, body, "", "make-red make-small");
+        var title = "Edit connection"
+        addModal(title, body, "");
      }).fail(function (message) {
         addModalError(message);
      });

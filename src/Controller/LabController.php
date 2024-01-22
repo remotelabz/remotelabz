@@ -693,6 +693,9 @@ class LabController extends Controller
                         $i=$i+1;
                         $new_network_inter->setIsTemplate(true);
                         $new_network_inter->setVlan($network_int->getVlan());
+                        $new_network_inter->setConnection($network_int->getConnection());
+                        $new_network_inter->setConnectorType($network_int->getConnectorType());
+                        $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
                         $new_device->addNetworkInterface($new_network_inter);
                         $new_setting->setName($new_network_inter->getName());
                         $entityManager->persist($new_network_inter);
