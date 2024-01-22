@@ -131,7 +131,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
      */
     public function getUsername(): string
     {
-        return (string) $this->mail;
+        return (string) $this->code;
     }
 
     /**
@@ -141,7 +141,7 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->mail;
+        return (string) $this->code;
     }
 
     /**

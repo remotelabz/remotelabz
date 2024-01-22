@@ -190,7 +190,7 @@ class InvitationController extends Controller
     {
         $invitationCode = $this->invitationCodeRepository->findBy(['uuid'=>$uuid]);
         $entityManager = $this->getDoctrine()->getManager();
-        $this->logger->info("User ".$invitationCode[0]->getMail()." is deleted");
+        $this->logger->info("Code for user ".$invitationCode[0]->getMail()." and lab ".$invitationCode[0]->getLab()->getName()." are deleted");
         $entityManager->remove($invitationCode[0]);
         $entityManager->flush();
 
@@ -239,7 +239,7 @@ class InvitationController extends Controller
                         'emails/invitation.html.twig',
                         [
                             'labName' => $lab->getName(),
-                            'link' => $this->generateUrl('login', [],  UrlGeneratorInterface::ABSOLUTE_URL),
+                            'link' => $this->generateUrl('code_login', [],  UrlGeneratorInterface::ABSOLUTE_URL),
                             'code' => $code
                         ]
                     )
