@@ -19,11 +19,11 @@ security:
         invited_users:
             entity:
                 class: App\Entity\InvitationCode
-                property: mail
+                property: code
 
         all_users:
             chain:
-                providers: ['app', 'invited_users']
+                providers: ['invited_users', 'app']
 
     role_hierarchy:
         ROLE_TEACHER: [ROLE_USER]
