@@ -634,6 +634,9 @@ class InstanceManager
             $new_network_inter->setSettings($new_setting);
             $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
             $new_network_inter->setVlan($network_int->getVlan());
+            $new_network_inter->setConnection($network_int->getConnection());
+            $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
+            $new_network_inter->setConnectorType($network_int->getConnectorType());
             $i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);

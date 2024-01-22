@@ -60,20 +60,20 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $connection;
 
      /**
      * @ORM\Column(type="string", nullable=true, options={"default": null})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      * @Assert\Choice({"Straight","Bezier", "Flowchart"})
      */
     private $connectorType;
 
     /**
      * @ORM\Column(type="string", nullable=true, options={"default": null})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $connectorLabel;
 
@@ -186,7 +186,7 @@ class NetworkInterface implements InstanciableInterface
         return $this->connection;
     }
 
-    public function setConnection(int $connection): self
+    public function setConnection(?int $connection): self
     {
         $this->connection = $connection;
 
@@ -198,7 +198,7 @@ class NetworkInterface implements InstanciableInterface
         return $this->connectorType;
     }
 
-    public function setConnectorType(string $connectorType): self
+    public function setConnectorType(?string $connectorType): self
     {
         $this->connectorType = $connectorType;
 
@@ -210,7 +210,7 @@ class NetworkInterface implements InstanciableInterface
         return $this->connectorLabel;
     }
 
-    public function setConnectorLabel(string $connectorLabel): self
+    public function setConnectorLabel(?string $connectorLabel): self
     {
         $this->connectorLabel = $connectorLabel;
 
