@@ -273,13 +273,14 @@ class InvitationController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
 
         $invitationCode = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
-
+        $date = new \DateTime();
+        $date->modify('+'.$duration['hour'].' hours + '.$duration['minute'].' minutes');
         if (!$invitationCode) {
             $invitation = new InvitationCode();
             $invitation->setCode($code);
             $invitation->setMail($email);
             $invitation->setLab($lab);
-            $invitation->setExpiryDate(new \DateTime('@'.strtotime('+'.$duration['hour'].' hours '.$duration['minute'].' minutes')));
+            $invitation->setExpiryDate($date);
             $entityManager->persist($invitation);
             $entityManager->flush();
 
