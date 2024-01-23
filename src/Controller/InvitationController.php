@@ -190,7 +190,7 @@ class InvitationController extends Controller
     {
         $invitationCode = $this->invitationCodeRepository->findBy(['uuid'=>$uuid]);
         $entityManager = $this->getDoctrine()->getManager();
-        $this->logger->info("Code for user ".$invitationCode[0]->getMail()." and lab ".$invitationCode[0]->getLab()->getName()." are deleted");
+        $this->logger->info("Code for user ".$invitationCode[0]->getMail()." and lab ".$invitationCode[0]->getLab()->getName()." is deleted");
         $entityManager->remove($invitationCode[0]);
         $entityManager->flush();
 
