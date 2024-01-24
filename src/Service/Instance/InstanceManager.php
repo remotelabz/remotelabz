@@ -625,7 +625,7 @@ class InstanceManager
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
 
-        $i=0;
+        //$i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
             $new_setting=new NetworkSettings();
@@ -637,7 +637,7 @@ class InstanceManager
             $new_network_inter->setConnection($network_int->getConnection());
             $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
             $new_network_inter->setConnectorType($network_int->getConnectorType());
-            $i=$i+1;
+            //$i=$i+1;
             $new_network_inter->setIsTemplate(true);
             $newDevice->addNetworkInterface($new_network_inter);
         }
