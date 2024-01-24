@@ -632,7 +632,7 @@ class InstanceManager
             $new_setting=clone $network_int->getSettings();
             
             $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
+            $new_network_inter->setName($network_int->getName());
             $new_network_inter->setVlan($network_int->getVlan());
             $new_network_inter->setConnection($network_int->getConnection());
             $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
