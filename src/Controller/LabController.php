@@ -682,15 +682,15 @@ class LabController extends Controller
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
                 $this->logger->debug("Source device id adds is :".$device_array['id']);
-                $i=0;
+                //$i=0;
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
                         $new_network_inter=new NetworkInterface();
                         $new_setting=new NetworkSettings();
                         $new_setting=clone $network_int->getSettings();
                         $new_network_inter->setSettings($new_setting);
-                        $new_network_inter->setName($device->getNetworkInterfaceTemplate().$i);
-                        $i=$i+1;
+                        $new_network_inter->setName($network_int->getName());
+                        //$i=$i+1;
                         $new_network_inter->setIsTemplate(true);
                         $new_network_inter->setVlan($network_int->getVlan());
                         $new_network_inter->setConnection($network_int->getConnection());
