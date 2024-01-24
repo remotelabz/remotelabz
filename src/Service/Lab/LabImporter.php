@@ -270,11 +270,14 @@ class LabImporter
                     ->setVlan($networkInterfaceJson['vlan'])
                     ->setConnection($networkInterfaceJson['connection'])
                     ->setConnectorType($networkInterfaceJson['connectorType'])
-                    ->setConnectorLabel($networkInterfaceJson['connectorLabel'])
                     ->setSettings($networkSettings)
                     ->setIsTemplate(false)
                 ;
 
+                if(isset($networkInterfaceJson['connectorLabel'])) {
+                    $networkInterface->setConnectorLabel($networkInterfaceJson['connectorLabel']);
+                }
+                
                 $device->addNetworkInterface($networkInterface);
                 $this->entityManager->persist($networkInterface);
             }
