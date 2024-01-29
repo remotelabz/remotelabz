@@ -517,38 +517,41 @@ class UserController extends Controller
                             $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
                             if ($validEmail && $this->userRepository->findByEmail($email) == null) {
+                                var_dump($user->getName());
                                 $entityManager->persist($user);
                                 $this->sendNewAccountEmail($user, $password);
                                 $addedUsers[$row] = $user;
-                            }
 
-                        }
-                        if ($group != "") {
-                            if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
-                                $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
-                                $group_wanted = new Group();
-                                $group_wanted->setName($group);
-                                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                $slug_wanted=str_replace(" ","-",$group);
-
-                                $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
-                                $i=1;
-                                while($slug_list) {
-                                    if ($slug_wanted==$slug_list->getSlug()) {
-                                        $this->logger->debug("The slug ".$slug_wanted." exists");
-                                        $slug_wanted=$slug_wanted.$i;
-                                        $i++;
+                                if ($group != "") {
+                                    if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
+                                        $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
+                                        $group_wanted = new Group();
+                                        $group_wanted->setName($group);
+                                        $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+                                        $slug_wanted=str_replace(" ","-",$group);
+        
+                                        $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                        $i=1;
+                                        while($slug_list) {
+                                            if ($slug_wanted==$slug_list->getSlug()) {
+                                                $this->logger->debug("The slug ".$slug_wanted." exists");
+                                                $slug_wanted=$slug_wanted.$i;
+                                                $i++;
+                                            }
+                                            $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                        }
+                                        $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
+                                        $group_wanted->setSlug($slug_wanted);
+                                        $entityManager->persist($group_wanted);
+                                        $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
                                     }
-                                    $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                    if (!$user->isMemberOf($group_wanted))
+                                        $group_wanted->addUser($user);
                                 }
-                                $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
-                                $group_wanted->setSlug($slug_wanted);
-                                $entityManager->persist($group_wanted);
-                                $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
                             }
-                            if (!$user->isMemberOf($group_wanted))
-                                $group_wanted->addUser($user);
+
                         }
+                        
                         $row++;
                     }
                     $entityManager->flush();
