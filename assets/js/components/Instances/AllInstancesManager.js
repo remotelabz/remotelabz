@@ -8,10 +8,13 @@ import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstra
 import moment from 'moment/moment';
 
 function AllInstancesManager(props) { 
-    const [labInstance, setLabInstance] = useState(props.props)
+    const [labInstance, setLabInstance] = useState([])
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
+    useEffect(()=> {
+        setLabInstance(props.props);
+    })
     function hasInstancesStillRunning() {
         //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
         return false;
