@@ -44,25 +44,33 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 response.data
             )
 
-            const list = response.data.map((labInstance) => {
-                return (
-                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
-                    <div>
+            if (response.data === "") {
+                const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
+                                <span class="lab-item-name">
+                                    None
+                                </span>
+                            </div>
+                setInstancesList(list)
+            }
+            else {
+                const list = response.data.map((labInstance) => {
+                    return (
+                    <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
                         <div>
-                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
-                            </a>
-                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                            {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` : 
-                            labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` : ` group ${labInstance.owner.name}` )}<br/>
+                            <div>
+                                <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                                </a>
+                                Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                                {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` : 
+                                labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` : ` group ${labInstance.owner.name}` )}<br/>
+                            </div>
+                            
+                            <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                         </div>
-                        
-                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
-                    </div>
-                </div>)
-            });
-
-            setInstancesList(list)
-
+                    </div>)
+                });
+                setInstancesList(list)
+            }
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
@@ -191,13 +199,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     return (<>
-        {!instancesList && 
-        <div class="wrapper align-items-center p-3 border-bottom lab-item">
-            <span class="lab-item-name">
-                None
-            </span>
-        </div>}
-        {instancesList && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
+        {instancesList && labInstances !== "" && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
         <div className="d-flex justify-content-end mb-2">
             <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
             <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
