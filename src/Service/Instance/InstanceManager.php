@@ -565,6 +565,11 @@ class InstanceManager
         $newLab->setLocked($lab->getLocked());
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
+        if ($lab->getHasTimer()) {
+            $newLab->setHasTimer($lab->getHasTimer());
+            $newLab->setTimer($lab->getTimer());
+        }
+        
 
         if (count($lab->getTextobjects()) >= 1) {
             foreach($lab->getTextobjects() as $textObject) {

@@ -26,7 +26,7 @@ class TextObject implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_text_object", "api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_text_object", "api_get_lab", "api_get_lab_instance", "api_get_lab_template", "export_lab"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -58,7 +58,7 @@ class TextObject implements InstanciableInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="textobjects", cascade={"persist"})
      * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_text_object", "export_lab"})
+     * @Serializer\Groups({"api_get_text_object"})
      */
     private $lab;
 

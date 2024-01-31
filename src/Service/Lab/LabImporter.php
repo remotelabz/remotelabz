@@ -22,6 +22,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use function Symfony\Component\String\u;
 use App\Service\Lab\BannerManager;
 
@@ -36,6 +37,8 @@ class LabImporter
     protected $operatingSystemRepository;
     protected $bannerManager;
     private $rootDirectory;
+    private $publicImageDirectory;
+    private $bannerDirectory;
 
     public function __construct(
         LoggerInterface $logger,
@@ -48,7 +51,9 @@ class LabImporter
         HypervisorRepository $hypervisorRepository,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         BannerManager $bannerManager,
-        string $rootDirectory
+        string $rootDirectory,
+        string $publicImageDirectory,
+        string $bannerDirectory
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -61,6 +66,8 @@ class LabImporter
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->bannerManager = $bannerManager;
         $this->rootDirectory = $rootDirectory;
+        $this->publicImageDirectory = $publicImageDirectory;
+        $this->bannerDirectory = $bannerDirectory;
     }
 
     /**
@@ -152,6 +159,12 @@ class LabImporter
             //->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
         ;
+
+        if ($labJson["hasTimer"] && array_key_exists("timer",$labJson)) {
+            $lab
+                ->setHasTimer($labJson["hasTimer"])
+                ->setTimer($labJson["timer"]);
+        }
 
 
         foreach ($labJson['devices'] as $deviceJson) {
@@ -291,7 +304,23 @@ class LabImporter
 
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
-        $this->bannerManager->copyBanner($labJson['id'], $lab->getId());
+        if (array_key_exists("id",$labJson)) {
+            $this->bannerManager->copyBanner($labJson['id'], $lab->getId());
+        }
+        else {
+            $filesystem = new Filesystem();
+            try {
+                $src=$this->publicImageDirectory.'/logo/nopic.jpg';
+                $dst=$this->bannerDirectory.'/'.$lab->getId().'/nopic.jpg';
+            $filesystem->copy($src,$dst);
+            $this->logger->debug("Copy from ".$src." to ".$dst);
+            $lab->setBanner('nopic.jpg');
+            $this->entityManager->flush();
+            }
+            catch (IOExceptionInterface $exception) {
+                $this->logger->error("An error occurred while creating your directory at ".$exception->getPath());
+            }
+        }
         foreach($lab->getPictures() as $picture) {
             $type = explode("image/",$picture->getType())[1];
             file_put_contents($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type, $picture->getData());

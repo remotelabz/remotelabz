@@ -129,7 +129,7 @@ class Lab implements InstanciableInterface
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
      * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template", "export_lab"})
      *
      * @var Collection|TextObject[]
      */
@@ -146,13 +146,13 @@ class Lab implements InstanciableInterface
 
     /**
      * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
     private $hasTimer = false;
 
     /**
      * @ORM\Column(type="string", nullable="true")
-     * @Serializer\Groups({"api_get_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      * @Assert\Time
      * @var string A "H:i:s" formatted value 
      */
