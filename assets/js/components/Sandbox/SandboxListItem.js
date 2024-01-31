@@ -54,11 +54,17 @@ class SandboxListItem extends Component {
         });
         if(this.props.itemType == "device") {
             var labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
+            var fields = {name: labName};
         }
         else if (this.props.itemType == "lab") {
             var labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
+            var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
+            if (this.props.item.hasTimer) {
+                let timerArray = this.props.item.timer.split(":");
+                fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}}
+            }
         }
-        var labObj = { id: lab.id, fields: {name: labName}};
+        var labObj = { id: lab.id, fields: fields};
         Remotelabz.labs.update(labObj);
 
         if (this.props.itemType == "lab") {

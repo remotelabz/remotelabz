@@ -109,6 +109,8 @@ services:
     App\Service\Lab\LabImporter:
         arguments:
             $rootDirectory: '%kernel.project_dir%'
+            $publicImageDirectory: '%directory.public.images%'
+            $bannerDirectory: '%directory.public.upload.lab.banner%'
 
     App\Service\ImageFileUploader:
         arguments:
