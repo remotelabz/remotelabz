@@ -4,48 +4,46 @@
     {% set category = category|default('dashboard') %}
     <nav class="sidebar sidebar-offcanvas {% if app.request.cookies.get('sidebar_collapsed') == 'true' %}sidebar-collapsed{%endif%}" id="sidebar">
         {% block sidebar_header %}
-            <div class="context-header">
+            <div class="context-header" id ="sidebarContext">
                 {{ sidebar.header('users', 'admin') }}
             </div>
         {% endblock %}
 
-        <ul class="nav">
+        <ul class="nav overflow-scroll" id="sidebar-scroll">
             {{ sidebar.link("User", 'users', null, 'user', 'users', _context) }}
             {{ sidebar.link("Mail", 'admin_write_mail', null, 'mail', 'mail', _context) }}
             {# {{ sidebar.link("Groups", 'groups', null, 'group', 'groups', _context) }} #}
-            <li class="nav-item">
+            {#<li class="nav-item">
                 <a class="nav-link dropdown-toggle" href="#deviceSubmenu" data-toggle="collapse" aria-expanded="false">
                     {{- svg('pod', 'image-sm') -}}
                     <span class="menu-title">Device components</span>
                 </a>
-                <ul class="collapse list-unstyled" id="deviceSubmenu">
+                <ul class="collapse list-unstyled" id="deviceSubmenu">#}
                     {{ sidebar.link("Flavor", 'flavors', null, 'disk', 'flavors', _context) }}
                     {{ sidebar.link("Control Protocol", 'controlProtocolType', null, 'disk', 'controlProtocolType', _context) }}
                     {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
                     {{ sidebar.link("Hypervisor", 'hypervisor', null, 'cloud-gear', 'hypervisor', _context) }}
                     {{ sidebar.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
-                </ul>
-            </li>
+               {# </ul>
+            </li>#}
             {{ sidebar.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
             {{ sidebar.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
             {{ sidebar.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
             {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
-            {{ sidebar.link("Database", 'admin_database', null, 'redo', 'database', _context) }}
-            <li class="nav-item">
+            {# <li class="nav-item">
                 <a class="nav-link dropdown-toggle" href="#systemSubmenu" data-toggle="collapse" aria-expanded="false">
                     {{- svg('api', 'image-sm') -}}
                     <span class="menu-title">System</span>
                 </a>
-                <ul class="collapse list-unstyled" id="systemSubmenu">
+                <ul class="collapse list-unstyled" id="systemSubmenu">#}
                     {{ sidebar.link("Workers", 'admin_config', null, 'settings', 'config', _context) }}
                     {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
                     {{ sidebar.link("Usage", 'resources', null, 'tachometer', 'resources', _context) }}
-                </ul>
-            </li>
-
-
+               {# </ul>
+            </li>#}
+            {{ sidebar.link("Database", 'admin_database', null, 'redo', 'database', _context) }}
             <div class="nav-item">
-            <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button">
+            <a class="toggle-sidebar nav-link" role="button" title="Toggle sidebar" type="button" id="toggle-sidebar">
                 <span class="toggle-sidebar-hide">{{ svg('angle-double-left') }}Collapse sidebar</span>
                 <span class="toggle-sidebar-show">{{ svg('angle-double-right') }}</span>
             </a>
@@ -53,4 +51,3 @@
         </ul>
     </nav>
 {% endblock %}
-
