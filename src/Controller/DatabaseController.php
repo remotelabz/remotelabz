@@ -20,6 +20,7 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class DatabaseController extends Controller
 {
@@ -100,7 +101,8 @@ class DatabaseController extends Controller
     /**
     * @Route("/admin/database/backup", name="admin_database_backup", methods="GET")
     * @Rest\Get("/api/database/backup", name="api_database_backup")
-    * 
+    *
+    * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
     */
     public function databaseBackup(Request $request)
     {

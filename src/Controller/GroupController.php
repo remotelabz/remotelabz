@@ -31,6 +31,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class GroupController extends Controller
 {
@@ -93,6 +95,8 @@ class GroupController extends Controller
      * @Route("/explore/groups", name="dashboard_explore_groups")
      *
      * @Rest\Get("/api/groups", name="api_groups")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function dashboardIndexAction(Request $request)
     {
@@ -175,6 +179,8 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $labs = [];
 
         $instances = $labInstanceRepository->findByGroup($group);
@@ -225,7 +231,15 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
-        $lab = $labRepository->findOneBy(['uuid' => $uuid]);
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+    
+        if (!$lab = $labRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('Lab with UUID '.$uuid.' does not exist.');
+        }
+        
+        if (!$group->getLabs()->contains($lab)) {
+            throw new BadRequestHttpException('This lab '.$lab->getName().' in not in the group '.$slug.'.');
+        }
         $instances = $labInstanceRepository->findByGroupAndLabUuid($group, $lab);
 
         if ('json' === $request->getRequestFormat()) {
@@ -253,6 +267,8 @@ class GroupController extends Controller
      * @Route("/groups/new", name="new_group")
      *
      * @Rest\Post("/api/groups", name="api_new_group")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newAction(Request $request, ValidatorInterface $validator)
     {
@@ -417,6 +433,7 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
 
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
@@ -463,6 +480,7 @@ class GroupController extends Controller
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
 
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $parentId = $request->request->get('parent');
 
         if ($parentId !== null) {
@@ -680,6 +698,8 @@ class GroupController extends Controller
     public function getGroupPictureAction(Request $request, string $slug, KernelInterface $kernel)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
+        $this->denyAccessUnlessGranted(GroupVoter::VIEW, $group);
+
         $size = $request->query->get('size', 128);
         $picture = $group->getPicture();
 
@@ -705,6 +725,8 @@ class GroupController extends Controller
     public function uploadGroupPictureAction(Request $request, GroupPictureFileUploader $fileUploader, string $slug)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
         $fileUploader->setGroup($group);
 
         $pictureFile = $request->files->get('picture');
@@ -824,6 +846,7 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         //$lab= Fetch all laboratories of privileged user of this group
         $labs=$group->getLabs();
         

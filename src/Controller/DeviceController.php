@@ -9,6 +9,7 @@ use App\Entity\NetworkSettings;
 use App\Entity\EditorData;
 use App\Entity\ControlProtocolType;
 use App\Entity\OperatingSystem;
+use App\Entity\InvitationCode;
 use App\Form\DeviceType;
 use App\Form\EditorDataType;
 use App\Form\ControlProtocolTypeType;
@@ -22,6 +23,7 @@ use App\Repository\FlavorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\NetworkInterfaceRepository;
+use App\Security\ACL\LabVoter;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -29,6 +31,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -37,6 +40,7 @@ use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 
 class DeviceController extends Controller
@@ -84,6 +88,8 @@ class DeviceController extends Controller
      * @Route("/admin/devices", name="devices")
      * 
      * @Rest\Get("/api/devices", name="api_devices")
+     * 
+     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -150,6 +156,8 @@ class DeviceController extends Controller
     public function indexActionTest(Request $request, int $id)
     {
         $lab = $this->labRepository->findById($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE_DEVICE, $lab);
+
         $nodeData = json_decode($request->getContent(), true);
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
@@ -267,13 +275,48 @@ class DeviceController extends Controller
      * @Route("/devices/{id<\d+>}", name="show_device_public", methods="GET")
      * 
      * @Rest\Get("/api/devices/{id<\d+>}", name="api_get_device")
+     * 
      */
     public function showAction(Request $request, int $id)
     {
         $device = $this->deviceRepository->find($id);
-
         if (!$device) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
+        }
+
+        $canViewDevice = false;
+        $user = $this->getUser();
+        if ($user instanceof InvitationCode) {
+            foreach ($user->getLab()->getDevices() as $userDevice) {
+                if ($userDevice == $device) {
+                    $canViewDevice = true;
+                }
+            }
+        }
+        else {
+            if ($user->getHighestRole() == "ROLE_TEACHER") {
+                $labInstances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            }
+            else {
+                $labInstances=$this->labInstanceRepository->findByUserAndGroups($user);
+            }
+            foreach($labInstances as $labInstance) {
+                
+                foreach($labInstance->getDeviceInstances() as $deviceInstance) {
+                    //var_dump($deviceInstance->getDevice()->getId());
+                    if ($deviceInstance->getDevice() == $device) {
+                        $canViewDevice = true;
+                        break;
+                    }
+                }
+            }
+            if ($user->isAdministrator()) {
+                $canViewDevice = true;
+            }
+        }
+
+        if ($canViewDevice == false) {
+          throw new AccessDeniedHttpException("Access denied.");
         }
 
         if ('json' === $request->getRequestFormat()) {
@@ -289,8 +332,10 @@ class DeviceController extends Controller
      */
     public function showActionTest(Request $request, int $id, int $labId)
     {
-        $device = $this->deviceRepository->find($id);
         $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::SEE_DEVICE, $lab);
+
+        $device = $this->deviceRepository->find($id);
         $nodeData = json_decode($request->getContent(), true);
         if (!$device) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
@@ -409,10 +454,11 @@ class DeviceController extends Controller
      * @Route("/admin/devices/new", name="new_device")
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
+     * 
+     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newAction(Request $request)
     {
-
         $device = new Device();
 
         if(($params = $request->query->all()) && (isset($params['os'])) && (isset($params['model']))) {
@@ -511,6 +557,8 @@ class DeviceController extends Controller
      * 
      * @Rest\Post("/api/devices/lxc_params", name="api_new_lxc_device_params")
      * @Rest\Post("/api/devices/lxc", name="api_new_lxc_device")
+     * 
+     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newLxcAction(Request $request, UrlGeneratorInterface $router)
     {
@@ -524,7 +572,6 @@ class DeviceController extends Controller
                 array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
             }
         }
-        //$os = ["Almalinux","Alpine","Alt","Amazonlinux","Archlinux","Busybox","Centos","Debian","Devuan","Fedora","Funtoo","Gentoo","Kali","Mint","Openeuler","Opensuse","Openwrt","Oracle","Plamo","Rockylinux","Slackware","Springdalelinux","Ubuntu","Voidlinux"];
 
         $os_json = json_encode($os);
 
@@ -595,6 +642,7 @@ class DeviceController extends Controller
         $data = json_decode($request->getContent(), true);
         
         $lab = $this->labRepository->findById($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
 
         $no_array = true;
         $ids = [];
@@ -747,6 +795,8 @@ class DeviceController extends Controller
      * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
      * 
      * @Rest\Put("/api/devices/{id<\d+>}", name="api_edit_device")
+     * 
+     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function updateAction(Request $request, int $id)
     {
@@ -915,7 +965,18 @@ class DeviceController extends Controller
      */
     public function updateActionTest(Request $request, int $id, int $labId)
     {
-        $device = $this->deviceRepository->findById($id)[0];
+        if (!$lab = $this->labRepository->find($labId)){
+            throw new NotFoundHttpException("Lab ".$labId." does not exist.");
+        }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
+
+        if (!$device = $this->deviceRepository->findById($id)[0]){
+            throw new NotFoundHttpException("Device ".$id. " does not exist.");
+        }
+        if (!$lab->getDevices()->contains($device)) {
+            throw new BadRequestHttpException("Lab ".$lab->getId()." does not contain device ". $device->getId().".");
+        }
+
         $data = json_decode($request->getContent(), true);   
 
         if(isset($data['count'])) {
@@ -1078,10 +1139,10 @@ class DeviceController extends Controller
     /**
      * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
      */
-    public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
-    {
+    /*public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
+    {*/
         /** @var EditorDataRepository $editorDataRepository */
-        $editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);
+        /*$editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);
         $deviceEditorData = $editorDataRepository->findByDeviceId($id);
         //$device = $this->deviceRepository->find($id);
 
@@ -1114,7 +1175,7 @@ class DeviceController extends Controller
         $entityManager->flush();
 
         return new JsonResponse();
-    }
+    }*/
 
     /**
      * @Rest\Put("/api/labs/{id<\d+>}/editordata", name="api_edit_node_editor_data")
@@ -1122,7 +1183,7 @@ class DeviceController extends Controller
     public function updateEditorDataActionTest(Request $request, int $id, EditorDataRepository $editorDataRepository)
     {
         $lab = $this->labRepository->findById($id);
-
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
  
         $editorDataList = json_decode($request->getContent(), true);
 
@@ -1168,6 +1229,8 @@ class DeviceController extends Controller
      * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
      * 
      * @Rest\Delete("/api/devices/{id<\d+>}", name="api_delete_device")
+     * 
+     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function deleteAction(Request $request, int $id)
     {
@@ -1232,9 +1295,20 @@ class DeviceController extends Controller
      */
     public function deleteActionTest(Request $request, int $id, int $labId)
     {
+        if(!$lab = $this->labRepository->find($labId)) {
+            throw new NotFoundHttpException("Lab ". $labId. "does not exist.");
+        }
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
+
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $username=$user->getUserIdentifier();
-        $device = $this->deviceRepository->find($id);
+
+        if(!$device = $this->deviceRepository->find($id)) {
+            throw new NotFoundHttpException("Device ". $id. "does not exist.");
+        }
+        if(!$lab->getDevices()->contains($device)) {
+            throw new BadRequestHttpException("Lab ". $lab->getId()." does not contain device ".$device->getId().".");
+        }
 
         $this->delete_device($device, $labId);
         $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
@@ -1272,7 +1346,7 @@ class DeviceController extends Controller
     /**
      * @Rest\Get("/api/device/{id<\d+>}/networkinterface", name="api_get_device_interface")
      */
-    public function getNetworkInterface(Request $request, int $id)
+    /*public function getNetworkInterface(Request $request, int $id)
     {
         $device = $this->deviceRepository->find($id);
 
@@ -1290,14 +1364,25 @@ class DeviceController extends Controller
         
         return new JsonResponse();
         
-    }
+    }*/
 
      /**
      * @Rest\Get("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_get_device_interfaces")
      */
     public function getNetworkInterfaces(Request $request, int $labId, int $deviceId)
     {
-        $device = $this->deviceRepository->find($deviceId);
+        if (!$lab = $this->labRepository->find($labId)) {
+            throw new NotFoundHttpException("Lab ".$labId. " does not exist.");
+        }
+        $this->denyAccessUnlessGranted(LabVoter::SEE_DEVICE, $lab);
+
+        if (!$device = $this->deviceRepository->find($deviceId)){
+            throw new NotFoundHttpException("Device ".$id. " does not exist.");
+        }
+
+        if ($lab->getDevices()->contains($device)){
+            throw new BadRequestHttpException("Lab ".$lab->getId(). "does not contain device ".$device->getId().".");
+        }
         $networkInterfaces = $device->getNetworkInterfaces();
 
         //the device has at least one interface

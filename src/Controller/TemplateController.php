@@ -61,6 +61,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 
 class TemplateController extends Controller
@@ -86,10 +87,9 @@ class TemplateController extends Controller
     }
 
     /**
-     * @Route("/templates", name="templates")
-     * 
      * @Rest\Get("/api/list/templates", name="api_get_templates")
      * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -132,10 +132,10 @@ class TemplateController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/templates/{id<\d+>}", name="show_template", methods="GET")
-     * 
+    /** 
      * @Rest\Get("/api/list/templates/{id<\d+>}", name="api_get_template")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function showAction(
         int $id,
@@ -146,6 +146,11 @@ class TemplateController extends Controller
         $this->logger->debug("Device id request : ".$id);
 
         $device = $this->deviceRepository->find($id);
+
+        if (!$device) {
+            throw new NotFoundHttpException("Device Template " . $id . " does not exist.");
+        }
+        
         $deviceName = u($device->getName())->camel();
  
         if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml')) {

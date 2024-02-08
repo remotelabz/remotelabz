@@ -18,6 +18,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class ControlProtocolTypeController extends Controller
 {
@@ -45,6 +46,8 @@ class ControlProtocolTypeController extends Controller
      * @Route("/admin/controlProtocolType", name="controlProtocolType")
      * 
      * @Rest\Get("/api/controlProtocolType", name="api_controlProtocolType")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function indexAction(Request $request)
     {
@@ -72,6 +75,8 @@ class ControlProtocolTypeController extends Controller
      * @Route("/admin/controlProtocolType/{id<\d+>}", name="show_controlProtocolType")
      * 
      * @Rest\Get("/api/controlProtocolType/{id<\d+>}", name="api_get_controlProtocolType")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function showAction(Request $request, int $id)
     {
