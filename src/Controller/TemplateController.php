@@ -135,7 +135,7 @@ class TemplateController extends Controller
     /** 
      * @Rest\Get("/api/list/templates/{id<\d+>}", name="api_get_template")
      * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message="Access denied.")
      */
     public function showAction(
         int $id,

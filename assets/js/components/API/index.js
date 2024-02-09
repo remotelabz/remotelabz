@@ -814,7 +814,7 @@ export class RemotelabzAPI {
             /**
              * Get lab instances of group by lab.
              * 
-             * Implements GET `/api/groups/{slug}/lab/{uuid}/instances`
+             * Implements GET `/api/groups/{slug}/lab/{uuid}/labInstances`
              * 
              * @param {string} slug
              * @param {string} uuid
@@ -822,7 +822,7 @@ export class RemotelabzAPI {
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
             getGroupInstancesByLab(slug, uuid) {
-                return axios.get(`/groups/${slug}/lab/${uuid}/instances`);
+                return axios.get(`/groups/${slug}/lab/${uuid}/labInstances`);
             },
 
             /**

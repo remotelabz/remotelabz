@@ -83,7 +83,7 @@ class Group implements InstancierInterface
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="children")
      * @Serializer\MaxDepth(1)
-     * @Serializer\Groups({"api_get_group", "api_users", "api_get_user"})
+     * @Serializer\Groups({"api_get_group", "api_users", "api_get_user", "api_get_lab_instance"})
      */
     private $parent;
 

@@ -172,7 +172,7 @@ class GroupController extends Controller
     /**
      * @Route("/group/{slug}/instances", name="dashboard_group_instances", requirements={"slug"="[\w\-\/]+"})
      *
-     * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances")
+     * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances", requirements={"slug"="[\w\-\/]+"})
      */
     public function dashboardGroupInstancesAction(Request $request , string $slug, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
     {
@@ -224,7 +224,7 @@ class GroupController extends Controller
 
     /**
      *
-     * @Rest\Get("/api/groups/{slug}/lab/{uuid}/instances", name="api_group_instances_by_lab", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     * @Rest\Get("/api/groups/{slug}/lab/{uuid}/labInstances", name="api_group_instances_by_lab", requirements={"slug": "[\w\-\/]+", "uuid": "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
     public function fetchGroupInstancesByLabUuid(Request $request , string $slug, string $uuid, LabRepository $labRepository, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
     {
