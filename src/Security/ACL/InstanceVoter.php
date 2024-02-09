@@ -66,11 +66,21 @@ class InstanceVoter extends Voter
 
     private function canStopDevice($instance, $user)
     {
+        if ($instance instanceof DeviceInstance) {
+            if ($instance->getDevice()->getType() == "switch") {
+                return false;
+            }
+        }
         return $this->canHaveAccess($instance, $user);
     }
 
     private function canStartDevice($instance, $user)
     {
+        if ($instance instanceof DeviceInstance) {
+            if ($instance->getDevice()->getType() == "switch") {
+                return false;
+            }
+        }
         return $this->canHaveAccess($instance, $user);
     }
 
