@@ -70,6 +70,9 @@ class InstanceVoter extends Voter
             if ($instance->getDevice()->getType() == "switch") {
                 return false;
             }
+            if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
+                return false;
+            }
         }
         return $this->canHaveAccess($instance, $user);
     }
@@ -78,6 +81,9 @@ class InstanceVoter extends Voter
     {
         if ($instance instanceof DeviceInstance) {
             if ($instance->getDevice()->getType() == "switch") {
+                return false;
+            }
+            if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
                 return false;
             }
         }
