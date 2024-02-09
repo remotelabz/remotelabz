@@ -1380,7 +1380,7 @@ class DeviceController extends Controller
             throw new NotFoundHttpException("Device ".$id. " does not exist.");
         }
 
-        if ($lab->getDevices()->contains($device)){
+        if (!$lab->getDevices()->contains($device)){
             throw new BadRequestHttpException("Lab ".$lab->getId(). "does not contain device ".$device->getId().".");
         }
         $networkInterfaces = $device->getNetworkInterfaces();
