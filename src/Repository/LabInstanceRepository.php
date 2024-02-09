@@ -95,9 +95,45 @@ class LabInstanceRepository extends ServiceEntityRepository
                         }
                     }
                 }
+                foreach ($group->getLabs() as $lab) {
+                    foreach($this->findBy(["lab" => $lab, "user" => NULL, "_group" => NULL]) as $labinstance) {
+                        array_push($result,$labinstance);
+                    }
+                }
                 foreach ($group->getLabInstances() as $labinstance) {
                     array_push($result,$labinstance);
                 }
+            }
+        }
+        return $result;
+    }
+
+    /* Return all instances started by the $user and groups for which
+    the $user is the owner or the admin
+    */
+    public function findByUserMembersAndGroups(User $user)
+    {
+        $result=$this->findByUser($user);
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            if ($group->isElevatedUser($user)) {
+                foreach ($group->getUsers() as $user_member) {
+                    if ($user_member != $user) {
+                        foreach ($this->findByUser($user_member) as $labinstance) {
+                            if ($labinstance->getLab()->getGroups()->contains($group)) {
+                                array_push($result,$labinstance);
+                            }
+                        }
+                    }
+                }
+                foreach ($group->getLabs() as $lab) {
+                    foreach($this->findBy(["lab" => $lab, "user" => NULL, "_group" => NULL]) as $labinstance) {
+                        array_push($result,$labinstance);
+                    }
+                }
+            }
+            foreach ($group->getLabInstances() as $labinstance) {
+                array_push($result,$labinstance);
             }
         }
         return $result;

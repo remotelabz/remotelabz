@@ -295,7 +295,7 @@ class DeviceController extends Controller
         }
         else {
             if ($user->getHighestRole() == "ROLE_TEACHER") {
-                $labInstances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+                $labInstances=$this->labInstanceRepository->findByUserMembersAndGroups($user);
             }
             else {
                 $labInstances=$this->labInstanceRepository->findByUserAndGroups($user);
