@@ -478,7 +478,7 @@ export function getNodes(node_id) {
 }
 
 // Get node startup-config
-export function getNodeConfigs(node_id) {
+/*export function getNodeConfigs(node_id) {
     var deferred = $.Deferred();
     var lab_filename = $('#lab-viewport').attr('data-path');
     if (node_id != null) {
@@ -514,7 +514,7 @@ export function getNodeConfigs(node_id) {
         }
     });
     return deferred.promise();
-}
+}*/
 
 // Get lab node interfaces
 export function getNodeInterfaces(node_id) {
@@ -1717,7 +1717,7 @@ export function printFormText(values) {
 
 
 //save lab handler
-export function saveLab(form) {
+/*export function saveLab(form) {
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('config');
     var url = '/api/labs/' + lab_filename + '/configs/' + form_data['id'];
@@ -1753,7 +1753,7 @@ export function saveLab(form) {
         }
     });
     return false;  // Stop to avoid POST
-}
+}*/
 
 
 // Drag jsPlumb helpers

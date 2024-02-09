@@ -26,8 +26,8 @@ import '../bootstrap/js/bootstrap.min';
 import '../bootstrap/js/bootstrap-select.min';
 import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, postBanner,
-         lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
-         setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
+         lockLab, printFormLab, unlockLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
+         setNodesPosition, printLabTopology, printContextMenu, getNodes, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
          printListNodes, setNodeData, printFormCustomShape, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
@@ -605,7 +605,7 @@ $(document).on('mouseleave','.node_frame, .network_frame', function (e) {
  **************************************************************************/
 
 // startup-config menu
-$(document).on('click', '.action-configsget', function (e) {
+/*$(document).on('click', '.action-configsget', function (e) {
     logger(1, 'DEBUG: action = configsget');
     $.when(getNodeConfigs(null)).done(function (configs) {
         var configTable= [];
@@ -617,10 +617,10 @@ $(document).on('click', '.action-configsget', function (e) {
     }).fail(function (message) {
         addModalError(message);
     });
-});
+});*/
 
 
-function printConfigEjs(configs) {
+/*function printConfigEjs(configs) {
     var html = new EJS({ url: '/build/editor/ejs/action_configsget.ejs' }).render({ configs: configs, MESSAGES: MESSAGES })
     addModalWide(MESSAGES[120], html, '');
 }
@@ -633,10 +633,10 @@ $(document).on('click', '.action-changeopacity', function (e) {
         $('.modal-content').fadeTo("fast", 0.3);
         $(this).data("transparent", true);
     }
-});
+});*/
 
 // Get startup-config
-$(document).on('click', '.action-configget', function (e) {
+/*$(document).on('click', '.action-configget', function (e) {
     logger(1, 'DEBUG: action = configget');
     var el = $(document).find('.action-configget').filter('.selected');
     if( LOCK ==0 && el.length > 0) {
@@ -654,7 +654,7 @@ $(document).on('click', '.action-configget', function (e) {
         addModalError(message);
     });
     $('#context-menu').remove();
-});
+});*/
 
 // Add a new folder
 $(document).on('click', '.action-folderadd', function (e) {
@@ -2102,7 +2102,7 @@ $(document).on('focus', '.configured-nods-select, .configured-nodes-input', func
 
 
 // Submit config form
-$(document).on('submit', '#form-node-config', function (e) {
+/*$(document).on('submit', '#form-node-config', function (e) {
     e.preventDefault();  // Prevent default behaviour
 
     if($('#toggle_editor').is(':checked')) {
@@ -2112,7 +2112,7 @@ $(document).on('submit', '#form-node-config', function (e) {
     }
     //saveLab('form-node-config');
     saveEditorLab('form-node-config', true)
-});
+});*/
 
 
 /*******************************************************************************
