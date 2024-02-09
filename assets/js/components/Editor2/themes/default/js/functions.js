@@ -123,7 +123,7 @@ export function addModalWide(title, body, footer, property) {
     if (title.toUpperCase() == "STARTUP-CONFIGS" || title.toUpperCase() == "CONFIGURED NODES" ||
         title.toUpperCase() == "CONFIGURED TEXT OBJECTS" ||
         title.toUpperCase() == "CONFIGURED NETWORKS" || title.toUpperCase() == "CONFIGURED NODES" ||
-        title.toUpperCase() == "STATUS" || title.toUpperCase() == "PICTURES") {
+        title.toUpperCase() == "STATUS") {
         addittionalHeaderBtns = '<i title="Make transparent" class="glyphicon glyphicon-certificate pull-right action-changeopacity"></i>'
     }
     var html = '<div aria-hidden="false" style="display: block;" class="modal modal-wide ' + prop + ' fade in" tabindex="-1" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"></i><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' + addittionalHeaderBtns + '<h4 class="modal-title">' + title + '</h4></div><div class="modal-body">' + body + '</div><div class="modal-footer">' + footer + '</div></div></div></div>';
@@ -548,42 +548,6 @@ export function getNodeInterfaces(node_id) {
     return deferred.promise();
 }
 
-// Get lab pictures
-export function getPictures(picture_id) {
-    var deferred = $.Deferred();
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    if (picture_id != null) {
-        var url = '/api/labs/' + lab_filename + '/pictures/' + picture_id;
-    } else {
-        var url = '/api/labs/' + lab_filename + '/pictures';
-    }
-    var type = 'GET';
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: type,
-        url: encodeURI(url),
-        dataType: 'json',
-        success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got pictures(s) from lab "' + lab_filename + '".');
-                deferred.resolve(data['data']);
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                deferred.reject(data['message']);
-            }
-        },
-        error: function (data) {
-            // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
-            deferred.reject(message);
-        }
-    });
-    return deferred.promise();
-}
 
 // Get lab topology
 export function getTopology() {
@@ -725,39 +689,6 @@ export function logger(severity, message) {
     $('#alert_container').next().first().slideDown();
 }
 
-// Delete picture
-export function deletePicture(lab_file, picture_id, cb) {
-    var deferred = $.Deferred();
-    var data = [];
-
-    // Delete network
-    var url = '/api/labs/' + lab_file + '/pictures/' + picture_id;
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: 'DELETE',
-        url: encodeURI(url),
-        dataType: 'json',
-        success: function (data) {
-            if (data['status'] == 'success') {
-                // Fetching ok
-                $('.picture' + picture_id).fadeOut(300, function () {
-                    $(this).remove();
-                });
-                deferred.resolve(data);
-            } else {
-                // Fetching failed
-                addMessage('DANGER', data['status']);
-                deferred.reject(data['status']);
-            }
-        },
-        error: function (data) {
-            addMessage('DANGER', getJsonMessage(data['responseText']));
-            deferred.reject();
-        }
-    });
-    return deferred.promise();
-}
 
 // Post login
 export function postLogin(param) {
@@ -1784,13 +1715,6 @@ export function printFormText(values) {
     }
 };
 
-// Map picture
-export function printNodesMap(values, cb) {
-    var title = values['name'] + ': ' + MESSAGES[123];
-    var html = '<div class="col-md-12">' + values.body + '</div><div class="text-right">' + values.footer + '</div>';
-    $('#config-data').html(html);
-    cb && cb();
-}
 
 //save lab handler
 export function saveLab(form) {
@@ -1831,236 +1755,6 @@ export function saveLab(form) {
     return false;  // Stop to avoid POST
 }
 
-// Display picture in form
-export function printPictureInForm(id) {
-    var picture_id = id;
-    var picture_url = '/api/labs/' + $('#lab-viewport').attr('data-path') + '/pictures/' + picture_id + '/data';
-
-    //$.when(getPicturesMapped(picture_id)).done(function (picture) {
-    $.when(getPictures(picture_id)).done(function (picture) {
-        var picture_map = picture['map'];
-        picture_map = picture_map.replace(/href='telnet:..{{IP}}:{{NODE([0-9]+)}}/g, function (a,b,c,d,e) {
-        var nodehref = ''
-        if ( $("#node"+b).length > 0 ) nodehref =  $("#node"+b).find('a')[0].href
-        return "href='"+nodehref
-
-        }) ;
-        // Read privileges and set specific actions/elements
-        var sizeClass = FOLLOW_WRAPPER_IMG_STATE == 'resized' ? 'picture-img-autosozed' : ''
-        //var sizeClass = ""
-        var body = '<div id="lab_picture">' +
-            '<img class="' + sizeClass + '" usemap="#picture_map" ' +
-            'src="' + picture_url + '" ' +
-            'alt="' + picture['name'] + '" ' +
-            'title="' + picture['name'] + '" ' +
-             //'width="' + picture['width'] + '" ' +
-             //'height="' + picture['height'] +
-            '/>' +
-            '<map name="picture_map">' + picture_map + '</map>' +
-            '</div>';
-
-        var footer = '';
-
-        printNodesMap({name: picture['name'], body: body, footer: footer}, function () {
-            setTimeout(function () {
-               $('map').imageMapResize();
-            }, 500);
-        });
-        window.lab_picture = jsPlumb.getInstance()
-        lab_picture.setContainer($('#lab_picture'))
-        $('#picslider').slider("value",100)
-    }).fail(function (message) {
-        addModalError(message);
-    });
-}
-
-// Display picture form
-export function displayPictureForm(picture_id) {
-    var deferred = $.Deferred();
-    var form = '';
-    var lab_file = LAB;
-    if (picture_id == null) {
-        // Adding a new picture
-        var title = 'Add new picture';
-        var action = 'picture-add';
-        var button = 'Add';
-        // Header
-        form += '<form id="form-' + action + '" class="form-horizontal form-picture">';
-        // Name
-        form += '<div class="form-group"><label class="col-md-3 control-label">Name</label><div class="col-md-5"><input type="text" class="form-control-static" name="picture[name]" value=""/></div></div>';
-        // File (add only)
-        form += '<div class="form-group"><label class="col-md-3 control-label">Picture</label><div class="col-md-5"><input type="file" name="picture[file]" value=""/></div></div>';
-        // Footer
-        form += '<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + button + '</button><button type="button" class="btn" data-dismiss="modal">Cancel</button></div></div></form>';
-        // Add the form to the HTML page
-
-        addModal("Add picture", form, '<div></div>');
-
-        // Show the form
-        $('.selectpicker').selectpicker();
-        validateLabPicture();
-        deferred.resolve();
-    } else {
-        // Can be lab_edit or lab_open
-
-        $.when(getPicture(lab_file, picture_id)).done(function (picture) {
-            if (picture != null) {
-                if ($(location).attr('pathname') == '/lab_edit.php') {
-                    var title = 'Edit picture';
-                    var action = 'picture_edit';
-                    var button = 'Save';
-
-                    picture_name = picture['name'];
-                    if (typeof picture['map'] != 'undefined') {
-                        picture_map = picture['map'];
-                    } else {
-                        picture_map = '';
-                    }
-                    // Header
-                    form += '<div class="modal fade" id="modal-' + action + '" tabindex="-1" role="dialog"><div class="modal-dialog" style="width: 100%;"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">' + title + '</h4></div><div class="modal-body"><form id="form-' + action + '" class="form-horizontal form-picture">';
-                    // Name
-                    form += '<div class="form-group"><label class="col-md-3 control-label">Name</label><div class="col-md-5"><input type="text" class="form-control" name="picture[name]" value="' + picture_name + '"/></div></div>';
-                    // Picure
-                    form += '<img id="lab_picture" src="/api/labs/' + lab_file + '/pictures/' + picture_id + '/data">'
-                    // MAP
-                    form += '<div class="form-group"><label class="col-md-3 control-label">Map</label><div class="col-md-5"><textarea type="textarea" name="picture[map]">' + picture_map + '</textarea></div></div>';
-                    // Footer
-                    form += '<input type="hidden" name="picture[id]" value="' + picture_id + '"/>';
-                    form += '<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + button + '</button> <button type="button" class="btn" data-dismiss="modal">Cancel</button></div></div></form></div></div></div></div>';
-                    // Add the form to the HTML page
-                    $('#form_frame').html(form);
-
-                    // Show the form
-                    $('#modal-' + action).modal('show');
-                    $('.selectpicker').selectpicker();
-                    validateLabPicture();
-                    deferred.resolve();
-                } else {
-                    var action = 'picture_open';
-                    var title = picture['name'];
-                    if (typeof picture['map'] != 'undefined') {
-                        picture_map = picture['map'];
-                    } else {
-                        picture_map = '';
-                    }
-                    // Header
-                    form += '<div class="modal fade" id="modal-' + action + '" tabindex="-1" role="dialog"><div class="modal-dialog" style="width: 100%;"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">' + title + '</h4></div><div class="modal-body">';
-                    // Picure
-                    form += '<img id="lab_picture" src="/api/labs/' + lab_file + '/pictures/' + picture_id + '/data" usemap="#picture_map">';
-                    // Map
-                    form += '<map name="picture_map">' + translateMap(picture_map) + '</map>';
-                    // Footer
-                    form += '</div></div></div></div>';
-                    // Add the form to the HTML page
-                    $('#form_frame').html(form);
-
-                    // Show the form
-                    $('#modal-' + action).modal('show');
-                    deferred.resolve();
-                }
-            } else {
-                // Cannot get picture
-                raiseMessage('DANGER', 'Cannot get picture (picture_id = ' + picture_id + ').');
-                deferred.reject();
-            }
-        });
-    }
-
-    return deferred.promise();
-}
-
-// Add a new picture
-export function printFormPicture(action, values) {
-    var map = (values['map'] != null) ? values['map'] : ''
-        , custommap = map.replace(/.*NODE.*/g,'').replace(/^\s*[\r\n]/gm,'').replace(/\n*$/,'\n')
-        , name = (values['name'] != null) ? values['name'] : ''
-        , width = (values['width'] != null) ? values['width'] : ''
-        , height = (values['height'] != null) ? values['height'] : ''
-        , title = (action == 'add') ? MESSAGES[135] : MESSAGES[137]
-        , html = '';
-        if ( map != '' ) map = map.match(/.*NODE.*/g).join().replace(/>,</g,'>\n<').replace(/\n*$/,'\n');
-        $("#lab_picture").empty()
-        $.when(getPictures(values['id'])).done(function (picture) {
-        var picture_map = values['map'];
-        picture_map = picture_map.replace(/{{IP}}/g, location.hostname);
-    $.when(getNodes(null)).done(function (nodes) {
-        if (action == 'add') {
-            html += '<form id="form-picture-' + action + '" class="form-horizontal form-lab-' + action + '">'+
-                '<div class="form-group">'+
-                    '<label class="col-md-3 control-label">' + MESSAGES[19] + '</label>'+
-                    '<div class="col-md-5">'+
-                        '<input class="form-control" autofocus name="picture[name]" value="' + name + '" type="text"/>'+
-                    '</div>'+
-                    '</div>'+
-                '<div class="form-group">'+
-                    '<label class="col-md-3 control-label">' + MESSAGES[137] + '</label>'+
-                    '<div class="col-md-5">'+
-                    '<textarea class="form-control" name="picture[map]">' + map + '</textarea></div>'+
-                '</div>'+
-                '</div>' +
-                '<div class="form-group">'+
-                    '<div class="col-md-5 col-md-offset-3">'+
-                    '<button type="submit" class="btn btn-success">' + MESSAGES[47] + '</button>'+
-                    '<button type="button" class="btn" data-dismiss="modal">' + MESSAGES[18] + '</button>'+
-                '</div>'+
-            '</div>'+
-        '</form>';
-    } else {
-            var sizeClass = 'resized'
-            html += '<form id="form-picture-' + action + '" class="form-horizontal form-lab-' + action + '" data-path=' + values['id'] + '>'+
-                '<div class="follower-wrapper">'+
-                    '<img class="' + sizeClass + '" src="/api/labs/' + $('#lab-viewport').attr('data-path') + '/pictures/' + values['id'] + '/data" alt="' + values['name'] + '" width-val="'+values['width'] + '" height-val="' + values['height'] +'"/>'+
-                    '<div id="follower">'+
-                    '<map name="picture_map">' + picture_map + '</map>' +
-                    '</div>'+
-                '</div>'+
-                '<div class="form-group">'+
-                    '<label class="col-md-3 control-label">' + MESSAGES[19] + '</label>'+
-                    '<div class="col-md-5">'+
-                        '<input class="form-control" autofocus name="picture[name]" value="' + name + '" type="text"/>'+
-                    '</div>'+
-                '</div>'+
-                '<div class="form-group">'+
-                    '<label class="col-md-3 control-label">' + MESSAGES[62] + '</label>'+
-                    '<div class="col-md-5">'+
-                        '<select class="form-control" id="map_nodeid">';
-                        $.each(nodes, function (key, value) {
-                            html += '<option value="'+key+'">' + value.name + ', NODE ' +   key + '</option>';
-                        });
-                    html += '<option value="CUSTOM"> CUSTOM , NODE outside lab</option>';
-                    html += '</select>' +
-                    '</div>'+
-                '</div>'+
-                '<div class="form-group">'+
-                    '<label class="col-md-3 control-label">'+ MESSAGES[137] + '</label>'+
-                    '<div class="col-md-5">'+
-                        '<textarea class="form-control map hidden" name="picture[map]">'+ map + '</textarea>'+
-                        '<textarea class="form-control custommap" name="picture[custommap]">'+ custommap + '</textarea>'+
-                    '</div>'+
-                '</div>'+
-                '<div class="form-group">'+
-                    '<div class="col-md-5 col-md-offset-3">'+
-                        '<button type="submit" class="btn btn-success">'+ MESSAGES[47] + '</button>'+
-                        '<button type="button" class="btn" data-dismiss="modal">'+ MESSAGES[18] + '</button>'+
-                    '</div>'+
-                '</div>'+
-            '</form>';
-
-        }
-        logger(1, 'DEBUG: popping up the picture form.');
-        addModalWide(title, html, '', 'second-win modal-ultra-wide');
-        var htmlsvg = "" ;
-        $.each( $('area') , function ( key, area ) {
-        var cX = area.coords.split(",")[0] - 30
-        var cY = area.coords.split(",")[1] - 30
-        htmlsvg = '<div class="map_mark" id="'+area.coords+'" style="position:absolute;top:'+cY+'px;left:'+cX+'px;width:60px;height:60px;"><svg width="60" height="60"><g><ellipse cx="30" cy="30" rx="28" ry="28" stroke="#000000" stroke-width="2" fill="#ffffff"></ellipse><text x="50%" y="50%" text-anchor="middle" alignment-baseline="central" stroke="#000000" stroke-width="0px" dy=".2em" font-size="12" >'+area.href.replace(/.*{{NODE/g, "NODE ").replace(/}}/g, "").replace(/.*:.*/,"CUSTOM")+'</text></g></svg></div>'
-        $(".follower-wrapper").append(htmlsvg)
-        });
-
-        validateLabInfo();
-    });
-    });
-}
 
 // Drag jsPlumb helpers
 // Jquery-ui freeselect
@@ -2766,16 +2460,12 @@ function printPageLabOpen(lab) {
     var html = '<div id="lab-sidebar"><ul></ul></div><div id="lab-viewport" data-path="' + lab + '"></div>';
     $('#body').html(html);
     // Print topology
-    $.when(printLabTopology(),getPictures()).done( function (rc,pic) {
+    $.when(printLabTopology()).done( function (rc) {
         if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
               $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
          }
          $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
          //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
-         $('#lab-sidebar ul').append('<li class="action-picturesget-li"><a class="action-picturesget" href="javascript:void(0)" title="' + MESSAGES[59] + '"><i class="glyphicon glyphicon-picture"></i></a></li>');
-         if ( Object.keys(pic)  < 1 ) {
-         $('.action-picturesget-li').addClass('hidden');
-         }
          if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
          $('#lab-sidebar ul').append('<li><a class="action-textobjectsget" href="javascript:void(0)" title="' + MESSAGES[150] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');
          }
@@ -3721,11 +3411,7 @@ function zoomlab ( event, ui ) {
     $('#zoomslide').slider({value:ui.value})
 }
 
-export function zoompic ( event, ui ) {
-    var zoom=ui.value/100
-    setZoom(zoom,lab_picture,[0,0])
-    $('#picslider').slider({value:ui.value})
-}
+
 
 // Function from jsPlumb Doc
 window.setZoom = function(zoom, instance, transformOrigin, el) {

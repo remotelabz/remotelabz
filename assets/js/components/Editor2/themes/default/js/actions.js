@@ -28,10 +28,10 @@ import './ejs';
 import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserInfo, getLabInfo, getLabBody, closeLab, postBanner,
          lockLab, printFormLab, unlockLab, saveLab, printLabStatus, postLogin, getNodeInterfaces, deleteNode, form2Array, getVlan, getConnection, removeConnection, setNodeInterface,
          setNodesPosition, printLabTopology, printContextMenu, getNodes, getNodeConfigs, start, recursive_start, stop, printFormNode, printFormNodeConfigs, 
-         printListNodes, setNodeData, printFormCustomShape, printFormPicture, printFormText, printListTextobjects, printFormEditCustomShape,
-         printFormEditText, printFormSubjectLab, getPictures, printPictureInForm, deletePicture, displayPictureForm, getTextObjects, createTextObject, 
+         printListNodes, setNodeData, printFormCustomShape, printFormText, printListTextobjects, printFormEditCustomShape,
+         printFormEditText, printFormSubjectLab, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         zoompic, dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection } from'./functions.js';
+         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 import Showdown, { extension } from 'showdown';
@@ -95,57 +95,6 @@ $(document).on('keydown', 'body', function (e) {
     }
 });
 
-//Add picture MAP
-$('body').on('click', '.follower-wrapper', function (e) {
-    var img_width_original  = +$(".follower-wrapper img").attr('width-val')
-    var img_height_original = +$(".follower-wrapper img").attr('height-val')
-    var data_x = $("#follower").data("data_x");
-    var data_y = $("#follower").data("data_y");
-    var img_width_resized = $(".follower-wrapper img").width()
-    var img_height_resized = $(".follower-wrapper img").height()
-
-    var k = 1;
-    if($('.follower-wrapper img').hasClass('picture-img-autosozed')){
-        k = img_width_original / img_width_resized;
-    }
-
-    var y = (parseInt((data_y).toFixed(0)) * k).toFixed(0);
-    var x = (parseInt((data_x).toFixed(0)) * k).toFixed(0);
-    var current_href=""
-    if ( $("#map_nodeid option:selected").val().match(/CUSTOM/) ) {
-         $('form textarea.custommap').val($('form textarea.custommap').val() + "<area shape='circle' alt='img' coords='" + x + "," + y + (",30' href='telnet://{{IP}}:{{NODE"+$("#map_nodeid option:selected").val()+"}}'>\n").replace(/telnet.*NODECUSTOM}}/,"proto://CUSTOM_IP:CUSTOM_PORT"));
-    } else {
-         $('form textarea.map').val($('form textarea.map').val() + "<area shape='circle' alt='img' coords='" + x + "," + y + (",30' href='telnet://{{IP}}:{{NODE"+$("#map_nodeid option:selected").val()+"}}'>\n").replace(/telnet.*NODECUSTOM}}/,"proto://CUSTOM_IP:CUSTOM_PORT"));
-    }
-    var htmlsvg="" ;
-    htmlsvg = '<div class="map_mark" id="'+x+","+y+","+30+'" style="position:absolute;top:'+(y-30)+'px;left:'+(x-30)+'px;width:60px;height:60px;"><svg width="60" height="60"><g><ellipse cx="30" cy="30" rx="28" ry="28" stroke="#000000" stroke-width="2" fill="#ffffff"></ellipse><text x="50%" y="50%" text-anchor="middle" alignment-baseline="central" stroke="#000000" stroke-width="0px" dy=".2em" font-size="12" >' + ("NODE"+$("#map_nodeid option:selected").val()).replace(/NODE.*CUSTOM.*/,"CUSTOM")+'</text></g></svg></div>'
-    $(".follower-wrapper").append(htmlsvg)
-});
-
-
-// context menu on picture edit
-$(document).on('contextmenu', '.follower-wrapper', function(e){
-    // Prevent default context menu on viewport
-    e.stopPropagation();
-    e.preventDefault();
-    var body = '';
-        body += '<li><a class="action-showfull-picture" href="javascript:void(0)">Set original size</a></li>';
-        body += '<li><a class="action-autosize" href="javascript:void(0)">Set autosize</a></li>';
-})
-
-$(document).on('click', '.action-showfull-picture', function(){
-    $('#context-menu').remove();
-    FOLLOW_WRAPPER_IMG_STATE = 'full'
-    $('.follower-wrapper img').removeClass('picture-img-autosozed')
-    $('#lab_picture img').removeClass('picture-img-autosozed')
-})
-
-$(document).on('click', '.action-autosize', function(){
-    $('#context-menu').remove();
-    FOLLOW_WRAPPER_IMG_STATE = 'resized'
-    $('.follower-wrapper img').addClass('picture-img-autosozed')
-    $('#lab_picture img').addClass('picture-img-autosozed')
-})
 
 // Accept privacy
 $(document).on('click', '#privacy', function () {
@@ -354,7 +303,6 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
         var body = '';
         body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
         body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
-        body += '<li><a class="action-pictureadd" href="javascript:void(0)"><i class="glyphicon glyphicon-picture"></i> ' + MESSAGES[83] + '</a></li>';
         body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
         body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
         body += '<li role="separator" class="divider">';
@@ -623,10 +571,6 @@ $(window).resize(function () {
     if ($('#lab-viewport').length) {
         // Update topology on window resize
         lab_topology.repaintEverything();
-        // Update picture map on window resize
-        jQuery(function($) {
-            $('map').imageMapResize();
-        });
     }
 });
 
@@ -940,18 +884,6 @@ $(document).on('contextmenu', '.map_mark', function (e) {
      printContextMenu('Map', body, e.pageX, e.pageY,true,"menu");
 });
 
-$(document).on('click', '.action-mapdelete' , function (e) {
-   id=this.id.replace(/,/g,"\\,")
-  $('#context-menu').remove();
-  $('#'+id).remove();
-  var mapoldval = $('form :input[name="picture[map]"]').val()
-  var custommapoldval = $('form :input[name="picture[custommap]"]').val()
-  var regex = new RegExp(".*"+id+".*>\n")
-  var mapnewval = mapoldval.replace(regex,'')
-  var custommapnewval = custommapoldval.replace(regex,'')
-  $('form :input[name="picture[map]"]').val(mapnewval)
-  $('form :input[name="picture[custommap]"]').val(custommapnewval)
-});
 
 /*$(document).on('click', '#networkdelete', function (e) {
 
@@ -1239,7 +1171,6 @@ $(document).on('click', '.action-labobjectadd', function (e) {
     logger(1, 'DEBUG: action = labobjectadd');
     var body = '';
     body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
-    body += '<li><a class="action-pictureadd" href="javascript:void(0)"><i class="glyphicon glyphicon-picture"></i> ' + MESSAGES[83] + '</a></li>';
   body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
   body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
     printContextMenu(MESSAGES[80], body, e.pageX, e.pageY, true,"sidemenu", true);
@@ -1425,18 +1356,6 @@ $(document).on('click', '.action-openconsole-all, .action-openconsole-group', fu
 });
 
 
-// Add picture
-$(document).on('click', '.action-pictureadd', function (e) {
-    logger(1, 'DEBUG: action = pictureadd');
-    $('#context-menu').remove();
-    displayPictureForm();
-
-
-    $("#form-picture-add").find('input:eq(0)').delay(500).queue(function() {
-     $(this).focus();
-     $(this).dequeue();
-    });
-});
 
 // Attach files
 var attachments;
@@ -1444,76 +1363,6 @@ $('body').on('change', 'input[type=file]', function (e) {
     attachments = e.target.files;
 });
 
-// Add picture form
-$('body').on('submit', '#form-picture-add', function (e) {
-    var lab_file = $('#lab-viewport').attr('data-path');
-    var form_data = new FormData();
-    var picture_name = $('form :input[name^="picture[name]"]').val();
-    // Setting options
-    $('form :input[name^="picture["]').each(function (id, object) {
-        form_data.append($(this).attr('name').substr(8, $(this).attr('name').length - 9), $(this).val());
-    });
-
-    // Add attachments
-    $.each(attachments, function (key, value) {
-        form_data.append(key, value);
-    });
-
-    // Get action URL
-    var url = '/api/labs/' + lab_file + '/pictures';
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: 'POST',
-        url: encodeURI(url),
-        contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-        processData: false, // Don't process the files
-        dataType: 'json',
-        data: form_data,
-        success: function (data) {
-            if (data['status'] == 'success') {
-                addMessage('SUCCESS', 'Picture "' + picture_name + '" added.');
-                $('.action-picturesget-li').removeClass('hidden')
-            } else {
-                // Fetching failed
-                addMessage('DANGER', data['status']);
-            }
-        },
-        error: function (data) {
-            addMessage('DANGER', getJsonMessage(data['responseText']));
-        }
-    });
-
-    // Hide and delete the modal (or will be posted twice)
-    $('body').children('.modal').modal('hide');
-
-    // Stop or form will follow the action link
-    return false;
-});
-
-// Edit picture
-$(document).on('click', '.action-pictureedit', function (e) {
-    logger(1, 'DEBUG: action = pictureedit');
-    $('#context-menu').remove();
-    var picture_id = $(this).attr('data-path');
-    $.when(getPictures(picture_id)).done(function (picture) {
-        picture['id'] = picture_id;
-        printFormPicture('edit', picture);
-    }).fail(function (message) {
-        addModalError(message);
-    });
-});
-
-// Get picture
-$(document).on('click', '.action-pictureget', function (e) {
-    logger(1, 'DEBUG: action = pictureget');
-    $(".action-pictureget").removeClass("selected");
-    $(this).addClass("selected");
-    $('#context-menu').remove();
-    var picture_id = $(this).attr('data-path');
-    printPictureInForm(picture_id);
-
-});
 
 //Show circle under cursor
 $(document).on('mousemove', '.follower-wrapper', function (e) {
@@ -1539,91 +1388,6 @@ $(document).on('click', '#follower', function (e) {
     };
 });
 
-// Get pictures list
-$(document).on('click', '.action-picturesget', function (e) {
-    logger(1, 'DEBUG: action = picturesget');
-    $.when(getPictures()).done(function (pictures) {
-        if (!$.isEmptyObject(pictures)) {
-            var body = '<div class="col-md-1 col-md-offset-10" id="picslider"></div><div class="col-md-1 col-md-offset-11"></div><div class="row"><div class="picture-list col-md-3 col-lg-2"><ul class="map">';
-            $.each(pictures, function (key, picture) {
-                var title = picture['name'] || "pic name";
-                body += '<li>';
-                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK != 1 ) {
-                    body += '<a class="delete-picture" style="margin-right: 5px;" href="javascript:void(0)" data-path="' + key + '" title="' + title + '"><i class="glyphicon glyphicon-trash" title="Delete"></i> ';
-                    body += '<a class="action-pictureedit" href="javascript:void(0)" data-path="' + key + '"><i class="glyphicon glyphicon-edit" title="Edit"></i> ';
-                }
-                body += '<a class="action-pictureget" data-path="' + key + '" href="javascript:void(0)" title="' + title + '">&nbsp;&nbsp;' + picture['name'].split(' ')[0] + '</a>';
-                body += '</a></li>';
-            });
-            body += '</ul></div><div id="config-data" class="col-md-9 col-lg-10"></div></div>';
-            addModalWide(MESSAGES[59], body, '', "modal-ultra-wide");
-            $('#picslider').slider({value:100,min:10,max:200,step:10,slide:zoompic})
-        } else {
-            addMessage('info', MESSAGES[134]);
-        }
-    }).fail(function (message) {
-        addModalError(message);
-    });
-});
-
-// Get picture list old
-$(document).on('click', '.action-picturesget-stop', function (e) {
-    logger(1, 'DEBUG: action = picturesget');
-    $.when(getPictures()).done(function (pictures) {
-        if (!$.isEmptyObject(pictures)) {
-            var body = '';
-            $.each(pictures, function (key, picture) {
-                body += '<li><a class="action-pictureget" data-path="' + key + '" href="javascript:void(0)" title="' + picture['name'] + '"><i class="glyphicon glyphicon-picture"></i> ' + picture['name'] + '</a></li>';
-            });
-            printContextMenu(MESSAGES[59], body, e.pageX, e.pageY,false,"menu");
-        } else {
-            addMessage('info', MESSAGES[134]);
-        }
-    }).fail(function (message) {
-        addModalError(message);
-    });
-});
-
-//Detele picture
-$(document).on('click', '.delete-picture', function (ev) {
-    ev.stopPropagation();  // Prevent default behaviour
-    ev.preventDefault();  // Prevent default behaviour
-    var id = $(this).attr('data-path');
-    var name = $(this).attr('title');
-    var body = '<div class="form-group">' +
-                    '<div class="question">Are you sure to delete this picture?</div>' +
-                    '<div class="col-md-5 col-md-offset-3">' +
-                        '<button id="formPictureDelete" class="btn btn-success"  data-path="'+id+'" title="'+name +'" data-dismiss="modal">Yes</button>' +
-                        '<button type="button" class="btn" data-dismiss="modal">Cancel</button>' +
-                    '</div>' +
-                '</div>'
-    var title = "Warning"
-    addModal(title, body, "", "make-red make-small");
-    $('#formPictureDelete').on('click', function (e) {
-        var lab_filename = $('#lab-viewport').attr('data-path');
-        var picture_id = $(this).attr('data-path');
-        var picture_name = $(this).attr("title");
-        $.when(deletePicture(lab_filename, picture_id)).done(function () {
-            $('.modal.make-red').modal('hide')
-            addMessage('SUCCESS', 'Picture "' + picture_name + '" deleted.');
-            $('li a[data-path="' + picture_id + '"]').parent().remove();
-            $("#config-data").html("");
-            $.when(getPictures()).done( function (pic) {
-             if ( Object.keys(pic)  < 1 ) {
-                 $('.action-picturesget-li').addClass('hidden');
-              }
-            });
-        }).fail(function (message) {
-            $('.modal.make-red').modal('hide')
-            addModalError(message);
-        });
-        // Hide and delete the modal (or will be posted twice)
-        $('body').children('.modal.second-win').modal('hide');
-
-        // Stop or form will follow the action link
-        return false;
-    });
-});
 
 // Delete all startup-config
 /*$(document).on('click', '.action-nodesbootdelete, .action-nodesbootdelete-group', function (ev) {
@@ -2350,87 +2114,6 @@ $(document).on('submit', '#form-node-config', function (e) {
     saveEditorLab('form-node-config', true)
 });
 
-// Edit picture form
-$('body').on('submit', '#form-picture-edit', function (e) {
-    e.preventDefault();  // Prevent default behaviour
-    var picture_id = $(this).attr('data-path');
-    var missed_id = []
-    var regex = /{{(NODE([0-9]*))}}/g;
-    var temp;
-    var str = $('form :input[name="picture[map]"]').val()
-    $.when(getNodes(null)).then(function (nodes) {
-        while (temp = regex.exec(str)) {
-            if(temp[2] && !nodes.hasOwnProperty(temp[2])) missed_id.push(temp[2])
-        }
-
-        if(missed_id.length > 0) {
-            var body = '<div class="form-group">'
-            if(missed_id.length > 1){
-                body += '<div class="question">Nodes IDs does not exist: '+ missed_id.join(', ') +'</div>' +
-                        '<div class="question">Please change it to the correct value</div>'
-            } else {
-                body += '<div class="question">Node ID does not exist: '+ missed_id[0] + '</div>' +
-                        '<div class="question">Please change it to the correct value</div>'
-            }
-                body += '<div class="col-md-5 col-md-offset-3">' +
-                    '<button class="btn" data-dismiss="modal">Cotinue edit picture</button>' +
-                    // '<button type="button" class="btn" data-dismiss="modal">Cancel</button>' +
-                '</div>' +
-            '</div>'
-            var title = "Warning"
-            addModal(title, body, "", "make-red make-small");
-        } else {
-            submitPictureEdit(picture_id)
-        }
-    })
-    // return false;
-    // Setting options
-});
-
-function submitPictureEdit(picture_id){
-    var lab_file = $('#lab-viewport').attr('data-path');
-    var form_data = {};
-
-    $('form :input[name^="picture["]').each(function (id, object) {
-        // Standard options
-        var field_name = $(this).attr('name').replace(/^picture\[([a-z]+)\]$/, '$1');
-        form_data[field_name] = $(this).val();
-    });
-    form_data['map'] = form_data['map'] + form_data['custommap']
-    form_data['custommap']=''
-    // Get action URL
-    var url = '/api/labs/' + lab_file + '/pictures/' + picture_id;
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT,
-        type: 'PUT',
-        url: encodeURI(url),
-        dataType: 'json',
-        data: JSON.stringify(form_data),
-        success: function (data) {
-            if (data['status'] == 'success') {
-                // Fetching ok
-                addMessage('SUCCESS', 'Picture "' + form_data['name'] + '" saved.');
-                printPictureInForm(picture_id);
-                $('ul.map a.action-pictureget[data-path="' + picture_id + '"]').attr('title', form_data['name']);
-                $('ul.map a.action-pictureget[data-path="' + picture_id + '"]').text(form_data['name'].split(" ")[0]);
-                $('body').children('.modal.second-win').modal('hide');
-            } else {
-                // Fetching failed
-                addMessage('DANGER', data['status']);
-            }
-        },
-        error: function (data) {
-            addMessage('DANGER', getJsonMessage(data['responseText']));
-        }
-    });
-
-    // Hide and delete the modal (or will be posted twice)
-    $('#form_frame > div').modal('hide');
-
-    // Stop or form will follow the action link
-    return false;
-}
 
 /*******************************************************************************
  * Custom Shape/Text Functions
