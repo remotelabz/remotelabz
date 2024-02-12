@@ -2238,6 +2238,48 @@ export function printLabStatus() {
 
             $('.node' + node['id']).attr('data-status',node['status']);
 
+            if (EDITION == 0 && node['console'].length > 0 && node['status'] == 2 && node['type'] != "switch") {
+                if (node['console'].length > 1 ) {
+                    // '<a class="openControlProtocolMenu" id="'+ node['id']+'" href="javascript:void(0)" >'
+                    $('.node'+ node["id"] +' a' ).attr("id",node['id']);
+                    $('.node'+ node["id"] +' a' ).attr("href","javascript:void(0)");
+                    $('.node'+ node["id"] +' a' ).attr("class","openControlProtocolMenu");
+                    var targetAttr = $('.node'+ node["id"] +' a' ).attr("target");
+                    if (typeof targetAttr !== "undefined" && targetAttr !== false) {
+                        $('.node'+ node["id"] +' a' ).removeAttr("target");
+                    }
+                    
+                }
+                else {
+                    // '<a href="/instances/' + node['uuid'] +'/view/' + node['console']+ '" target="_blank">';
+                    var IdAttr = $('.node'+ node["id"] +' a' ).attr("id");
+                    if (typeof IdAttr !== "undefined" && IdAttr !== false) {
+                        $('.node'+ node["id"] +' a' ).removeAttr("id");
+                    }
+                    $('.node'+ node["id"] +' a' ).attr("href",'/instances/' + node['uuid'] +'/view/' + node['console']);
+                    $('.node'+ node["id"] +' a' ).attr("target","_blank");
+                    var classAttr = $('.node'+ node["id"] +' a' ).attr("class");
+                    if (typeof classAttr !== "undefined" && classAttr !== false) {
+                        $('.node'+ node["id"] +' a' ).removeAttr("class");
+                    }
+                }                
+            }
+            else {
+                //'<a href="javascript:void(0)" >' ;
+                var IdAttr = $('.node'+ node["id"] +' a' ).attr("id");
+                if (typeof IdAttr !== "undefined" && IdAttr !== false) {
+                    $('.node'+ node["id"] +' a' ).removeAttr("id");
+                }
+                $('.node'+ node["id"] +' a' ).attr("href","javascript:void(0)");
+                var targetAttr = $('.node'+ node["id"] +' a' ).attr("target");
+                if (typeof targetAttr !== "undefined" && targetAttr !== false) {
+                    $('.node'+ node["id"] +' a' ).removeAttr("target");
+                }
+                var classAttr = $('.node'+ node["id"] +' a' ).attr("class");
+                if (typeof classAttr !== "undefined" && classAttr !== false) {
+                    $('.node'+ node["id"] +' a' ).removeAttr("class");
+                }
+            }
         });
     }).fail(function (message) {
         addMessage('danger', message);

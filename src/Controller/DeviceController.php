@@ -222,6 +222,11 @@ class DeviceController extends Controller
                     $serial == true;
                 }
             }
+
+            $user = $this->getUser();
+            if (in_array('login', $controlProtocolTypes) && ($user->isAdministrator() || ($user->hasRole("ROLE_TEACHER") && $user == $lab->getAuthor()))) {
+                array_push($controlProtocolTypes, "admin");
+            }
             
             //choose the control protocol to open the console
             if ($vnc == true) {
@@ -393,7 +398,10 @@ class DeviceController extends Controller
                 $serial == true;
             }
         }
-        
+        $user = $this->getUser();
+        if (in_array('login', $controlProtocolTypesName) && ($user->isAdministrator() || ($user->hasRole("ROLE_TEACHER") && $user == $lab->getAuthor()))) {
+            array_push($controlProtocolTypesName, "admin");
+        }
         //choose the control protocol to open the console
         if ($vnc == true) {
             $finalControlProtocolType = 'vnc';
