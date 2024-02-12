@@ -27,7 +27,8 @@ security:
 
     role_hierarchy:
         ROLE_TEACHER: [ROLE_USER]
-        ROLE_ADMINISTRATOR: [ROLE_TEACHER]
+        ROLE_TEACHER_EDITOR: [ROLE_TEACHER]
+        ROLE_ADMINISTRATOR: [ROLE_TEACHER_EDITOR]
         ROLE_SUPER_ADMINISTRATOR: [ROLE_ADMINISTRATOR]
 
     firewalls:
@@ -98,5 +99,7 @@ security:
         - { path: ^/activities, roles: ['ROLE_USER'] }
         - { path: ^/admin/labs, roles: ['ROLE_TEACHER'] }
         - { path: ^/admin/sandbox, roles: ['ROLE_TEACHER'] }
+        - { path: ^/admin/devices, roles: ['ROLE_TEACHER_EDITOR'] }
+        - { path: ^/admin/operating-systems, roles: ['ROLE_TEACHER_EDITOR'] }
         - { path: ^/admin, roles: ['ROLE_ADMINISTRATOR'] }
         - { path: ^/, roles: ['ROLE_USER'] }

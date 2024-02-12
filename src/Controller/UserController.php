@@ -105,6 +105,9 @@ class UserController extends Controller
         $adminCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
         })->count();
+        $teacherEditorCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+        })->count();
         $teacherCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_TEACHER';
         })->count();
@@ -119,12 +122,16 @@ class UserController extends Controller
                         return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
                     });
                 break;
+                case 'editor':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+                    });
+                break;
                 case 'teacher':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_TEACHER';
                     });
                 break;
-                
                 case 'student':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_USER';
@@ -197,6 +204,7 @@ class UserController extends Controller
                 'total' => $count,
                 'current' => $users->count(),
                 'admins' => $adminCount,
+                'teacherEditors' => $teacherEditorCount,
                 'teachers' => $teacherCount,
                 'students' => $studentCount
             ],

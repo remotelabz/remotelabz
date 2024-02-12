@@ -49,7 +49,7 @@ class OperatingSystemController extends Controller
      * 
      * @Rest\Get("/api/operating-systems", name="api_operating_systems")
      * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -78,7 +78,7 @@ class OperatingSystemController extends Controller
      * 
      * @Rest\Get("/api/operating-systems/{id<\d+>}", name="api_get_operating_system")
      * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function showAction(Request $request, int $id)
     {

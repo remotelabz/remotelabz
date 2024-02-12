@@ -78,12 +78,29 @@
                                 required="required"
                                 class="form-check-input"
                                 value="{{ userForm.roles.children[2].vars.value }}"
-                                {%- if user is defined and user.getHighestRole() == 'ROLE_ADMINISTRATOR' -%}
+                                {%- if user is defined and user.getHighestRole() == 'ROLE_TEACHER_EDITOR' -%}
                                 checked
                                 {%- endif -%}
                                 {% if isRoot %}disabled{% endif %}
                             >
                             <label class="form-check-label required" for="{{ userForm.roles.children[2].vars.id }}">
+                                <div>Editor teacher</div>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input
+                                type="radio"
+                                id="{{ userForm.roles.children[3].vars.id }}"
+                                name="{{ userForm.roles.children[3].vars.full_name }}"
+                                required="required"
+                                class="form-check-input"
+                                value="{{ userForm.roles.children[3].vars.value }}"
+                                {%- if user is defined and user.getHighestRole() == 'ROLE_ADMINISTRATOR' -%}
+                                checked
+                                {%- endif -%}
+                                {% if isRoot %}disabled{% endif %}
+                            >
+                            <label class="form-check-label required" for="{{ userForm.roles.children[3].vars.id }}">
                                 <div>Administrator</div>
                             </label>
                         </div>
@@ -91,11 +108,11 @@
                         <div class="form-check">
                             <input
                                 type="hidden"
-                                id="{{ userForm.roles.children[3].vars.id }}"
-                                name="{{ userForm.roles.children[3].vars.full_name }}"
+                                id="{{ userForm.roles.children[4].vars.id }}"
+                                name="{{ userForm.roles.children[4].vars.full_name }}"
                                 required="required"
                                 class="form-check-input"
-                                value="{{ userForm.roles.children[3].vars.value }}"
+                                value="{{ userForm.roles.children[4].vars.value }}"
                                 checked
                             >
                         </div>

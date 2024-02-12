@@ -89,7 +89,7 @@ class DeviceController extends Controller
      * 
      * @Rest\Get("/api/devices", name="api_devices")
      * 
-     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -315,7 +315,7 @@ class DeviceController extends Controller
                     }
                 }
             }
-            if ($user->isAdministrator()) {
+            if ($user->isAdministrator() || $user->isEditor()) {
                 $canViewDevice = true;
             }
         }
@@ -463,7 +463,7 @@ class DeviceController extends Controller
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
      * 
-     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
      */
     public function newAction(Request $request)
     {
@@ -566,7 +566,7 @@ class DeviceController extends Controller
      * @Rest\Post("/api/devices/lxc_params", name="api_new_lxc_device_params")
      * @Rest\Post("/api/devices/lxc", name="api_new_lxc_device")
      * 
-     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
      */
     public function newLxcAction(Request $request, UrlGeneratorInterface $router)
     {
@@ -804,7 +804,7 @@ class DeviceController extends Controller
      * 
      * @Rest\Put("/api/devices/{id<\d+>}", name="api_edit_device")
      * 
-     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
      */
     public function updateAction(Request $request, int $id)
     {
@@ -1238,7 +1238,7 @@ class DeviceController extends Controller
      * 
      * @Rest\Delete("/api/devices/{id<\d+>}", name="api_delete_device")
      * 
-     * @Security("is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
      */
     public function deleteAction(Request $request, int $id)
     {
