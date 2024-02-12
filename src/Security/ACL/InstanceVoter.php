@@ -95,6 +95,9 @@ class InstanceVoter extends Voter
         if (!$user instanceof User) {
             return false;
         }
+        if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
+            return false;
+        }
         return $this->canEdit($instance, $user);
     }
 
