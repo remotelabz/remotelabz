@@ -1265,7 +1265,7 @@ class DeviceController extends Controller
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             if ($labId != null) {
-                foreach($this->networkInterfaceRepository->findByLabAndVlan($labId, $networkInterface->getVlan()) as $otherInterface) {
+                foreach($this->networkInterfaceRepository->findByLabAndConnection($labId, $networkInterface->getConnection()) as $otherInterface) {
                     $entityManager->remove($otherInterface);
                 }
             }
