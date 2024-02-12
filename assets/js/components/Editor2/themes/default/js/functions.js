@@ -12,8 +12,8 @@
  * @version 20160719
  */
 
-import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION, TEMPLATE,
-      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate,
+import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS,
+      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
       LONGTIMEOUT, STATUSINTERVAL, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION, setEditon, setAuthor} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
@@ -628,11 +628,12 @@ export function getUserInfo() {
     }
     var deferred = $.Deferred();
    var url = '/api/user/rights/lab/' + lab;
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
+        data: JSON.stringify({"labInstance": labInstance}),
         url: encodeURI(url),
         dataType: 'json',
         beforeSend: function (jqXHR) {
@@ -648,6 +649,9 @@ export function getUserInfo() {
                 setLang("en");
                 setLab(lab);
                 setTenant("0");
+                setRole(data['data']['role']);
+                setIsGroupOwner(data['data']['isGroupOwner']);
+                setHasGroupAccess(data['data']['hasGroupAccess']);
                 setRole(data['data']['role']);
                 if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
@@ -2378,7 +2382,7 @@ function createNodeListRow(template, id){
 
         //node actions
         html_data += '<td><div class="action-controls">';
-        if (EDITION == 0) {
+        if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
             if (node_values['type'] != 'switch') {
                 html_data += '<a class="action-nodestart" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[66] + '"><i class="glyphicon glyphicon-play"></i></a>'+
                             '<a class="action-nodestop" data-path="' + id + '" data-name="' + checkTemplateValue(template_values['options'],'name') + '" href="javascript:void(0)" title="' + MESSAGES[67] + '"><i class="glyphicon glyphicon-stop"></i></a>';

@@ -12,7 +12,7 @@
  * @version 20160719
  */
 
-import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, setAttachements} from './javascript';
+import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -351,7 +351,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
         }
 
             var title = $(this).attr('data-name') + " (" + node_id + ")";
-            if(EDITION == 0) {
+            if(EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
                 if ($(this).attr('data-type') != "switch") {
                 body +=
                     content+
@@ -430,7 +430,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
         if (isFreeSelectMode) {
             window.contextclick = 1
             body = '' ;
-            if (EDITION == 0) {
+            if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
                 body += '<li>' +
                     '<a class="action-nodestart-group context-collapsible menu-manage" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[153] + '</a>' +
                 '</li>' +
@@ -1115,7 +1115,7 @@ $(document).on('click', '.action-lablist', function (e) {
 $(document).on('click', '.action-moreactions', function (e) {
     logger(1, 'DEBUG: action = moreactions');
     var body = '';
-    if (EDITION == 0) {
+    if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
         body += '<li><a class="action-nodesstart" href="javascript:void(0)"><i class="glyphicon glyphicon-play"></i> ' + MESSAGES[126] + '</a></li>';
         body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
     }
@@ -1124,7 +1124,9 @@ $(document).on('click', '.action-moreactions', function (e) {
         body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Edit practical subject</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
     }
-    printContextMenu(MESSAGES[125], body, e.pageX + 3, e.pageY + 3, true,"sidemenu", true);
+    if (body != '') {
+        printContextMenu(MESSAGES[125], body, e.pageX + 3, e.pageY + 3, true,"sidemenu", true);
+    }
 });
 
 // Redraw topology
@@ -3247,7 +3249,7 @@ $(document).on('click', '.node.node_frame a', function (e) {
         $.when(getNodes(node_id))
             .then(function (node) {
 
-                if (EDITION == 0) {
+                if (EDITION == 0 && (ISGROUPOWNER == 0 ||(ISGROUPOWNER == 1 && HASGROUPACCESS == 1))) {
                     if (node.type != "switch") {
                         var network = '<li><a class="action-nodestart menu-manage" data-path="' + node_id +
                         '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-play"></i> Start</a></li>';

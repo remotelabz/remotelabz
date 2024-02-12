@@ -39,6 +39,8 @@ export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
 export var EVE_VERSION = "5.0.1-19";
 export var AUTHOR;
 export var TEMPLATE;
+export var ISGROUPOWNER;
+export var HASGROUPACCESS;
 
 export function setFolder(value){
 	FOLDER = value;
@@ -85,6 +87,14 @@ export function setAuthor(value) {
 
 export function setTemplate(value) {
 	TEMPLATE = value;
+}
+
+export function setIsGroupOwner(value) {
+	ISGROUPOWNER = value;
+}
+
+export function setHasGroupAccess(value) {
+	HASGROUPACCESS = value;
 }
 
 $(document).ready(function() {
