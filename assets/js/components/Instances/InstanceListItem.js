@@ -319,15 +319,15 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             </div>
                         }
 
-                        {viewAs.type != 'group' && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
-                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id)) &&
+                        {viewAs != 'group' && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
-                        {viewAs.type == "group" && showControls &&
+                        {viewAs == "group" && showControls &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login()) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id))
+                         && is_login()) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id))
                          )
                          &&
                             <a

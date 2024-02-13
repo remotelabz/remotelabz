@@ -272,7 +272,7 @@ class InstanceController extends Controller
             if ($user->isAdministrator()) {
                 $labs = $this->labRepository->findBy(["isTemplate"=>false]);
             }
-            else if ($user->hasRole("ROLE_TEACHER")){
+            else if ($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")){
                 $labs = $this->labRepository->findByAuthorAndGroups($user);
             }
 
@@ -290,6 +290,13 @@ class InstanceController extends Controller
                     array_push($subFilter, [
                         "uuid" => "allAdmins",
                         "name" => "All administrators"
+                    ]);
+                }
+                else if ($filter == "editor") {
+                    $role = "EDITOR";
+                    array_push($subFilter, [
+                        "uuid" => "allEditors",
+                        "name" => "All editors"
                     ]);
                 }
                 else if ($filter == "teacher") {
@@ -316,6 +323,13 @@ class InstanceController extends Controller
                     array_push($subFilter, [
                         "uuid" => "allTeachers",
                         "name" => "All teachers"
+                    ]);
+                }
+                else if ($filter == "editor") {
+                    $role = "editors";
+                    array_push($subFilter, [
+                        "uuid" => "allEditors",
+                        "name" => "All editors"
                     ]);
                 }
                 else {
@@ -790,7 +804,7 @@ class InstanceController extends Controller
         if ($user->isAdministrator()) {
             if ($userType == "teacher") {
                 foreach($instances as $instance) {
-                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER" || $instance->getOwner()->getHighestRole() == "ROLE_TEACHER_EDITOR" ) {
                         array_push($data, $instance);
                     }
                 }
@@ -1008,7 +1022,7 @@ class InstanceController extends Controller
             return $this->redirectToRoute("index");
         }
 
-        $isTeacherAuthor = ($user->hasRole('ROLE_TEACHER') && $isAuthor); 
+        $isTeacherAuthor = (($user->hasRole('ROLE_TEACHER') || $user->hasRole('ROLE_TEACHER_EDITOR')) && $isAuthor); 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
         if ($type == "admin") {

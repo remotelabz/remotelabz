@@ -120,7 +120,7 @@ class LabVoter extends Voter
         if (!$user instanceof User) {
             return false;
         }
-        return ($user->isAdministrator() || $user->getHighestRole() == "ROLE_TEACHER");
+        return ($user->isAdministrator() || $user->getHighestRole() == "ROLE_TEACHER" || $user->getHighestRole() == "ROLE_TEACHER_EDITOR");
     }
 
     private function canEdit(Lab $lab, $user)

@@ -26,6 +26,9 @@ class UserRepository extends ServiceEntityRepository
         if ($userType == "teachers") {
             $highestRole = "ROLE_TEACHER";
         }
+        else if ($userType == "editors") {
+            $highestRole = "ROLE_TEACHER_EDITOR";
+        }
         else {
             $highestRole = "ROLE_USER";
         }

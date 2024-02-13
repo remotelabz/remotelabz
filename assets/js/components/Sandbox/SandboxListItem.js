@@ -164,14 +164,14 @@ class SandboxListItem extends Component {
 
                 <div class="lab-item-right d-flex flex-column text-right">
                     <div>
-                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (this.props.item.author.roles.includes("ROLE_TEACHER") && this.props.item.author.id == this.props.user.id)) &&
+                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && this.props.item.author.id == this.props.user.id)) &&
                         <>
                         <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
-                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
@@ -210,14 +210,14 @@ class SandboxListItem extends Component {
 
                 <div class="lab-item-right d-flex flex-column text-right">
                     <div>
-                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (this.props.item.author.roles.includes("ROLE_TEACHER") && this.props.item.author.id == this.props.user.id)) &&
+                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && this.props.item.author.id == this.props.user.id)) &&
                         <>
                         <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
-                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && this.props.item.author.roles.includes("ROLE_TEACHER") && (!this.state.exist) &&
+                    {this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
                         <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     { this.state.exist ?

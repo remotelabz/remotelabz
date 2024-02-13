@@ -158,7 +158,7 @@ const url = require('url');
  * @typedef {"qemu"|"lxc"} Hypervisor
  * @typedef {"tap"} NetworkInterfaceType
  * @typedef {"VNC"|null} NetworkInterfaceAccess
- * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
+ * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_TEACHER_EDITOR"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
  * @typedef {"user"|"admin"|"owner"} UserGroupRole
  */
 

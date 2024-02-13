@@ -79,7 +79,7 @@ $(document).on('keydown', 'body', function (e) {
         $('.ui-selecting').removeClass('ui-selecting')
         $("#lab-viewport").removeClass('freeSelectMode')
         lab_topology.clearDragSelection();
-        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
               lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
         }
     }
@@ -291,7 +291,7 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
 
     if ( window.connContext == 1 ) {
            window.connContext = 0
-           if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 || EDITION == 0) return;
+           if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 0) || (ROLE == 'ROLE_USER')) || LOCK == 1 || EDITION == 0) return;
            body = '';
            body += '<li><a class="action-connedit" href="javascript:void(0)"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
            body += '<li><a class="action-conndelete" href="javascript:void(0)"><i class="glyphicon glyphicon-trash"></i> Delete</a></li>';
@@ -299,7 +299,7 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
            return;
     }
 
-    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
         var body = '';
         body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
         body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
@@ -366,7 +366,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
             }
 
             // Read privileges and set specific actions/elements
-            if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+            if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
                 if(!isNodeRunning){
                     body += '<li>' +
                     '<a class="action-nodeedit control" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
@@ -439,7 +439,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                 '</li>';
             }
 
-            if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+            if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
                 body += '<li>' +
                         '<a class="action-halign-group" data-path="node' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
                         '<i class="glyphicon glyphicon-object-align-horizontal"></i> ' + MESSAGES[204] +
@@ -470,7 +470,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
         }
 
     } else if ($(this).hasClass('network_frame')) {
-        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
             logger(1, 'DEBUG: opening network context menu');
             var network_id = $(this).attr('data-path');
             var title = $(this).attr('data-name');
@@ -496,7 +496,7 @@ $(document).on('contextmenu', '.context-menu', function (e) {
                         '</li>' ;
 	  }
     } else if ($(this).hasClass('customShape')) {
-        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
             logger(1, 'DEBUG: opening text object context menu');
             var textObject_id = $(this).attr('data-path')
             var elId =  $(this).attr('id');
@@ -587,7 +587,7 @@ $(document).on('change input', 'input[name="node[count]"]', function(e){
 // plug show/hide event
 
 $(document).on('mouseover','.node_frame, .network_frame', function (e) {
-    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0  && ( $(this).attr('data-status') == 0 || $(this).attr('data-status') == undefined ) && !$('#lab-viewport').hasClass('freeSelectMode') ) {
+    if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0  && ( $(this).attr('data-status') == 0 || $(this).attr('data-status') == undefined ) && !$('#lab-viewport').hasClass('freeSelectMode') ) {
          $(this).find('.tag').removeClass("hidden");
         }
 }) ;
@@ -1120,7 +1120,7 @@ $(document).on('click', '.action-moreactions', function (e) {
         body += '<li><a class="action-nodesstop" href="javascript:void(0)"><i class="glyphicon glyphicon-stop"></i> ' + MESSAGES[127] + '</a></li>';
     }
     
-    if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+    if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
         body += '<li><a class="action-subjectedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i>Edit practical subject</a></li>';
         body += '<li><a class="action-labedit" href="javascript:void(0)"><i class="glyphicon glyphicon-pencil"></i> ' + MESSAGES[87] + '</a></li>';
     }
@@ -3164,7 +3164,7 @@ $(document).on('click','#lab-viewport', function (e) {
         $('.ui-selecting').removeClass('ui-selecting')
         $('#lab-viewport').removeClass('freeSelectMode')
         lab_topology.clearDragSelection()
-        if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+        if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
               lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
         }
    }
@@ -3189,7 +3189,7 @@ $(document).on('click', '.customShape', function (e) {
                      $('.ui-selecting').removeClass('ui-selecting')
                      $('#lab-viewport').removeClass('freeSelectMode')
                      lab_topology.clearDragSelection()
-                     if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                     if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
                           lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), true)
                      }
                      e.preventDefault();
@@ -3256,7 +3256,7 @@ $(document).on('click', '.node.node_frame a', function (e) {
                         printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
                     }
                 }
-                if (((ROLE == 'ROLE_TEACHER' && AUTHOR == 1) || (ROLE != 'ROLE_USER' && ROLE !='ROLE_TEACHER')) && EDITION ==1 && LOCK == 0 ) {
+                if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
                     var network = '<li><a style="display: block;" class="action-nodeedit " data-path="' + node_id +
                      '" data-name="' + node.name + '" href="#"><i class="glyphicon glyphicon-edit"></i> Edit</a></li>';
                      printContextMenu(node.name, network, e.pageX, e.pageY,false,"menu");
