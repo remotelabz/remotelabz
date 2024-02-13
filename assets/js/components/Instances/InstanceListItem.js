@@ -323,7 +323,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
-                        {instance.ownedBy == "group" && showControls &&
+                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
