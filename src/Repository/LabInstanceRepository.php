@@ -252,20 +252,40 @@ class LabInstanceRepository extends ServiceEntityRepository
             foreach ($user->getGroups() as $groupuser){
                 $group = $groupuser->getGroup();
                 if ($instance->getLab()->getGroups()->contains($group)) {
-                    array_push($result, $instance);
+                    if (!in_array($instance, $result)) {
+                        if ($user->isAdministrator()) {
+                            array_push($result, $instance);
+                        }
+                        else {
+                            if ($instance->getOwnedBy() !== "group") {
+                                array_push($result, $instance);
+                            }
+                            else if ($instance->getOwnedBy() == "group" && $instance->getOwner()->isElevatedUser($user)) {
+                                array_push($result, $instance);
+                            }
+                        }
+                    }
+                    
                 }
             }
         }
         return $result;
     }
 
-    public function findByGroup(Group $group)
+    public function findByGroup(Group $group, User $user)
     {
         $instances = $this->findAll();
         $result = [];
         foreach ($instances as $instance) {
             if ($instance->getLab()->getGroups()->contains($group)) {
-                array_push($result, $instance);
+                if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+                    array_push($result, $instance);
+                }
+                else {
+                    if ($instance->getOwner() == $user) {
+                        array_push($result, $instance);
+                    }
+                }
             }
         }
         return $result;

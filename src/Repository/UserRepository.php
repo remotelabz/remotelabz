@@ -49,7 +49,7 @@ class UserRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('u')
             ->andWhere('u.roles LIKE :role')
-            ->setParameter('role', "%" .$role. "%")
+            ->setParameter('role', $role)
             ->getQuery()
             ->getResult()
         ;

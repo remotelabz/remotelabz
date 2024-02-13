@@ -123,19 +123,19 @@ class InstanceType extends AbstractType
             $subFilter = [];
             if ($user->isAdministrator()) {
                 if ($filter == "admin") {
-                    $role = "ADMIN";
+                    $role = "%ADMIN%";
                     $subFilter = [
                         "All administrators" => "allAdmins"
                     ];
                 }
                 else if ($filter == "teacher") {
-                    $role = "TEACHER";
+                    $role = "%TEACHER__";
                     $subFilter = [
                         "All teachers" => "allTeachers"
                     ];
                 }
                 else if ($filter == "editor") {
-                    $role = "EDITOR";
+                    $role = "%EDITOR%";
                     $subFilter = [
                         "All editors" => "allEditors"
                     ];
@@ -144,7 +144,7 @@ class InstanceType extends AbstractType
                     $subFilter = [
                         "All students" => "allStudents"
                     ];
-                    $role = "USER";
+                    $role = "%USER%";
                 }
 
                 $users = $this->userRepository->findByRole($role);

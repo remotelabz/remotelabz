@@ -213,21 +213,24 @@ class InstanceController extends Controller
         else if ($filter == "lab" && $subFilter != "allLabs") {
             $instances = $this->fetchLabInstancesByLabUuid($subFilter);
         }
-        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allAdmins") {
+        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allEditors"|| $subFilter == "allAdmins") {
             $userType = "";
             if($subFilter == "allTeachers") {
-                $userType = "teacher";
+                $userType = "teachers";
+            }
+            else if ($subFilter == "allEditors") {
+                $userType = "editors";
             }
             else if ($subFilter == "allStudents") {
-                $userType = "student";
+                $userType = "students";
             }
             else if ($subFilter == "allAdmins") {
-                $userType = "admin";
+                $userType = "admins";
             }
 
             $instances = $this->fetchLabInstancesOwnedByUserType($userType);
         }
-        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins")) {//done
+        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins") || ($filter == "editor" && $subFilter != "allEditors")) {
             $instances = $this->fetchLabInstancesByUserUuid($subFilter);
         }
         return $instances;
@@ -283,31 +286,31 @@ class InstanceController extends Controller
                 ]);
             }
         }
-        else if ($filter == "student" || $filter == "teacher" || $filter == "admin") {
+        else if ($filter == "student" || $filter == "teacher" || $filter == "editor" || $filter == "admin") {
             if ($user->isAdministrator()) {
                 if ($filter == "admin") {
-                    $role = "ADMIN";
+                    $role = "%ADMIN%";
                     array_push($subFilter, [
                         "uuid" => "allAdmins",
                         "name" => "All administrators"
                     ]);
                 }
                 else if ($filter == "editor") {
-                    $role = "EDITOR";
+                    $role = "%EDITOR%";
                     array_push($subFilter, [
                         "uuid" => "allEditors",
                         "name" => "All editors"
                     ]);
                 }
                 else if ($filter == "teacher") {
-                    $role = "TEACHER";
+                    $role = "%TEACHER__";
                     array_push($subFilter, [
                         "uuid" => "allTeachers",
                         "name" => "All teachers"
                     ]);
                 }
                 else {
-                    $role = "USER";
+                    $role = "%USER%";
                     array_push($subFilter, [
                         "uuid" => "allStudents",
                         "name" => "All students"
@@ -802,21 +805,28 @@ class InstanceController extends Controller
         $user = $this->getUser();
 
         if ($user->isAdministrator()) {
-            if ($userType == "teacher") {
+            if ($userType == "teachers") {
                 foreach($instances as $instance) {
-                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER" || $instance->getOwner()->getHighestRole() == "ROLE_TEACHER_EDITOR" ) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
                         array_push($data, $instance);
                     }
                 }
             }
-            else if ($userType == "admin") {
+            else if ($userType == "editors") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                        array_push($data, $instance);
+                    }
+                }
+            }
+            else if ($userType == "admins") {
                 foreach($instances as $instance) {
                     if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR")) {
                         array_push($data, $instance);
                     }
                 }
             }
-            else if ($userType == "student") {
+            else if ($userType == "students") {
                 foreach($instances as $instance) {
                     if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
                         array_push($data, $instance);
@@ -828,14 +838,24 @@ class InstanceController extends Controller
             }
         }
         else {
-            if ($userType == "teacher") {
+            if ($userType == "teachers" || $userType == "editors") {
+                $users = $this->userRepository->findUserTypesByGroups($userType, $user);
                 foreach($instances as $instance) {
                     if ($instance->getOwner() == $user) {
                         array_push($data, $instance);
                     }
+                    foreach ($users as $teacher) {
+                        if ($teacher !== $user) {
+                            foreach($this->fetchLabInstancesByUserUuid($teacher->getUuid()) as $userInstance) {
+                                if ($userInstance == $instance) {
+                                    array_push($data, $instance);
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            else if ($userType == "student") {
+            else if ($userType == "students") {
                 $data = $this->labInstanceRepository->findByUserAndGroupStudents($user);
             }
             else {
@@ -856,12 +876,12 @@ class InstanceController extends Controller
         
         if (!$group) throw new NotFoundHttpException('Group not found.');
         $user = $this->getUser();
-        if ($user->isAdministrator() || $group->isElevatedUser($user)) {
-            $data = $this->labInstanceRepository->findByGroup($group);
-        }
+        //if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+            $data = $this->labInstanceRepository->findByGroup($group, $user);
+        /*}
         else {
             throw new AccessDeniedHttpException();
-        }
+        }*/
        
 
 

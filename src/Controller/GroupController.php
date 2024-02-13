@@ -183,7 +183,7 @@ class GroupController extends Controller
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $labs = [];
 
-        $instances = $labInstanceRepository->findByGroup($group);
+        $instances = $labInstanceRepository->findByGroup($group, $user);
         foreach ($instances as $instance) {
             $exists = false;
             foreach($labs as $lab) {
