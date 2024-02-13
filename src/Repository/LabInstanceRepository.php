@@ -236,8 +236,10 @@ class LabInstanceRepository extends ServiceEntityRepository
         foreach ($instances as $instance) {
             foreach($owner->getGroups() as $groupuser){
                 $group = $groupuser->getGroup();
-                if ($instance->getLab()->getGroups()->contains($group)) {
-                    array_push($result, $instance);
+                if($group->isElevatedUser($owner)) {
+                    if ($instance->getLab()->getGroups()->contains($group)) {
+                        array_push($result, $instance);
+                    }
                 }
             }
         }
