@@ -114,4 +114,18 @@
     </div>
   </div>
 {% endblock %}
+{% block javascripts %}
+{{parent()}}
+<script>
+function resizebar() {
+  var toggleSidebar = document.querySelector("#toggle-sidebar");
+  var scrollSidebar = document.querySelector("#sidebar-scroll");
+  var sideBarContext = document.querySelector("#sidebarContext");
+  var sideBar = document.querySelector("#sidebar");
+  scrollSidebar.style.maxHeight = sideBar.offsetHeight - toggleSidebar.offsetHeight - sideBarContext.offsetHeight +"px";
+}
+resizebar();
+window.addEventListener("resize", ()=> resizebar());
 
+</script>
+{% endblock %}

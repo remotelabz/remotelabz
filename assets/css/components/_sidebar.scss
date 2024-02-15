@@ -193,6 +193,11 @@
     }
 }
 
+.overflow-scroll {
+    overflow-y: scroll;
+    display: block;
+}
+
 [theme="dark"] {
     .sidebar {
         background-color: theme-color("dark-lighter");
