@@ -79,7 +79,7 @@ class PictureController extends Controller
      * @Rest\Get("/api/labs/{id<\d+>}/pictures", name="api_get_pictures")
      * 
      */
-    public function indexAction(int $id, Request $request, UserRepository $userRepository)
+    /*public function indexAction(int $id, Request $request, UserRepository $userRepository)
     {
         $pictures = $this->pictureRepository->findByLab($id);
         $data = [];
@@ -102,13 +102,13 @@ class PictureController extends Controller
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_get_picture")
      */
-    public function showAction(
+    /*public function showAction(
         int $labId,
         int $id,
         Request $request,
@@ -145,13 +145,13 @@ class PictureController extends Controller
         }
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}/data", name="api_get_picture_data")
      */
-    public function getPictureData(
+    /*public function getPictureData(
         int $labId,
         int $id,
         Request $request,
@@ -185,13 +185,13 @@ class PictureController extends Controller
 
         $response = new BinaryFileResponse($file);
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Post("/api/labs/{id<\d+>}/pictures", name="api_new_picture")
      */
-    public function newAction(Request $request, int $id)
+    /*public function newAction(Request $request, int $id)
     {
         $picture = new Picture();
         $lab = $this->labRepository->findById($id);
@@ -269,18 +269,18 @@ class PictureController extends Controller
             'id' => $lab->getId()
         ]);*/
         
-        $response->setContent(json_encode([
+        /*$response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).']));
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_update_picture")
      */
-    public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
+    /*public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         $data = json_decode($request->getContent(), true);   
@@ -314,13 +314,13 @@ class PictureController extends Controller
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).']));
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Delete("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_delete_picture")
      */
-    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
+    /*public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         
@@ -340,5 +340,5 @@ class PictureController extends Controller
         $response->headers->set('Content-Type', 'application/json');
         return $response;
 
-    }
+    }*/
 }

@@ -205,6 +205,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     {
         if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_SUPER_ADMINISTRATOR';
         if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+        if (in_array('ROLE_TEACHER_EDITOR', $this->roles)) return 'ROLE_TEACHER_EDITOR';
         if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
         return 'ROLE_USER';
     }
@@ -219,6 +220,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     public function isAdministrator(): bool
     {
         return in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles) || in_array('ROLE_ADMINISTRATOR', $this->roles);
+    }
+
+    public function isEditor(): bool
+    {
+        return in_array('ROLE_TEACHER_EDITOR', $this->roles);
     }
 
     public function hasRole(string $role): bool

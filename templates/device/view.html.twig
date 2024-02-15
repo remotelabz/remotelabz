@@ -25,7 +25,7 @@
             </h1>
         </div>
         <div class="content-title-actions">
-            {% if is_granted("ROLE_ADMINISTRATOR") %}
+            {% if is_granted("ROLE_TEACHER_EDITOR") %}
                 <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                 <button class="btn btn-danger" data-target={{'.delete-modal'}} data-toggle="modal" type="button">
                     {{ 'Delete'|trans }}

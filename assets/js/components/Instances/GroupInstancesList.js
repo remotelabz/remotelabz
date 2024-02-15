@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {instances, labs, groups, user}) {
+export default function GroupInstancesList(props = {instances, labs, group, user}) {
     const [options, setOptions] = useState();
     const [instances, setInstances] = useState();
     const [filter, setFilter] = useState("allLabs");
@@ -84,15 +84,25 @@ export default function GroupInstancesList(props = {instances, labs, groups, use
         setFilter(filterValue);
     }
 
+    function getParentPath(group, path) {
+        console.log(path);
+        if (group.parent !== undefined) {
+            path = getParentPath(group.parent, group.parent.slug) + "/" + path;
+            console.log(path);
+        }
+        return path;
+    }
+
     function refreshInstance() {
         
         let request;
 
+        let path = getParentPath(props.group, props.group.slug);
         if(filter == "allLabs") {
-            request = Remotelabz.instances.lab.getGroupInstances(props.group.slug);  
+            request = Remotelabz.instances.lab.getGroupInstances(path);  
         }
         else {
-            request = Remotelabz.instances.lab.getGroupInstancesByLab(props.group.slug, filter)
+            request = Remotelabz.instances.lab.getGroupInstancesByLab(path, filter)
         }
         request.then(response => {
             setInstances(response.data);

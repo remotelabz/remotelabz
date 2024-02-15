@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class FlavorController extends Controller
 {
@@ -24,6 +25,8 @@ class FlavorController extends Controller
      * @Route("/admin/flavors", name="flavors")
      * 
      * @Rest\Get("/api/flavors", name="api_flavors")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function indexAction(Request $request)
     {
@@ -49,6 +52,8 @@ class FlavorController extends Controller
 
     /**
      * @Rest\Get("/api/flavors/{id<\d+>}", name="api_get_flavor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function showAction(Request $request, int $id)
     {
@@ -63,6 +68,8 @@ class FlavorController extends Controller
      * @Route("/admin/flavors/new", name="new_flavor", methods={"GET", "POST"})
      * 
      * @Rest\Post("/api/flavors", name="api_new_flavor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function newAction(Request $request)
     {
@@ -105,6 +112,8 @@ class FlavorController extends Controller
      * @Route("/admin/flavors/{id<\d+>}/edit", name="edit_flavor")
      * 
      * @Rest\Put("/api/flavors/{id<\d+>}", name="api_edit_flavor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function editAction(Request $request, int $id)
     {
@@ -151,6 +160,8 @@ class FlavorController extends Controller
      * @Route("/admin/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
      * 
      * @Rest\Delete("/api/flavors/{id<\d+>}", name="api_delete_flavor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function deleteAction(Request $request, int $id)
     {

@@ -18,6 +18,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class HypervisorController extends Controller
 {
@@ -45,6 +46,8 @@ class HypervisorController extends Controller
      * @Route("/admin/hypervisor", name="hypervisor")
      * 
      * @Rest\Get("/api/hypervisor", name="api_hypervisor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function indexAction(Request $request)
     {
@@ -72,6 +75,8 @@ class HypervisorController extends Controller
      * @Route("/admin/hypervisor/{id<\d+>}", name="show_hypervisor")
      * 
      * @Rest\Get("/api/hypervisor/{id<\d+>}", name="api_get_hypervisor")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
      */
     public function showAction(Request $request, int $id)
     {

@@ -10,7 +10,7 @@ import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, user }) {
+function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, viewAs, user }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -319,13 +319,15 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             </div>
                         }
 
-                        {(instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
-                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id)) &&
+                        {instance.ownedBy != 'group' && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
-
+                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') &&
+                            <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                        }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login()) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") && user.id === lab.author.id))
+                         && is_login()) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id))
                          )
                          &&
                             <a

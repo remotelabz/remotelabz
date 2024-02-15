@@ -13,6 +13,7 @@ use App\Entity\DeviceInstance;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
+use App\Security\ACL\LabVoter;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use GuzzleHttp\Client;
@@ -78,13 +79,13 @@ class TextObjectController extends Controller
     }
 
     /**
-     * @Route("/textobjects", name="textobjects")
-     * 
      * @Rest\Get("/api/labs/{id<\d+>}/textobjects", name="api_get_textobjects")
      * 
      */
     public function indexAction(int $id, Request $request, UserRepository $userRepository)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE_TEXTOBJECT, $lab);
         $textobjects = $this->textobjectRepository->findByLab($id);
         $data = [];
         foreach($textobjects as $textobject){
@@ -114,9 +115,7 @@ class TextObjectController extends Controller
         return $response;
     }
 
- /**
-     * @Route("/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="show_textobject", methods="GET")
-     * 
+    /**
      * @Rest\Get("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_get_textobject")
      */
     public function showAction(
@@ -128,7 +127,9 @@ class TextObjectController extends Controller
         TextObjectRepository $textobjectRepository,
         SerializerInterface $serializer)
     {
-        //$lab = $labRepository->findById($LabId);
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::SEE_TEXTOBJECT, $lab);
+
         $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
 
         $data = [
@@ -152,12 +153,13 @@ class TextObjectController extends Controller
     
 
     /**
-     * @Route("/textobjects/new", name="new_textobject")
-     * 
      * @Rest\Post("/api/labs/{id<\d+>}/textobjects", name="api_new_textobject")
      */
     public function newAction(Request $request, int $id)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_TEXTOBJECT, $lab);
+
         $textobject = new TextObject();
         $data = json_decode($request->getContent(), true);
         $lab = $this->labRepository->findById($id);
@@ -205,6 +207,9 @@ class TextObjectController extends Controller
      */
     public function updateAction(Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_TEXTOBJECT, $lab);
+
         $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
         $data = json_decode($request->getContent(), true);   
 
@@ -241,7 +246,9 @@ class TextObjectController extends Controller
      */
     public function updateMultipleTextObjectsAction(Request $request, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
     {
-       // $network = $networkdeviceRepository->findByIdAndLab($id, $labId);
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_TEXTOBJECT, $lab);
+
         $data = json_decode($request->getContent(), true);   
 
         foreach($data as $dataObject){
@@ -269,6 +276,9 @@ class TextObjectController extends Controller
      */
     public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_TEXTOBJECT, $lab);
+
         $textobject = $textobjectRepository->findByIdAndLab($id, $labId);
         
         $entityManager = $doctrine->getManager();

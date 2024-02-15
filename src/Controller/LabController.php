@@ -13,6 +13,7 @@ use App\Entity\DeviceInstance;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
+use App\Security\ACL\LabVoter;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use GuzzleHttp\Client;
@@ -52,6 +53,7 @@ use Doctrine\ORM\ORMException;
 use Exception;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -108,6 +110,8 @@ class LabController extends Controller
      * 
      * @Rest\Get("/api/labs", name="api_get_labs")
      * @Rest\QueryParam(name="limit", requirements="\d+", default="10")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request, UserRepository $userRepository)
     {
@@ -210,6 +214,8 @@ class LabController extends Controller
     /**
      * 
      * @Rest\Get("/api/labs/template", name="api_get_labs_template")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function getLabTemplates(Request $request, UserRepository $userRepository)
     {
@@ -224,6 +230,8 @@ class LabController extends Controller
     /**
      * 
      * @Rest\Get("/api/labs/template/{id<\d+>}", name="api_get_lab_template_by_uuid")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function getOneLabTemplate(Request $request, int $id)
     {
@@ -237,11 +245,14 @@ class LabController extends Controller
 
     /**
      * 
-     * @Rest\Get("/api/labs/teacher/{id<\d+>}", name="api_get_lab_by_teacher")
+     * @Rest\Get("/api/labs/teacher", name="api_get_lab_by_teacher")
+     * 
+     * 
      */
-    public function getTeacherLabs(Request $request, int $id, UserRepository $userRepository)
+    /*public function getTeacherLabs(Request $request, UserRepository $userRepository)
     {
-        $user = $userRepository->find(['id' => $id]);
+        //$user = $userRepository->find(['id' => $id]);
+        $user = $this->getUser();
         if ($user && $user->hasRole("ROLE_TEACHER")) {
             $labs = $this->labRepository->findByAuthorAndGroups($user);
 
@@ -250,9 +261,9 @@ class LabController extends Controller
             }
         }
         else {
-            throw new BadRequestException("User ".$id." is not a teacher");
+            throw new BadRequestHttpException("User ".$user->getName()." is not a teacher");
         }
-    }
+    }*/
 
     /**
      * @Route("/labs/{id<\d+>}", name="show_lab", methods="GET")
@@ -268,6 +279,7 @@ class LabController extends Controller
         SerializerInterface $serializer)
     {
         $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
 
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -389,8 +401,6 @@ class LabController extends Controller
     }
 
     /**
-     * @Route("/labs/info/{id<\d+>}", name="show_lab_test", methods="GET")
-     * 
      * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
      */
     public function showActionTest(
@@ -401,18 +411,21 @@ class LabController extends Controller
         LabRepository $labRepository,
         SerializerInterface $serializer)
     {
-        $lab = $labRepository->findLabInfoById($id);
+        $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+        $labInfo = $labRepository->findLabInfoById($id);
         $data = [
-            "id"=>$lab["id"],
-            "name"=>$lab["name"],
-            "description"=>$lab["description"],
-            "body"=>$lab["body"],
-            "author"=>$lab["author"],
-            "version"=>$lab["version"],
-            "scripttimeout"=>$lab["scripttimeout"],
-            "lock"=>$lab["locked"],
-            "banner"=>$lab["banner"],
-            "timer"=>$lab["timer"]
+            "id"=>$labInfo["id"],
+            "name"=>$labInfo["name"],
+            "description"=>$labInfo["description"],
+            "body"=>$labInfo["body"],
+            "author"=>$labInfo["author"],
+            "version"=>$labInfo["version"],
+            "scripttimeout"=>$labInfo["scripttimeout"],
+            "lock"=>$labInfo["locked"],
+            "banner"=>$labInfo["banner"],
+            "timer"=>$labInfo["timer"]
         ];
 
         $response = new Response();
@@ -515,13 +528,16 @@ class LabController extends Controller
         LabRepository $labRepository,
         SerializerInterface $serializer)
     {
-        $lab = $labRepository->findLabDetailsById($id);
+        $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+        $details = $labRepository->findLabDetailsById($id);
 
         $response = new Response();
         $response->setContent(json_encode([
             'code '=> 200,
             'status'=>'success',
-            'data' => $lab['tasks']]));
+            'data' => $details['tasks']]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
@@ -531,6 +547,8 @@ class LabController extends Controller
      * @Route("/labsSandbox/new", name="new_lab_template")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newAction(Request $request)
     {
@@ -605,6 +623,8 @@ class LabController extends Controller
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
@@ -823,6 +843,9 @@ class LabController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
         $device=null;
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -931,6 +954,7 @@ class LabController extends Controller
     public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $data = json_decode($request->getContent(), true); 
 
@@ -970,6 +994,7 @@ class LabController extends Controller
     public function updateSubjectAction(Request $request, int $id)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $data = json_decode($request->getContent(), true);   
 
@@ -1003,6 +1028,7 @@ class LabController extends Controller
         }
 
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
         
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
@@ -1072,6 +1098,8 @@ class LabController extends Controller
      * @Route("/admin/labs/import", name="import_lab", methods="POST")
      * 
      * @Rest\Post("/api/labs/import", name="api_import_lab")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function importAction(Request $request, LabImporter $labImporter)
     {
@@ -1112,6 +1140,9 @@ class LabController extends Controller
      */
     public function getBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+        
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
@@ -1135,6 +1166,8 @@ class LabController extends Controller
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
+        
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $pictureFile = $request->files->get('banner');
         
@@ -1160,6 +1193,9 @@ class LabController extends Controller
      */
     public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
        
+        $lab = $this->labRepository->find($newId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
         return $bannerManager->copyBanner($id, $newId);
 
     }
@@ -1402,6 +1438,7 @@ class LabController extends Controller
         int $id)
     {
         $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $lab->setLocked(1);
         $response = new Response();
@@ -1425,7 +1462,8 @@ class LabController extends Controller
         int $id)
     {
         $lab = $labRepository->find($id);
-
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
         $lab->setLocked(0);
         $response = new Response();
         $response->setContent(json_encode([

@@ -18,6 +18,7 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 
 
@@ -48,10 +49,11 @@ class ConfigWorkerController extends Controller
     /**
      * @Route("/admin/config", name="admin_config")
      * @Rest\Get("/api/config/workers", name="api_get_workers")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
-
         $workers = $this->configWorkerRepository->findAll();
         $nbWorkers = count($workers);
         $workerProps = [
@@ -76,6 +78,8 @@ class ConfigWorkerController extends Controller
 
     /**
      * @Rest\Post("/api/config/worker/new", name="api_new_worker")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function newAction(Request $request) {
         $data = json_decode($request->getContent(), true);
@@ -119,6 +123,8 @@ class ConfigWorkerController extends Controller
 
     /**
      * @Rest\Put("/api/config/worker/{id<\d+>}", name="api_update_worker")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function updateAction(Request $request, int $id) {
         $data = json_decode($request->getContent(), true);
@@ -144,6 +150,8 @@ class ConfigWorkerController extends Controller
 
     /**
      * @Rest\Delete("/api/config/worker/{id<\d+>}", name="api_delete_worker")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function deleteAction(Request $request, int $id) {
         $data = json_decode($request->getContent(), true);

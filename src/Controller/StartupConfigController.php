@@ -69,7 +69,7 @@ class StartupConfigController extends Controller
      * @Rest\Get("/api/labs/{id<\d+>}/configs", name="api_get_configs")
      * 
      */
-    public function indexAction(Request $request, int $id)
+    /*public function indexAction(Request $request, int $id)
     {
         $devices = $this->deviceRepository->findByLab($id);
         $data = [];
@@ -96,14 +96,14 @@ class StartupConfigController extends Controller
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Get("/api/labs/{labId<\d+>}/configs/{id<\d+>}", name="api_show_config")
      * 
      */
-    public function showAction(Request $request, int $id, int $labId)
+    /*public function showAction(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
 
@@ -121,13 +121,13 @@ class StartupConfigController extends Controller
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Put("/api/labs/{labId<\d+>}/configs/{id<\d+>}", name="api_edit_config")
      */
-    public function updateAction(Request $request, int $id, int $labId)
+    /*public function updateAction(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
 
@@ -148,6 +148,6 @@ class StartupConfigController extends Controller
             'message' => 'Lab has been saved (60023).']));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
     
 }

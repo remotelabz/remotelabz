@@ -23,6 +23,11 @@ use App\Service\Instance\InstanceManager;
 
 use App\Form\InstanceType;
 
+use App\EventSubscriber\AddFilterInstanceSubscriber;
+
+use App\Security\ACL\LabVoter;
+use App\Security\ACL\InstanceVoter;
+
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -39,7 +44,8 @@ use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use App\EventSubscriber\AddFilterInstanceSubscriber;
+
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 use FOS\RestBundle\Controller\Annotations as Rest;
 
@@ -89,6 +95,8 @@ class InstanceController extends Controller
      * @Route("/instances", name="instances")
      * 
      * @Rest\Get("/api/instances", name="api_get_instances")
+     * 
+     * @Security("is_granted('ROLE_USER')", message="Access denied.")
      */
     public function indexAction(
         Request $request,
@@ -205,21 +213,24 @@ class InstanceController extends Controller
         else if ($filter == "lab" && $subFilter != "allLabs") {
             $instances = $this->fetchLabInstancesByLabUuid($subFilter);
         }
-        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allAdmins") {
+        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allEditors"|| $subFilter == "allAdmins") {
             $userType = "";
             if($subFilter == "allTeachers") {
-                $userType = "teacher";
+                $userType = "teachers";
+            }
+            else if ($subFilter == "allEditors") {
+                $userType = "editors";
             }
             else if ($subFilter == "allStudents") {
-                $userType = "student";
+                $userType = "students";
             }
             else if ($subFilter == "allAdmins") {
-                $userType = "admin";
+                $userType = "admins";
             }
 
             $instances = $this->fetchLabInstancesOwnedByUserType($userType);
         }
-        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins")) {//done
+        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins") || ($filter == "editor" && $subFilter != "allEditors")) {
             $instances = $this->fetchLabInstancesByUserUuid($subFilter);
         }
         return $instances;
@@ -227,6 +238,8 @@ class InstanceController extends Controller
 
     /**
      * @Rest\Get("/api/filter", name="api_list_instances_filter")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function listInstancesFilterAction(
         Request $request)
@@ -262,7 +275,7 @@ class InstanceController extends Controller
             if ($user->isAdministrator()) {
                 $labs = $this->labRepository->findBy(["isTemplate"=>false]);
             }
-            else if ($user->hasRole("ROLE_TEACHER")){
+            else if ($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")){
                 $labs = $this->labRepository->findByAuthorAndGroups($user);
             }
 
@@ -273,24 +286,31 @@ class InstanceController extends Controller
                 ]);
             }
         }
-        else if ($filter == "student" || $filter == "teacher" || $filter == "admin") {
+        else if ($filter == "student" || $filter == "teacher" || $filter == "editor" || $filter == "admin") {
             if ($user->isAdministrator()) {
                 if ($filter == "admin") {
-                    $role = "ADMIN";
+                    $role = "%ADMIN%";
                     array_push($subFilter, [
                         "uuid" => "allAdmins",
                         "name" => "All administrators"
                     ]);
                 }
+                else if ($filter == "editor") {
+                    $role = "%EDITOR%";
+                    array_push($subFilter, [
+                        "uuid" => "allEditors",
+                        "name" => "All editors"
+                    ]);
+                }
                 else if ($filter == "teacher") {
-                    $role = "TEACHER";
+                    $role = "%TEACHER__";
                     array_push($subFilter, [
                         "uuid" => "allTeachers",
                         "name" => "All teachers"
                     ]);
                 }
                 else {
-                    $role = "USER";
+                    $role = "%USER%";
                     array_push($subFilter, [
                         "uuid" => "allStudents",
                         "name" => "All students"
@@ -306,6 +326,13 @@ class InstanceController extends Controller
                     array_push($subFilter, [
                         "uuid" => "allTeachers",
                         "name" => "All teachers"
+                    ]);
+                }
+                else if ($filter == "editor") {
+                    $role = "editors";
+                    array_push($subFilter, [
+                        "uuid" => "allEditors",
+                        "name" => "All editors"
                     ]);
                 }
                 else {
@@ -360,6 +387,7 @@ class InstanceController extends Controller
         /** @var InstancierInterface $instancier */
         $instancier = $repository->findOneBy(['uuid' => $instancierUuid]);
         $lab = $labRepository->findOneBy(['uuid' => $labUuid]);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
         
         /*foreach ($request->headers as $key => $part) {
             $this->logger->debug("Key: ".$key);
@@ -394,7 +422,8 @@ class InstanceController extends Controller
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
-
+        $this->denyAccessUnlessGranted(InstanceVoter::START_DEVICE, $deviceInstance);
+        
         $json = $instanceManager->start($deviceInstance);
         $status = empty($json) ? 204 : 200;
 
@@ -437,6 +466,8 @@ class InstanceController extends Controller
                 'message' => 'You can not start device in edit mode.']));
                 return $response;
         }
+
+        $this->denyAccessUnlessGranted(InstanceVoter::START_DEVICE, $deviceInstance);
         $entityManager = $this->getDoctrine()->getManager();
         //var_dump($deviceInstance->getDevice()); exit;
         $json = $instanceManager->start($deviceInstance);
@@ -463,6 +494,7 @@ class InstanceController extends Controller
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
+        $this->denyAccessUnlessGranted(InstanceVoter::STOP_DEVICE, $deviceInstance);
 
         $instanceManager->stop($deviceInstance);
 
@@ -504,6 +536,7 @@ class InstanceController extends Controller
                 'message' => 'You can not stop device in edit mode.']));
                 return $response;
         }
+        $this->denyAccessUnlessGranted(InstanceVoter::STOP_DEVICE, $deviceInstance);
 
         $entityManager = $this->getDoctrine()->getManager();
         //var_dump($deviceInstance->getDevice()); exit;
@@ -531,6 +564,7 @@ class InstanceController extends Controller
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
+        $this->denyAccessUnlessGranted(InstanceVoter::RESET_DEVICE, $deviceInstance);
 
         $instanceManager->reset($deviceInstance);
 
@@ -559,12 +593,16 @@ class InstanceController extends Controller
                 throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
             }
 
+            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $deviceInstance);
+
             $instanceManager->exportDevice($deviceInstance, $name);
         }
         else if ($type == "lab") {
             if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
                 throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
             }
+
+            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $labInstance);
 
             $instanceManager->exportLab($labInstance, $name);
         }
@@ -593,6 +631,7 @@ class InstanceController extends Controller
         if (!$data) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $data);
 
         return $this->json($data, 200, [], $groups);
     }
@@ -619,6 +658,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
@@ -643,6 +683,8 @@ class InstanceController extends Controller
         if (!$labInstance = $this->labInstanceRepository->findOneBy(['guest' => $guest, 'lab' => $lab])) {
             throw new NotFoundHttpException();
         }
+
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
    
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
@@ -669,13 +711,15 @@ class InstanceController extends Controller
             throw new NotFoundHttpException();
         }
 
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
+
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
     /**
      * @Rest\Get("/api/instances/by-user/{uuid}", name="api_get_instance_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
-    public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
+    /*public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
     {
         $type = $request->query->get('type', 'lab');
         $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
@@ -700,13 +744,13 @@ class InstanceController extends Controller
         if (!$data) throw new NotFoundHttpException('No instance found.');
 
         return $this->json($data, 200, [], $groups);
-    }
+    }*/
 
 
     /**
      * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
      */
-    public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
+    /*public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
     {
         $type = $request->query->get('type', 'lab');
         $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
@@ -731,7 +775,7 @@ class InstanceController extends Controller
         if (!$data) throw new NotFoundHttpException();
 
         return $this->json($data, 200, [], $groups);
-    }
+    }*/
 
     public function fetchLabInstancesByUserUuid(string $uuid)
     {
@@ -761,21 +805,28 @@ class InstanceController extends Controller
         $user = $this->getUser();
 
         if ($user->isAdministrator()) {
-            if ($userType == "teacher") {
+            if ($userType == "teachers") {
                 foreach($instances as $instance) {
                     if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER") {
                         array_push($data, $instance);
                     }
                 }
             }
-            else if ($userType == "admin") {
+            else if ($userType == "editors") {
+                foreach($instances as $instance) {
+                    if ($instance->getOwner()->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                        array_push($data, $instance);
+                    }
+                }
+            }
+            else if ($userType == "admins") {
                 foreach($instances as $instance) {
                     if ($instance->getOwner()->hasRole("ROLE_ADMINISTRATOR") || $instance->getOwner()->hasRole("ROLE_SUPER_ADMINISTRATOR")) {
                         array_push($data, $instance);
                     }
                 }
             }
-            else if ($userType == "student") {
+            else if ($userType == "students") {
                 foreach($instances as $instance) {
                     if ($instance->getOwner()->getHighestRole() == "ROLE_USER") {
                         array_push($data, $instance);
@@ -787,14 +838,24 @@ class InstanceController extends Controller
             }
         }
         else {
-            if ($userType == "teacher") {
+            if ($userType == "teachers" || $userType == "editors") {
+                $users = $this->userRepository->findUserTypesByGroups($userType, $user);
                 foreach($instances as $instance) {
                     if ($instance->getOwner() == $user) {
                         array_push($data, $instance);
                     }
+                    foreach ($users as $teacher) {
+                        if ($teacher !== $user) {
+                            foreach($this->fetchLabInstancesByUserUuid($teacher->getUuid()) as $userInstance) {
+                                if ($userInstance == $instance) {
+                                    array_push($data, $instance);
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            else if ($userType == "student") {
+            else if ($userType == "students") {
                 $data = $this->labInstanceRepository->findByUserAndGroupStudents($user);
             }
             else {
@@ -815,12 +876,12 @@ class InstanceController extends Controller
         
         if (!$group) throw new NotFoundHttpException('Group not found.');
         $user = $this->getUser();
-        if ($user->isAdministrator() || $group->isElevatedUser($user)) {
-            $data = $this->labInstanceRepository->findByGroup($group);
-        }
+        //if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+            $data = $this->labInstanceRepository->findByGroup($group, $user);
+        /*}
         else {
             throw new AccessDeniedHttpException();
-        }
+        }*/
        
 
 
@@ -883,6 +944,13 @@ class InstanceController extends Controller
         if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }
+
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            
+            $this->denyAccessUnlessGranted(InstanceVoter::DELETE, $instance);
+        }
+        
+        
         $lab=$instance->getLab();
         $device=$lab->getDevices();
         
@@ -974,7 +1042,7 @@ class InstanceController extends Controller
             return $this->redirectToRoute("index");
         }
 
-        $isTeacherAuthor = ($user->hasRole('ROLE_TEACHER') && $isAuthor); 
+        $isTeacherAuthor = (($user->hasRole('ROLE_TEACHER') || $user->hasRole('ROLE_TEACHER_EDITOR')) && $isAuthor); 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
         if ($type == "admin") {
@@ -1049,6 +1117,8 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . '.');
         }
 
+        $this->denyAccessUnlessGranted(InstanceVoter::GET_LOGS, $deviceInstance);
+
         $logs = $deviceInstanceLogRepository->findBy([
             'deviceInstance' => $deviceInstance,
             'scope' => DeviceInstanceLog::SCOPE_PUBLIC
@@ -1079,9 +1149,6 @@ class InstanceController extends Controller
             'code'=> 200,
             'status'=>'success',
             'data'=>[
-                'lab'=>$lab,
-                'user'=>$user,
-                'labInstance'=>$labInstance,
                 'html'=>$html
             ]]));
         $response->headers->set('Content-Type', 'application/json');

@@ -20,6 +20,7 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class OperatingSystemController extends Controller
 {
@@ -47,6 +48,8 @@ class OperatingSystemController extends Controller
      * @Route("/admin/operating-systems", name="operating_systems")
      * 
      * @Rest\Get("/api/operating-systems", name="api_operating_systems")
+     * 
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -74,6 +77,8 @@ class OperatingSystemController extends Controller
      * @Route("/admin/operating-systems/{id<\d+>}", name="show_operating_system")
      * 
      * @Rest\Get("/api/operating-systems/{id<\d+>}", name="api_get_operating_system")
+     * 
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function showAction(Request $request, int $id)
     {

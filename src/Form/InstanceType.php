@@ -61,6 +61,7 @@ class InstanceType extends AbstractType
                     "Lab" => "lab",
                     "Student" => "student",
                     "Teacher" => "teacher",
+                    "Editor" => "editor",
                     "Administrator" => "admin",
                 ]
             ]);
@@ -79,6 +80,7 @@ class InstanceType extends AbstractType
                     "Lab" => "lab",
                     "Student" => "student",
                     "Teacher" => "teacher",
+                    "Editor" => "editor",
                 ]
             ]);
         }
@@ -109,7 +111,7 @@ class InstanceType extends AbstractType
             if ($user->isAdministrator()) {
                 $labs = $this->labRepository->findBy(["isTemplate"=>false]);
             }
-            else if ($user->hasRole("ROLE_TEACHER")){
+            else if ($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")){
                 $labs = $this->labRepository->findByAuthorAndGroups($user);
             }
 
@@ -117,26 +119,32 @@ class InstanceType extends AbstractType
                 $subFilter[$lab->getName()] = $lab->getUuid();
             }
         }
-        else if ($filter == "student" || $filter == "teacher" || $filter == "admin") {
+        else if ($filter == "student" || $filter == "teacher" || $filter == "editor" || $filter == "admin") {
             $subFilter = [];
             if ($user->isAdministrator()) {
                 if ($filter == "admin") {
-                    $role = "ADMIN";
+                    $role = "%ADMIN%";
                     $subFilter = [
                         "All administrators" => "allAdmins"
                     ];
                 }
                 else if ($filter == "teacher") {
-                    $role = "TEACHER";
+                    $role = "%TEACHER__";
                     $subFilter = [
                         "All teachers" => "allTeachers"
+                    ];
+                }
+                else if ($filter == "editor") {
+                    $role = "%EDITOR%";
+                    $subFilter = [
+                        "All editors" => "allEditors"
                     ];
                 }
                 else {
                     $subFilter = [
                         "All students" => "allStudents"
                     ];
-                    $role = "USER";
+                    $role = "%USER%";
                 }
 
                 $users = $this->userRepository->findByRole($role);
@@ -147,6 +155,12 @@ class InstanceType extends AbstractType
                     $role = "teachers";
                     $subFilter = [
                         "All teachers" => "allTeachers"
+                    ];
+                }
+                else if ($filter == "editor") {
+                    $role = "editors";
+                    $subFilter = [
+                        "All editors" => "allEditors"
                     ];
                 }
                 else {

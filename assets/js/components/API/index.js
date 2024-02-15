@@ -158,7 +158,7 @@ const url = require('url');
  * @typedef {"qemu"|"lxc"} Hypervisor
  * @typedef {"tap"} NetworkInterfaceType
  * @typedef {"VNC"|null} NetworkInterfaceAccess
- * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
+ * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_TEACHER_EDITOR"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
  * @typedef {"user"|"admin"|"owner"} UserGroupRole
  */
 
@@ -814,7 +814,7 @@ export class RemotelabzAPI {
             /**
              * Get lab instances of group by lab.
              * 
-             * Implements GET `/api/groups/{slug}/lab/{uuid}/instances`
+             * Implements GET `/api/groups/{slug}/lab/{uuid}/labInstances`
              * 
              * @param {string} slug
              * @param {string} uuid
@@ -822,7 +822,7 @@ export class RemotelabzAPI {
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
             getGroupInstancesByLab(slug, uuid) {
-                return axios.get(`/groups/${slug}/lab/${uuid}/instances`);
+                return axios.get(`/groups/${slug}/lab/${uuid}/labInstances`);
             },
 
             /**

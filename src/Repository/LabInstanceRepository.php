@@ -62,8 +62,7 @@ class LabInstanceRepository extends ServiceEntityRepository
     }
 
     /* Return all instances started by the $user and groups for which
-    the $user is the owner or the admin
-    */
+    the $user is a member*/
     public function findByUserAndGroups(User $user)
     {
         //$result=$this->findByUser($user);
@@ -71,9 +70,9 @@ class LabInstanceRepository extends ServiceEntityRepository
         foreach ($user->getGroups() as $groupuser) {
             $group=$groupuser->getGroup();
             
-            if ($group->isElevatedUser($user))
-                foreach ($group->getLabInstances() as $labinstance)
-                    array_push($result,$labinstance);
+            foreach ($group->getLabInstances() as $labinstance) {
+                array_push($result,$labinstance);
+            }
         }
         return $result;
     }
@@ -96,9 +95,45 @@ class LabInstanceRepository extends ServiceEntityRepository
                         }
                     }
                 }
+                foreach ($group->getLabs() as $lab) {
+                    foreach($this->findBy(["lab" => $lab, "user" => NULL, "_group" => NULL]) as $labinstance) {
+                        array_push($result,$labinstance);
+                    }
+                }
                 foreach ($group->getLabInstances() as $labinstance) {
                     array_push($result,$labinstance);
                 }
+            }
+        }
+        return $result;
+    }
+
+    /* Return all instances started by the $user and groups for which
+    the $user is the owner or the admin
+    */
+    public function findByUserMembersAndGroups(User $user)
+    {
+        $result=$this->findByUser($user);
+        foreach ($user->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            if ($group->isElevatedUser($user)) {
+                foreach ($group->getUsers() as $user_member) {
+                    if ($user_member != $user) {
+                        foreach ($this->findByUser($user_member) as $labinstance) {
+                            if ($labinstance->getLab()->getGroups()->contains($group)) {
+                                array_push($result,$labinstance);
+                            }
+                        }
+                    }
+                }
+                foreach ($group->getLabs() as $lab) {
+                    foreach($this->findBy(["lab" => $lab, "user" => NULL, "_group" => NULL]) as $labinstance) {
+                        array_push($result,$labinstance);
+                    }
+                }
+            }
+            foreach ($group->getLabInstances() as $labinstance) {
+                array_push($result,$labinstance);
             }
         }
         return $result;
@@ -201,8 +236,10 @@ class LabInstanceRepository extends ServiceEntityRepository
         foreach ($instances as $instance) {
             foreach($owner->getGroups() as $groupuser){
                 $group = $groupuser->getGroup();
-                if ($instance->getLab()->getGroups()->contains($group)) {
-                    array_push($result, $instance);
+                if($group->isElevatedUser($owner)) {
+                    if ($instance->getLab()->getGroups()->contains($group)) {
+                        array_push($result, $instance);
+                    }
                 }
             }
         }
@@ -217,20 +254,40 @@ class LabInstanceRepository extends ServiceEntityRepository
             foreach ($user->getGroups() as $groupuser){
                 $group = $groupuser->getGroup();
                 if ($instance->getLab()->getGroups()->contains($group)) {
-                    array_push($result, $instance);
+                    if (!in_array($instance, $result)) {
+                        if ($user->isAdministrator()) {
+                            array_push($result, $instance);
+                        }
+                        else {
+                            if ($instance->getOwnedBy() !== "group") {
+                                array_push($result, $instance);
+                            }
+                            else if ($instance->getOwnedBy() == "group" && $instance->getOwner()->isElevatedUser($user)) {
+                                array_push($result, $instance);
+                            }
+                        }
+                    }
+                    
                 }
             }
         }
         return $result;
     }
 
-    public function findByGroup(Group $group)
+    public function findByGroup(Group $group, User $user)
     {
         $instances = $this->findAll();
         $result = [];
         foreach ($instances as $instance) {
             if ($instance->getLab()->getGroups()->contains($group)) {
-                array_push($result, $instance);
+                if ($user->isAdministrator() || $group->isElevatedUser($user)) {
+                    array_push($result, $instance);
+                }
+                else {
+                    if ($instance->getOwner() == $user) {
+                        array_push($result, $instance);
+                    }
+                }
             }
         }
         return $result;

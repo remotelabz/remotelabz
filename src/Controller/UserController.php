@@ -30,12 +30,14 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email as Email;
 use Symfony\Component\Validator\Constraints\Email as ConstraintsEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class UserController extends Controller
 {
@@ -73,6 +75,8 @@ class UserController extends Controller
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
      * 
      * @Rest\Get("/api/users", name="api_users")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -101,6 +105,9 @@ class UserController extends Controller
         $adminCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
         })->count();
+        $teacherEditorCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+        })->count();
         $teacherCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_TEACHER';
         })->count();
@@ -115,12 +122,16 @@ class UserController extends Controller
                         return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
                     });
                 break;
+                case 'editor':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+                    });
+                break;
                 case 'teacher':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_TEACHER';
                     });
                 break;
-                
                 case 'student':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_USER';
@@ -193,6 +204,7 @@ class UserController extends Controller
                 'total' => $count,
                 'current' => $users->count(),
                 'admins' => $adminCount,
+                'teacherEditors' => $teacherEditorCount,
                 'teachers' => $teacherCount,
                 'students' => $studentCount
             ],
@@ -202,8 +214,9 @@ class UserController extends Controller
     }
 
     /**
-     * 
      * @Rest\Get("/api/fetch/users", name="api_fetch_users")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function fetchUsersAction(Request $request)
     {
@@ -220,7 +233,7 @@ class UserController extends Controller
      * 
      * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
      */
-    public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
+    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
     {
         $owner = $this->userRepository->find($id);
         $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
@@ -234,17 +247,24 @@ class UserController extends Controller
         }
 
 
-    }
+    }*/
 
     /**
      * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.")
      */
     public function showAction(Request $request, int $id)
     {
         $user = $this->userRepository->find($id);
+        $currentUser = $this->getUser();
 
         if (!$user) {
             throw new NotFoundHttpException();
+        }
+
+        if (!$currentUser->isAdministrator() && $user !== $currentUser) {
+            throw new AccessDeniedHttpException("Access denied.");
         }
 
         return $this->json($user, 200, [], [$request->get('_route')]);
@@ -359,6 +379,8 @@ class UserController extends Controller
      * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="GET")
      * 
      * @Rest\Patch("/api/users/{id<\d+>}", name="api_toggle_user")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function toggleAction(Request $request, $id)
     {
@@ -401,6 +423,8 @@ class UserController extends Controller
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
      * 
      * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function deleteAction(Request $request, $id)
     {
@@ -804,6 +828,8 @@ class UserController extends Controller
 
     /**
      * @Rest\Get("/api/users/me", name="api_users_me")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.")
      */
     public function meAction()
     {

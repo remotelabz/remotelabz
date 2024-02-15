@@ -58,6 +58,11 @@
                     <span>Admins</span> <span class="badge badge-pill">{{ count.admins }}</span>
                 </a>
             </li>
+            <li {% if role == 'editor' %}class="active"{% endif %}>
+                <a href="{{ path('users', app.request.query|merge({role: 'editor', page: null})) }}">
+                    <span>Editors</span> <span class="badge badge-pill">{{ count.teacherEditors }}</span>
+                </a>
+            </li>
             <li {% if role == 'teacher' %}class="active"{% endif %}>
                 <a href="{{ path('users', app.request.query|merge({role: 'teacher', page: null})) }}">
                     <span>Teachers</span> <span class="badge badge-pill">{{ count.teachers }}</span>
@@ -184,6 +189,8 @@
                                         </a>
                                         {% if 'ROLE_ADMINISTRATOR' in user.roles or 'ROLE_SUPER_ADMINISTRATOR' in user.roles %}
                                             <label class="badge badge-success">Admin</label>
+                                        {% elseif 'ROLE_TEACHER_EDITOR' in user.roles %}
+                                            <label class="badge badge-secondary">Editor</label>
                                         {% elseif 'ROLE_TEACHER' in user.roles %}
                                             <label class="badge badge-info">Teacher</label>
                                         {% endif %}

@@ -6,8 +6,10 @@ use App\Repository\LabRepository;
 use App\Repository\InvitationCodeRepository;
 use App\Entity\InvitationCode;
 use App\Form\InvitationCodeType;
+use App\Security\ACL\LabVoter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\Validator\Constraints\Email as EmailConstraint;
@@ -18,6 +20,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class InvitationController extends Controller
 {
@@ -41,12 +44,19 @@ class InvitationController extends Controller
     /**
     * @Route("/codes", name="codes")
     * 
+    * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
     */
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
 
-        $codes = $this->invitationCodeRepository->findCodesGroupByLab(new \DateTime(), $search);
+        $user = $this->getUser();
+        if ($user->isAdministrator()) {
+            $codes = $this->invitationCodeRepository->findCodesGroupByLab(new \DateTime(), $search);
+        }
+        else {
+            $codes = $this->invitationCodeRepository->findCodesByAuthorGroupAndLab(new \DateTime(), $search, $user);
+        }
 
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
@@ -75,6 +85,8 @@ class InvitationController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_CODE, $lab);
+
         $invitationForm = $this->createForm(InvitationCodeType::class);
         $invitationForm->handleRequest($request);
         
@@ -112,6 +124,8 @@ class InvitationController extends Controller
     {
 
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_CODE, $lab);
+        
         $invitationCodes = $this->invitationCodeRepository->findBy(['lab'=> $lab]);
 
         if ('json' === $request->getRequestFormat()) {
@@ -125,7 +139,11 @@ class InvitationController extends Controller
     * 
     */
     public function fetchExpiredTokenInstances(Request $request)
-    {
+    {  
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            throw new AccessDeniedHttpException("Access denied.");
+        }
+
         $invitationCodes = $this->invitationCodeRepository->findExpiredCodeInstances(new \DateTime());
         $guests = [];
         $deviceInstances = [];
@@ -174,6 +192,10 @@ class InvitationController extends Controller
     */
     public function fetchExpiredToken(Request $request)
     {
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            throw new AccessDeniedHttpException("Access denied.");
+        }
+
         $invitationCodes = $this->invitationCodeRepository->findExpiredCodes(new \DateTime());
 
         if ('json' === $request->getRequestFormat()) {
@@ -189,6 +211,11 @@ class InvitationController extends Controller
     public function deleteCodeAction(Request $request, string $uuid)
     {
         $invitationCode = $this->invitationCodeRepository->findBy(['uuid'=>$uuid]);
+
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            $this->denyAccessUnlessGranted(LabVoter::EDIT_CODE, $invitationCode[0]->getLab());
+        }
+
         $entityManager = $this->getDoctrine()->getManager();
         $this->logger->info("Code for user ".$invitationCode[0]->getMail()." and lab ".$invitationCode[0]->getLab()->getName()." is deleted");
         $entityManager->remove($invitationCode[0]);

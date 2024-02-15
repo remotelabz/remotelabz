@@ -88,6 +88,29 @@ class InvitationCodeRepository extends ServiceEntityRepository
         return $query->getResult();
 
     }
+
+    public function findCodesByAuthorGroupAndLab($now, $name, $author)
+    {
+
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT DISTINCT l.name as labName, l.id as labId, count(i.id) as numberOfCodes
+            FROM App\Entity\InvitationCode i
+            LEFT JOIN i.lab l
+            WHERE l.name LIKE :name
+            AND l.author = :author
+            AND i.expiryDate > :now
+            GROUP BY l.id, l.name
+            ORDER BY numberOfCodes DESC'
+        )
+        ->setParameter(':name', '%'.$name.'%')
+        ->setParameter(':author', $author)
+        ->setParameter(':now', $now);
+
+        return $query->getResult();
+
+    }
     // /**
     //  * @return InvitationCode[] Returns an array of InvitationCode objects
     //  */
