@@ -97,10 +97,10 @@ services:
             - { name: doctrine.event_listener, event: preUpdate }
             - { name: doctrine.event_listener, event: postLoad }
 
-#    App\EventListener\ExceptionListener:
-#        tags:
-#            - { name: kernel.event_listener, event: kernel.exception }
-#        arguments: ['%kernel.environment%']
+    App\EventListener\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+        arguments: ['%kernel.environment%']
 
     App\Service\FileUploader:
         arguments:
