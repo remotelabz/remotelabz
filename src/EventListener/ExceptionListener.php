@@ -43,9 +43,16 @@ class ExceptionListener
         // holds status code and header details
         if ($exception instanceof HttpExceptionInterface) {
             if ($exception->getStatusCode() == 404) {
-                $response = new RedirectResponse('/');
-                // sends the modified response object to the event
-                $event->setResponse($response);
+                preg_match(
+                    '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-user\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/', 
+                    $event->getRequest()->getRequestUri(),
+                    $matches
+                );
+                if ($matches == null) {
+                    $response = new RedirectResponse('/');
+                    // sends the modified response object to the event
+                    $event->setResponse($response);
+                }
             }
             /*else {
                 $response->setStatusCode($exception->getStatusCode());
