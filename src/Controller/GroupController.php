@@ -7,6 +7,7 @@ use App\Entity\Group;
 use App\Entity\User;
 use App\Form\GroupParentType;
 use App\Form\GroupType;
+use App\Form\GroupInstanceType;
 use App\Repository\GroupRepository;
 use App\Repository\UserRepository;
 use App\Repository\LabRepository;
@@ -47,12 +48,16 @@ class GroupController extends Controller
         GroupRepository $groupRepository,
         LoggerInterface $logger,
         LabRepository $labRepository,
+        LabInstanceRepository $labInstanceRepository,
+        SerializerInterface $serializer,
         UserRepository $userRepository
     )
     {
         $this->groupRepository = $groupRepository;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
+        $this->serializer = $serializer;
         $this->userRepository = $userRepository;
     }
 
@@ -182,9 +187,21 @@ class GroupController extends Controller
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $labs = [];
+        $groupInstance = $request->query->get('group_instance');
+        $filter = $groupInstance ? $groupInstance['filter'] : "allLabs";
+        $page = (int)$request->query->get('page', 1);
+        $limit = 10;
+        
+        $groupInstanceForm = $this->createForm(GroupInstanceType::class, ["action"=> "/group/".$slug."/instances", "method"=>"GET", "slug"=>$slug, "filter"=>$filter]);
+        $groupInstanceForm->handleRequest($request);
 
-        $instances = $labInstanceRepository->findByGroup($group, $this->getUser());
-        foreach ($instances as $instance) {
+        if ($filter == "allLabs") {
+            $instances = $labInstanceRepository->findByGroup($group, $this->getUser());
+        }
+        else {
+            $instances = $this->fetchGroupInstancesByLabUuid($slug, $filter);
+        }
+        /*foreach ($instances as $instance) {
             $exists = false;
             foreach($labs as $lab) {
                 if ($instance->getLab() == $lab) {
@@ -194,15 +211,26 @@ class GroupController extends Controller
             if ($exists == false) {
                 array_push($labs, $instance->getLab());
             }
+        }*/
+        $AllLabInstances = [];
+        foreach ($instances as $instance) {
+            
+            array_push($AllLabInstances, $instance);
         }
 
+        $count = count($instances);
+        try {
+            $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
+        } catch (ORMException $e) {
+            throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
+        }
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($instances, 200, [], ['api_get_lab_instance']);
+            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
         }
-
+        
         $GroupInstancesProps = [
-            'instances'=> $instances,
-            'labs'=> $labs,
+            //'instances'=> $instances,
+            //'labs'=> $labs,
             'group'=> $group,
             'user'=>$this->getUser()
         ];
@@ -215,36 +243,35 @@ class GroupController extends Controller
         );
 
         return $this->render('group/dashboard_group_instances.html.twig', [
-            'labInstances' => $instances,
+            'labInstances' => $AllLabInstances,
             'group' => $group,
-            'labs' => $labs,
-            'props' => $props
+            //'labs' => $labs,
+            'props' => $props,
+            'groupInstanceForm' => $groupInstanceForm->createView(),
+            'count'=>$count,
+            'limit'=>$limit,
+            'page'=>$page
         ]);
     }
 
-    /**
-     *
-     * @Rest\Get("/api/groups/{slug}/lab/{uuid}/labInstances", name="api_group_instances_by_lab", requirements={"slug": "[\w\-\/]+", "uuid": "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    public function fetchGroupInstancesByLabUuid(Request $request , string $slug, string $uuid, LabRepository $labRepository, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
+    public function fetchGroupInstancesByLabUuid(string $slug, string $uuid)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
-        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
     
-        if (!$lab = $labRepository->findOneBy(['uuid' => $uuid])) {
+        if (!$lab = $this->labRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('Lab with UUID '.$uuid.' does not exist.');
         }
         
         if (!$group->getLabs()->contains($lab)) {
             throw new BadRequestHttpException('This lab '.$lab->getName().' in not in the group '.$slug.'.');
         }
-        $instances = $labInstanceRepository->findByGroupAndLabUuid($group, $lab);
+        $instances = $this->labInstanceRepository->findByGroupAndLabUuid($group, $lab);
 
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($instances, 200, [], ['api_get_lab_instance']);
-        }
+        if (!$instances) $instances = [];
+
+        return $instances;
 
     }
 
