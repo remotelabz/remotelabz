@@ -247,7 +247,6 @@ class DeviceController extends Controller
                 "name"=> $device->getName(),
                 "type"=> $device->getType(),
                 //"console"=> $device->getConsole(),
-                "delay"=> $device->getDelay(),
                 "left"=> $device->getEditorData()->getY(),
                 "top"=> $device->getEditorData()->getX(),
                 "icon"=> $device->getIcon(),
@@ -256,7 +255,7 @@ class DeviceController extends Controller
                 //"url"=> $device->getUrl(),
                 "template"=> $device->getTemplate(),
                 "status"=> $status,
-                "ethernet"=> $device->getEthernet(),
+                "ethernet"=> 1,
                 "console" => $controlProtocolTypes,
                 "networkInterfaceTemplate"=> $device->getNetworkInterfaceTemplate()
             ];
@@ -420,7 +419,6 @@ class DeviceController extends Controller
             "name"=> $device->getName(),
             "type"=> $device->getType(),
             //"console"=> $device->getConsole(),
-            "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
             "top"=> $device->getEditorData()->getX(),
             "icon"=> $device->getIcon(),
@@ -428,7 +426,7 @@ class DeviceController extends Controller
             //"url"=> $device->getUrl(),
             "config"=>$device->getConfig(),
             "status"=> $status,
-            "ethernet"=>$device->getEthernet(), 
+            "ethernet"=>1, 
             "cpu"=>$device->getNbCpu(),
             "core"=>$device->getNbCore(),
             "socket"=>$device->getNbSocket(),
@@ -715,7 +713,6 @@ class DeviceController extends Controller
         else {
             $device->setNbThread($data['thread']);
         }
-        //$device->setCount($data['count']);
         if($data['name'] != '') {
             $device->setName($data['name']);
         }
@@ -740,13 +737,6 @@ class DeviceController extends Controller
         /*if($controlProtocolType != null) {
             $device->addControlProtocolType($controlProtocolType[0]);
         }*/
-        if($data['delay'] != '') {
-            $device->setDelay($data['delay']);
-        }
-        else {
-            $device->setDelay(0);
-        }
-        $device->setPostFix($data['postfix']);
         $device->setLaunchOrder(0);
         $device->setVirtuality(0);
         if($data['cpu'] != '') {
@@ -987,18 +977,12 @@ class DeviceController extends Controller
 
         $data = json_decode($request->getContent(), true);   
 
-        if(isset($data['count'])) {
-            $device->setCount($data['count']);
-        }
         if(isset($data['name'])) {
             if($data['name'] != '') {
                 $oldDeviceName = $device->getName();
                 $device->setName($data['name']);
 
             }
-        }
-        if(isset($data['postfix'])) {
-            $device->setPostFix($data['postfix']);
         }
 
         if(isset($data['config'])) {
@@ -1083,14 +1067,6 @@ class DeviceController extends Controller
             $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
             $device->setOperatingSystem($operatingSystem[0]);
             $this->setDeviceHypervisorToOS($device);
-        }
-        if(isset($data['delay'])) {
-            if($data['delay'] != '') {
-                $device->setDelay($data['delay']);
-            }
-            else {
-                $device->setDelay(0);
-            }
         }
 
         if(isset($data['template'])) {

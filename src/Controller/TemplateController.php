@@ -196,12 +196,6 @@ class TemplateController extends Controller
 		//$data['options']['config']['list'][0] = 'None';	// None
 		//$data['options']['config']['list'][1] = 'Exported';	// Exported
 
-        $data['options']['delay'] = Array(
-            'name' => 'Delay (s)',
-            'type' => 'input',
-            'value' => 0
-        );
-
         //if ($p['type'] = 'remotelabz') {
             $data['options']['brand'] = Array(
                 'name' => 'Brand',
