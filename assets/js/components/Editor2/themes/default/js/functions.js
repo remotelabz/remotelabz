@@ -1266,8 +1266,6 @@ export function printFormLab(action, values) {
         url: '/build/editor/ejs/form_lab.ejs'
     }).render({
         name: (values['name'] != null) ? values['name'] : '',
-        version: (values['version'] != null) ? values['version'] : '',
-        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
         author: (values['author'] != null) ? values['author'] : '',
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
@@ -1334,8 +1332,6 @@ export function printFormSubjectLab(action, values) {
         url: '/build/editor/ejs/form_subject_lab.ejs'
     }).render({
         name: (values['name'] != null) ? values['name'] : '',
-        version: (values['version'] != null) ? values['version'] : '',
-        scripttimeout: (values['scripttimeout'] != null) ? values['scripttimeout'] : '300',
         author: (values['author'] != null) ? values['author'] : '',
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',

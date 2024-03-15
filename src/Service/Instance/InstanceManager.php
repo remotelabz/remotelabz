@@ -559,9 +559,6 @@ class InstanceManager
         $newLab->setShortDescription($lab->getShortDescription());
         $newLab->setDescription($lab->getDescription());
         $newLab->setIsTemplate(true);
-        $newLab->setTasks($lab->getTasks());
-        $newLab->setVersion($lab->getVersion());
-        $newLab->setScripttimeout($lab->getScripttimeout());
         $newLab->setLocked($lab->getLocked());
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());

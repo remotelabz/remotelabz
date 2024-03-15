@@ -52,24 +52,6 @@ class Lab implements InstanciableInterface
     private $isTemplate;
 
     /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
-    private $tasks;
-
-    /**
-     * @ORM\Column(type="string", length=10, options={"default": "1"})
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
-    private $version = "1";
-
-    /**
-     * @ORM\Column(type="integer", options={"default": 300})
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
-    private $scripttimeout = 300;
-
-    /**
      * @ORM\Column(type="integer", options={"default": 0})
      * @Serializer\Groups({"api_get_lab", "export_lab"})
      */
@@ -232,42 +214,6 @@ class Lab implements InstanciableInterface
     public function setIsTemplate(bool $isTemplate): self
     {
         $this->isTemplate = $isTemplate;
-
-        return $this;
-    }
-
-    public function getTasks(): ?string
-    {
-        return $this->tasks;
-    }
-
-    public function setTasks(?string $tasks): self
-    {
-        $this->tasks = $tasks;
-
-        return $this;
-    }
-
-    public function getVersion(): ?string
-    {
-        return $this->version;
-    }
-
-    public function setVersion(?string $version): self
-    {
-        $this->version = $version;
-
-        return $this;
-    }
-
-    public function getScripttimeout(): ?int
-    {
-        return $this->scripttimeout;
-    }
-
-    public function setScripttimeout(?int $scripttimeout): self
-    {
-        $this->scripttimeout = $scripttimeout;
 
         return $this;
     }
