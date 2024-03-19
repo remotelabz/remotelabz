@@ -171,6 +171,7 @@ class InstanceType extends AbstractType
                 }
                 $users = $this->userRepository->findUserTypesByGroups($role, $user);
             }
+            usort($users, function ($a,$b) {return strcmp($a->getLastName(), $b->getLastName());});
             foreach ($users as $user) {
                 $subFilter[$user->getName()] = $user->getUuid();
             }

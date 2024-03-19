@@ -344,6 +344,8 @@ class InstanceController extends Controller
                 }
                 $users = $this->userRepository->findUserTypesByGroups($role, $user);
             }
+
+            usort($users, function ($a,$b) {return strcmp($a->getLastName(), $b->getLastName());});
             foreach ($users as $user) {
                 array_push($subFilter, [
                     "uuid" => $user->getUuid(),

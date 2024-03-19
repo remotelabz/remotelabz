@@ -52,7 +52,7 @@
                             <option {% if value == field_value(addFilterForm.subFilter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
-                    
+
                     <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
                 </div>
                 {{ form_end(addFilterForm) }}
@@ -218,8 +218,13 @@
 {% block javascripts %}
     {{ parent() }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const filterSelector = document.getElementById('instance_filter');
+        $('#instance_subFilter').select2({
+            theme: "bootstrap-5",
+        });
+
         if (filterSelector.nodeName == "SELECT") {
             filterSelector.addEventListener('change', ()=> {
                 $.ajax({
@@ -237,6 +242,10 @@
                         for(let choice of choices){
                             subFilterSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
                         }
+
+                        $('#instance_subFilter').select2({
+                            theme: "bootstrap-5",
+                        });
                     },
                     error: function (err) {
                         console.log(err.response);
