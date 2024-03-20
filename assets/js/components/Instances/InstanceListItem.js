@@ -400,7 +400,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             controls
                         }
                         {instance.ownedBy != 'group' && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' && !isSandbox && user.roles &&
-                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR"))) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowStopDeviceModel(true)}><SVG name="stop" /></Button>
                         }
                         {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' &&
