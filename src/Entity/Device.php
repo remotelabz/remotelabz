@@ -187,13 +187,6 @@ class Device implements InstanciableInterface
     private $isTemplate;
 
     /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $delay = 0;
-
-
-    /**
      * @ORM\Column(type="string", length=100, nullable=true)
      * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      */
@@ -204,19 +197,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      */
     private $template;
-
-
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $count;
-
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $postfix;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
@@ -229,18 +209,6 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device"})
      */
     private $config_data = "";
-
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $status = 0;
-
-    /**
-     * @ORM\Column(type="integer", options={"default": 1})
-     * @Serializer\Groups({"api_get_device"})
-     */
-    private $ethernet = 1;
 
      /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdDevices")
@@ -600,18 +568,6 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getDelay(): ?int
-    {
-        return $this->delay;
-    }
-
-    public function setDelay(int $delay): self
-    {
-        $this->delay = $delay;
-
-        return $this;
-    }
-
     public function getAuthor(): ?User
     {
         return $this->author;
@@ -648,30 +604,6 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getCount(): ?int
-    {
-        return $this->count;
-    }
-
-    public function setCount(int $count): self
-    {
-        $this->count = $count;
-
-        return $this;
-    }
-
-    public function getPostfix(): ?int
-    {
-        return $this->postfix;
-    }
-
-    public function setPostfix(int $postfix): self
-    {
-        $this->postfix = $postfix;
-
-        return $this;
-    }
-
     public function getConfig(): ?int
     {
         return $this->config;
@@ -692,30 +624,6 @@ class Device implements InstanciableInterface
     public function setConfigData(string $config_data): self
     {
         $this->config_data = $config_data;
-
-        return $this;
-    }
-
-    public function getStatus(): ?int
-    {
-        return $this->status;
-    }
-
-    public function setStatus(int $status): self
-    {
-        $this->status = $status;
-
-        return $this;
-    }
-
-    public function getEthernet(): ?int
-    {
-        return $this->ethernet;
-    }
-
-    public function setEthernet(int $ethernet): self
-    {
-        $this->ethernet = $ethernet;
 
         return $this;
     }

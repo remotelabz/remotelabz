@@ -421,8 +421,6 @@ class LabController extends Controller
             "description"=>$labInfo["description"],
             "body"=>$labInfo["body"],
             "author"=>$labInfo["author"],
-            "version"=>$labInfo["version"],
-            "scripttimeout"=>$labInfo["scripttimeout"],
             "lock"=>$labInfo["locked"],
             "banner"=>$labInfo["banner"],
             "timer"=>$labInfo["timer"]
@@ -959,9 +957,7 @@ class LabController extends Controller
         $data = json_decode($request->getContent(), true); 
 
         $lab->setName($data['name']);
-        $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
-        $lab->setScripttimeout($data['scripttimeout']);
         if ($data['timer'] !== "" && $data['timer'] != "00:00:00") {
             $lab->setHasTimer(true);
             $lab->setTimer($data['timer']);
