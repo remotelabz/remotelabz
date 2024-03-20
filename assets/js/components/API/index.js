@@ -807,8 +807,8 @@ export class RemotelabzAPI {
              * 
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
-            getGroupInstances(slug) {
-                return axios.get(`/groups/${slug}/instances`);
+            getGroupInstances(slug, filter="allLabs", page=1) {
+                return axios.get(`/groups/${slug}/instances`, {params: {"group_instance[filter]": filter, page}});
             },
 
             /**

@@ -5,10 +5,10 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function GroupInstancesList(props = {instances, labs, group, user}) {
+export default function GroupInstancesList(props = {instances, group, user}) {
     const [options, setOptions] = useState();
     const [instances, setInstances] = useState();
-    const [filter, setFilter] = useState("allLabs");
+    //const [filter, setFilter] = useState("allLabs");
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
@@ -25,9 +25,9 @@ export default function GroupInstancesList(props = {instances, labs, group, user
             setInstances(null)
             setLoadingInstanceState(true)
         }
-    }, [filter]);
+    }, []);
 
-    useEffect(() => {
+    /*useEffect(() => {
         let optionsList = props.labs.map((lab) => {
             return(
             <><option
@@ -42,7 +42,7 @@ export default function GroupInstancesList(props = {instances, labs, group, user
           >All Labs</option></>);
 
         setOptions(optionsList);
-    }, []);
+    }, []);*/
 
     useEffect(() => {
 
@@ -98,12 +98,12 @@ export default function GroupInstancesList(props = {instances, labs, group, user
         let request;
 
         let path = getParentPath(props.group, props.group.slug);
-        if(filter == "allLabs") {
-            request = Remotelabz.instances.lab.getGroupInstances(path);  
-        }
-        else {
-            request = Remotelabz.instances.lab.getGroupInstancesByLab(path, filter)
-        }
+
+        let filter = document.getElementById("group_instance_filter").value;
+        let page = document.getElementById("group_instance_page").value;
+
+        request = Remotelabz.instances.lab.getGroupInstances(path, filter, page)
+
         request.then(response => {
             setInstances(response.data);
             const list = response.data.map((labInstance) => {
@@ -244,14 +244,14 @@ export default function GroupInstancesList(props = {instances, labs, group, user
 
     return (
         <div>
-            <div>
+            {/*<div>
                 <div><span>Filter by lab : </span></div>
                 <div className="d-flex align-items-center mb-2 mt-2">
                 <select className='form-control' id="labSelect" onChange={onChange}>
                     {options}
                 </select>
                 </div>
-            </div>
+            </div>*/}
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
