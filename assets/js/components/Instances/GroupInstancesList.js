@@ -11,6 +11,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
     //const [filter, setFilter] = useState("allLabs");
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
+    const [showForceStopModal, setShowForceStopModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
     const [instancesList, setInstancesList] = useState(null)
 
@@ -225,7 +226,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
     
     }
 
-    function stopDevices() {
+    function stopDevices(leave) {
         for(let deviceInstanceToStop of deviceInstancesToStop) {
             try {
                 Remotelabz.instances.device.stop(deviceInstanceToStop.uuid)
@@ -239,7 +240,54 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 //setLoadingInstanceState(false)
             }
         }
-        onLeaveLab(true);
+        if (leave == true) {
+            onLeaveLab(true);
+        }
+    }
+
+    function stopAllDevices() {
+        setShowForceStopModal(false)
+        const boxes = document.querySelectorAll(".checkLab");
+        let labInstancesToStop = [];
+        let running = false;
+        deviceInstancesToStop = [];
+        let promises = []
+
+        for (var i=0; i<boxes.length; i++) {
+            if (boxes[i].checked) {
+                labInstancesToStop.push(boxes[i].value);
+            }
+        }
+
+        for(let labInstanceToStop of labInstancesToStop) {
+            promises.push(()=> {return Remotelabz.instances.lab.get(labInstanceToStop)
+                .then((response) => {
+                    if (hasInstancesStillRunning(response.data)) {
+                        running = true;
+                        for(let deviceInstance of response.data.deviceInstances) {
+                            console.log(deviceInstance)
+                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
+                                deviceInstancesToStop.push(deviceInstance);
+                            }
+                        }  
+                        
+                    }                    
+                })
+            })
+        }
+        promises.push(()=>{
+            if (running == true) {
+                stopDevices(false);
+            }
+        })
+        promises.reduce((prev, promise) => {
+            return prev
+              .then(promise)
+              .catch(err => {
+                console.warn('err', err.message);
+              });
+          }, Promise.resolve());         
+        
     }
 
     return (
@@ -254,7 +302,10 @@ export default function GroupInstancesList(props = {instances, group, user}) {
             </div>*/}
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&
+                    <>
+                    <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                    </>
                 }
                 {instances !== "" &&
                     <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
@@ -284,7 +335,19 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={stopDevices}>Continue</Button>
+                    <Button variant="danger" onClick={() => stopDevices(true)}>Continue</Button>
+                </Modal.Footer>
+            </Modal>
+            <Modal show={showForceStopModal} onHide={() => setShowForceStopModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Force to stop labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to stop the devices of the selected labs?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowForceStopModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={stopAllDevices}>Continue</Button>
                 </Modal.Footer>
             </Modal>
         </div>

@@ -46,9 +46,19 @@ class ExceptionListener
                 preg_match(
                     '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-user\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/', 
                     $event->getRequest()->getRequestUri(),
-                    $matches
+                    $matchesUser
                 );
-                if ($matches == null) {
+                preg_match(
+                    '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-group\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/', 
+                    $event->getRequest()->getRequestUri(),
+                    $matchesGroup
+                );
+                preg_match(
+                    '/\/api\/instances\/lab\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}\/by-guest\/[0-9a-fA-F]{8}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{4}[-][0-9a-fA-F]{12}/', 
+                    $event->getRequest()->getRequestUri(),
+                    $matchesGuest
+                );
+                if ($matchesUser == null && $matchesGroup == null && $matchesGuest == null) {
                     $response = new RedirectResponse('/');
                     // sends the modified response object to the event
                     $event->setResponse($response);

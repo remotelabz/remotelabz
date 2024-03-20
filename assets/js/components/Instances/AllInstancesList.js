@@ -13,6 +13,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [instancesList, setInstancesList] = useState(null)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
+    const [showForceStopModal, setShowForceStopModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
     let deviceInstancesToStop = [];
@@ -103,7 +104,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     function hasInstancesStillRunning(labInstance) {
-        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));    }
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error') && (i.state != 'reset'));    }
 
 
     async function onLeaveLab(force) {
@@ -117,7 +118,6 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         let promises = []
 
         for (var i=0; i<boxes.length; i++) {
-            // And stick the checked ones onto an array...
             if (boxes[i].checked) {
                 instancesToDelete.push(boxes[i].value);
             }
@@ -181,7 +181,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     
     }
 
-    function stopDevices() {
+    function stopDevices(leave) {
         for(let deviceInstanceToStop of deviceInstancesToStop) {
             try {
                 Remotelabz.instances.device.stop(deviceInstanceToStop.uuid)
@@ -195,12 +195,60 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 //setLoadingInstanceState(false)
             }
         }
-        onLeaveLab(true);
+        if (leave == true) {
+            onLeaveLab(true);
+        }
+    }
+
+    function stopAllDevices() {
+        setShowForceStopModal(false)
+        const boxes = document.querySelectorAll(".checkLab");
+        let labInstancesToStop = [];
+        let running = false;
+        deviceInstancesToStop = [];
+        let promises = []
+
+        for (var i=0; i<boxes.length; i++) {
+            if (boxes[i].checked) {
+                labInstancesToStop.push(boxes[i].value);
+            }
+        }
+
+        for(let labInstanceToStop of labInstancesToStop) {
+            promises.push(()=> {return Remotelabz.instances.lab.get(labInstanceToStop)
+                .then((response) => {
+                    if (hasInstancesStillRunning(response.data)) {
+                        running = true;
+                        for(let deviceInstance of response.data.deviceInstances) {
+                            console.log(deviceInstance)
+                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
+                                deviceInstancesToStop.push(deviceInstance);
+                            }
+                        }  
+                        
+                    }                    
+                })
+            })
+        }
+        promises.push(()=>{
+            if (running == true) {
+                stopDevices(false);
+            }
+        })
+        promises.reduce((prev, promise) => {
+            return prev
+              .then(promise)
+              .catch(err => {
+                console.warn('err', err.message);
+              });
+          }, Promise.resolve());         
+        
     }
 
     return (<>
         {instancesList && labInstances !== "" && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
         <div className="d-flex justify-content-end mb-2">
+            <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
             <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
             <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
         </div>}
@@ -227,7 +275,19 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={stopDevices}>Continue</Button>
+                    <Button variant="danger" onClick={() => stopDevices(true)}>Continue</Button>
+                </Modal.Footer>
+            </Modal>
+            <Modal show={showForceStopModal} onHide={() => setShowForceStopModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Force to stop labs</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to stop the devices of the selected labs?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="default" onClick={() => setShowForceStopModal(false)}>Close</Button>
+                    <Button variant="danger" onClick={stopAllDevices}>Continue</Button>
                 </Modal.Footer>
             </Modal>
     </>)
