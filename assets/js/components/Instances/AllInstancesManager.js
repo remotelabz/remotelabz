@@ -10,14 +10,15 @@ import moment from 'moment/moment';
 function AllInstancesManager(props) { 
     const [labInstance, setLabInstance] = useState([])
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [showStopLabModal, setShowStopLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
     useEffect(()=> {
         setLabInstance(props.props);
     })
     function hasInstancesStillRunning() {
-        //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
-        return false;
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error') && (i.state != 'reset'));
+        //return false;
     }
 
     async function onInstanceStateUpdate() {
@@ -41,6 +42,38 @@ function AllInstancesManager(props) {
         }
     }
 
+    function stopDevices() {
+        setShowStopLabModal(false);
+        var deviceInstancesToStop = [];
+        let promises = []
+        if (hasInstancesStillRunning()) {
+            promises.push(()=> {
+                for(let deviceInstance of labInstance.deviceInstances) {
+                    if (deviceInstance.state != "stopped" && deviceInstance.state != "exported" && deviceInstance.state != "error" && deviceInstance.state != "reset") {
+                        console.log(deviceInstance);
+                        try {
+                            Remotelabz.instances.device.stop(deviceInstance.uuid)
+                        } catch (error) {
+                            console.error(error)
+                            new Noty({
+                                text: 'An error happened while stopping a device. Please try again later.',
+                                type: 'error'
+                            }).show()
+                        }
+                    }
+                }
+            });
+
+            promises.reduce((prev, promise) => {
+                return prev
+                  .then(promise)
+                  .catch(err => {
+                    console.warn('err', err.message);
+                  });
+              }, Promise.resolve());   
+        }
+    }
+
     return (<>
         {
             <ListGroup>
@@ -55,10 +88,11 @@ function AllInstancesManager(props) {
                         <Button variant="danger" className="ml-2" href={`/labs/${props.props.lab.id}/see/${props.props.id}`}>See Lab</Button>
                     }
                     {
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
+                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} >Leave lab</Button>
                     }
                     {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_TEACHER_EDITOR") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
-                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                        <><Button variant="danger" className="ml-2" onClick={() => setShowStopLabModal(true)}>Stop lab</Button>
+                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input></>
                     }
                     </div>
                 </ListGroupItem>
@@ -96,6 +130,18 @@ function AllInstancesManager(props) {
             <Modal.Footer>
                 <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
                 <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal show={showStopLabModal} onHide={() => setShowStopLabModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Stop devices</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                Are you sure you want the devices ?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="default" onClick={() => setShowStopLabModal(false)}>Close</Button>
+                <Button variant="danger" onClick={stopDevices}>Stop</Button>
             </Modal.Footer>
         </Modal>
     </>)

@@ -19,6 +19,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     const [showExport, setShowExport] = useState(false)
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
+    const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
    
     useEffect(() => {
         fetchLogs()
@@ -79,6 +80,9 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
 
     function stopDevice(deviceInstance) {
         setComputing(true)
+        if (showStopDeviceModel == true) {
+            setShowStopDeviceModel(false);
+        }
 
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
             new Noty({
@@ -323,6 +327,10 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
+                        {instance.ownedBy != 'group' && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' && !isSandbox && user.roles &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
+                            <Button variant="danger" className="ml-3" onClick={() => setShowStopDeviceModel(true)}><SVG name="stop" /></Button>
+                        }
                         {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
@@ -423,7 +431,20 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                 <Button variant="default" onClick={() => setShowResetDeviceModel(false)}>Close</Button>
                 <Button variant="danger" onClick={() => resetDevice(instance)}>Reset</Button>
             </Modal.Footer>
-        </Modal></>
+        </Modal>
+        <Modal show={showStopDeviceModel} onHide={() => setShowStopDeviceModel(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Force to stop device</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                Are you sure you want to force to stop the device?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="default" onClick={() => setShowStopDeviceModel(false)}>Close</Button>
+                <Button variant="danger" onClick={() => stopDevice(instance)}>Stop</Button>
+            </Modal.Footer>
+        </Modal>
+        </>
     )
 }
 
