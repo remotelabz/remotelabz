@@ -10,7 +10,7 @@ import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, viewAs, user }) {
+function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -326,12 +326,8 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                         {instance.ownedBy != 'group' && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
-                        }
-                        {instance.ownedBy != 'group' && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' && !isSandbox && user.roles &&
-                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
-                            <Button variant="danger" className="ml-3" onClick={() => setShowStopDeviceModel(true)}><SVG name="stop" /></Button>
-                        }
-                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') &&
+                        }        
+                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
                             <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
@@ -402,6 +398,13 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
 
                         {instance.device.type != "switch" && showControls && 
                             controls
+                        }
+                        {instance.ownedBy != 'group' && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' && !isSandbox && user.roles &&
+                            (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
+                            <Button variant="danger" className="ml-3" onClick={() => setShowStopDeviceModel(true)}><SVG name="stop" /></Button>
+                        }
+                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' &&
+                            <Button variant="danger" className="ml-3" onClick={() => setShowStopDeviceModel(true)}><SVG name="stop"></SVG></Button>
                         }
                     </div>
                 </div>

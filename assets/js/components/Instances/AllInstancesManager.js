@@ -115,7 +115,7 @@ function AllInstancesManager(props) {
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true} user={props.user}>
+                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true} user={props.user} allInstancesPage={true}>
                     </InstanceList>
                 }
             </ListGroup>
