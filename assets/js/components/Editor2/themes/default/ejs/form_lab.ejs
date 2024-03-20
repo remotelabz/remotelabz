@@ -20,11 +20,16 @@
                     </div>
                 </div>
             <div class="form-group">
-                <label class="col-md-4 control-label"><%=MESSAGES[158]%><sup class="sup-star">*</sup></label>
-                <div class="col-md-3"><input class="form-control" name="lab[scripttimeout]" value="<%=scripttimeout%>" type="text"/>
+                <label class="col-md-2 control-label">Banner</label>
+                <div class="col-md-6">
+                    <div id="bannerDropzone" class="dropzone">
+                        <div class="dz-default dz-message" id="bannerDropzoneText">
+                            <img src="<%=srcBanner%>" class="bannerDropzone data-dz-thumbnail" width="160px" height="105px" style="object-fit: cover;">
+                            <span>Drop files here</span>
+                        </div>
                     </div>
-                <label class="col-md-3 control-label control-label_custom">Seconds</label>
                 </div>
+            </div>
             <div class="row">
                 <div class="col-md-12 parent-required">
                     <p class="p-required"><sup class="sup-required">*</sup>- Required Fields</p>
@@ -37,18 +42,6 @@
                 <div class="col-md-10">
                     <textarea class="form-control" name="lab[description]" rows="6" style="width: 100%;"><%=description%></textarea>
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="col-md-2 control-label">Banner</label>
-                <div class="col-md-3">
-                    <div id="bannerDropzone" class="dropzone">
-                        <div class="dz-default dz-message" id="bannerDropzoneText">
-                            <img src="<%=srcBanner%>" class="bannerDropzone data-dz-thumbnail" width="160px" height="105px" style="object-fit: cover;">
-                            <span>Drop files here</span>
-                        </div>
-                    </div>
-                </div>
-                
             </div>
             <div class="form-group">
                 <label class="col-md-2 control-label">Timer</label>
