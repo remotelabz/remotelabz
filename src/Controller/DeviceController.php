@@ -224,7 +224,7 @@ class DeviceController extends Controller
             }
 
             $user = $this->getUser();
-            if (in_array('login', $controlProtocolTypes) && ($user->isAdministrator() || (($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")) && $user == $lab->getAuthor()))) {
+            if (in_array('login', $controlProtocolTypes) && ($user instanceof User && ($user->isAdministrator() || (($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")) && $user == $lab->getAuthor())))) {
                 array_push($controlProtocolTypes, "admin");
             }
             
