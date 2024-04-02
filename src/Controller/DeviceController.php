@@ -399,7 +399,7 @@ class DeviceController extends Controller
             }
         }
         $user = $this->getUser();
-        if (in_array('login', $controlProtocolTypesName) && ($user->isAdministrator() || (($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")) && $user == $lab->getAuthor()))) {
+        if (in_array('login', $controlProtocolTypesName) && ($user instanceof User && ($user->isAdministrator() || (($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")) && $user == $lab->getAuthor())))) {
             array_push($controlProtocolTypesName, "admin");
         }
         //choose the control protocol to open the console
