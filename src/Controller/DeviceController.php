@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use DateTime;
 use App\Entity\Device;
+use App\Entity\User;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
 use App\Entity\EditorData;
