@@ -629,6 +629,7 @@ class InstanceManager
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
+        $newDevice->setVirtuality($device->getVirtuality());
 
         //$i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {

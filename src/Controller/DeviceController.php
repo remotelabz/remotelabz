@@ -749,7 +749,7 @@ class DeviceController extends Controller
         }
         $device->setPostFix($data['postfix']);
         $device->setLaunchOrder(0);
-        $device->setVirtuality(0);
+        $device->setVirtuality(1);
         if($data['cpu'] != '') {
             $device->setNbCpu($data['cpu']);
         }
