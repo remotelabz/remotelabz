@@ -97,6 +97,12 @@ class Lab implements InstanciableInterface
      */
     private $uuid;
 
+     /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $virtuality;
+
     /**
      * @ORM\Column(type="datetime")
      * @Serializer\Groups({"api_get_lab"})
@@ -176,6 +182,7 @@ class Lab implements InstanciableInterface
         $this->textobjects = new ArrayCollection();
         $this->pictures = new ArrayCollection();
         $this->isTemplate = 0;
+        $this->virtuality = 1;
     }
 
     public static function create(): self
@@ -332,6 +339,18 @@ class Lab implements InstanciableInterface
     public function setUuid(string $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getVirtuality(): ?int
+    {
+        return $this->virtuality;
+    }
+
+    public function setVirtuality(int $virtuality): self
+    {
+        $this->virtuality = $virtuality;
 
         return $this;
     }

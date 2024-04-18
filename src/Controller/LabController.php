@@ -126,6 +126,7 @@ class LabController extends Controller
         
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
+        $virtuality = $request->query->get('virtuality');
         $orderBy = $request->query->get('order_by', 'lastUpdated');
         $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
 
@@ -153,7 +154,27 @@ class LabController extends Controller
 
         $labs = $this->labRepository->matching($criteria);
         $count = $labs->count();
+        $virtualCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 1;
+        })->count();
+        $physicalCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 0;
+        })->count();
 
+        if ($virtuality !== null) {
+            if ($virtuality === "1") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 1;
+                });
+            }
+            elseif ($virtuality === "0") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 0;
+                });
+            }
+        }
+
+        $currentCount = $labs->count();
         // paging results
         try {
             $labs = $labs->slice($page * $limit - $limit, $limit);
@@ -167,7 +188,12 @@ class LabController extends Controller
 
         return $this->render('lab/index.html.twig', [
             'labs' => $labs,
-            'count' => $count,
+            'count' => [
+                'total' => $count,
+                'current' => $currentCount,
+                'virtual' => $virtualCount,
+                'physical' => $physicalCount
+            ],
             'search' => $search,
             'limit' => $limit,
             'page' => $page,
@@ -545,6 +571,7 @@ class LabController extends Controller
     /**
      * @Route("/labs/new", name="new_lab")
      * @Route("/labsSandbox/new", name="new_lab_template")
+     * @Route("/labsPhysical/new", name="new_physical_lab")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
      * 
@@ -570,6 +597,13 @@ class LabController extends Controller
         $lab = new Lab();
         $lab->setName($name)
             ->setAuthor($this->getUser());
+
+        if ('new_physical_lab' == $request->get('_route')) {
+            $lab->setVirtuality(false);
+        }
+        else {
+            $lab->setVirtuality(true);
+        }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
