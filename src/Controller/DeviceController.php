@@ -669,6 +669,19 @@ class DeviceController extends Controller
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
+        if ($data["virtuality"] == 0) {
+            $sameDevice = $this->deviceRepository->findOneBy(["template" => $data["template"]]);
+            if ($sameDevice != null) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'A device using this template already exists.'
+                ]));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+        } 
         
         $lab = $this->labRepository->findById($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
