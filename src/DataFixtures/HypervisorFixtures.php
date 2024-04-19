@@ -33,6 +33,14 @@ class HypervisorFixtures extends Fixture
         $manager->persist($hypervisor);
         $this->addReference('natif', $hypervisor);
         $manager->flush();
+        $hypervisor = new Hypervisor();
+        $hypervisor
+            ->setName('physical')
+        ;
+
+        $manager->persist($hypervisor);
+        $this->addReference('physical', $hypervisor);
+        $manager->flush();
     }
 
 }

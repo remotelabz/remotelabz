@@ -117,6 +117,9 @@ class DeviceController extends Controller
         $containerCount = $devices->filter(function ($device) {
             return $device->getType() === 'container';
         })->count();
+        $physicalCount = $devices->filter(function ($device) {
+            return $device->getType() === 'physical';
+        })->count();
     
         if ($type) {
             switch ($type) {
@@ -128,6 +131,11 @@ class DeviceController extends Controller
                 case 'container':
                     $devices = $devices->filter(function ($device) {
                         return $device->getType() === 'container';
+                    });
+                break;
+                case 'physical':
+                    $devices = $devices->filter(function ($device) {
+                        return $device->getType() === 'physical';
                     });
                 break;
             }
@@ -142,7 +150,8 @@ class DeviceController extends Controller
             'count' => [
                 'total' => $count,
                 'vms' => $vmCount,
-                'containers' => $containerCount
+                'containers' => $containerCount,
+                'physical' => $physicalCount
             ],
             'search' => $search
         ]);
@@ -461,6 +470,7 @@ class DeviceController extends Controller
 
     /**
      * @Route("/admin/devices/new", name="new_device")
+     * @Route("/admin/devices/physical/new", name="new_physical_device")
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
      * 
@@ -485,7 +495,14 @@ class DeviceController extends Controller
             
         }
 
-        $deviceForm = $this->createForm(DeviceType::class, $device);
+        if ("new_physical_device" === $request->get('_route')) {
+            $virtuality = false;
+        }
+        else {
+            $virtuality = true;
+        }
+
+        $deviceForm = $this->createForm(DeviceType::class, $device, ["virtuality" => $virtuality]);
         
         $deviceForm->handleRequest($request);
 
@@ -505,6 +522,7 @@ class DeviceController extends Controller
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
             $device->setAuthor($this->getUser());
+            $device->setVirtuality($virtuality);
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -534,7 +552,8 @@ class DeviceController extends Controller
                     "thread" => $device->getNbSocket(),
                     "context" => "remotelabz",
                     "config_script" => "embedded",
-                    "ethernet" => 1
+                    "ethernet" => 1,
+                    "virtuality" => $virtuality
                 ];
 
                 $yamlContent = Yaml::dump($deviceData,2);
@@ -557,7 +576,8 @@ class DeviceController extends Controller
 
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
-            'data' => $device
+            'data' => $device,
+            'virtuality' => $virtuality
         ]);
     }
 
@@ -815,9 +835,11 @@ class DeviceController extends Controller
 
         $isTemplate = $device->getIsTemplate();
         $oldName = $device->getName();
+        $virtuality = $device->getVirtuality();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
         $deviceForm = $this->createForm(DeviceType::class, $device, [
-            'nb_network_interface' => count($device->getNetworkInterfaces())]
+            'nb_network_interface' => count($device->getNetworkInterfaces()),
+            'virtuality' => $virtuality]
         );
         $deviceForm->handleRequest($request);
 
@@ -912,7 +934,8 @@ class DeviceController extends Controller
                 "thread" => $device->getNbSocket(),
                 "context" => "remotelabz",
                 "config_script" => "embedded",
-                "ethernet" => 1
+                "ethernet" => 1,
+                "virtuality"=> $virtuality
             ];
 
             $yamlContent = Yaml::dump($deviceData);
@@ -964,7 +987,8 @@ class DeviceController extends Controller
 
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
-            'data' => $device
+            'data' => $device,
+            'virtuality' => $virtuality
         ]);
     }
 
@@ -1496,6 +1520,9 @@ class DeviceController extends Controller
                 break;
                 case 'natif':
                     $device->setType('switch');
+                break;
+                case 'physical':
+                    $device->setType('physical');
                 break;
             }
     }

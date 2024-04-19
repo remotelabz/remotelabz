@@ -16,7 +16,10 @@
             <h1>{{ 'Device Templates'|trans }}</h1>
         </div>
         <div class="content-title-actions">
-            <a href="{{ path('new_device') }}" class="btn btn-success">{{ 'New device'|trans }}</a>
+            <a href="{{ path('new_device') }}" class="btn btn-success">{{ 'New virtual device'|trans }}</a>
+        </div>
+        <div class="content-title-actions ml-2">
+            <a href="{{ path('new_physical_device') }}" class="btn btn-success">{{ 'New physical device'|trans }}</a>
         </div>
     </div>
     <div class="top-panel">
@@ -35,6 +38,11 @@
             <li {% if type == 'container' %}class="active"{% endif %}>
                 <a href="{{ path('devices', app.request.query|merge({type: 'container'})) }}">
                     <span>Containers</span> <span class="badge badge-pill">{{ count.containers }}</span>
+                </a>
+            </li>
+            <li {% if type == 'physical' %}class="active"{% endif %}>
+                <a href="{{ path('devices', app.request.query|merge({type: 'physical'})) }}">
+                    <span>Physical Devices</span> <span class="badge badge-pill">{{ count.physical }}</span>
                 </a>
             </li>
         </ul>
