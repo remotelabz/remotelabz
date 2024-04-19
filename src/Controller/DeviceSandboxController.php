@@ -48,6 +48,7 @@ class DeviceSandboxController extends Controller
             ->where(Criteria::expr()->contains('name', $search))
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
             ->andWhere(Criteria::expr()->neq('type', 'switch'))
+            ->andWhere(Criteria::expr()->eq('virtuality', true))
             ->orderBy([
                 'id' => Criteria::DESC
             ]);
