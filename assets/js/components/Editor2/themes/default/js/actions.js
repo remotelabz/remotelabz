@@ -12,7 +12,7 @@
  * @version 20160719
  */
 
-import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements} from './javascript';
+import {TIMEOUT, FOLDER, ROLE, TENANT, LOCK, AUTHOR, EDITION, setFolder, setLab, setLang, setLock, setName, setRole, setTenant, setUpdateId, LONGTIMEOUT, ATTACHMENTS, ISGROUPOWNER, HASGROUPACCESS, setAttachements, VIRTUALITY} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -2011,11 +2011,14 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
         } else {
             form_data['postfix'] = 0;
         }
+        // if adding need to add viruality
+        form_data['virtuality'] = VIRTUALITY;
     } else {
         // If editing need to post once
         form_data['count'] = 1;
         form_data['postfix'] = 0;
     }
+
        var request = $.ajax({
             cache: false,
             timeout: TIMEOUT,

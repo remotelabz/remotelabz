@@ -12,9 +12,10 @@
  * @version 20160719
  */
 
-import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS,
-      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
-      LONGTIMEOUT, STATUSINTERVAL, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION, setEditon, setAuthor} from './javascript';
+import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
+       setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
+       STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
+      setVirtuality} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -587,13 +588,14 @@ function getTemplates(template) {
     var deferred = $.Deferred();
     var templateData;
     var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify({'virtuality': VIRTUALITY}),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got template(s).');
@@ -649,10 +651,10 @@ export function getUserInfo() {
                 setLang("en");
                 setLab(lab);
                 setTenant("0");
-                setRole(data['data']['role']);
                 setIsGroupOwner(data['data']['isGroupOwner']);
                 setHasGroupAccess(data['data']['hasGroupAccess']);
                 setRole(data['data']['role']);
+                setVirtuality(data['data']['virtuality']);
                 if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
                 }
