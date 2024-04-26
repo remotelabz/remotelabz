@@ -151,6 +151,14 @@ class Lab implements InstanciableInterface
     private $pictures;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="lab")
+     * @Serializer\Groups({"api_get_lab"})
+     *
+     * @var Collection|Booking[]
+     */
+    private $bookings;
+
+    /**
      * @ORM\Column(type="boolean")
      * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
@@ -499,6 +507,38 @@ class Lab implements InstanciableInterface
     {
         $this->timer = $timer;
       
+        return $this;
+    }
+
+    
+     /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getLab() === $this) {
+                $booking->setLab(null);
+            }
+        }
+
         return $this;
     }
 

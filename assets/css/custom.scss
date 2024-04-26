@@ -716,6 +716,11 @@ img.rounded-circle {
   opacity: 0.5;
 }
 
+.lab-booking-active {
+  background-color: #d1d1df8a;
+  // background-color: rgb(224, 223, 223);
+}
+
 .dropdown-menu {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-top: 4px;
@@ -1162,6 +1167,12 @@ $grid-number: 12;
       }
     }
   }
+
+  .lab-booking-active {
+    background-color: #343446a2
+    // background-color: #35353b;
+  }
+
   .content-list {
     > ul {
       li {

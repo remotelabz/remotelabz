@@ -1,0 +1,68 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Booking': is_granted("ROLE_ADMINISTRATOR") ? path('show_lab_bookings', {'id':lab.id}) : null }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'bookings' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>Reservations of {{lab.name}}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('new_booking', {'id':lab.id}) }}" class="btn btn-success">{{ 'New booking'|trans }}</a>
+        </div>
+    </div>
+    <div class="content-body">
+    </div>
+    <div>
+    {% if bookings is empty %}
+    <div class="wrapper align-items-center p-3 border-bottom lab-item">
+        <span class="lab-item-name">
+            None
+        </span>
+    </div>
+    {% else %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Reserved by</th>
+                <th>Reserved for</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Duration</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for booking in bookings %}
+        {% set duration = (date(booking.endDate).diff(date(booking.startDate))) %}
+            <tr {% if currentDate| date("U") >= booking.startDate| date("U")  and currentDate| date("U") <= booking.endDate| date("U")%} class="lab-booking-active" {% endif %}>
+                <td>{{booking.name}}</td>
+                <td>{{booking.author.name}}</td>
+                <td>{{booking.user ? booking.user.name : booking.group.name}}</td>
+                <td>{{booking.startDate |date('Y-m-d H:i:s')}}</td>
+                <td>{{booking.endDate |date('Y-m-d H:i:s')}}</td>
+                <td>{{duration |date('%H:%I:%S')}}</td>
+                <td>
+                    <button type="button" class="btn btn-warning" {% if currentDate| date("U") >= booking.startDate| date("U")  and currentDate| date("U") <= booking.endDate| date("U")%} disabled {% endif %}>Edit</button>
+                    <a href="{{ path('delete_booking', {'id':booking.id}) }}" class="btn btn-danger">Delete</a>
+                </td>
+            <tr>
+        {% endfor %}
+        <tbody>
+    <table>
+    {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

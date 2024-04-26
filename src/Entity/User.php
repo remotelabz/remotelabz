@@ -85,6 +85,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     private $labInstances;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="user")
+     * @Serializer\Groups({"api_get_user"})
+     *
+     * @var Collection|Booking[]
+     */
+    private $bookings;
+
+    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
      *
      * @var Collection|Lab[]
@@ -351,6 +359,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
             // set the owning side to null (unless already changed)
             if ($labInstance->getUser() === $this) {
                 $labInstance->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getUser() === $this) {
+                $booking->setUser(null);
             }
         }
 

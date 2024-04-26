@@ -101,6 +101,13 @@ class Group implements InstancierInterface
     private $labInstances;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="_group")
+     * @Serializer\Groups({"api_groups", "api_get_group"})
+     * @var Collection|Booking[]
+     */
+    private $bookings;
+
+    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"api_get_lab","api_get_lab_instance", "api_groups", "api_get_group", "api_users", "api_get_user", "worker"})
      */
@@ -127,6 +134,7 @@ class Group implements InstancierInterface
         $this->children = new ArrayCollection();
         $this->uuid = (string) new Uuid();
         $this->labInstances = new ArrayCollection();
+        $this->bookings = new ArrayCollection();
         $this->labs = new ArrayCollection();
     }
 
@@ -522,6 +530,37 @@ class Group implements InstancierInterface
             // set the owning side to null (unless already changed)
             if ($labInstance->getGroup() === $this) {
                 $labInstance->setGroup(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setGroup($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(LabInstance $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getGroup() === $this) {
+                $booking->setGroup(null);
             }
         }
 

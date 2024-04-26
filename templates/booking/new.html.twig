@@ -1,0 +1,26 @@
+{% extends 'booking/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_booking', {"id" : lab.id}) }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit booking'|trans }}: {{ data.name }}
+                {% else %}
+                    {{ 'New booking'|trans }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('device') }} #}
+{% endblock %}
