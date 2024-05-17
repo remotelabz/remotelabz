@@ -17,10 +17,277 @@
             </h1>
         </div>
     </div>
-
+    <div class="content-body">
+        {{form_start(bookingForm)}}
+        {{form_row(bookingForm.name)}}
+        {{form_row(bookingForm.reservedFor)}}
+        {% if bookingForm.user is defined %}
+            {{form_row(bookingForm.user)}}
+        {% else %}
+            {{form_row(bookingForm.group)}}
+        {% endif %}
+        <div class="form-group row">
+            <label class="col-form-label col-sm-2 required text-right">Time Start</label>
+            <div class="col">
+                <div class="form-inline">
+                    <select name="{{ field_name(bookingForm.yearStart) }}" id="yearStart" class="form-control">
+                        {% for label, value in field_choices(bookingForm.yearStart) %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    -
+                    <select name="{{ field_name(bookingForm.monthStart) }}" id="monthStart" class="form-control">
+                        {% for label, value in field_choices(bookingForm.monthStart) %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    -
+                    <select name="{{ field_name(bookingForm.dayStart) }}" id="dayStart" class="form-control">
+                        {% for label, value in field_choices(bookingForm.dayStart) %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    &nbsp;
+                    &nbsp;
+                    &nbsp;
+                    <select name="{{ field_name(bookingForm.hourStart) }}" id="hourStart" class="form-control">
+                        {% for label, value in field_choices(bookingForm.hourStart) %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    :
+                    <select name="{{ field_name(bookingForm.minuteStart) }}" id="minuteStart" class="form-control">
+                        {% for label, value in field_choices(bookingForm.minuteStart) %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-form-label col-sm-2 required text-right">Time End</label>
+            <div class="col">
+                <div class="form-inline">
+                <select name="{{ field_name(bookingForm.yearEnd) }}" id="yearEnd" class="form-control">
+                    {% for label, value in field_choices(bookingForm.yearEnd) %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                - 
+                <select name="{{ field_name(bookingForm.monthEnd) }}" id="monthEnd" class="form-control">
+                    {% for label, value in field_choices(bookingForm.monthEnd) %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                -
+                <select name="{{ field_name(bookingForm.dayEnd) }}" id="dayEnd" class="form-control">
+                    {% for label, value in field_choices(bookingForm.dayEnd) %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                &nbsp;
+                &nbsp;
+                &nbsp;
+                <select name="{{ field_name(bookingForm.hourEnd) }}" id="hourEnd" class="form-control">
+                    {% for label, value in field_choices(bookingForm.hourEnd) %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                :
+                <select name="{{ field_name(bookingForm.minuteEnd) }}" id="minuteEnd" class="form-control">
+                    {% for label, value in field_choices(bookingForm.minuteEnd) %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+            </div>
+        </div>
+        {{form_end(bookingForm)}}
+    </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('device') }} #}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        const labId = window.location.pathname.split(/(\d+)/)[1];
+
+        const yearStart = document.getElementById('yearStart');
+        yearStart.addEventListener('change', () => {
+            let monthStart = document.getElementById('monthStart');
+            let dayStart = document.getElementById('dayStart');
+            let hourStart = document.getElementById('hourStart');
+            let minuteStart = document.getElementById('minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('monthEnd');
+            let dayEnd = document.getElementById('dayEnd');
+            let hourEnd = document.getElementById('hourEnd');
+            let minuteEnd = document.getElementById('minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_year_start_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+                    console.log(response)
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const monthStart = document.getElementById('monthStart');
+
+        const dayStart = document.getElementById('dayStart');
+        dayStart.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('monthStart');
+            let hourStart = document.getElementById('hourStart');
+            let minuteStart = document.getElementById('minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('monthEnd');
+            let dayEnd = document.getElementById('dayEnd');
+            let hourEnd = document.getElementById('hourEnd');
+            let minuteEnd = document.getElementById('minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_day_start_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+
+                    hourStart.innerHTML = ''
+                    for(let hourChoice in response) {
+                        let hourDisabled = "";
+                        if (response[hourChoice].activation == "disabled") {
+                            hourDisabled = "disabled";
+                        }
+                        hourStart.innerHTML += '<option value="' + response[hourChoice].value + '" '+ hourDisabled +'>' + response[hourChoice].name + '</option>';
+                    }
+                    let hourElement = document.getElementById('hourStart');
+                    minuteStart.innerHTML = ''
+                    for (let hourChoice in response) {
+                        if (hourElement.options[hourElement.selectedIndex] == undefined) {
+                            for (let minuteChoice in response[hourChoice]["minutes"]) {
+                                let minuteDisabled = "disabled";
+                                minuteStart.innerHTML += '<option value="' + response[hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[hourChoice]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                            for (let minuteChoice in response[hourChoice]["minutes"]) {
+                                let minuteDisabled = "";
+                                if (response[hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                    minuteDisabled = "disabled";
+                                }
+                                minuteStart.innerHTML += '<option value="' + response[hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[hourChoice]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const hourStart = document.getElementById('hourStart');
+        hourStart.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('monthStart');
+            let dayStart = document.getElementById('dayStart');
+            let minuteStart = document.getElementById('minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('monthEnd');
+            let dayEnd = document.getElementById('dayEnd');
+            let hourEnd = document.getElementById('hourEnd');
+            let minuteEnd = document.getElementById('minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_hour_start_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+
+                    minuteStart.innerHTML = '';
+
+                    for(let choice of response){
+                        let disabled = "";
+                        if (choice.activation == "disabled") {
+                            disabled = "disabled";
+                        }
+                        minuteStart.innerHTML += '<option value="' + choice.value + '" '+ disabled +'>' + choice.name + '</option>';
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const minuteStart = document.getElementById('minuteStart');
+        const yearEnd = document.getElementById('yearEnd');
+        const monthEnd = document.getElementById('monthEnd');
+        const dayEnd = document.getElementById('dayEnd');
+        const hourEnd = document.getElementById('hourEnd');
+        const minuteEnd = document.getElementById('minuteEnd');
+    </script>
 {% endblock %}

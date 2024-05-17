@@ -47,9 +47,9 @@
             <tr {% if currentDate| date("U") >= booking.startDate| date("U")  and currentDate| date("U") <= booking.endDate| date("U")%} class="lab-booking-active" {% endif %}>
                 <td>{{booking.name}}</td>
                 <td>{{booking.author.name}}</td>
-                <td>{{booking.user ? booking.user.name : booking.group.name}}</td>
-                <td>{{booking.startDate |date('Y-m-d H:i:s')}}</td>
-                <td>{{booking.endDate |date('Y-m-d H:i:s')}}</td>
+                <td>{{booking.owner.name}}</td>
+                <td>{{booking.startDate |date('d-m-Y H:i:s')}}</td>
+                <td>{{booking.endDate |date('d-m-Y H:i:s')}}</td>
                 <td>{{duration |date('%H:%I:%S')}}</td>
                 <td>
                     <button type="button" class="btn btn-warning" {% if currentDate| date("U") >= booking.startDate| date("U")  and currentDate| date("U") <= booking.endDate| date("U")%} disabled {% endif %}>Edit</button>

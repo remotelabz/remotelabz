@@ -23,13 +23,13 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template", "api_get_booking"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox", "api_get_booking"})
      */
     private $name;
 
@@ -99,7 +99,7 @@ class Lab implements InstanciableInterface
 
      /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker", "api_get_lab_template", "api_get_booking"})
      */
     private $virtuality;
 

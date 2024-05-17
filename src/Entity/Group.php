@@ -28,7 +28,7 @@ class Group implements InstancierInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"group_tree", "api_groups", "api_get_group", "api_create_group", "api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker"})
+     * @Serializer\Groups({"group_tree", "api_groups", "api_get_group", "api_create_group", "api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker", "api_get_booking"})
      */
     private $id;
 

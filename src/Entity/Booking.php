@@ -20,55 +20,67 @@ class Booking implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $name;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $author;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $uuid;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $startDate;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_lab"})
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
     private $endDate;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="bookings")
+     * @Serializer\Groups({"api_get_booking"})
      */
     protected $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="bookings")
+     * @Serializer\Groups({"api_get_booking"})
      */
     protected $_group;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="bookings")
+     * @Serializer\Groups({"api_get_booking"})
      */
     protected $lab;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
+     */
+    protected $reservedFor = self::RESERVED_FOR_USER;
   
+    public const RESERVED_FOR_USER  = 'user';
+    public const RESERVED_FOR_GROUP = 'group';
+
 
     public function __construct()
     {
@@ -172,6 +184,48 @@ class Booking implements InstanciableInterface
     public function setLab(?Lab $lab)
     {
         $this->lab = $lab;
+
+        return $this;
+    }
+
+    public function getReservedFor(): ?string
+    {
+        return $this->reservedFor;
+    }
+
+    public function setReservedFor(string $reservedFor)
+    {
+        $this->reservedFor = $reservedFor;
+
+        return $this;
+    }
+
+    public function isReservedForUser(): bool
+    {
+        return self::RESERVED_FOR_USER === $this->reservedFor;
+    }
+
+    public function isReservedForGroup(): bool
+    {
+        return self::RESERVED_FOR_GROUP === $this->reservedFor;
+    }
+
+    /**
+     * Return the owner entity.
+     *
+     * @return InstancierInterface
+     * 
+     * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
+     */
+    public function getOwner(): InstancierInterface
+    { 
+        return $this->isReservedForUser() ? $this->getUser() : $this->getGroup();
+    }
+
+    public function setOwner(string $uuid)
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }
