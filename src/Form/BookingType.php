@@ -95,6 +95,14 @@ class BookingType extends AbstractType
                 "11" => 11,
                 "12" => 12,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$value < (int)$today->format("m")) {
+                    $disabled = true;
+                }
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -132,6 +140,14 @@ class BookingType extends AbstractType
                 "30" => 30,
                 "31" => 31
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$value < (int)$today->format("d")) {
+                    $disabled = true;
+                }
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -163,6 +179,22 @@ class BookingType extends AbstractType
                 "22" => 22,
                 "23" => 23,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$today->format("i") <= 45) {
+                    if ((int)$value < (int)$today->format("H")) {
+                        $disabled = true;
+                    }
+                }
+                else {
+                    if ((int)$value < ((int)$today->format("H")+1)) {
+                        $disabled = true;
+                    }
+                }
+                
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -173,6 +205,17 @@ class BookingType extends AbstractType
                 "30" => 30,
                 "45" => 45,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$today->format("i") <= 45) {
+                    if ((int)$value < (int)$today->format("i")) {
+                        $disabled = true;
+                    }
+                }
+                
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -208,6 +251,14 @@ class BookingType extends AbstractType
                 "11" => 11,
                 "12" => 12,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$value < (int)$today->format("m")) {
+                    $disabled = true;
+                }
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -245,6 +296,14 @@ class BookingType extends AbstractType
                 "30" => 30,
                 "31" => 31,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$value < (int)$today->format("d")) {
+                    $disabled = true;
+                }
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -276,6 +335,22 @@ class BookingType extends AbstractType
                 "22" => 22,
                 "23" => 23,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$today->format("i") < 30) {
+                    if ((int)$value < (int)$today->format("H")) {
+                        $disabled = true;
+                    }
+                }
+                else {
+                    if ((int)$value < ((int)$today->format("H") +1)) {
+                        $disabled = true;
+                    }
+                }
+                
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);
@@ -286,6 +361,22 @@ class BookingType extends AbstractType
                 "30" => 30,
                 "45" => 45,
             ],
+            'choice_attr' => function($choice, $key, $value) {
+                $today = new \DateTime("now");
+                $disabled = false;
+                if ((int)$today->format("i") < 30) {
+                    if ((int)$value < ((int)$today->format("i") +15)) {
+                        $disabled = true;
+                    }
+                }
+                else if ((int)$today->format("i") >= 45) {
+                    if ((int)$value < 15) {
+                        $disabled = true;
+                    }
+                }
+                
+                return $disabled ? ["disabled" => "disabled"] : [];
+            },
             'mapped' => false,
             'label'=> false
         ]);

@@ -22,4 +22,5 @@ return [
     Twig\Extra\TwigExtraBundle\TwigExtraBundle::class => ['all' => true],
     Remotelabz\NetworkBundle\RemotelabzNetworkBundle::class => ['all' => true],
     Remotelabz\Message\RemotelabzMessageBundle::class => ['all' => true],
+    CalendarBundle\CalendarBundle::class => ['all' => true],
 ];

@@ -980,6 +980,11 @@ $grid-number: 12;
   font-weight: normal;
 }
 
+.tippy-tooltip.remotelabz-theme {
+  background-color: rgb(233, 230, 240);
+  color: black;
+}
+
 /** media specific */
 
 [theme="dark"] {
@@ -1322,6 +1327,11 @@ $grid-number: 12;
 
   .jumbotron {
     background-color: theme-color("dark-lighter");
+  }
+
+  .tippy-tooltip.remotelabz-theme {
+    background-color: rgb(54, 54, 71);
+    color: white;
   }
 }
 

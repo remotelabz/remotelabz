@@ -21,6 +21,7 @@
         {{form_start(bookingForm)}}
         {{form_row(bookingForm.name)}}
         {{form_row(bookingForm.reservedFor)}}
+        
         {% if bookingForm.user is defined %}
             {{form_row(bookingForm.user)}}
         {% else %}
@@ -32,35 +33,21 @@
                 <div class="form-inline">
                     <select name="{{ field_name(bookingForm.yearStart) }}" id="yearStart" class="form-control">
                         {% for label, value in field_choices(bookingForm.yearStart) %}
+                        
                             <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
                     -
-                    <select name="{{ field_name(bookingForm.monthStart) }}" id="monthStart" class="form-control">
-                        {% for label, value in field_choices(bookingForm.monthStart) %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    {{form_widget(bookingForm.monthStart)}}
                     -
-                    <select name="{{ field_name(bookingForm.dayStart) }}" id="dayStart" class="form-control">
-                        {% for label, value in field_choices(bookingForm.dayStart) %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    {{form_widget(bookingForm.dayStart)}}
                     &nbsp;
                     &nbsp;
                     &nbsp;
-                    <select name="{{ field_name(bookingForm.hourStart) }}" id="hourStart" class="form-control">
-                        {% for label, value in field_choices(bookingForm.hourStart) %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    {{form_widget(bookingForm.hourStart)}}
                     :
-                    <select name="{{ field_name(bookingForm.minuteStart) }}" id="minuteStart" class="form-control">
-                        {% for label, value in field_choices(bookingForm.minuteStart) %}
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    {{form_widget(bookingForm.minuteStart)}}
+
                 </div>
             </div>
         </div>
@@ -74,31 +61,15 @@
                     {% endfor %}
                 </select>
                 - 
-                <select name="{{ field_name(bookingForm.monthEnd) }}" id="monthEnd" class="form-control">
-                    {% for label, value in field_choices(bookingForm.monthEnd) %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {{form_widget(bookingForm.monthEnd)}}
                 -
-                <select name="{{ field_name(bookingForm.dayEnd) }}" id="dayEnd" class="form-control">
-                    {% for label, value in field_choices(bookingForm.dayEnd) %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {{form_widget(bookingForm.dayEnd)}}
                 &nbsp;
                 &nbsp;
                 &nbsp;
-                <select name="{{ field_name(bookingForm.hourEnd) }}" id="hourEnd" class="form-control">
-                    {% for label, value in field_choices(bookingForm.hourEnd) %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {{form_widget(bookingForm.hourEnd)}}
                 :
-                <select name="{{ field_name(bookingForm.minuteEnd) }}" id="minuteEnd" class="form-control">
-                    {% for label, value in field_choices(bookingForm.minuteEnd) %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {{form_widget(bookingForm.minuteEnd)}}
                 </div>
             </div>
         </div>
@@ -114,15 +85,15 @@
 
         const yearStart = document.getElementById('yearStart');
         yearStart.addEventListener('change', () => {
-            let monthStart = document.getElementById('monthStart');
-            let dayStart = document.getElementById('dayStart');
-            let hourStart = document.getElementById('hourStart');
-            let minuteStart = document.getElementById('minuteStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
             let yearEnd = document.getElementById('yearEnd');
-            let monthEnd = document.getElementById('monthEnd');
-            let dayEnd = document.getElementById('dayEnd');
-            let hourEnd = document.getElementById('hourEnd');
-            let minuteEnd = document.getElementById('minuteEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
             var dates = {
                 "dateTimeStart":{
                     "year":yearStart.value,
@@ -148,7 +119,89 @@
                     labId: labId
                 }),
                 success: function (response) {
-                    console.log(response)
+                    monthStart.innerHTML = ''
+                    for(let monthChoice in response) {
+                        let monthDisabled = "";
+                        if (response[monthChoice].activation == "disabled") {
+                            monthDisabled = "disabled";
+                        }
+                        monthStart.innerHTML += '<option value="' + response[monthChoice].value + '" '+ monthDisabled +'>' + response[monthChoice].name + '</option>';
+                    }
+                    let monthElement = document.getElementById('booking_monthStart');
+                    dayStart.innerHTML = '';
+                    hourStart.innerHTML = '';
+                    minuteStart.innerHTML = '';
+
+                    for (let monthChoice in response) {
+                        if (monthElement.options[monthElement.selectedIndex] == undefined) {
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                let dayDisabled = "disabled";
+                                dayStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice].value + '" '+ dayDisabled +'>' + response[monthChoice]["days"][dayChoice].name + '</option>';
+                            }
+                            let firstDayKey = Object.keys(response[monthChoice]["days"])[0]
+                            for (let hourChoice in response[monthChoice]["days"][firstDayKey]["hours"]) {
+                                let hourDisabled = "disabled";
+                                hourStart.innerHTML += '<option value="' + response[monthChoice]["days"][firstDayKey]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["days"][firstDayKey]["hours"][hourChoice].name + '</option>';
+                            }
+                            let firstHourKey = Object.keys(response[monthChoice]["days"][firstDayKey]["hours"])[0]
+                            for (let minuteChoice in response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"]) {
+                                let minuteDisabled = "disabled";
+                                minuteStart.innerHTML += '<option value="' + response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[monthChoice].value == monthElement.options[monthElement.selectedIndex].value) {
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                let dayDisabled = "";
+                                if (response[monthChoice]["days"][dayChoice].activation == "disabled") {
+                                    dayDisabled = "disabled";
+                                }
+                                dayStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice].value + '" '+ dayDisabled +'>' + response[monthChoice]["days"][dayChoice].name + '</option>';
+                            }
+
+                            let dayElement = document.getElementById('booking_dayStart'); 
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                if (dayElement.options[dayElement.selectedIndex] == undefined) {
+                                    for (let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        let hourDisabled = "disabled";
+                                        hourStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["month"][dayChoice]["days"][hourChoice].name + '</option>';
+                                    }
+                                    let firstHourKey = Object.keys(response[monthChoice]["days"][dayChoice]["hours"])[0]
+                                    for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"]) {
+                                        let minuteDisabled = "disabled";
+                                        minuteStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                                else if (response[monthChoice]["days"][dayChoice].value == dayElement.options[dayElement.selectedIndex].value) {
+                                    for (let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        let hourDisabled = "";
+                                        if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice].activation == "disabled") {
+                                            hourDisabled = "disabled";
+                                        }
+                                        hourStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].name + '</option>';
+                                    }
+                                    let hourElement = document.getElementById('booking_hourStart'); 
+                                    for(let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        if (hourElement.options[hourElement.selectedIndex] == undefined) {
+                                            for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"]) {
+                                                let minuteDisabled = "disabled";
+                                                minuteStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                                            }
+                                        }
+                                        else if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                                            for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"]) {
+                                                let minuteDisabled = "";
+                                                if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                                    minuteDisabled = "disabled";
+                                                }
+                                                minuteStart.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        }
+                    }
                 },
                 error: function (err) {
                     console.log(err.response);
@@ -156,19 +209,116 @@
             });
         })
 
-        const monthStart = document.getElementById('monthStart');
+        const monthStart = document.getElementById('booking_monthStart');
+        monthStart.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_month_start_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
 
-        const dayStart = document.getElementById('dayStart');
+                    dayStart.innerHTML = ''
+                    for(let dayChoice in response) {
+                        let dayDisabled = "";
+                        if (response[dayChoice].activation == "disabled") {
+                            dayDisabled = "disabled";
+                        }
+                        dayStart.innerHTML += '<option value="' + response[dayChoice].value + '" '+ dayDisabled +'>' + response[dayChoice].name + '</option>';
+                    }
+                    let dayElement = document.getElementById('booking_dayStart');
+                    hourStart.innerHTML = '';
+                    minuteStart.innerHTML = '';
+
+                    for (let dayChoice in response) {
+                        if (dayElement.options[dayElement.selectedIndex] == undefined) {
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                let hourDisabled = "disabled";
+                                hourStart.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[dayChoice]["hours"][hourChoice].name + '</option>';
+                            }
+                            let firstHourKey = Object.keys(response[dayChoice]["hours"])[0]
+                            for (let minuteChoice in response[dayChoice]["hours"][firstHourKey]["minutes"]) {
+                                console.log(minuteChoice)
+                                let minuteDisabled = "disabled";
+                                minuteStart.innerHTML += '<option value="' + response[dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[dayChoice].value == dayElement.options[dayElement.selectedIndex].value) {
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                let hourDisabled = "";
+                                if (response[dayChoice]["hours"][hourChoice].activation == "disabled") {
+                                    hourDisabled = "disabled";
+                                }
+                                hourStart.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[dayChoice]["hours"][hourChoice].name + '</option>';
+                            }
+
+                            let hourElement = document.getElementById('booking_hourStart'); 
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                if (hourElement.options[hourElement.selectedIndex] == undefined) {
+                                    for (let minuteChoice in response[dayChoice]["hours"][hourChoice]["minutes"]) {
+                                        let minuteDisabled = "disabled";
+                                        minuteStart.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                                else if (response[dayChoice]["hours"][hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                                    for (let minuteChoice in response[dayChoice]["hours"][hourChoice]["minutes"]) {
+                                        let minuteDisabled = "";
+                                        if (response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                            minuteDisabled = "disabled";
+                                        }
+                                        minuteStart.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                            }
+                            
+                        }
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const dayStart = document.getElementById('booking_dayStart');
         dayStart.addEventListener('change', () => {
             let yearStart = document.getElementById('yearStart');
-            let monthStart = document.getElementById('monthStart');
-            let hourStart = document.getElementById('hourStart');
-            let minuteStart = document.getElementById('minuteStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
             let yearEnd = document.getElementById('yearEnd');
-            let monthEnd = document.getElementById('monthEnd');
-            let dayEnd = document.getElementById('dayEnd');
-            let hourEnd = document.getElementById('hourEnd');
-            let minuteEnd = document.getElementById('minuteEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
             var dates = {
                 "dateTimeStart":{
                     "year":yearStart.value,
@@ -203,7 +353,7 @@
                         }
                         hourStart.innerHTML += '<option value="' + response[hourChoice].value + '" '+ hourDisabled +'>' + response[hourChoice].name + '</option>';
                     }
-                    let hourElement = document.getElementById('hourStart');
+                    let hourElement = document.getElementById('booking_hourStart');
                     minuteStart.innerHTML = ''
                     for (let hourChoice in response) {
                         if (hourElement.options[hourElement.selectedIndex] == undefined) {
@@ -230,17 +380,17 @@
             });
         })
 
-        const hourStart = document.getElementById('hourStart');
+        const hourStart = document.getElementById('booking_hourStart');
         hourStart.addEventListener('change', () => {
             let yearStart = document.getElementById('yearStart');
-            let monthStart = document.getElementById('monthStart');
-            let dayStart = document.getElementById('dayStart');
-            let minuteStart = document.getElementById('minuteStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
             let yearEnd = document.getElementById('yearEnd');
-            let monthEnd = document.getElementById('monthEnd');
-            let dayEnd = document.getElementById('dayEnd');
-            let hourEnd = document.getElementById('hourEnd');
-            let minuteEnd = document.getElementById('minuteEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
             var dates = {
                 "dateTimeStart":{
                     "year":yearStart.value,
@@ -269,12 +419,12 @@
 
                     minuteStart.innerHTML = '';
 
-                    for(let choice of response){
+                    for(let choice in response){
                         let disabled = "";
-                        if (choice.activation == "disabled") {
+                        if (response[choice].activation == "disabled") {
                             disabled = "disabled";
                         }
-                        minuteStart.innerHTML += '<option value="' + choice.value + '" '+ disabled +'>' + choice.name + '</option>';
+                        minuteStart.innerHTML += '<option value="' + response[choice].value + '" '+ disabled +'>' + response[choice].name + '</option>';
                     }
                 },
                 error: function (err) {
@@ -283,11 +433,386 @@
             });
         })
 
-        const minuteStart = document.getElementById('minuteStart');
+        const minuteStart = document.getElementById('booking_minuteStart');
         const yearEnd = document.getElementById('yearEnd');
-        const monthEnd = document.getElementById('monthEnd');
-        const dayEnd = document.getElementById('dayEnd');
-        const hourEnd = document.getElementById('hourEnd');
-        const minuteEnd = document.getElementById('minuteEnd');
+        yearEnd.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_year_end_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+                    monthEnd.innerHTML = ''
+                    for(let monthChoice in response) {
+                        let monthDisabled = "";
+                        if (response[monthChoice].activation == "disabled") {
+                            monthDisabled = "disabled";
+                        }
+                        monthEnd.innerHTML += '<option value="' + response[monthChoice].value + '" '+ monthDisabled +'>' + response[monthChoice].name + '</option>';
+                    }
+                    let monthElement = document.getElementById('booking_monthEnd');
+                    dayEnd.innerHTML = '';
+                    hourEnd.innerHTML = '';
+                    minuteEnd.innerHTML = '';
+
+                    for (let monthChoice in response) {
+                        if (monthElement.options[monthElement.selectedIndex] == undefined) {
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                let dayDisabled = "disabled";
+                                dayEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice].value + '" '+ dayDisabled +'>' + response[monthChoice]["days"][dayChoice].name + '</option>';
+                            }
+                            let firstDayKey = Object.keys(response[monthChoice]["days"])[0]
+                            for (let hourChoice in response[monthChoice]["days"][firstDayKey]["hours"]) {
+                                let hourDisabled = "disabled";
+                                hourEnd.innerHTML += '<option value="' + response[monthChoice]["days"][firstDayKey]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["days"][firstDayKey]["hours"][hourChoice].name + '</option>';
+                            }
+                            let firstHourKey = Object.keys(response[monthChoice]["days"][firstDayKey]["hours"])[0]
+                            for (let minuteChoice in response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"]) {
+                                let minuteDisabled = "disabled";
+                                minuteEnd.innerHTML += '<option value="' + response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][firstDayKey]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[monthChoice].value == monthElement.options[monthElement.selectedIndex].value) {
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                let dayDisabled = "";
+                                if (response[monthChoice]["days"][dayChoice].activation == "disabled") {
+                                    dayDisabled = "disabled";
+                                }
+                                dayEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice].value + '" '+ dayDisabled +'>' + response[monthChoice]["days"][dayChoice].name + '</option>';
+                            }
+
+                            let dayElement = document.getElementById('booking_dayEnd'); 
+                            for (let dayChoice in response[monthChoice]["days"]) {
+                                if (dayElement.options[dayElement.selectedIndex] == undefined) {
+                                    for (let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        let hourDisabled = "disabled";
+                                        hourEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["month"][dayChoice]["days"][hourChoice].name + '</option>';
+                                    }
+                                    let firstHourKey = Object.keys(response[monthChoice]["days"][dayChoice]["hours"])[0]
+                                    for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"]) {
+                                        let minuteDisabled = "disabled";
+                                        minuteEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                                else if (response[monthChoice]["days"][dayChoice].value == dayElement.options[dayElement.selectedIndex].value) {
+                                    for (let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        let hourDisabled = "";
+                                        if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice].activation == "disabled") {
+                                            hourDisabled = "disabled";
+                                        }
+                                        hourEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice].name + '</option>';
+                                    }
+                                    let hourElement = document.getElementById('booking_hourEnd'); 
+                                    for(let hourChoice in response[monthChoice]["days"][dayChoice]["hours"]) {
+                                        if (hourElement.options[hourElement.selectedIndex] == undefined) {
+                                            for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"]) {
+                                                let minuteDisabled = "disabled";
+                                                minuteEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                                            }
+                                        }
+                                        else if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                                            for (let minuteChoice in response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"]) {
+                                                let minuteDisabled = "";
+                                                if (response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                                    minuteDisabled = "disabled";
+                                                }
+                                                minuteEnd.innerHTML += '<option value="' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[monthChoice]["days"][dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        }
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+        const monthEnd = document.getElementById('booking_monthEnd');
+        monthEnd.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_month_end_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+
+                    dayEnd.innerHTML = ''
+                    for(let dayChoice in response) {
+                        let dayDisabled = "";
+                        if (response[dayChoice].activation == "disabled") {
+                            dayDisabled = "disabled";
+                        }
+                        dayEnd.innerHTML += '<option value="' + response[dayChoice].value + '" '+ dayDisabled +'>' + response[dayChoice].name + '</option>';
+                    }
+                    let dayElement = document.getElementById('booking_dayEnd');
+                    hourEnd.innerHTML = '';
+                    minuteEnd.innerHTML = '';
+
+                    for (let dayChoice in response) {
+                        if (dayElement.options[dayElement.selectedIndex] == undefined) {
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                let hourDisabled = "disabled";
+                                hourEnd.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[dayChoice]["hours"][hourChoice].name + '</option>';
+                            }
+                            let firstHourKey = Object.keys(response[dayChoice]["hours"])[0]
+                            for (let minuteChoice in response[dayChoice]["hours"][firstHourKey]["minutes"]) {
+                                console.log(minuteChoice)
+                                let minuteDisabled = "disabled";
+                                minuteEnd.innerHTML += '<option value="' + response[dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][firstHourKey]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[dayChoice].value == dayElement.options[dayElement.selectedIndex].value) {
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                let hourDisabled = "";
+                                if (response[dayChoice]["hours"][hourChoice].activation == "disabled") {
+                                    hourDisabled = "disabled";
+                                }
+                                hourEnd.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice].value + '" '+ hourDisabled +'>' + response[dayChoice]["hours"][hourChoice].name + '</option>';
+                            }
+
+                            let hourElement = document.getElementById('booking_hourEnd'); 
+                            for (let hourChoice in response[dayChoice]["hours"]) {
+                                if (hourElement.options[hourElement.selectedIndex] == undefined) { 
+                                    for (let minuteChoice in response[dayChoice]["hours"][hourChoice]["minutes"]) {
+                                        let minuteDisabled = "disabled";
+                                        minuteEnd.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                                else if (response[dayChoice]["hours"][hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                                    for (let minuteChoice in response[dayChoice]["hours"][hourChoice]["minutes"]) {
+                                        let minuteDisabled = "";
+                                        if (response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                            minuteDisabled = "disabled";
+                                        }
+                                        minuteEnd.innerHTML += '<option value="' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[dayChoice]["hours"][hourChoice]["minutes"][minuteChoice].name + '</option>';
+                                    }
+                                }
+                            }
+                            
+                        }
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const dayEnd = document.getElementById('booking_dayEnd');
+        dayEnd.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let hourEnd = document.getElementById('booking_hourEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_day_end_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+
+                    hourEnd.innerHTML = ''
+                    for(let hourChoice in response) {
+                        let hourDisabled = "";
+                        if (response[hourChoice].activation == "disabled") {
+                            hourDisabled = "disabled";
+                        }
+                        hourEnd.innerHTML += '<option value="' + response[hourChoice].value + '" '+ hourDisabled +'>' + response[hourChoice].name + '</option>';
+                    }
+                    let hourElement = document.getElementById('booking_hourEnd');
+                    minuteEnd.innerHTML = ''
+                    for (let hourChoice in response) {
+                        if (hourElement.options[hourElement.selectedIndex] == undefined) {
+                            for (let minuteChoice in response[hourChoice]["minutes"]) {
+                                let minuteDisabled = "disabled";
+                                minuteEnd.innerHTML += '<option value="' + response[hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[hourChoice]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        else if (response[hourChoice].value == hourElement.options[hourElement.selectedIndex].value) {
+                            for (let minuteChoice in response[hourChoice]["minutes"]) {
+                                let minuteDisabled = "";
+                                if (response[hourChoice]["minutes"][minuteChoice].activation == "disabled") {
+                                    minuteDisabled = "disabled";
+                                }
+                                minuteEnd.innerHTML += '<option value="' + response[hourChoice]["minutes"][minuteChoice].value + '" '+ minuteDisabled +'>' + response[hourChoice]["minutes"][minuteChoice].name + '</option>';
+                            }
+                        }
+                        
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+        const hourEnd = document.getElementById('booking_hourEnd');
+        hourEnd.addEventListener('change', () => {
+            let yearStart = document.getElementById('yearStart');
+            let monthStart = document.getElementById('booking_monthStart');
+            let dayStart = document.getElementById('booking_dayStart');
+            let hourStart = document.getElementById('booking_hourStart');
+            let minuteStart = document.getElementById('booking_minuteStart');
+            let yearEnd = document.getElementById('yearEnd');
+            let monthEnd = document.getElementById('booking_monthEnd');
+            let dayEnd = document.getElementById('booking_dayEnd');
+            let minuteEnd = document.getElementById('booking_minuteEnd');
+            var dates = {
+                "dateTimeStart":{
+                    "year":yearStart.value,
+                    "month":monthStart.value,
+                    "day":dayStart.value,
+                    "hour": hourStart.value,
+                    "minute":minuteStart.value
+                },
+                "dateTimeEnd": {
+                    "year":yearEnd.value,
+                    "month":monthEnd.value,
+                    "day":dayEnd.value,
+                    "hour": hourEnd.value,
+                    "minute":minuteEnd.value
+                }
+            }; 
+            $.ajax({
+                url: "{{ path('api_hour_end_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    dates: dates,
+                    labId: labId
+                }),
+                success: function (response) {
+
+                    minuteEnd.innerHTML = '';
+
+                    for(let choice in response){
+                        let disabled = "";
+                        if (response[choice].activation == "disabled") {
+                            disabled = "disabled";
+                        }
+                        minuteEnd.innerHTML += '<option value="' + response[choice].value + '" '+ disabled +'>' + response[choice].name + '</option>';
+                    }
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+        const minuteEnd = document.getElementById('booking_minuteEnd');
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendarEl = document.getElementById('calendar-holder');
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                editable: true,
+                eventSources: [
+                    {
+                        url: "{{ path('fc_load_events') }}",
+                        method: 'POST',
+                        extraParams: {
+                            filters: JSON.stringify({})
+                        },
+                        failure: () => {
+                        },
+                    },
+                ],
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                },
+                nowIndicator: true,
+                timeZone: 'UTC',
+            });
+
+            calendar.render();
+        });
     </script>
 {% endblock %}

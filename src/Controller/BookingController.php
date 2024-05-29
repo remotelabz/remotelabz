@@ -46,6 +46,17 @@ class BookingController extends Controller
         ]);
     }
 
+
+    /**
+     * @Route("/bookings/{id<\d+>}", name="get_booking")
+     * 
+     * 
+     */
+    public function showAction(Request $request)
+    {
+ 
+    }
+
     /**
      *  @Route("/bookings/lab/{id<\d+>}", name="show_lab_bookings")
      * @Rest\Get("/api/bookings/lab/{id<\d+>}", name="api_show_lab_bookings")
@@ -77,12 +88,6 @@ class BookingController extends Controller
         ]);
     }
 
-    public function fetchOldBookingInstances(Request $request)
-    {
-        $bookings = $this->bookingReppository->findBy(new \DateTime());
-
-
-    }
     /**
      * @Route("/bookings/lab/{id<\d+>}/new", name="new_booking", methods={"GET", "POST"})
      * 
@@ -97,19 +102,44 @@ class BookingController extends Controller
         $lab = $this->labRepository->find($id);
         if ($lab->getVirtuality() == 0) {
             if ($bookingForm->isSubmitted() && $bookingForm->isValid()) {
-                $booking = $bookingForm->getData();
-                $booking->setAuthor($this->getUser());
-                $booking->setLab($lab);
-                $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
-                $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
-                $entityManager = $this->getDoctrine()->getManager();
-                $entityManager->persist($booking);
-                $entityManager->flush();
-
-                if ('json' === $request->getRequestFormat()) {
-                    return $this->json($booking, 201, [], ['api_get_booking']);
+                $dateStart = new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData());
+                $dateEnd = new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData());
+                $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab);
+                if ($isValid == 0) {
+                    $booking = $bookingForm->getData();
+                    $booking->setAuthor($this->getUser());
+                    $booking->setLab($lab);
+                    $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
+                    $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
+                    $entityManager = $this->getDoctrine()->getManager();
+                    $entityManager->persist($booking);
+                    $entityManager->flush();
+    
+                    if ('json' === $request->getRequestFormat()) {
+                        return $this->json($booking, 201, [], ['api_get_booking']);
+                    }
+                    return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
                 }
-                return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
+                else {
+                    switch ($isValid) {
+                        case 1:
+                            $this->addFlash("danger", "The starting date of the booking must precede the ending date.");
+                            break;
+                        case 2:
+                            $this->addFlash("danger", "The starting date cannot precede the current time.");
+                            break;
+                        case 3:
+                            $this->addFlash("danger", "The booking cannot start during another booking");
+                            break;
+                        case 4:
+                            $this->addFlash("danger", "Another booking starts during the choosen period");
+                            break;
+                        case 5:
+                            $this->addFlash("danger", "A booking cannot last more than 4 weeks");
+                    }
+                     //throw new BadRequestHttpException('The dates are not valid'); 
+                }
+                
             }
         }
         if ($request->getContentType() === 'json') {
@@ -158,6 +188,30 @@ class BookingController extends Controller
         return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
     }
 
+    private function checkDatesValidation($dateStart, $dateEnd, $lab) {
+        $now = new \DateTime("now");
+        if ($dateEnd <= $dateStart) {
+            return 1;
+        }
+        if ($dateStart < $now) {
+            return 2;
+        }
+        if ($dateStart->diff($dateEnd)->format("%a") > 28) {
+            return 5;
+        } 
+        $bookings = $this->bookingRepository->findBy(["lab"=>$lab],['startDate'=>'ASC']);
+        foreach ($bookings as $booking) {
+            if ($booking->getStartDate() <= $dateStart && $dateStart < $booking->getEndDate()) {
+                return 3;
+            }
+            else if ($dateStart <= $booking->getStartDate() &&  $booking->getStartDate() < $dateEnd) {
+                return 4;
+            }
+        }
+        return 0;
+        
+    }
+
     /** 
      * @Rest\Post("/api/bookings/yearStart", name="api_year_start_change")
      * 
@@ -168,13 +222,281 @@ class BookingController extends Controller
         if ($data['dates']['dateTimeStart']['year'] < date('Y')) {
             //error
         }
-        $lab = $this->labRepository->find($data['labId']);
-        if (!$bookings = $this->bookingRepository->findBy(["lab" => $lab])) {
-            return $this->json($data);
-            //check if dateEnd > dateStart
+        $today = new \DateTime("now");
+        $year = $data['dates']['dateTimeStart']['year'];
+        $choices = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $monthName = "";
+            if ($i < 10) { $monthName = "0";}
+            $monthName .= (string)$i;
+            $choices[$monthName] = ["name" => $monthName, "activation" => "enabled", "value" => $i];
+            if ($i == 4 || $i == 6 || $i == 9 || $i == 11) {
+                $days = 30;
+            }
+            else if ($i == 2) {
+                if (($year % 4 == 0 && $year % 100 != 0) || ($year % 4 == 0 && $year % 400 == 0)) {
+                    $days = 29;
+                }
+                else {
+                    $days = 28;
+                }
+            }
+            else {
+                $days = 31;
+            }
+            for ($j = 1; $j <= $days; $j++) {
+                $dayName = "";
+                if ($j < 10) { $dayName = "0";}
+                $dayName .= (string)$j;
+                $choices[$monthName]["days"][$dayName] = ["name" => $dayName, "activation" => "enabled", "value" => $j];
+                for ($k = 0; $k <= 23; $k++) {
+                    $hourName = "";
+                    if ($k < 10) { $hourName = "0";}
+                    $hourName .= (string)$k;
+                    $choices[$monthName]["days"][$dayName]["hours"][$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $k];
+                    for ($l = 0; $l <= 45; $l+=15) {
+                        $minuteName = "";
+                        if ($l < 10) { $minuteName = "0";}
+                        $minuteName .= (string)$l;
+                        $dateTest = new \DateTime($year."-".$i."-".$j." ".$k.":".$l);
+                        if ($dateTest < $today) {
+                            $activation = "disabled";
+                        }
+                        else {
+                            $activation = "enabled";
+                        }
+                        $choices[$monthName]["days"][$dayName]["hours"][$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $l];
+                    }
+                }
+            }
         }
+
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $monthTest = new \DateTime($year."-".$choice["value"]);
+                if ($booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m") && $monthTest->format("Y-m") <= $booking->getEndDate()->format("Y-m")) {
+                    foreach ($choice["days"] as $day) {
+                        $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
+                        if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                            foreach ($day["hours"] as $hour) {
+                                $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                                if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                                    foreach ($hour["minutes"] as $minute) {
+                                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                        if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                        }
+                                        else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                        }
+                                    }
+                                }
+                                else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
+                                    $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
+                                    if ($booking->getStartDate() == $bookingTest) {
+                                        foreach ($hour["minutes"] as $minute) {
+                                            if ($minute["value"] >= 45) {
+                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                            }
+                        }
+                        else if ($booking->getStartDate()->format("Y-m") == $dayTest->format("Y-m") && $booking->getStartDate()->format("Y-m-d") > $dayTest->format("Y-m-d") && $dayTest->diff($booking->getStartDate())->format("%d") == 1) {
+                            $bookingTest = new \DateTime($dayTest->format("Y-m")."-".($day["value"]+1)." 0:0");
+                            if ($bookingTest == $booking->getStartDate()) {
+                                foreach ($day["hours"] as $hour) {
+                                    if ($hour["value"] >= 23) {
+                                        foreach ($hour["minutes"] as $minute) {
+                                            if ($minute["value"] >= 45) {
+                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach ($choices as $choice) {
+            $disabledMonth = true;
+            foreach ($choice["days"] as $day) {
+                $disabledDay = true;
+                foreach ($day["hours"] as $hour) {
+                    $disabledHour = true;
+                    foreach ($hour["minutes"] as $minute) {
+                        if ($minute["activation"] == "enabled") {
+                            $disabledHour = false;
+                        }
+                    }
+                    if ($disabledHour == false) {
+                        $choices[$choice["name"]]["days"][$day["name"]]['hours'][$hour["name"]]['activation'] = "enabled";
+                        $hour["activation"] = "enabled";
+                    }
+                    else {
+                        $choices[$choice["name"]]["days"][$day["name"]]['hours'][$hour["name"]]['activation'] = "disabled";
+                        $hour["activation"] = "disabled";
+                    }
+                    if ($hour["activation"] == "enabled") {
+                        $disabledDay = false;
+                    }
+                    usort($choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+                }
+                if ($disabledDay == false) {
+                    $choices[$choice["name"]]["days"][$day["name"]]['activation'] = "enabled";
+                    $day['activation'] = "enabled";
+                }
+                else {
+                    $choices[$choice["name"]]["days"][$day["name"]]['activation'] = "disabled";
+                    $day['activation'] = "disabled";
+                }
+                if ($day["activation"] == "enabled") {
+                    $disabledMonth = false;
+                }
+                usort($choices[$choice["name"]]["days"][$day["name"]]["hours"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+            }
+            if ($disabledMonth == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["days"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
         
-        return $this->json($lab->getId());
+        return $this->json($choices);
+    }
+
+    /** 
+     * @Rest\Post("/api/bookings/monthStart", name="api_month_start_change")
+     * 
+     */
+    public function onMonthStartChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $today = new \DateTime("now"); 
+
+        $choices = [];
+        $month = $data['dates']['dateTimeStart']['month'];
+        $year = $data['dates']['dateTimeStart']['year'];
+        if ($month == 4 || $month == 6 || $month == 9 || $month == 11) {
+            $days = 30;
+        }
+        else if ($month == 2) {
+            if (($year % 4 == 0 && $year % 100 != 0) || ($year % 4 == 0 && $year % 400 == 0)) {
+                $days = 29;
+            }
+            else {
+                $days = 28;
+            }
+        }
+        else {
+            $days = 31;
+        }
+
+        for ($i = 1; $i <= $days; $i++) {
+            $dayName = "";
+            if ($i < 10) { $dayName = "0";}
+            $dayName .= (string)$i;
+            $choices[$dayName] = ["name" => $dayName, "activation" => "enabled", "value" => $i];
+            for ($j = 0; $j <= 23; $j++) {
+                $hourName = "";
+                if ($j < 10) { $hourName = "0";}
+                $hourName .= (string)$j;
+                $choices[$dayName]["hours"][$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $j];
+                for ($k = 0; $k <= 45; $k+=15) {
+                    $minuteName = "";
+                    if ($k < 10) { $minuteName = "0";}
+                    $minuteName .= (string)$k;
+                    $dateTest = new \DateTime($year."-".$month."-".$i." ".$j.":".$k);
+                    if ($dateTest < $today) {
+                        $activation = "disabled";
+                    }
+                    else {
+                        $activation = "enabled";
+                    }
+                    $choices[$dayName]["hours"][$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $k];
+                }
+            }
+        }
+
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
+                if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                    foreach ($choice["hours"] as $hour) {
+                        $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                        if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                            foreach ($hour["minutes"] as $minute) {
+                                $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                }
+                                else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                }
+                            }
+                        }
+                        else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
+                            $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
+                            if ($booking->getStartDate() == $bookingTest) {
+                                foreach ($hour["minutes"] as $minute) {
+                                    if ($minute["value"] >= 45) {
+                                        $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                    }
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        }
+
+        foreach ($choices as $choice) {
+            $disabledDay = true;
+            foreach ($choice["hours"] as $hour) {
+                $disabledHour = true;
+                foreach ($hour["minutes"] as $minute) {
+                    if ($minute["activation"] == "enabled") {
+                        $disabledHour = false;
+                    }
+                }
+                if ($disabledHour == false) {
+                    $choices[$choice["name"]]['hours'][$hour["name"]]['activation'] = "enabled";
+                    $hour["activation"] = "enabled";
+                }
+                else {
+                    $choices[$choice["name"]]['hours'][$hour["name"]]['activation'] = "disabled";
+                    $hour["activation"] = "disabled";
+                }
+                if ($hour["activation"] == "enabled") {
+                    $disabledDay = false;
+                }
+                usort($choices[$choice["name"]]["hours"][$hour["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+            }
+            if ($disabledDay == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["hours"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        return $this->json($choices);
     }
 
     /** 
@@ -185,281 +507,69 @@ class BookingController extends Controller
     {
         $data = json_decode($request->getContent(), true); 
         $today = new \DateTime("now");
-        $minuteStart = $data['dates']['dateTimeStart']['minute'] ? $data['dates']['dateTimeStart']['minute'] : 0;
-        $minuteEnd = $data['dates']['dateTimeEnd']['minute'] ? $data['dates']['dateTimeEnd']['minute'] : 0;
-        $hourStart = $data['dates']['dateTimeStart']['hour'] ? $data['dates']['dateTimeStart']['hour'] : 0;
-        $hourEnd = $data['dates']['dateTimeEnd']['hour'] ? $data['dates']['dateTimeEnd']['hour'] : 0;
-        $minuteChoices = [["name"=>"00","activation"=>"enabled", "value"=>0], ["name"=>"15","activation"=>"enabled", "value"=>15], ["name"=>"30","activation"=>"enabled", "value"=>30], ["name"=>"45","activation"=>"enabled", "value"=>45]];
-        $hourChoices = [
-            ["name"=>"00","activation"=>"enabled", "value"=>0], 
-            ["name"=>"01","activation"=>"enabled", "value"=>1], 
-            ["name"=>"02","activation"=>"enabled", "value"=>2], 
-            ["name"=>"03","activation"=>"enabled", "value"=>3], 
-            ["name"=>"04","activation"=>"enabled", "value"=>4],
-            ["name"=>"05","activation"=>"enabled", "value"=>5], 
-            ["name"=>"06","activation"=>"enabled", "value"=>6], 
-            ["name"=>"07","activation"=>"enabled", "value"=>7], 
-            ["name"=>"08","activation"=>"enabled", "value"=>8],
-            ["name"=>"09","activation"=>"enabled", "value"=>9], 
-            ["name"=>"10","activation"=>"enabled", "value"=>10], 
-            ["name"=>"11","activation"=>"enabled", "value"=>11], 
-            ["name"=>"12","activation"=>"enabled", "value"=>12],
-            ["name"=>"13","activation"=>"enabled", "value"=>13], 
-            ["name"=>"14","activation"=>"enabled", "value"=>14],
-            ["name"=>"15","activation"=>"enabled", "value"=>15], 
-            ["name"=>"16","activation"=>"enabled", "value"=>16], 
-            ["name"=>"17","activation"=>"enabled", "value"=>17], 
-            ["name"=>"18","activation"=>"enabled", "value"=>18],
-            ["name"=>"19","activation"=>"enabled", "value"=>19], 
-            ["name"=>"20","activation"=>"enabled", "value"=>20],
-            ["name"=>"21","activation"=>"enabled", "value"=>21], 
-            ["name"=>"22","activation"=>"enabled", "value"=>22], 
-            ["name"=>"23","activation"=>"enabled", "value"=>23], 
-        ];
-        $disabledChoices = [];
-        $dateStart = new \DateTime($data['dates']['dateTimeStart']['year']."-".$data['dates']['dateTimeStart']['month']."-".$data['dates']['dateTimeStart']['day']);
-        $dateTimeStart = new \DateTime($data['dates']['dateTimeStart']['year']."-".$data['dates']['dateTimeStart']['month']."-".$data['dates']['dateTimeStart']['day']." ".$hourStart.":".$minuteStart);
-        $dateTimeEnd = new \DateTime($data['dates']['dateTimeEnd']['year']."-".$data['dates']['dateTimeEnd']['month']."-".$data['dates']['dateTimeEnd']['day']." ".$hourStart.":".$minuteEnd);
-        if ($dateStart->format("Y-m-d") < $today->format("Y-m-d")) {
-            foreach ($hourChoices as $key => $hourChoice) {
-                $disabledChoices[$hourChoice["name"]] = ["activation" => "disabled", "name" => $hourChoice["name"], "value" => $hourChoice["value"]]; 
+        $choices = [];
+        $day = $data['dates']['dateTimeStart']['day'];
+        $month = $data['dates']['dateTimeStart']['month'];
+        $year = $data['dates']['dateTimeStart']['year'];
 
-                foreach ($minuteChoices as $minuteChoice) {
-                    $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                }              
-            }
-        }
-        else if ($dateStart->format("Y-m-d") == $today->format("Y-m-d")) {
-            foreach ($hourChoices as $key => $hourChoice) {
-                $dateTest = new \DateTime($dateStart->format("Y-m-d")." ".$hourChoice['value'].":0");
-                if ($dateTest->format("H") < $today->format("H")) {
-                    $disabledChoices[$hourChoice["name"]] = ["activation" => "disabled", "name" => $hourChoice["name"], "value" => $hourChoice["value"]]; 
-    
-                    foreach ($minuteChoices as $minuteChoice) {
-                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                    }              
+        for ($i = 0; $i <= 23; $i++) {
+            $hourName = "";
+            if ($i < 10) { $hourName = "0";}
+            $hourName .= (string)$i;
+            $choices[$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $i];
+            for ($j = 0; $j <= 45; $j+=15) {
+                $minuteName = "";
+                if ($j < 10) { $minuteName = "0";}
+                $minuteName .= (string)$j;
+                $dateTest = new \DateTime($year."-".$month."-".$day." ".$i.":".$j);
+                if ($dateTest < $today) {
+                    $activation = "disabled";
                 }
-                else if ($dateTest->format("H") == $today->format("H")) {
-                    foreach ($minuteChoices as $key => $minuteChoice) {
-                        $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                        if ($minuteTest->format("i") <= $today->format("i")) {
-                            if (array_key_exists($today->format("H"), $disabledChoices)) {
-                                $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                            }
-                            else {
-                                $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                            }
-                        }
-                    }
+                else {
+                    $activation = "enabled";
                 }
-
+                $choices[$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $j];
             }
         }
         
         $lab = $this->labRepository->find($data['labId']);
-        if (!$bookings = $this->bookingRepository->findBy(["lab" => $lab])) {
-            return $this->json(["choices"=> ["minute"=> $minuteChoices, "hours" => $hourChoices]]);
-            //check if dateEnd > dateStart
-        }
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
 
         foreach ($bookings as $booking) {
-            if ($booking->getStartDate()->format("Y-m-d") <= $dateStart->format("Y-m-d") && $dateStart->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
-                if ($booking->getStartDate()->format("Y-m-d") == $dateStart->format("Y-m-d") && $dateStart->format("Y-m-d") < $booking->getEndDate()->format("Y-m-d")) {
-                    foreach ($hourChoices as $hourChoice) {
-                        $dateTest = new \DateTime($dateStart->format("Y-m-d")." ".$hourChoice['value'].":0");
-                        if ($booking->getStartDate()->format('H') < $dateTest->format('H')) {
-                            $disabledChoices[$hourChoice['name']] = ["activation" => "disabled", "name" => $hourChoice['name'], "value" => $hourChoice['value']];
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                            }
+            foreach ($choices as $choice) {
+                $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
+                if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                    foreach ($choice["minutes"] as $minute) {
+                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                        if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
                         }
-                        else if ($booking->getStartDate()->format('H') == $dateTest->format('H')){
-                            foreach ($minuteChoices as $minuteChoice) {
-                                if ($booking->getStartDate()->format('i') <= $minuteChoice['value']) {
-                                    if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                                else {
-                                    $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                    if ($minuteTest->diff($booking->getStartDate())->format("%i") < 15) {
-                                        if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                            $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                        }
-                                        else {
-                                            $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                        }
-                                    }
-                                }
-                            }
+                        else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
                         }
-                        else {
-                            if ($dateTest->diff($booking->getStartDate())->format("%H") == 1) {
-                                foreach ($minuteChoices as $minuteChoice) {
-                                    $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                    if ($minuteTest->diff($booking->getStartDate())->format("%i") < 15) {
-                                        if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                            $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                        }
-                                        else {
-                                            $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                        }
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
-                }
-                else if ($booking->getStartDate()->format("Y-m-d") == $dateStart->format("Y-m-d") && $dateStart->format("Y-m-d") == $booking->getEndDate()->format("Y-m-d")) {
-                    foreach ($hourChoices as $hourChoice) {
-                        $dateTest = new \DateTime($dateStart->format("Y-m-d")." ".$hourChoice['value'].":0");
-                        if ($booking->getStartDate()->format('H') < $dateTest->format('H') && $dateTest->format('H') < $booking->getEndDate()->format('H')) {
-                            $disabledChoices[$hourChoice['name']] = ["activation" => "disabled", "name" => $hourChoice['name'], "value" => $hourChoice['value']];
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                            }
-                        }
-                        else if ($booking->getStartDate()->format('H') < $dateTest->format('H') && $dateTest->format('H') == $booking->getEndDate()->format('H')) {
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                if ($minuteTest->format("i") < $booking->getEndDate()->format("i")) {
-                                    if (array_key_exists($booking->getEndDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                            }
-                        }
-                        else if ($booking->getStartDate()->format('H') == $dateTest->format('H') && $dateTest->format('H') < $booking->getEndDate()->format('H')) {
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                if ($booking->getStartDate()->format("i") <= $minuteTest->format("i")) {
-                                    if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                                else {
-                                    if ($minuteTest->diff($booking->getStartDate())->format("%i") < 15) {
-                                        if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                            $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                        }
-                                        else {
-                                            $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else if ($booking->getStartDate()->format('H') == $dateTest->format('H') && $dateTest->format('H') == $booking->getEndDate()->format('H')) {
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                if ($minuteTest->format("i") < $booking->setStartDate()->format("i") && $minuteTest->diff($booking->getStartDate())->format("%i") < 15) {
-                                    if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                                else if ($booking->getStartDate()->format("i") <= $minuteTest->format("i") && $minuteTest->format("i") < $booking->getEndDate()->format('i')) {
-                                    if (array_key_exists($booking->getStartDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else if ($booking->getStartDate()->format("Y-m-d") < $dateStart->format("Y-m-d") && $dateStart->format("Y-m-d") == $booking->getEndDate()->format("Y-m-d")) {
-                    foreach ($hourChoices as $hourChoice) {
-                        $dateTest = new \DateTime($dateStart->format("Y-m-d")." ".$hourChoice['value'].":0");
-                        if ($dateTest->format('H') < $booking->getEndDate()->format('H')) {
-                            $disabledChoices[$hourChoice['name']] = ["activation" => "disabled", "name" => $hourChoice['name'], "value" => $hourChoice['value']];
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                            }
-                        }
-                        else if ($dateTest->format('H') == $booking->getEndDate()->format('H')) {
-                            foreach ($minuteChoices as $minuteChoice) {
-                                $minuteTest = new \DateTime($dateTest->format("Y-m-d H").":".$minuteChoice['value']);
-                                if ($minuteTest->format("i") <= $booking->getEndDate()->format("i")) {
-                                    if (array_key_exists($booking->getEndDate()->format('H'), $disabledChoices)) {
-                                        $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                                    }
-                                    else {
-                                        $disabledChoices[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value'], "minutes" => [$minuteChoice['name'] => ["activation" => "disabled", "name" => $minuteChoice["name"], "value" => $minuteChoice['value']]]];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else {
-                    foreach ($hourChoices as $hourChoice) {
-                        $disabledChoices[$hourChoice['name']] = ["activation" => "disabled", "name" => $hourChoice['name'], "value" => $hourChoice['value']];
-                        foreach ($minuteChoices as $minuteChoice) {
-                            $disabledChoices[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "disabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                        }
-                    }
+                    }   
                 }
             }
-
-            //check if an existing booking is between the start and the end
-            if ($dateTimeStart <= $booking->getStartDate() && $booking->getStartDate() < $dateTimeEnd) {
-                //do something
-            }
-
-            $choiceList = $disabledChoices;
-            foreach ($hourChoices as $hourChoice) {
-                if (!array_key_exists($hourChoice["name"], $choiceList)) {
-                    $choiceList[$hourChoice["name"]] = ["activation" => "enabled", "name" => $hourChoice['name'], "value" => $hourChoice['value']];
-                    foreach ($minuteChoices as $minuteChoice) {
-                        $choiceList[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "enabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                    }
-                }
-                else {
-                    foreach ($minuteChoices as $minuteChoice) {
-                        if (!array_key_exists($minuteChoice["name"], $choiceList[$hourChoice["name"]]["minutes"])) {
-                            $choiceList[$hourChoice["name"]]["minutes"][$minuteChoice["name"]] = ["activation" => "enabled", "name" => $minuteChoice['name'], "value" => $minuteChoice["value"]]; 
-                        }
-                    }
-                }
-            }
-            foreach ($choiceList as $key => $choice) {
-                $disabledHour = true;
-                foreach ($choice["minutes"] as $minute) {
-                    if ($minute['activation'] == "enabled") {
-                        $disabledHour = false; break;
-                    }
-                }
-                if ($disabledHour == false) {
-                    $choiceList[$key]['activation'] = "enabled";
-                }
-                else {
-                    $choiceList[$key]['activation'] = "disabled";
-                }
-                usort($choiceList[$key]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
-            }
-            
         }
-        
-        usort($choiceList, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
 
-        $choices["minuteChoices"] = $minuteChoices;
-        $choices["hourChoices"] = $hourChoices;
-        return $this->json($choiceList);
+        foreach ($choices as $choice) {
+            $disabledHour = true;
+            foreach ($choice["minutes"] as $minute) {
+                if ($minute["activation"] == "enabled") {
+                    $disabledHour = false;
+                }
+            }
+            if ($disabledHour == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+
+        return $this->json($choices);
     }
 
     /** 
@@ -470,55 +580,429 @@ class BookingController extends Controller
     {
         $data = json_decode($request->getContent(), true); 
         $today = new \DateTime("today");
-        $minuteStart = $data['dates']['dateTimeStart']['minute'] ? $data['dates']['dateTimeStart']['minute'] : 0;
-        $minuteEnd = $data['dates']['dateTimeEnd']['minute'] ? $data['dates']['dateTimeEnd']['minute'] : 0;
-        $minuteChoices = [["name"=>"00","activation"=>"enabled", "value"=>0], ["name"=>"15","activation"=>"enabled", "value"=>15], ["name"=>"30","activation"=>"enabled", "value"=>30], ["name"=>"45","activation"=>"enabled", "value"=>45]];
-        $dateStart = new \DateTime($data['dates']['dateTimeStart']['year']."-".$data['dates']['dateTimeStart']['month']."-".$data['dates']['dateTimeStart']['day']);
-        $dateTimeStart = new \DateTime($data['dates']['dateTimeStart']['year']."-".$data['dates']['dateTimeStart']['month']."-".$data['dates']['dateTimeStart']['day']." ".$data['dates']['dateTimeStart']['hour'].":".$minuteStart);
-        $dateTimeEnd = new \DateTime($data['dates']['dateTimeEnd']['year']."-".$data['dates']['dateTimeEnd']['month']."-".$data['dates']['dateTimeEnd']['day']." ".$data['dates']['dateTimeEnd']['hour'].":".$minuteEnd);
-        if ( $dateStart < $today) {
-            /*foreach ($hourChoices as $key => $hourChoice) {
-                $hourChoices[$key]["activation"] = "disabled"; 
-            }*/
-            foreach ($minuteChoices as $key => $minuteChoice) {
-                $minuteChoices[$key]["activation"] = "disabled"; 
+
+        $choices = [];
+        $hour = $data['dates']['dateTimeStart']['hour'];
+        $day = $data['dates']['dateTimeStart']['day'];
+        $month = $data['dates']['dateTimeStart']['month'];
+        $year = $data['dates']['dateTimeStart']['year'];
+
+        for ($i = 0; $i <= 45; $i+=15) {
+            $minuteName = "";
+            if ($i < 10) { $minuteName = "0";}
+            $minuteName .= (string)$i;
+            $dateTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$i);
+            if ($dateTest < $today) {
+                $activation = "disabled";
             }
+            else {
+                $activation = "enabled";
+            }
+            $choices[$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $i];
         }
-        else if ($dateStart == $today) {
-            if ($data['dates']['dateTimeStart']['hour'] < date("H")) {
-                foreach ($minuteChoices as $key => $minuteChoice) {
-                    $minuteChoices[$key]["activation"] = "disabled"; 
+
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
+                if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                    $choices[$choice["name"]]["activation"] = "disabled";
+                }
+                else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                    $choices[$choice["name"]]["activation"] = "disabled";
                 }
             }
-            else if ($data['dates']['dateTimeStart']['hour'] == date("H")) {
-                foreach ($minuteChoices as $key => $minuteChoice) {
-                    if ($minuteChoice["value"] <= date("i")) {
-                        $minuteChoices[$key]["activation"] = "disabled"; 
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        
+        return $this->json($choices);
+    }
+
+    /** 
+     * @Rest\Post("/api/bookings/yearEnd", name="api_year_end_change")
+     * 
+     */
+    public function onYearEndChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true); 
+        $today = new \DateTime("now");
+        $yearStart = isset($data['dates']['dateTimeStart']['year']) ? $data['dates']['dateTimeStart']['year'] : (int)$today->format("Y");
+        $monthStart = isset($data['dates']['dateTimeStart']['month']) ? $data['dates']['dateTimeStart']['month'] : (int)$today->format("m");
+        $dayStart = isset($data['dates']['dateTimeStart']['day']) ? $data['dates']['dateTimeStart']['day'] : (int)$today->format("d");
+        $hourStart = isset($data['dates']['dateTimeStart']['hour']) ? $data['dates']['dateTimeStart']['hour'] : 0;
+        $minuteStart = isset($data['dates']['dateTimeStart']['minute']) ? $data['dates']['dateTimeStart']['minute'] : 0;
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $year = $data['dates']['dateTimeEnd']['year'];
+        $choices = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $monthName = "";
+            if ($i < 10) { $monthName = "0";}
+            $monthName .= (string)$i;
+            $choices[$monthName] = ["name" => $monthName, "activation" => "enabled", "value" => $i];
+            if ($i == 4 || $i == 6 || $i == 9 || $i == 11) {
+                $days = 30;
+            }
+            else if ($i == 2) {
+                if (($year % 4 == 0 && $year % 100 != 0) || ($year % 4 == 0 && $year % 400 == 0)) {
+                    $days = 29;
+                }
+                else {
+                    $days = 28;
+                }
+            }
+            else {
+                $days = 31;
+            }
+            for ($j = 1; $j <= $days; $j++) {
+                $dayName = "";
+                if ($j < 10) { $dayName = "0";}
+                $dayName .= (string)$j;
+                $choices[$monthName]["days"][$dayName] = ["name" => $dayName, "activation" => "enabled", "value" => $j];
+                for ($k = 0; $k <= 23; $k++) {
+                    $hourName = "";
+                    if ($k < 10) { $hourName = "0";}
+                    $hourName .= (string)$k;
+                    $choices[$monthName]["days"][$dayName]["hours"][$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $k];
+                    for ($l = 0; $l <= 45; $l+=15) {
+                        $minuteName = "";
+                        if ($l < 10) { $minuteName = "0";}
+                        $minuteName .= (string)$l;
+                        $dateTest = new \DateTime($year."-".$i."-".$j." ".$k.":".$l);
+                        $todayPlus15Minutes = new \DateTime("+15 minutes");
+                        if ($dateTest < $todayPlus15Minutes) {
+                            $activation = "disabled";
+                        }
+                        else {
+                            $activation = "enabled";
+                        }
+                        $choices[$monthName]["days"][$dayName]["hours"][$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $l];
                     }
                 }
             }
         }
+
         $lab = $this->labRepository->find($data['labId']);
-        if (!$bookings = $this->bookingRepository->findBy(["lab" => $lab])) {
-            return $this->json(["choices"=> ["minute"=> $minuteChoices]]);
-            //TODO: check if dateEnd > dateStart
-        }
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
         foreach ($bookings as $booking) {
-            //check if the time start during an existing booking
-            foreach ($minuteChoices as $key => $minuteChoice) {
-                $dateTest = new \DateTime($dateStart->format("Y-m-d")." ".$data['dates']['dateTimeStart']['hour'].":".$minuteChoice["value"]);
-                if ($booking->getStartDate() <= $dateTest && $dateTest < $booking->getEndDate()) {
-                    $minuteChoices[$key]["activation"] = "disabled";
+            foreach ($choices as $choice) {
+                $monthTest = new \DateTime($year."-".$choice["value"]);
+                if ($dateStart->format("Y-m") <= $booking->getStartDate()->format("Y-m") && $booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m")) {
+                    foreach ($choice["days"] as $day) {
+                        $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
+                        if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
+                            foreach ($day["hours"] as $hour) {
+                                $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                                if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                                    foreach ($hour["minutes"] as $minute) {
+                                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                        if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                        }
+                                    }
+                                }                                
+                            }
+                        }
+                    }
                 }
             }
+        }
 
-            //check if an existing booking is between the start and the end
-            if ($dateTimeStart <= $booking->getStartDate() && $booking->getStartDate() < $dateTimeEnd) {
-                //TODO: do something
+        foreach ($choices as $choice) {
+            $disabledMonth = true;
+            foreach ($choice["days"] as $day) {
+                $disabledDay = true;
+                foreach ($day["hours"] as $hour) {
+                    $disabledHour = true;
+                    foreach ($hour["minutes"] as $minute) {
+                        if ($minute["activation"] == "enabled") {
+                            $disabledHour = false;
+                        }
+                    }
+                    if ($disabledHour == false) {
+                        $choices[$choice["name"]]["days"][$day["name"]]['hours'][$hour["name"]]['activation'] = "enabled";
+                        $hour["activation"] = "enabled";
+                    }
+                    else {
+                        $choices[$choice["name"]]["days"][$day["name"]]['hours'][$hour["name"]]['activation'] = "disabled";
+                        $hour["activation"] = "disabled";
+                    }
+                    if ($hour["activation"] == "enabled") {
+                        $disabledDay = false;
+                    }
+                    usort($choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+                }
+                if ($disabledDay == false) {
+                    $choices[$choice["name"]]["days"][$day["name"]]['activation'] = "enabled";
+                    $day['activation'] = "enabled";
+                }
+                else {
+                    $choices[$choice["name"]]["days"][$day["name"]]['activation'] = "disabled";
+                    $day['activation'] = "disabled";
+                }
+                if ($day["activation"] == "enabled") {
+                    $disabledMonth = false;
+                }
+                usort($choices[$choice["name"]]["days"][$day["name"]]["hours"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
             }
+            if ($disabledMonth == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["days"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        
+        return $this->json($choices);
+    }
 
+    /** 
+     * @Rest\Post("/api/bookings/monthEnd", name="api_month_end_change")
+     * 
+     */
+    public function onMonthEndChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true); 
+        $today = new \DateTime("now");
+        $yearStart = isset($data['dates']['dateTimeStart']['year']) ? $data['dates']['dateTimeStart']['year'] : (int)$today->format("Y");
+        $monthStart = isset($data['dates']['dateTimeStart']['month']) ? $data['dates']['dateTimeStart']['month'] : (int)$today->format("m");
+        $dayStart = isset($data['dates']['dateTimeStart']['day']) ? $data['dates']['dateTimeStart']['day'] : (int)$today->format("d");
+        $hourStart = isset($data['dates']['dateTimeStart']['hour']) ? $data['dates']['dateTimeStart']['hour'] : 0;
+        $minuteStart = isset($data['dates']['dateTimeStart']['minute']) ? $data['dates']['dateTimeStart']['minute'] : 0;
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $month = $data['dates']['dateTimeEnd']['month'];
+        $year = $data['dates']['dateTimeEnd']['year'];
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+
+        if ($month == 4 || $month == 6 || $month == 9 || $month == 11) {
+            $days = 30;
+        }
+        else if ($month == 2) {
+            if (($year % 4 == 0 && $year % 100 != 0) || ($year % 4 == 0 && $year % 400 == 0)) {
+                $days = 29;
+            }
+            else {
+                $days = 28;
+            }
+        }
+        else {
+            $days = 31;
+        }
+
+        for ($i = 1; $i <= $days; $i++) {
+            $dayName = "";
+            if ($i < 10) { $dayName = "0";}
+            $dayName .= (string)$i;
+            $choices[$dayName] = ["name" => $dayName, "activation" => "enabled", "value" => $i];
+            for ($j = 0; $j <= 23; $j++) {
+                $hourName = "";
+                if ($j < 10) { $hourName = "0";}
+                $hourName .= (string)$j;
+                $choices[$dayName]["hours"][$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $j];
+                for ($k = 0; $k <= 45; $k+=15) {
+                    $minuteName = "";
+                    if ($k < 10) { $minuteName = "0";}
+                    $minuteName .= (string)$k;
+                    $dateTest = new \DateTime($year."-".$month."-".$i." ".$j.":".$k);
+                    $todayPlus15Minutes = new \DateTime("+15 minutes");
+                    if ($dateTest < $todayPlus15Minutes) {
+                        $activation = "disabled";
+                    }
+                    else {
+                        $activation = "enabled";
+                    }
+                    $choices[$dayName]["hours"][$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $k];
+                }
+            }
+        }
+
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
+                if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
+                    foreach ($choice["hours"] as $hour) {
+                        $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                        if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                            foreach ($hour["minutes"] as $minute) {
+                                $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                }
+                            }
+                        }                        
+                    }
+                }
+            }
+        }
+
+        foreach ($choices as $choice) {
+            $disabledDay = true;
+            foreach ($choice["hours"] as $hour) {
+                $disabledHour = true;
+                foreach ($hour["minutes"] as $minute) {
+                    if ($minute["activation"] == "enabled") {
+                        $disabledHour = false;
+                    }
+                }
+                if ($disabledHour == false) {
+                    $choices[$choice["name"]]['hours'][$hour["name"]]['activation'] = "enabled";
+                    $hour["activation"] = "enabled";
+                }
+                else {
+                    $choices[$choice["name"]]['hours'][$hour["name"]]['activation'] = "disabled";
+                    $hour["activation"] = "disabled";
+                }
+                if ($hour["activation"] == "enabled") {
+                    $disabledDay = false;
+                }
+                usort($choices[$choice["name"]]["hours"][$hour["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+            }
+            if ($disabledDay == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["hours"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        return $this->json($choices);
+    }
+
+    /** 
+     * @Rest\Post("/api/bookings/dayEnd", name="api_day_end_change")
+     * 
+     */
+    public function onDayEndChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true); 
+        $today = new \DateTime("now");
+        $choices = [];
+
+        $yearStart = isset($data['dates']['dateTimeStart']['year']) ? $data['dates']['dateTimeStart']['year'] : (int)$today->format("Y");
+        $monthStart = isset($data['dates']['dateTimeStart']['month']) ? $data['dates']['dateTimeStart']['month'] : (int)$today->format("m");
+        $dayStart = isset($data['dates']['dateTimeStart']['day']) ? $data['dates']['dateTimeStart']['day'] : (int)$today->format("d");
+        $hourStart = isset($data['dates']['dateTimeStart']['hour']) ? $data['dates']['dateTimeStart']['hour'] : 0;
+        $minuteStart = isset($data['dates']['dateTimeStart']['minute']) ? $data['dates']['dateTimeStart']['minute'] : 0;
+        $day = $data['dates']['dateTimeEnd']['day'];
+        $month = $data['dates']['dateTimeEnd']['month'];
+        $year = $data['dates']['dateTimeEnd']['year'];
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+
+        for ($i = 0; $i <= 23; $i++) {
+            $hourName = "";
+            if ($i < 10) { $hourName = "0";}
+            $hourName .= (string)$i;
+            $choices[$hourName] = ["name" => $hourName, "activation" => "enabled", "value" => $i];
+            for ($j = 0; $j <= 45; $j+=15) {
+                $minuteName = "";
+                if ($j < 10) { $minuteName = "0";}
+                $minuteName .= (string)$j;
+                $dateTest = new \DateTime($year."-".$month."-".$day." ".$i.":".$j);
+                $todayPlus15Minutes = new \DateTime("+15 minutes");
+                if ($dateTest < $todayPlus15Minutes) {
+                    $activation = "disabled";
+                }
+                else {
+                    $activation = "enabled";
+                }
+                $choices[$hourName]["minutes"][$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $j];
+            }
         }
         
-        return $this->json($minuteChoices);
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
+                if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                    foreach ($choice["minutes"] as $minute) {
+                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                        if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                        }
+                    }   
+                }
+            }
+        }
+
+        foreach ($choices as $choice) {
+            $disabledHour = true;
+            foreach ($choice["minutes"] as $minute) {
+                if ($minute["activation"] == "enabled") {
+                    $disabledHour = false;
+                }
+            }
+            if ($disabledHour == false) {
+                $choices[$choice["name"]]['activation'] = "enabled";
+            }
+            else {
+                $choices[$choice["name"]]['activation'] = "disabled";
+            }
+            usort($choices[$choice["name"]]["minutes"], function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+
+        return $this->json($choices);
+    }
+
+        /** 
+     * @Rest\Post("/api/bookings/hourEnd", name="api_hour_end_change")
+     * 
+     */
+    public function onHourEndChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true); 
+        $today = new \DateTime("today");
+
+        $choices = [];
+        $yearStart = isset($data['dates']['dateTimeStart']['year']) ? $data['dates']['dateTimeStart']['year'] : (int)$today->format("Y");
+        $monthStart = isset($data['dates']['dateTimeStart']['month']) ? $data['dates']['dateTimeStart']['month'] : (int)$today->format("m");
+        $dayStart = isset($data['dates']['dateTimeStart']['day']) ? $data['dates']['dateTimeStart']['day'] : (int)$today->format("d");
+        $hourStart = isset($data['dates']['dateTimeStart']['hour']) ? $data['dates']['dateTimeStart']['hour'] : 0;
+        $minuteStart = isset($data['dates']['dateTimeStart']['minute']) ? $data['dates']['dateTimeStart']['minute'] : 0;
+        $hour = $data['dates']['dateTimeEnd']['hour'];
+        $day = $data['dates']['dateTimeEnd']['day'];
+        $month = $data['dates']['dateTimeEnd']['month'];
+        $year = $data['dates']['dateTimeEnd']['year'];
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+
+        for ($i = 0; $i <= 45; $i+=15) {
+            $minuteName = "";
+            if ($i < 10) { $minuteName = "0";}
+            $minuteName .= (string)$i;
+            $dateTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$i);
+            $todayPlus15Minutes = new \DateTime("+15 minutes");
+            if ($dateTest < $todayPlus15Minutes) {
+                $activation = "disabled";
+            }
+            else {
+                $activation = "enabled";
+            }
+            $choices[$minuteName] = ["name" => $minuteName, "activation" => $activation, "value" => $i];
+        }
+
+        $lab = $this->labRepository->find($data['labId']);
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+
+        foreach ($bookings as $booking) {
+            foreach ($choices as $choice) {
+                $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
+                if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                    $choices[$choice["name"]]["activation"] = "disabled";
+                }
+            }
+        }
+        usort($choices, function ($a,$b) {return strcmp($a["name"], $b["name"]);});
+        
+        return $this->json($choices);
     }
 }
