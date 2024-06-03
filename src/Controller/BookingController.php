@@ -3,9 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Booking;
+use App\Entity\User;
+use App\Entity\Group;
 use App\Form\BookingType;
 use App\Repository\BookingRepository;
 use App\Repository\LabRepository;
+use App\Repository\LabInstanceRepository;
+use App\Repository\UserRepository;
+use App\Repository\GroupRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,12 +21,24 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 class BookingController extends Controller
 {
     public $labRepository;
+    public $labInstanceRepository;
     public $bookingRepository;
+    public $userRepository;
+    public $groupRepository;
 
-    public function __construct(LabRepository $labRepository, BookingRepository $bookingRepository)
+    public function __construct(
+        LabRepository $labRepository, 
+        BookingRepository $bookingRepository, 
+        LabInstanceRepository $labInstanceRepository, 
+        UserRepository $userRepository, 
+        GroupRepository $groupRepository
+    )
     {
         $this->labRepository = $labRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
         $this->bookingRepository = $bookingRepository;
+        $this->userRepository = $userRepository;
+        $this->groupRepository = $groupRepository;
     }
 
     /**
@@ -48,13 +65,29 @@ class BookingController extends Controller
 
 
     /**
-     * @Route("/bookings/{id<\d+>}", name="get_booking")
+     * @Route("/bookings/{id<\d+>}", name="show_booking")
      * 
      * 
      */
-    public function showAction(Request $request)
+    public function showAction(Request $request, int $id)
     {
- 
+        $booking = $this->bookingRepository->find($id);
+        $bookingObject = [
+            "id" => $booking->getId(),
+            "name" => $booking->getName(),
+            "lab" => $booking->getLab(),
+            "author" => $booking->getAuthor(),
+            "owner" => $booking->getOwner(),
+            "bookedFor" => $booking->getReservedFor(),
+            "startDate" => $booking->getStartDate(),
+            "endDate" => $booking->getEndDate()
+        ];
+
+        return $this->render("booking/view.html.twig", [
+            //'lab' => $lab,
+            'booking' => $booking,
+        ]);
+
     }
 
     /**
@@ -106,19 +139,38 @@ class BookingController extends Controller
                 $dateEnd = new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData());
                 $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab);
                 if ($isValid == 0) {
-                    $booking = $bookingForm->getData();
-                    $booking->setAuthor($this->getUser());
-                    $booking->setLab($lab);
-                    $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
-                    $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
-                    $entityManager = $this->getDoctrine()->getManager();
-                    $entityManager->persist($booking);
-                    $entityManager->flush();
-    
-                    if ('json' === $request->getRequestFormat()) {
-                        return $this->json($booking, 201, [], ['api_get_booking']);
+                    if ($bookingForm['reservedFor']->getData() == "group") {
+                        $owner = $this->groupRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
                     }
-                    return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
+                    else {
+                        $owner = $this->userRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                    }
+                    if ($owner && (($bookingForm['reservedFor']->getData() == "group" && $owner instanceof Group) || ($bookingForm['reservedFor']->getData() == "user" && $owner instanceof User) )) {
+                        $booking = $bookingForm->getData();
+                        $booking->setName($bookingForm['name']->getData());
+                        $booking->setAuthor($this->getUser());
+                        $booking->setReservedFor($bookingForm['reservedFor']->getData());
+                        if ($owner instanceof Group) {
+                            $booking->setGroup($owner);
+                        }
+                        else {
+                            $booking->setUser($owner);
+                        }
+                        $booking->setLab($lab);
+                        $booking->setStartDate($dateStart);
+                        $booking->setEndDate($dateEnd);
+                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager->persist($booking);
+                        $entityManager->flush();
+                        if ('json' === $request->getRequestFormat()) {
+                            return $this->json($booking, 201, [], ['api_get_booking']);
+                        }
+                        return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
+                    }
+                    else {
+                        $this->addFlash("danger", "The owner does not exist.");
+                    }
+                    
                 }
                 else {
                     switch ($isValid) {
@@ -161,7 +213,85 @@ class BookingController extends Controller
      */
     public function editAction(Request $request, int $id)
     {
+        if (!$booking = $this->bookingRepository->find($id)) {
+            throw new NotFoundHttpException("Booking " . $id . " does not exist.");
+        } 
+        $bookingForm = $this->createForm(BookingType::class, $booking);
+        $bookingForm->handleRequest($request);
 
+        if ($request->getContentType() === 'json') {
+            $booking = json_decode($request->getContent(), true);
+            $bookingForm->submit($booking);
+        }
+
+        $lab = $booking->getLab();
+        if ($lab->getVirtuality() == 0) {
+            if ($bookingForm->isSubmitted() && $bookingForm->isValid()) {
+                $dateStart = new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData());
+                $dateEnd = new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData());
+                $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab, $booking->getId());
+                if ($isValid == 0) {
+                    if ($bookingForm['reservedFor']->getData() == "group") {
+                        $owner = $this->groupRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                    }
+                    else {
+                        $owner = $this->userRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                    }
+                    if ($owner && (($bookingForm['reservedFor']->getData() == "group" && $owner instanceof Group) || ($bookingForm['reservedFor']->getData() == "user" && $owner instanceof User) )) {
+                        $booking = $bookingForm->getData();
+                        $booking->setName($bookingForm['name']->getData());
+                        $booking->setAuthor($this->getUser());
+                        $booking->setLab($lab);
+                        $booking->setReservedFor($bookingForm['reservedFor']->getData());
+                        if ($owner instanceof Group) {
+                            $booking->setGroup($owner);
+                        }
+                        else {
+                            $booking->setUser($owner);
+                        }
+                        $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
+                        $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
+                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager->persist($booking);
+                        $entityManager->flush();
+        
+                        if ('json' === $request->getRequestFormat()) {
+                            return $this->json($booking, 201, [], ['api_get_booking']);
+                        }
+                        return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
+                    }
+                    else {
+                        $this->addFlash("danger", "The owner does not exist.");
+                    }
+                }
+                else {
+                    switch ($isValid) {
+                        case 1:
+                            $this->addFlash("danger", "The starting date of the booking must precede the ending date.");
+                            break;
+                        case 2:
+                            $this->addFlash("danger", "The starting date cannot precede the current time.");
+                            break;
+                        case 3:
+                            $this->addFlash("danger", "The booking cannot start during another booking");
+                            break;
+                        case 4:
+                            $this->addFlash("danger", "Another booking starts during the choosen period");
+                            break;
+                        case 5:
+                            $this->addFlash("danger", "A booking cannot last more than 4 weeks");
+                    }
+                     //throw new BadRequestHttpException('The dates are not valid'); 
+                }
+                
+            }
+        }
+
+        return $this->render('booking/new.html.twig', [
+            'bookingForm' => $bookingForm->createView(),
+            'booking' => $booking,
+            'lab' => $lab,
+        ]);
     }
 
     /**
@@ -188,7 +318,34 @@ class BookingController extends Controller
         return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
     }
 
-    private function checkDatesValidation($dateStart, $dateEnd, $lab) {
+    /**
+     * 
+     * @Rest\Delete("/api/bookings/by_uuid/{uuid}", name="api_delete_booking_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
+     * 
+     */
+    public function deleteActionByUuid(Request $request, string $uuid)
+    {
+        if (!$booking = $this->bookingRepository->findOneBy(["uuid" =>$uuid])) {
+            throw new NotFoundHttpException("Booking " . $booking->getId(). " does not exist.");
+        }
+        $lab = $booking->getLab();
+        if (!$labInstance = $this->labInstanceRepository->findBy(["lab" => $lab])) {
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->remove($booking);
+            $entityManager->flush();
+        }
+        else {
+            throw new BadRequestHttpExeception("An instance of the lab exists.");
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json();
+        }
+
+        return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
+    }
+
+    private function checkDatesValidation($dateStart, $dateEnd, $lab, $newBooking = false) {
         $now = new \DateTime("now");
         if ($dateEnd <= $dateStart) {
             return 1;
@@ -201,15 +358,59 @@ class BookingController extends Controller
         } 
         $bookings = $this->bookingRepository->findBy(["lab"=>$lab],['startDate'=>'ASC']);
         foreach ($bookings as $booking) {
-            if ($booking->getStartDate() <= $dateStart && $dateStart < $booking->getEndDate()) {
-                return 3;
+            if ($newBooking == false || $newBooking != $booking->getId()) {
+                if ($booking->getStartDate() <= $dateStart && $dateStart < $booking->getEndDate()) {
+                    return 3;
+                }
+                else if ($dateStart <= $booking->getStartDate() &&  $booking->getStartDate() < $dateEnd) {
+                    return 4;
+                }
             }
-            else if ($dateStart <= $booking->getStartDate() &&  $booking->getStartDate() < $dateEnd) {
-                return 4;
-            }
+            
         }
         return 0;
         
+    }
+
+    /** 
+     * @Rest\Get("/api/bookings/old", name="api_get_old_bookings")
+     * 
+     */
+    public function getOldBookings(Request $request) {
+        /*if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            throw new AccessDeniedHttpException("Access denied.");
+        }*/
+
+        $bookings = $this->bookingRepository->findOldBookings(new \DateTime());
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($bookings, 200, [], []);
+        }
+
+    }
+
+    /**
+     * @Rest\Post("/api/bookings/owner", name="api_owner_change")
+     * 
+     */
+
+    public function onReservedForChange(Request $request)
+    {
+        $data = json_decode($request->getContent(), true); 
+        $reservedFor = $data["reservedFor"];
+        if ($reservedFor == "group") {
+            $owners = $this->groupRepository->findAll();
+        }
+        else {
+            $owners = $this->userRepository->findAll();
+        }
+        $ownerList = [];
+        foreach ($owners as $owner) {
+            array_push($ownerList,[
+                "uuid" => $owner->getUuid(),
+                "name" => $owner->getName()
+            ]);
+        }
+        return $this->json($ownerList, 200, [], []);
     }
 
     /** 
@@ -273,48 +474,52 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
-
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $monthTest = new \DateTime($year."-".$choice["value"]);
-                if ($booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m") && $monthTest->format("Y-m") <= $booking->getEndDate()->format("Y-m")) {
-                    foreach ($choice["days"] as $day) {
-                        $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
-                        if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
-                            foreach ($day["hours"] as $hour) {
-                                $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
-                                if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
-                                    foreach ($hour["minutes"] as $minute) {
-                                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                                        if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
-                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                                        }
-                                        else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
-                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                                        }
-                                    }
-                                }
-                                else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
-                                    $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
-                                    if ($booking->getStartDate() == $bookingTest) {
+            if ($booking != $oldBooking) {
+                foreach ($choices as $choice) {
+                    $monthTest = new \DateTime($year."-".$choice["value"]);
+                    if ($booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m") && $monthTest->format("Y-m") <= $booking->getEndDate()->format("Y-m")) {
+                        foreach ($choice["days"] as $day) {
+                            $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
+                            if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                                foreach ($day["hours"] as $hour) {
+                                    $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                                    if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
                                         foreach ($hour["minutes"] as $minute) {
-                                            if ($minute["value"] >= 45) {
+                                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                            if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                            }
+                                            else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
                                                 $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
                                             }
                                         }
                                     }
+                                    else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
+                                        $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
+                                        if ($booking->getStartDate() == $bookingTest) {
+                                            foreach ($hour["minutes"] as $minute) {
+                                                if ($minute["value"] >= 45) {
+                                                    $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
                                 }
-                                
                             }
-                        }
-                        else if ($booking->getStartDate()->format("Y-m") == $dayTest->format("Y-m") && $booking->getStartDate()->format("Y-m-d") > $dayTest->format("Y-m-d") && $dayTest->diff($booking->getStartDate())->format("%d") == 1) {
-                            $bookingTest = new \DateTime($dayTest->format("Y-m")."-".($day["value"]+1)." 0:0");
-                            if ($bookingTest == $booking->getStartDate()) {
-                                foreach ($day["hours"] as $hour) {
-                                    if ($hour["value"] >= 23) {
-                                        foreach ($hour["minutes"] as $minute) {
-                                            if ($minute["value"] >= 45) {
-                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                            else if ($booking->getStartDate()->format("Y-m") == $dayTest->format("Y-m") && $booking->getStartDate()->format("Y-m-d") > $dayTest->format("Y-m-d") && $dayTest->diff($booking->getStartDate())->format("%d") == 1) {
+                                $bookingTest = new \DateTime($dayTest->format("Y-m")."-".($day["value"]+1)." 0:0");
+                                if ($bookingTest == $booking->getStartDate()) {
+                                    foreach ($day["hours"] as $hour) {
+                                        if ($hour["value"] >= 23) {
+                                            foreach ($hour["minutes"] as $minute) {
+                                                if ($minute["value"] >= 45) {
+                                                    $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                                }
                                             }
                                         }
                                     }
@@ -323,7 +528,7 @@ class BookingController extends Controller
                         }
                     }
                 }
-            }
+            }  
         }
 
         foreach ($choices as $choice) {
@@ -431,38 +636,43 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
-                if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
-                    foreach ($choice["hours"] as $hour) {
-                        $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
-                        if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
-                            foreach ($hour["minutes"] as $minute) {
-                                $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                                if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
-                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                                }
-                                else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
-                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                                }
-                            }
-                        }
-                        else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
-                            $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
-                            if ($booking->getStartDate() == $bookingTest) {
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
+                    if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                        foreach ($choice["hours"] as $hour) {
+                            $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                            if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
                                 foreach ($hour["minutes"] as $minute) {
-                                    if ($minute["value"] >= 45) {
+                                    $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                    if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                                        $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                    }
+                                    else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
                                         $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
                                     }
                                 }
                             }
+                            else if ($booking->getStartDate()->format("Y-m-d") == $hourTest->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d H") > $hourTest->format("Y-m-d H") && $hourTest->diff($booking->getStartDate())->format("%H") == 1) { 
+                                $bookingTest = new \DateTime($hourTest->format("Y-m-d")." ".($hour["value"]+1).":0");
+                                if ($booking->getStartDate() == $bookingTest) {
+                                    foreach ($hour["minutes"] as $minute) {
+                                        if ($minute["value"] >= 45) {
+                                            $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                        }
+                                    }
+                                }
+                            }
+                            
                         }
-                        
                     }
                 }
-            }
+            }  
         }
 
         foreach ($choices as $choice) {
@@ -534,20 +744,25 @@ class BookingController extends Controller
         
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
-                if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
-                    foreach ($choice["minutes"] as $minute) {
-                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                        if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
-                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                        }
-                        else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
-                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                        }
-                    }   
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
+                    if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                        foreach ($choice["minutes"] as $minute) {
+                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                            if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                                $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                            }
+                            else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                                $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                            }
+                        }   
+                    }
                 }
             }
         }
@@ -603,15 +818,20 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
-                if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
-                    $choices[$choice["name"]]["activation"] = "disabled";
-                }
-                else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
-                    $choices[$choice["name"]]["activation"] = "disabled";
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
+                    if ($booking->getStartDate()->format("Y-m-d H:i") <= $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") < $booking->getEndDate()->format("Y-m-d H:i")) {
+                        $choices[$choice["name"]]["activation"] = "disabled";
+                    }
+                    else if ($booking->getStartDate()->format("Y-m-d H") == $minuteTest->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H:i") > $minuteTest->format("Y-m-d H:i") && $minuteTest->diff($booking->getStartDate())->format("%i") <= 15) {
+                        $choices[$choice["name"]]["activation"] = "disabled";
+                    }
                 }
             }
         }
@@ -633,7 +853,7 @@ class BookingController extends Controller
         $dayStart = isset($data['dates']['dateTimeStart']['day']) ? $data['dates']['dateTimeStart']['day'] : (int)$today->format("d");
         $hourStart = isset($data['dates']['dateTimeStart']['hour']) ? $data['dates']['dateTimeStart']['hour'] : 0;
         $minuteStart = isset($data['dates']['dateTimeStart']['minute']) ? $data['dates']['dateTimeStart']['minute'] : 0;
-        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart." ".$hourStart.":".$minuteStart);
         $year = $data['dates']['dateTimeEnd']['year'];
         $choices = [];
         for ($i = 1; $i <= 12; $i++) {
@@ -685,29 +905,52 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $monthTest = new \DateTime($year."-".$choice["value"]);
-                if ($dateStart->format("Y-m") <= $booking->getStartDate()->format("Y-m") && $booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m")) {
-                    foreach ($choice["days"] as $day) {
-                        $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
-                        if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
-                            foreach ($day["hours"] as $hour) {
-                                $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
-                                if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
-                                    foreach ($hour["minutes"] as $minute) {
-                                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                                        if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
-                                            $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $monthTest = new \DateTime($year."-".$choice["value"]);
+                    if ($dateStart->format("Y-m") <= $booking->getStartDate()->format("Y-m") && $booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m")) {
+                        foreach ($choice["days"] as $day) {
+                            $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
+                            if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
+                                foreach ($day["hours"] as $hour) {
+                                    $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                                    if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                                        foreach ($hour["minutes"] as $minute) {
+                                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                            if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                            }
                                         }
-                                    }
-                                }                                
+                                    }                                
+                                }
+                            }
+                        }
+                    }
+                    if ($booking->getStartDate()->format("Y-m") <= $monthTest->format("Y-m") && $monthTest->format("Y-m") <= $booking->getEndDate()->format("Y-m")) {
+                        foreach ($choice["days"] as $day) {
+                            $dayTest = new \DateTime($monthTest->format("Y-m")."-".$day["value"]); 
+                            if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                                foreach ($day["hours"] as $hour) {
+                                    $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                                    if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                                        foreach ($hour["minutes"] as $minute) {
+                                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                            if ($booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") <= $booking->getEndDate()->format("Y-m-d H:i")) {
+                                                $choices[$choice["name"]]["days"][$day["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                            }
+                                        }
+                                    }                                
+                                }
                             }
                         }
                     }
                 }
-            }
+            }  
         }
 
         foreach ($choices as $choice) {
@@ -776,7 +1019,7 @@ class BookingController extends Controller
         $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
         $month = $data['dates']['dateTimeEnd']['month'];
         $year = $data['dates']['dateTimeEnd']['year'];
-        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart." ".$hourStart.":".$minuteStart);
 
         if ($month == 4 || $month == 6 || $month == 9 || $month == 11) {
             $days = 30;
@@ -822,21 +1065,39 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
-                if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
-                    foreach ($choice["hours"] as $hour) {
-                        $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
-                        if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
-                            foreach ($hour["minutes"] as $minute) {
-                                $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                                if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
-                                    $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $dayTest = new \DateTime($year."-".$month."-".$choice["value"]); 
+                    if ($dateStart->format("Y-m-d") <= $booking->getStartDate()->format("Y-m-d") && $booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d")) {
+                        foreach ($choice["hours"] as $hour) {
+                            $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                            if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                                foreach ($hour["minutes"] as $minute) {
+                                    $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                    if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                                        $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                    }
                                 }
-                            }
-                        }                        
+                            }                        
+                        }
+                    }
+                    if ($booking->getStartDate()->format("Y-m-d") <= $dayTest->format("Y-m-d") && $dayTest->format("Y-m-d") <= $booking->getEndDate()->format("Y-m-d")) {
+                        foreach ($choice["hours"] as $hour) {
+                            $hourTest = new \DateTime($dayTest->format("Y-m-d")." ".$hour["value"].":0");
+                            if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                                foreach ($hour["minutes"] as $minute) {
+                                    $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                                    if ($booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") <= $booking->getEndDate()->format("Y-m-d H:i")) {
+                                        $choices[$choice["name"]]["hours"][$hour["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                                    }
+                                }
+                            }                        
+                        }
                     }
                 }
             }
@@ -894,7 +1155,7 @@ class BookingController extends Controller
         $day = $data['dates']['dateTimeEnd']['day'];
         $month = $data['dates']['dateTimeEnd']['month'];
         $year = $data['dates']['dateTimeEnd']['year'];
-        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart." ".$hourStart.":".$minuteStart);
 
         for ($i = 0; $i <= 23; $i++) {
             $hourName = "";
@@ -919,17 +1180,30 @@ class BookingController extends Controller
         
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
-                if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
-                    foreach ($choice["minutes"] as $minute) {
-                        $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
-                        if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
-                            $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
-                        }
-                    }   
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $hourTest = new \DateTime($year."-".$month."-".$day." ".$choice["value"].":0"); 
+                    if ($dateStart->format("Y-m-d H") <= $booking->getStartDate()->format("Y-m-d H") && $booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H")) {
+                        foreach ($choice["minutes"] as $minute) {
+                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                            if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
+                                $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                            }
+                        }   
+                    }
+                    if ($booking->getStartDate()->format("Y-m-d H") <= $hourTest->format("Y-m-d H") && $hourTest->format("Y-m-d H") <= $booking->getEndDate()->format("Y-m-d H")) {
+                        foreach ($choice["minutes"] as $minute) {
+                            $minuteTest = new \DateTime($hourTest->format("Y-m-d H").":".$minute["value"]);
+                            if ($booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") <= $booking->getEndDate()->format("Y-m-d H:i")) {
+                                $choices[$choice["name"]]["minutes"][$minute["name"]]["activation"] = "disabled";
+                            }
+                        }   
+                    }
                 }
             }
         }
@@ -973,7 +1247,7 @@ class BookingController extends Controller
         $day = $data['dates']['dateTimeEnd']['day'];
         $month = $data['dates']['dateTimeEnd']['month'];
         $year = $data['dates']['dateTimeEnd']['year'];
-        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart."-".$hourStart."-".$minuteStart);
+        $dateStart = new \DateTime($yearStart."-".$monthStart."-".$dayStart." ".$hourStart.":".$minuteStart);
 
         for ($i = 0; $i <= 45; $i+=15) {
             $minuteName = "";
@@ -992,12 +1266,17 @@ class BookingController extends Controller
 
         $lab = $this->labRepository->find($data['labId']);
         $bookings = $this->bookingRepository->findBy(["lab" => $lab]);
+        if (isset($data["bookingId"])) {
+            $oldBooking = $this->bookingRepository->findOneBy(["id" => $data["bookingId"]]);
+        }
 
         foreach ($bookings as $booking) {
-            foreach ($choices as $choice) {
-                $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
-                if ($dateStart->format("Y-m-d H:i") <= $booking->getStartDate()->format("Y-m-d H:i") && $booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i")) {
-                    $choices[$choice["name"]]["activation"] = "disabled";
+            if ($oldBooking != $booking) {
+                foreach ($choices as $choice) {
+                    $minuteTest = new \DateTime($year."-".$month."-".$day." ".$hour.":".$choice["value"]);
+                    if ($booking->getStartDate()->format("Y-m-d H:i") < $minuteTest->format("Y-m-d H:i") && $minuteTest->format("Y-m-d H:i") <= $booking->getEndDate()->format("Y-m-d H:i")) {
+                        $choices[$choice["name"]]["activation"] = "disabled";
+                    }
                 }
             }
         }

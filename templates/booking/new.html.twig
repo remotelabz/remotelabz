@@ -10,7 +10,7 @@
         <div class="content-title-infos">
             <h1>
                 {% if app.request.uri ends with 'edit' %}
-                    {{ 'Edit booking'|trans }}: {{ data.name }}
+                    {{ 'Edit booking'|trans }}: {{ booking.name }}
                 {% else %}
                     {{ 'New booking'|trans }}
                 {% endif %}
@@ -20,23 +20,23 @@
     <div class="content-body">
         {{form_start(bookingForm)}}
         {{form_row(bookingForm.name)}}
-        {{form_row(bookingForm.reservedFor)}}
-        
-        {% if bookingForm.user is defined %}
-            {{form_row(bookingForm.user)}}
-        {% else %}
-            {{form_row(bookingForm.group)}}
-        {% endif %}
+
+        <div class="form-group row">
+            <label class="col-form-label col-sm-2 required text-right">Owner</label>
+            <div class="col">
+                {{form_widget(bookingForm.reservedFor)}}
+            </div>
+            <div class="col">
+                    
+                    {{form_widget(bookingForm.owner)}}
+            </div>
+        </div>
+
         <div class="form-group row">
             <label class="col-form-label col-sm-2 required text-right">Time Start</label>
             <div class="col">
                 <div class="form-inline">
-                    <select name="{{ field_name(bookingForm.yearStart) }}" id="yearStart" class="form-control">
-                        {% for label, value in field_choices(bookingForm.yearStart) %}
-                        
-                            <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
+                    {{form_widget(bookingForm.yearStart)}}
                     -
                     {{form_widget(bookingForm.monthStart)}}
                     -
@@ -55,11 +55,7 @@
             <label class="col-form-label col-sm-2 required text-right">Time End</label>
             <div class="col">
                 <div class="form-inline">
-                <select name="{{ field_name(bookingForm.yearEnd) }}" id="yearEnd" class="form-control">
-                    {% for label, value in field_choices(bookingForm.yearEnd) %}
-                        <option value="{{ value }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {{form_widget(bookingForm.yearEnd)}}
                 - 
                 {{form_widget(bookingForm.monthEnd)}}
                 -
@@ -74,6 +70,10 @@
             </div>
         </div>
         {{form_end(bookingForm)}}
+        <input type="hidden" id="labId" value="{{lab.id}}"/>
+        {% if app.request.uri ends with 'edit' %}
+        <input type="hidden" id="bookingId" value="{{booking.id}}"/>
+        {% endif %}
     </div>
 {% endblock %}
 
@@ -81,15 +81,45 @@
     {{ parent() }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
-        const labId = window.location.pathname.split(/(\d+)/)[1];
+        const labId = document.getElementById('labId').value;
+        var bookingId = "";
 
-        const yearStart = document.getElementById('yearStart');
+        if (document.getElementById("bookingId") != null) {
+            bookingId = document.getElementById('bookingId').value;           
+        }
+
+        const reservedFor = document.getElementById('booking_reservedFor');
+        reservedFor.addEventListener("change", () => {
+            $.ajax({
+                url: "{{ path('api_owner_change') }}",
+                type: "POST",
+                dataType: "JSON",
+                data: JSON.stringify({
+                    reservedFor: reservedFor.value
+                }),
+                success: function (choices) {
+                    const ownerSelect = document.getElementById('booking_owner');
+
+                    ownerSelect.innerHTML = '';
+
+                    for(let choice of choices){
+                        ownerSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
+                    }
+
+                },
+                error: function (err) {
+                    console.log(err.response);
+                }
+            });
+        })
+
+        const yearStart = document.getElementById('booking_yearStart');
         yearStart.addEventListener('change', () => {
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
@@ -110,14 +140,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_year_start_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
                     monthStart.innerHTML = ''
                     for(let monthChoice in response) {
@@ -211,11 +251,11 @@
 
         const monthStart = document.getElementById('booking_monthStart');
         monthStart.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
@@ -236,14 +276,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_month_start_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     dayStart.innerHTML = ''
@@ -310,11 +360,11 @@
 
         const dayStart = document.getElementById('booking_dayStart');
         dayStart.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
@@ -335,14 +385,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_day_start_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     hourStart.innerHTML = ''
@@ -382,11 +442,11 @@
 
         const hourStart = document.getElementById('booking_hourStart');
         hourStart.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
@@ -407,14 +467,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_hour_start_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     minuteStart.innerHTML = '';
@@ -434,9 +504,9 @@
         })
 
         const minuteStart = document.getElementById('booking_minuteStart');
-        const yearEnd = document.getElementById('yearEnd');
+        const yearEnd = document.getElementById('booking_yearEnd');
         yearEnd.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
@@ -461,14 +531,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_year_end_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
                     monthEnd.innerHTML = ''
                     for(let monthChoice in response) {
@@ -561,12 +641,12 @@
         })
         const monthEnd = document.getElementById('booking_monthEnd');
         monthEnd.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
             let minuteEnd = document.getElementById('booking_minuteEnd');
@@ -586,14 +666,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_month_end_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     dayEnd.innerHTML = ''
@@ -660,12 +750,12 @@
 
         const dayEnd = document.getElementById('booking_dayEnd');
         dayEnd.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let hourEnd = document.getElementById('booking_hourEnd');
             let minuteEnd = document.getElementById('booking_minuteEnd');
@@ -685,14 +775,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_day_end_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     hourEnd.innerHTML = ''
@@ -731,12 +831,12 @@
         })
         const hourEnd = document.getElementById('booking_hourEnd');
         hourEnd.addEventListener('change', () => {
-            let yearStart = document.getElementById('yearStart');
+            let yearStart = document.getElementById('booking_yearStart');
             let monthStart = document.getElementById('booking_monthStart');
             let dayStart = document.getElementById('booking_dayStart');
             let hourStart = document.getElementById('booking_hourStart');
             let minuteStart = document.getElementById('booking_minuteStart');
-            let yearEnd = document.getElementById('yearEnd');
+            let yearEnd = document.getElementById('booking_yearEnd');
             let monthEnd = document.getElementById('booking_monthEnd');
             let dayEnd = document.getElementById('booking_dayEnd');
             let minuteEnd = document.getElementById('booking_minuteEnd');
@@ -756,14 +856,24 @@
                     "minute":minuteEnd.value
                 }
             }; 
+            if (bookingId !== undefined) {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                    bookingId : bookingId
+                }
+            }
+            else {
+                data = {
+                    dates: dates,
+                    labId: labId,
+                }
+            }
             $.ajax({
                 url: "{{ path('api_hour_end_change') }}",
                 type: "POST",
                 dataType: "JSON",
-                data: JSON.stringify({
-                    dates: dates,
-                    labId: labId
-                }),
+                data: JSON.stringify(data),
                 success: function (response) {
 
                     minuteEnd.innerHTML = '';

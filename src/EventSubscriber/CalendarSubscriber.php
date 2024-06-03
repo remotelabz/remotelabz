@@ -64,7 +64,7 @@ class CalendarSubscriber implements EventSubscriberInterface
             ]);
             $bookingEvent->addOption(
                 'url',
-                $this->router->generate('get_booking', [
+                $this->router->generate('show_booking', [
                     'id' => $booking->getId(),
                 ])
             );
