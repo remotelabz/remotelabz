@@ -9,7 +9,7 @@ import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 import moment from 'moment/moment';
 
-function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false}) { 
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
@@ -361,24 +361,32 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         Loading...
                     </ListGroupItem>
                     :
+                    
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {viewAs.type === 'user' || viewAs.type === 'guest' ?
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                You haven&apos;t joined this lab yet.
+                        {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid)?
+                        
+                            (viewAs.type === 'user' || viewAs.type === 'guest' ?
+                                <div className="d-flex align-items-center justify-content-center flex-column">
+                                    You haven&apos;t joined this lab yet.
 
-                                <div className="mt-3">
-                                    <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
-                                </div>
-                            </div>
-                            :
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                This group hasn&apos;t joined this lab yet.
-
-                                {isCurrentUserGroupAdmin(viewAs) &&
                                     <div className="mt-3">
                                         <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                     </div>
-                                }
+                                </div>
+                                :
+                                <div className="d-flex align-items-center justify-content-center flex-column">
+                                    This group hasn&apos;t joined this lab yet.
+
+                                    {isCurrentUserGroupAdmin(viewAs) &&
+                                        <div className="mt-3">
+                                            <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
+                                        </div>
+                                    }
+                                </div>
+                            )
+                        : 
+                            <div className="d-flex align-items-center justify-content-center flex-column">
+                                You can&apos;t join this lab yet.
                             </div>
                         }
                     </ListGroupItem>

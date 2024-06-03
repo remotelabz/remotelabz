@@ -113,7 +113,8 @@ class DeviceSandboxController extends Controller
             'user' => $this->getUser(),
             'labInstance' => $userLabInstance,
             'lab' => $lab,
-            'isSandbox' => true
+            'isSandbox' => true,
+            "hasBooking" => false
         ];
         //$this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 

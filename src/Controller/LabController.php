@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
+use App\Repository\BookingRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
@@ -81,6 +82,7 @@ class LabController extends Controller
     private $flavorRepository;
     private $serializer;
     private $labInstanceRepository;
+    private $bookingRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -90,7 +92,8 @@ class LabController extends Controller
         HypervisorRepository $hypervisorRepository,
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
-        LabInstanceRepository $labInstanceRepository)
+        LabInstanceRepository $labInstanceRepository,
+        BookingRepository $bookingRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -103,6 +106,7 @@ class LabController extends Controller
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->bookingRepository = $bookingRepository;
     }
 
     /**
@@ -333,6 +337,15 @@ class LabController extends Controller
             }
         }
 
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab],['startDate'=>'ASC']);
+        $hasBooking = false;
+        foreach ($bookings as $booking) {
+            $now = new \DateTime("now");
+            if ($booking->getStartDate() <= $now && $now < $booking->getEndDate()) {
+                $hasBooking = ['uuid' => $booking->getOwner()->getUuid(), 'type' => $booking->getReservedFor()];
+                break;
+            }
+        }
         if ('json' === $request->getRequestFormat()) {
             $context=$request->get('_route');
             //Change the context value to limit the return information
@@ -344,7 +357,8 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+            'isSandbox' => false,
+            'hasBooking' => $hasBooking
         ];
 
         $props=$serializer->serialize(
@@ -407,7 +421,8 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+            'isSandbox' => false,
+            'hasBooking' => false
         ];
 
         $props=$serializer->serialize(
