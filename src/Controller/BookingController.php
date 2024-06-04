@@ -245,9 +245,11 @@ class BookingController extends Controller
                         $booking->setReservedFor($bookingForm['reservedFor']->getData());
                         if ($owner instanceof Group) {
                             $booking->setGroup($owner);
+                            $booking->setUser(null);
                         }
                         else {
                             $booking->setUser($owner);
+                            $booking->setGroup(null);
                         }
                         $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
                         $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
@@ -350,7 +352,7 @@ class BookingController extends Controller
         if ($dateEnd <= $dateStart) {
             return 1;
         }
-        if ($dateStart < $now) {
+        if ($dateStart->format("Y-m-d H:i") < $now->format("Y-m-d H:i")) {
             return 2;
         }
         if ($dateStart->diff($dateEnd)->format("%a") > 28) {

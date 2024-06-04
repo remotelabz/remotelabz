@@ -26,7 +26,7 @@ class BookingRepository extends ServiceEntityRepository
 
         $result = [];
         $bookings =  $this->createQueryBuilder('b')
-            ->andWhere('b.endDate < :now')
+            ->andWhere('b.endDate <= :now')
             ->setParameter('now', $now)
             ->getQuery()
             ->getResult()
@@ -38,7 +38,7 @@ class BookingRepository extends ServiceEntityRepository
                 l.id as lab_id
                 FROM App\Entity\LabInstance li
                 JOIN li.lab l
-                WHERE li.lab < :lab'
+                WHERE li.lab = :lab'
             )
             ->setParameter(':lab', $booking->getLab())
             ->getOneOrNullResult();

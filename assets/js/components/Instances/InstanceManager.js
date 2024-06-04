@@ -363,7 +363,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     :
                     
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid)?
+                        {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
                         
                             (viewAs.type === 'user' || viewAs.type === 'guest' ?
                                 <div className="d-flex align-items-center justify-content-center flex-column">
