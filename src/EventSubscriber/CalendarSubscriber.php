@@ -8,19 +8,25 @@ use CalendarBundle\CalendarEvents;
 use CalendarBundle\Event\CalendarEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use App\Repository\BookingRepository;
+use App\Entity\Group;
+use App\Entity\User;
 
 class CalendarSubscriber implements EventSubscriberInterface
 {
     private $bookingRepository;
     private $router;
+    private $tokenStorageInterface;
 
     public function __construct(
         BookingRepository $bookingRepository,
-        UrlGeneratorInterface $router
+        UrlGeneratorInterface $router,
+        TokenStorageInterface $tokenStorageInterface
     ) {
         $this->bookingRepository = $bookingRepository;
-        $this->router =$router;
+        $this->router = $router;
+        $this->tokenStorageInterface = $tokenStorageInterface;
     }
 
     public static function getSubscribedEvents()
@@ -49,25 +55,66 @@ class CalendarSubscriber implements EventSubscriberInterface
                 ->setParameter('labId', $filters["labId"]);
         }
         $bookings = $query->getQuery()->getResult();
+        $user = $this->tokenStorageInterface->getToken()->getUser();
         foreach ($bookings as $booking) {
+            $color = "#2C3E50";
+            $canSee = false;
+            if ($user->isAdministrator() || $user == $booking->getAuthor()) {
+                $canSee = true;
+            }
 
+            if ($booking->getOwner() instanceof Group) {
+                if ($user->isMemberOf($booking->getOwner())) {                    
+                    $color = "#008060";
+                    $canSee = true;
+                }
+                if($booking->getOwner()->isElevatedUser($user)) {
+                    $color = '#cc6600';
+                    $canSee = true;
+                }
+            }
+            else {
+                foreach ($user->getGroups() as $groupUser) {
+                    $group = $groupUser->getGroup();
+                    if ($group->isElevatedUser($user) && $booking->getOwner()->isMemberOf($group)) {
+                        $color = '#a93d4d';
+                        $canSee = true;
+                    }
+                }
+                if ($user == $booking->getOwner()) {
+                    $color = '#008080';
+                    $canSee = true;
+                }
+            }
             $bookingEvent = new Event(
-                $booking->getName(),
+                $canSee ? $booking->getName() : "",
                 $booking->getStartDate(),
                 $booking->getEndDate()
             );
 
-            $bookingEvent->setOptions([
-                'backgroundColor' => '#2C3E50',
-                'borderColor' => '#2C3E50',
-                'description' => " reserved by ".$booking->getAuthor()->getName()." for ". $booking->getOwner()->getName()
-            ]);
-            $bookingEvent->addOption(
-                'url',
-                $this->router->generate('show_booking', [
-                    'id' => $booking->getId(),
-                ])
-            );
+            if ($canSee) {
+                $bookingEvent->setOptions([
+                    'backgroundColor' => $color,
+                    'borderColor' => $color,
+                    'description' => " reserved by ".$booking->getAuthor()->getName()." for ". $booking->getOwner()->getName()
+                ]);
+
+                $bookingEvent->addOption(
+                    'url',
+                    $this->router->generate('show_booking', [
+                        'id' => $booking->getId(),
+                    ])
+                );
+            }
+            else {
+                $bookingEvent->setOptions([
+                    'backgroundColor' => $color,
+                    'borderColor' => $color
+                ]);
+
+            }
+           
+            
             $setDataEvent->addEvent($bookingEvent);
         }
     }

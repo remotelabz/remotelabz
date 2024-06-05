@@ -77,8 +77,7 @@
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
-                editable: true,
-                seletable: true,
+                editable: false,
                 eventSources: [
                     {
                         url: "{{ path('fc_load_events') }}",
@@ -97,11 +96,13 @@
                     right: 'dayGridMonth,timeGridWeek,timeGridDay',
                 },
                 eventDidMount: function(info) {
-                    tippy(info.el, {
-                        content:info.event.extendedProps.description,
-                        theme: 'remotelabz',
-                        arrow: false
-                    })
+                    if (info.event.extendedProps.description) {
+                        tippy(info.el, {
+                            content:info.event.extendedProps.description,
+                            theme: 'remotelabz',
+                            arrow: false
+                        })
+                    }
                 },
                 timeZone: 'UTC'
             });

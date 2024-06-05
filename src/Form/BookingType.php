@@ -7,12 +7,14 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use App\Repository\BookingRepository;
+
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\DataMapperInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -20,22 +22,30 @@ use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Security\Core\Security;
 
 
 class BookingType extends AbstractType implements DataMapperInterface
 {
     
-    public function __construct(BookingRepository $bookingRepository, UserRepository $userRepository, GroupRepository $groupRepository)
+    public function __construct(
+        BookingRepository $bookingRepository, 
+        UserRepository $userRepository, 
+        GroupRepository $groupRepository, 
+        Security $security)
     {
         $this->bookingRepository = $bookingRepository;
         $this->userRepository = $userRepository;
         $this->groupRepository = $groupRepository;
+        $this->security = $security;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $booking = $builder->getData();
+        $user = $this->security->getUser();
 
         if ($booking->getStartDate() == null) {
             $monthStartAtrr = function($choice, $key,$value) {
@@ -140,14 +150,25 @@ class BookingType extends AbstractType implements DataMapperInterface
                 return [];
             };
         }
+        if ($user->getHighestRole() == "ROLE_USER") {
+            $reservedForChoices = [
+                'User' => "user"
+            ];
+            $reservedForDisabled = true;
+        }
+        else {
+            $reservedForChoices = [
+                'User' => "user",
+                'Group' => "group"
+            ];
+            $reservedForDisabled = false;
+        }
         $builder
             ->add('name', TextType::class)
             ->add('reservedFor', ChoiceType::class, [
-                'choices' => [
-                    'User' => "user",
-                    'Group' => "group"
-                ],
-                'label' => "Type"
+                'choices' => $reservedForChoices,
+                'label' => "Type",
+                'disabled' => $reservedForDisabled
             ])
 
             ->addEventListener(FormEvents::PRE_SET_DATA, array($this, 'onPreSetOwner'))
@@ -375,23 +396,59 @@ class BookingType extends AbstractType implements DataMapperInterface
 
     public function addOwnerElement($form, $type = "user")
     {
-        if ($type == "group"){
-            $label = "Group";
-            $owners = $this->groupRepository->findAll();
+        $user = $this->security->getUser();
+        $disabled = false;
+        
+        $choices = [];
+        if ($user->getHighestRole() == "ROLE_USER") {
+            $choices[$user->getName()] = $user->getUuid();
+            $disabled = true;
+            $label = "User";
         }
         else {
-            $label = "User";
-            $owners = $this->userRepository->findAll();
-        }
-        $choices = [];
-        foreach ($owners as $owner) {
-            $choices[$owner->getName()] = $owner->getUuid();
+            if ($type == "group"){
+                $label = "Group";
+                if ($user->getHighestRole() == "ROLE_TEACHER" || $user->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                    $owners = [];
+                    foreach ($user->getGroupsInfo() as $group) {
+                        if ($group->isElevatedUser($user)) {
+                            array_push($owners, $group);
+                        }
+                    }
+                }
+                else {
+                    $owners = $this->groupRepository->findAll();
+                }
+            }
+            else {
+                $label = "User";
+                if ($user->getHighestRole() == "ROLE_TEACHER" || $user->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                    $owners = [];
+                    array_push($owners, $user);
+                    foreach ($user->getGroupsInfo() as $group) {
+                        if ($group->isElevatedUser($user)) {
+                            foreach ($group->getUsers() as $member) {
+                                if (!in_array($member, $owners)) {
+                                    array_push($owners, $member);
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    $owners = $this->userRepository->findAll();
+                }
+            }
+            foreach ($owners as $owner) {
+                $choices[$owner->getName()] = $owner->getUuid();
+            }
         }
 
         $form->add('owner', ChoiceType::class, [
             'choices' => $choices,
             'label' => $label,
-            'mapped' => false
+            'mapped' => false,
+            'disabled' => $disabled
         ]);
     }
 
@@ -465,8 +522,6 @@ class BookingType extends AbstractType implements DataMapperInterface
         /** @var FormInterface[] $forms */
         $forms = iterator_to_array($forms);
 
-        $viewData->setName($forms['name']->getData());
-        $viewData->setReservedFor($forms['reservedFor']->getData());
         $dateStart = new \DateTime($forms['yearStart']->getData()."-".$forms['monthStart']->getData()."-".$forms['dayStart']->getData()." ".$forms['hourStart']->getData().":".$forms['minuteStart']->getData());
         $dateEnd = new \DateTime($forms['yearEnd']->getData()."-".$forms['monthEnd']->getData()."-".$forms['dayEnd']->getData()." ".$forms['hourEnd']->getData().":".$forms['minuteEnd']->getData());
         $viewData->setStartDate($dateStart);
@@ -492,7 +547,9 @@ class BookingType extends AbstractType implements DataMapperInterface
         $form = $event->getForm();
         $data = $event->getData();
 
-        $this->addOwnerElement($form, $data['reservedFor']);
+        if (isset($data['reservedFor'])) {
+            $this->addOwnerElement($form, $data['reservedFor']);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver)

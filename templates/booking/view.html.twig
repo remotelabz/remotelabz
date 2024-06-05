@@ -18,12 +18,14 @@
         <div class="content-title-infos">
             <h1>Booking {{ booking.name }} for {{booking.lab.name}}</h1>
         </div>
+        {% if canEdit == true %}
         <div class="content-title-actions">
             <a href="{{ path('edit_booking', {'id': booking.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> Edit</a>
             <button class="btn btn-danger" data-target={{'.delete-modal'}} data-toggle="modal" type="button">
                 {{ 'Delete'|trans }}
              </button>
         </div>
+        {% endif %}
     </div>
     <div class="content-body">
         <p>Name : 

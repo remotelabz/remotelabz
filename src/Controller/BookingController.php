@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class BookingController extends Controller
@@ -46,6 +47,7 @@ class BookingController extends Controller
      * 
      * @Rest\Get("/api/bookings", name="api_bookings")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function indexAction(Request $request)
     {
@@ -67,11 +69,43 @@ class BookingController extends Controller
     /**
      * @Route("/bookings/{id<\d+>}", name="show_booking")
      * 
-     * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function showAction(Request $request, int $id)
     {
         $booking = $this->bookingRepository->find($id);
+        $user = $this->getUser();
+        $canSee = false;
+        $canEdit = false;
+        if ($user->isAdministrator() || $user == $booking->getAuthor()) {
+            $canSee = true;
+            $canEdit = true;
+        }
+
+        if ($booking->getOwner() instanceof Group) {
+            if ($user->isMemberOf($booking->getOwner())) {
+                $canSee = true;
+            }
+            if($booking->getOwner()->isElevatedUser($user)) {
+                $canSee = true;
+                $canEdit = true;
+            }
+        }
+        else {
+            foreach ($user->getGroups() as $groupUser) {
+                $group = $groupUser->getGroup();
+                if ($group->isElevatedUser($user) && $booking->getOwner()->isMemberOf($group) && $user != $booking->getOwner()) {
+                    $canSee = true;
+                    $canEdit = true;
+                }
+            }
+            if ($user == $booking->getOwner()) {
+                $canSee = true;
+            }
+        }
+        if ($canSee == false) {
+            throw new AccessDeniedHttpException("Access denied.");
+        }
         $bookingObject = [
             "id" => $booking->getId(),
             "name" => $booking->getName(),
@@ -86,6 +120,7 @@ class BookingController extends Controller
         return $this->render("booking/view.html.twig", [
             //'lab' => $lab,
             'booking' => $booking,
+            "canEdit" => $canEdit
         ]);
 
     }
@@ -94,6 +129,7 @@ class BookingController extends Controller
      *  @Route("/bookings/lab/{id<\d+>}", name="show_lab_bookings")
      * @Rest\Get("/api/bookings/lab/{id<\d+>}", name="api_show_lab_bookings")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function showLabBookings(Request $request, int $id)
     {
@@ -125,12 +161,15 @@ class BookingController extends Controller
      * @Route("/bookings/lab/{id<\d+>}/new", name="new_booking", methods={"GET", "POST"})
      * 
      * @Rest\Post("/api/bookings/lab/{id<\d+>}", name="api_new_booking")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function newAction(Request $request, int $id)
     {
         $booking = new Booking();
         $bookingForm = $this->createForm(BookingType::class, $booking);
         $bookingForm->handleRequest($request);
+        $user = $this->getUser();
 
         $lab = $this->labRepository->find($id);
         if ($lab->getVirtuality() == 0) {
@@ -139,17 +178,25 @@ class BookingController extends Controller
                 $dateEnd = new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData());
                 $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab);
                 if ($isValid == 0) {
-                    if ($bookingForm['reservedFor']->getData() == "group") {
-                        $owner = $this->groupRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                    if ($user->getHighestRole() != "ROLE_USER") {
+                        if ($bookingForm['reservedFor']->getData() == "group") {
+                            $owner = $this->groupRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                        }
+                        else {
+                            $owner = $this->userRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                        }
+                        $reservedFor = $bookingForm['reservedFor']->getData();
                     }
                     else {
-                        $owner = $this->userRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
+                        $owner = $user;
+                        $reservedFor = "user";
                     }
-                    if ($owner && (($bookingForm['reservedFor']->getData() == "group" && $owner instanceof Group) || ($bookingForm['reservedFor']->getData() == "user" && $owner instanceof User) )) {
+                    
+                    if ($owner && (($reservedFor == "group" && $owner instanceof Group) || ($reservedFor == "user" && $owner instanceof User) )) {
                         $booking = $bookingForm->getData();
                         $booking->setName($bookingForm['name']->getData());
                         $booking->setAuthor($this->getUser());
-                        $booking->setReservedFor($bookingForm['reservedFor']->getData());
+                        $booking->setReservedFor($reservedFor);
                         if ($owner instanceof Group) {
                             $booking->setGroup($owner);
                         }
@@ -206,16 +253,41 @@ class BookingController extends Controller
     }
 
     /**
-     * @Route("/admin/bookings/{id<\d+>}/edit", name="edit_booking")
+     * @Route("/bookings/{id<\d+>}/edit", name="edit_booking")
      * 
      * @Rest\Put("/api/bookings/{id<\d+>}", name="api_edit_booking")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function editAction(Request $request, int $id)
     {
         if (!$booking = $this->bookingRepository->find($id)) {
             throw new NotFoundHttpException("Booking " . $id . " does not exist.");
         } 
+
+        $user = $this->getUser();
+        $canEdit = false;
+        if ($user->isAdministrator() || $user == $booking->getAuthor()) {
+            $canEdit = true;
+        }
+
+        if ($booking->getOwner() instanceof Group ) {
+            if($booking->getOwner()->isElevatedUser($user)) {
+                $canEdit = true;
+            }
+        }
+        else {
+            foreach ($user->getGroups() as $groupUser) {
+                $group = $groupUser->getGroup();
+                if ($group->isElevatedUser($user) && $booking->getOwner()->isMemberOf($group) && $user != $booking->getOwner()) {
+                    $canEdit = true;
+                }
+            }
+        }
+        if ($canEdit == false) {
+            throw new AccessDeniedHttpException("Access denied.");
+        }
+
         $bookingForm = $this->createForm(BookingType::class, $booking);
         $bookingForm->handleRequest($request);
 
@@ -242,14 +314,16 @@ class BookingController extends Controller
                         $booking->setName($bookingForm['name']->getData());
                         $booking->setAuthor($this->getUser());
                         $booking->setLab($lab);
-                        $booking->setReservedFor($bookingForm['reservedFor']->getData());
-                        if ($owner instanceof Group) {
-                            $booking->setGroup($owner);
-                            $booking->setUser(null);
-                        }
-                        else {
-                            $booking->setUser($owner);
-                            $booking->setGroup(null);
+                        if ($user->getHighestRole() != "ROLE_USER") {
+                            $booking->setReservedFor($bookingForm['reservedFor']->getData());
+                            if ($owner instanceof Group) {
+                                $booking->setGroup($owner);
+                                $booking->setUser(null);
+                            }
+                            else {
+                                $booking->setUser($owner);
+                                $booking->setGroup(null);
+                            }
                         }
                         $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
                         $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
@@ -297,15 +371,39 @@ class BookingController extends Controller
     }
 
     /**
-     * @Route("/admin/bookings/{id<\d+>}/delete", name="delete_booking", methods="GET")
+     * @Route("/bookings/{id<\d+>}/delete", name="delete_booking", methods="GET")
      * 
      * @Rest\Delete("/api/bookings/{id<\d+>}", name="api_delete_booking")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function deleteAction(Request $request, int $id)
     {
         if (!$booking = $this->bookingRepository->find($id)) {
             throw new NotFoundHttpException("Booking " . $id . " does not exist.");
+        }
+
+        $user = $this->getUser();
+        $canEdit = false;
+        if ($user->isAdministrator() || $user == $booking->getAuthor()) {
+            $canEdit = true;
+        }
+
+        if ($booking->getOwner() instanceof Group ) {
+            if($booking->getOwner()->isElevatedUser($user)) {
+                $canEdit = true;
+            }
+        }
+        else {
+            foreach ($user->getGroups() as $groupUser) {
+                $group = $groupUser->getGroup();
+                if ($group->isElevatedUser($user) && $booking->getOwner()->isMemberOf($group) && $user != $booking->getOwner()) {
+                    $canEdit = true;
+                }
+            }
+        }
+        if ($canEdit == false) {
+            throw new AccessDeniedHttpException("Access denied.");
         }
         $lab = $booking->getLab();
 
@@ -329,6 +427,9 @@ class BookingController extends Controller
     {
         if (!$booking = $this->bookingRepository->findOneBy(["uuid" =>$uuid])) {
             throw new NotFoundHttpException("Booking " . $booking->getId(). " does not exist.");
+        }
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            throw new AccessDeniedHttpException("Access denied.");
         }
         $lab = $booking->getLab();
         if (!$labInstance = $this->labInstanceRepository->findBy(["lab" => $lab])) {
@@ -393,17 +494,64 @@ class BookingController extends Controller
     /**
      * @Rest\Post("/api/bookings/owner", name="api_owner_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
 
     public function onReservedForChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
+        $user = $this->getUser();
         $reservedFor = $data["reservedFor"];
+
+        if ($user->getHighestRole() == "ROLE_USER") {
+            $choices[$user->getName()] = $user->getUuid();
+            $disabled = true;
+            $label = "User";
+        }
         if ($reservedFor == "group") {
-            $owners = $this->groupRepository->findAll();
+            if ($user->getHighestRole() == "ROLE_USER") {
+                $owners = [];
+            }
+            else if ($user->getHighestRole() == "ROLE_TEACHER" || $user->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                $owners = [];
+                foreach ($user->getGroupsInfo() as $group) {
+                    if ($group->isElevatedUser($user)) {
+                        array_push($owners, $group);
+                    }
+                }
+            }
+            else if ($user->isAdministrator()) {
+                $owners = $this->groupRepository->findAll();
+            }
+            else {
+                throw new AccessDeniedHttpException("Access denied.");
+            }
+            
         }
         else {
-            $owners = $this->userRepository->findAll();
+            if ($user->getHighestRole() == "ROLE_USER") {
+                $owners = [];
+                array_push($owners, $user);
+            }
+            else if ($user->getHighestRole() == "ROLE_TEACHER" || $user->getHighestRole() == "ROLE_TEACHER_EDITOR") {
+                $owners = [];
+                array_push($owners, $user);
+                foreach ($user->getGroupsInfo() as $group) {
+                    if ($group->isElevatedUser($user)) {
+                        foreach ($group->getUsers() as $member) {
+                            if (!in_array($member, $owners)) {
+                                array_push($owners, $member);
+                            }
+                        }
+                    }
+                }
+            }
+            else if ($user->isAdministrator()) {
+                $owners = $this->userRepository->findAll();
+            }
+            else {
+                throw new AccessDeniedHttpException("Access denied.");
+            }
         }
         $ownerList = [];
         foreach ($owners as $owner) {
@@ -418,6 +566,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/yearStart", name="api_year_start_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onYearStartChange(Request $request)
     {
@@ -586,6 +735,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/monthStart", name="api_month_start_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onMonthStartChange(Request $request)
     {
@@ -714,6 +864,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/dayStart", name="api_day_start_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onDayStartChange(Request $request)
     {
@@ -792,6 +943,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/hourStart", name="api_hour_start_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onHourStartChange(Request $request)
     {
@@ -845,6 +997,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/yearEnd", name="api_year_end_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onYearEndChange(Request $request)
     {
@@ -1008,6 +1161,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/monthEnd", name="api_month_end_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onMonthEndChange(Request $request)
     {
@@ -1142,6 +1296,7 @@ class BookingController extends Controller
     /** 
      * @Rest\Post("/api/bookings/dayEnd", name="api_day_end_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onDayEndChange(Request $request)
     {
@@ -1230,9 +1385,10 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-        /** 
+    /** 
      * @Rest\Post("/api/bookings/hourEnd", name="api_hour_end_change")
      * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function onHourEndChange(Request $request)
     {
