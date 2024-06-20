@@ -116,6 +116,29 @@ class Device implements InstanciableInterface
      */
     private $virtuality;
 
+     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Assert\Ip(version="4")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $ip;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     *
+     * @Assert\Range(min=0, max=65536)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $port;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\PduOutletDevice", mappedBy="device")
+     * @Serializer\Groups({"worker"})
+     */
+    private $outlet;
+
     /**
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
@@ -446,6 +469,42 @@ class Device implements InstanciableInterface
     public function setVirtuality(int $virtuality): self
     {
         $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getIp(): ?string
+    {
+        return $this->ip;
+    }
+
+    public function setIp(string $ip): self
+    {
+        $this->ip = $ip;
+
+        return $this;
+    }
+
+    public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function setPort(int $port): self
+    {
+        $this->port = $port;
+
+        return $this;
+    }
+
+    public function getOutlet(): ?string
+    {
+        return $this->outlet;
+    }
+
+    public function setOutlet(string $outlet): self
+    {
+        $this->outlet = $outlet;
 
         return $this;
     }

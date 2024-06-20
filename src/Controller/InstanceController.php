@@ -1047,10 +1047,13 @@ class InstanceController extends Controller
         $isTeacherAuthor = (($user->hasRole('ROLE_TEACHER') || $user->hasRole('ROLE_TEACHER_EDITOR')) && $isAuthor); 
         $lab = $deviceInstance->getLab();
         $device = $deviceInstance->getDevice();
-        if ($type == "admin") {
-            $adminConnection = true;
-            $type = "login";
+        if ($device->getHypervisor()->getName() != "physical") {
+            if ($type == "admin") {
+                $adminConnection = true;
+                $type = "login";
+            }
         }
+        
         $port_number=$this->isRemoteAccess($deviceInstance,$type);
         if ($port_number) {
             $this->logger->debug("Creation proxy rule to port ".$port_number);
