@@ -264,7 +264,8 @@ class BookingController extends Controller
         if (!$booking = $this->bookingRepository->find($id)) {
             throw new NotFoundHttpException("Booking " . $id . " does not exist.");
         } 
-
+        $oldStartDate = $booking->getStartDate();
+        $oldEndDate = $booking->getEndDate();
         $user = $this->getUser();
         $canEdit = false;
         if ($user->isAdministrator() || $user == $booking->getAuthor()) {
@@ -301,7 +302,12 @@ class BookingController extends Controller
             if ($bookingForm->isSubmitted() && $bookingForm->isValid()) {
                 $dateStart = new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData());
                 $dateEnd = new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData());
-                $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab, $booking->getId());
+                if ($dateStart == $oldStartDate && $dateEnd == $oldEndDate) {
+                    $isValid = 0;
+                }
+                else {
+                    $isValid = $this->checkDatesValidation($dateStart, $dateEnd, $lab, $booking->getId());
+                }
                 if ($isValid == 0) {
                     if ($bookingForm['reservedFor']->getData() == "group") {
                         $owner = $this->groupRepository->findOneBy(['uuid'=> $bookingForm['owner']->getData()]);
