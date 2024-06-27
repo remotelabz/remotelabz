@@ -92,6 +92,7 @@ class InstanceManager
         EntityManagerInterface $entityManager,
         LabInstanceRepository $labInstanceRepository,
         DeviceInstanceRepository $deviceInstanceRepository,
+        DeviceRepository $deviceRepository,
         NetworkInterfaceInstanceRepository $networkInterfaceInstanceRepository,
         ControlProtocolTypeInstanceRepository $controlProtocolTypeInstanceRepository,
         DeviceRepository $DeviceRepository,
@@ -115,6 +116,7 @@ class InstanceManager
         $this->networkManager = $networkManager;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
+        $this->deviceRepository = $deviceRepository;
         $this->networkInterfaceInstanceRepository = $networkInterfaceInstanceRepository;
         $this->controlProtocolTypeInstanceRepository = $controlProtocolTypeInstanceRepository;
         $this->DeviceRepository=$DeviceRepository;
@@ -258,9 +260,30 @@ class InstanceManager
             $deviceInstance->setState(InstanceState::STARTING);
             $this->entityManager->flush();
 
-            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);           
             $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
             //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+            if ($device->getVirtuality() == 0) {
+                $this->logger->info($device->getTemplate());
+                preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+                $this->logger->info(json_encode($templateNumber, true));
+                $template = $this->deviceRepository->find($templateNumber[0][0]);
+                
+                $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
+                    if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
+                        $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                            'outlet' => $template->getOutlet()->getOutlet(),
+                            'pdu' => [
+                                'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                'model' => $template->getOutlet()->getPdu()->getModel(),
+                                'brand' => $template->getOutlet()->getPdu()->getBrand()
+                            ]
+                        ];
+                    }
+                }
+                $labJson = json_encode($tmp, 0, 4096);
+            }
 
             $this->logger->info('Sending device instance '.$uuid.' start message');
             $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
@@ -286,6 +309,7 @@ class InstanceManager
         $uuid = $deviceInstance->getUuid();
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+        $device = $deviceInstance->getDevice();
 
         if ($worker->getAvailable() == true) {
             $deviceInstance->setState(InstanceState::STOPPING);
@@ -297,7 +321,29 @@ class InstanceManager
             $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
             $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
 
-            
+            if ($device->getVirtuality() == 0) {
+                $this->logger->info($device->getTemplate());
+                preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+                $this->logger->info(json_encode($templateNumber, true));
+                $template = $this->deviceRepository->find($templateNumber[0][0]);
+                
+                $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
+                    if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
+                        $this->logger->info("ok");
+                        $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                            'outlet' => $template->getOutlet()->getOutlet(),
+                            'pdu' => [
+                                'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                'model' => $template->getOutlet()->getPdu()->getModel(),
+                                'brand' => $template->getOutlet()->getPdu()->getBrand()
+                            ]
+                        ];
+                    }
+                }
+                $labJson = json_encode($tmp, 0, 4096);
+            }
+
             $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
             $this->logger->info('Sending device instance '.$uuid.' stop message.');
             $this->bus->dispatch(

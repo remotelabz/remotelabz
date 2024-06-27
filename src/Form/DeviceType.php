@@ -90,8 +90,18 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name',
                 'multiple' => true,
                 'required' => false,
-            ])
-            ->add('isTemplate', CheckboxType::class, [
+           ]);
+           if ($virtuality == 0) {
+            $builder
+                ->add('ip', TextType::class, [
+                    'required' => true
+                ])
+                ->add('port', NumberType::class, [
+                    'required' => true
+                ]);
+
+           }
+            $builder->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
                 'label' => 'Template',

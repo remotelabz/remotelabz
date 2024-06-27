@@ -7,9 +7,11 @@ use App\Repository\PduRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=PduRepository::class)
+ * @UniqueEntity("ip")
  */
 class Pdu
 {
@@ -22,21 +24,21 @@ class Pdu
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      * @Assert\Choice({"raritan","apc"})
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $model;
 
     /**
      * @ORM\Column(type="integer")
      * @Assert\Range(min=0, max=42)
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $numberOfOutlets;
 
@@ -44,12 +46,12 @@ class Pdu
      * @ORM\Column(type="string", length=255, nullable=true)
      *
      * @Assert\Ip(version="4")
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $ip;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\PduOutletDevice", mappedBy="pdu", cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="App\Entity\PduOutletDevice", mappedBy="pdu", cascade={"persist", "remove"})
      */
     private $outlets;
 

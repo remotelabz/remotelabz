@@ -822,6 +822,13 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
         
+        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
+            $template = $this->deviceRepository->find($templateNumber[0][0]);
+            $device->setIp($template->getIp());
+            $device->setPort($template->getPort());
+        } 
+        
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $lab->addDevice($device);
@@ -896,7 +903,7 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
 
-            
+
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 //$this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
@@ -1164,6 +1171,13 @@ class DeviceController extends Controller
         
         if ($device->getNbCpu() < $total ) {
             $device->setNbCpu($total);
+        }
+
+        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
+            $template = $this->deviceRepository->find($templateNumber[0][0]);
+            $device->setIp($template->getIp());
+            $device->setPort($template->getPort());
         }
 
         $entityManager = $this->getDoctrine()->getManager();

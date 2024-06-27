@@ -1,0 +1,29 @@
+{% extends 'pdu/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_pdu') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{%- set edit = app.request.uri ends with 'edit' -%}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit pdu'|trans }}: {{ pdu.ip }}
+                {% else %}
+                    {{ 'New pdu'|trans }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+    <div class="content-body">
+        {{ form(pduForm) }}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

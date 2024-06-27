@@ -28,20 +28,20 @@ class PduOutletDevice
     /**
      * @ORM\Column(type="integer")
      * @Assert\GreaterThan(value=0)
-     * @Assert\LessThanOrEqual(value="this.getPdu().getNumberOfOutlets()")
-     * @Serializer\Groups({"worker"})
+     * @Assert\LessThanOrEqual(value=42)
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $outlet;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Pdu", inversedBy="outlets", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="App\Entity\Pdu", inversedBy="outlets")
      * @ORM\JoinColumn(name="pdu_id", referencedColumnName="id")
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $pdu;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Device", inversedBy="outlet", cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="App\Entity\Device", inversedBy="outlet")
      * @ORM\JoinColumn(name="device_id", referencedColumnName="id")
      */
     private $device;
@@ -81,7 +81,7 @@ class PduOutletDevice
         return $this->device;
     }
 
-    public function setDevice(Device $device): self
+    public function setDevice(?Device $device): self
     {
         $this->device = $device;
 

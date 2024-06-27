@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
+use App\Entity\PduOutletDevice;
 use App\Entity\ControlProtocolType;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
@@ -135,7 +136,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\PduOutletDevice", mappedBy="device")
-     * @Serializer\Groups({"worker"})
+     * @Serializer\Groups({"worker", "api_get_device"})
      */
     private $outlet;
 
@@ -497,13 +498,21 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getOutlet(): ?string
+    public function getOutlet(): ?PduOutletDevice
     {
         return $this->outlet;
     }
 
-    public function setOutlet(string $outlet): self
+    public function setOutlet(?PduOutletDevice $outlet): self
     {
+        if ($outlet == null) {
+            if ($this->outlet != null) {
+                $this->outlet->setDevice(null);
+            }
+        }
+        else {
+            $outlet->setDevice($this);
+        }
         $this->outlet = $outlet;
 
         return $this;
