@@ -272,14 +272,16 @@ class InstanceManager
                 $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
                 foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
                     if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
-                        $tmp['deviceInstances'][$key]['device']['outlet'] = [
-                            'outlet' => $template->getOutlet()->getOutlet(),
-                            'pdu' => [
-                                'ip' => $template->getOutlet()->getPdu()->getIp(),
-                                'model' => $template->getOutlet()->getPdu()->getModel(),
-                                'brand' => $template->getOutlet()->getPdu()->getBrand()
-                            ]
-                        ];
+                        if ($deviceInstance->getOutlet()) {
+                            $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                                'outlet' => $template->getOutlet()->getOutlet(),
+                                'pdu' => [
+                                    'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                    'model' => $template->getOutlet()->getPdu()->getModel(),
+                                    'brand' => $template->getOutlet()->getPdu()->getBrand()
+                                ]
+                            ];
+                        }
                     }
                 }
                 $labJson = json_encode($tmp, 0, 4096);
@@ -330,15 +332,16 @@ class InstanceManager
                 $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
                 foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
                     if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
-                        $this->logger->info("ok");
-                        $tmp['deviceInstances'][$key]['device']['outlet'] = [
-                            'outlet' => $template->getOutlet()->getOutlet(),
-                            'pdu' => [
-                                'ip' => $template->getOutlet()->getPdu()->getIp(),
-                                'model' => $template->getOutlet()->getPdu()->getModel(),
-                                'brand' => $template->getOutlet()->getPdu()->getBrand()
-                            ]
-                        ];
+                        if ($deviceInstance->getOutlet()) {
+                            $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                                'outlet' => $template->getOutlet()->getOutlet(),
+                                'pdu' => [
+                                    'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                    'model' => $template->getOutlet()->getPdu()->getModel(),
+                                    'brand' => $template->getOutlet()->getPdu()->getBrand()
+                                ]
+                            ];
+                        }
                     }
                 }
                 $labJson = json_encode($tmp, 0, 4096);

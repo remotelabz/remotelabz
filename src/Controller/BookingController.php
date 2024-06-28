@@ -9,6 +9,7 @@ use App\Form\BookingType;
 use App\Repository\BookingRepository;
 use App\Repository\LabRepository;
 use App\Repository\LabInstanceRepository;
+use App\Repository\DeviceInstanceRepository;
 use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use Doctrine\Common\Collections\Criteria;
@@ -23,6 +24,7 @@ class BookingController extends Controller
 {
     public $labRepository;
     public $labInstanceRepository;
+    public $deviceInstanceRepository;
     public $bookingRepository;
     public $userRepository;
     public $groupRepository;
@@ -31,12 +33,14 @@ class BookingController extends Controller
         LabRepository $labRepository, 
         BookingRepository $bookingRepository, 
         LabInstanceRepository $labInstanceRepository, 
+        DeviceInstanceRepository $deviceInstanceRepository, 
         UserRepository $userRepository, 
         GroupRepository $groupRepository
     )
     {
         $this->labRepository = $labRepository;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->bookingRepository = $bookingRepository;
         $this->userRepository = $userRepository;
         $this->groupRepository = $groupRepository;
@@ -486,11 +490,23 @@ class BookingController extends Controller
      * 
      */
     public function getOldBookings(Request $request) {
-        /*if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
             throw new AccessDeniedHttpException("Access denied.");
-        }*/
+        }
 
         $bookings = $this->bookingRepository->findOldBookings(new \DateTime());
+        foreach ($bookings as $key => $booking) {
+            if (isset($booking['lab_instance_uuid'])) {
+                $bookings[$key]['device_instances'] = [];
+                $labInstance = $this->labInstanceRepository->findOneBy(['uuid' =>$booking['lab_instance_uuid']]);
+                $deviceInstances = $labInstance->getDeviceInstances();
+                foreach ($deviceInstances as $deviceInstance) {
+                    $deviceInstance_json["device_instance_uuid"] = $deviceInstance->getUuid();
+                    $deviceInstance_json["device_instance_id"] = $deviceInstance->getId();
+                    array_push($bookings[$key]['device_instances'], $deviceInstance_json);
+                }
+            }
+        }
         if ('json' === $request->getRequestFormat()) {
             return $this->json($bookings, 200, [], []);
         }

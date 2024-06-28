@@ -496,8 +496,10 @@ class InstanceController extends Controller
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
-        $this->denyAccessUnlessGranted(InstanceVoter::STOP_DEVICE, $deviceInstance);
-
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            $this->denyAccessUnlessGranted(InstanceVoter::STOP_API_DEVICE, $deviceInstance);
+        }
+        
         $instanceManager->stop($deviceInstance);
 
         return $this->json();
