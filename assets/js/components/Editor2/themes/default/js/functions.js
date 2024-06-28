@@ -1401,10 +1401,12 @@ export function printFormNode(action, values, fromNodeList) {
                     id = (id == null) ? '' : id;
                     var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
                     if (action == 'add') {
-                        // If action == add -> print the nework count input
-                        html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>'+
-                                        '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>'+
-                                     '</div>';
+                        if (VIRTUALITY == 1) {
+                            // If action == add -> print the nework count input
+                            html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>'+
+                            '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>'+
+                            '</div>';
+                        }
                     } else {
                         // If action == edit -> print the network ID
                         html_data += '<div class="form-group col-sm-12">'+

@@ -670,7 +670,8 @@ class DeviceController extends Controller
     {
         $data = json_decode($request->getContent(), true);
         if ($data["virtuality"] == 0) {
-            $sameDevice = $this->deviceRepository->findOneBy(["template" => $data["template"]]);
+            preg_match_all('!\d+!', $data["template"], $templateNumber);
+            $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
             if ($sameDevice != null) {
                 $response = new Response();
                 $response->setContent(json_encode([
@@ -688,7 +689,7 @@ class DeviceController extends Controller
 
         $no_array = true;
         $ids = [];
-        if($data['count'] > 1) {
+        if($data["virtuality"] == 1 && $data['count'] > 1) {
             $no_array = false;
             for($i = 1; $i <= $data['count']; $i++) {
                 if ($i > 1)

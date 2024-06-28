@@ -479,7 +479,7 @@ class Device implements InstanciableInterface
         return $this->ip;
     }
 
-    public function setIp(string $ip): self
+    public function setIp(?string $ip): self
     {
         $this->ip = $ip;
 
@@ -491,7 +491,7 @@ class Device implements InstanciableInterface
         return $this->port;
     }
 
-    public function setPort(int $port): self
+    public function setPort(?int $port): self
     {
         $this->port = $port;
 
