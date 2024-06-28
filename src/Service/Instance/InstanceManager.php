@@ -272,7 +272,7 @@ class InstanceManager
                 $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
                 foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
                     if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
-                        if ($deviceInstance->getOutlet()) {
+                        if ($template->getOutlet()) {
                             $tmp['deviceInstances'][$key]['device']['outlet'] = [
                                 'outlet' => $template->getOutlet()->getOutlet(),
                                 'pdu' => [
@@ -332,7 +332,7 @@ class InstanceManager
                 $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
                 foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
                     if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
-                        if ($deviceInstance->getOutlet()) {
+                        if ($template->getOutlet()) {
                             $tmp['deviceInstances'][$key]['device']['outlet'] = [
                                 'outlet' => $template->getOutlet()->getOutlet(),
                                 'pdu' => [

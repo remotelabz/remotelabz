@@ -497,7 +497,7 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
-            $this->denyAccessUnlessGranted(InstanceVoter::STOP_API_DEVICE, $deviceInstance);
+            $this->denyAccessUnlessGranted(InstanceVoter::STOP_DEVICE, $deviceInstance);
         }
         
         $instanceManager->stop($deviceInstance);
