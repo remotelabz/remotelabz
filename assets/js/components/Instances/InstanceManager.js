@@ -264,7 +264,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     return (<>
-        {!isSandbox && props.user.name &&
+        {!isSandbox && props.user.name && props.lab.virtuality == 1 &&
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -286,9 +286,9 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                     </div>
                     <div>
-                        {props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
+                        {props.lab.virtuality == 1 && props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
                         }
-                        {props.lab.hasTimer == false && <span>No timer</span>
+                        {props.lab.virtuality == 1 && props.lab.hasTimer == false && <span>No timer</span>
                         }
                     </div>
                     <div>

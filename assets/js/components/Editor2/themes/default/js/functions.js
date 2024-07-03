@@ -1275,6 +1275,7 @@ export function printFormLab(action, values) {
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '',
+        virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
         path: path,
