@@ -113,7 +113,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template", "api_get_lab_instance", "sandbox"})
      */
     private $virtuality;
 

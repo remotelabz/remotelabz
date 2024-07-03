@@ -367,6 +367,7 @@ class InstanceManager
     public function reset(DeviceInstance $deviceInstance)
     {
         $uuid = $deviceInstance->getUuid();
+        $device = $deviceInstance->getDevice();
         $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
         $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
         $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
@@ -377,6 +378,28 @@ class InstanceManager
         $tmp['labInstance']['ownedBy'] = $deviceInstance->getLabInstance()->getOwnedBy();
         $tmp['labInstance']['owner']['uuid'] = $deviceInstance->getLabInstance()->getOwner()->getUuid();
         $deviceJson = json_encode($tmp, 0, 4096);
+
+        if ($device->getVirtuality() == 0) {
+            $this->logger->info($device->getTemplate());
+            preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+            $this->logger->info(json_encode($templateNumber, true));
+            $template = $this->deviceRepository->find($templateNumber[0][0]);
+            
+            $tmp = json_decode($deviceJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+            if ($tmp['uuid'] == $deviceInstance->getUuid()) {
+                if ($template->getOutlet()) {
+                    $tmp['device']['outlet'] = [
+                        'outlet' => $template->getOutlet()->getOutlet(),
+                        'pdu' => [
+                            'ip' => $template->getOutlet()->getPdu()->getIp(),
+                            'model' => $template->getOutlet()->getPdu()->getModel(),
+                            'brand' => $template->getOutlet()->getPdu()->getBrand()
+                        ]
+                    ];
+                }
+            }
+            $deviceJson = json_encode($tmp, 0, 4096);
+        }
 
         if ($worker->getAvailable() == true) {
             $deviceInstance->setState(InstanceState::RESETTING);
