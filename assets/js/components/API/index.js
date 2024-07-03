@@ -389,11 +389,12 @@ export class RemotelabzAPI {
          * 
          * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
          */
-        all(search = '', limit = 10) {
+        all(search = '', limit = 10, virtuality = null) {
             return axios.get('/labs', {
                 params: {
                     limit,
-                    search
+                    search,
+                    virtuality
                 }
             })
         },
