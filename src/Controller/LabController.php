@@ -323,15 +323,6 @@ class LabController extends Controller
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
         
-        $isMember = false;
-        foreach($lab->getGroups() as $group) {
-            if ($this->getUser()->isMemberOf($group)) {
-                $isMember = true;
-            }
-        }
-        if (!$this->getUser()->isAdministrator() && $this->getUser() != $lab->getAuthor() && !$isMember) {
-            return $this->redirectToRoute("index");
-        }
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);

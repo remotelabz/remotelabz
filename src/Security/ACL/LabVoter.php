@@ -141,18 +141,32 @@ class LabVoter extends Voter
     {
         if($user instanceof User) {
             $isMember = false;
+            $hasBooking = false;
             foreach($lab->getGroups() as $group) {
                 if ($user->isMemberOf($group)) {
                     $isMember = true;
                 }
             }
-            return ($user->isAdministrator() || $user == $lab->getAuthor() || $isMember);
+            foreach($lab->getBookings() as $booking) {
+                if ($booking->isReservedForUser()) {
+                    if ($booking->getOwner() == $user) {
+                        $hasBooking = true;
+                    }
+                }
+                else {
+                    if ($user->isMemberOf($booking->getOwner())) {
+                        $hasBooking = true;
+                    }
+                }
+            }
+            return ($user->isAdministrator() || $user == $lab->getAuthor() || $isMember || $hasBooking);
         }
         else {
             return ($user->getLab() == $lab);
         }
         
     }
+    
 
     private function canHaveEditorRights(Lab $lab, User $user)
     {
