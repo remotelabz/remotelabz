@@ -264,7 +264,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     return (<>
-        {!isSandbox && props.user.name && props.lab.virtuality == 1 &&
+        {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -273,6 +273,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     onChange={onViewAsChange}
                     isDisabled={isLoadingInstanceState}
                     value={viewAs}
+                    lab={props.lab}
                     />
                 </div>
             </div>
