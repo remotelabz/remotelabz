@@ -221,11 +221,12 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const filterSelector = document.getElementById('instance_filter');
-        $('#instance_subFilter').select2({
+        
+    console.log(filterSelector.type);
+        if (filterSelector.type != "hidden") {
+            $('#instance_subFilter').select2({
             theme: "bootstrap-5",
         });
-
-        if (filterSelector.nodeName == "SELECT") {
             filterSelector.addEventListener('change', ()=> {
                 $.ajax({
                     url: "{{ path('api_list_instances_filter') }}",
