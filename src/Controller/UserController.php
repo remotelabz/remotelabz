@@ -221,6 +221,7 @@ class UserController extends Controller
     public function fetchUsersAction(Request $request)
     {
         $users = $this->userRepository->findAll();
+        usort($users, function ($a,$b) {return strcmp($a->getLastName(), $b->getLastName());});
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($users, 200, [], ["api_users"]);

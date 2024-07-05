@@ -419,6 +419,7 @@ class BookingType extends AbstractType implements DataMapperInterface
                 else {
                     $owners = $this->groupRepository->findAll();
                 }
+                usort($owners, function ($a,$b) {return strcmp($a->getName(), $b->getName());});
             }
             else {
                 $label = "User";
@@ -438,6 +439,7 @@ class BookingType extends AbstractType implements DataMapperInterface
                 else {
                     $owners = $this->userRepository->findAll();
                 }
+                usort($owners, function ($a,$b) {return strcmp($a->getLastName(), $b->getLastName());});
             }
             foreach ($owners as $owner) {
                 $choices[$owner->getName()] = $owner->getUuid();
