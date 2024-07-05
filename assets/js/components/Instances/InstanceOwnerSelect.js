@@ -89,119 +89,44 @@ const SingleValue = ({ ...props }) => (
 //     }, [group])
 // }
 
-export default function InstanceOwnerSelect(props = {user: {}, className: '', placeholder: '', fieldName: '', isClearable: false, lab: {}}) {
+export default function InstanceOwnerSelect(props = {user: {}, className: '', placeholder: '', fieldName: '', isClearable: false}) {
     const [user, setUser] = useState(props.user);
-    const [lab, setLab] = useState(props.lab);
 
     function loadOptions(input) {
-        if (props.lab.virtuality == 1) {
-            return new Promise(resolve => {
-                Remotelabz.users.get(props.user)
+        return new Promise(resolve => {
+            Remotelabz.users.get(props.user)
+                .then(response => {
+                    const user = { ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: [] }
+                    Remotelabz.groups.all(input, 10, 1, false)
                     .then(response => {
-                        const user = { ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: [] }
-                        Remotelabz.groups.all(input, 10, 1, false)
-                        .then(response => {
-                            const groups = response.data;
-                            let groupOptions = [];
-    
-                            if (Array.isArray(groups)) {
-                                for (const group of groups) {
-                                    group.fullyQualifiedName.pop()
-                                    group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
-                                    groupOptions.push({
-                                        ...group,
-                                        value: group.id,
-                                        label: group.name,
-                                        type: 'group',
-                                        owner: group.users.find(user => user.role === 'owner')
-                                    })
-                                }
-                            }
-    
-                            const data = [{
-                                label: 'User',
-                                options: [user]
-                            }, {
-                                label: 'Groups',
-                                options: groupOptions
-                                }];
-                            resolve(data)
-                        });
-                    })
-            })
-        }
-        else {
-            return new Promise(resolve => {
-                var userOptions = [];
-                let groupOptions = [];
-                for (const booking of props.lab.bookings) {
-                    if (booking.reservedFor == "user") {
-                        if (booking.owner == props.user) {
-                            if (!userOptions.includes(response.data)) {
-                                userOptions.push({
-                                    ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: []
+                        const groups = response.data;
+                        let groupOptions = [];
+
+                        if (Array.isArray(groups)) {
+                            for (const group of groups) {
+                                group.fullyQualifiedName.pop()
+                                group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
+                                groupOptions.push({
+                                    ...group,
+                                    value: group.id,
+                                    label: group.name,
+                                    type: 'group',
+                                    owner: group.users.find(user => user.role === 'owner')
                                 })
                             }
                         }
-                    }
-                    else {
-                        
-                    }
-                }
-                Remotelabz.users.get(props.user)
-                    .then(response => {
-                        const user = response.data;
-                        for (const booking of props.lab.bookings) {
-                            if (booking.reservedFor == "user") {
-                                if (booking.owner.uuid == response.data.uuid) {
-                                    if (!userOptions.includes(response.data)) {
-                                        userOptions.push({
-                                            ...(response.data), type: 'user', value: response.data.id, label: response.data.name, fqn: []
-                                        })
-                                    }
-                                }
-                            }
-                        }
 
-                        Remotelabz.groups.all(input, 10, 1, false)
-                        .then(response => {
-                            const groups = response.data;
-                            for (const group of groups) {
-                                for (const userGroup of user.groups) {
-                                    if (group.uuid == userGroup.uuid) {
-                                        for (const booking of props.lab.bookings) {
-                                            if (booking.reservedFor == "group") {
-                                                if (booking.owner.uuid == group.uuid) {
-                                                    if (!groupOptions.includes(group)) {
-                                                        group.fullyQualifiedName.pop()
-                                                        group.fullyQualifiedName = group.fullyQualifiedName.reduce((acc, cur) => acc + cur + ' / ', '')
-                                                        groupOptions.push({
-                                                            ...group,
-                                                            value: group.id,
-                                                            label: group.name,
-                                                            type: 'group',
-                                                            owner: group.users.find(user => user.role === 'owner')
-                                                        })
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            const data = [{
-                                label: 'User',
-                                options: userOptions
-                            }, {
-                                label: 'Groups',
-                                options: groupOptions
-                                }];
-                            resolve(data)
-                        });
-                    })
-            })
-        }
+                        const data = [{
+                            label: 'User',
+                            options: [user]
+                        }, {
+                            label: 'Groups',
+                            options: groupOptions
+                            }];
+                        resolve(data)
+                    });
+                })
+        })
         
     }
 

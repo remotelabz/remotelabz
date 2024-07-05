@@ -38,13 +38,6 @@
         {% set bookingLabs = bookingLabs|merge([booking.lab]) %}
     {% endif %}
 {% endfor %}
-{% for group in groups %}
-    {% for booking in group.bookings %}
-        {% if booking.lab not in bookingLabs %}
-            {% set bookingLabs = bookingLabs|merge([booking.lab]) %}
-        {% endif %}
-    {% endfor %}
-{% endfor %}
 
 <div class="row">
     <div class="col-xl-8 col-lg-12 border-right">

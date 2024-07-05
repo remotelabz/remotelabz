@@ -273,7 +273,6 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     onChange={onViewAsChange}
                     isDisabled={isLoadingInstanceState}
                     value={viewAs}
-                    lab={props.lab}
                     />
                 </div>
             </div>

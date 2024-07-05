@@ -167,22 +167,14 @@ class LabController extends Controller
 
         if ($virtuality !== null) {
             if ($virtuality === "1") {
-                $labsArray = [];
                 $labs = $labs->filter(function ($lab) {
                     return $lab->getVirtuality() === 1;
                 });
-                foreach ($labs as $lab) {
-                    array_push($labsArray, $lab);
-                }
             }
             elseif ($virtuality === "0") {
-                $labsArray = [];
                 $labs = $labs->filter(function ($lab) {
                     return $lab->getVirtuality() === 0;
                 });
-                foreach ($labs as $lab) {
-                    array_push($labsArray, $lab);
-                }
             }
         }
 
@@ -195,7 +187,7 @@ class LabController extends Controller
         }
 
         if ('json' === $request->getRequestFormat()) {
-            return $this->json($labsArray, 200, [], ["api_get_lab"]);
+            return $this->json($labs, 200, [], ["api_get_lab"]);
         }
 
         return $this->render('lab/index.html.twig', [
