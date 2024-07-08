@@ -15,6 +15,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\DataMapperInterface;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -523,11 +524,45 @@ class BookingType extends AbstractType implements DataMapperInterface
     {
         /** @var FormInterface[] $forms */
         $forms = iterator_to_array($forms);
+    
+        if ($forms['yearStart']->getData() === null) {
+            $forms['yearStart']->addError(new FormError("The year of the start date is disabled. Please choose another option."));
+        }
+        if ($forms['monthStart']->getData() === null) {
+            $forms['monthStart']->addError(new FormError("The month of the start date is disabled. Please choose another option."));
+        }
+        if ($forms['dayStart']->getData() === null) {
+            $forms['dayStart']->addError(new FormError("The day of the start date is disabled. Please choose another option."));
+        }
+        if ($forms['hourStart']->getData() === null) {
+            $forms['hourStart']->addError(new FormError("The hour of the start date is disabled. Please choose another option."));
+        }
+        if ($forms['minuteStart']->getData() === null) {
+            $forms['minuteStart']->addError(new FormError("The minute of the start date is disabled. Please choose another option."));
+        }
+        if ($forms['yearEnd']->getData() === null) {
+            $forms['yearEnd']->addError(new FormError("The year of the end date is disabled. Please choose another option."));
+        }
+        if ($forms['monthEnd']->getData() === null) {
+            $forms['monthEnd']->addError(new FormError("The month of the end date is disabled. Please choose another option."));
+        }
+        if ($forms['dayEnd']->getData() === null) {
+            $forms['dayEnd']->addError(new FormError("The day of the end date is disabled. Please choose another option."));
+        }
+        if ($forms['hourEnd']->getData() === null) {
+            $forms['hourEnd']->addError(new FormError("The hour of the end date is disabled. Please choose another option."));
+        }
+        if ($forms['minuteEnd']->getData() === null) {
+            $forms['minuteEnd']->addError(new FormError("The minute of the end date is disabled. Please choose another option."));
+        }
+        if ($forms['yearStart']->getData() !== null && $forms['monthStart']->getData() !== null && $forms['dayStart']->getData() !== null && $forms['hourStart']->getData() !== null && $forms['minuteStart']->getData() !== null &&
+         $forms['yearEnd']->getData() !== null && $forms['monthEnd']->getData() !== null && $forms['dayEnd']->getData() !== null && $forms['hourEnd']->getData() !== null && $forms['minuteEnd']->getData() !== null) {
+            $dateStart = new \DateTime($forms['yearStart']->getData()."-".$forms['monthStart']->getData()."-".$forms['dayStart']->getData()." ".$forms['hourStart']->getData().":".$forms['minuteStart']->getData());
+            $dateEnd = new \DateTime($forms['yearEnd']->getData()."-".$forms['monthEnd']->getData()."-".$forms['dayEnd']->getData()." ".$forms['hourEnd']->getData().":".$forms['minuteEnd']->getData());
+            $viewData->setStartDate($dateStart);
+            $viewData->setEndDate($dateEnd);
+        }
 
-        $dateStart = new \DateTime($forms['yearStart']->getData()."-".$forms['monthStart']->getData()."-".$forms['dayStart']->getData()." ".$forms['hourStart']->getData().":".$forms['minuteStart']->getData());
-        $dateEnd = new \DateTime($forms['yearEnd']->getData()."-".$forms['monthEnd']->getData()."-".$forms['dayEnd']->getData()." ".$forms['hourEnd']->getData().":".$forms['minuteEnd']->getData());
-        $viewData->setStartDate($dateStart);
-        $viewData->setEndDate($dateEnd);
     }
  
 

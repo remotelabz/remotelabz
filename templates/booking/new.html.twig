@@ -69,6 +69,16 @@
                 </div>
             </div>
         </div>
+        {{form_errors(bookingForm.yearStart)}}
+        {{form_errors(bookingForm.monthStart)}}
+        {{form_errors(bookingForm.dayStart)}}
+        {{form_errors(bookingForm.hourStart)}}
+        {{form_errors(bookingForm.minuteStart)}}
+        {{form_errors(bookingForm.yearEnd)}}
+        {{form_errors(bookingForm.monthEnd)}}
+        {{form_errors(bookingForm.dayEnd)}}
+        {{form_errors(bookingForm.hourEnd)}}
+        {{form_errors(bookingForm.minuteEnd)}}
         {{form_end(bookingForm)}}
         <input type="hidden" id="labId" value="{{lab.id}}"/>
         {% if app.request.uri ends with 'edit' %}
