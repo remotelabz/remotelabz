@@ -78,6 +78,7 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
                 editable: false,
+                allDaySlot: false,
                 eventSources: [
                     {
                         url: "{{ path('fc_load_events') }}",
