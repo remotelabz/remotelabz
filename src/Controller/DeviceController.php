@@ -117,6 +117,9 @@ class DeviceController extends Controller
         $containerCount = $devices->filter(function ($device) {
             return $device->getType() === 'container';
         })->count();
+        $physicalCount = $devices->filter(function ($device) {
+            return $device->getType() === 'physical';
+        })->count();
     
         if ($type) {
             switch ($type) {
@@ -128,6 +131,11 @@ class DeviceController extends Controller
                 case 'container':
                     $devices = $devices->filter(function ($device) {
                         return $device->getType() === 'container';
+                    });
+                break;
+                case 'physical':
+                    $devices = $devices->filter(function ($device) {
+                        return $device->getType() === 'physical';
                     });
                 break;
             }
@@ -142,7 +150,8 @@ class DeviceController extends Controller
             'count' => [
                 'total' => $count,
                 'vms' => $vmCount,
-                'containers' => $containerCount
+                'containers' => $containerCount,
+                'physical' => $physicalCount
             ],
             'search' => $search
         ]);
@@ -461,6 +470,7 @@ class DeviceController extends Controller
 
     /**
      * @Route("/admin/devices/new", name="new_device")
+     * @Route("/admin/devices/physical/new", name="new_physical_device")
      * 
      * @Rest\Post("/api/devices", name="api_new_device")
      * 
@@ -485,7 +495,14 @@ class DeviceController extends Controller
             
         }
 
-        $deviceForm = $this->createForm(DeviceType::class, $device);
+        if ("new_physical_device" === $request->get('_route')) {
+            $virtuality = false;
+        }
+        else {
+            $virtuality = true;
+        }
+
+        $deviceForm = $this->createForm(DeviceType::class, $device, ["virtuality" => $virtuality]);
         
         $deviceForm->handleRequest($request);
 
@@ -505,6 +522,7 @@ class DeviceController extends Controller
             $this->setDeviceHypervisorToOS($device);
             $device->setIcon('Server_Linux.png');
             $device->setAuthor($this->getUser());
+            $device->setVirtuality($virtuality);
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($device);
             $entityManager->flush();
@@ -534,7 +552,8 @@ class DeviceController extends Controller
                     "thread" => $device->getNbSocket(),
                     "context" => "remotelabz",
                     "config_script" => "embedded",
-                    "ethernet" => 1
+                    "ethernet" => 1,
+                    "virtuality" => $virtuality
                 ];
 
                 $yamlContent = Yaml::dump($deviceData,2);
@@ -557,7 +576,8 @@ class DeviceController extends Controller
 
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
-            'data' => $device
+            'data' => $device,
+            'virtuality' => $virtuality
         ]);
     }
 
@@ -649,13 +669,27 @@ class DeviceController extends Controller
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
+        if ($data["virtuality"] == 0) {
+            preg_match_all('!\d+!', $data["template"], $templateNumber);
+            $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
+            if ($sameDevice != null) {
+                $response = new Response();
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'A device using this template already exists.'
+                ]));
+                $response->headers->set('Content-Type', 'application/json');
+                return $response;
+            }
+        } 
         
         $lab = $this->labRepository->findById($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
 
         $no_array = true;
         $ids = [];
-        if($data['count'] > 1) {
+        if($data["virtuality"] == 1 && $data['count'] > 1) {
             $no_array = false;
             for($i = 1; $i <= $data['count']; $i++) {
                 if ($i > 1)
@@ -749,7 +783,7 @@ class DeviceController extends Controller
         }
         $device->setPostFix($data['postfix']);
         $device->setLaunchOrder(0);
-        $device->setVirtuality(0);
+        $device->setVirtuality($data['virtuality']);
         if($data['cpu'] != '') {
             $device->setNbCpu($data['cpu']);
         }
@@ -789,6 +823,13 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
         
+        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
+            $template = $this->deviceRepository->find($templateNumber[0][0]);
+            $device->setIp($template->getIp());
+            $device->setPort($template->getPort());
+        } 
+        
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $lab->addDevice($device);
@@ -815,9 +856,11 @@ class DeviceController extends Controller
 
         $isTemplate = $device->getIsTemplate();
         $oldName = $device->getName();
+        $virtuality = $device->getVirtuality();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
         $deviceForm = $this->createForm(DeviceType::class, $device, [
-            'nb_network_interface' => count($device->getNetworkInterfaces())]
+            'nb_network_interface' => count($device->getNetworkInterfaces()),
+            'virtuality' => $virtuality]
         );
         $deviceForm->handleRequest($request);
 
@@ -861,7 +904,7 @@ class DeviceController extends Controller
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
 
-            
+
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
                 //$this->logger->debug("Add for ".$device->getName()." control protocol ".$proto->getName());
@@ -912,7 +955,8 @@ class DeviceController extends Controller
                 "thread" => $device->getNbSocket(),
                 "context" => "remotelabz",
                 "config_script" => "embedded",
-                "ethernet" => 1
+                "ethernet" => 1,
+                "virtuality"=> $virtuality
             ];
 
             $yamlContent = Yaml::dump($deviceData);
@@ -964,7 +1008,8 @@ class DeviceController extends Controller
 
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
-            'data' => $device
+            'data' => $device,
+            'virtuality' => $virtuality
         ]);
     }
 
@@ -1127,6 +1172,13 @@ class DeviceController extends Controller
         
         if ($device->getNbCpu() < $total ) {
             $device->setNbCpu($total);
+        }
+
+        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
+            $template = $this->deviceRepository->find($templateNumber[0][0]);
+            $device->setIp($template->getIp());
+            $device->setPort($template->getPort());
         }
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -1496,6 +1548,9 @@ class DeviceController extends Controller
                 break;
                 case 'natif':
                     $device->setType('switch');
+                break;
+                case 'physical':
+                    $device->setType('physical');
                 break;
             }
     }

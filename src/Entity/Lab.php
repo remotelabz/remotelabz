@@ -23,13 +23,13 @@ class Lab implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template", "api_get_booking"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox", "api_get_booking"})
      */
     private $name;
 
@@ -97,6 +97,12 @@ class Lab implements InstanciableInterface
      */
     private $uuid;
 
+     /**
+     * @ORM\Column(type="integer")
+     * @Serializer\Groups({"api_get_lab", "export_lab", "worker", "api_get_lab_template", "api_get_booking"})
+     */
+    private $virtuality;
+
     /**
      * @ORM\Column(type="datetime")
      * @Serializer\Groups({"api_get_lab"})
@@ -145,6 +151,14 @@ class Lab implements InstanciableInterface
     private $pictures;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="lab")
+     * @Serializer\Groups({"api_get_lab"})
+     *
+     * @var Collection|Booking[]
+     */
+    private $bookings;
+
+    /**
      * @ORM\Column(type="boolean")
      * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
      */
@@ -176,6 +190,7 @@ class Lab implements InstanciableInterface
         $this->textobjects = new ArrayCollection();
         $this->pictures = new ArrayCollection();
         $this->isTemplate = 0;
+        $this->virtuality = 1;
     }
 
     public static function create(): self
@@ -336,6 +351,18 @@ class Lab implements InstanciableInterface
         return $this;
     }
 
+    public function getVirtuality(): ?int
+    {
+        return $this->virtuality;
+    }
+
+    public function setVirtuality(int $virtuality): self
+    {
+        $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -480,6 +507,38 @@ class Lab implements InstanciableInterface
     {
         $this->timer = $timer;
       
+        return $this;
+    }
+
+    
+     /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setLab($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getLab() === $this) {
+                $booking->setLab(null);
+            }
+        }
+
         return $this;
     }
 

@@ -41,6 +41,16 @@ class DeviceRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByTemplateBeginning($template)
+    {
+        return $this->createQueryBuilder('d')
+            ->andWhere('d.template LIKE :val')
+            ->setParameter('val', $template . "%")
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     public function findByNameByTemplate($name, $template = true)
     {
         return $this->createQueryBuilder('l')

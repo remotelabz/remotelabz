@@ -87,12 +87,14 @@ class TemplateController extends Controller
     }
 
     /**
-     * @Rest\Get("/api/list/templates", name="api_get_templates")
+     * @Rest\Post("/api/list/templates", name="api_get_templates")
      * 
      * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
+
+        $data = json_decode($request->getContent(), true);
 
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
@@ -108,12 +110,15 @@ class TemplateController extends Controller
                 if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
                         $cur_name = preg_replace('/.yaml/','',$element ) ;
                         $cur_templ = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$element));
-                        if ( isset($cur_templ['description']) ) {
+                        if (isset($cur_templ["virtuality"]) && $cur_templ['virtuality'] == $data["virtuality"]){
+                            if ( isset($cur_templ['description']) ) {
                                 $node_templates[$cur_name] =  $cur_templ['description'] ;
+                            }
+                            if ( isset($cur_templ['config_script']) ) {
+                                    $node_config[$cur_name] =  $cur_templ['config_script'] ;
+                            }
                         }
-                        if ( isset($cur_templ['config_script']) ) {
-                                $node_config[$cur_name] =  $cur_templ['config_script'] ;
-                        }
+                        
                 }
         }
         
@@ -133,7 +138,7 @@ class TemplateController extends Controller
     }
 
     /** 
-     * @Rest\Get("/api/list/templates/{id<\d+>}", name="api_get_template")
+     * @Rest\Post("/api/list/templates/{id<\d+>}", name="api_get_template")
      * 
      * @Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message="Access denied.")
      */
@@ -141,6 +146,7 @@ class TemplateController extends Controller
         int $id,
         Request $request)
     {
+        $data = json_decode($request->getContent(), true);
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
         $this->logger->debug("Device id request : ".$id);
@@ -164,10 +170,18 @@ class TemplateController extends Controller
             $response->setContent(json_encode([
                 'code' => 400,
                 'status'=>'fail',
-                'message' => 'Requested template is not valid (60033).',
-                'data' =>$data])
+                'message' => 'Requested template is not valid (60033).'
+                ])
             );
             return $response;
+        }
+       
+        if (!isset($p['virtuality']) || $p['virtuality'] != $data['virtuality']) {
+            $response->setContent(json_encode([
+                'code' => 403,
+                'status' => 'forbidden',
+                'message' => 'Template virtuality is not equal to lab virtuality.'
+            ]));
         }
 
         $data = Array();
@@ -258,7 +272,7 @@ class TemplateController extends Controller
                 'type' => 'list',
                 'multiple'=> false,
                 'value' => $p['operatingSystem'] ?? '',
-                'list' => $this->listOperatingSystems()
+                'list' => $this->listOperatingSystems($p['virtuality'])
             );
 
             $data['options']['controlProtocol'] = Array(
@@ -326,13 +340,13 @@ class TemplateController extends Controller
         return $hypervisorList;
     }
 
-    public function listOperatingSystems() {
+    public function listOperatingSystems($virtuality) {
 
         $operatingSystemList= [];
-            $operatingSystems = $this->operatingSystemRepository->findAll();
-            foreach($operatingSystems as $operatingSystem){
-                $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
-            }
+        $operatingSystems = $this->operatingSystemRepository->findByVirtuality($virtuality);
+        foreach($operatingSystems as $operatingSystem){
+            $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
+        }
         return $operatingSystemList;
     }
     

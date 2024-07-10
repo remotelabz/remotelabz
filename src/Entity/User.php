@@ -21,7 +21,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker","sandbox", "api_get_booking"})
      *
      * @var int
      */
@@ -83,6 +83,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      * @var Collection|LabInstance[]
      */
     private $labInstances;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="user")
+     * @Serializer\Groups({"api_get_user"})
+     *
+     * @var Collection|Booking[]
+     */
+    private $bookings;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
@@ -351,6 +359,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
             // set the owning side to null (unless already changed)
             if ($labInstance->getUser() === $this) {
                 $labInstance->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getUser() === $this) {
+                $booking->setUser(null);
             }
         }
 

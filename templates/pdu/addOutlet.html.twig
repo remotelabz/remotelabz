@@ -1,0 +1,29 @@
+{% extends 'pdu/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs %}
+    {{ parent() }}
+{% endblock %}
+
+{%- set edit = app.request.uri ends with 'edit' -%}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit outlet'|trans }}: {{ pduOutletDevice.pdu.ip }} outlet {{pduOutletDevice.outlet}}
+                {% else %}
+                    {{ 'Add an outlet'|trans }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+    <div class="content-body">
+        {{form(pduOutletDeviceForm)}}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

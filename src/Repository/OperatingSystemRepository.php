@@ -33,6 +33,30 @@ class OperatingSystemRepository extends ServiceEntityRepository
         }
         return $operatingSystem[0];
     }
+
+    public function findByVirtuality($virtuality)
+    {
+        if ($virtuality == 1) {
+            $operatingSystems = $this->createQueryBuilder('o')
+            ->join('o.hypervisor', 'h')
+            ->where('h.name != :name')
+            ->setParameter('name', 'physical')
+            ->getQuery()
+            ->getResult()
+        ;
+        }
+        else {
+            $operatingSystems = $this->createQueryBuilder('o')
+            ->join('o.hypervisor', 'h')
+            ->where('h.name = :name')
+            ->setParameter('name', 'physical')
+            ->getQuery()
+            ->getResult()
+        ;
+        }
+    
+        return $operatingSystems;
+    }
     // /**
     //  * @return OperatingSystem[] Returns an array of OperatingSystem objects
     //  */

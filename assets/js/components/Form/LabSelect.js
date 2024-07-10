@@ -24,7 +24,7 @@ export default class LabSelect extends Component {
         super(props);
     }
 
-    loadOptions = async (inputValue) => (await Remotelabz.labs.all(inputValue)).data;
+    loadOptions = async (inputValue) => (await Remotelabz.labs.all(inputValue, 10)).data;
 
     render() {
         return (

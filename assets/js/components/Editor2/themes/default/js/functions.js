@@ -12,9 +12,10 @@
  * @version 20160719
  */
 
-import {DEBUG, TIMEOUT, FOLDER, LAB, LANG, NAME, ROLE, AUTHOR, EMAIL, USERNAME, TENANT, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS,
-      setFolder, setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
-      LONGTIMEOUT, STATUSINTERVAL, ATTACHMENTS, isIE, FOLLOW_WRAPPER_IMG_STATE, EVE_VERSION, setEditon, setAuthor} from './javascript';
+import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
+       setLab, setLang, setLock, setUserName, setEmail, setRole, setTenant, setUpdateId, setTemplate, setIsGroupOwner, setHasGroupAccess,
+       STATUSINTERVAL, ATTACHMENTS, isIE, setEditon, setAuthor,
+      setVirtuality} from './javascript';
 import {MESSAGES} from './messages_en';
 import '../bootstrap/js/jquery-3.2.1.min';
 import '../bootstrap/js/tinytools.toggleswitch.min';
@@ -587,13 +588,14 @@ function getTemplates(template) {
     var deferred = $.Deferred();
     var templateData;
     var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
-    var type = 'GET';
+    var type = 'POST';
     $.ajax({
         cache: false,
         timeout: TIMEOUT,
         type: type,
         url: encodeURI(url),
         dataType: 'json',
+        data: JSON.stringify({'virtuality': VIRTUALITY}),
         success: function (data) {
             if (data['status'] == 'success') {
                 logger(1, 'DEBUG: got template(s).');
@@ -649,10 +651,10 @@ export function getUserInfo() {
                 setLang("en");
                 setLab(lab);
                 setTenant("0");
-                setRole(data['data']['role']);
                 setIsGroupOwner(data['data']['isGroupOwner']);
                 setHasGroupAccess(data['data']['hasGroupAccess']);
                 setRole(data['data']['role']);
+                setVirtuality(data['data']['virtuality']);
                 if(pathname == '/admin/labs/' + LAB + '/edit' || pathname == '/admin/labs_template/' + LAB + '/edit') {
                     setEditon(1);
                 }
@@ -1273,6 +1275,7 @@ export function printFormLab(action, values) {
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
         timer: (values['timer'] != null) ? values['timer'] : '',
+        virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
         path: path,
@@ -1399,10 +1402,12 @@ export function printFormNode(action, values, fromNodeList) {
                     id = (id == null) ? '' : id;
                     var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
                     if (action == 'add') {
-                        // If action == add -> print the nework count input
-                        html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>'+
-                                        '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>'+
-                                     '</div>';
+                        if (VIRTUALITY == 1) {
+                            // If action == add -> print the nework count input
+                            html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>'+
+                            '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>'+
+                            '</div>';
+                        }
                     } else {
                         // If action == edit -> print the network ID
                         html_data += '<div class="form-group col-sm-12">'+

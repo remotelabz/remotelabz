@@ -85,7 +85,8 @@ class EditorController extends Controller
                         "username" => $user->getName(),
                         "author" => $author,
                         "hasGroupAccess" => $hasGroupAccess,
-                        "isGroupOwner" => $isGroupOwner
+                        "isGroupOwner" => $isGroupOwner,
+                        "virtuality" => $lab->getVirtuality()
                     ]]));
             }
             else {
@@ -100,7 +101,8 @@ class EditorController extends Controller
                         "username" => $user->getName(),
                         "author" => $author,
                         "hasGroupAccess" => $hasGroupAccess,
-                        "isGroupOwner" => $isGroupOwner
+                        "isGroupOwner" => $isGroupOwner,
+                        "virtuality" => $lab->getVirtuality()
                     ]]));
             }
 

@@ -41,6 +41,7 @@ export var AUTHOR;
 export var TEMPLATE;
 export var ISGROUPOWNER;
 export var HASGROUPACCESS;
+export var VIRTUALITY;
 
 export function setFolder(value){
 	FOLDER = value;
@@ -95,6 +96,10 @@ export function setIsGroupOwner(value) {
 
 export function setHasGroupAccess(value) {
 	HASGROUPACCESS = value;
+}
+
+export function setVirtuality(value) {
+	VIRTUALITY = value;
 }
 
 $(document).ready(function() {

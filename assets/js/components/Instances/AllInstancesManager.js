@@ -139,7 +139,7 @@ function AllInstancesManager(props) {
                 <Modal.Title>Stop devices</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Are you sure you want the devices ?
+                Are you sure you want to stop the devices ?
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={() => setShowStopLabModal(false)}>Close</Button>

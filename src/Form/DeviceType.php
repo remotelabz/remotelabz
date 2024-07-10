@@ -9,6 +9,7 @@ use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
 use App\Entity\ControlProtocolType;
+use App\Repository\OperatingSystemRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -18,11 +19,13 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Doctrine\ORM\QueryBuilder;
 
 class DeviceType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        $virtuality = $options['virtuality'];
         $builder
             ->add('name', TextType::class, [
                 'attr' => [
@@ -40,6 +43,21 @@ class DeviceType extends AbstractType
             
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
+                'query_builder' => function(OperatingSystemRepository $operaringSystemRepository) use ($virtuality): QueryBuilder {
+                    if ($virtuality == 0) {
+                        return $operaringSystemRepository->createQueryBuilder('o')
+                        ->join('o.hypervisor', 'h')
+                        ->where('h.name = :name')
+                        ->setParameter('name', 'physical');
+                    }
+                    else {
+                        return $operaringSystemRepository->createQueryBuilder('o')
+                        ->join('o.hypervisor', 'h')
+                        ->where('h.name != :name')
+                        ->setParameter('name', 'physical');
+                    }
+                    
+                },
                 'choice_label' => 'name',
                 'help' => 'Image disk used for this device.'
             ])
@@ -72,8 +90,18 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name',
                 'multiple' => true,
                 'required' => false,
-            ])
-            ->add('isTemplate', CheckboxType::class, [
+           ]);
+           if ($virtuality == 0) {
+            $builder
+                ->add('ip', TextType::class, [
+                    'required' => true
+                ])
+                ->add('port', NumberType::class, [
+                    'required' => true
+                ]);
+
+           }
+            $builder->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
                 'label' => 'Template',
@@ -87,7 +115,8 @@ class DeviceType extends AbstractType
         $resolver->setDefaults([
             'data_class' => Device::class,
             "allow_extra_fields" => true,
-            'nb_network_interface' => null
+            'nb_network_interface' => null,
+            "virtuality" => 1
         ]);
     }
 }
