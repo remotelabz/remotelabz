@@ -335,10 +335,10 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
 
                         {instance.ownedBy != 'group' && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' && !isSandbox && user.roles &&
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id)) &&
-                            <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                            <Button variant="danger" title="Reset device" data-toggle="tooltip" data-placement="top" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }        
                         {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
-                            <Button variant="danger" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                            <Button variant="danger" title="Reset device" data-toggle="tooltip" data-placement="top" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
                          && is_login()) && !is_real() && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id))
