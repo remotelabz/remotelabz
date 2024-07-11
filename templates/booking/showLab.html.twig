@@ -79,6 +79,13 @@
                 initialView: 'timeGridWeek',
                 editable: false,
                 allDaySlot: false,
+                eventTimeFormat: {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false
+                },
+                locale: "en-gb",
+                weekNumbers:true,
                 eventSources: [
                     {
                         url: "{{ path('fc_load_events') }}",

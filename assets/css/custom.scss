@@ -538,12 +538,24 @@ img.rounded-circle {
   color:black;
 }
 
+.fc .fc-timegrid-axis-cushion {
+  color: black;
+}
+
 .fc .fc-col-header-cell-cushion:hover {
+  text-decoration: none;
+}
+
+.fc .fc-timegrid-axis-cushion:hover {
   text-decoration: none;
 }
 
 .fc .fc-daygrid-day.fc-day-today, .fc .fc-timegrid-col.fc-day-today {
   background-color: #eeeeee;
+}
+
+.fc-daygrid-week-number:hover {
+  text-decoration: none;
 }
 
 .fc-timegrid-event-harness-inset .fc-timegrid-event {
@@ -1201,8 +1213,22 @@ $grid-number: 12;
     color:white;
   }
 
+  .fc .fc-timegrid-axis-cushion {
+    color: white;
+  }
+  
   .fc .fc-daygrid-day.fc-day-today, .fc .fc-timegrid-col.fc-day-today {
     background-color: #44444e;
+  }
+  
+  .fc-daygrid-week-number {
+    background-color: #636363;
+    color: #e2e2e2;
+  }
+  
+  .fc-daygrid-week-number:hover {
+    text-decoration: none;
+    color: #e2e2e2;
   }
   
   .fc-timegrid-event-harness-inset .fc-timegrid-event {
