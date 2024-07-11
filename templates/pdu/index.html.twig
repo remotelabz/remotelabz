@@ -1,0 +1,51 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Pdus': path('pdus') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'pdus' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ 'PDU'|trans }}</h1>
+        </div>
+        <div class="content-title-actions">
+           <a class="btn btn-success" role="button" href="{{ path('new_pdu') }}">
+                New PDU
+            </a>
+        </div>
+    </div>
+<div class="content-body">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>IP address</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Number of outlets</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pdu in pdus %}
+            <tr class="labs-panel">
+                <td class="lab-item"><a href="{{ path('show_pdu', {'id': pdu.id}) }}" class="lab-item-name">{{pdu.ip}}</a></td>
+                <td>{{pdu.brand}}</td>
+                <td>{{pdu.model}}</td>
+                <td>{{pdu.numberOfOutlets}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+    
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('operating-system') }} #}
+{% endblock %}

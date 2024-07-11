@@ -37,7 +37,7 @@ if ($codes !== null) {
             
             curl_close($curl);
         }
-    
+        sleep(3);
         //delete lab instance linked to the user
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, "127.0.0.1/api/instances/".$code['lab_instance_uuid']);

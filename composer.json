@@ -65,6 +65,7 @@
         "symfony/web-link": "5.4.*",
         "symfony/webpack-encore-bundle": "^1.15",
         "symfony/yaml": "5.4.*",
+        "tattali/calendar-bundle": "^1.2",
         "twig/extra-bundle": "^3.3",
         "twig/markdown-extra": "^3.3"
     },

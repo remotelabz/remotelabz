@@ -28,6 +28,9 @@
           <a class="nav-link ml-2 {% if '/groups' in app.request.uri %}active{% endif %}" href="{{ path('dashboard_groups') }}" data-toggle="tooltip" data-placement="bottom" title="Groups">
             {{ svg('users', 's16') }}
           </a>
+          <a class="nav-link ml-2 {% if '/bookings' in app.request.uri %}active{% endif %}" href="{{ path('bookings') }}" data-toggle="tooltip" data-placement="bottom" title="Bookings">
+            {{ svg('calendar', 's16') }}
+          </a>
         </ul>
         {% if is_granted('ROLE_TEACHER') and not is_granted('ROLE_TEACHER_EDITOR') %}
           <a class="nav-link ml-2 {% if '/sandbox' in app.request.uri %}active{% endif %}" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">

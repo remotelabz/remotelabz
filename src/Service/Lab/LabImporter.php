@@ -239,7 +239,7 @@ class LabImporter
                 ->setModel($deviceJson['model'])
                 ->setType($deviceJson['type'])
                 ->setIcon($deviceJson['icon'])
-                ->setVirtuality(0)
+                ->setVirtuality($deviceJson['virtuality'])
                 ->setHypervisor($hypervisor)
                 ->setNbCpu($deviceJson['nbCpu'])
                 ->setTemplate($deviceJson['template'])

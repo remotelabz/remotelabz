@@ -528,6 +528,85 @@ img.rounded-circle {
   }
 }
 
+/////// FULL CALENDAR ////////
+
+.fc .fc-col-header {
+  background-color: #dad8d8;
+}
+
+.fc .fc-col-header-cell-cushion {
+  color:black;
+}
+
+.fc .fc-timegrid-axis-cushion {
+  color: black;
+}
+
+.fc .fc-col-header-cell-cushion:hover {
+  text-decoration: none;
+}
+
+.fc .fc-timegrid-axis-cushion:hover {
+  text-decoration: none;
+}
+
+.fc .fc-daygrid-day.fc-day-today, .fc .fc-timegrid-col.fc-day-today {
+  background-color: #eeeeee;
+}
+
+.fc-daygrid-week-number:hover {
+  text-decoration: none;
+}
+
+.fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: none;
+}
+
+.fc .fc-view-harness {
+  background-color: #fafafa;
+}
+
+.fc .fc-button-primary {
+  background-color: #382b71;
+  border-color: #382b71;
+}
+
+.fc .fc-button-primary:not(:disabled):hover {
+  background-color: #2b2157;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: #2b2157;
+}
+
+.fc .fc-button-primary:disabled {
+  background-color: #382b71;
+  border-color: #382b71;
+  opacity: 0.5;
+}
+
+.fc .fc-daygrid-day-number {
+  color: black;
+}
+
+.fc .fc-daygrid-day-number:hover {
+  text-decoration: none;
+}
+
+.fc-daygrid-event {
+  color: black;
+}
+
+.fc-daygrid-event:hover {
+ color: rgb(45, 45, 45);
+}
+
+.fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 0.5;
+}
+
+
+
 .btn i {
   margin-right: 0;
 }
@@ -714,6 +793,11 @@ img.rounded-circle {
 
 .lab-item-counter-empty {
   opacity: 0.5;
+}
+
+.lab-booking-active {
+  background-color: #d1d1df8a;
+  // background-color: rgb(224, 223, 223);
 }
 
 .dropdown-menu {
@@ -975,6 +1059,11 @@ $grid-number: 12;
   font-weight: normal;
 }
 
+.tippy-tooltip.remotelabz-theme {
+  background-color: rgb(233, 230, 240);
+  color: black;
+}
+
 /** media specific */
 
 [theme="dark"] {
@@ -1115,6 +1204,69 @@ $grid-number: 12;
     }
   }
 
+  /////// FULL CALENDAR ////////
+
+  .fc .fc-col-header {
+    background-color: #09090a;
+  }
+  .fc .fc-col-header-cell-cushion {
+    color:white;
+  }
+
+  .fc .fc-timegrid-axis-cushion {
+    color: white;
+  }
+  
+  .fc .fc-daygrid-day.fc-day-today, .fc .fc-timegrid-col.fc-day-today {
+    background-color: #44444e;
+  }
+  
+  .fc-daygrid-week-number {
+    background-color: #636363;
+    color: #e2e2e2;
+  }
+  
+  .fc-daygrid-week-number:hover {
+    text-decoration: none;
+    color: #e2e2e2;
+  }
+  
+  .fc-timegrid-event-harness-inset .fc-timegrid-event {
+    box-shadow: none;
+  }
+  
+  .fc .fc-view-harness {
+    background-color: #232327;;
+  }
+  
+  .fc .fc-button-primary {
+    background-color: #382b71;
+    border-color: #382b71;
+  }
+  .fc .fc-button-primary:not(:disabled):hover {
+    background-color: #2b2157;
+  }
+  .fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #2b2157;
+  }
+
+  .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid {
+    border-color: #8e8e93;
+  }
+
+  .fc .fc-daygrid-day-number {
+    color: white;
+  }
+
+  .fc-daygrid-event {
+    color: white;
+  }
+  .fc-daygrid-event:hover {
+    color: #cbcaca;
+  }
+
+  
+
   .search-panel {
     background-color: darken(theme-color("dark-lighter"), 5%);
   }
@@ -1162,6 +1314,12 @@ $grid-number: 12;
       }
     }
   }
+
+  .lab-booking-active {
+    background-color: #343446a2
+    // background-color: #35353b;
+  }
+
   .content-list {
     > ul {
       li {
@@ -1311,6 +1469,11 @@ $grid-number: 12;
 
   .jumbotron {
     background-color: theme-color("dark-lighter");
+  }
+
+  .tippy-tooltip.remotelabz-theme {
+    background-color: rgb(54, 54, 71);
+    color: white;
   }
 }
 

@@ -130,6 +130,24 @@ class LabRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findByBookings($search)
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT DISTINCT l.id, l.name, count(b.id) as numberOfBookings
+            FROM App\Entity\Lab l
+            LEFT JOIN l.bookings b
+            WHERE l.name LIKE :name
+            AND l.virtuality = 0
+            GROUP BY l.id, l.name
+            ORDER BY numberOfBookings DESC'
+        )
+        ->setParameter(':name', '%'.$search.'%');
+
+        return $query->getResult();
+    }
+
     // /**
     //  * @return Lab[] Returns an array of Lab objects
     //  */

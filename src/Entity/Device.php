@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
+use App\Entity\PduOutletDevice;
 use App\Entity\ControlProtocolType;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
@@ -112,9 +113,32 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template", "api_get_lab_instance", "sandbox"})
      */
     private $virtuality;
+
+     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Assert\Ip(version="4")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $ip;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     *
+     * @Assert\Range(min=0, max=65536)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $port;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\PduOutletDevice", mappedBy="device")
+     * @Serializer\Groups({"worker", "api_get_device"})
+     */
+    private $outlet;
 
     /**
      *
@@ -446,6 +470,50 @@ class Device implements InstanciableInterface
     public function setVirtuality(int $virtuality): self
     {
         $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getIp(): ?string
+    {
+        return $this->ip;
+    }
+
+    public function setIp(?string $ip): self
+    {
+        $this->ip = $ip;
+
+        return $this;
+    }
+
+    public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function setPort(?int $port): self
+    {
+        $this->port = $port;
+
+        return $this;
+    }
+
+    public function getOutlet(): ?PduOutletDevice
+    {
+        return $this->outlet;
+    }
+
+    public function setOutlet(?PduOutletDevice $outlet): self
+    {
+        if ($outlet == null) {
+            if ($this->outlet != null) {
+                $this->outlet->setDevice(null);
+            }
+        }
+        else {
+            $outlet->setDevice($this);
+        }
+        $this->outlet = $outlet;
 
         return $this;
     }

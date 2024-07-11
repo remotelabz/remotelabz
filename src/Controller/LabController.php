@@ -22,6 +22,7 @@ use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
+use App\Repository\BookingRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
@@ -81,6 +82,7 @@ class LabController extends Controller
     private $flavorRepository;
     private $serializer;
     private $labInstanceRepository;
+    private $bookingRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -90,7 +92,8 @@ class LabController extends Controller
         HypervisorRepository $hypervisorRepository,
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
-        LabInstanceRepository $labInstanceRepository)
+        LabInstanceRepository $labInstanceRepository,
+        BookingRepository $bookingRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -103,6 +106,7 @@ class LabController extends Controller
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->bookingRepository = $bookingRepository;
     }
 
     /**
@@ -126,6 +130,7 @@ class LabController extends Controller
         
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
+        $virtuality = $request->query->get('virtuality');
         $orderBy = $request->query->get('order_by', 'lastUpdated');
         $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
 
@@ -153,7 +158,27 @@ class LabController extends Controller
 
         $labs = $this->labRepository->matching($criteria);
         $count = $labs->count();
+        $virtualCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 1;
+        })->count();
+        $physicalCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 0;
+        })->count();
 
+        if ($virtuality !== null) {
+            if ($virtuality === "1") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 1;
+                });
+            }
+            elseif ($virtuality === "0") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 0;
+                });
+            }
+        }
+
+        $currentCount = $labs->count();
         // paging results
         try {
             $labs = $labs->slice($page * $limit - $limit, $limit);
@@ -167,7 +192,12 @@ class LabController extends Controller
 
         return $this->render('lab/index.html.twig', [
             'labs' => $labs,
-            'count' => $count,
+            'count' => [
+                'total' => $count,
+                'current' => $currentCount,
+                'virtual' => $virtualCount,
+                'physical' => $physicalCount
+            ],
             'search' => $search,
             'limit' => $limit,
             'page' => $page,
@@ -285,15 +315,6 @@ class LabController extends Controller
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
         
-        $isMember = false;
-        foreach($lab->getGroups() as $group) {
-            if ($this->getUser()->isMemberOf($group)) {
-                $isMember = true;
-            }
-        }
-        if (!$this->getUser()->isAdministrator() && $this->getUser() != $lab->getAuthor() && !$isMember) {
-            return $this->redirectToRoute("index");
-        }
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
@@ -307,6 +328,15 @@ class LabController extends Controller
             }
         }
 
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab],['startDate'=>'ASC']);
+        $hasBooking = false;
+        foreach ($bookings as $booking) {
+            $now = new \DateTime("now");
+            if ($booking->getStartDate() <= $now && $now < $booking->getEndDate()) {
+                $hasBooking = ['uuid' => $booking->getOwner()->getUuid(), 'type' => $booking->getReservedFor()];
+                break;
+            }
+        }
         if ('json' === $request->getRequestFormat()) {
             $context=$request->get('_route');
             //Change the context value to limit the return information
@@ -318,7 +348,8 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+            'isSandbox' => false,
+            'hasBooking' => $hasBooking
         ];
 
         $props=$serializer->serialize(
@@ -381,7 +412,8 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+            'isSandbox' => false,
+            'hasBooking' => false
         ];
 
         $props=$serializer->serialize(
@@ -545,6 +577,7 @@ class LabController extends Controller
     /**
      * @Route("/labs/new", name="new_lab")
      * @Route("/labsSandbox/new", name="new_lab_template")
+     * @Route("/labsPhysical/new", name="new_physical_lab")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
      * 
@@ -570,6 +603,13 @@ class LabController extends Controller
         $lab = new Lab();
         $lab->setName($name)
             ->setAuthor($this->getUser());
+
+        if ('new_physical_lab' == $request->get('_route')) {
+            $lab->setVirtuality(false);
+        }
+        else {
+            $lab->setVirtuality(true);
+        }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
@@ -962,7 +1002,7 @@ class LabController extends Controller
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
-        if ($data['timer'] !== "" && $data['timer'] != "00:00:00") {
+        if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "00:00:00") {
             $lab->setHasTimer(true);
             $lab->setTimer($data['timer']);
         }
