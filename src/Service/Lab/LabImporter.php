@@ -155,6 +155,7 @@ class LabImporter
             ->setName($labJson['name'])
             ->setAuthor($this->tokenStorage->getToken()->getUser())
             ->setIsTemplate(false)
+            ->setVirtuality($labJson['virtuality'])
             //->setDescription($labJson['description'])
             //->setShortDescription($labJson['shortDescription'])
             ->setIsInternetAuthorized(true)
