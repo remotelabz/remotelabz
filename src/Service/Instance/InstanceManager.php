@@ -637,6 +637,7 @@ class InstanceManager
         $newLab->setLocked($lab->getLocked());
         $newLab->setBanner($lab->getBanner());
         $newLab->setIsInternetAuthorized($lab->isInternetAuthorized());
+        $newLab->setVirtuality($lab->getVirtuality());
         if ($lab->getHasTimer()) {
             $newLab->setHasTimer($lab->getHasTimer());
             $newLab->setTimer($lab->getTimer());
