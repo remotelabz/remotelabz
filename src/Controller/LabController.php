@@ -20,6 +20,7 @@ use GuzzleHttp\Client;
 use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
+use App\Repository\ConfigWorkerRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use App\Repository\BookingRepository;
@@ -52,6 +53,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\ORMException;
 use Exception;
+use ZipArchive;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -83,6 +87,7 @@ class LabController extends Controller
     private $serializer;
     private $labInstanceRepository;
     private $bookingRepository;
+    private $configWorkerRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -93,7 +98,8 @@ class LabController extends Controller
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
         LabInstanceRepository $labInstanceRepository,
-        BookingRepository $bookingRepository)
+        BookingRepository $bookingRepository,
+        ConfigWorkerRepository $configWorkerRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -107,6 +113,7 @@ class LabController extends Controller
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->bookingRepository = $bookingRepository;
+        $this->configWorkerRepository = $configWorkerRepository;
     }
 
     /**
@@ -1159,16 +1166,79 @@ class LabController extends Controller
             throw new NotFoundHttpException();
         }
         
+        $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $data = $labImporter->export($lab);
 
-        $response = new Response($data);
+        $fileSystem = new FileSystem();
+        $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        foreach($lab->getDevices() as $device) {
+            if ($device->getOperatingSystem()->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
+                $image = $device->getOperatingSystem()->getImage();
+                if ($workers !== null) {
+                    if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
+                        $break = false;
+                        foreach($workers as $worker) {
+                            $workerPort = $this->getParameter('app.worker_port');
+                            $imageName = str_replace(".img", "", $image);
+                            $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
+                            $curl = curl_init();
+                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+                            curl_setopt($curl, CURLOPT_FILE, $resource);
+                            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                            curl_exec($curl);
+                                                        
+                            if (curl_errno($curl)) { 
+                                $this->logger->debug("curl error of image download: ".curl_error($curl));
+                            }
+                            else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200) {
+                                $this->logger->debug("http code of  image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
+                            }
+                            else {
+                                break;
+                            }
+                            curl_close($curl);
+                            fclose($resource);
 
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            'lab_'.$lab->getUuid().'.json'
+                        }
+                    }
+                }
+            }            
+        }
+        $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
+
+        $zip = new ZipArchive();
+        $rootPath = realpath($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        $zip->open($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($rootPath),
+            RecursiveIteratorIterator::LEAVES_ONLY
         );
 
-        $response->headers->set('Content-Type', 'application/json');
+        foreach ($files as $name => $file)
+        {
+            // Skip directories (they would be added automatically)
+            if (!$file->isDir())
+            {
+                // Get real and relative path for current file
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($rootPath) + 1);
+
+                // Add current file to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+
+        // Zip archive will be created only after closing object
+        $zip->close();
+        $response = new Response(file_get_contents($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip'));
+        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'lab_'.$lab->getUuid().'.zip'
+        );
+
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
