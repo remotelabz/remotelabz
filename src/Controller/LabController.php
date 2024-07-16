@@ -66,6 +66,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class LabController extends Controller
@@ -1170,6 +1171,7 @@ class LabController extends Controller
         $data = $labImporter->export($lab);
 
         $fileSystem = new FileSystem();
+        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
         $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
         foreach($lab->getDevices() as $device) {
             if ($device->getOperatingSystem()->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
@@ -1184,6 +1186,7 @@ class LabController extends Controller
                             $curl = curl_init();
                             curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+                            curl_setopt($curl, CURLOPT_TIMEOUT, 600);
                             curl_setopt($curl, CURLOPT_FILE, $resource);
                             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
                             curl_exec($curl);
@@ -1231,8 +1234,11 @@ class LabController extends Controller
 
         // Zip archive will be created only after closing object
         $zip->close();
-        $response = new Response(file_get_contents($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip'));
-        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+
+        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip';
+        $response = new StreamedResponse(function() use ($filePath) {
+            readfile($filePath);exit;
+        });
         
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
