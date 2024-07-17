@@ -186,10 +186,17 @@ class LabImporter
                 $this->logger->info('No similar operating system found. Creating a new one.');
 
                 $operatingSystem = new OperatingSystem();
+                if (str_contains($operatingSystemJson['image'], '/')) {
+                    $operatingSystem->setImageUrl($operatingSystemJson['image']);
+                }
+                else {
+                    $operatingSystem->setImageFilename($operatingSystemJson['image']);
+                }
                 $operatingSystem
                     ->setName($operatingSystemJson['name'])
                     ->setImage($operatingSystemJson['image'])
                 ;
+                
 
                 $this->entityManager->persist($operatingSystem);
             }

@@ -60,6 +60,7 @@
         "js-cookie": "^2.2.1",
         "js-yaml": "^3.0.0",
         "jsplumb": "^2.14.2",
+        "jszip": "^3.10.1",
         "keycharm": "^0.2.0",
         "mdast-add-list-metadata": "^1.1.0",
         "moment": "^2.24.0",

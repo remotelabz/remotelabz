@@ -1159,6 +1159,32 @@ class LabController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Post("/api/labs/import/images", name="api_import_lab_images")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     */
+    public function importImagesAction(Request $request, LabImporter $labImporter)
+    {
+            $zipFile = $request->files->get('zipImages');
+            $jsonName = str_replace(".zip", ".json", $zipFile->getClientOriginalName());
+            $zip = new ZipArchive();
+            $fileSystem = new FileSystem();
+            if ($zip->open($zipFile) === TRUE) {
+                $zip->extractTo($this->getParameter('kernel.project_dir').'/public/uploads/images/');
+                $zip->close();
+                $this->logger->debug('images uploaded from zip file during lab import');
+                $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/images/'.$jsonName);
+                $response = new JsonResponse(["status" => "success"]);
+            } else {
+                $this->logger->debug('Could not upload images during lab import');
+                $response = new JsonResponse(["status" => "failed"]);
+            }
+
+        return $response;
+    }
+
+    /**
      * @Route("/admin/labs/{id<\d+>}/export", name="export_lab", methods="GET")
      */
     public function exportAction(int $id, LabImporter $labImporter)
