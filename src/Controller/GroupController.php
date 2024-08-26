@@ -394,6 +394,7 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
+     * @Rest\Delete("/api/groups/{slug}/user/{userId<\d+>}", name="api_delete_user_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
     {
@@ -572,6 +573,8 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
+     * 
+     * @Rest\Get("/api/groups/{slug}/members", name="app_group_members", requirements={"slug"="[\w\-\/]+"})
      */
     public function dashboardMembersAction(string $slug, SerializerInterface $serializer, Request $request)
     {
@@ -624,6 +627,9 @@ class GroupController extends Controller
                 'slug'=>$slug,
             ]);
 
+        }
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($group, 200, [], ['api_groups']);
         }
 
         return $this->render('group/dashboard_members.html.twig', [

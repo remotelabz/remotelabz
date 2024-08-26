@@ -104,6 +104,12 @@
                 </div>
                 {% endif %}
                 <div class="top-panel">
+                    <div class="quick-actions">
+                        <input type="checkbox" name="selectAll" id="selectAll" value="selectAll" onClick="checkAll()" class="mr-1"/>
+                        <button class="btn btn-danger" data-toggle="modal" onClick="deleteUsers('{{group.path}}')" type="button">
+                            {{ svg('remove') }}
+                        </button>  
+                    </div>
                     <ul class="nav-links nav nav-tabs">
                         <li class="active">
                             <a href="#currentMembers" id="currentMembers">
@@ -146,8 +152,12 @@
                                      or (group.isOwner(app.user) )
                                      or ( group.isAdmin(app.user)) ) and ( not group.isOwner(user) ))
                                 %}
+                                    
                                     <div style="min-width: 150px"> 
                                         {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
+                                    </div>
+                                    <div class="ml-5">
+                                        <input type="checkbox" name="selectUserGroup" class="selectUserGroup" value="{{user.id}}"/>
                                     </div>
                                     <div class="ml-2">
                                         <a href="{{ path('remove_user_group', {slug: group.path, userId: user.id}) }}" class="btn btn-danger">{{ svg('remove') }}</a>
@@ -160,4 +170,62 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script type="text/javascript">
+    function checkAll() {
+            const boxes = document.querySelectorAll(".selectUserGroup");
+            let checkAll = document.getElementById("selectAll");
+
+            if (checkAll.checked == true) {
+                for(let box of boxes) {
+                    box.checked = true
+                }
+            }
+            else {
+                for(let box of boxes) {
+                    box.checked = false
+                }
+            }
+        }
+
+        function deleteUsers(slug) {
+            const boxes = document.querySelectorAll(".selectUserGroup");
+
+            var usersToDelete = [];
+            var i = 0;
+
+            for (let box of boxes) {
+                if (box.checked) {
+                    usersToDelete.push(box.value);
+                }
+            }
+            $.ajax({
+                type: "GET",
+                url: `/api/groups/${slug}/members`
+            }).then((response) => {
+                var groupUsers = response.users;
+
+                console.log(groupUsers)
+                for(let userId of usersToDelete) {
+                    i++;
+                    for (let groupUser of groupUsers) {
+                        if (userId == groupUser.id && groupUser.role == "user") {
+                            $.ajax({
+                                type: "DELETE",
+                                url: `/api/groups/${slug}/user/${userId}`
+                            }).then(()=> {
+                                if (i == usersToDelete.length) {
+                                    location.href = `/groups/${slug}/members`; 
+                                }
+                            })
+                        }
+                    }
+                }
+            })
+        }
+    </script>
 {% endblock %}
