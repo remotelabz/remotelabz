@@ -393,6 +393,7 @@ class TemplateController extends Controller
         "context" => "remotelabz",
         "config_script" => "embedded",
         "ethernet" => 1,
+        "virtuality" => $template->getVirtuality()
     ];
 
     $yamlContent = Yaml::dump($templateData,2);
