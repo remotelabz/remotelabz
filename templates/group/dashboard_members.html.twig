@@ -152,11 +152,12 @@
                                      or (group.isOwner(app.user) )
                                      or ( group.isAdmin(app.user)) ) and ( not group.isOwner(user) ))
                                 %}
-                                    <div class="mr-2">
-                                        <input type="checkbox" name="selectUserGroup" class="selectUserGroup" value="{{user.id}}"/>
-                                    </div>
+                                    
                                     <div style="min-width: 150px"> 
                                         {{- react_component('GroupRoleSelect', {'props': {'role': group.getUserRole(user), 'user': user.id, 'group': group.path}}) -}}
+                                    </div>
+                                    <div class="ml-5">
+                                        <input type="checkbox" name="selectUserGroup" class="selectUserGroup" value="{{user.id}}"/>
                                     </div>
                                     <div class="ml-2">
                                         <a href="{{ path('remove_user_group', {slug: group.path, userId: user.id}) }}" class="btn btn-danger">{{ svg('remove') }}</a>
