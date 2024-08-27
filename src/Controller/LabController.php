@@ -1202,7 +1202,7 @@ class LabController extends Controller
         $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
         $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
         foreach($lab->getDevices() as $device) {
-            if ($device->getOperatingSystem()->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
+            if ($device->getOperatingSystem()->getHypervisor()->getName() == "qemu" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
                 $image = $device->getOperatingSystem()->getImage();
                 if ($workers !== null) {
                     if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
