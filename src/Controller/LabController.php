@@ -54,6 +54,8 @@ use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\ORMException;
 use Exception;
 use ZipArchive;
+use PharData;
+use Phar;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -1209,6 +1211,7 @@ class LabController extends Controller
                             $workerPort = $this->getParameter('app.worker_port');
                             $imageName = str_replace(".img", "", $image);
                             $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
+                            $this->logger->debug("http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             $curl = curl_init();
                             curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
@@ -1236,9 +1239,9 @@ class LabController extends Controller
         }
         $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
 
-        $zip = new ZipArchive();
+        $phar = new PharData($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar');
         $rootPath = realpath($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
-        $zip->open($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        //$zip->open($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
         $files = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($rootPath),
             RecursiveIteratorIterator::LEAVES_ONLY
@@ -1254,21 +1257,23 @@ class LabController extends Controller
                 $relativePath = substr($filePath, strlen($rootPath) + 1);
 
                 // Add current file to archive
-                $zip->addFile($filePath, $relativePath);
+                $phar->addFile($filePath, $relativePath);
             }
         }
-
+        //$phar->buildFromIterator($files->getPathName());
+        $phar->compress(Phar::GZ);
         // Zip archive will be created only after closing object
-        $zip->close();
+        //$zip->close();
 
-        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip';
+        //$filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip';
+        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
         $response = new StreamedResponse(function() use ($filePath) {
             readfile($filePath);exit;
         });
         
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'lab_'.$lab->getUuid().'.zip'
+            'lab_'.$lab->getUuid().'.tar.gz'
         );
 
         $response->headers->set('Content-Disposition', $disposition);
