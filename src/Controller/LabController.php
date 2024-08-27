@@ -1201,6 +1201,7 @@ class LabController extends Controller
         $fileSystem = new FileSystem();
         $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
         $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        set_time_limit(120);
         foreach($lab->getDevices() as $device) {
             if ($device->getOperatingSystem()->getHypervisor()->getName() == "qemu" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
                 $image = $device->getOperatingSystem()->getImage();
@@ -1211,7 +1212,6 @@ class LabController extends Controller
                             $workerPort = $this->getParameter('app.worker_port');
                             $imageName = str_replace(".img", "", $image);
                             $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
-                            $this->logger->debug("http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             $curl = curl_init();
                             curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
@@ -1239,33 +1239,9 @@ class LabController extends Controller
         }
         $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
 
-        $phar = new PharData($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar');
-        $rootPath = realpath($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
-        //$zip->open($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($rootPath),
-            RecursiveIteratorIterator::LEAVES_ONLY
-        );
 
-        foreach ($files as $name => $file)
-        {
-            // Skip directories (they would be added automatically)
-            if (!$file->isDir())
-            {
-                // Get real and relative path for current file
-                $filePath = $file->getRealPath();
-                $relativePath = substr($filePath, strlen($rootPath) + 1);
+        exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
 
-                // Add current file to archive
-                $phar->addFile($filePath, $relativePath);
-            }
-        }
-        //$phar->buildFromIterator($files->getPathName());
-        $phar->compress(Phar::GZ);
-        // Zip archive will be created only after closing object
-        //$zip->close();
-
-        //$filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.zip';
         $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
         $response = new StreamedResponse(function() use ($filePath) {
             readfile($filePath);exit;
