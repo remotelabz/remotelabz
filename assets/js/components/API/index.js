@@ -478,21 +478,6 @@ export class RemotelabzAPI {
         },
 
         /**
-         * Import zip file with lab images.
-         * 
-         * Implements PUT `/api/labs/import/images`
-         * 
-         * @param {File} image 
-         * 
-         * @returns {Promise<import('axios').AxiosResponse<void>>}
-         */
-        importImages(image) {
-            var formData = new FormData();
-            formData.append("zipImages", image);
-            return axios.post(`/labs/import/images`, formData, { headers : { 'Content-Type': 'multipart/form-data' } });
-        },
-
-        /**
          * copy a banner by lab ID.
          * 
          * Implements GET `/api/labs/{id}/banner/{newId}`

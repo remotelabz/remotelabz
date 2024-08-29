@@ -4,7 +4,6 @@ import Noty from 'noty';
 import { Formik, Form, Field, useFormikContext } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import Remotelabz from '../API';
-import JSZip from 'jszip';
 
 export default function LabImporter()
 {
@@ -32,42 +31,19 @@ export default function LabImporter()
             reader.onerror = () => console.log('file reading has failed')
             reader.onload = (e) => {
                 // Do whatever you want with the file contents
-                if (file.type == "application/json") {
-                    const json = reader.result
-                    console.log(json)
-                    setFileContent(json);
-                    if (formRef.current) {
-                        formRef.current.handleSubmit()
-                    }
+                const json = reader.result
+                console.log(json)
+                setFileContent(json);
+                if (formRef.current) {
+                    formRef.current.handleSubmit()
                 }
-                else {
-                    var zip = new JSZip();
-                    zip.loadAsync(file)
-                        .then(function(zipContent) {
-                            return zipContent.file(file.name.replace(".zip", ".json")).async("string");
-                        })
-                        .then(function(jsonContent) {
-                            console.log(jsonContent)
-                            setFileContent(jsonContent)
-                            if (formRef.current) {
-                                formRef.current.handleSubmit()
-                            }
-                            Remotelabz.labs.importImages(file).then(response => {
-                                console.log(response)
-                                if (response.data.status == "failed") {
-                                    new Noty({ text: 'An error happened while importing lab images.', type: 'error' }).show();
-                                }
-                            })
-                        })
-                }
-                
             }
             reader.readAsText(file)
           })
     }, []);
 
     const formRef = useRef();
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1, accept: 'application/json, application/zip, application/x-zip-compressed' })
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1, accept: 'application/json' })
 
     const validateJson = (value) => {
         let error;
