@@ -27,7 +27,6 @@ export default function LabImporter()
     const onDrop = useCallback(acceptedFiles => {
         acceptedFiles.forEach((file) => {
             const reader = new FileReader()
-      
             reader.onabort = () => console.log('file reading was aborted')
             reader.onerror = () => console.log('file reading has failed')
             reader.onload = (e) => {

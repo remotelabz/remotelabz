@@ -20,6 +20,7 @@ use GuzzleHttp\Client;
 use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
+use App\Repository\ConfigWorkerRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use App\Repository\BookingRepository;
@@ -52,6 +53,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\ORMException;
 use Exception;
+use ZipArchive;
+use PharData;
+use Phar;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
@@ -62,6 +68,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class LabController extends Controller
@@ -83,6 +90,7 @@ class LabController extends Controller
     private $serializer;
     private $labInstanceRepository;
     private $bookingRepository;
+    private $configWorkerRepository;
 
     public function __construct(
         LoggerInterface $logger,
@@ -93,7 +101,8 @@ class LabController extends Controller
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
         LabInstanceRepository $labInstanceRepository,
-        BookingRepository $bookingRepository)
+        BookingRepository $bookingRepository,
+        ConfigWorkerRepository $configWorkerRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -107,6 +116,7 @@ class LabController extends Controller
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->bookingRepository = $bookingRepository;
+        $this->configWorkerRepository = $configWorkerRepository;
     }
 
     /**
@@ -1159,16 +1169,77 @@ class LabController extends Controller
             throw new NotFoundHttpException();
         }
         
+        $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $data = $labImporter->export($lab);
 
-        $response = new Response($data);
+        $fileSystem = new FileSystem();
+        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
+        $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        set_time_limit(120);
+        foreach($lab->getDevices() as $device) {
+            if ($device->getOperatingSystem()->getHypervisor()->getName() == "qemu" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
+                $image = $device->getOperatingSystem()->getImage();
+                if ($workers !== null) {
+                    if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
+                        $break = false;
+                        foreach($workers as $worker) {
+                            $this->logger->debug("worker ".$worker->getIPv4());
+                            $workerPort = $this->getParameter('app.worker_port');
+                            $imageName = str_replace(".img", "", $image);
+                            $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
+                            $this->logger->debug("curl http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            $curl = curl_init();
+                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+                            curl_setopt($curl, CURLOPT_TIMEOUT, 600);
+                            curl_setopt($curl, CURLOPT_FILE, $resource);
+                            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                            curl_exec($curl);
+                                                        
+                            if (curl_errno($curl)) { 
+                                $this->logger->debug("curl error of image download: ".curl_error($curl));
+                            }
+                            else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200) {
+                                $this->logger->debug("http code of  image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
+                            }
+                            else {
+                                break;
+                            }
+                            curl_close($curl);
+                            fclose($resource);
 
+                        }
+                    }
+                }
+            } 
+            else if($device->getOperatingSystem()->getHypervisor()->getName() == "lxc") {
+                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$device->getOperatingSystem()->getImageFileName().".tar.gz")) {
+                    exec("ls /var/lib/lxc/", $containersOutput);
+                    foreach ($containersOutput as $container) {
+                        if ($container == $device->getOperatingSystem()->getImageFileName()) {
+                            $this->logger->debug("compressing container ".$device->getOperatingSystem()->getImageFileName());
+                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$device->getOperatingSystem()->getImageFileName().".tar.gz -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
+                            break;
+                        }
+                    }
+                }
+            }           
+        }
+        $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
+
+        $this->logger->debug("compressing to tar.gz");
+        exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
+        $this->logger->debug("starting download");
+        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
+        $response = new StreamedResponse(function() use ($filePath) {
+            readfile($filePath);exit;
+        });
+        
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'lab_'.$lab->getUuid().'.json'
+            'lab_'.$lab->getUuid().'.tar.gz'
         );
 
-        $response->headers->set('Content-Type', 'application/json');
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
