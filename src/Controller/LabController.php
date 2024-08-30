@@ -1183,9 +1183,11 @@ class LabController extends Controller
                     if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
                         $break = false;
                         foreach($workers as $worker) {
+                            $this->logger->debug("worker ".$worker->getIPv4());
                             $workerPort = $this->getParameter('app.worker_port');
                             $imageName = str_replace(".img", "", $image);
                             $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
+                            $this->logger->debug("curl http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             $curl = curl_init();
                             curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
                             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
@@ -1213,9 +1215,9 @@ class LabController extends Controller
         }
         $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
 
-
+        $this->logger->debug("compressing to tar.gz");
         exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
-
+        $this->logger->debug("starting download");
         $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
         $response = new StreamedResponse(function() use ($filePath) {
             readfile($filePath);exit;
