@@ -1211,7 +1211,19 @@ class LabController extends Controller
                         }
                     }
                 }
-            }            
+            } 
+            else if($device->getOperatingSystem()->getHypervisor()->getName() == "lxc") {
+                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$device->getOperatingSystem()->getImageFileName().".tar.gz")) {
+                    exec("ls /var/lib/lxc/", $containersOutput);
+                    foreach ($containersOutput as $container) {
+                        if ($container == $device->getOperatingSystem()->getImageFileName()) {
+                            $this->logger->debug("compressing container ".$device->getOperatingSystem()->getImageFileName());
+                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$device->getOperatingSystem()->getImageFileName().".tar.gz -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
+                            break;
+                        }
+                    }
+                }
+            }           
         }
         $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
 
