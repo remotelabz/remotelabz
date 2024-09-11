@@ -253,7 +253,7 @@ class Installer
             $this->rchown($this->installPath."/var", "www-data", "www-data");
             chmod($this->installPath."/config/packages/messenger.yaml", 0664);
             $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
-            chmod($this->installPath."/config/templates", 0664);
+            chmod($this->installPath."/config/templates", 0774);
             @mkdir($this->installPath."/backups");
             chmod($this->installPath."/backups", 0664);
             echo "Right modified ✔️\n";

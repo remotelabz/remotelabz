@@ -76,7 +76,7 @@ class UserController extends Controller
      * 
      * @Rest\Get("/api/users", name="api_users")
      * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
+     * @IsGranted("ROLE_TEACHER", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
