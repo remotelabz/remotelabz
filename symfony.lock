@@ -790,6 +790,18 @@
     "symfony/yaml": {
         "version": "v5.2.14"
     },
+    "tattali/calendar-bundle": {
+        "version": "1.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.1",
+            "ref": "0c643e17b5340747b35c2c75e11727fa31bfa9bb"
+        },
+        "files": [
+            "config/routes/calendar.yaml"
+        ]
+    },
     "theseer/tokenizer": {
         "version": "1.2.1"
     },
