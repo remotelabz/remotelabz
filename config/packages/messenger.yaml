@@ -8,7 +8,9 @@ framework:
                     exchange:
                         name: worker
                         type: direct
-                    queues: { }
+                    queues:
+                        messages_worker1:
+                            binding_keys: [192.168.11.132]
                 retry_strategy:
                     max_retries: 3
                     delay: 5000
@@ -20,7 +22,7 @@ framework:
                     exchange:
                         name: front
                     queues:
-                        messages_front: ~
+                        messages_front: null
             failed: 'doctrine://default?queue_name=failed'
         routing:
             Remotelabz\Message\Message\InstanceActionMessage: worker

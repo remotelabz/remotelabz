@@ -92,13 +92,15 @@ class InstanceVoter extends Voter
 
     private function canResetDevice($instance, $user)
     {
+        $result=true;
         if (!$user instanceof User) {
-            return false;
+            $result=false;
         }
         if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
-            return false;
+            $result=false;
         }
-        return $this->canEdit($instance, $user);
+        return $result;
+        //return $this->canEdit($instance, $user);
     }
 
     private function canExportInstance($instance, $user)
