@@ -221,7 +221,10 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     }
     
     let controls;
-    
+/*    console.log('instance',instance)
+    console.log('user',user)
+    console.log('lab',lab)
+*/
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -333,14 +336,15 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             </div>
                         }
                         
-                        { (instance.ownedBy != 'group' 
+                        { 
+                        (instance.ownedBy != 'group' 
                         && (instance.state === 'stopped' || instance.state === 'error') 
                         && instance.device.type != 'switch' 
                         && !isSandbox 
                         && user.roles 
                         && (user.roles.includes("ROLE_ADMINISTRATOR") || 
                             user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || 
-                            user.roles.includes("ROLE_STUDENT") ||
+                            user.roles.includes("ROLE_USER") ||
                             user.roles.includes("ROLE_TEACHER") || 
                             user.roles.includes("ROLE_TEACHER_EDITOR") )
                         )
