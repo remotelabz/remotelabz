@@ -49,6 +49,7 @@ use App\Service\Lab\BannerManager;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use App\Bridge\Network\IPTools;
 
 
 /**
@@ -150,7 +151,7 @@ class InstanceManager
             throw new BadRequestHttpException('No worker available');
         }
 
-        $this->logger->debug("worker avalaible from create function in InstanceManager:".$worker);
+        $this->logger->debug("worker available from create function in InstanceManager:".$worker);
         $labInstance = LabInstance::create()
             ->setLab($lab)
             ->setworkerIp($worker)
@@ -178,6 +179,7 @@ class InstanceManager
 
         $network = $this->networkManager->getAvailableSubnet();
 
+        
         if (!$network) {
             throw new NoNetworkAvailableException();
         }
@@ -186,6 +188,14 @@ class InstanceManager
             ->setState(InstanceStateMessage::STATE_CREATING)
             ->setNetwork($network)
             ->populate();
+
+        if (IPTools::routeExists($network))
+            $this->logger->debug("Route to ".$network." exists");
+        else {
+            $this->logger->debug("Route to ".$network." doesn't exist".$worker);
+        IPTools::routeAdd($network,$worker);
+        }
+        
 
         if ($lab->getHasTimer() == true) {
             $timer = explode(":",$lab->getTimer());
@@ -224,6 +234,16 @@ class InstanceManager
             $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
             $labJson = $this->serializer->serialize($labInstance, 'json', $context);
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
+            $network=$labInstance->getNetwork();
+            if (IPTools::routeExists($network)) {
+                $this->logger->debug("Route to ".$network." exists");
+               IPTools::routeDelete($network,$workerIP);
+            }
+        else {
+            $this->logger->debug("Route to ".$network." doesn't exist".$workerIP);
+            
+        }
+
             $this->entityManager->persist($labInstance);
             $this->entityManager->flush();
             $this->bus->dispatch(
