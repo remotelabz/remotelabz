@@ -282,7 +282,7 @@ class Installer
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
-        echo "You have to install the databaseRemoteLabz is installed! 🔥\n";
+        echo "You have to install the database 🔥\n";
         echo "Thank you for using our software. ❤️\n";
     }
 
