@@ -19,9 +19,9 @@ use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-
-
-
+use Remotelabz\Message\Message\InstanceActionMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 
 class ConfigWorkerController extends Controller
 {
@@ -29,12 +29,15 @@ class ConfigWorkerController extends Controller
     private $workerRepository;
     private $serializer;
     private $labInstanceRepository;
+    private $bus;
 
     public function __construct(
         LoggerInterface $logger=null,
         ConfigWorkerRepository $configWorkerRepository,
         LabInstanceRepository $labInstanceRepository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        MessageBusInterface $bus
+
     ) {
         $this->logger = $logger;
         if ($logger == null) {
@@ -43,6 +46,7 @@ class ConfigWorkerController extends Controller
         $this->configWorkerRepository = $configWorkerRepository;
         $this->labInstanceRepository = $labInstanceRepository;
         $this->serializer = $serializer;
+        $this->bus = $bus;
     }
 
 
@@ -97,6 +101,7 @@ class ConfigWorkerController extends Controller
         $this->createQueue($worker->getIPv4(), $worker->getQueueName());
 
         return $this->json($worker, 200, [], ['api_get_worker_config']);
+
     }
 
     private function getQueueName() {
@@ -130,16 +135,39 @@ class ConfigWorkerController extends Controller
         $data = json_decode($request->getContent(), true);
 
         $worker = $this->configWorkerRepository->find(["id" => $id]);
+        
+        $workers = $this->configWorkerRepository->findAll();
+        
+        
+        $i=0;
+        while ($i<count($workers)-1 && $workers[$i]->getAvailable()==0) {
+            $i++;
+        }
+        $first_available_worker=$workers[$i];
+        //$this->logger->debug("Worker ". $first_available_worker->getIPv4(). " is the first available worker.");
+
+
         if (isset($data['IPv4'])) {
             $worker->setIPv4($data['IPv4']);
         }
         else if (isset($data['available'])) {
             $worker->setAvailable($data['available']);
+
+            $available=($worker->getAvailable()==1)?"Available":"Disable";
+
+            $this->logger->info("Worker ". $worker->getIPv4(). " has been updated (".$available.").");
+
+            
+            $this->bus->dispatch(
+                new InstanceActionMessage($worker->getIPv4(), "test", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
+                    new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),
+                ]
+            );
+    
         }
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->flush();
-        $this->logger->debug("worker ". $worker->getIPv4(). " has been updated.");
 
         if (isset($data['IPv4'])) {
             $this->bindQueue($worker->getIPv4(), $worker->getQueueName());
