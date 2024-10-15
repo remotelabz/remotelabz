@@ -746,36 +746,6 @@ class InstanceManager
 
         return $newDevice;
     }
-
-    // TODO : Problem with the entitymanager closed when called to this function
-    /**
-     * Delete a device form a DeviceInstance, with its os defined in options.
-     * This function is used when an error occurs in export process
-     *
-     * @param DeviceInstance $device the device to delete
-     *
-     * @return void
-     */
-    public function deleteDev_fromexport(string $uuid, array $options = null )
-    {
-        
-        $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');
-        
-        /*$context = SerializationContext::create()->setGroups('del_dev');
-        $labJson = $this->serializer->serialize($return_array, 'json', $context);
-
-        $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
-*/
-        //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
-        
-        if ($options) {
-        $this->logger->debug('Options received ', $options);
-        $os = $this->OperatingSystemRepository->find($options["newOS_id"]);
-        $device = $this->DeviceRepository->find($options["newDevice_id"]);
-        
-        $this->entityManager->remove($os);
-        $this->entityManager->remove($device);
-        $this->entityManager->flush();
-        }
-    }
+    
+    
 }

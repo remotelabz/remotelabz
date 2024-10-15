@@ -59,18 +59,19 @@ class WorkerManager
     {
         $usages = $this->checkWorkersAction();
         if ($item instanceof Device) {
-            $memory = $item->getFlavor()->getMemory() / 2;
+            $memory = $item->getFlavor()->getMemory();
         }
         else {
             $memory = 0;
             foreach($item->getDevices() as $device) {
-                $memory += ($device->getFlavor()->getMemory() / 2) ;
+                $memory += ($device->getFlavor()->getMemory()) ;
             }
             
         }
         $memoryFreeUsages = $this->checkMemory($usages, $memory);
         $worker = $this->checkCPU($memoryFreeUsages);
-        $this->logger->debug("worker chosen from getFreeWorker :".$worker);
+
+        $this->logger->debug("Worker chosen from getFreeWorker :".$worker);
         return $worker;
     }
 

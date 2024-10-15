@@ -112,26 +112,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                         //$instance->setState(InstanceStateMessage::STATE_ERROR);
                         $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
 
-                        /* Remove newdevice template and OS created
-                        As the worker doesn't send message with some information like name chosen by the user for the new device template created,
-                        if we have an error, we have to delete creation done as soon as we click on Export button.
-                        The solution to execute the new template creation only if the worker doesn't report an error, need to pass the name chosen
-                        by the user. But this action is driven by message state receive and the worker doesn't send information in their message. It's only 
-                        state message.
-                        The format of $message->getUuid(), in this case is :
-                            InstanceStateMessage::STATE_ERROR,
-                            $deviceInstance['uuid'],
-                            $labInstance["newOS_id"],
-                            $labInstance["newDevice_id"],
-                            $labInstance["new_os_name"],
-                            $labInstance["new_os_imagename"]
-
-                        */
-                        //Uuid of the device created but to delete because an error occurs
-                        //$message->getUuid();
-                        // Test using options
-                        // For transition, all uuid are copy in options
-                        //$this->instanceManager->deleteDev_fromexport($message->getUuid(),$message->getOptions());
+                       
                         break;
 
                     default:
