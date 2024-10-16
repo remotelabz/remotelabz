@@ -210,9 +210,15 @@ class ConfigWorkerController extends Controller
                         $tmp['hypervisor'] = $operatingSystem->getHypervisor()->getName();
                         $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                         $deviceJsonToCopy = json_encode($tmp, 0, 4096);
-
-                    
-                        $this->logger->debug("Task in futur: Sync:",$tmp);
+                        if (!is_null($operatingSystem->getImageFilename())) { // the case of qemu image with link.
+                        $this->logger->debug("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                        $this->bus->dispatch(
+                            new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
+                                new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),
+                                //new AmqpStamp("192.168.11.132", AMQP_NOPARAM, []),
+                                ]
+                            );
+                        }
                     }
                 }
             }

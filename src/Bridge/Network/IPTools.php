@@ -161,17 +161,19 @@ class IPTools extends Bridge
      * @throws ProcessFailedException If the process didn't terminate successfully.
      * @return Process The executed process.
      */
-    public static function routeDelete(string $route, string $gateway) : Process {
+    public static function routeDelete(string $route, string $gateway=null){
         if (empty($route)) {
             throw new Exception("Route cannot be empty.");
         }     
 
         $command = [ 'ip', 'route', 'del' ];
         array_push($command, $route);
-        array_push($command, 'via');
-        array_push($command,$gateway);
-        
-        return static::exec($command);
+        if (!is_null($gateway)) {
+            array_push($command, 'via');
+            array_push($command,$gateway);
+        }
+            return static::exec($command);
+                throw new Exception("Route delete in error");
     }
 
     /**

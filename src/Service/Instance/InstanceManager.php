@@ -3,6 +3,7 @@
 namespace App\Service\Instance;
 
 use DateTime;
+use ErrorException;
 use App\Entity\Device;
 use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
@@ -50,6 +51,8 @@ use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use App\Bridge\Network\IPTools;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+
 
 
 /**
@@ -236,13 +239,18 @@ class InstanceManager
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
             $network=$labInstance->getNetwork();
             if (IPTools::routeExists($network)) {
-                $this->logger->debug("Route to ".$network." exists");
-               IPTools::routeDelete($network,$workerIP);
+                $this->logger->debug("Route to ".$network." exists via ".$workerIP);
+               try {
+                //IPTools::routeDelete($network,$workerIP);
+                IPTools::routeDelete($network,null);
+               }
+               catch (ErrorException $e) {
+                $this->logger->error("ERROR route delete : ".$e->getMessage());
+               }
             }
-        else {
-            $this->logger->debug("Route to ".$network." doesn't exist".$workerIP);
-            
-        }
+            else {
+            $this->logger->debug("Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
+            }
 
             $this->entityManager->persist($labInstance);
             $this->entityManager->flush();
@@ -446,7 +454,8 @@ class InstanceManager
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
-        $worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
+        //$worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
+        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
             $this->logger->error('Could not export device. No worker available');
@@ -501,6 +510,28 @@ class InstanceManager
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
             ]
         );
+
+        
+       // Copy on all other workers
+        
+        $workers = $this->configWorkerRepository->findAll();
+
+        foreach ($workers as $otherWorker) {
+            if ($otherWorker != $worker) {
+                $tmp=array();
+                $tmp['Worker_Dest_IP'] = $otherWorker;
+                $tmp['hypervisor'] = $hypervisor->getName();
+                $tmp['os_imagename'] = $imageName;
+                $deviceJsonToCopy = json_encode($tmp, 0, 4096);
+                 // the case of qemu image with link.
+                $this->logger->debug("OS to sync from ".$worker." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                $this->bus->dispatch(
+                    new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
+                        new AmqpStamp($worker, AMQP_NOPARAM, [])
+                        ]
+                    );
+            }
+        }
     }
 
     function exportlab(LabInstance $labInstance, string $name) {
