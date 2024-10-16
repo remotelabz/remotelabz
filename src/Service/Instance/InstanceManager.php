@@ -3,6 +3,7 @@
 namespace App\Service\Instance;
 
 use DateTime;
+use ErrorException;
 use App\Entity\Device;
 use App\Entity\DeviceInstance;
 use App\Entity\InstancierInterface;
@@ -50,6 +51,8 @@ use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use App\Bridge\Network\IPTools;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+
 
 
 /**
@@ -236,13 +239,18 @@ class InstanceManager
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
             $network=$labInstance->getNetwork();
             if (IPTools::routeExists($network)) {
-                $this->logger->debug("Route to ".$network." exists");
-               IPTools::routeDelete($network,$workerIP);
+                $this->logger->debug("Route to ".$network." exists via ".$workerIP);
+               try {
+                //IPTools::routeDelete($network,$workerIP);
+                IPTools::routeDelete($network,null);
+               }
+               catch (ErrorException $e) {
+                $this->logger->error("ERROR route delete : ".$e->getMessage());
+               }
             }
-        else {
-            $this->logger->debug("Route to ".$network." doesn't exist".$workerIP);
-            
-        }
+            else {
+            $this->logger->debug("Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
+            }
 
             $this->entityManager->persist($labInstance);
             $this->entityManager->flush();
@@ -446,7 +454,8 @@ class InstanceManager
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
-        $worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
+        //$worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
+        $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
             $this->logger->error('Could not export device. No worker available');
@@ -501,6 +510,33 @@ class InstanceManager
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
             ]
         );
+
+        
+       
+    }
+
+    // Copy on all other workers
+    function Sync2OS(string $workerIP,string $hypervisorName,string $imageName){
+        
+        $workers = $this->configWorkerRepository->findAll();
+
+        foreach ($workers as $otherWorker) {
+            $otherWorkerIP=$otherWorker->getIPv4();
+            if (strcmp($otherWorkerIP,$workerIP)) { //return 0 en égalité
+                $tmp=array();
+                $tmp['Worker_Dest_IP'] = $otherWorkerIP;
+                $tmp['hypervisor'] = $hypervisorName;
+                $tmp['os_imagename'] = $imageName;
+                $deviceJsonToCopy = json_encode($tmp, 0, 4096);
+                // the case of qemu image with link.
+                $this->logger->debug("OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                $this->bus->dispatch(
+                    new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
+                        new AmqpStamp($workerIP, AMQP_NOPARAM, [])
+                        ]
+                    );
+            }
+        }
     }
 
     function exportlab(LabInstance $labInstance, string $name) {
@@ -746,36 +782,6 @@ class InstanceManager
 
         return $newDevice;
     }
-
-    // TODO : Problem with the entitymanager closed when called to this function
-    /**
-     * Delete a device form a DeviceInstance, with its os defined in options.
-     * This function is used when an error occurs in export process
-     *
-     * @param DeviceInstance $device the device to delete
-     *
-     * @return void
-     */
-    public function deleteDev_fromexport(string $uuid, array $options = null )
-    {
-        
-        $this->logger->debug('Execute delete action of new device template created because error received by worker when export action request');
-        
-        /*$context = SerializationContext::create()->setGroups('del_dev');
-        $labJson = $this->serializer->serialize($return_array, 'json', $context);
-
-        $this->logger->debug('Json received to deleteDev: ', json_decode($labJson, true));
-*/
-        //Delete the instance because if we are in the lab, a lab instance exist and the device template is used.
-        
-        if ($options) {
-        $this->logger->debug('Options received ', $options);
-        $os = $this->OperatingSystemRepository->find($options["newOS_id"]);
-        $device = $this->DeviceRepository->find($options["newDevice_id"]);
-        
-        $this->entityManager->remove($os);
-        $this->entityManager->remove($device);
-        $this->entityManager->flush();
-        }
-    }
+    
+    
 }
