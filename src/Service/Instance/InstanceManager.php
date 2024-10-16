@@ -512,22 +512,26 @@ class InstanceManager
         );
 
         
-       // Copy on all other workers
+       
+    }
+
+    // Copy on all other workers
+    function Sync2OS(string $workerIP,string $hypervisorName,string $imageName){
         
         $workers = $this->configWorkerRepository->findAll();
 
         foreach ($workers as $otherWorker) {
-            if ($otherWorker != $worker) {
+            if ($otherWorker != $workerIP) {
                 $tmp=array();
-                $tmp['Worker_Dest_IP'] = $otherWorker;
-                $tmp['hypervisor'] = $hypervisor->getName();
+                $tmp['Worker_Dest_IP'] = $otherWorker->getIPv4();
+                $tmp['hypervisor'] = $hypervisorName;
                 $tmp['os_imagename'] = $imageName;
                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
-                 // the case of qemu image with link.
-                $this->logger->debug("OS to sync from ".$worker." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                // the case of qemu image with link.
+                $this->logger->debug("OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
                 $this->bus->dispatch(
                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
-                        new AmqpStamp($worker, AMQP_NOPARAM, [])
+                        new AmqpStamp($workerIP, AMQP_NOPARAM, [])
                         ]
                     );
             }

@@ -108,8 +108,11 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                     case InstanceStateMessage::STATE_EXPORTING:
                         $this->logger->debug('Instance in '.$instance->getState());
-                        $instance->setState(InstanceStateMessage::STATE_DELETED);
-                        //$instance->setState(InstanceStateMessage::STATE_ERROR);
+                        if ($message->getOptions()['error_code'] === 1) //Device never started
+                            $instance->setState(InstanceStateMessage::STATE_ERROR);
+                        else
+                            $instance->setState(InstanceStateMessage::STATE_DELETED);
+                        
                         $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
 
                        
@@ -144,6 +147,9 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 //                    $device=$instance->getDevice();
 //                    $lab=$instance->getLab();
                     $this->instanceManager->delete($instance->getLabInstance());
+                    $options_exported=$message->getOptions();
+
+                    $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$uuid);
 
                     //TODO redirect to route labs
                     //$signUpPage = $this->router->generate('labs');
