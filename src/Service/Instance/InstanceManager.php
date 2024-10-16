@@ -521,9 +521,10 @@ class InstanceManager
         $workers = $this->configWorkerRepository->findAll();
 
         foreach ($workers as $otherWorker) {
-            if ($otherWorker != $workerIP) {
+            $otherWorkerIP=$otherWorker->getIPv4();
+            if (strcmp($otherWorkerIP,$workerIP)) { //return 0 en égalité
                 $tmp=array();
-                $tmp['Worker_Dest_IP'] = $otherWorker->getIPv4();
+                $tmp['Worker_Dest_IP'] = $otherWorkerIP;
                 $tmp['hypervisor'] = $hypervisorName;
                 $tmp['os_imagename'] = $imageName;
                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);

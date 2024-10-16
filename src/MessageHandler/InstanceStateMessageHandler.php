@@ -149,7 +149,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $this->instanceManager->delete($instance->getLabInstance());
                     $options_exported=$message->getOptions();
 
-                    $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$uuid);
+                    $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$options_exported['new_os_imagename']);
 
                     //TODO redirect to route labs
                     //$signUpPage = $this->router->generate('labs');
