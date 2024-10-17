@@ -173,7 +173,6 @@ class ConfigWorkerController extends Controller
             //$OS_available_worker=$this->getOS_Worker($first_available_worker->getIPv4(),$this->workerPort);
             //$this->logger->debug("OS on Worker ". $worker->getIPv4(). " ".$OS_available_worker);
 
-            //TODO change to == 0
             if ($data['available'] == 1) {
                 $operatingSystems=$this->operatingSystemRepository->findAll();
                 $OS_available_worker=$this->getOS_Worker($worker->getIPv4(),$workerPort); //Find OS available on the worker which is enabled

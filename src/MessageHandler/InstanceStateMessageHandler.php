@@ -154,6 +154,10 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     //TODO redirect to route labs
                     //$signUpPage = $this->router->generate('labs');
                 break;
+                case InstanceStateMessage::STATE_OS_DELETED:
+                    $options_exported=$message->getOptions();
+                    $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from ".$options_exported["Worker_Dest_IP"]);
+                break;
             }
         }
         if (!is_null($instance)) {
