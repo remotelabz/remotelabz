@@ -81,20 +81,11 @@ class WorkerManager
     */
     public function getFreeWorker($item)
     {
-        $usages = $this->checkWorkersAction();
-        // Computation of total memory needed to execute the device or lab
-        if ($item instanceof Device) {
-            $memory = $item->getFlavor()->getMemory();
-        }
-        else {
-            $memory = 0;
-            foreach($item->getDevices() as $device) {
-                $memory += ($device->getFlavor()->getMemory()) ;
-            }
-            
-        }
         $min=100;
         $result="";
+        $memory=$this->Memory_Usage($item);
+        $usages = $this->checkWorkersAction();
+        
         foreach ($usages as $usage) {
             $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker']);
             $this->logger->debug("Score for worker ".$usage["worker"]." is ".$val);
@@ -104,15 +95,10 @@ class WorkerManager
             }
         }   
 
-        /*
-        $memoryFreeUsages = $this->checkMemory($usages, $memory);
-        $worker = $this->checkCPU($memoryFreeUsages);
-
-        $this->logger->debug("Worker chosen from getFreeWorker :".$worker);
-        */
         return $result;
     }
 
+    /*
     public function checkMemory($usages, $memory) {
         $workers = [];
         $this->logger->debug("checkMemory memory param:".$memory);
@@ -139,7 +125,7 @@ class WorkerManager
         $this->logger->debug("worker chosen from checkCPU :".$worker);
         return $worker;
     }
-    
+    */
     /*
     $memory : % used memory
     $disk : % used disk
