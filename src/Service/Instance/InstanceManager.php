@@ -149,6 +149,7 @@ class InstanceManager
     {
         
         $worker = $this->workerManager->getFreeWorker($lab);
+
         if ($worker == null) {
             $this->logger->error('Could not create instance. No worker available');
             throw new BadRequestHttpException('No worker available');
@@ -454,7 +455,6 @@ class InstanceManager
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
-        //$worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
         $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
