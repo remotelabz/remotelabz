@@ -149,6 +149,7 @@ class InstanceManager
     {
         
         $worker = $this->workerManager->getFreeWorker($lab);
+
         if ($worker == null) {
             $this->logger->error('Could not create instance. No worker available');
             throw new BadRequestHttpException('No worker available');
@@ -193,10 +194,10 @@ class InstanceManager
             ->populate();
 
         if (IPTools::routeExists($network))
-            $this->logger->debug("Route to ".$network." exists");
+            $this->logger->debug("Route to ".$network." exists, via ".$worker);
         else {
-            $this->logger->debug("Route to ".$network." doesn't exist".$worker);
-        IPTools::routeAdd($network,$worker);
+            $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+            IPTools::routeAdd($network,$worker);
         }
         
 
@@ -454,7 +455,6 @@ class InstanceManager
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
         $uuid = $deviceInstance->getUuid();
-        //$worker = $this->workerManager->getFreeWorker($deviceInstance->getDevice());
         $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
@@ -510,8 +510,6 @@ class InstanceManager
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
             ]
         );
-
-        
        
     }
 
@@ -522,7 +520,7 @@ class InstanceManager
 
         foreach ($workers as $otherWorker) {
             $otherWorkerIP=$otherWorker->getIPv4();
-            if (strcmp($otherWorkerIP,$workerIP)) { //return 0 en égalité
+            if (strcmp($otherWorkerIP,$workerIP) && $otherWorker->getAvailable()) { //return 0 en égalité
                 $tmp=array();
                 $tmp['Worker_Dest_IP'] = $otherWorkerIP;
                 $tmp['hypervisor'] = $hypervisorName;
@@ -782,6 +780,5 @@ class InstanceManager
 
         return $newDevice;
     }
-    
-    
+       
 }

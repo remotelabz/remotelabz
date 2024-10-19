@@ -50,7 +50,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
             'state_message' => $message->getState()
-        ]);
+            ]);
 
         // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
         // So if it's an error, in all case, we have to return, from the worker
@@ -152,8 +152,15 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                     $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$options_exported['new_os_imagename']);
 
                     //TODO redirect to route labs
-                    //$signUpPage = $this->router->generate('labs');
+                    //$this->redirectToRoute('labs');
+                    
                 break;
+                case InstanceStateMessage::STATE_OS_DELETED:
+                    $options_exported=$message->getOptions();
+                    $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);                  
+                break;
+
+                
             }
         }
         if (!is_null($instance)) {

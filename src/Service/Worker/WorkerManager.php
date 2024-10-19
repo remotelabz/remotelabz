@@ -55,9 +55,13 @@ class WorkerManager
             return $usage;
     }
 
-    public function getFreeWorker($item)
+    /*
+    $item : the device or the lab we want to execute
+    return The value of needed memory for all devices
+    */
+    private function Memory_Usage($item)
     {
-        $usages = $this->checkWorkersAction();
+        $memory=0;
         if ($item instanceof Device) {
             $memory = $item->getFlavor()->getMemory();
         }
@@ -68,13 +72,33 @@ class WorkerManager
             }
             
         }
-        $memoryFreeUsages = $this->checkMemory($usages, $memory);
-        $worker = $this->checkCPU($memoryFreeUsages);
+        return $memory;
+    }
+    
+    
+    /*
+    $item : the device or the lab we want to execute
+    */
+    public function getFreeWorker($item)
+    {
+        $min=100;
+        $result="";
+        $memory=$this->Memory_Usage($item);
+        $usages = $this->checkWorkersAction();
+        
+        foreach ($usages as $usage) {
+            $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker']);
+            $this->logger->debug("Score for worker ".$usage["worker"]." is ".$val);
+            if ($val<$min) {
+                $min=$val;
+                $result=$usage['worker'];
+            }
+        }   
 
-        $this->logger->debug("Worker chosen from getFreeWorker :".$worker);
-        return $worker;
+        return $result;
     }
 
+    /*
     public function checkMemory($usages, $memory) {
         $workers = [];
         $this->logger->debug("checkMemory memory param:".$memory);
@@ -101,4 +125,45 @@ class WorkerManager
         $this->logger->debug("worker chosen from checkCPU :".$worker);
         return $worker;
     }
+    */
+    /*
+    $memory : % used memory
+    $disk : % used disk
+    $cpu : % cpu load
+    $needmemory : need memory to execute a lab
+    $worker : IP of the worker to check
+    */
+    public function loadBalancing($memory, $disk, $cpu, $needmemory, $max_memory, $worker) {
+        // Limites maximales avant de considérer un serveur surchargé (ajuster selon vos besoins)
+        $maxMemory = 85; // en pourcentage
+        $maxDisk = 90; // en pourcentage
+        $maxCpu = 90; // en pourcentage
+    
+        // Mémoire disponible : 
+        
+        $availableMemory = 100 - $memory; // in %
+        $availableMemoryKB=$availableMemory*$max_memory;
+
+        // Vérifier si le serveur peut gérer la charge en fonction de la mémoire disponible
+        if ( $availableMemory*$max_memory < $needmemory) {
+            $this->logger->info("Insufficient memory on worker: ".$worker." It need ".$needmemory." and we have only ".$availableMemoryKB." free");
+        }
+    
+        // Calcul du score pour chaque paramètre
+        $memoryScore = ($maxMemory - $memory) / $maxMemory; // Le plus bas sera pénalisant
+        $diskScore = ($maxDisk - $disk) / $maxDisk; // Idem pour le disque
+        $cpuScore = ($maxCpu - $cpu) / $maxCpu; // Idem pour le CPU
+    
+        // Pondérer les scores pour obtenir un score final. On peut donner plus de poids à un paramètre en particulier si besoin.
+        $finalScore = ($memoryScore * 0.4) + ($diskScore * 0.2) + ($cpuScore * 0.4);
+    
+        // Si le serveur est surchargé dans l'un des domaines, on considère qu'il est inapte.
+        if ($memory >= $maxMemory || $disk >= $maxDisk || $cpu >= $maxCpu) {
+            $this->logger->info("Worker: ".$worker." is overloaded");
+        }
+    
+        // Retourne le score de santé du serveur
+        return $finalScore;
+    }
+    
 }

@@ -4548,12 +4548,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/remotelabz/remotelabz-message-bundle.git",
-                "reference": "8047e7438ca991bcb4ff9957970ee5406d773c02"
+                "reference": "58e472e6664cb92f4e88fe73f1f47adec81e7ce5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/8047e7438ca991bcb4ff9957970ee5406d773c02",
-                "reference": "8047e7438ca991bcb4ff9957970ee5406d773c02",
+                "url": "https://api.github.com/repos/remotelabz/remotelabz-message-bundle/zipball/58e472e6664cb92f4e88fe73f1f47adec81e7ce5",
+                "reference": "58e472e6664cb92f4e88fe73f1f47adec81e7ce5",
                 "shasum": ""
             },
             "require": {
@@ -4599,7 +4599,7 @@
                 "source": "https://github.com/remotelabz/remotelabz-message-bundle/tree/dev",
                 "issues": "https://github.com/remotelabz/remotelabz-message-bundle/issues"
             },
-            "time": "2024-09-29T17:27:11+00:00"
+            "time": "2024-10-17T16:18:15+00:00"
         },
         {
             "name": "s1lentium/iptools",
