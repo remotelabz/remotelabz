@@ -132,6 +132,7 @@ services:
     App\Security\LoginFormAuthenticator:
         arguments:
             $refreshTokenManager: '@gesdinet.jwtrefreshtoken.refresh_token_manager'
+            $maintenance: '%env(bool:APP_MAINTENANCE)%'
 
     App\Security\ShibbolethAuthenticator:
         arguments:

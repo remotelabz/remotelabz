@@ -51,6 +51,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
      */
     protected $refreshTokenManager;
     private $config;
+    protected $maintenance;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -60,7 +61,8 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         JWTTokenManagerInterface $JWTManager,
         RefreshTokenManagerInterface $refreshTokenManager,
         ContainerBagInterface $config,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator,
+        bool $maintenance
     ) {
         $this->entityManager = $entityManager;
         $this->router = $router;
@@ -70,12 +72,12 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         $this->refreshTokenManager = $refreshTokenManager;
         $this->config = $config;
         $this->urlGenerator = $urlGenerator;
+        $this->maintenance=$maintenance;
     }
 
     public function supports(Request $request): bool
     {
-        return 'login' === $request->attributes->get('_route')
-            && $request->isMethod('POST');
+        return ($request->getPathInfo() === '/login' && $request->isMethod('POST'));
     }
 
     public function authenticate(Request $request): Passport
@@ -93,74 +95,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         );
     }
 
-    /*public function getCredentials(Request $request)
-    {
-        $credentials = [
-            'email' => $request->request->get('email'),
-            'password' => $request->request->get('password'),
-            'csrf_token' => $request->request->get('_csrf_token'),
-        ];
-        $request->getSession()->set(
-            Security::LAST_USERNAME,
-            $credentials['email']
-        );
-
-        return $credentials;
-    }*/
-
-    /*public function getUser($credentials, UserProviderInterface $userProvider): ?UserInterface
-    {
-        $token = new CsrfToken('authenticate', $credentials['csrf_token']);
-        if (!$this->csrfTokenManager->isTokenValid($token)) {
-            throw new InvalidCsrfTokenException();
-        }
-
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $credentials['email']]);
-
-        if (!$user) {
-            // fail authentication with a custom error
-            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
-        }
-
-        if (!$user->isEnabled()) {
-            throw new DisabledException();
-        }
-
-        return $user;
-    }*/
-
-    /*public function checkCredentials($credentials, UserInterface $user): bool
-    {
-        return $this->passwordHasher->isPasswordValid($user, $credentials['password']);
-    }*/
-
-    /*public function onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
-    {
-        $response = new RedirectResponse('/');
-        /** @var User $user */
-        /*$user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
-
-        $jwtToken = $this->JWTManager->create($user);
-        $now = new DateTime();
-        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
-
-        $response->headers->setCookie($jwtTokenCookie);
-        // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
-        $user->setLastActivity(new DateTime());
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
-
-        if ($request->query->has('ref_url')) {
-            $response->setTargetUrl(urldecode($request->query->get('ref_url')));
-        } else if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
-            $response->setTargetUrl($targetPath);
-        } else {
-            $response->setTargetUrl($this->router->generate('index'));
-        }
-
-        return $response;
-    }*/
-
+ 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         /*if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
@@ -169,25 +104,30 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
         $response = new RedirectResponse('/');
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+//TODO Get Role and maintenance state
 
-        $jwtToken = $this->JWTManager->create($user);
-        $now = new DateTime();
-        $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
+        if ( $this->maintenance && $user->getRoles() === 'ROLE_SUPER_ADMINISTRATOR') {
+            $jwtToken = $this->JWTManager->create($user);
+            $now = new DateTime();
+            $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
 
-        $response->headers->setCookie($jwtTokenCookie);
-        // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
-        $user->setLastActivity(new DateTime());
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
-        
-        if ($request->query->has('ref_url')) {
-            $response->setTargetUrl(urldecode($request->query->get('ref_url')));
-        } else if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            $response->setTargetUrl($targetPath);
-        } else {
-            $response->setTargetUrl($this->router->generate('index'));
-        }
-        return $response;
+            $response->headers->setCookie($jwtTokenCookie);
+            // $response->headers->setCookie(Cookie::create('rt', $this->createRefreshToken($user)));
+            $user->setLastActivity(new DateTime());
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+            
+            if ($request->query->has('ref_url')) {
+                $response->setTargetUrl(urldecode($request->query->get('ref_url')));
+            } else if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+                $response->setTargetUrl($targetPath);
+            } else {
+                $response->setTargetUrl($this->router->generate('index'));
+            }
+            return $response;
+        } else 
+            return $response->setTargetUrl($this->router->generate('login'));
+            
     }
 
 
