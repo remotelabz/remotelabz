@@ -70,7 +70,6 @@ class ServiceController extends Controller
                 $service = new $registeredService();
                 $serviceStatus[$service::getServiceName()] = $service->isStarted();
                 $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
-
             }
             if ($type === 'distant') {
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
@@ -79,11 +78,8 @@ class ServiceController extends Controller
                     $service = new $registeredService($this->workerPort, $worker->getIPv4());
                     $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service->isStarted();
                     $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
-                }
-                
+                }               
             }
-           
-
         }
 
         return $this->render('service/index.html.twig', [

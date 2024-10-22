@@ -81,15 +81,15 @@ class WorkerManager
     */
     public function getFreeWorker($item)
     {
-        $min=100;
+        $min=0;
         $result="";
         $memory=$this->Memory_Usage($item);
         $usages = $this->checkWorkersAction();
         
         foreach ($usages as $usage) {
-            $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker']);
+            $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
             $this->logger->debug("Score for worker ".$usage["worker"]." is ".$val);
-            if ($val<$min) {
+            if ($val>$min) {
                 $min=$val;
                 $result=$usage['worker'];
             }
@@ -133,12 +133,13 @@ class WorkerManager
     $needmemory : need memory to execute a lab
     $worker : IP of the worker to check
     */
-    public function loadBalancing($memory, $disk, $cpu, $needmemory, $max_memory, $worker) {
+    public function loadBalancing($memory, $disk, $cpu, $needmemory, $max_memory, $worker, $lxcfs) {
         // Limites maximales avant de considérer un serveur surchargé (ajuster selon vos besoins)
         $maxMemory = 85; // en pourcentage
         $maxDisk = 90; // en pourcentage
         $maxCpu = 90; // en pourcentage
-    
+        $maxlxcfs= 180; // max load CPU of lxcfs process, in purcent
+
         // Mémoire disponible : 
         
         $availableMemory = 100 - $memory; // in %
@@ -153,12 +154,13 @@ class WorkerManager
         $memoryScore = ($maxMemory - $memory) / $maxMemory; // Le plus bas sera pénalisant
         $diskScore = ($maxDisk - $disk) / $maxDisk; // Idem pour le disque
         $cpuScore = ($maxCpu - $cpu) / $maxCpu; // Idem pour le CPU
-    
+        $lxcfsScore = ($maxlxcfs - $lxcfs) / $maxlxcfs;
+
         // Pondérer les scores pour obtenir un score final. On peut donner plus de poids à un paramètre en particulier si besoin.
-        $finalScore = ($memoryScore * 0.4) + ($diskScore * 0.2) + ($cpuScore * 0.4);
+        $finalScore = ($memoryScore * 0.3) + ($diskScore * 0.1) + ($cpuScore * 0.3) + ($lxcfsScore * 0.3);
     
         // Si le serveur est surchargé dans l'un des domaines, on considère qu'il est inapte.
-        if ($memory >= $maxMemory || $disk >= $maxDisk || $cpu >= $maxCpu) {
+        if ($memory >= $maxMemory || $disk >= $maxDisk || $cpu >= $maxCpu || $lxcfs >= $maxlxcfs ) {
             $this->logger->info("Worker: ".$worker." is overloaded");
         }
     
