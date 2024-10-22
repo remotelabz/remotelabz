@@ -33,6 +33,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Psr\Log\LoggerInterface;
 
 
 class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
@@ -45,6 +46,8 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     private $passwordHasher;
     private $JWTManager;
     public const LOGIN_ROUTE = 'login';
+    private $logger;
+
 
     /**
      * @var RefreshTokenManagerInterface
@@ -62,7 +65,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         RefreshTokenManagerInterface $refreshTokenManager,
         ContainerBagInterface $config,
         UrlGeneratorInterface $urlGenerator,
-        bool $maintenance
+        bool $maintenance,
+        LoggerInterface $logger
+
     ) {
         $this->entityManager = $entityManager;
         $this->router = $router;
@@ -73,6 +78,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         $this->config = $config;
         $this->urlGenerator = $urlGenerator;
         $this->maintenance=$maintenance;
+        $this->logger = $logger;
     }
 
     public function supports(Request $request): bool
@@ -106,7 +112,9 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
 //TODO Get Role and maintenance state
 
-        if ( $this->maintenance && $user->getRoles() === 'ROLE_SUPER_ADMINISTRATOR') {
+        $this->logger->info("Authentification : Email: ".$user->getEmail()." Roles :",$user->getRoles());
+
+        if ( ($this->maintenance && in_array('ROLE_SUPER_ADMINISTRATOR',$user->getRoles())) || !$this->maintenance ) {
             $jwtToken = $this->JWTManager->create($user);
             $now = new DateTime();
             $jwtTokenCookie = Cookie::create('bearer', $jwtToken, $now->getTimestamp() + 24 * 3600);
