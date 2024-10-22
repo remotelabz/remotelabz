@@ -124,12 +124,12 @@
                 <div class="card m-4">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
-                        Load of LXCFS process
+                        LXCFS
                         </h4>
                         <div class="stats-circle cpu-circle">
                         </div>
                         <p class="card-text flex-grow-1 text-center" id ="lxcfs" name="lxcfs" style="display: none;">
-                            {% if worker is null %} NA {% else %} {{ worker['lxcfs'] }}% {% endif %}
+                            {% if worker is null %} NA {% else %} {{ worker['lxcfs'] }} % {% endif %}
                         </p>
                     </div>
                 </div>
@@ -214,6 +214,26 @@ function drawStats() {
         $(circle).addClass('worker-'+ index);
     }
 
+    var disks = $('p[name="lxcfs"]');
+    for (disk of disks) {
+        diskText = disk.textContent.split(/(\d+)/)[1];
+        circle = $(disk).prev();
+
+        if (diskText != undefined) {
+            $(circle).circleProgress({
+                value: diskText,
+                min: 0,
+                max:100,
+                textFormat: 'percent'
+            })
+        }
+        else {
+            $(disk).css({display: "block", marginTop: "20%"});
+        }
+        index = [...disks].indexOf(disk);
+        $(circle).addClass('worker-'+ index);
+    }
+
     setTimeout(function() {
         let cpus = $('p[name="cpu"]');
         for (cpu of cpus) {
@@ -235,6 +255,14 @@ function drawStats() {
             diskText = disk.textContent.split(/(\d+)/)[1];
             changeColorProgress(diskText, '.disk-circle.worker-' +index);
         }
+
+        let lxclses = $('p[name="lxcfs"]');
+        for (disk of disks) {
+            index = [...lxcfses].indexOf(lxcfs);
+            lxcfsText = lxcfs.textContent.split(/(\d+)/)[1];
+            changeColorProgress(diskText, '.lxcfs-circle.worker-' +index);
+        }
+
     }, 100);
 }
 
