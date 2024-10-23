@@ -22,6 +22,11 @@
     {% if nbworkers == 1 %}  
     <div class="row">
         <div class="col-xl-8 col-lg-12">
+        <ul>
+            <li>Number of opened files : value['openedfiles']</br></li>
+            <li>Number of LXC containers : value['lxclsrun']</br></li>
+            <li>Number of VM QEMU : value['qemurun']</br></li>
+        </ul>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                 <div class="card m-4">
                     <div class="card-body d-flex flex-column">
@@ -83,6 +88,11 @@
     </div>
     <div class="row">
         <div class="col-xl-8 col-lg-12">
+        <ul>
+            <li>Number of opened files : {{ worker['openedfiles'] }}</br></li>
+            <li>Number of LXC containers : {{ worker['lxclsrun'] }}</br></li>
+            <li>Number of VM QEMU : {{ worker['qemurun'] }}</br></li>
+        </ul>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
                 <div class="card m-4">
                     <div class="card-body d-flex flex-column">
