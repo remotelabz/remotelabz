@@ -11,7 +11,7 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
     protected $serviceName;
     
     
-    public function isStarted(): bool
+    public function isStarted()
     {
 
         $process = new Process([

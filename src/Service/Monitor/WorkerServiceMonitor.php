@@ -4,18 +4,24 @@ namespace App\Service\Monitor;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class WorkerServiceMonitor extends AbstractServiceMonitor
 {
     protected $workerServer;
     protected $workerPort;
+    private $logger;
 
     public function __construct(
         string $workerPort,
-        string $workerServer
+        string $workerServer,
+        LoggerInterface $logger=null
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
+        $this->logger = $logger ?: new NullLogger();       
     }
 
     public static function getServiceName(): string
@@ -25,13 +31,14 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
 
     public function getServiceSubName(): string
     {
-        return 'worker '.$this->workerServer;
+        return $this->workerServer;
     }
 
     public function start()
     {
         $workers = explode(',', $this->workerServer);
         $nbWorkers = count($workers);
+       
         if ($nbWorkers > 1) {
             foreach($workers as $worker) {
                 $client = new Client();
@@ -59,6 +66,7 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
             } catch (Exception $exception) {
                 return false;
             }
+         
         }
         
 
@@ -102,46 +110,27 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
         return true;
     }
 
-    public function isStarted(): bool
+    public function isStarted(): array
     {
-        $workers = explode(',', $this->workerServer);
-        $nbWorkers = count($workers);
-        if ($nbWorkers > 1) {
-            $healths = [];
-            foreach($workers as $worker) {
-                $client = new Client();
-                $url = 'http://'.$worker.':'.$this->workerPort.'/healthcheck';
-                try {
-                    $response = $client->get($url, [
-                        'query' => [
-                            'action' => 'start'
-                        ]
-                    ]);
-                } catch (Exception $exception) {
-                    return false;
-                }
-                $health = json_decode($response->getBody()->getContents(), true);
-                array_push($healths, $health['remotelabz-worker']['isStarted']);
-            }
-            if (in_array(false, $healths)) {
-                return $health['remotelabz-worker']['isStarted'] = false;
-            }
-            else {
-                return $health['remotelabz-worker']['isStarted'] = true;
-            }
-        }
-        else {
+            //$this->logger->info("Worker: ".$this->workerServer);
+
             $client = new Client();
             $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/healthcheck';
             try {
                 $response = $client->get($url);
-            } catch (Exception $exception) {
-                return false;
             }
-
+            catch (Exception $e) {
+                return array(
+                    "statut" => (bool) false,
+                    "error_code" => 1,
+                    "value" => $e->getMessage());
+            }
+           
             $health = json_decode($response->getBody()->getContents(), true);
-
-            return $health['remotelabz-worker']['isStarted'];
-        }
+            $this->logger->debug("isStarted: ",$health);            
+            return array("statut" => (bool) true,
+                            "error_code" => 0,
+                            "value" => $health['remotelabz-worker']['isStarted']
+                        );
     }
 }

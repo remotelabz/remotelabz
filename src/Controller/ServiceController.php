@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
 use GuzzleHttp\Client;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\ConfigWorkerRepository;
@@ -39,10 +41,7 @@ class ServiceController extends Controller
         $this->workerServer = $workerServer;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
-        $this->logger = $logger;
-        if ($logger == null) {
-            $this->logger = new Logger();
-        }
+        $this->logger = $logger ?: new NullLogger();       
     }
 
     /**
@@ -68,16 +67,23 @@ class ServiceController extends Controller
             if ($type === 'local') {
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService();
-                $serviceStatus[$service::getServiceName()] = $service->isStarted();
-                $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+                $service_result=$service->isStarted();
+                $serviceStatus[$service::getServiceName()] = $service_result;
+                    $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result);
             }
             if ($type === 'distant') {
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
                 foreach($workers as $worker) {
                     /** @var ServiceMonitorInterface */
-                    $service = new $registeredService($this->workerPort, $worker->getIPv4());
-                    $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service->isStarted();
-                    $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted());
+                    $service = new $registeredService($this->workerPort, $worker->getIPv4(), $this->logger);
+                    $service_result=$service->isStarted();
+                    $this->logger->info("Health of worker: ".$worker->getIPv4()." Result: ",$service_result);
+                    if ($service_result["statut"] === true) // The worker is power on so, the service (value) can be up or down
+                        $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service_result["value"];
+                    else  // The worker is power off
+                        $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = "error";
+
+                    $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result["statut"]);
                 }               
             }
         }
@@ -103,11 +109,13 @@ class ServiceController extends Controller
                     if ($type === 'local') {
                         $service = new $registredService();
                         $service->start();
+                        //TODO Change the statut : wait a health message !
                         $this->addFlash('success', 'Service successfully started.');
                     }
                     if ($type === 'distant') {
                         $service = new $registredService($this->workerPort, $this->workerServer);
                         $service->start();
+                        //TODO Change the statut : wait a health message !
                         $this->addFlash('success', 'Service successfully started.');
                     }
                 }
