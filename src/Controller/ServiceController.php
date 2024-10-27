@@ -62,14 +62,19 @@ class ServiceController extends Controller
     public function index()
     {
         $serviceStatus = [];
+        
 
         foreach ($this->getRegistredServices() as $registeredService => $type) {
+            $this->logger->debug("Type of service: ".$registeredService);
+            $this->logger->debug("Name of the service: ".$registeredService::getServiceName());
+
             if ($type === 'local') {
                 /** @var ServiceMonitorInterface */
                 $service = new $registeredService();
                 $service_result=$service->isStarted();
                 $serviceStatus[$service::getServiceName()] = $service_result;
                     $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result);
+                           
             }
             if ($type === 'distant') {
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
@@ -78,20 +83,27 @@ class ServiceController extends Controller
                     $service = new $registeredService($this->workerPort, $worker->getIPv4(), $this->logger);
                     $service_result=$service->isStarted();
                     $this->logger->info("Health of worker: ".$worker->getIPv4()." Result: ",$service_result);
-                    if ($service_result["statut"] === true) // The worker is power on so, the service (value) can be up or down
-                        $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service_result["value"];
-                    else  // The worker is power off
+                    if ($service_result["power"] === true) {// The worker is power on so, the service (value) can be up or down
+                        $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service_result["service"];
+                    }
+                    elseif (($service_result["power"] === false)) {  // The worker is power off
                         $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = "error";
-
-                    $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result["statut"]);
-                }               
+                        //The service is not response
+                        $worker = $this->configWorkerRepository->findBy(['IPv4' => $worker->getIPv4()]);
+                        $worker[0]->setAvailable(0);
+                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager->persist($worker[0]);
+                        $entityManager->flush();
+                    }
+                }             
             }
         }
 
         return $this->render('service/index.html.twig', [
             'serviceName' => $service::getServiceName(),
-            'serviceStarted' => $serviceStatus,
+            'serviceStatus' => $serviceStatus,
         ]);
+        
     }
 
     /**
@@ -99,24 +111,34 @@ class ServiceController extends Controller
      */
     public function startServiceAction(Request $request)
     {
-        $requestedService = $request->query->get('service');
+        $requestedService = $request->query->get('service');     
+        $publicKeyFile=$this->getParameter('app.ssh.worker.publickey');
+        $privateKeyFile=$this->getParameter('app.ssh.worker.privatekey');
+        $ssh_user=$this->getParameter('app.ssh.worker.user');
+        $ssh_password=$this->getParameter('app.ssh.worker.passwd');
+        
+        $this->logger->debug("Requested service: ".$requestedService);
+
 
         try {
             foreach ($this->getRegistredServices() as $registredService => $type) {
-                $serviceName = call_user_func($registredService.'::getServiceName');
+                $serviceName = $registredService::getServiceName();                             
 
                 if ($requestedService === $serviceName) {
                     if ($type === 'local') {
+                        $this->logger->info("Start service action requested for ".$registredService);
                         $service = new $registredService();
                         $service->start();
                         //TODO Change the statut : wait a health message !
                         $this->addFlash('success', 'Service successfully started.');
                     }
                     if ($type === 'distant') {
-                        $service = new $registredService($this->workerPort, $this->workerServer);
-                        $service->start();
+                        $this->logger->info("Start action for worker: ".$request->query->get('ip'));
+                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->logger);
+                        if ($service->start())
                         //TODO Change the statut : wait a health message !
-                        $this->addFlash('success', 'Service successfully started.');
+                            $this->addFlash('success', 'Service successfully started.');
+                        else $this->addFlash('error', 'Service failed.');
                     }
                 }
             }
@@ -127,7 +149,7 @@ class ServiceController extends Controller
             return $this->redirectToRoute('services', ['error' => true]);
         } catch (Exception $e) {
             $this->addFlash('danger', 'Service failed to start.');
-            $this->logger->error("Error starting service ".$service::getServiceName(). "Exception ".$e); 
+            //$this->logger->error("Error starting service ".$service::getServiceName(). "Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         }
@@ -157,11 +179,13 @@ class ServiceController extends Controller
                         $this->addFlash('success', 'Service successfully stopped.');
                     }
                     if ($type === 'distant') {
-                        $service = new $registredService($this->workerPort, $this->workerServer);
-                        $service->stop();
-                        $this->addFlash('success', 'Service successfully stopped.');
+                        $this->logger->info("Stop action for worker: ".$request->query->get('ip'));
+                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->logger);
+                        if ($service->stop()) {
+                            $this->addFlash('success', 'Service successfully stopped.');
+                            //We assume the worker stay available. It's just the service is down
+                        }
                     }
-                $this->logger->info($type." service ".$service::getServiceName(). " is in state : ".$service->isStarted()); 
                 }
             }
         } catch (ProcessFailedException $e) {

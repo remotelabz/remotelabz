@@ -64,6 +64,11 @@ parameters:
     app.ssl.dn.org: '%env(resolve:SSL_DN_ORG)%'
     app.ssl.dn.email: '%env(resolve:SSL_DN_EMAIL)%'
 
+    app.ssh.worker.user : '%env(string:SSH_USER_WORKER)%'
+    app.ssh.worker.passwd : '%env(string:SSH_USER_PASSWD)%'
+    app.ssh.worker.privatekey : '%env(string:SSH_USER_PRIVATEKEY_FILE)%'
+    app.ssh.worker.publickey : '%env(string:SSH_USER_PUBLICKEY_FILE)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -236,3 +241,5 @@ services:
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'
+
+    
