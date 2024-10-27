@@ -21,6 +21,9 @@ use GuzzleHttp\Client;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use App\Repository\ConfigWorkerRepository;
 use App\Entity\ConfigWorker;
+use App\Repository\LabInstanceRepository;
+use App\Entity\LabInstance;
+
 
 
 class ServiceController extends Controller
@@ -29,18 +32,22 @@ class ServiceController extends Controller
     protected $workerServer;
     private $logger;
     protected $workerManager;
+    private $labInstanceRepository;
+
 
     public function __construct(
         string $workerPort,
         string $workerServer,
         LoggerInterface $logger=null,
         WorkerManager $workerManager,
-        ConfigWorkerRepository $configWorkerRepository
+        ConfigWorkerRepository $configWorkerRepository,
+        LabInstanceRepository $labInstanceRepository
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
+        $this->LabInstanceRepository = $labInstanceRepository;
         $this->logger = $logger ?: new NullLogger();       
     }
 
@@ -62,7 +69,6 @@ class ServiceController extends Controller
     public function index()
     {
         $serviceStatus = [];
-        
 
         foreach ($this->getRegistredServices() as $registeredService => $type) {
             $this->logger->debug("Type of service: ".$registeredService);
@@ -80,7 +86,7 @@ class ServiceController extends Controller
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
                 foreach($workers as $worker) {
                     /** @var ServiceMonitorInterface */
-                    $service = new $registeredService($this->workerPort, $worker->getIPv4(), $this->logger);
+                    $service = new $registeredService($this->workerPort, $worker->getIPv4(), $this->LabInstanceRepository, $this->logger);
                     $service_result=$service->isStarted();
                     $this->logger->info("Health of worker: ".$worker->getIPv4()." Result: ",$service_result);
                     if ($service_result["power"] === true) {// The worker is power on so, the service (value) can be up or down
@@ -134,11 +140,10 @@ class ServiceController extends Controller
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Start action for worker: ".$request->query->get('ip'));
-                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->logger);
+                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
                         if ($service->start())
                         //TODO Change the statut : wait a health message !
                             $this->addFlash('success', 'Service successfully started.');
-                        else $this->addFlash('error', 'Service failed.');
                     }
                 }
             }
@@ -180,7 +185,7 @@ class ServiceController extends Controller
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Stop action for worker: ".$request->query->get('ip'));
-                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->logger);
+                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
                         if ($service->stop()) {
                             $this->addFlash('success', 'Service successfully stopped.');
                             //We assume the worker stay available. It's just the service is down

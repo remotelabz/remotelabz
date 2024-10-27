@@ -7,22 +7,28 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use App\Repository\LabInstanceRepository;
+use App\Entity\LabInstance;
+use App\Bridge\Network\IPTools;
+
 
 class WorkerServiceMonitor extends AbstractServiceMonitor
 {
     protected $workerServer;
     protected $workerPort;
     private $logger;
-    protected $params;
+    private $labInstanceRepository;
 
     public function __construct(
         string $workerPort,
         string $workerServer,
+        LabInstanceRepository $labInstanceRepository,
         LoggerInterface $logger=null        
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
-        $this->logger = $logger ?: new NullLogger();     
+        $this->LabInstanceRepository = $labInstanceRepository;
+        $this->logger = $logger ?: new NullLogger();
     }
 
     public static function getServiceName(): string
@@ -47,8 +53,23 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
                         'action' => 'start'
                     ]
                 ]);
+                //Looking for all routes to lab on this worker
+                $labinstances = $this->LabInstanceRepository->findBy(['workerIp' => $this->workerServer]);
+                foreach ($labinstances as $labinstance) {
+                    $network=$labinstance->getNetwork();
+                    $this->logger->debug("Network for lab ".$labinstance->getLab()->getName()." is ".$network);
+                    //route exists ?
+                    if (IPTools::routeExists($network))
+                        $this->logger->debug("Route to ".$network." exists, via ".$this->workerServer);
+                    else {
+                        $this->logger->debug("Route to ".$network." doesn't exist, via ".$this->workerServer);
+                        IPTools::routeAdd($network,$this->workerServer);
+                    }
+                }
+
+            return true;
         } catch (Exception $exception) {
-            $this->logger->debug("Service remotelabz-worker ".$this->workerServer." is perhaps down");
+            $this->logger->debug("Service remotelabz-worker ".$this->workerServer." is perhaps down :".$exception->getMessage());
             try {
                 $connection=$this->ssh($this->workerServer,"22",$ssh_user,$ssh_password,$publicKeyFile,$privateKeyFile);
                 $cmd="sudo service remotelabz-worker restart";
@@ -64,11 +85,9 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
                 ssh2_disconnect($connection);
             }
             catch (Exception $e) {
-
                 return false;
             }
-
-        return true;
+        return false;
         }
     }
 
@@ -109,7 +128,7 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
             }
            
             $health = json_decode($response->getBody()->getContents(), true);
-            $this->logger->debug("isStarted: ",$health);
+            //$this->logger->debug("isStarted: ",$health);
          
             return array("power" => (bool) true,
                             "error_code" => 0,

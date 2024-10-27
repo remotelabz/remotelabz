@@ -83,6 +83,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
     
     function refresh() {
         Remotelabz.configWorker.all().then((result)=> {
+            //console.log(result);
             setWorkers(result.data);
             setNbWorkers(result.data.length);
             let dbWorkers = result.data.sort((a,b)=>{return a.queueName.replace(/messages_worker/,"") - b.queueName.replace(/messages_worker/,"")});
@@ -98,7 +99,7 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                                 <input type="text" id={worker.id} className="form-control mb-2" name="workers" defaultValue={worker.IPv4} readOnly={!worker.available}/>
                             </div>
                             <div className="col-2">
-                                    {worker.available == true ? <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
+                                    {worker.available == true ? <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : <button type="button" className='btn btn-success mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
                                     <button type="button" className='btn btn-danger' onClick={() => deleteWorker(worker.id)}>Delete</button>
                                 
                             </div>
