@@ -35,7 +35,11 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
+            return false;
         }
+
+        return true;
+
     }
 
     public function stop()
@@ -49,7 +53,9 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
+            return false;
         }
+        return true;
     }
 
     public static abstract function getServiceName(): string;

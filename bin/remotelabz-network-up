@@ -9,7 +9,10 @@ use App\Bridge\Network\IPTools;
 
 require dirname(__DIR__).'/src/.bootstrap.php';
 
+/* 
+Deprecated from version 2.4.4 - Routes are add dynamically for each lab to the right worker
 $cmd = ['ip','route','add'];
+
 
 if ( array_key_exists('BASE_NETWORK', $_ENV) && array_key_exists('WORKER_DATA_IP', $_ENV) ) {
     $base_ip = new IP($_ENV['BASE_NETWORK']);
@@ -25,3 +28,4 @@ $process->setTimeout(null);
 $process->run(function ($type, $buffer) {
     echo $buffer;
 });
+*/

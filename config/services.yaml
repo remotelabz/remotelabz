@@ -223,6 +223,8 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+            $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
+            $remotelabzProxyServerAPI: '%app.services.proxy.server.api%'
 
     App\Controller\UserController:
         arguments:

@@ -9,6 +9,8 @@ use App\Service\Monitor\ProxyServiceMonitor;
 use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
 use App\Service\Worker\WorkerManager;
+use App\Service\Proxy\ProxyManager;
+
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,8 +25,7 @@ use App\Repository\ConfigWorkerRepository;
 use App\Entity\ConfigWorker;
 use App\Repository\LabInstanceRepository;
 use App\Entity\LabInstance;
-
-
+use App\Repository\DeviceInstanceRepository;
 
 class ServiceController extends Controller
 {
@@ -33,21 +34,32 @@ class ServiceController extends Controller
     private $logger;
     protected $workerManager;
     private $labInstanceRepository;
-
+    private $remotelabzProxyServerAPI;
+    private $remotelabzProxyApiPort;
+    protected $deviceInstanceRepository;
+    protected $proxyManager;
 
     public function __construct(
         string $workerPort,
         string $workerServer,
+        string $remotelabzProxyServerAPI,
+        string $remotelabzProxyApiPort,
         LoggerInterface $logger=null,
         WorkerManager $workerManager,
+        ProxyManager $proxyManager,
         ConfigWorkerRepository $configWorkerRepository,
-        LabInstanceRepository $labInstanceRepository
+        LabInstanceRepository $labInstanceRepository,
+        DeviceInstanceRepository $deviceInstanceRepository
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->LabInstanceRepository = $labInstanceRepository;
+        $this->remotelabzProxyServerAPI = $remotelabzProxyServerAPI;
+        $this->remotelabzProxyApiPort = $remotelabzProxyApiPort;
+        $this->deviceInstanceRepository = $deviceInstanceRepository;
+        $this->proxyManager = $proxyManager;
         $this->logger = $logger ?: new NullLogger();       
     }
 
@@ -71,15 +83,29 @@ class ServiceController extends Controller
         $serviceStatus = [];
 
         foreach ($this->getRegistredServices() as $registeredService => $type) {
-            $this->logger->debug("Type of service: ".$registeredService);
-            $this->logger->debug("Name of the service: ".$registeredService::getServiceName());
+            //$this->logger->debug("Type of service: ".$registeredService);
+            //$this->logger->debug("Name of the service: ".$registeredService::getServiceName());
 
             if ($type === 'local') {
                 /** @var ServiceMonitorInterface */
-                $service = new $registeredService();
+                $service=null;
+                if ($registeredService::getServiceName() == "remotelabz") {
+                    $service = new $registeredService();
+                }
+                if ($registeredService::getServiceName() == "remotelabz-proxy") {
+                    $service = new $registeredService(
+                                    $this->remotelabzProxyServerAPI,
+                                    $this->remotelabzProxyApiPort,
+                                    $this->deviceInstanceRepository,
+                                    $this->proxyManager,
+                                    $this->logger
+                                );
+                }
+
                 $service_result=$service->isStarted();
                 $serviceStatus[$service::getServiceName()] = $service_result;
-                    $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result);
+                $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result);
+                
                            
             }
             if ($type === 'distant') {
@@ -92,7 +118,7 @@ class ServiceController extends Controller
                     if ($service_result["power"] === true) {// The worker is power on so, the service (value) can be up or down
                         $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = $service_result["service"];
                     }
-                    elseif (($service_result["power"] === false)) {  // The worker is power off
+                    elseif (($service_result["power"] === false)) {  //The worker is power off
                         $serviceStatus[$service::getServiceName()][$service->getServiceSubName()] = "error";
                         //The service is not response
                         $worker = $this->configWorkerRepository->findBy(['IPv4' => $worker->getIPv4()]);
@@ -101,7 +127,7 @@ class ServiceController extends Controller
                         $entityManager->persist($worker[0]);
                         $entityManager->flush();
                     }
-                }             
+                }
             }
         }
 
@@ -122,31 +148,46 @@ class ServiceController extends Controller
         $privateKeyFile=$this->getParameter('app.ssh.worker.privatekey');
         $ssh_user=$this->getParameter('app.ssh.worker.user');
         $ssh_password=$this->getParameter('app.ssh.worker.passwd');
-        
+        $remotelabzProxyServerAPI=$this->getParameter('app.services.proxy.server.api');
+        $remotelabzProxyApiPort=$this->getParameter('app.services.proxy.port.api');
+
         $this->logger->debug("Requested service: ".$requestedService);
 
 
-        try {
-            foreach ($this->getRegistredServices() as $registredService => $type) {
-                $serviceName = $registredService::getServiceName();                             
+        //try {
+            foreach ($this->getRegistredServices() as $registeredService => $type) {
+                $serviceName = $registeredService::getServiceName();                             
 
                 if ($requestedService === $serviceName) {
                     if ($type === 'local') {
-                        $this->logger->info("Start service action requested for ".$registredService);
-                        $service = new $registredService();
-                        $service->start();
-                        //TODO Change the statut : wait a health message !
-                        $this->addFlash('success', 'Service successfully started.');
+                        $this->logger->info("Start service action requested for ".$registeredService);
+                        if ($serviceName == "remotelabz-proxy") {
+                            $service = new $registeredService(
+                                $this->remotelabzProxyServerAPI,
+                                $this->remotelabzProxyApiPort,
+                                $this->deviceInstanceRepository,
+                                $this->proxyManager,
+                                $this->logger
+                            );
+                        }
+                        else {
+                            $service = new $registeredService();
+                        }
+                        if ($service->start())
+                            $this->addFlash('success', "Service ".$serviceName." successfully started");
+                        else 
+                            $this->addFlash('danger', "Service ".$serviceName." doesn't started successfully");
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Start action for worker: ".$request->query->get('ip'));
-                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
-                        if ($service->start())
-                        //TODO Change the statut : wait a health message !
-                            $this->addFlash('success', 'Service successfully started.');
+                        $service = new $registeredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
+                        if ($service->start() === true)
+                            $this->addFlash('success', "Service ".$serviceName." successfully started");
+                        else $this->addFlash('danger', "Service ".$serviceName." doesn't start successfully");
                     }
                 }
             }
+            try{
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to start.');
             $this->logger->error("Error starting service ".$service::getServiceName(). "Exception ".$e); 
@@ -171,25 +212,36 @@ class ServiceController extends Controller
         //$this->logger->debug($requestedService);
 
         try {
-            foreach ($this->getRegistredServices() as $registredService => $type) {
-                $serviceName = call_user_func($registredService.'::getServiceName');
-               
+            foreach ($this->getRegistredServices() as $registeredService => $type) {
+                $serviceName = $registeredService::getServiceName();                             
 
                 if ($requestedService === $serviceName) {
-                    $this->logger->debug("Service name to stop: ".$serviceName);
-                    $this->logger->debug("Requested Service to stop: ".$requestedService);
                     if ($type === 'local') {
-                        $service = new $registredService();
-                        $service->stop();
-                        $this->addFlash('success', 'Service successfully stopped.');
+                        $this->logger->info("Stop service action requested for ".$registeredService);
+                        if ($serviceName == "remotelabz-proxy") {
+                            $service = new $registeredService(
+                                $this->remotelabzProxyServerAPI,
+                                $this->remotelabzProxyApiPort,
+                                $this->deviceInstanceRepository,
+                                $this->proxyManager,
+                                $this->logger
+                            );
+                        }
+                        else {
+                            $service = new $registeredService();
+                        }
+                        if ($service->stop() === true)
+                            $this->addFlash('success', "Service ".$serviceName." successfully stopped");
+                        else
+                            $this->addFlash('danger', "Service ".$serviceName." doesn't stopped successfully");
+
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Stop action for worker: ".$request->query->get('ip'));
-                        $service = new $registredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
-                        if ($service->stop()) {
-                            $this->addFlash('success', 'Service successfully stopped.');
-                            //We assume the worker stay available. It's just the service is down
-                        }
+                        $service = new $registeredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
+                        if ($service->stop() === true )
+                            $this->addFlash('success', "Service ".$serviceName." successfully stopped");
+                        else $this->addFlash('danger', "Service ".$serviceName." doesn't stopped successfully");
                     }
                 }
             }
