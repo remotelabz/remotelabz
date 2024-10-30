@@ -19,7 +19,8 @@
 <div class="content-body">
 <div class="row">
 </div>
-    {% if nbworkers == 1 %}  
+
+  {#   {% if nbworkers == 1 %}  
     <div class="row">
         <div class="col-xl-8 col-lg-12">
         <ul>
@@ -69,7 +70,7 @@
                  <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
-                        Load of LXCFS process
+                        LXCFS
                         </h4>
                         <div class="stats-circle cpu-circle">
                         </div>
@@ -81,7 +82,7 @@
             </div>
         </div>
     </div>
-    {% else %}
+    {% else %} #}
     {% for worker in value %}
     <div class="row">
     <h2>{{worker['worker']}}</h2>
@@ -147,7 +148,7 @@
         </div>
     </div>
     {% endfor %}
-    {% endif %}
+    {# {% endif %}#}
 </div>
 
 {% endblock %}

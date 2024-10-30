@@ -26,6 +26,7 @@ use App\Entity\ConfigWorker;
 use App\Repository\LabInstanceRepository;
 use App\Entity\LabInstance;
 use App\Repository\DeviceInstanceRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 class ServiceController extends Controller
 {
@@ -134,8 +135,7 @@ class ServiceController extends Controller
         return $this->render('service/index.html.twig', [
             'serviceName' => $service::getServiceName(),
             'serviceStatus' => $serviceStatus,
-        ]);
-        
+        ]); 
     }
 
     /**
@@ -262,33 +262,35 @@ class ServiceController extends Controller
          /**
      * @Route("/admin/resources", name="resources", methods="GET")
      */
-    public function ResourceAction(Request $request)
+    public function ResourceAction(Request $request,ManagerRegistry $doctrine)
     {
         $workers = $this->configWorkerRepository->findBy(['available' => true]);
         //$workers = explode(',', $this->workerServer);
-        $nbWorkers = count($workers);
-        if ( $nbWorkers > 1) {
-            $usage = $this->workerManager->checkWorkersAction();
-        }
-        else {
+        //$nbWorkers = count($workers);
+      //  if ( $nbWorkers > 1) {
+            $usage = $this->workerManager->checkWorkersAction($doctrine);
+        //}
+        /* else {
             $client = new Client();
             $this->logger->debug("worker:".$workers[0]->getIPv4());
 
             $url = 'http://'.$workers[0]->getIPv4().':'.$this->workerPort.'/stats/hardware';
+            $response="";
             try {
                 $response = $client->get($url);
                 $usage = json_decode($response->getBody()->getContents(), true);
             } catch (Exception $exception) {
                 $this->addFlash('danger', 'Worker is not available');
-                $this->logger->error('Usage resources error - Web service or Worker is not available');
+                $this->logger->error("Usage resources error - Web service or Worker ".$worker[0]->getIPv4()." is not available");
                 $usage=null;
             }
-        }
+
+        }*/
         $this->logger->debug("worker usage:",$usage);
 
         return $this->render('service/resources.html.twig', [
-            'value' => $usage,
-            'nbworkers' => $nbWorkers
+            'value' => $usage
+          //  'nbworkers' => $nbWorkers
         ]);
     }
 }

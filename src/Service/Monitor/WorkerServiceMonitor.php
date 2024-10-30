@@ -118,7 +118,7 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
             $client = new Client();
             $url = 'http://'.$this->workerServer.':'.$this->workerPort.'/healthcheck';
             try {
-                $response = $client->get($url);
+                $response = $client->get($url,['timeout' => 3]);
             }
             catch (Exception $e) {
                     return array(
