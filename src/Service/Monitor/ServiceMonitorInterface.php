@@ -7,7 +7,7 @@ interface ServiceMonitorInterface
     /**
      * Tells if the service is started.
      */
-    public function isStarted(): bool;
+    public function isStarted();
 
     /**
      * Start the service.

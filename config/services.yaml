@@ -15,6 +15,7 @@ parameters:
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
     image_directory: '%kernel.project_dir%/public/uploads/images'
     image_default_profile: 'Circle-icons-profile.png'
+    no_internet_access: 'No-Internet.png'
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
     api_key_cookie_name: 'bearer'
@@ -47,7 +48,7 @@ parameters:
     app.network.base_network_netmask: '%env(resolve:BASE_NETWORK_NETMASK)%'
     app.network.lab_network_netmask: '%env(resolve:LAB_NETWORK_NETMASK)%'
 
-    app.user.ip_check_internet: '%env(resolve:IP_TO_CHECK_INTERNET)%'
+    app.user.url_check_internet: '%env(resolve:URL_TO_CHECK_INTERNET)%'
     app.user.authorized_affiliation: '%env(resolve:AUTHORIZED_SHIBBOLETH_DOMAIN)%'
 
 
@@ -63,6 +64,11 @@ parameters:
     app.ssl.dn.city: '%env(resolve:SSL_DN_CITY)%'
     app.ssl.dn.org: '%env(resolve:SSL_DN_ORG)%'
     app.ssl.dn.email: '%env(resolve:SSL_DN_EMAIL)%'
+
+    app.ssh.worker.user : '%env(string:SSH_USER_WORKER)%'
+    app.ssh.worker.passwd : '%env(string:SSH_USER_PASSWD)%'
+    app.ssh.worker.privatekey : '%env(string:SSH_USER_PRIVATEKEY_FILE)%'
+    app.ssh.worker.publickey : '%env(string:SSH_USER_PUBLICKEY_FILE)%'
 
 services:
     # default configuration for services in *this* file
@@ -82,6 +88,8 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             - '../src/Tests/'
+            
+    Psr\Log\LoggerInterface: '@monolog.logger'
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
@@ -216,10 +224,12 @@ services:
         arguments:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
+            $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
+            $remotelabzProxyServerAPI: '%app.services.proxy.server.api%'
 
     App\Controller\UserController:
         arguments:
-            $ip_check_internet: '%app.user.ip_check_internet%'
+            $url_check_internet: '%app.user.url_check_internet%'
             $remotevpn_addr: '%app.general.public_address%'
             $contact_mail: '%app.general.contact_mail%'
 
@@ -234,3 +244,5 @@ services:
     instance_manager: '@App\Service\Instance\InstanceManager'
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'
+
+    

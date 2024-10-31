@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use App\Repository\ConfigWorkerRepository;
 use App\Entity\ConfigWorker;
 use App\Entity\Device;
+use Doctrine\Persistence\ManagerRegistry;
 
 class WorkerManager
 {
@@ -20,7 +21,8 @@ class WorkerManager
         string $workerPort,
         LoggerInterface $logger,
         ClientInterface $client,
-        ConfigWorkerRepository $configWorkerRepository
+        ConfigWorkerRepository $configWorkerRepository,
+        ManagerRegistry $doctrine
     ) {
         $this->publicAddress = $publicAddress;
         $this->workerServer = $workerServer;
@@ -28,6 +30,7 @@ class WorkerManager
         $this->logger = $logger;
         $this->client = $client;
         $this->configWorkerRepository = $configWorkerRepository;
+        $this->doctrine=$doctrine;
     }
 
     public function checkWorkersAction()
@@ -39,16 +42,18 @@ class WorkerManager
         foreach($workers as $worker) {
             $url = 'http://'.$worker->getIPv4().':'.$this->workerPort.'/stats/hardware';
             try {
-                $response = $client->get($url);
+                $response = $client->get($url,['timeout' => 3]);
                 $content = json_decode($response->getBody()->getContents(), true);
                 $this->logger->debug('Get '. $url);
                 $content['worker'] = $worker->getIPv4();
                 array_push($usage, $content);
             } catch (Exception $exception) {
-                $this->logger->error('Usage resources error - Web service or Worker is not available');
-                $content['disk'] = $content['cpu'] = $content['memory'] = $content['memory_total'] = null;
-                $content['worker'] = $worker->getIPv4();
-                array_push($usage, $content);
+                $this->logger->error("Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");               
+                $worker->setAvailable(0);
+                $entityManager = $this->doctrine->getManager();
+                $entityManager->persist($worker);
+                $entityManager->flush();
+                $this->logger->info("Worker ".$worker->getIPv4()." is disable");
             }
         }
         $this->logger->debug('Usage return from checkWorkersAction :',$usage);

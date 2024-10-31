@@ -19,16 +19,17 @@
 <div class="content-body">
 <div class="row">
 </div>
-    {% if nbworkers == 1 %}  
+
+  {#   {% if nbworkers == 1 %}  
     <div class="row">
         <div class="col-xl-8 col-lg-12">
         <ul>
-            <li>Number of opened files : value['openedfiles']</br></li>
-            <li>Number of LXC containers : value['lxclsrun']</br></li>
-            <li>Number of VM QEMU : value['qemurun']</br></li>
+            <li>Number of opened files : {{value['openedfiles']}}</br></li>
+            <li>Number of LXC containers : {{value['lxclsrun']}}</br></li>
+            <li>Number of VM QEMU : {{value['qemurun']}}</br></li>
         </ul>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         CPU
@@ -40,7 +41,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         Memory
@@ -53,7 +54,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         Disk
@@ -66,10 +67,10 @@
                         </p>
                     </div>
                 </div>
-                 <div class="card m-4">
+                 <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
-                        Load of LXCFS process
+                        LXCFS
                         </h4>
                         <div class="stats-circle cpu-circle">
                         </div>
@@ -81,7 +82,7 @@
             </div>
         </div>
     </div>
-    {% else %}
+    {% else %} #}
     {% for worker in value %}
     <div class="row">
     <h2>{{worker['worker']}}</h2>
@@ -94,7 +95,7 @@
             <li>Number of VM QEMU : {{ worker['qemurun'] }}</br></li>
         </ul>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         CPU
@@ -106,7 +107,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         Memory
@@ -119,7 +120,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         Disk
@@ -131,7 +132,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="card m-4">
+                <div class="card m-3">
                     <div class="card-body d-flex flex-column">
                         <h4 class="card-title">
                         LXCFS
@@ -147,7 +148,7 @@
         </div>
     </div>
     {% endfor %}
-    {% endif %}
+    {# {% endif %}#}
 </div>
 
 {% endblock %}

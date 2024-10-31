@@ -23,13 +23,13 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <span class="fw600">Messaging service</span>
-                        {% if serviceStarted['remotelabz'] %}
+                        {% if serviceStatus['remotelabz'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
-                        {% if serviceStarted['remotelabz'] %}
+                        {% if serviceStatus['remotelabz'] %}
                             <a href="{{ path('stop_service', {'service': 'remotelabz'}) }}" class="btn btn-danger">Stop</a>
                         {% else %}
                             <a href="{{ path('start_service', {'service': 'remotelabz'}) }}" class="btn btn-success">Start</a>
@@ -38,13 +38,13 @@
                     </li>
                     <li class="list-group-item">
                         <span class="fw600">Proxy service</span>
-                        {% if serviceStarted['remotelabz-proxy'] %}
+                        {% if serviceStatus['remotelabz-proxy'] %}
                             <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
                         {% else %}
                         <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
                         {% endif %}
                         <div class="float-right">
-                        {% if serviceStarted['remotelabz-proxy'] %}
+                        {% if serviceStatus['remotelabz-proxy'] %}
                             <a href="{{ path('stop_service', {'service': 'remotelabz-proxy'}) }}" class="btn btn-danger">Stop</a>
                         {% else %}
                             <a href="{{ path('start_service', {'service': 'remotelabz-proxy'}) }}" class="btn btn-success">Start</a>
@@ -67,24 +67,31 @@
         <div class="col">
             <div class="card">
                 <ul class="list-group list-group-flush">
-                {% if serviceStarted['remotelabz-worker'] is defined %}
-                {% for key, worker in serviceStarted['remotelabz-worker'] -%}
-                    <li class="list-group-item">
-                        <span class="fw600">Worker Service: {{key}}</span>
-                        {% if worker %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
-                        {% else %}
-                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
-                        {% endif %}
-                        <div class="float-right">
-                        {% if worker %}
-                            <a href="{{ path('stop_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-danger">Stop</a>
-                        {% else %}
-                            <a href="{{ path('start_service', {'service': 'remotelabz-worker'}) }}" class="btn btn-success">Start</a>
-                        {% endif %}
-                        </div>
-                    </li>
-                {% endfor %}
+                
+                {% if serviceStatus['remotelabz-worker'] is defined %}
+
+                    {% for key, status in serviceStatus['remotelabz-worker'] %}
+                        <li class="list-group-item">
+                            <span class="fw600">Worker Service: {{key}} </span>
+                            {% if status is same as(true) %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                            {% elseif status is same as(false) %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
+                            {% elseif status is same as('error') %}
+                                    Not available
+                            {% endif %}                              
+                            
+                            <div class="float-right">
+                            {% if status is same as(true) %}
+                                <a href="{{ path('stop_service', {'service': 'remotelabz-worker','ip':key }) }}" class="btn btn-danger">Stop</a>
+                            {% elseif status is same as(false) %}
+                                <a href="{{ path('start_service', {'service': 'remotelabz-worker','ip':key}) }}" class="btn btn-success">Start</a>
+                            {% else %}
+                                Not available
+                            {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
                 {% else %}
                 <li class="list-group-item">None</li>
                 {% endif %}
