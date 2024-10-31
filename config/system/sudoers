@@ -1,4 +1,4 @@
-Cmnd_Alias REMOTELABZ_CMDS = /bin/systemctl start remotelabz*, /bin/systemctl stop remotelabz*, /bin/systemctl status remotelabz*,  /usr/sbin/ip, /usr/sbin/iptables
+Cmnd_Alias REMOTELABZ_CMDS = /bin/systemctl start remotelabz*, /bin/systemctl stop remotelabz*, /bin/systemctl status remotelabz*, /usr/sbin/ip, /sbin/iptables, /usr/sbin/service remotelabz-proxy start, /usr/sbin/service remotelabz-proxy stop
 
 %www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS
 www-data ALL=(ALL) NOPASSWD: REMOTELABZ_CMDS
