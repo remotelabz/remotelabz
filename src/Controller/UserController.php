@@ -38,6 +38,7 @@ use Symfony\Component\Mime\Email as Email;
 use Symfony\Component\Validator\Constraints\Email as ConstraintsEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use GuzzleHttp\Client;
 
 class UserController extends Controller
 {
@@ -56,7 +57,7 @@ class UserController extends Controller
         MailerInterface $mailer,
         SerializerInterface $serializer,
         LoggerInterface $logger,
-        string $ip_check_internet,
+        string $url_check_internet,
         string $remotevpn_addr,
         string $contact_mail)
     {
@@ -66,7 +67,7 @@ class UserController extends Controller
         $this->mailer = $mailer;
         $this->serializer = $serializer;
         $this->logger = $logger;
-        $this->ip_check_internet = $ip_check_internet;
+        $this->url_check_internet = $url_check_internet;
         $this->remotevpn_addr = $remotevpn_addr;
         $this->contact_mail = $contact_mail;
     }
@@ -714,15 +715,14 @@ class UserController extends Controller
         } else {
             $url=Gravatar::getGravatar($user->getEmail(), $size);
             $picture=""; $file="";
+            //$this->logger->debug("no picture for: ".$user->getName());
 
             if ($this->checkInternet()){
                 try {
-                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '4.0']] ));
+                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '1.0']] ));
                 }
                 catch (Exception $e){
-                    $this->logger->debug("exception");
-                    $this->logger->error("No access to internet");
-                    $this->logger->error($e->getMessage());
+                    $this->logger->error("No access to gravatar: ".$e->getMessage());
                 }
             }
             else
@@ -738,6 +738,7 @@ class UserController extends Controller
     }
 
     /**
+     * This function is called by the page admin/users
      * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
     public function getUserProfilePictureAction(
@@ -748,7 +749,6 @@ class UserController extends Controller
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
-        // TODO #661 : error app.ERROR: Call to a member function getProfilePicture() on null
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -771,7 +771,7 @@ class UserController extends Controller
 
             return $response;
         } else {
-        
+
         $picture="";
         $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
@@ -784,7 +784,7 @@ class UserController extends Controller
             $file=$this->getParameter('directory.public.images').'/'.$fileName;
             $picture=file_get_contents($file);
         }
-        //$this->logger->debug("fonction getUserProfilePictureAction");
+
         return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
@@ -902,18 +902,19 @@ class UserController extends Controller
     function checkInternet()
     {
         $response="";
+        $client = new Client();
             try {
                 //Test if internet access
                 // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
-                $fp= stream_socket_client("tcp://".$this->ip_check_internet.":80",$errno,$errstr,2);
-            
-                if ($fp) // If no exception
+                $result = $client->get($this->url_check_internet,['timeout' => 1, 'max'             => 1]);
+                if ($result)
                 {
                     $response=true;
                 }
             }
             catch (Exception $e){
                 $response=false;
+                $this->logger->error("Checkinternet process - No internet access: ".$e->getMessage());
             }
         return $response;
     }

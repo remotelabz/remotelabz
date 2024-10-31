@@ -21,7 +21,8 @@ class WorkerManager
         string $workerPort,
         LoggerInterface $logger,
         ClientInterface $client,
-        ConfigWorkerRepository $configWorkerRepository
+        ConfigWorkerRepository $configWorkerRepository,
+        ManagerRegistry $doctrine
     ) {
         $this->publicAddress = $publicAddress;
         $this->workerServer = $workerServer;
@@ -29,9 +30,10 @@ class WorkerManager
         $this->logger = $logger;
         $this->client = $client;
         $this->configWorkerRepository = $configWorkerRepository;
+        $this->doctrine=$doctrine;
     }
 
-    public function checkWorkersAction(ManagerRegistry $doctrine)
+    public function checkWorkersAction()
     {
         $client = new Client();
         //$workers = explode(',', $this->workerServer);
@@ -48,7 +50,7 @@ class WorkerManager
             } catch (Exception $exception) {
                 $this->logger->error("Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");               
                 $worker->setAvailable(0);
-                $entityManager = $doctrine->getManager();
+                $entityManager = $this->doctrine->getManager();
                 $entityManager->persist($worker);
                 $entityManager->flush();
                 $this->logger->info("Worker ".$worker->getIPv4()." is disable");

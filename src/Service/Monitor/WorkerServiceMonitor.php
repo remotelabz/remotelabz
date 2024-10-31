@@ -102,8 +102,7 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
                     'query' => [
                         'action' => 'stop'
                     ]
-                ]);
-                
+                ]);             
 
             } catch (Exception $exception) {
                 return false;
