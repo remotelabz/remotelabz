@@ -713,11 +713,11 @@ class UserController extends Controller
             $response->headers->set('Content-Type', 'image/png');
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
         } else {
-            $url=Gravatar::getGravatar($user->getEmail(), $size);
+            //$url=Gravatar::getGravatar($user->getEmail(), $size);
             $picture=""; $file="";
             //$this->logger->debug("no picture for: ".$user->getName());
 
-            if ($this->checkInternet()){
+            /* if ($this->checkInternet()){
                 try {
                     $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '1.0']] ));
                 }
@@ -726,11 +726,11 @@ class UserController extends Controller
                 }
             }
             else
-            {
+            { */
                 $fileName = $this->getParameter('image_default_profile');
                 $file=$this->getParameter('directory.public.images').'/'.$fileName;
                 $picture = file_get_contents($file);
-            }
+            //}
             $response=new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         //$this->logger->debug("No profile picture saved in user profile");
@@ -773,17 +773,18 @@ class UserController extends Controller
         } else {
 
         $picture="";
-        $url=Gravatar::getGravatar($user->getEmail(), $size);
+       /* $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
             $picture = file_get_contents($url);
             }
         catch (Exception $e){
             $this->logger->error("getUserProfilePictureAction: Impossible to connect to ".$url);
             $this->logger->error($e->getMessage());
+            */
             $fileName = $this->getParameter('image_default_profile');
             $file=$this->getParameter('directory.public.images').'/'.$fileName;
             $picture=file_get_contents($file);
-        }
+        //}
 
         return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
@@ -811,10 +812,10 @@ class UserController extends Controller
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
-        } else {
+        }/* else {
             
     
-            $url=Gravatar::getGravatar($user->getEmail(), $size);
+         /*   $url=Gravatar::getGravatar($user->getEmail(), $size);
             try {
                 $picture = file_get_contents($url);
     
@@ -824,7 +825,7 @@ class UserController extends Controller
                 $this->logger->error("Impossible to connect to ".$url);
                 $this->logger->error($e->getMessage());
                 }
-        }
+        }*/
     }
 
     /**

@@ -56,7 +56,34 @@ class WorkerManager
                 $this->logger->info("Worker ".$worker->getIPv4()." is disable");
             }
         }
-        $this->logger->debug('Usage return from checkWorkersAction :',$usage);
+        $this->logger->info('Usage of each worker:',$usage);
+            return $usage;
+    }
+
+    public function checkWorkersLightAction()
+    {
+        $client = new Client();
+        //$workers = explode(',', $this->workerServer);
+        $workers = $this->configWorkerRepository->findBy(["available" => true]);
+        $usage = [];
+        foreach($workers as $worker) {
+            $url = 'http://'.$worker->getIPv4().':'.$this->workerPort.'/stats/hardwarelight';
+            try {
+                $response = $client->get($url);
+                $content = json_decode($response->getBody()->getContents(), true);
+                $this->logger->debug('Get '. $url);
+                $content['worker'] = $worker->getIPv4();
+                array_push($usage, $content);
+            } catch (Exception $exception) {
+                $this->logger->error("Light Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");               
+                $worker->setAvailable(0);
+                $entityManager = $this->doctrine->getManager();
+                $entityManager->persist($worker);
+                $entityManager->flush();
+                $this->logger->info("Worker ".$worker->getIPv4()." is disable");
+            }
+        }
+        $this->logger->info('Usage of each worker:',$usage);
             return $usage;
     }
 
