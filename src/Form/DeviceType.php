@@ -90,6 +90,7 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name',
                 'multiple' => true,
                 'required' => false,
+                'help' => 'Press on CTRL when you click to delete a type',
            ]);
            if ($virtuality == 0) {
             $builder
