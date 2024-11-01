@@ -251,10 +251,6 @@ class SecurityController extends AbstractController
      */
     public function Codelogin(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
     {
-        
-        
-        
-        
         return $this->render('security/code_login.html.twig');
     }
 }
