@@ -42,7 +42,7 @@ class WorkerManager
         foreach($workers as $worker) {
             $url = 'http://'.$worker->getIPv4().':'.$this->workerPort.'/stats/hardware';
             try {
-                $response = $client->get($url,['timeout' => 3]);
+                $response = $client->get($url);
                 $content = json_decode($response->getBody()->getContents(), true);
                 $this->logger->debug('Get '. $url);
                 $content['worker'] = $worker->getIPv4();
