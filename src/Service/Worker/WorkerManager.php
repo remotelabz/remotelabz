@@ -116,7 +116,7 @@ class WorkerManager
         $min=0;
         $result="";
         $memory=$this->Memory_Usage($item);
-        $usages = $this->checkWorkersAction();
+        $usages = $this->checkWorkersLightAction();
         
         foreach ($usages as $usage) {
             $val=$this->loadBalancing($usage['memory'], $usage['disk'], $usage['cpu'], $memory, $usage['memory_total'],$usage['worker'], $usage['lxcfs']);
