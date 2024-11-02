@@ -76,8 +76,6 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         });
     }
     function changeAvailable(id, available) {
-        console.log("id",id);
-        console.log("available",available);
         Remotelabz.configWorker.update(id, {"available": available}).then(()=> {
             let msg;
             if (available == 1 )

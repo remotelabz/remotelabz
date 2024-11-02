@@ -88,7 +88,7 @@ export function initEditor () {
 
 
     editor.show();
-    console.log(textarea.val())
+    //console.log(textarea.val())
     textarea.hide();
     ace_conf_panel.show();
     $('#editor').css('height', $('#nodeconfig').height());

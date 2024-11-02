@@ -86,10 +86,10 @@ export default function GroupInstancesList(props = {instances, group, user}) {
     }
 
     function getParentPath(group, path) {
-        console.log(path);
+        //console.log(path);
         if (group.parent !== undefined) {
             path = getParentPath(group.parent, group.parent.slug) + "/" + path;
-            console.log(path);
+            //console.log(path);
         }
         return path;
     }
@@ -265,7 +265,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
-                            console.log(deviceInstance)
+                            //console.log(deviceInstance)
                             if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
                                 deviceInstancesToStop.push(deviceInstance);
                             }

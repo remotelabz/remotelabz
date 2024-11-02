@@ -12,7 +12,7 @@ function openFullscreen() {
             rfb.disconnect();
 
             WindowObjectReference.onbeforeunload = function () {
-                console.log('Unload window')
+                //console.log('Unload window')
                 var userRating = document.querySelector('.js-user-rating');
                 let protocol = userRating.dataset.protocol;
                 let host = userRating.dataset.host;
@@ -32,16 +32,16 @@ function openFullscreen() {
 
 function connectToVNC(protocol, host, port, path, options = {}) {
     const url = protocol + '://' + host + ':' + port + '/' + path;
-    console.log('Connecting to ' + url);
+    //console.log('Connecting to ' + url);
     rfb = new RFB(document.getElementById('noVNCScreen'), url, options);
     rfb.scaleViewport = true;
     rfb._fbWidth
     rfb.addEventListener('connect', function () {
         reconnectButton.setAttribute("disabled", "disabled");
-        console.log("Event: RFB connected");
+        //console.log("Event: RFB connected");
     });
     rfb.addEventListener('disconnect', function () {
-        console.log("Event: RFB disconnect");
+        //console.log("Event: RFB disconnect");
         rfb = null;
         reconnectButton.removeAttribute("disabled");
     });
@@ -58,24 +58,24 @@ var ctrlAltDelButton = document.getElementById('CtrlAltDelButton');
 if (ctrlAltDelButton) {
     ctrlAltDelButton.onclick = () => {
         rfb.sendCtrlAltDel();
-        console.log("User action: sent Ctrl+Alt+Del");
+        //console.log("User action: sent Ctrl+Alt+Del");
     }
 }
 
 var reconnectButton = document.getElementById('ReconnectButton');
 if (reconnectButton) {
     reconnectButton.onclick = () => {
-        console.log("User action: reconnect to VNC");
+        //console.log("User action: reconnect to VNC");
         reconnectButton.setAttribute("disabled", "disabled");
         let userRating = document.querySelector('.js-user-rating');
         let protocol = userRating.dataset.protocol;
         let host = userRating.dataset.host;
         let port = userRating.dataset.port;
         let path = userRating.dataset.path;
-        connectToVNC(protocol, host, port, path, {
-            scaleViewport: true,
-            clipViewport: true,
-        });
+        //connectToVNC(protocol, host, port, path, {
+        //    scaleViewport: true,
+        //    clipViewport: true,
+        //});
     }
 }
 
