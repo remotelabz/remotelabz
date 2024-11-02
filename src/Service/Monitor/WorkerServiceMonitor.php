@@ -63,7 +63,9 @@ class WorkerServiceMonitor extends AbstractServiceMonitor
                         $this->logger->debug("Route to ".$network." exists, via ".$this->workerServer);
                     else {
                         $this->logger->debug("Route to ".$network." doesn't exist, via ".$this->workerServer);
-                        IPTools::routeAdd($network,$this->workerServer);
+                        if (IPTools::routeAdd($network,$this->workerServer)) 
+                            $this->logger->info("Route to ".$network." via ".$this->workerServer. " added");
+
                     }
                 }
 

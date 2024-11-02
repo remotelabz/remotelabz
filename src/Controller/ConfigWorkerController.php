@@ -165,7 +165,7 @@ class ConfigWorkerController extends Controller
                 $worker->setAvailable($data['available']); 
                 $available=($worker->getAvailable()==1)?"Available":"Disable";
                 $this->logger->info("Worker ". $worker->getIPv4(). " has been updated (".$available.").");    
-                $this->addFlash('success', 'Worker has been enabled');
+                //$this->addFlash('success', 'Worker has been enabled');
 
                 if ($data['available'] == 1) {
                     $operatingSystems=$this->operatingSystemRepository->findAll();
@@ -217,9 +217,8 @@ class ConfigWorkerController extends Controller
                             }
                         }
                     } else {
-                        $this->logger->info("The worker ".$worker->getIPv4()." is not in line. Perhaps it's power off");
-                        $this->addFlash("danger", "This worker seems not to be online");
-
+                        $this->logger->info("The worker ".$worker->getIPv4()." is not online. Perhaps it's power off");
+                        //$this->addFlash("danger", "This worker seems not to be online");
                     }
                 }
             }
