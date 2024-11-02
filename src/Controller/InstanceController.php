@@ -17,6 +17,8 @@ use App\Repository\NetworkInterfaceInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\InvitationCodeRepository;
+use App\Repository\ConfigWorkerRepository;
+
 
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
@@ -63,6 +65,8 @@ class InstanceController extends Controller
     private $userRepository;
     private $serializer;
     protected $remotelabzProxyUseWss;
+    private $configworkerRepository;
+
     
     /** @var LabRepository $labRepository */
     private $labRepository;
@@ -77,7 +81,8 @@ class InstanceController extends Controller
         GroupRepository $groupRepository,
         UserRepository $userRepository,
         SerializerInterface $serializerInterface,
-        bool $remotelabzProxyUseWss
+        bool $remotelabzProxyUseWss,
+        ConfigWorkerRepository $configworkerRepository
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -89,6 +94,7 @@ class InstanceController extends Controller
         $this->proxyManager = $proxyManager;
         $this->serializer = $serializerInterface;
         $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
+        $this->configworkerRepository = $configworkerRepository;
     }
 
     /**
@@ -207,13 +213,13 @@ class InstanceController extends Controller
         else if ($filter == "group" && $subFilter != "allGroups") {
             $instances = $this->fetchLabInstancesByGroupUuid($subFilter);
         }
-        else if ($subFilter == "allLabs") {
-            $instances = $this->fetchLabInstancesOrdredByLab();
+        else if ($subFilter == "allLabs" || $subFilter == "allWorkers") {
+            $instances = $this->fetchLabInstancesOrderedByLab();
         }
         else if ($filter == "lab" && $subFilter != "allLabs") {
             $instances = $this->fetchLabInstancesByLabUuid($subFilter);
         }
-        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allEditors"|| $subFilter == "allAdmins") {
+        else if ($subFilter == "allTeachers" || $subFilter == "allStudents" || $subFilter == "allEditors"|| $subFilter == "allAdmins" ) {
             $userType = "";
             if($subFilter == "allTeachers") {
                 $userType = "teachers";
@@ -233,6 +239,9 @@ class InstanceController extends Controller
         else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins") || ($filter == "editor" && $subFilter != "allEditors")) {
             $instances = $this->fetchLabInstancesByUserUuid($subFilter);
         }
+        else if ($filter == "worker" && $subFilter != "allWorkers")
+            $instances = $this->fetchLabInstancesByWorker($subFilter);
+
         return $instances;
     }
 
@@ -353,6 +362,20 @@ class InstanceController extends Controller
                 ]);
             }
            
+        }
+        else if ($filter == "worker") {
+            array_push($subFilter, [
+                "uuid" => "allworkers",
+                "name" => "All workers"
+            ]);
+            $workers = $this->configworkerRepository->findAll();
+            foreach($workers as $worker ){
+                array_push($subFilter, [
+                    "uuid" => $worker->getIPv4(),
+                    "name" => $worker->getIPv4()
+                ]);
+            }
+            
         }
         else if ($filter == "none") {
             array_push($subFilter, [
@@ -925,7 +948,7 @@ class InstanceController extends Controller
         return $data;
     }
 
-    public function fetchLabInstancesOrdredByLab()
+    public function fetchLabInstancesOrderedByLab()
     {
        $user = $this->getUser();
        if ($user->isAdministrator())
@@ -936,6 +959,13 @@ class InstanceController extends Controller
             $data = $this->labInstanceRepository->findByLabAuthorAndGroups($user);
        }
        if (!$data) $data= [];
+
+        return $data;
+    }
+
+    public function fetchLabInstancesByWorker(string $workerIp)
+    {
+        $data = $this->labInstanceRepository->findBy(['workerIp' => $workerIp ]);
 
         return $data;
     }

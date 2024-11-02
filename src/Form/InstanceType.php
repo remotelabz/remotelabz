@@ -16,6 +16,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use App\Repository\GroupRepository;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
+use App\Repository\ConfigWorkerRepository;
+
 
 class InstanceType extends AbstractType
 {
@@ -23,17 +25,20 @@ class InstanceType extends AbstractType
     private $groupRepository;
     private $labRepository;
     private $userRepository;
+    private $configworkerRepository;
 
     public function __construct(
         Security $security, 
         GroupRepository $groupRepository,
         LabRepository $labRepository,
-        UserRepository $userRepository)
+        UserRepository $userRepository,
+        ConfigWorkerRepository $configworkerRepository)
     {
         $this->security = $security;
         $this->groupRepository = $groupRepository;
         $this->labRepository = $labRepository;
         $this->userRepository = $userRepository;
+        $this->configworkerRepository = $configworkerRepository;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
@@ -63,6 +68,7 @@ class InstanceType extends AbstractType
                     "Teacher" => "teacher",
                     "Editor" => "editor",
                     "Administrator" => "admin",
+                    "Worker" => "worker"
                 ]
             ]);
         }
@@ -176,6 +182,15 @@ class InstanceType extends AbstractType
                 $subFilter[$user->getName()] = $user->getUuid();
             }
            
+        } else if ($filter == "worker"){
+            $subFilter = [
+                "All workers" => "allWorkers"
+            ];
+            $workers = $this->configworkerRepository->findAll();
+            foreach($workers as $worker ){
+                $subFilter[$worker->getIPv4()] = $worker->getIPv4();
+            }
+
         }
 
         $form->add('subFilter', ChoiceType::class, [

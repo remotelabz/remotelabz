@@ -50,7 +50,6 @@ function AllInstancesManager(props) {
             promises.push(()=> {
                 for(let deviceInstance of labInstance.deviceInstances) {
                     if (deviceInstance.state != "stopped" && deviceInstance.state != "exported" && deviceInstance.state != "error" && deviceInstance.state != "reset") {
-                        console.log(deviceInstance);
                         try {
                             Remotelabz.instances.device.stop(deviceInstance.uuid)
                         } catch (error) {
@@ -80,7 +79,7 @@ function AllInstancesManager(props) {
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
-                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
+                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") } on {labInstance.workerIp} </span>
                     </div>
                     <div>
                     {
