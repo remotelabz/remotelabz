@@ -315,8 +315,15 @@ class DeviceController extends Controller
             else {
                 $labInstances=$this->labInstanceRepository->findByUserAndGroups($user);
             }
+            $defaultgroupinstances=$this->labInstanceRepository->findByDefaultGroup();
+            foreach($defaultgroupinstances as $defaultgroupinstance)
+                array_push($labInstances,$defaultgroupinstance);
+         
+            /*foreach($labInstances as $labInstance) {
+                $this->logger->debug("".$labInstance->getGroup()->getName());
+            }*/
+
             foreach($labInstances as $labInstance) {
-                
                 foreach($labInstance->getDeviceInstances() as $deviceInstance) {
                     //var_dump($deviceInstance->getDevice()->getId());
                     if ($deviceInstance->getDevice() == $device) {
@@ -325,6 +332,7 @@ class DeviceController extends Controller
                     }
                 }
             }
+
             if ($user->isAdministrator() || $user->isEditor()) {
                 $canViewDevice = true;
             }

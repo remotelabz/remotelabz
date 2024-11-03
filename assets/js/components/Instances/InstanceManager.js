@@ -195,10 +195,10 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 });  
             }
         } catch (error) {
-            console.error(error)
-            if (error.response.data.message.includes("No worker available - Contact an administrator")) {
+            //console.error(error)
+            if (error.response.data.message.includes("No worker available")) {
                 new Noty({
-                    text: error.response.data.message,
+                    text: 'No worker available - Please contact an administrator',
                     type: 'error',
                     timeout: 10000
                 }).show()

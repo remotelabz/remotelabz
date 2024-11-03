@@ -147,12 +147,12 @@ class InstanceManager
      */
     public function create(Lab $lab, InstancierInterface $instancier)
     {
-        
+
         $worker = $this->workerManager->getFreeWorker($lab);
 
         if ($worker == null) {
             $this->logger->error('Could not create instance. No worker available');
-            throw new BadRequestHttpException('No worker available');
+            throw new Exception('No worker available');
         }
 
         $this->logger->debug("worker available from create function in InstanceManager:".$worker);
