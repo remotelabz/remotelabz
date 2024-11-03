@@ -18,7 +18,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const isSandbox=props.isSandbox
 
     useEffect(() => {
-        setLoadingInstanceState(true)
+        setLoadingInstanceState(false)
         refreshInstance()
         const interval = setInterval(refreshInstance, 5000)
         
@@ -27,6 +27,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             setLabInstance(null)
             setLoadingInstanceState(true)
         }
+
     }, [viewAs])
 
     useEffect(()=> {
@@ -195,10 +196,11 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             console.error(error)
-            if (error.response.data.message.includes("No worker available")) {
+            if (error.response.data.message.includes("No worker available - Contact an administrator")) {
                 new Noty({
                     text: error.response.data.message,
-                    type: 'error'
+                    type: 'error',
+                    timeout: 10000
                 }).show()
             }
             else {
