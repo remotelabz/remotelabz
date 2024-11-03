@@ -305,6 +305,19 @@ class LabInstanceRepository extends ServiceEntityRepository
         return $result;
     }
     
+    public function findByDefaultGroup()
+    {
+        $instances = $this->findAll();
+        $result = [];
+        foreach ($instances as $instance) {
+            if ($instance->getGroup()->getName() == "Default group")//->getName()->contains("Default group")
+             {
+                    array_push($result, $instance);
+                }
+            }
+        return $result;
+    }
+
     // /**
     //  * @return LabInstance[] Returns an array of LabInstance objects
     //  */
