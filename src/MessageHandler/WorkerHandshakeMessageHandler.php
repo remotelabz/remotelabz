@@ -82,7 +82,7 @@ class WorkerHandshakeMessageHandler implements MessageHandlerInterface
             }
 
             $this->logger->info('Sending device instance '.$uuid.' start message.');
-            $this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
+            //$this->logger->debug('Sending device instance '.$uuid.' start message.', json_decode($deviceJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($deviceJson, $uuid, InstanceActionMessage::ACTION_START), [
                     new AmqpStamp($workerIp, AMQP_NOPARAM, []),
