@@ -317,7 +317,7 @@ class InstanceManager
             }
 
             $this->logger->info('Sending device instance '.$uuid.' start message');
-            $this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+            //$this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
                     new AmqpStamp($workerIP, AMQP_NOPARAM, []),
@@ -376,7 +376,7 @@ class InstanceManager
                 $labJson = json_encode($tmp, 0, 4096);
             }
 
-            $this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
+            //$this->logger->debug('Sending device instance '.$uuid.' stop message.', json_decode($labJson, true));
             $this->logger->info('Sending device instance '.$uuid.' stop message.');
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_STOP), [
@@ -504,7 +504,7 @@ class InstanceManager
         $tmp['newDevice_id'] = $newDevice->getId();
         $labJson = json_encode($tmp, 0, 4096);
 
-        $this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
+        //$this->logger->debug('Sending device instance '.$uuid.' export message.', json_decode($labJson, true));
         $this->bus->dispatch(
             new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_DEV), [
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
