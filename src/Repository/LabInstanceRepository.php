@@ -310,8 +310,9 @@ class LabInstanceRepository extends ServiceEntityRepository
         $instances = $this->findAll();
         $result = [];
         foreach ($instances as $instance) {
-            if ($instance->getGroup()->getName() == "Default group")//->getName()->contains("Default group")
-             {
+            if (!is_null($instance->getGroup()))
+                if ( $instance->getGroup()->getName() == "Default group")
+                {
                     array_push($result, $instance);
                 }
             }

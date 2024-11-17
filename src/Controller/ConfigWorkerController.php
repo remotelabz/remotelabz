@@ -177,12 +177,13 @@ class ConfigWorkerController extends Controller
                         //$this->logger->debug("List of OS",$OS_already_exist_on_worker["lxc"]);
 
                         foreach ($operatingSystems as $operatingSystem) {
-                        //  $this->logger->debug("OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
+                          $this->logger->debug("OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
 
-                        /* if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
+                            if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
                                 $this->logger->debug($operatingSystem->getName()." is in the array");
-                                else $this->logger->debug($operatingSystem->getName()." is NOT in the array");
-                            */
+                            else
+                                $this->logger->debug($operatingSystem->getName()." is NOT in the array");
+
                             if ($operatingSystem->getHypervisor()->getName() === "lxc" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"])) {
                                 $tmp=array();
                                 $tmp['Worker_Dest_IP'] = $worker->getIPv4();
