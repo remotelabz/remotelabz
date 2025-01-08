@@ -315,11 +315,14 @@ class DeviceController extends Controller
             else {
                 $labInstances=$this->labInstanceRepository->findByUserAndGroups($user);
             }
+            /*
             $defaultgroupinstances=$this->labInstanceRepository->findByDefaultGroup();
-            foreach($defaultgroupinstances as $defaultgroupinstance)
-                array_push($labInstances,$defaultgroupinstance);
-         
-            /*foreach($labInstances as $labInstance) {
+                foreach($defaultgroupinstances as $defaultgroupinstance)
+                    array_push($labInstances,$defaultgroupinstance);
+            */
+
+            /*
+            foreach($labInstances as $labInstance) {
                 $this->logger->debug("".$labInstance->getGroup()->getName());
             }*/
 
