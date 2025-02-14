@@ -428,9 +428,12 @@ class InstanceController extends Controller
             $instance = $instanceManager->create($lab, $instancier);
             if ($instancierType == "guest") {
                 $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." Wait ack created message");
+                $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
             }
             else {
                 $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." Wait ack created message");
+                $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
+
             }
         } catch (Exception $e) {
             throw $e;

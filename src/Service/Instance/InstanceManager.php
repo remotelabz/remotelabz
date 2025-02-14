@@ -154,7 +154,7 @@ class InstanceManager
             $this->logger->error('Could not create instance. No worker available');
             throw new Exception('No worker available');
         }
-        $this->logger->info("Worker choosen is :".$worker);
+        //$this->logger->info("Worker choosen is :".$worker);
         $this->logger->debug("worker available from create function in InstanceManager:".$worker);
         $labInstance = LabInstance::create()
             ->setLab($lab)

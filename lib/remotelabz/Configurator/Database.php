@@ -68,8 +68,20 @@ class Database
     {
         $doMigration = !$options['skip-migration'];
         $doFixtures = !$options['skip-fixtures'];
+        
 
         if ($doMigration) {
+        
+            $log->debug("First - Drop the database");
+            Logger::println('First - Drop the database', Logger::COLOR_NONE, 1);
+            
+            exec("php " . dirname(__FILE__) . "/../../../bin/console doctrine:schema:drop --force 2>&1", $output, $return);
+            Logger::println($output, null, 1);
+            $log->debug($output);
+            if ($return !== 0) {
+                throw new ConfigurationException("Error while drop the databases.");
+            }
+            
             $log->debug("Starting database migration");
             Logger::println('Starting database migration', Logger::COLOR_NONE, 1);
             exec("php " . dirname(__FILE__) . "/../../../bin/console doctrine:migrations:migrate -n 2>&1", $output, $return);
@@ -95,17 +107,8 @@ class Database
             }
 
             Logger::println('Starting database fixtures loading', Logger::COLOR_NONE, 1);
-
-            /*$log->debug("First - Drop the database");
-            Logger::println('First - Drop the database', Logger::COLOR_NONE, 1);
             
-            exec("php " . dirname(__FILE__) . "/../../../bin/console doctrine:schema:drop --force 2>&1", $output, $return);
-            Logger::println($output, null, 1);
-            $log->debug($output);
-            if ($return !== 0) {
-                throw new ConfigurationException("Error while drop the databases.");
-            }
-
+            /*
             $log->debug("Second - Create the schema");
             Logger::println('Second - Create the schema', Logger::COLOR_NONE, 1);
 
