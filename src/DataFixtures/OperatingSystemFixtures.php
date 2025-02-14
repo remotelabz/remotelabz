@@ -65,12 +65,12 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem
-            ->setName('Ubuntu20.04SrvLTS')
-            ->setImageFilename('Ubuntu20LTS')
+            ->setName('Ubuntu24.04SrvLTS')
+            ->setImageFilename('Ubuntu24LTS')
             ->setHypervisor($this->getReference('lxc'))
         ;
         $manager->persist($operatingSystem);
-        $this->setReference('Ubuntu20LTSOS', $operatingSystem);
+        $this->setReference('Ubuntu24LTSOS', $operatingSystem);
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem

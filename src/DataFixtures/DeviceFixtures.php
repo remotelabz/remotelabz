@@ -61,13 +61,13 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
         $device = new Device();
         $device
-            ->setName('Ubuntu20LTS-cnt')
+            ->setName('Ubuntu24LTS-cnt')
             ->setBrand('Ubuntu')
-            ->setModel('Version Focal 20 LTS')
+            ->setModel('Version 24 LTS')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Ubuntu20LTSOS'))
+            ->setOperatingSystem($this->getReference('Ubuntu24LTSOS'))
             ->setType('container')
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
@@ -79,7 +79,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             
         ;
         $manager->persist($device);
-        $this->addReference('Ubuntu20LTS-cnt', $device);
+        $this->addReference('Ubuntu24LTS-cnt', $device);
 
         $device = new Device();
         $device
