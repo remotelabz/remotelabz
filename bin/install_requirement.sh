@@ -2,7 +2,8 @@
 
 apt-get update
 apt-get -y upgrade
-apt install -y fail2ban exim4 apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip ntp openvpn libapache2-mod-php7.4 
+apt install -y fail2ban exim4 apache2 curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip ntp openvpn libapache2-mod-php
+systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.2.6/composer.phar', 'composer.phar');"
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
