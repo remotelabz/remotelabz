@@ -71,7 +71,8 @@ class Database
         
 
         if ($doMigration) {
-        
+
+            exec("php " . dirname(__FILE__) . "/../../../bin/console doctrine:schema:drop --force --full-database 2>&1", $output, $return);
             
             $log->debug("Starting database migration");
             Logger::println('Starting database migration', Logger::COLOR_NONE, 1);
