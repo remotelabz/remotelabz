@@ -266,23 +266,21 @@ class ConfigWorkerController extends Controller
     }
 
     private function createQueue($ipAdress, $queueName) {
-        $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName];
+        $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
         $process = new Process($cmd);
 
         $process->run();
 
         if (!$process->isSuccessful()) {
             $this->addFlash("danger", "The queue of worker ".$ipAdress. " has not been created");
-            $this->logger->warning("The creation of the queue ". $queueName. " failed.");
+            $this->logger->error("The creation of the queue ". $queueName. " failed.");
             //throw new ProcessFailedException($process);
         }
         else {
-            $this->logger->warning("The creation of the queue ". $queueName. " succeed.");
+            $this->logger->info("The creation of the queue ". $queueName. " succeed.");
             $this->logger->debug($process->getOutput());
             $this->bindQueue($ipAdress, $queueName);
-        }
-
-        
+        }       
 
     }
 

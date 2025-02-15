@@ -53,7 +53,7 @@ class FlavorFixtures extends Fixture
 
         $flavor = new Flavor();
         $flavor
-            ->setName("x-large")
+            ->setName("x-large-4096")
             ->setMemory(4096)
             ->setDisk(30)
         ;
