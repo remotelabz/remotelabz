@@ -1012,12 +1012,11 @@ export class RemotelabzAPI {
             return axios.put(`/config/worker/${id}`, options)
         },
         /**
-         * Updates a worker.
+         * Delete a worker.
          * 
-         * Implements PUT `/api/config/worker/{id}`
+         * Implements DELETE `/api/config/worker/{id}`
          * 
          * @param {number} id ID of the device to update
-         * 
          * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
          */
         delete(id) {

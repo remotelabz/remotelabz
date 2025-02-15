@@ -258,30 +258,34 @@ class ConfigWorkerController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($worker);
         $entityManager->flush(); 
-        $this->logger->debug("worker ". $worker->getIPv4(). " has been deleted.");
+        $this->logger->debug("Worker ". $worker->getIPv4(). " has been deleted.");
 
         $this->deleteQueue($queueName);
 
         return $this->json();
     }
 
-    private function createQueue($ipAdress, $queueName) {
-        $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
-        $process = new Process($cmd);
-
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            $this->addFlash("danger", "The queue of worker ".$ipAdress. " has not been created");
-            $this->logger->error("The creation of the queue ". $queueName. " failed.");
-            //throw new ProcessFailedException($process);
-        }
-        else {
+    private function createQueue($ipAdress, $queueName) {        
+        if ($this->queueExists($queueName)) {
             $this->logger->info("The creation of the queue ". $queueName. " succeed.");
-            $this->logger->debug($process->getOutput());
-            $this->bindQueue($ipAdress, $queueName);
-        }       
+        } else
+        {
+            $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
+            $process = new Process($cmd);
 
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                $this->addFlash("danger", "The queue of worker ".$ipAdress. " has not been created");
+                $this->logger->error("The creation of the queue ". $queueName. " failed.");
+                //throw new ProcessFailedException($process);
+            }
+            else {
+                $this->logger->info("The creation of the queue ". $queueName. " succeed.");
+                $this->logger->debug($process->getOutput());
+                $this->bindQueue($ipAdress, $queueName);
+            }
+        }
     }
 
     private function deleteQueue($queueName) {
@@ -321,6 +325,19 @@ class ConfigWorkerController extends Controller
         }
     }
 
+    private function queueExists($queueName) {
+        //$this->logger->debug("Test if ". $queueName. " exist.");
+
+        $command = "rabbitmqadmin list queues name | grep \"$queueName\"";
+        $output = shell_exec($command);
+    
+        // Vérifie si la sortie contient le nom de la queue
+        return strpos($output, $queueName) !== false;
+    }
+
+
+
+    
     private function modifyMessengerConfig() {
         $yaml = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/packages/messenger.yaml'));
 
