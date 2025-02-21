@@ -148,79 +148,102 @@ class InstanceManager
     public function create(Lab $lab, InstancierInterface $instancier)
     {
 
-        $worker = $this->workerManager->getFreeWorker($lab);
-
-        if ($worker == null) {
-            $this->logger->error('Could not create instance. No worker available');
-            throw new Exception('No worker available');
-        }
-        //$this->logger->info("Worker choosen is :".$worker);
-        $this->logger->debug("worker available from create function in InstanceManager:".$worker);
-        $labInstance = LabInstance::create()
-            ->setLab($lab)
-            ->setworkerIp($worker)
-            ->setInternetConnected(false)
-            ->setInterconnected(false);
-
+        // Test is this user, guest or group has already started an instance of this lab
+        // It's can occur if the user click to time, too quickly, on the "Join lab" button
+        $is_exist_labinstance=null;
         switch ($instancier->getType()) {
             case 'user':
-                $labInstance->setUser($instancier)
-                    ->setOwnedBy($instancier->getType());
+                $is_exist_labinstance=$this->labInstanceRepository->findByUserAndLab($instancier,$lab);
                 break;
-
             case 'guest':
-                $labInstance->setGuest($instancier)
-                    ->setOwnedBy($instancier->getType());
+                $is_exist_labinstance=$this->labInstanceRepository->findByGuestAndLab($instancier,$lab);
                 break;
-
             case 'group':
-                $labInstance->setGroup($instancier);
+                if (count($this->labInstanceRepository->findByGroupAndLabUuid($instancier,$lab))==0)
+                    $is_exist_labinstance=null;
                 break;
-
             default:
-                throw new Exception('Instancier must be an instance of User or Group.');
-        }
+                throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
+        }     
 
-        $network = $this->networkManager->getAvailableSubnet();
+        if (is_null($is_exist_labinstance)) {
 
+                $worker = $this->workerManager->getFreeWorker($lab);
+
+            if ($worker == null) {
+                $this->logger->error('Could not create instance. No worker available');
+                throw new Exception('No worker available');
+            }
+            //$this->logger->info("Worker choosen is :".$worker);
+            $this->logger->debug("Worker available from create function in InstanceManager:".$worker);
+            
+            $labInstance = LabInstance::create()
+                ->setLab($lab)
+                ->setworkerIp($worker)
+                ->setInternetConnected(false)
+                ->setInterconnected(false);
+
+            switch ($instancier->getType()) {
+                case 'user':
+                    $labInstance->setUser($instancier)
+                        ->setOwnedBy($instancier->getType());
+                    break;
+
+                case 'guest':
+                    $labInstance->setGuest($instancier)
+                        ->setOwnedBy($instancier->getType());
+                    break;
+
+                case 'group':
+                    $labInstance->setGroup($instancier);
+                    break;
+
+                default:
+                    throw new Exception('Instancier must be an instance of User or Group.');
+            }
+
+            $network = $this->networkManager->getAvailableSubnet();
+
+            
+            if (!$network) {
+                throw new NoNetworkAvailableException();
+            }
+            $labInstance
+                ->setOwnedBy($instancier->getType())
+                ->setState(InstanceStateMessage::STATE_CREATING)
+                ->setNetwork($network)
+                ->populate();
+
+            if (IPTools::routeExists($network))
+                $this->logger->debug("Route to ".$network." exists, via ".$worker);
+            else {
+                $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+                IPTools::routeAdd($network,$worker);
+            }
+            
+
+            if ($lab->getHasTimer() == true) {
+                $timer = explode(":",$lab->getTimer());
+                $date = new \DateTime();
+                $date->modify('+ '.$timer[0].' hours + ' . $timer[1]. ' minutes + ' .$timer[2]. ' seconds');
+                $labInstance->setTimerEnd($date);
+            }
+
+            $this->entityManager->persist($labInstance);
+            $this->entityManager->flush();
+
+            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
+            $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+    
+            $this->bus->dispatch(
+                new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE), [
+                    new AmqpStamp($worker, AMQP_NOPARAM, []),
+                ]
+            );
+            return $labInstance;
+        } else 
+            return null;
         
-        if (!$network) {
-            throw new NoNetworkAvailableException();
-        }
-        $labInstance
-            ->setOwnedBy($instancier->getType())
-            ->setState(InstanceStateMessage::STATE_CREATING)
-            ->setNetwork($network)
-            ->populate();
-
-        if (IPTools::routeExists($network))
-            $this->logger->debug("Route to ".$network." exists, via ".$worker);
-        else {
-            $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
-            IPTools::routeAdd($network,$worker);
-        }
-        
-
-        if ($lab->getHasTimer() == true) {
-            $timer = explode(":",$lab->getTimer());
-            $date = new \DateTime();
-            $date->modify('+ '.$timer[0].' hours + ' . $timer[1]. ' minutes + ' .$timer[2]. ' seconds');
-            $labInstance->setTimerEnd($date);
-        }
-
-        $this->entityManager->persist($labInstance);
-        $this->entityManager->flush();
-
-        $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
-        $labJson = $this->serializer->serialize($labInstance, 'json', $context);
- 
-        $this->bus->dispatch(
-            new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE), [
-                new AmqpStamp($worker, AMQP_NOPARAM, []),
-            ]
-        );
-
-        return $labInstance;
     }
 
     /**

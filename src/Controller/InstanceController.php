@@ -418,23 +418,35 @@ class InstanceController extends Controller
             $this->logger->debug("Key: ".$key);
         }*/
         try {
+            $username=$this->getUser()->getName();
             $this->logger->debug("Lab instance creation: ".$lab->getName());
             if ($instancierType == "guest") {
-                $this->logger->info($this->getUser()->getMail()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
+                $this->logger->info("The guest".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             }
             else {
-                $this->logger->info($this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
+                $this->logger->info($this->getUser()->getFirstname()." ".$username." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             }
-            $instance = $instanceManager->create($lab, $instancier);
-            if ($instancierType == "guest") {
-                $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." Wait ack created message");
-                $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
-            }
-            else {
-                $this->logger->info("Lab instance ".$instance->getUuid()." created by ".$this->getUser()->getFirstname()." ".$this->getUser()->getName()." ".$this->getUser()->getUuid()." Wait ack created message");
-                $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
 
+            $instance = $instanceManager->create($lab, $instancier);                        
+            if (!is_null($instance)) {
+                switch($instancierType) {
+                    case "guest":
+                        $this->logger->info("Lab instance ".$instance->getUuid()." created by guest ".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." Wait ack created message");
+                        $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
+                        break;
+                    case "user":
+                        $this->logger->info("Lab instance ".$instance->getUuid()." created by user ".$this->getUser()->getFirstname()." ".$username." ".$this->getUser()->getUuid()." Wait ack created message");
+                        $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
+                        break;
+                    case "group":
+                        $this->logger->info("Lab instance ".$instance->getUuid()." created by group ".$instancier->getName()." Wait ack created message");
+                        $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
+                        break;
+                }
             }
+            else
+                $this->logger->info("User ".$username." has already an instance of the lab ".$lab->getName());
+
         } catch (Exception $e) {
             throw $e;
         }
