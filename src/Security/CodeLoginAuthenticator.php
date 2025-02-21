@@ -16,18 +16,19 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Symfony\Component\Security\Core\Exception\DisabledException;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\DisabledException;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Http\Logout\LogoutSuccessHandlerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 //use Symfony\Component\Security\Guard\Authenticator\AbstractFormLoginAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
-use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
@@ -79,19 +80,10 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
             && $request->isMethod('POST');
     }
 
-    public function authenticate(Request $request): Passport
+/*    public function authenticate(Request $request): Passport
     {
         $code = $request->request->get('code', '');
         $invitedUser = $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['code' => $code]);
-        /*var_dump(new Passport(
-            new UserBadge($invitedUser->getMail(), function($invitedUser) {
-                return $this->entityManager->getReposiory(InvitationCode::class)->findOneBy(['mail'=>$invitedUser]);
-            }),
-            new PasswordCredentials($code),
-            [
-                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
-            ]
-            ));exit;*/
         return new Passport(
             new UserBadge($invitedUser->getMail()." ".$code,  function($credentials) {
                 $mail = explode(" ", $credentials)[0];
@@ -105,6 +97,43 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
             ]
         );
     }
+*/
+
+public function authenticate(Request $request): Passport
+{
+    $code = $request->request->get('code', '');
+    $invitedUser = $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['code' => $code]);
+
+    if (is_null($invitedUser)) {
+        throw new AccessDeniedException();
+    }
+
+    return new Passport(
+        new UserBadge($invitedUser->getMail()." ".$code, function($credentials) {
+            [$mail, $userCode] = explode(" ", $credentials);
+
+            return $this->entityManager->getRepository(InvitationCode::class)->findOneBy([
+                'mail' => $mail, 
+                'code' => $userCode
+            ]);
+        }),
+        new PasswordCredentials($code),
+        [
+            new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
+        ]
+    );
+}
+
+
+
+
+
+
+
+
+
+
+
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
