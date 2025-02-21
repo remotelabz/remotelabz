@@ -177,7 +177,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
         try {
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false)
-            setLoadingInstanceState(false)
+            setLoadingInstanceState(true)
             setLabInstance(response.data)
             if (!isSandbox) {
                 $.ajax({
