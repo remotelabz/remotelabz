@@ -35,7 +35,7 @@ class FlavorController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ]);
 
         $flavors = $this->flavorRepository->matching($criteria)->getValues();

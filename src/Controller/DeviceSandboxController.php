@@ -50,7 +50,7 @@ class DeviceSandboxController extends Controller
             ->andWhere(Criteria::expr()->neq('type', 'switch'))
             ->andWhere(Criteria::expr()->eq('virtuality', true))
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ]);
 
         $devices = $this->deviceRepository->matching($criteria);

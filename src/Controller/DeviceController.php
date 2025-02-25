@@ -103,7 +103,7 @@ class DeviceController extends Controller
             ->where(Criteria::expr()->contains('name', $search))
             ->andWhere(Criteria::expr()->eq('isTemplate', $template))
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ]);
 
         $allDevices = $this->deviceRepository->matching($criteria);

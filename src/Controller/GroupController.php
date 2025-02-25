@@ -75,7 +75,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'name' => Criteria::ASC,
             ])
         ;
 
@@ -119,7 +119,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'name' => Criteria::ASC
             ]);
 
         /** @param Group $value */

@@ -66,7 +66,7 @@ class OperatingSystemController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ]);
 
         $operatingSystems = $this->operatingSystemRepository->matching($criteria)->getValues();

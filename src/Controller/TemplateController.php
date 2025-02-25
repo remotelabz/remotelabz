@@ -282,6 +282,12 @@ class TemplateController extends Controller
                 'value' => $p['controlProtocol'] ?? '',
                 'list' => $this->listControlProtocolTypes()
             );
+
+            $data['options']['template'] = Array(
+                'name' => 'Template',
+                'type' => 'boolean',
+                'value' => $p['template'] ?? ''
+            );
         
         //}
         

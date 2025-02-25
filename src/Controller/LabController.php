@@ -234,7 +234,7 @@ class LabController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ])
         ;
 

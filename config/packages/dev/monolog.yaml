@@ -19,7 +19,12 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_app.log"
             level: debug
-            channels: ["app", "messenger"]
+            channels: ["app"]
+        messenger:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%_messenger.log"
+            level: debug
+            channels: ["messenger"]
         php:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_php.log"
