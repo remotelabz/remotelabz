@@ -474,6 +474,7 @@ class InstanceManager
 
     /**
      * Export a device template to new device template.
+     * @return device the new device created
      */
     public function exportDevice(DeviceInstance $deviceInstance, string $name)
     {
@@ -488,7 +489,7 @@ class InstanceManager
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
 
-        $this->logger->debug('Exporting device instance with UUID ' . $uuid . '.');
+        $this->logger->debug('Exporting device instance process with UUID ' . $uuid . '.');
         
         $device = $deviceInstance->getDevice();
         $hypervisor=$device->getHypervisor();
@@ -509,16 +510,14 @@ class InstanceManager
                 $imageName=$imageName;
         }
         $this->logger->debug('Export process. New name will be :'.$imageName);
-
+        
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
         $newDevice = $this->copyDevice($device, $newOS, $name);
-        $this->entityManager->persist($newOS);
-        $this->entityManager->persist($newDevice);
         $this->entityManager->flush();
-
+        
         $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-        $this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
+        //$this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
 
         $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
         $tmp['new_os_name']=$name;
@@ -533,17 +532,20 @@ class InstanceManager
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
             ]
         );
+        return $newDevice;
        
     }
 
-    // Copy on all other workers
+    // Copy OS on all other workers
+    //TODO : change parameters to entities worker and OS, beside string. It's avoid 
+    // to make a query to get worker and OS entities
     function Sync2OS(string $workerIP,string $hypervisorName,string $imageName){
         
         $workers = $this->configWorkerRepository->findAll();
 
         foreach ($workers as $otherWorker) {
             $otherWorkerIP=$otherWorker->getIPv4();
-            if (strcmp($otherWorkerIP,$workerIP) && $otherWorker->getAvailable()) { //return 0 en égalité
+            if (strcmp($otherWorkerIP,$workerIP) && $otherWorker->getAvailable()) { //strcmp return 0 if equal; avoid to copy itself
                 $tmp=array();
                 $tmp['Worker_Dest_IP'] = $otherWorkerIP;
                 $tmp['hypervisor'] = $hypervisorName;
@@ -560,20 +562,25 @@ class InstanceManager
         }
     }
 
+    // Copy device on all other workers
+    //TODO : change parameters to entities worker and device, beside string. It's avoid
+    // to make a query to get worker and device entities
+    
     function exportlab(LabInstance $labInstance, string $name) {
         $uuid = $labInstance->getUuid();
-        $this->logger->debug('Exporting lab instance with UUID ' . $uuid . '.');
+        $this->logger->info('Exporting lab instance with UUID ' . $uuid . '.');
 
         $now = new DateTime();
 
         $lab = $this->copyLab($labInstance->getLab(), $name);
+
 
         $worker = $this->workerManager->getFreeWorker($lab);
         if ($worker == null) {
             $this->logger->error('Could not export lab. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
-        
+                 
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
         if (count($lab->getPictures()) >= 1) {
@@ -584,60 +591,114 @@ class InstanceManager
         }
         $this->bannerManager->copyBanner($labInstance->getLab()->getId(), $lab->getId());
         if (count($labInstance->getDeviceInstances()) >= 1) {
-            foreach($labInstance->getDeviceInstances() as $deviceInstance) {
+            foreach($labInstance->getDeviceInstances() as $deviceInstance) {               
                 $device = $deviceInstance->getDevice();
-                $osName = $device->getOperatingSystem()->getName()."_".$name;
-                $deviceName = $device->getName()."_".$name;
-                $deviceInstanceUuid = $deviceInstance->getUuid();
-                $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
-                $id = uniqid();
-                $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
-    
-                $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
-    
-                $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
-                $newDevice = $this->copyDevice($device, $newOS, $deviceName);
-                if ($device->getTemplate() !== null) {
-                    $newDevice->setTemplate($device->getTemplate());
-                }
-                $this->entityManager->persist($newOS);
-    
-                $newEditorData = new EditorData();
-                $newEditorData->setY($device->getEditorData()->getY());
-                $newEditorData->setX($device->getEditorData()->getX());
-                $this->entityManager->persist($newEditorData);
-                $newDevice->setEditorData($newEditorData);
-                $this->entityManager->persist($newDevice);
-                $newEditorData->setDevice($newDevice);
-    
-                $lab->addDevice($newDevice);
-                $this->entityManager->flush();
-    
-                $context = SerializationContext::create()->setGroups('api_get_lab_instance');
-                $labJson = $this->serializer->serialize($labInstance, 'json', $context);
-                $this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
-    
-                $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-                for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
-                    if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
-                        $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
-                        $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
-                        $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
-                        $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
+                
+                $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
+                //$id = uniqid();
+                $new_name .= '_' . $now->format('YmdHis');
+
+                if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
+                    $this->stop($deviceInstance);                   
+                    $newDevice=$this->exportDevice($deviceInstance, $new_name);                  
+                   
+                    $newDevice->getEditorData()->setX($device->getEditorData()->getX());
+                    $newDevice->getEditorData()->setY($device->getEditorData()->getY());
+
+                    $newDevice->setNetworkInterfaceTemplate($device->getNetworkInterfaceTemplate());
+                    if($device->getIcon() != NULL) {
+                        $newDevice->setIcon($device->getIcon()); 
                     }
+                    /*foreach ($device->getNetworkInterfaces() as $network_int) {
+                        $new_network_inter=new NetworkInterface();
+                        $new_setting=new NetworkSettings();
+                        $new_setting=clone $network_int->getSettings();
+                        
+                        $new_network_inter->setSettings($new_setting);
+                        $new_network_inter->setName($network_int->getName());
+                        $new_network_inter->setVlan($network_int->getVlan());
+                        $new_network_inter->setConnection($network_int->getConnection());
+                        $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
+                        $new_network_inter->setConnectorType($network_int->getConnectorType());
+                        //$i=$i+1;
+                        $new_network_inter->setIsTemplate(true);
+                        $newDevice->addNetworkInterface($new_network_inter);
+                    }*/
+
+                    /* $osName = $device->getOperatingSystem()->getName()."_".$name;
+                    $deviceName = $device->getName()."_".$name;
+                    $deviceInstanceUuid = $deviceInstance->getUuid();
+                    $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
+                    $id = uniqid();
+                    $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
+        
+                    $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
+        
+                    $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
+                    $newDevice = $this->copyDevice($device, $newOS, $deviceName);
+                    if ($device->getTemplate() !== null) {
+                        $newDevice->setTemplate($device->getTemplate());
+                    }
+                    $this->entityManager->persist($newOS);
+                    */
+
+                    //$newEditorData = new EditorData();
+                    //$newDevice->setEditorData($device->getEditorData());
+                    //$this->logger->debug('Export process. '.$new_name." Coordinates X,Y:".$device->getEditorData()->getX().",".$device->getEditorData()->getY());                    
+                    $this->entityManager->persist($newDevice);
+                    
+                    $lab->addDevice($newDevice);
+
+                    $this->entityManager->persist($lab);
+                    $this->entityManager->flush();
+
+                    /*
+                    $context = SerializationContext::create()->setGroups('api_get_lab_instance');
+                    $labJson = $this->serializer->serialize($labInstance, 'json', $context);
+                    //$this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
+        
+                    $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                    for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
+                        if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
+                            $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
+                            $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
+                            $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
+                            $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
+                        }
+                    }
+        
+                    $labJson = json_encode($tmp, 0, 4096);
+                    */
+                } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") { 
+                    // Switch interne or DHCP server
+                    $this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
+                    //$newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $new_name, $new_name);
+                    $newDevice = $this->copyDevice($device, $device->getOperatingSystem(), $new_name);
+                    
+                    $newDevice->getEditorData()->setX($device->getEditorData()->getX());
+                    $newDevice->getEditorData()->setY($device->getEditorData()->getY());
+
+                    if ($device->getTemplate() !== null) {
+                        $newDevice->setTemplate($device->getTemplate());
+                    }
+
+                    $this->entityManager->persist($newDevice);
+
+                    //$this->logger->debug('Export process. '.$new_name." Coordinates X,Y:".$device->getEditorData()->getX().",".$device->getEditorData()->getY());
+                    $lab->addDevice($newDevice);
+                    $this->entityManager->persist($lab);
+                    $this->entityManager->flush();                    
                 }
-    
-                $labJson = json_encode($tmp, 0, 4096);
-    
             }
         }
 
-        $this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
+        //$this->logger->debug('Sending lab instance '.$uuid.' export message.', json_decode($labJson, true));
+        /*$this->logger->debug('Sending lab instance '.$uuid.' export message.');
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_EXPORT_LAB), [
                     new AmqpStamp($worker, AMQP_NOPARAM, []),
                 ]
-            );
+            );*/
         
     }
 
@@ -697,7 +758,7 @@ class InstanceManager
         $newOS->setName($name);
         $newOS->setImageFilename($imageName);
         $newOS->setHypervisor($operatingSystem->getHypervisor());
-
+        $this->entityManager->persist($newOS);
         return $newOS;
     }
 
@@ -755,7 +816,7 @@ class InstanceManager
         }
         
         $newLab->setAuthor($this->tokenStorage->getToken()->getUser());
-
+        $this->entityManager->persist($newLab);
         return $newLab;
     }
 
@@ -781,6 +842,10 @@ class InstanceManager
         $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
         $newDevice->setVirtuality($device->getVirtuality());
 
+        //$newCoordinate=new EditorData();
+        //$newDevice->setEditorData($newCoordinate);
+        //$this->entityManager->persist($newCoordinate);
+
         //$i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
@@ -800,8 +865,7 @@ class InstanceManager
         foreach ($device->getControlProtocolTypes() as $control_protocol) {
             $newDevice->addControlProtocolType($control_protocol);
         }
-
+        $this->entityManager->persist($newDevice);
         return $newDevice;
     }
-       
 }

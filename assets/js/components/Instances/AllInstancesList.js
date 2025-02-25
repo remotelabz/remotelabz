@@ -21,7 +21,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 10000)
+        const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
             setLabInstances(null)

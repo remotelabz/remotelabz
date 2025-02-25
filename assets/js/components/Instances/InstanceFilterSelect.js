@@ -25,7 +25,7 @@ export default function InstanceFilterSelect(props) {
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 20000)
+        const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
             setInstances(null)

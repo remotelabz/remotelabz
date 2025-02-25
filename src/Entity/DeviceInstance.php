@@ -180,7 +180,6 @@ class DeviceInstance extends Instance
     public function getOwnerId()
     {
         $id = null;
-        // TODO: refractor to "getOwnerId"
         switch ($this->ownedBy) {
             case self::OWNED_BY_USER:
                 $id = $this->user;

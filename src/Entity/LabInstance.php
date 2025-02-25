@@ -79,11 +79,6 @@ class LabInstance extends Instance
     private $workerIp;
 
 
-    //TODO add hypervisor IP to manage cluster of hypervisor
-    //@ORM\Column(type=.., length=)
-    //private $hypervisor_address
-
-
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
      * @Serializer\Groups({"api_get_lab_instance"})

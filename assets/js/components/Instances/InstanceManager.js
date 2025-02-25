@@ -16,11 +16,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const [viewAs, setViewAs] = useState({ type: props.user.code ? 'guest' : 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
     const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox=props.isSandbox
-
+    const timer=null
+    
     useEffect(() => {
         setLoadingInstanceState(false)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 5000)
+        const interval = setInterval(refreshInstance, 10000)
         
         return () => {
             clearInterval(interval)
@@ -80,6 +81,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         type: 'error'
                     }).show()
                 }
+                clearInterval(timer);
             }
         }
     }
@@ -216,6 +218,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     async function onLeaveLab() {
         setShowLeaveLabModal(false)
         setLoadingInstanceState(true)
+        clearInterval(timer);
 
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid)

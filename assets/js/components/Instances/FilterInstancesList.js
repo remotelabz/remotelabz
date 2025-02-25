@@ -29,7 +29,7 @@ function FilterInstancesList(props = {labInstances: [], filter, itemValue, itemF
         //console.log(props.itemFilter);
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 20000)
+        const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
             setLabInstances(null)

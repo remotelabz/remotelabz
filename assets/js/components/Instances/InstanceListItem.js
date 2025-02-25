@@ -23,7 +23,8 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
    
     useEffect(() => {
         fetchLogs()
-        const interval = setInterval(fetchLogs, 5000)
+        //Collect log every 30 seconds
+        const interval = setInterval(fetchLogs, 30000)
         Remotelabz.devices.get(instance.device.id).then(response => {
             setDevice(response.data)
             setLoading(false)
@@ -56,7 +57,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
             new Noty({
                 type: 'success',
                 text: 'Instance start requested.',
-                timeout: 5000
+                timeout: 10000
             }).show();
 
             onStateUpdate();
@@ -88,7 +89,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
             new Noty({
                 type: 'success',
                 text: 'Instance stop requested.',
-                timeout: 5000
+                timeout: 10000
             }).show();
 
             onStateUpdate();

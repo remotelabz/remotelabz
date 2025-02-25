@@ -32,6 +32,7 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->andWhere('l.lab = :lab')
             ->setParameter('user', $user)
             ->setParameter('lab', $lab)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
@@ -44,6 +45,7 @@ class LabInstanceRepository extends ServiceEntityRepository
             ->andWhere('l.lab = :lab')
             ->setParameter('guest', $guest)
             ->setParameter('lab', $lab)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;

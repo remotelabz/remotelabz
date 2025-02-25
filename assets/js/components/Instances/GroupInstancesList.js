@@ -20,7 +20,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 20000)
+        const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
             setInstances(null)
