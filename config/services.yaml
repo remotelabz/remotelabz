@@ -41,6 +41,7 @@ parameters:
     app.general.contact_mail: '%env(resolve:CONTACT_MAIL)%'
     app.general.maintenance: '%env(bool:APP_MAINTENANCE)%'
     app.general.message: '%env(resolve:GENERAL_MESSAGE)%'
+    app.general.single_srv: '%env(bool:DEPLOY_SINGLE_SERVER)%'
 
     app.shibboleth.enable: '%env(resolve:ENABLE_SHIBBOLETH)%'
 
@@ -193,6 +194,7 @@ services:
             $workerServer: '%app.worker_server%'
             $workerPort: '%app.worker_port%'
             $rootDirectory: '%kernel.project_dir%'
+            $singleServer: '%app.general.single_srv%'
 
     App\Service\Worker\WorkerManager:
         arguments:

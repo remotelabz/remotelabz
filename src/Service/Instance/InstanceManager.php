@@ -86,6 +86,7 @@ class InstanceManager
         'worker'
     ];
     protected $tokenStorage;
+    protected $singleServer = true;
 
     public function __construct(
         LoggerInterface $logger,
@@ -107,6 +108,7 @@ class InstanceManager
         string $workerServer,
         string $workerPort,
         string $rootDirectory,
+        bool $singleServer,
         ProxyManager $proxyManager,
         WorkerManager $workerManager,
         BannerManager $bannerManager,
@@ -135,6 +137,7 @@ class InstanceManager
         $this->configWorkerRepository = $configWorkerRepository;
         $this->bannerManager = $bannerManager;
         $this->tokenStorage = $tokenStorage;
+        $this->singleServer = $singleServer;
     }
 
     /**
@@ -213,14 +216,15 @@ class InstanceManager
                 ->setState(InstanceStateMessage::STATE_CREATING)
                 ->setNetwork($network)
                 ->populate();
-
+        //TODO: test with local env if deploy the front and the worker on the same server
+        if (!$this->singleServer) {// One server for the Front and one server for the worker
             if (IPTools::routeExists($network))
                 $this->logger->debug("Route to ".$network." exists, via ".$worker);
             else {
                 $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
                 IPTools::routeAdd($network,$worker);
             }
-            
+        }
 
             if ($lab->getHasTimer() == true) {
                 $timer = explode(":",$lab->getTimer());
