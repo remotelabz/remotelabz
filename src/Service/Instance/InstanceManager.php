@@ -302,60 +302,73 @@ class InstanceManager
      */
     public function start(DeviceInstance $deviceInstance)
     {
-        $uuid = $deviceInstance->getUuid();
-        $device = $deviceInstance->getDevice();
 
-        $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
-        $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
-        if ($worker->getAvailable() == true) {
-            foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
-                $control_protocol_instance->setPort($this->getRemoteAvailablePort($workerIP));
-                $this->entityManager->persist($control_protocol_instance);
-            }
+        $this->logger->info('Device instance state'.$deviceInstance->getState());
+        
+        if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
+                $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
+                $deviceInstance->getState() == InstanceStateMessage::STATE_STARTED ||
+                $deviceInstance->getState() == InstanceStateMessage::STATE_RESETTING) {
+            $this->logger->info('Device instance '.$deviceInstance->getUuid().' is already running.');
+            throw new BadRequestHttpException('Device already running or started');
+        } else {
+            $this->logger->info('Starting device instance '.$deviceInstance->getUuid().'.');
+            
+            $uuid = $deviceInstance->getUuid();
+            $device = $deviceInstance->getDevice();
+            
+            $workerIP = $deviceInstance->getLabInstance()->getWorkerIp();
+            $worker = $this->configWorkerRepository->findOneBy(["IPv4"=>$workerIP]);
+            if ($worker->getAvailable() == true) {
+                foreach ($deviceInstance->getControlProtocolTypeInstances() as $control_protocol_instance) {
+                    $control_protocol_instance->setPort($this->getRemoteAvailablePort($workerIP));
+                    $this->entityManager->persist($control_protocol_instance);
+                }
 
-            $deviceInstance->setState(InstanceState::STARTING);
-            $this->entityManager->flush();
+                $deviceInstance->setState(InstanceState::STARTING);
+                $this->entityManager->flush();
 
-            $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);           
-            $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
-            //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
-            if ($device->getVirtuality() == 0) {
-                $this->logger->info($device->getTemplate());
-                preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
-                $this->logger->info(json_encode($templateNumber, true));
-                $template = $this->deviceRepository->find($templateNumber[0][0]);
-                
-                $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-                foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
-                    if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
-                        if ($template->getOutlet()) {
-                            $tmp['deviceInstances'][$key]['device']['outlet'] = [
-                                'outlet' => $template->getOutlet()->getOutlet(),
-                                'pdu' => [
-                                    'ip' => $template->getOutlet()->getPdu()->getIp(),
-                                    'model' => $template->getOutlet()->getPdu()->getModel(),
-                                    'brand' => $template->getOutlet()->getPdu()->getBrand()
-                                ]
-                            ];
+                $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);           
+                $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
+                //$labJson = $this->serializer->serialize($deviceInstance, 'json', $context);
+                if ($device->getVirtuality() == 0) {
+                    $this->logger->info($device->getTemplate());
+                    preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+                    $this->logger->info(json_encode($templateNumber, true));
+                    $template = $this->deviceRepository->find($templateNumber[0][0]);
+                    
+                    $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                    foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
+                        if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
+                            if ($template->getOutlet()) {
+                                $tmp['deviceInstances'][$key]['device']['outlet'] = [
+                                    'outlet' => $template->getOutlet()->getOutlet(),
+                                    'pdu' => [
+                                        'ip' => $template->getOutlet()->getPdu()->getIp(),
+                                        'model' => $template->getOutlet()->getPdu()->getModel(),
+                                        'brand' => $template->getOutlet()->getPdu()->getBrand()
+                                    ]
+                                ];
+                            }
                         }
                     }
+                    $labJson = json_encode($tmp, 0, 4096);
                 }
-                $labJson = json_encode($tmp, 0, 4096);
+
+                $this->logger->info('Sending device instance '.$uuid.' start message');
+                //$this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+                $this->bus->dispatch(
+                    new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
+                        new AmqpStamp($workerIP, AMQP_NOPARAM, []),
+                    ]
+                );
+
+                return $labJson;
             }
-
-            $this->logger->info('Sending device instance '.$uuid.' start message');
-            //$this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
-            $this->bus->dispatch(
-                new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
-                    new AmqpStamp($workerIP, AMQP_NOPARAM, []),
-                ]
-            );
-
-            return $labJson;
-        }
-        else {
-            $this->logger->error('Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
-            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+            else {
+                $this->logger->error('Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+                throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+            }
         }
     }
 

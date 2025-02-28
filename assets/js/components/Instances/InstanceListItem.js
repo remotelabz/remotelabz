@@ -65,12 +65,20 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
                 new Noty({
                     text: error.response.data.message,
-                    type: 'error'
+                    type: 'error',
+                    timeout: 5000
+                }).show()
+            } else if (error.response.data.message.includes("Device")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error',
+                    timeout: 5000
                 }).show()
             }
             else {
                 new Noty({
                     type: 'error',
+//                    text: error.response.data.message,
                     text: 'Error while requesting instance start. Please try again later.',
                     timeout: 5000
                 }).show();
