@@ -55,5 +55,5 @@ vagrant/provision_prod.sh
 
 config/templates/
 backups/
-composer.lock
-config/packages/messenger.yaml
+/composer.lock
+/config/packages/messenger.yaml
