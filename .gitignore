@@ -53,7 +53,7 @@ vagrant/provision_prod.sh
 .phpunit.result.cache
 ###< phpunit/phpunit ###
 
-config/templates/
-backups/
+/config/templates/
+/backups/
 /composer.lock
 /config/packages/messenger.yaml
