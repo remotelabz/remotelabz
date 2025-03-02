@@ -66,7 +66,7 @@ export default function LabImporter()
             lab = response.data;
 
             Remotelabz.labs.import(JSON.stringify(lab)).then(response => {
-                console.log(response.request)
+                //console.log(response.request)
                 setSuccess({
                     wasCreated: true,
                     redirect: response.request.responseURL
@@ -109,7 +109,7 @@ export default function LabImporter()
                 onSubmit={ (values, actions) => {
                     actions.setSubmitting(true);
                     Remotelabz.labs.import(values.json).then(response => {
-                        console.log(response.request)
+                        //console.log(response.request)
                         setSuccess({
                             wasCreated: true,
                             redirect: response.request.responseURL

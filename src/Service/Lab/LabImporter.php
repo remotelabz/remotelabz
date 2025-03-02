@@ -169,6 +169,7 @@ class LabImporter
 
 
         foreach ($labJson['devices'] as $deviceJson) {
+            //$this->logger->debug('Lab Json', $deviceJson);
             // find similar operating system
             $operatingSystemJson = $deviceJson['operatingSystem'];
             $criteria = Criteria::create()
@@ -250,7 +251,6 @@ class LabImporter
                 ->setVirtuality($deviceJson['virtuality'])
                 ->setHypervisor($hypervisor)
                 ->setNbCpu($deviceJson['nbCpu'])
-                ->setTemplate($deviceJson['template'])
                 //->setVnc($deviceJson['vnc'])
                 ->setOperatingSystem($operatingSystem)
                 ->setFlavor($flavor)
@@ -258,6 +258,10 @@ class LabImporter
                 ->setIsTemplate(false)
                 ->setNetworkInterfaceTemplate($deviceJson['networkInterfaceTemplate'])
             ;
+            if (array_key_exists("template",$deviceJson)) {
+                $device->setTemplate($deviceJson['template']);
+            }
+
             
             foreach($deviceJson["controlProtocolTypes"] as $controlProtocolTypeJson){
                 $controlProtocolType = $this->controlProtocolTypeRepository->find($controlProtocolTypeJson["id"]);

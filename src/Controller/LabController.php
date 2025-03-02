@@ -261,7 +261,7 @@ class LabController extends Controller
     {
 
         $labs = $this->labRepository->findBy(["isTemplate" => true]);
-
+        
         if ('json' === $request->getRequestFormat()) {
             return $this->json($labs, 200, [], ["api_get_lab"]);
         }
@@ -277,7 +277,6 @@ class LabController extends Controller
     {
 
         $labs = $this->labRepository->find($id);
-
         if ('json' === $request->getRequestFormat()) {
             return $this->json($labs, 200, [], ["api_get_lab_template"]);
         }
