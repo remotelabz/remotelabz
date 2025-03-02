@@ -46,15 +46,15 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class DeviceController extends Controller
 {
-    private $deviceRepository;
-    private $deviceInstanceRepository;
-    private $labRepository;
-    private $labInstanceRepository;
-    private $controlProtocolTypeRepository;
-    private $hypervisorRepository;
-    private $flavorRepository;
-    private $operatingSystemRepository;
-    private $networkInterfaceRepository;
+    private DeviceRepository $deviceRepository;
+    private DeviceInstanceRepository $deviceInstanceRepository;
+    private LabRepository $labRepository;
+    private LabInstanceRepository $labInstanceRepository;
+    private ControlProtocolTypeRepository $controlProtocolTypeRepository;
+    private HypervisorRepository $hypervisorRepository;
+    private FlavorRepository $flavorRepository;
+    private OperatingSystemRepository $operatingSystemRepository;
+    private NetworkInterfaceRepository $networkInterfaceRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -836,16 +836,20 @@ class DeviceController extends Controller
         
         //preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
         
-        preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+        if ($device->getTemplate() != null) {
+            
+            preg_match('/^(\d+)(.*)$/', $device->getTemplate(), $templateNumber);
+                        
+            $this->logger->debug("Device template: ".$device->getTemplate());
+            if ($templateNumber != null) {
+            $this->logger->debug("template number: ".$templateNumber[1]);
+            
+                    $template = $this->deviceRepository->find($templateNumber[2]);
+                    $device->setIp($template->getIp());
+                    $device->setPort($template->getPort());
+            }
+        } else $this->logger->debug("Device has no template");
         
-        $this->logger->debug("Device template: ".$device->getTemplate());
-        $this->logger->debug("template number: ",$templateNumber);
-
-        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
-            $template = $this->deviceRepository->find($templateNumber[0][0]);
-            $device->setIp($template->getIp());
-            $device->setPort($template->getPort());
-        } 
         
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
