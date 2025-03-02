@@ -843,8 +843,6 @@ class DeviceController extends Controller
 
         if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
             $template = $this->deviceRepository->find($templateNumber[0][0]);
-            //TODO : solve this problem because sometimes
-            // In case of template with name like Windows10 of Ubuntu-cfg3 the $templateNumber
             $device->setIp($template->getIp());
             $device->setPort($template->getPort());
         } 
@@ -1193,7 +1191,7 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
 
-        preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
+        preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
         if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
             $template = $this->deviceRepository->find($templateNumber[0][0]);
             $device->setIp($template->getIp());
