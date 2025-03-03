@@ -1,0 +1,29 @@
+framework:
+    messenger:
+        transports:
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            worker:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: worker
+                        type: direct
+                    queues:
+                        messages_worker1:
+                            binding_keys: [127.0.0.1]
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 1
+                    max_delay: 0
+            front:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: front
+                    queues:
+                        messages_front: null
+            failed: 'doctrine://default?queue_name=failed'
+        routing:
+            Remotelabz\Message\Message\InstanceActionMessage: worker
+            Remotelabz\Message\Message\InstanceStateMessage: front
