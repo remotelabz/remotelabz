@@ -118,11 +118,19 @@ class DeviceSandboxController extends Controller
         ];
         //$this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
+        preg_match("/^Sandbox_(Lab).*$/",$lab->getName(),$result);
+        //$this->logger->debug("Sandbox lab: ",$result);
+        if ($result != null)
+            $sandboxlab=true;
+        else
+            $sandboxlab=false;
+
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
             'deviceStarted' => $deviceStarted,
             'user' => $user,
+            'sandboxlab' => $sandboxlab,
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
