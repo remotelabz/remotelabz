@@ -428,6 +428,7 @@ class InstanceController extends Controller
             }
 
             $instance = $instanceManager->create($lab, $instancier);                        
+            
             if (!is_null($instance)) {
                 switch($instancierType) {
                     case "guest":
@@ -443,15 +444,28 @@ class InstanceController extends Controller
                         $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
                         break;
                 }
+            
+                return $this->json($instance, 200, [], ['api_get_lab_instance']);
             }
-            else
-                $this->logger->info("User ".$username." has already an instance of the lab ".$lab->getName());
-
+            
+            else { //instance is null, so no worker available
+                $this->logger->info("No worker available for lab ".$lab->getName()." ".$lab->getUuid());
+                return null;
+                
+                //Generate an error message if we return a 503 error to the promess
+                // in sandboxListItems.js (line 52)
+                /*  return new JsonResponse([
+                        'code' => 503,
+                        'status' => 'Service Unavailable',
+                        'message' => 'No worker available for lab '.$lab->getName().' '.$lab->getUuid()
+                    ], 503);
+                */
+            }
         } catch (Exception $e) {
             throw $e;
         }
 
-        return $this->json($instance, 200, [], ['api_get_lab_instance']);
+       
     }
 
     /**

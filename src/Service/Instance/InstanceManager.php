@@ -169,15 +169,16 @@ class InstanceManager
                 throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
         }     
 
-        if (is_null($is_exist_labinstance)) {
+        $worker = $this->workerManager->getFreeWorker($lab);
+        //$this->logger->info("Worker choosen is :".$worker);
+        if ($worker == null) {
+            $this->logger->error('Could not create instance. No worker available');
+            return null;
+            throw new Exception('No worker available');
+        }
 
-                $worker = $this->workerManager->getFreeWorker($lab);
-
-            if ($worker == null) {
-                $this->logger->error('Could not create instance. No worker available');
-                throw new Exception('No worker available');
-            }
-            //$this->logger->info("Worker choosen is :".$worker);
+        if (is_null($is_exist_labinstance)) { // Instance doesn't exist
+            
             $this->logger->debug("Worker available from create function in InstanceManager:".$worker);
             
             $labInstance = LabInstance::create()
@@ -216,15 +217,15 @@ class InstanceManager
                 ->setState(InstanceStateMessage::STATE_CREATING)
                 ->setNetwork($network)
                 ->populate();
-        //TODO: test with local env if deploy the front and the worker on the same server
-        if (!$this->singleServer) {// One server for the Front and one server for the worker
-            if (IPTools::routeExists($network))
-                $this->logger->debug("Route to ".$network." exists, via ".$worker);
-            else {
-                $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
-                IPTools::routeAdd($network,$worker);
+        
+            if (!$this->singleServer) {// One server for the Front and one server for the worker
+                if (IPTools::routeExists($network))
+                    $this->logger->debug("Route to ".$network." exists, via ".$worker);
+                else {
+                    $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+                    IPTools::routeAdd($network,$worker);
+                }
             }
-        }
 
             if ($lab->getHasTimer() == true) {
                 $timer = explode(":",$lab->getTimer());
@@ -245,9 +246,7 @@ class InstanceManager
                 ]
             );
             return $labInstance;
-        } else 
-            return null;
-        
+        }        
     }
 
     /**

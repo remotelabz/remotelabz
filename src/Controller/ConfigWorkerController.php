@@ -180,9 +180,9 @@ class ConfigWorkerController extends Controller
                           $this->logger->debug("OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
 
                             if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
-                                $this->logger->debug($operatingSystem->getName()." is in the array");
+                                $this->logger->debug($operatingSystem->getName()." already exists");
                             else
-                                $this->logger->debug($operatingSystem->getName()." is NOT in the array");
+                                $this->logger->debug($operatingSystem->getName()." doesn't exist");
 
                             if ($operatingSystem->getHypervisor()->getName() === "lxc" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"])) {
                                 $tmp=array();
@@ -207,7 +207,7 @@ class ConfigWorkerController extends Controller
                                 $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                                 if (!is_null($operatingSystem->getImageFilename())) { // the case of qemu image with link.
-                                $this->logger->debug("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                                $this->logger->info("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
                                 $this->bus->dispatch(
                                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                                         new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),

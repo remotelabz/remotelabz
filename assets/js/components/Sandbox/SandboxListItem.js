@@ -93,7 +93,7 @@ class SandboxListItem extends Component {
             //item.networkInterfaces.forEach(element => console.log(element.id));
             item.networkInterfaces = networkInterfaces;
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-            item.controlProtocolTypes.forEach(element => console.log(element.id));
+            //item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
             /*console.log("OnModify");
             console.log(device);*/
@@ -115,8 +115,16 @@ class SandboxListItem extends Component {
             }
         }
         // Create and start a lab instance
-        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-  
+        //await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user').then((response) => {
+            console.log("YES CREATION OK");
+            console.log(response);
+        }, (error) => {
+            console.log("ERROR");
+            this.deleteLab(lab.id);
+        }  
+    );
+
         this.setState({ isLoading: false, exist: true, lab: lab});
         // Redirect to Sandbox
         window.location.href = "/admin/sandbox/" + lab.id; 

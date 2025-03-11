@@ -1195,12 +1195,27 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
 
-        preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+       /* preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
         if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
             $template = $this->deviceRepository->find($templateNumber[0][0]);
             $device->setIp($template->getIp());
             $device->setPort($template->getPort());
-        }
+        }*/
+        if ($device->getTemplate() != null) {
+            
+            preg_match('/^(\d+)(.*)$/', $device->getTemplate(), $templateNumber);
+                        
+            $this->logger->debug("Device template: ".$device->getTemplate());
+            if ($templateNumber != null) {
+            $this->logger->debug("template number: ".$templateNumber[1]);
+            
+                    $template = $this->deviceRepository->find($templateNumber[2]);
+                    $device->setIp($template->getIp());
+                    $device->setPort($template->getPort());
+            }
+        } else $this->logger->debug("Device has no template");
+
+        
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
