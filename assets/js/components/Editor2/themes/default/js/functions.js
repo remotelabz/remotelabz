@@ -583,8 +583,10 @@ export function getTopology() {
     return deferred.promise();
 }
 
+//TODO verify here the template format
 // Get templates
 function getTemplates(template) {
+    logger(1,"DEBUG: ask getTemplates with value: "+ template);
     var deferred = $.Deferred();
     var templateData;
     var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
@@ -774,7 +776,7 @@ export function setNodeData(id){
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2ArrayByRow('node', id);
     var promises = [];
-    logger(1, 'DEBUG: posting form-node-edit form.');
+    logger(1, 'DEBUG: posting form-node-edit form from setNodeData function.');
     var url = '/api/labs/' + lab_filename + '/node/' + id;
     var type = 'PUT';
     form_data['id'] = id;
@@ -792,7 +794,7 @@ export function setNodeData(id){
             data: JSON.stringify(form_data),
             success: function (data) {
                 if (data['status'] == 'success') {
-                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
+                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved from setNodeData.');
                     // Close the modal
                     $("#node" + id + " .node_name").html('<i class="node' + id + '_status glyphicon glyphicon-stop"></i>' + form_data['name'])
                     $("#node" + id + " a img").attr("src", "/build/editor/images/icons/" + form_data['icon'])
@@ -1355,17 +1357,27 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (2,'action = ' + action)
+    logger (2,'action2 = ' + action)
+    logger (2,'values id = ' + values['id'])
+    logger (2,'values template = ' + values['template'])
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
     var top = (values == null || values['top'] == null) ? null : Math.trunc(values['top']/zoom);
     var template = (values == null || values['template'] == null) ? null : values['template'];
-
     var title = (action == 'add') ? MESSAGES[85] : MESSAGES[86];
     var template_disabled = (values == null || values['template'] == null ) ? '' : 'disabled ';
+    var id_template=null;
 
-    $.when(getTemplates(null)).done(function (templates) {
+    logger(1, 'DEBUG: template: '+ template);
+    if ( template == null ) {
+        id_template=null;      
+    } else {
+        id_template=template.split(/^(\d+)-*$/)[1];
+        logger(1,'DEBUG: value of the template: '+ id_template)
+    }
+
+    $.when(getTemplates(id_template)).done(function (templates) {
         var html = '';
         html += '<form id="form-node-' + action + '" >'+
                     '<div class="form-group col-sm-12">'+
@@ -1943,7 +1955,7 @@ export function printLabTopology() {
                     $newTextObject
                         .resizable().resizable("destroy")
                         .resizable({
-                grid:[3,3],
+                            grid:[3,3],
                             autoHide: true,
                             resize: function (event, ui) {
                                 textObjectResize(event, ui, {"shape_border_width": 5});
@@ -1959,7 +1971,7 @@ export function printLabTopology() {
                     $newTextObject
                         .resizable().resizable('destroy')
                         .resizable({
-                grid:[3,3],
+                            grid:[3,3],
                             autoHide: true,
                             resize: function (event, ui) {
                                 textObjectResize(event, ui, {"shape_border_width": 5});
@@ -2538,8 +2550,6 @@ function printPageLabOpen(lab) {
          $('#lab-sidebar ul a').each(function () {
              var t = $(this).attr("title");
              $(this).append(t);
-
-
              })
         if ( LOCK == 1 ) {
             lab_topology.setDraggable($('.node_frame, .network_frame, .customShape'), false);

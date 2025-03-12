@@ -142,9 +142,7 @@ class TemplateController extends Controller
      * 
      * @Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message="Access denied.")
      */
-    public function showAction(
-        int $id,
-        Request $request)
+    public function showAction(int $id, Request $request)
     {
         $data = json_decode($request->getContent(), true);
         $response = new Response();
@@ -163,7 +161,7 @@ class TemplateController extends Controller
             $this->newAction($device);
          }
         $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
-        $p['template'] = $deviceName;
+        $p['template'] = $id."-".$deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
 

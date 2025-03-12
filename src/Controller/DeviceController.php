@@ -845,8 +845,10 @@ class DeviceController extends Controller
             $this->logger->debug("template number: ".$templateNumber[1]);
             
                     $template = $this->deviceRepository->find($templateNumber[2]);
-                    $device->setIp($template->getIp());
-                    $device->setPort($template->getPort());
+                    if (!is_null($template)) {
+                        $device->setIp($template->getIp());
+                        $device->setPort($template->getPort());
+                    }
             }
         } else $this->logger->debug("Device has no template");
         
@@ -1210,8 +1212,10 @@ class DeviceController extends Controller
             $this->logger->debug("template number: ".$templateNumber[1]);
             
                     $template = $this->deviceRepository->find($templateNumber[2]);
-                    $device->setIp($template->getIp());
-                    $device->setPort($template->getPort());
+                    if (!is_null($template)) {
+                        $device->setIp($template->getIp());
+                        $device->setPort($template->getPort());
+                    }
             }
         } else $this->logger->debug("Device has no template");
 
@@ -1376,7 +1380,7 @@ class DeviceController extends Controller
         try {
             $entityManager->remove($device);
             $entityManager->flush();        
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
+        //$this->addFlash('success', $device->getName() . ' has been deleted.');
 
         }
         catch (ForeignKeyConstraintViolationException $e) {
