@@ -1,0 +1,66 @@
+<div class="modal-header">
+    <i class="glyphicon glyphicon-certificate pull-right pointer action-changeopacity" ng-click="opacity()"></i>
+    <h3 class="modal-title">Add connection between{{src.name}} and {{dst.name}}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+		<div class="col-md-4">
+			<div style="text-align:center;" >{{src.name}}</div>
+			<img ng-src="{{src.icon}}" class="{{src.iconClass}} img-responsive" style="margin:0 auto;">
+			<div style="width:3px;height: {{ (src.type == 'network') ? 0 : 60}}px; margin: 0 auto; background-color:#444"></div>
+			<div style="margin: 0 auto; width:50%; text-align:center;" ng-show="src.type != 'network'">
+				<text class="aLabel text-center" >{{srcInfoList[src.selectedIF].name}}</text>
+			</div>
+			<div style="width:3px;height:160px; margin: 0 auto; background-color:#444"></div>
+			<div style="margin: 0 auto; width:50%; text-align:center;" ng-show="dst.type != 'network'">
+				<text class="aLabel text-center" >{{dstInfoList[dst.selectedIF].name}}</text>
+			</div>
+			<div style="width:3px;height: {{ (dst.type == 'network') ? 0 : 60}}px; margin: 0 auto; background-color:#444"></div>
+			<img ng-src="{{dst.icon}}" class="{{dst.iconClass}} img-responsive" style="margin:0 auto;">
+			<div style="text-align:center;" >{{dst.name}}</div>
+		</div>
+		<div class="col-md-8">
+			<div class="form-group">
+				<label>Source ID: {{src.eveID}}</label>
+				<p style="margin:0px;"></p>
+				<label>Source Name: {{src.name}}</label>
+				<p style="text-muted"><small>type - {{src.type}}</small></p>
+			</div>
+			<div class="form-group">
+
+			<div class="form-group" ng-show="src.type != 'network'">
+			<label for="sourceInterf_addConn">Choose Interface for {{src.name}}</label>
+			<select class="form-control" ng-model="src.selectedIF" convert-to-number>
+					<option ng-repeat="(srcethkey, srceth) in src.if.ethernet" value="{{srceth.id ? srceth.id : 0}}">{{srceth.name}} {{(srceth.network_id == 0) ? '' : ' connected to '+allNet[srceth.network_id].name}}</option>
+					<option ng-repeat="(srcserkey,srcser) in src.if.serial" value="{{srcser.id}}">{{srcser.name}} {{(srcser.remote_id == 0) ? '' : ' connected to '+nodeList[srcser.remote_id].name+' '+srcser.remote_if_name}}</option>
+			</select>
+			<div style="width:3px;height:30px;"></div>
+			<!--type pus de mine-->
+	            <label>Type {{selectNetType}}</label>
+	            <!--<select class="form-control" ng-init="selectNetType = 'bridge'" data-ng-model="selectNetType" data-ng-options="x for x in netList">-->
+	            <select class="form-control"  ng-model="selectNetType">
+					<option ng-repeat="a in netList"  ng-disabled="(selectNetType && a !== selectNetType)">{{a}}</option>
+				</select>
+	        	</div>
+			</div>
+			<div style="width:3px;height:30px;"></div>
+			<div class="form-group" ng-show="dst.type != 'network'">
+			<label for="sourceInterf_addConn">Choose Interface for {{dst.name}}</label>
+			<select class="form-control" ng-model="dst.selectedIF" convert-to-number>
+					<option ng-repeat="(dstethkey,dsteth) in dst.if.ethernet" value="{{dsteth.id ? dsteth.id : 0}}">{{dsteth.name}} <strong>{{(dsteth.network_id == 0) ? '' : 'connected to '+allNet[dsteth.network_id].name}}</strong></option>
+					<option ng-repeat="(dstserkey,dstser) in dst.if.serial" value="{{dstserkey}}">{{dstser.name}} {{(dstser.remote_id == 0) ? '' : ' connected to '+nodeList[dstser.remote_id].name+' '+dstser.remote_if_name}}</option>
+			</select>
+			</div>
+			<div class="form-group">
+				<label>Destination ID: {{dst.eveID}}</label>
+				<p style="margin:0px;"></p>
+				<label>Destination Name: {{dst.name}}</label>
+				<p style="text-muted"><small>type - {{dst.type}}</small></p>
+			</div>
+		</div>
+    </div>
+</div>
+<div class="modal-footer">
+            <button class="btn btn-success btn-flat" type="button" data-ng-click="addConn()">Connect</button>
+            <button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>

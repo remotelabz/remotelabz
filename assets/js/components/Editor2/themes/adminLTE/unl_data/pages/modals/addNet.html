@@ -1,0 +1,38 @@
+<div class="modal-header">
+            <h3 class="modal-title">Add a new network</h3>
+</div>
+<div class="modal-body">
+    <form role="form" name="formAddNet">
+		<div class="form-group {{errorClass}}">
+          <label>Network name</label>
+          <input type="text" class="form-control" data-ng-model="netname" placeholder="Enter network name" autofocus="autofocus" name="name" ng-pattern="restrictSpace"/>
+          <span class="chars" ng-class="{'chars--active': formAddNet.name.$valid == false, 'chars': formAddNet.name.$valid == true}">Use only [A-Za-z0-9_- ]chars</span>
+		  <!-- <span class="help-block" data-ng-show="errorClass != ''" data-ng-bind="errorMessage"></span> -->
+        </div>
+		
+		<div class="form-group">
+            <label>Type</label>
+            <select class="form-control" ng-init="selectNetType = 'bridge'" data-ng-model="selectNetType" data-ng-options="x for x in netList"></select>
+        </div>
+		
+		<div class="row">
+		<div class="col-md-6">
+			<div class="form-group">
+				<label>Axis X</label>
+				<input class="form-control" data-ng-model="tempObject.pageX" placeholder="Enter the x coordinate"/>
+			</div>
+        </div>
+		
+		<div class="col-md-6">
+			<div class="form-group">
+				<label>Axis Y</label>
+				<input class="form-control" data-ng-model="tempObject.pageY" placeholder="Enter the y coordinate"/>
+			</div>
+		</div>
+		</div>
+    </form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-success btn-flat" type="button" data-ng-click="addNet()">Add</button>
+    <button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>

@@ -2,10 +2,12 @@
 
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ ("Sandbox"): path('sandbox') }) -%}
+    {%- set breadcrumbs = breadcrumbs|merge({ ("Sandbox"): path('sandbox') }) -%}
     {{ parent() }}
 {% endblock %}
 
 {% block sidebar %}
+    {% set category = 'sandbox' %}
     {% set category = 'sandbox' %}
     {{ parent() }}
 {% endblock %}
@@ -20,6 +22,7 @@
     </div>
 </div>
 <div class="content-body">
+    <form action="{{ path('sandbox') }}" method="GET">
     <form action="{{ path('sandbox') }}" method="GET">
         <div class="row">
             <div class="col">

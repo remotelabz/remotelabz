@@ -1,0 +1,334 @@
+<div ng-controller="labController" id="labCtrl">
+	<script src="/themes/adminLTE/dist/js/app.js"></script>
+	<!-- unl_lab.css-->
+	<link rel="stylesheet" href="/themes/adminLTE/unl_data/css/unl_lab.css">
+	<!-- Content Wrapper. Contains page content 
+
+	<header class="main-header" data-ng-include="'/themes/adminLTE/unl_data/pages/lab/constant/header.html'" data-ng-controller="HeaderController"></header>-->
+	<header class="main-header">
+	<a href="#/lab" class="logo">
+      <!-- mini logo for sidebar mini 50x50 pixels -->
+      <span class="logo-mini"><img class="hidden-xs" src="/themes/adminLTE/unl_data/img/mainLogo.png" style="width:50px;height:19px"></span>
+      <!-- logo for regular state and mobile devices -->
+      <span class="logo-lg"><img class="hidden-xs" src="/themes/adminLTE/unl_data/img/mainLogo.png" style="width:104px;height:40px"></span>
+    </a>
+	 <nav class="navbar" style="width: 42px; position: absolute;">
+      <!-- Sidebar toggle button-->
+      <a href="" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+        <span class="sr-only">Toggle tools</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+	 </nav>
+	</header>
+	<aside class="main-sidebar" data-ng-include="'/themes/adminLTE/unl_data/pages/lab/constant/sidebar.html'" data-ng-controller="sidebarCtrl"></aside>
+
+	
+   
+		<!-- Content Header (Page header) 
+		<section class="content-header">
+			<h1>
+				UNL Lab
+				<small>here you can manage you lab</small>
+			</h1>
+		</section> -->
+		<!-- Main content 
+		<section class="content">-->
+		
+			<!-- /.content -->
+			<div 	class="grid mainDiv-menu {{ (changedCursorNode) ? ' router-cursor ':'' }} {{ (changedCursorNet) ? ' network-cursor ':'' }}" 	
+					style="	margin-left:50px; width:calc(100% - 50px); height:100%; position:absolute; overflow-x: scroll; overflow-y: scroll; background-color:#fff;" id="mainDIV" 
+					ng-click="mainFieldClick($event)">
+					
+				<div id="canvas" class="statemachine-demo" style="position:relative; display:node">
+					
+				</div>
+			</div>
+			
+			<span ng-init="init()"></span>
+		<!--</section> -->
+	</div><!-- /.content-wrapper --> 
+	<!-- Main Footer 
+	<div data-ng-include="'/themes/adminLTE/unl_data/pages/constant/footer.html'"></div> -->
+</div><!-- ./wrapper -->
+
+<nav id="context-menu_conn" class="context-menu_conn">
+  <ul class="context-menu__items_conn">
+   <!-- <li class="context-menu__item_conn">
+      <a class="context-menu__link_conn pointer">
+        <i class="fa fa-edit"></i> Edit Connection
+      </a>
+    </li> -->
+    <li class="context-menu__item_conn">
+      <a class="context-menu__link_conn pointer" my-action="delConnection">
+        <i class="fa fa-times"></i> Delete Connection
+      </a>
+    </li>
+  </ul>
+</nav>	
+
+<nav id="context-menu_mainDiv" class="context-menu_mainDiv">
+  <ul class="context-menu__items_mainDiv">
+    <li class="context-menu__item_mainDiv">
+      <a class="context-menu__link_mainDiv pointer" ng-click="changedCursorNode=true; changedCursorNet=false; mainFieldClick($event,'context-menu_mainDiv')">
+        <i class="glyphicon glyphicon-hdd"></i> Add new node
+      </a>
+    </li>
+    <li class="context-menu__item_mainDiv">
+      <a class="context-menu__link_mainDiv pointer" ng-click="changedCursorNode=false; changedCursorNet=true; mainFieldClick($event,'context-menu_mainDiv')">
+        <i class="glyphicon glyphicon-transfer"></i> Add new network
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<nav id="context-menu" class="context-menu">
+  <ul class="context-menu__items">
+    <li class="context-menu__item">
+      <a class="context-menu__link pointer" ng-click="">
+        <i class="fa fa-edit"></i> Edit Element
+      </a>
+    </li>
+    <li class="context-menu__item">
+      <a class="context-menu__link pointer" ng-click="deleteEl()">
+        <i class="fa fa-times"></i> Delete Element
+      </a>
+    </li>
+  </ul>
+</nav>	
+
+<input type="hidden" value="" id="tempElID">
+
+<script>
+var $scope = {}
+blockUI()
+var nodeReady=false;
+var netReady=false;
+var netArray=[];
+jsPlumb.detachEveryConnection();
+jsPlumb.reset();
+jsPlumb.importDefaults({
+	Endpoint: ["Dot", {radius: 3}],
+	Anchor:[ "Perimeter", { shape:"Circle", anchorCount:150 }],
+	Connector:"Bezier",
+    Container: "canvas",
+	PaintStyle: {strokeStyle: "#1e8151", lineWidth: 2, outlineColor: "white", outlineWidth: 1},
+	HoverPaintStyle:{ outlineWidth: 2, outlineColor: "white" },	
+});
+
+jsPlumb.bind("connection", function (info) {
+		$scope.newConnModal(info)
+})
+
+var readyState=false;
+var fullPathToFile='';
+var getScopeInterval=setInterval(function(){ 
+	if (test()) {clearInterval(getScopeInterval); readyState=true; console.log(fullPathToFile); initFullLab()}
+	}, 1000);
+ 
+function getScope(ctrlID) {
+    return angular.element("#"+ctrlID).scope();
+}
+
+function test() {
+    $scope = getScope('labCtrl');
+	fullPathToFile=$scope.fullPathToFile;
+	return ($scope.fullPathToFile === undefined) ? false : true
+}
+
+function initFullLab(){
+	console.log( $( "#canvas" ).children() )
+	if ($("#canvas div").length > 0) {$("#canvas div").remove(); $("#canvas svg").remove();}
+	if (fullPathToFile===undefined || fullPathToFile===null){console.log('Error. Sorry.'); $.unblockUI(); return;}
+	//$.when(nodeGet(), networkGet()).then(topologyGet())
+	$.when(
+		$.get('/api/labs'+fullPathToFile+'/nodes', function(data) {  ///GET ALL NODES FROM SERVER///
+			console.log(data.data)
+			var stopFlag=0;
+			$scope.allNodes=data.data;
+			var nodesNumber = ObjectLength(data.data)
+			for (var key in data.data){
+				stopFlag++
+				nodeInit(data.data[key])
+				//if (stopFlag === nodesNumber) {console.log('hereNode'); nodeReady=true;}
+			}
+		}),
+		$.get('/api/labs'+fullPathToFile+'/networks', function(data) { ///GET ALL NETWORKS FROM SERVER///
+			//console.log(data.data)
+			var stopFlag=0;
+			$scope.allNetworks=data.data;
+			var networksNumber = ObjectLength(data.data)
+			for (var key in data.data){
+				netArray[stopFlag]=key;
+				stopFlag++
+				networkInit(data.data[key])
+				//if (stopFlag === networksNumber) {console.log('hereNet'); netReady=true;} 
+			}
+		})
+	).then(function(){
+		$.get('/api/labs'+fullPathToFile+'/topology', function(data) { ///GET ALL CONNECTIONS FROM SERVER///
+			//console.log(data)
+			var connectionsNumber=ObjectLength(data.data);
+			for (i = 0; i < connectionsNumber; i++) {
+				netArray = jQuery.grep(netArray, function(value) {
+					if (data.data[i].destination_type === "network") {
+						return value != data.data[i].destination.replace('network', '');
+					}
+					if (data.data[i].source_type === "network") {
+						return value != data.data[i].source.replace('network', '');
+					}
+					return true;
+				});
+				topologyInit(data.data[i])
+			}
+			for (z = 0; z < netArray.length; z++) {
+				$('#networkID_'+netArray[z]).hide()		///HIDE ALL UNUSED NETWORKS///
+			}
+			$scope.ready=true;
+		})
+	})
+	$.unblockUI();
+}
+
+function nodeInit(node){
+	var id = node.id;
+	$scope.node[node.id]=node;
+	$scope.node[node.id].imageclass=node.icon.replace('.png','').replace(' ','')+'_sm';
+	$scope.node[node.id].loadclass=node.icon.replace('.png','').replace(' ','')+'_sm m-progress';
+	$scope.node[node.id].loadclassShow=false;
+	$scope.node[node.id].playstop=false;
+	$scope.node[node.id].playstopView=false;
+	$scope.node[node.id].upstatus=(node.status == 2) ? true : false;
+	var elDIV='<div id="nodeID_'+node.id+'" class="w element-menu" style="left: '+node.left+'px; top: '+node.top+'px;" ng-mousemove="node['+id+'].playstopView=true" ng-mouseleave="node['+id+'].playstopView=false">'+
+		'<div class="play-tag" ng-click="startstopNode('+id+')" ng-show="node['+id+'].playstopView && !node['+id+'].upstatus" title="Start node"><i class="fa fa-play play-icon" aria-hidden="true"></i></div>'+
+		'<div class="stop-tag" ng-click="startstopNode('+id+')" ng-show="node['+id+'].playstopView && node['+id+'].upstatus" title="Stop node"><i class="fa fa-stop stop-icon" aria-hidden="true"></i></div>'+
+		'<div class="tag" title="Connect to another node">'+
+			'<i class="fa fa-plug plug-icon dropdown-toggle ep" ng-show="node['+id+'].playstopView"></i>'+
+		'</div>'+
+		'<div class="{{node['+id+'].loadclass}} m-progress" ng-show="node['+id+'].loadclassShow" style="position:absolute; z-index:2;"></div>'+
+		'<img ng-src="/images/icons/{{node['+id+'].icon}}" class=" '+node.icon.replace('.png','').replace(' ','')+'_sm {{(!node['+id+'].upstatus) ? \'grayscale\' : \'\'}} {{(node['+id+'].loadclassShow) ? \'icon-opacity\' : \'\';}}">'+
+		'<figcaption class="figcaption-text '+node.icon.replace('.png','').replace(' ','')+'_sm_label">'+node.name+'</figcaption>'+
+	'</div>';
+	$scope.compileNewElement(elDIV, node.id)
+	//$('#canvas').append(elDIV)
+	//$('#nodeID_'+node.id).ready(function(){ $('.figcaption-text.'+id).css({'width': $('#nodeID_'+node.id+' img').css('width')}); jsPlumb.repaint($('#nodeID_'+node.id))/*console.log('nodeID_'+node.id+' ready');*/ });
+	//jsPlumbNodeInit($('#nodeID_'+node.id))
+	//console.log($scope)
+}
+
+function networkInit(networkObject){
+	//console.log(networkObject)
+	var icon = (networkObject.type == 'bridge') ? 'Switch.png' : 'Cloud.png';
+	var elDIV='<div id="networkID_'+networkObject['id']+'" class="w element-menu network" style="left: '+networkObject.left+'px; top: '+networkObject.top+'px;" context-menu="netContext">'+
+		//'<div class="tag"><i class="fa fa-plug plug-icon ep" aria-hidden="true"></i></div>'+
+		'<img src="/images/icons/'+icon+'" class="'+icon.replace('.png','')+'_sm'+'">'+
+		'<figcaption class="figcaption-text">'+networkObject.name+'</figcaption>'+
+	'</div>';
+	$('#canvas').append(elDIV);
+	$('#networkID_'+networkObject['id']).ready(function(){ /*console.log('networkID_'+networkObject['id']+' ready');*/ });
+	jsPlumbNodeInit($('#networkID_'+networkObject['id']))
+}
+
+function topologyInit(topologyObject){
+	///Show hidden network //START
+	if (topologyObject.destination_type == "network" || topologyObject.source_type == "network"){
+		if (topologyObject.destination_type == "network"){
+			var netID = topologyObject.destination.replace("network",'');
+		} else if (topologyObject.source_type == "network") {
+			var netID = topologyObject.source.replace("network",'');
+		}
+	}
+	///Show hidden network //End
+	///////////////////////////
+	///Make connection //START
+	var sourceID = (topologyObject.source_type === 'node') ? 'nodeID_'+topologyObject.source.replace("node",'') : 'networkID_'+topologyObject.source.replace("network",'');
+	var destinationID =(topologyObject.destination_type === 'node') ? 'nodeID_'+topologyObject.destination.replace("node",'') : 'networkID_'+topologyObject.destination.replace("network",'');
+	var sourceLabel = topologyObject.source_label;
+	var destinationLabel = topologyObject.destination_label;
+	var type = topologyObject.type;
+	//console.log(sourceID+' '+destinationID+' '+sourceLabel+' '+destinationLabel)
+	jsPlumbMakeConnection(sourceID,destinationID,sourceLabel,destinationLabel,type)
+	///Make connection //END
+}
+
+function jsPlumbNodeInit(el){
+	// initialise draggable elements.
+    jsPlumb.draggable(el,
+		{	grid:[10,10],
+			stop: function(e){
+				//console.log(e)
+				var offset = $(this).offset();
+				if (e.el.offsetLeft < 50 && e.el.offsetTop < 0) $('div#'+e.el.id).offset({ top: 0, left: 50 })
+				if (e.el.offsetLeft < 50){
+					console.log('X < 0')
+					e.el.offsetLeft=50
+					$('div#'+e.el.id).offset({ left: 50 })
+				} else if (e.el.offsetTop < 0){
+					console.log('Y < 0')
+					e.el.offsetTop=0
+					$('div#'+e.el.id).offset({ top: 0 })
+				}
+				var type = (e.el.id.search('node') != -1) ? 'node' : 'network';
+				var id = (type == 'node') ? e.el.id.replace('nodeID_','') : e.el.id.replace('networkID_','');
+				console.log(id+' '+type)
+				console.log('Element moved. ID: '+e.el.id+' (Name: '+$('div#'+e.el.id+' figcaption').text()+') Coordinates: X'+e.el.offsetLeft+' Y'+e.el.offsetTop)
+				$scope.setPosition(e.el.offsetTop,e.el.offsetLeft,id,type)
+			}
+		}
+	);
+
+    jsPlumb.makeSource(el, {
+        filter: ".ep",
+        anchor: "Continuous",
+        connectorStyle: { strokeStyle: "#e62e00", lineWidth: 2, outlineColor: "white", outlineWidth: 1 },
+        connectionType:"basic",
+        extract:{
+            "action":"the-action"
+        },
+        maxConnections: 30,
+        onMaxConnections: function (info, e) {
+            alert("Maximum connections (" + info.maxConnections + ") reached");
+        }
+    });
+
+    jsPlumb.makeTarget(el, {
+        dropOptions: { hoverClass: "dragHover" },
+        anchor: "Continuous",
+        allowLoopback: false
+    });
+	
+}
+
+function jsPlumbMakeConnection(SID,DID,SLb,Dlb,type){
+	//console.log(SID+' '+DID+' '+SLb+' '+Dlb)
+	var conn_temp = {};
+	conn_temp = jsPlumb.connect({
+	source:SID,
+	target:DID,
+	parameters:{
+		"interfSrc":SLb,
+		"interfTrg":Dlb,
+		"type":type,
+	},
+	paintStyle: {strokeStyle: (type != 'serial') ? '#1e8151' : '#ffd11a', lineWidth: 2, outlineColor: "white", outlineWidth: 1},
+	connector : (type != 'serial') ? 'Bezier' : 'Straight',
+	anchor: "Continuous",
+	detachable : false,
+	overlays:[
+	[ "Label", {
+		label:SLb, 
+		id:SID+'_'+SLb,
+		cssClass: (SLb != '') ? "aLabel" : '',
+		location:0.08}]
+	]
+	});
+	
+	conn_temp.addOverlay(["Label", {
+	label:Dlb, 
+	id:DID+'_'+Dlb,
+	cssClass: (Dlb != '') ? "aLabel" : '',
+	location:0.92
+	}]);
+}
+</script>

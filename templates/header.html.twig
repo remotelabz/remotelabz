@@ -59,6 +59,9 @@
         {% if is_granted('IS_IMPERSONATOR') %}
           <a class="nav-link ml-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
         {% endif %}
+        {% if is_granted('IS_IMPERSONATOR') %}
+          <a class="nav-link ml-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
+        {% endif %}
         {{ app.user.firstname }}
         <ul class="navbar-nav ml-lg-auto">
           <li class="nav-item d-sm-block profile-img dropdown">

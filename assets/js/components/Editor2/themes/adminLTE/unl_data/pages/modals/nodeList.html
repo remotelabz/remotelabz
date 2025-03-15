@@ -1,0 +1,217 @@
+<div class="modal-header">
+	<button type="button" class="close" ng-click="closeModal()">&times;</button>
+	<i class="glyphicon glyphicon-certificate pull-right pointer action-changeopacity" ng-click="opacity()"></i>
+	<h3 class="modal-title">All nodes in {{path}}</h3>
+</div>
+<div class="modal-body">
+	<div class="row">
+	<div class="col-md-12">
+		<div class="pull-right">
+			 <div class="btn-group">
+				<button type="button" class="btn btn-default btn-flat btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+				More columns <span class="caret"></span>
+				</button>
+
+				<!-- New dropdown -->
+				<ul class="dropdown-menu pull-right dropdown-menu__column">
+				<li class="{{(hideCPU) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideCPU = true" checked data-ng-click="hideCPU = !hideCPU" id="check-CPU_id">
+					<label class="pointer" for="check-CPU_id">CPU</label>
+					</li>
+				<li class="{{(hideIdlepc) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideIdlepc = true" checked data-ng-click="hideIdlepc = !hideIdlepc" id="check-IdlePC_id">
+					<label class="pointer" for="check-IdlePC_id">IdlePC</label>
+					</li>
+				<li class="{{(hideNVRAM) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideNVRAM = true" checked data-ng-click="hideNVRAM = !hideNVRAM" id="check-NVRAM_id">
+					<label class="pointer" for="check-NVRAM_id">NVRAM</label>
+					</li>
+				<li class="{{(hideRAM) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideRAM = true" checked data-ng-click="hideRAM = !hideRAM" id="check-RAM_id">
+					<label class="pointer" for="check-RAM_id">RAM</label>
+					</li>
+				<li class="{{(hideSer) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideSer = true" checked data-ng-click="hideSer = !hideSer" id="check-serial_id">
+					<label class="pointer" for="check-serial_id">Serial ports</label>
+					</li>
+				<li class="{{(hideConsole) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideConsole = true" checked data-ng-click="hideConsole = !hideConsole" id="check-console_id">
+					<label class="pointer" for="check-console_id">Console</label>
+					</li>
+				<li class="{{(hideStartup) ? 'active' : ''}}"><input type="checkbox" data-ng-init="hideStartup = true" checked data-ng-click="hideStartup = !hideStartup" id="check-start_id">
+					<label class="pointer" for="check-start_id">Startup-config</label>
+					</li>
+				</ul>
+
+				<!-- Old dropdown
+				<ul class="dropdown-menu pull-right dropdown-menu__column">
+				<li class="{{(hideCPU) ? 'active' : ''}}"><input type="checkbox" data-ng-click="hideCPU = !hideCPU">CPU</li>
+				<li class="{{(hideIdlepc) ? 'active' : ''}}"><a data-ng-click="hideIdlepc = !hideIdlepc" class="pointer">IdlePC</a></li>
+				<li class="{{(hideNVRAM) ? 'active' : ''}}"><a data-ng-click="hideNVRAM = !hideNVRAM" class="pointer">NVRAM</a></li>
+				<li class="{{(hideRAM) ? 'active' : ''}}"><a data-ng-click="hideRAM = !hideRAM" class="pointer">RAM</a></li>
+				<li class="{{(hideSer) ? 'active' : ''}}"><a data-ng-click="hideSer = !hideSer" class="pointer">Serial ports</a></li>
+				<li class="{{(hideConsole) ? 'active' : ''}}"><a data-ng-click="hideConsole = !hideConsole" class="pointer">Console</a></li>
+				<li class="{{(hideStartup) ? 'active' : ''}}"><a data-ng-click="hideStartup = !hideStartup" class="pointer">Startup-config</a></li>
+				</ul>-->
+			</div>
+		</div>
+	</div>
+	</div>
+	<div class="">
+	<table class="table">
+	<thead>
+		<tr>
+		<th>ID</th>
+		<th>Name</th>
+		<th>Icon</th>
+		<th>Template</th>
+		<th>Boot image</th>
+		<th ng-show="hideCPU">CPU</th>
+		<th ng-show="hideIdlepc">idlepc</th>
+		<th ng-show="hideNVRAM">NVRAM</th>
+		<th ng-show="hideRAM">RAM</th>
+		<th>Eth</th>
+		<th ng-show="hideSer">Ser</th>
+		<th ng-show="hideConsole">Console</th>
+		<th ng-show="hideStartup">Startup-config</th>
+		<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody class="tbodyNodeList">
+			<tr ng-repeat="(id,item) in nodeList" class="{{(item.status == 2) ? 'bg-info' : ''}} {{(item.editmode) ? 'bg-warning' : ''}}">
+			<td>{{id}}</td>
+			<td ng-click="beforeEdit(id, item.template)">
+				<form name="formNodeList[{{id}}]">
+					<text ng-show="!item.editmode">{{item.name}}</text>
+					<input ng-pattern="restrictSpace" name="nameNode" ng-init="item.newname = item.name" ng-model="item.name" ng-blur="applyChanges(id)" ng-change="item.name" style="width:80px; padding-left:2px;" ng-show="item.editmode"/> <!--  -->
+					<span style="display: none">{{$parent.formNodeListValid[id] = formNodeList[id].nameNode.$valid}}</span>
+				</form>
+
+			</td>
+			<td class="td" ng-click="beforeEdit(id, item.template)">
+			<!--	<label>Select icon to change it by click on </label>
+				<div class="row form-group-selection" ng-click="show = !show">
+					<div class="col-md-4">
+						<img ng-src="/images/icons/{{item.icon}}" ng-class="icon.replace('.png','').replace(' ','')+'_sm img-responsive'" style="margin: left;"/>
+					</div>
+					<div class="col-md-8">
+						<label>{{selectIcon}}</label>
+						<i class="fa fa-caret-down"></i>
+						<input type="hidden" data-ng-model="item.icon" value="{{item.icon}}" />
+					</div>
+				</div>
+				<div class="row row-icon">
+			    	<div class="col-md-12">
+						<div class="container-img-nodeList" ng-show="show">
+							<div ng-repeat="(x,y) in icon_list" ng-click="select_image(x)" class="imageBlock">
+								<div class="container__img">
+									<img ng-src="/images/icons/{{x}}" />
+								</div>
+								<div class="container__text">{{y}}</div>
+							</div>
+						
+						</div>
+					</div>
+			    </div>-->
+
+
+				<img ng-src="/images/icons/{{iconTempObj[id].selected.brname.search('.png') == -1 ? iconTempObj[id].selected.brname+'.png' : iconTempObj[id].selected.brname}}" width="30" height="auto" ng-show="!item.editmode"/>
+
+
+				<!--<img ng-src="/images/icons/{{item.icon}}" width="30" height="auto" ng-show="!item.editmode"/>-->
+
+				<ui-select ng-init="iconTempObj[id].selected.fullname=item.icon; iconTempObj[id].selected.brname=item.icon.replace('.png','')" ng-model="iconTempObj[id].selected" ng-change="applyChanges(id)" ng-show="item.editmode"> <!--  -->
+					<ui-select-match>
+						<img ng-src="/images/icons/{{iconTempObj[id].selected.fullname}}" width="15" height="auto"/>
+						<span ng-bind="iconTempObj[id].selected.brname"></span>
+					</ui-select-match>
+					<ui-select-choices repeat="icon in (templateList[item.template].icon.array | filter: $select.search) track by icon.brname" >
+						<img ng-src="/images/icons/{{icon.fullname}}" width="30" height="auto"/>
+						<span ng-bind="icon.brname"></span>
+					</ui-select-choices>
+				</ui-select>
+			</td>
+			<td>{{item.template}}</td>
+
+			<td class="imageList" ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode">{{item.image}}</text>
+				<ui-select ng-init="imageTempObj[id].selected=item.image;" ng-model="imageTempObj[id].selected"  ng-change="applyChanges(id)" ng-show="item.editmode"><!--  -->
+					<ui-select-match>
+						<span ng-bind="imageTempObj[id].selected"></span>
+					</ui-select-match>
+					<ui-select-choices repeat="image in (templateList[item.template].image.array | filter: $select.search)">
+						<span ng-bind="image" title="{{ imageTempObj[id].selected }}"></span>
+					</ui-select-choices>
+				</ui-select>
+			</td>
+
+			<td ng-show="hideCPU" ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode">{{(item.cpu == undefined) ? 'N/A' : item.cpu}}</text>
+				<input ng-init="item.newcpu = item.cpu" ng-model="item.cpu" ng-blur="applyChanges(id)" ng-show="item.cpu != undefined && item.editmode" style="width:40px; padding-left:2px;"/><!--  -->
+			</td>
+			<td ng-show="hideIdlepc" ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode">{{(item.idlepc == undefined) ? 'N/A' : item.idlepc}}</text>
+				<input ng-init="item.newidlepc = item.idlepc" ng-model="item.idlepc" ng-blur="applyChanges(id)" ng-show="item.idlepc != undefined  && item.editmode" style="width:80px; padding-left:2px;"/><!--  -->
+
+			</td>
+			<td ng-show="hideNVRAM" ng-click="beforeEdit(id, item.template)"> 
+				<text ng-show="!item.editmode">{{(item.nvram == undefined) ? 'N/A' : item.nvram}}</text>
+				<input ng-init="item.newnvram = item.nvram" ng-model="item.nvram" ng-blur="applyChanges(id)" ng-show="item.nvram != undefined  && item.editmode" style="width:40px; padding-left:2px;"/> <!-- -->
+			</td>
+			<td ng-show="hideRAM" ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode" >{{(item.ram == undefined) ? 'N/A' : item.ram}}</text>
+				<input ng-init="item.newram = item.ram" ng-model="item.ram" ng-blur="applyChanges(id)" ng-show="item.ram != undefined && item.editmode" style="width:40px; padding-left:2px;"/><!--  -->
+			</td>
+			<td ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode">{{item.ethernet}}</text>
+				<input ng-init="item.newethernet = item.ethernet" ng-model="item.ethernet" ng-blur="applyChanges(id)" ng-show="item.ethernet != undefined && item.editmode" style="width:40px; padding-left:2px;"/><!-- -->
+			</td>
+			<td ng-show="hideSer" ng-click="beforeEdit(id, item.template)">
+				<text ng-show="!item.editmode">{{item.serial}}</text>
+				<input ng-init="item.newserial = item.serial" ng-model="item.serial" ng-blur="applyChanges(id)" ng-show="item.serial != undefined && item.editmode" style="width:40px; padding-left:2px;"/> <!-- -->
+			</td>
+			
+			<td class="consoleList" ng-click="beforeEdit(id, item.template)">
+				<div ng-show="item.console" style="width:100px">
+					<text ng-show="!item.editmode">{{item.console}}</text>
+					<ui-select ng-init="consoleTempObj[id].selected=item.console; consoleTab = ['rdp','vnc','telnet'];"  ng-model="consoleTempObj[id].selected" ng-change="applyChanges(id)" ng-show="item.editmode"><!---->
+						<ui-select-match>
+							<span ng-bind="consoleTempObj[id].selected"></span>
+						</ui-select-match>
+						<ui-select-choices repeat="console in ( consoleTab ) ;">
+							<span ng-bind="console" title="{{consoleTempObj[id].selected}}"></span>
+						</ui-select-choices>
+					</ui-select>
+				</div>
+			</td>
+			<td ng-click="beforeEdit(id, item.template)"> 
+				<div class="div-config" style="width:100px">
+					<text ng-show="!item.editmode"> {{ (item.config == 0) ? 'None' : 'Exported' }} </text>
+					<ui-select ng-init="configList = [{'val' : 'none', 'key' : 0},{ 'val' : 'exported', 'key':1}]; configTempObj[id].selected=configList[item.config];"  ng-model="configTempObj[id].selected" ng-change="applyChanges(id)" ng-show="item.editmode">
+						<ui-select-match>
+							<span ng-bind="configTempObj[id].selected.val"></span>
+						</ui-select-match>
+						<ui-select-choices repeat="key in configList ;">
+							<span ng-bind="key.val" title="{{configTempObj[id].selected.val}}"></span>
+						</ui-select-choices>
+					</ui-select>
+				</div>
+			</td>
+			<td>
+				<div>
+					<button type="button" class="btn btn-xs btn-flat {{ (item.startLoading) ? 'm-progress' : ''}} min" tooltip-placement="top" uib-tooltip="Start node" ng-click="startstopNode(id); item.editmode = false" ng-show="item.status != 2"><i class="fa fa-play text-success" aria-hidden="true"></i></button>
+					<button type="button" class="btn btn-xs btn-flat {{ (item.startLoading) ? 'm-progress' : ''}} min" tooltip-placement="top" uib-tooltip="Stop node" ng-click="beforeEdit(id, item.template); startstopNode(id); " ng-show="item.status == 2"><i class="fa fa-stop text-danger" aria-hidden="true"></i></button>
+					<!-- <button type="button" class="btn btn-xs btn-flat" tooltip-placement="top" uib-tooltip="Edit node" ng-click="beforeEdit(id, item.template)" ng-show="!item.editmode"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></button> -->
+					<!-- <button type="button" class="btn btn-xs" tooltip-placement="top" uib-tooltip="Cancel changes" ng-click="cancelChanges(id)" ng-show="item.editmode"><i class="fa fa-ban" aria-hidden="true"></i></button> -->
+					<!-- <button type="button" class="btn btn-xs" tooltip-placement="top" uib-tooltip="Save changes" ng-disabled="!item.editmode" ng-click="applyChanges(id)"><i class="fa fa-floppy-o" aria-hidden="true"></i></button> -->
+					<button type="button" class="btn btn-danger btn-xs btn-flat" tooltip-placement="top" uib-tooltip="Delete node" ng-click="deleteNode(id,item.name)"><i class="fa fa-trash" aria-hidden="true"></i></button>
+				</div>
+			</td>
+			</tr>
+	</tbody>
+	</table>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<strong class="bg-info">Node running</strong>&nbsp;&nbsp;
+			<strong class="bg-warning">Edit mode</strong>
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>

@@ -1,0 +1,260 @@
+<div class="modal-header">
+	<h3 class="modal-title">Edit node x {{nodeNameOld}}</h3>
+</div>
+<div class="modal-body">
+	<form name="formEditNode">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="form-group {{errorClass}}">
+			        <label>Node name</label>
+			        <input type="text" name="name" class="form-control" data-ng-model="nodeInfo.name" placeholder="Enter node name" autofocus data-ng-pattern="restrictSpace">
+			        <span class="chars" ng-class="{'chars--active': formEditNode.name.$valid == false, 'chars': formEditNode.name.$valid == true}">Use only [A-Za-z0-9_- ]chars {{formNodeValid = formEditNode.name.$valid; ""}}</span>
+					<!-- <span class="help-block" data-ng-show="errorClass != ''" data-ng-bind="errorMessage"></span> -->
+			    </div>
+			</div>
+		</div>
+		<!--Modal structure has been modified as required-->
+		 <div class="form-group" ng-show="nodeTemplate.options.image.type != undefined">
+			<label>Select image</label>
+			<select class="form-control" data-ng-model="selectImage">
+			<option value="">- Please Select -</option>
+			<option ng-repeat="x in nodeTemplate.options.image.list" value="{{x}}">{{x}}</option>
+			</select>
+		</div>
+
+		<div class="row">
+			<div class="col-md-6">
+				<label>Select icon to change it by click on </label>
+				<div class="row form-group-selection" ng-click="show = !show">
+					<div class="col-md-4">
+						<img ng-src="/images/icons/{{selectIcon}}" ng-class="selectIcon.replace('.png','').replace(' ','')+'_sm img-responsive'" style="margin: left;"/>
+					</div>
+					<div class="col-md-8">
+						<label>{{selectIcon}}</label>
+						<i class="fa fa-caret-down"></i>
+						<input type="hidden" data-ng-model="selectIcon" value="{{selectIcon}}" />
+					</div>
+				</div>
+			</div>
+			<div class="col-md-2" ng-show="nodeTemplate.options.cpu.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.cpu.type != undefined">
+					<label>CPU</label>
+					<input class="form-control" data-ng-model="nodeInfo.cpu"/>
+				</div>
+			</div>
+			<div class="col-md-2" ng-show="nodeTemplate.options.nvram.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.nvram.type != undefined">
+					<label>NVRAM</label>
+					<input class="form-control" data-ng-model="nodeInfo.nvram"/>
+				</div>
+			</div>
+			<div class="col-md-2" ng-show="nodeTemplate.options.ram.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.ram.type != undefined">
+					<label>RAM</label>
+					<input class="form-control" data-ng-model="nodeInfo.ram"/>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="form-group" ng-show="nodeTemplate.options.delay.type != undefined">
+					<label>Delay</label>
+					<input class="form-control" data-ng-model="nodeInfo.delay"/>
+			    </div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6" ng-show="nodeTemplate.options.idlepc.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.idlepc.type != undefined">
+				<label>Idle PC</label>
+				<input class="form-control" data-ng-model="nodeInfo.idlepc"/>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="form-group" ng-show="nodeTemplate.options.slot1.type != undefined">
+					<label>Slot 1</label>
+					<select class="form-control" data-ng-model="selectSlot1">
+					<option ng-repeat="(x,y) in nodeTemplate.options.slot1.list" value="{{x}}">{{y}}</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="row row-icon">
+	    	<div class="col-md-12">
+				<div class="container-img" ng-show="show">
+					<div ng-repeat="(x,y) in nodeTemplate.options.icon.list" ng-click="select_image(x)" class="imageBlock">
+						<div class="container__img">
+							<img ng-src="/images/icons/{{x}}" />
+						</div>
+						<div class="container__text">{{y}}</div>
+					</div>
+				
+				</div>
+			</div>
+	    </div>
+	    <div class="row">
+	    	<div class="col-md-3">
+				<div class="form-group">
+					<label>Axis X</label>
+					<input class="form-control" data-ng-model="nodeInfo.left" placeholder="Enter the x coordinate"/>
+			    </div>
+		    </div>
+		    <div class="col-md-3">
+				<div class="form-group">
+					<label>Axis Y</label>
+					<input class="form-control" data-ng-model="nodeInfo.top" placeholder="Enter the y coordinate"/>
+			    </div>
+		    </div>
+		    <div class="col-md-6">
+				<div class="form-group" ng-show="nodeTemplate.options.ethernet.type != undefined">
+					<label>{{nodeTemplate.options.ethernet.name}}</label>
+					<input class="form-control" data-ng-model="nodeInfo.ethernet"/>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="form-group" ng-show="nodeTemplate.options.slot2.type != undefined">
+					<label>Slot 2</label>
+					<select class="form-control" data-ng-model="selectSlot2">
+					<option ng-repeat="(x,y) in nodeTemplate.options.slot2.list" value="{{x}}">{{y}}</option>
+					</select>
+				</div>
+			</div>
+	    </div>
+	    <div class="row">
+		    <div class="col-md-6">
+		    	<div class="form-group" ng-show="nodeInfo.config != undefined">
+					<label>Startup configuration</label>
+					<select class="form-control" data-ng-model="selectConfig"><!-- convert-to-number ng-options="key as value for (key , value) in nodeTemplate.options.config.list" -->
+						<option ng-repeat="(x,y) in nodeTemplate.options.config.list" value="{{x}}">{{y}}</option>
+					</select> 
+			    </div>
+		    </div>
+		    <div class="col-md-6">
+				<div class="form-group" ng-show="nodeInfo.console != ''">
+					<label>{{ nodeTemplate.options.console.name }}</label>
+					<select class="form-control" data-ng-model="selectConsole">
+						<option ng-repeat="(x,y) in nodeTemplate.options.console.list" value="{{x}}">{{y}}</option>
+					</select>
+				</div>
+			</div>
+		    <div class="col-md-6">
+				<div class="form-group" ng-show="nodeTemplate.options.serial.type != undefined">
+					<label>{{ nodeTemplate.options.serial.names }}</label>
+					<input class="form-control" data-ng-model="nodeInfo.serial"/>
+				</div>
+		    </div>
+	    </div>
+	    
+	<!--It is old modal structure-->
+		<!--<div class="row">
+			<div class="col-md-3">
+				<img ng-src="/images/icons/{{selectIcon}}" ng-class="selectIcon.replace('.png','').replace(' ','')+'_sm img-responsive'" style="margin:0 auto;"/>
+			</div>
+			<div class="col-md-8">
+				<div class="form-group">
+					<label>Select icon</label>
+					<select class="form-control" data-ng-model="selectIcon">
+					<option ng-repeat="(x,y) in nodeTemplate.options.icon.list" value="{{x}}">{{y}}</option>
+					</select>
+				</div>
+			</div>
+		</div>-->
+		<!--<div class="row">
+			<div class="col-md-2" ng-show="nodeTemplate.options.cpu.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.cpu.type != undefined">
+					<label>CPU</label>
+					<input class="form-control" data-ng-model="nodeInfo.cpu"/>
+				</div>
+			</div>
+			<div class="col-md-2" ng-show="nodeTemplate.options.nvram.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.nvram.type != undefined">
+					<label>NVRAM</label>
+					<input class="form-control" data-ng-model="nodeInfo.nvram"/>
+				</div>
+			</div>
+			<div class="col-md-3" ng-show="nodeTemplate.options.idlepc.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.idlepc.type != undefined">
+				<label>Idle PC</label>
+				<input class="form-control" data-ng-model="nodeInfo.idlepc"/>
+				</div>
+			</div>
+			<div class="col-md-2" ng-show="nodeTemplate.options.ram.type != undefined">
+				<div class="form-group" ng-show="nodeTemplate.options.ram.type != undefined">
+					<label>RAM</label>
+					<input class="form-control" data-ng-model="nodeInfo.ram"/>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
+		<div class="col-md-6">
+			<div class="form-group" ng-show="nodeTemplate.options.slot1.type != undefined">
+				<label>Slot 1</label>
+				<select class="form-control" data-ng-model="selectSlot1">
+				<option ng-repeat="(x,y) in nodeTemplate.options.slot1.list" value="{{x}}">{{y}}</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="form-group" ng-show="nodeTemplate.options.slot2.type != undefined">
+				<label>Slot 2</label>
+				<select class="form-control" data-ng-model="selectSlot2">
+				<option ng-repeat="(x,y) in nodeTemplate.options.slot2.list" value="{{x}}">{{y}}</option>
+				</select>
+			</div>
+		</div>
+		</div>-->
+		
+		<!--<div class="form-group" ng-show="nodeTemplate.options.config.type != undefined">
+			<label>Startup configuration</label>
+			<select class="form-control" data-ng-model="selectConfig">
+			<option ng-repeat="(x,y) in nodeTemplate.options.config.list" value="{{x}}">{{y}}</option>
+			</select>
+	    </div> -->
+		
+		<!--<div class="row">
+		<div class="col-md-6">
+			<div class="form-group" ng-show="nodeTemplate.options.ethernet.type != undefined">
+				<label>{{nodeTemplate.options.ethernet.name}}</label>
+				<input class="form-control" data-ng-model="nodeInfo.ethernet"/>
+			</div>
+		</div>
+		
+		<div class="col-md-6">
+			<div class="form-group" ng-show="nodeTemplate.options.serial.type != undefined">
+				<label>{{nodeTemplate.options.serial.name}}</label>
+				<input class="form-control" data-ng-model="nodeInfo.serial"/>
+			</div>
+	    </div>
+	    </div>
+		
+		<div class="form-group" ng-show="nodeTemplate.options.delay.type != undefined">
+			<label>Delay</label>
+			<input class="form-control" data-ng-model="nodeInfo.delay"/>
+	    </div>
+		
+		<div class="form-group" ng-show="nodeTemplate.options.console.type != undefined">
+			<label>Console</label>
+			<select class="form-control" data-ng-model="selectConsole">
+			<option ng-repeat="(x,y) in nodeTemplate.options.console.list" value="{{x}}">{{y}}</option>
+			</select>
+	    </div>
+		
+		<div class="row">
+		<div class="col-md-6">
+		<div class="form-group">
+			<label>Axis X</label>
+			<input class="form-control" data-ng-model="nodeInfo.left" placeholder="Enter the x coordinate"/>
+	    </div>
+	    </div>
+		<div class="col-md-6">
+		<div class="form-group">
+			<label>Axis Y</label>
+			<input class="form-control" data-ng-model="nodeInfo.top" placeholder="Enter the y coordinate"/>
+	    </div>
+	    </div>
+	    </div>-->
+	</div>
+</form>
+<div class="modal-footer">
+	<button class="btn btn-success btn-flat" type="button" data-ng-click="editNode()">Edit</button>
+	<button class="btn btn-dander btn-flat" type="button" data-ng-click="closeModal()">Close</button>
+</div>
