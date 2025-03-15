@@ -1,0 +1,65 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Booking': is_granted("ROLE_ADMINISTRATOR") ? path('bookings') : null }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'bookings' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ 'Physical labs'|trans }}</h1>
+        </div>
+    </div>
+    <div class="content-body">
+        <form action="{{ path('bookings') }}" method="GET">
+            <div class="row">
+                <div class="col">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">
+                                <i class="fa fa-search"></i>
+                            </span>
+                        </div>
+                        <input type="search" class="form-control input-sm" name="search"
+                        placeholder="Search by name"
+                        spellcheck="false" value="{{ search|default('') }}">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="labs-panel">
+    {% for lab in labs %}
+        <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
+            <div class="lab-item-left d-flex flex-column">
+                <div>
+                    <a href="{{ path('show_lab_bookings', {'id': lab.id}) }}" class="lab-item-name">
+                        {{- lab.name -}}
+                    </a>
+                </div>
+            </div>
+            <div class="separator flex-grow-1"></div>
+            <div class="lab-item-right d-flex flex-column text-right">
+                <div>
+
+                    <div class="d-inline ml-2" data-toggle="tooltip" data-placement="top" title="Devices">
+                        <span {% if lab.numberOfBookings == 0 %}class="lab-item-counter-empty"{% endif -%}>
+                            <span>{{ svg('planning', 'image-sm v-sub') }}</span> {{ lab.numberOfBookings }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

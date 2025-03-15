@@ -41,7 +41,8 @@
                     {% if ( maintenance == 1) %}
                         {{ svg('warning', 'image-lm') }}
                         <div class="text-center">In maintenance</div>
-                    {% else %}
+                    {% endif %}
+                    
                         <form role="form" method="POST">
                             <div class="form-group">
                                 <div class="input-group">
@@ -70,7 +71,11 @@
                                         Sign in
                                     {% endif %}
                                 </button>
-                                <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
+                                {% if ( maintenance == 0) %}
+                                    <p class="footer-text text-right mt-2"><a href="{{ path('reset_password') }}" class="text-muted">Lost your password ?</a></p>
+                                    <p class="footer-text text-right mt-2"><a href="{{ path('code_login') }}" class="text-muted">Login with code</a></p>
+                                {% endif %}
+
                             </div>
                             {# Add remember_me and forgot_password #}
                             {# <div class="form-group d-flex justify-content-between">
@@ -83,11 +88,10 @@
                             </div> #}
                         </form>
                 
-                        {% if enable_shibboleth %}
+                        {% if enable_shibboleth and maintenance == 0%}
                             <hr>
                             <a class="btn btn-info btn-block" href="{{ path('shib_login') }}">University sign in</a>
                         {% endif %}
-                    {% endif %}
                 </div>
                 <hr>
                 <p class="footer-text text-left">Version {{ version }}</p>

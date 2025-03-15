@@ -1,0 +1,75 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Group Instances': path('dashboard_group_instances', {'slug': group.path}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'dashboard_groups' %}
+    {% include "group.sidebar.html.twig" %}
+{% endblock %}
+
+{% set filter = filter|default('all') %}
+{% if filter not in ['all', 'labs'] %}{% set filter = 'all' %}{% endif %}
+
+{% block wrapper %}
+    <div class="top-panel">
+            <div class="quick-actions">
+                {% if is_granted('ROLE_ADMINISTRATOR') %}
+                {% endif %}
+            </div>
+            <input type="hidden" id="group_instance_page" value={{page}}/>
+    </div>
+
+    <div class="labs-panel">
+
+        {#- Lab instances -#}
+
+        <h4 class="p-3 border-bottom">Lab instances of {{group.name}}
+        <span data-toggle="tooltip" data-placement="right" title="All laboratories started by you, your groups and members of your groups.">
+            {{ svg('question') }} </span></h4>
+            <div>
+                {{ form_start(groupInstanceForm, {"action": path('dashboard_group_instances', {"slug":group.slug}), "method":"GET"}) }}
+                 
+                <div class="d-flex align-items-center mb-2">
+                    <select name="{{ field_name(groupInstanceForm.filter) }}" id="group_instance_filter" class="mr-3 instancesFilter form-control"> 
+
+                    {% for label, value in field_choices(groupInstanceForm.filter) %}
+                        <option {% if value == field_value(groupInstanceForm.filter) %}selected="selected"{% endif %} value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                    </select>
+                    <button id="group_instance_submit" class="btn-success btn" type="submit" name="{{ field_name(groupInstanceForm.submit) }}">{{ field_label(groupInstanceForm.submit) }}</button>
+                </div>
+                {{ form_end(groupInstanceForm) }}
+            </div>
+        {% if labInstances is empty %}
+        <div class="wrapper align-items-center p-3 border-bottom lab-item">
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
+        {% else %}
+         <div class="col">{{ react_component('GroupInstancesList', {'props': props}) }}</div>
+        {% endif %}
+
+    </div>
+    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    <nav aria-label="Page navigation example">
+        <ul class="pagination mt-3 justify-content-center">
+            <li class="page-item {% if page <= 1 %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('dashboard_group_instances', app.request.query|merge({page: page-1, "slug": group.slug})) }}">Previous</a>
+            </li>
+            {% for i in 1.. pagesNumber %}
+                <li class="page-item {% if i == page %}active{%endif%}"><a class="page-link" href="{{ path('dashboard_group_instances', app.request.query|merge({page: i, "slug": group.slug})) }}">{{ i }}</a></li>
+            {% endfor %}
+            <li class="page-item {% if page >= pagesNumber %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('dashboard_group_instances', app.request.query|merge({page: page+1, "slug": group.slug})) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

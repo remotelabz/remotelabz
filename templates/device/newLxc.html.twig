@@ -1,0 +1,26 @@
+{% extends 'device/index.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_lxc_device') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                {% if app.request.uri ends with 'edit' %}
+                    {{ 'Edit device'|trans }}
+                {% else %}
+                    {{ 'New device'|trans }}
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+    <div class="content-body">{{ react_component('DownloadLxcDevice', {'props': props}) }}</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# {{ encore_entry_script_tags('device') }} #}
+{% endblock %}

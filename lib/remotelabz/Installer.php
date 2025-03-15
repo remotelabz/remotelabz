@@ -248,8 +248,14 @@ class Installer
         try{
             @mkdir($this->installPath."/public/uploads");
             @mkdir($this->installPath."/public/uploads/lab");
+            @mkdir($this->installPath."/public/uploads/user");
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
+            chmod($this->installPath."/config/packages/messenger.yaml", 0664);
+            $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
+            chmod($this->installPath."/config/templates", 0774);
+            @mkdir($this->installPath."/backups");
+            chmod($this->installPath."/backups", 0664);
             echo "Right modified ✔️\n";
         } catch (Exception $e) {
             throw new Exception("Error while configuring right on directories.", 0, $e);
@@ -276,7 +282,7 @@ class Installer
         $this->logger->debug("Finished RemoteLabz installation");
         echo "Done!\n";
         echo "RemoteLabz is installed! 🔥\n";
-        echo "You have to install the databaseRemoteLabz is installed! 🔥\n";
+        echo "You have to install the database 🔥\n";
         echo "Thank you for using our software. ❤️\n";
     }
 

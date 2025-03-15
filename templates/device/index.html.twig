@@ -16,8 +16,36 @@
             <h1>{{ 'Device Templates'|trans }}</h1>
         </div>
         <div class="content-title-actions">
-            <a href="{{ path('new_device') }}" class="btn btn-success">{{ 'New device'|trans }}</a>
+            <a href="{{ path('new_device') }}" class="btn btn-success">{{ 'New virtual device'|trans }}</a>
         </div>
+        <div class="content-title-actions ml-2">
+            <a href="{{ path('new_physical_device') }}" class="btn btn-success">{{ 'New physical device'|trans }}</a>
+        </div>
+    </div>
+    <div class="top-panel">
+        <ul class="nav-links nav nav-tabs">
+            {% set type = app.request.query.get('type') %}
+            <li {% if type is null %} class="active"{% endif %}>
+                <a href="{{ path('devices', app.request.query|merge({type: null})) }}">
+                    <span>All</span> <span class="badge badge-pill">{{ count.total }}</span>
+                </a>
+            </li>
+            <li {% if type == 'vm' %}class="active"{% endif %}>
+                <a href="{{ path('devices', app.request.query|merge({type: 'vm'})) }}">
+                    <span>VMs</span> <span class="badge badge-pill">{{ count.vms }}</span>
+                </a>
+            </li>
+            <li {% if type == 'container' %}class="active"{% endif %}>
+                <a href="{{ path('devices', app.request.query|merge({type: 'container'})) }}">
+                    <span>Containers</span> <span class="badge badge-pill">{{ count.containers }}</span>
+                </a>
+            </li>
+            <li {% if type == 'physical' %}class="active"{% endif %}>
+                <a href="{{ path('devices', app.request.query|merge({type: 'physical'})) }}">
+                    <span>Physical Devices</span> <span class="badge badge-pill">{{ count.physical }}</span>
+                </a>
+            </li>
+        </ul>
     </div>
     <div class="content-body">
         <form action="{{ path('devices') }}" method="GET">

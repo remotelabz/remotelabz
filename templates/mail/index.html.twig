@@ -1,0 +1,54 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'Mail': path('admin_write_mail') }) %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+ 
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title"><h1>Write a new Email</h1></div>
+<div class="content-body">
+    {{ form_start(form) }}
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.15.2/js/selectize.min.js"
+  integrity="sha512-IOebNkvA/HZjMM7MxL0NYeLYEalloZ8ckak+NDtOViP7oiYzG5vn6WVXyrJDiJPhl4yRdmNAG49iuLmhkUdVsQ=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script>
+let usersEmail = [
+  {email: "All users"}
+];
+$.ajax({
+        type: "GET",
+        url: `/api/fetch/users`
+    }).then((response) => {
+      for(let user of response) {
+        usersEmail.push({email: user.email})
+      }
+
+      var select = $("#mail_to").selectize({
+      plugins: ["restore_on_backspace", "clear_button", "remove_button"],
+      delimiter: ",",
+      persist: false,
+      labelField: 'email',
+      maxItems: 10,
+      valueField: "email",
+      searchField :"email",
+      options: usersEmail,
+    });
+    var selectize = select[0].selectize;
+    })
+</script>
+{% endblock %}

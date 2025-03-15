@@ -25,7 +25,7 @@
             </h1>
         </div>
         <div class="content-title-actions">
-            {% if is_granted("ROLE_ADMINISTRATOR") %}
+            {% if is_granted("ROLE_TEACHER_EDITOR") %}
                 <a href="{{ path('edit_device', {'id': device.id}) }}" class="btn btn-secondary" role="button"><i class="fa fa-edit"></i> {{ 'Edit'|trans }}</a>
                 <button class="btn btn-danger" data-target={{'.delete-modal'}} data-toggle="modal" type="button">
                     {{ 'Delete'|trans }}
@@ -38,12 +38,14 @@
         <hr>
         <p>Model : {{ device.model }}</p>
         <hr>
+        {% if device.virtuality == 1 %}
         <p>Flavor : 
             {# <a href="{{ path('show_flavor', {'id': device.flavor.id}) }}"> #}
             {{ device.flavor.name }}
             {# </a> #}
         </p>
         <hr>
+        {% endif %}
         <p>vCPU number : {{ device.nbCpu }}</p>
         <hr>
         <p>Network interfaces : {{ device.networkInterfaces|length }}</p>
@@ -51,6 +53,11 @@
         <p>Operating system : {{ device.operatingSystem.name }}</p>
         <hr>
         <p>Hypervisor : {{ device.hypervisor.name }}</p>
+        {% if device.virtuality == 0 %}
+        <hr>
+        <p>IP address : {{ device.ip }}</p>
+        <p>port : {{ device.port }}</p>
+        {% endif %}
         <hr>
         <p>Control protocols :</p>
         <ul>
@@ -60,6 +67,7 @@
                 None
         {% endfor %}
         </ul>
+        
     </div>
 {% endblock %}
 

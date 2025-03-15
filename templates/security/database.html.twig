@@ -1,0 +1,85 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Database': path('admin_database') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'database' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+{% embed 'modal.html.twig' with {'title': 'Restore the database'|trans, 'class': 'restore-modal'} %}
+        {% block body %}
+            <p>Do you confirm you want to restore the database ? If you do some data will be lost.</p>
+            <button class="btn btn-danger" type="button">
+                Yes
+            </button>
+        {% endblock %}
+{% endembed %}
+{% embed 'modal.html.twig' with {'title': 'Import backup'|trans, 'class': 'import-backup-modal'} %}
+        {% block body %}
+            <p>You are about to import a backup of Remotelabz. If you continue the <strong>current data and files will be lost.</strong></p>
+            {{ form(importBackupForm, {'id': 'importBackupForm'}) }}
+        {% endblock %}
+    {% endembed %}
+
+<div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                Database backup and restore
+            </h1>
+        </div>
+        <div class="content-title-actions">
+        <button class="btn btn-info" data-target=".import-backup-modal" data-toggle="modal" type="button">
+                <i class="fa fa-upload"></i> Import
+            </button>
+            <a class="btn btn-success" role="button" href="{{path('admin_database_backup')}}">Make a backup</a>
+        </div>
+    </div>
+    <div class="content-body">
+        <table class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Backups</th>
+                    <th>Download</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for backup in backups -%}
+                <tr>
+                    <td>{{backup}}</td>
+                    <td>
+                        <button class="btn btn-info" type="button" onClick="downloadBackup('{{backup}}')">
+                        Download
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" type="button" onClick="deleteBackup('{{backup}}')">
+                        Delete
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+    
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        function downloadBackup(backup) {
+            var name = backup.split('.')[0];
+            location.href = `/admin/database/backup/download/${name}`;
+        }
+
+        function deleteBackup(backup) {
+            var name = backup.split('.')[0];
+            location.href = `/admin/database/backup/delete/${name}`;
+        }
+    </script>
+{% endblock %}

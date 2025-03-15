@@ -2,7 +2,9 @@
 
 apt-get update
 apt-get -y upgrade
-apt install -y curl gnupg php zip unzip php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip ntp openvpn libapache2-mod-php7.4 fail2ban exim4
+apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php7.4
+apt install -y php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip 
+systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.2.6/composer.phar', 'composer.phar');"
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
@@ -33,6 +35,9 @@ if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
 fi
 rabbitmqctl set_permissions -p '/' 'remotelabz-amqp' '.*' '.*' '.*'
 service rabbitmq-server restart
+rabbitmqctl set_user_tags remotelabz-amqp administrator
+
+rabbitmq-plugins enable rabbitmq_management
 
 #To test if the connexion to the RabbitMQ works fine
 #rabbitmqctl authenticate_user 'remotelabz-amqp' "password-amqp"

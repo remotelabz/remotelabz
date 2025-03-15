@@ -1,0 +1,37 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ ("!" ~ lab.id): path('show_lab_to_guest', {'id': lab.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+
+
+{% block wrapper %}
+<div class="content-title">
+    <div class="content-title-infos">
+        Created <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span> by <img src="/users/{{lab.author.id}}/picture?size=24&hash=author" class="rounded-circle ml-1 mr-1 d-inline-block" /> <strong>{{lab.author.name}}</strong>
+    </div>
+</div>
+<div class="content-body">
+    <h1 class="mb-4"><a href="{{path('show_lab_to_guest',{'id': lab.id}) }}">{{ lab.name }}</a></h1>
+
+    <div class="row">
+        {# Call to assets/js/components/Instances/InstanceManager.js to check if the lab is instantiated
+            Use the react component https://packagist.org/packages/limenius/react-renderer
+            Need yarn and webpack to compile the js #}
+        <div class="col">{{ react_component('InstanceManager', {'props': props}) }}</div>
+    </div>
+</div>
+{% if lab.description is defined %}
+    {% apply markdown_to_html %}
+        {{lab.description}}
+    {% endapply %}
+{% else %}
+    <p class="text-muted">No description</p>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

@@ -1,7 +1,11 @@
 {% extends 'device/index.html.twig' %}
 
 {% block breadcrumbs %}
+{% if virtuality == 1 %}
     {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_device') }) %}
+    {% else %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_physical_device') }) %}
+    {% endif %}
     {{ parent() }}
 {% endblock %}
 
@@ -16,6 +20,11 @@
                 {% endif %}
             </h1>
         </div>
+        {% if virtuality == 1 %}
+        <div class="content-title-actions">
+            <a href="{{ path('new_lxc_device') }}" class="btn btn-success">{{ 'New lxc'|trans }}</a>
+        </div>
+        {% endif %}
     </div>
     <div class="content-body">{{ form(form) }}</div>
 {% endblock %}

@@ -21,15 +21,28 @@
                     {{ svg('upload') }} {{ 'Import Lab'|trans }}
                 </button>
                 <a class="btn btn-success" role="button" href="{{
-                path('new_lab') }}">{{ 'New Lab'|trans }}</a>
+                path('new_lab') }}">{{ 'New Virtual Lab'|trans }}</a>
+                <a class="btn btn-success" role="button" href="{{
+                path('new_physical_lab') }}">{{ 'New Physical Lab'|trans }}</a>
             {% endif %}
         </div>
         <ul class="nav-links nav nav-tabs">
             {# <li><a href="#"><span>Started</span> <span class="badge badge-pill">0</span></a></li>
             <li><a href="#"><span>Stopped</span> <span class="badge badge-pill">0</span></a></li> #}
-            <li class="active">
-                <a href="{{ path('labs') }}">
-                    <span>All</span> <span class="badge badge-pill">{{ count }}</span>
+            {% set virtuality = app.request.query.get('virtuality') %}
+            <li {% if virtuality is null %}class="active"{% endif %}>
+                <a href="{{ path('labs', app.request.query|merge({virtuality: null, page: null})) }}">
+                    <span>All</span> <span class="badge badge-pill">{{ count.total }}</span>
+                </a>
+            </li>
+            <li {% if virtuality is same as("1") %}class="active"{% endif %}>
+                <a href="{{ path('labs', app.request.query|merge({virtuality: 1, page: null})) }}">
+                    <span>Virtual</span> <span class="badge badge-pill">{{ count.virtual }}</span>
+                </a>
+            </li>
+            <li {% if virtuality is same as("0") %}class="active"{% endif %}>
+                <a href="{{ path('labs', app.request.query|merge({virtuality: 0, page: null})) }}">
+                    <span>Physical</span> <span class="badge badge-pill">{{ count.physical }}</span>
                 </a>
             </li>
         </ul>
@@ -126,7 +139,7 @@
     {% endfor %}
     </div>
     
-    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    {% set pagesNumber = count.current > limit ? count.current // limit + 1 : 1 %}
     <nav aria-label="Page navigation example">
         <ul class="pagination mt-3 justify-content-center">
             <li class="page-item {% if page <= 1 %}disabled{%endif%}">

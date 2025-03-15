@@ -1,0 +1,28 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Config': path('admin_config') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'config' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="content-title">
+        <div class="content-title-infos">
+            <h1>
+                Worker configuration
+            </h1>
+        </div>
+    </div>
+    <div class="content-body">
+        {{ react_component('WorkerConfig', {"props": props}) }}
+    </div>
+{% endblock %}
+    
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

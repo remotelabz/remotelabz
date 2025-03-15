@@ -28,14 +28,24 @@
           <a class="nav-link ml-2 {% if '/groups' in app.request.uri %}active{% endif %}" href="{{ path('dashboard_groups') }}" data-toggle="tooltip" data-placement="bottom" title="Groups">
             {{ svg('users', 's16') }}
           </a>
+          <a class="nav-link ml-2 {% if '/bookings' in app.request.uri %}active{% endif %}" href="{{ path('bookings') }}" data-toggle="tooltip" data-placement="bottom" title="Bookings">
+            {{ svg('calendar', 's16') }}
+          </a>
         </ul>
-        {% if is_granted('ROLE_TEACHER') and not is_granted('ROLE_ADMINISTRATOR') %}
+        {% if is_granted('ROLE_TEACHER') and not is_granted('ROLE_TEACHER_EDITOR') %}
           <a class="nav-link ml-2 {% if '/sandbox' in app.request.uri %}active{% endif %}" href="{{ path('sandbox') }}" data-toggle="tooltip" data-placement="bottom" title="Sandbox">
             {{ svg('documents', 's16') }}
+          </a>
+          <a class="nav-link ml-2 {% if '/resources' in app.request.uri %}active{% endif %}" href="{{ path('resources') }}" data-toggle="tooltip" data-placement="bottom" title="Usage">
+            {{ svg('tachometer', 's16') }}
           </a>
           {% endif %}
         {% if is_granted('ROLE_ADMINISTRATOR') %}
           <a class="nav-link ml-2" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+            {{ svg('settings', 's16') }}
+          </a>
+          {% elseif is_granted('ROLE_TEACHER_EDITOR') and not is_granted('ROLE_ADMINISTRATOR') %}
+          <a class="nav-link ml-2" href="{{ path('devices') }}" data-toggle="tooltip" data-placement="bottom" title="Editor area">
             {{ svg('settings', 's16') }}
           </a>
           {% else %}
@@ -46,6 +56,9 @@
       </div>
       <div class="separator flex-grow-1"></div>
       <div class="navbar-menu-element">
+        {% if is_granted('IS_IMPERSONATOR') %}
+          <a class="nav-link ml-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
+        {% endif %}
         {% if is_granted('IS_IMPERSONATOR') %}
           <a class="nav-link ml-2" href="{{ impersonation_exit_path(path('index') ) }}">Exit impersonation</a>
         {% endif %}

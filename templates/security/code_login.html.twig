@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login with code{% endblock %}
+
+{% block body %}
+<div>
+    <div class="align-items-center mt-5 container-fluid container-limited">
+        <div class="row">
+            <div class="col-lg-4 mx-auto">
+                <div class="auto-form-wrapper">
+                <h1>Login with code</h1>
+                <p class="text-muted">Please enter the code you received by email to access a lab.</p>
+                        <form role="form" method="POST">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ svg('key', 'image-sm') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="code" name="code" value="" required autofocus>
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                            <div class="form-group">
+                                <button class="btn btn-success submit-btn btn-block" name="submit">
+                                    Sign in
+                                </button>
+                            </div>
+                        </form>
+                </div>
+                <hr>
+            </div>
+        </div>
+    </div>
+    <!-- content-wrapper ends -->
+</div>
+{% endblock %}

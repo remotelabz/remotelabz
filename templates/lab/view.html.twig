@@ -23,6 +23,9 @@
     </div>
     <div class="content-title-actions" id="instanceButtons">
         {% if (is_granted("ROLE_ADMINISTRATOR") or lab.author == app.user) %}
+            {% if lab.virtuality == 1 %}
+            <a href="{{ path('create_code_lab', {'id': lab.id}) }}" class="btn btn-success" role="button">{{ 'Codes'|trans }}</a>
+            {% endif %}
             <a href="{{ path('export_lab', {'id': lab.id}) }}" class="btn btn-primary" role="button">{{ svg('download') }} {{ 'Export'|trans }}</a>
         {% endif %}
 
@@ -40,7 +43,6 @@
         <button class="btn btn-danger" data-target={{'.delete-lab-modal'}} data-toggle="modal" type="button">
                 {{ 'Delete'|trans }}
              </button>
-        
         
         {% endif %}
     </div>

@@ -28,7 +28,7 @@ final class Version20220401134516 extends AbstractMigration
         $this->addSql('UPDATE device SET hypervisor_id = 1 WHERE type=\'vm\'');
         $this->addSql('UPDATE device SET hypervisor_id = 2 WHERE type=\'container\'');
         $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Debian cnt\', NULL, \'Debian\', \'2\')');
-        $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Alpine3.15 cnt\', NULL, \'Alpine3.15\', \'2\')');
+        $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Alpine3.16 cnt\', NULL, \'Alpine3.16\', \'2\')');
         $this->addSql('INSERT INTO operating_system (id, name, image_url, image_filename, hypervisor_id) VALUES (NULL, \'Ubuntu20LTS cnt\', NULL, \'Ubuntu20LTS\', \'2\')');
 
     }
@@ -44,7 +44,7 @@ final class Version20220401134516 extends AbstractMigration
         $this->addSql('UPDATE device SET hypervisor = \'qemu\' WHERE type=\'vm\'');
         $this->addSql('UPDATE device SET hypervisor = \'lxc\' WHERE type=\'container\'');
         $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Ubuntu20LTS cnt\' AND operating_system.image_filename=\'Ubuntu20LTS\'');
-        $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Alpine3.15 cnt\' AND operating_system.image_filename=\'Alpine3.15\'');
+        $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Alpine3.16 cnt\' AND operating_system.image_filename=\'Alpine3.16\'');
         $this->addSql('DELETE FROM operating_system WHERE operating_system.name=\'Debian cnt\' AND operating_system.image_filename=\'Debian\'');
 
     }

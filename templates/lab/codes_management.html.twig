@@ -1,0 +1,85 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block header %}
+    {% set category = 'codes' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'codes' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="py-3 border-bottom">
+        <h1>Codes management by Lab</h1>
+    </div>
+
+    <div class="search-panel">
+        {% set orderBy = app.request.query.get('orderBy')|default('lastUpdated') %}
+        <form action="{{ path('codes', app.request.query|merge(app.request.query)) }}" method="GET" class="d-flex align-items-center">
+            <div class="search-field flex-grow-1 mr-3">
+            <i class="fa fa-search"></i>
+                <input type="search" class="form-control input-sm" name="search" placeholder="Filter by name" spellcheck="false" value="{{ search|default('') }}" type="search" />
+            </div>
+            <div class="mr-2">
+                {% set searchLimit = app.request.query.get("limit") %}
+                <select name="limit" class="form-control">
+                    <option value="10" {% if searchLimit != 30 and searchLimit != 50 %}selected{% endif %}>10</option>
+                    <option value="30" {% if searchLimit is defined and searchLimit == 30 %}selected{% endif %}>30</option>
+                    <option value="50" {% if searchLimit is defined and searchLimit == 50 %}selected{% endif %}>50</option>
+                </select>
+            </div>
+            <div class="mr-3">
+                labs per page
+            </div>
+            <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
+        </form>
+    </div>
+
+    <div class="labs-panel">
+    {% for code in codes %}
+        <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
+            <div class="lab-item-left d-flex flex-column">
+                <div>
+                    <a href="{{ path('create_code_lab', {'id': code.labId}) }}" class="lab-item-name">
+                        {{- code.labName -}}
+                    </a>
+                </div>
+                <div class="lab-item-infos text-muted">
+                </div>
+            </div>
+            <div class="separator flex-grow-1"></div>
+            <div class="lab-item-right d-flex flex-column text-right">
+                <div>
+                    <div class="d-inline ml-2">
+                        {% if code.numberOfCodes <= 1 %}
+                    <span>{{code.numberOfCodes}} code</span>
+                    {% else %}
+                    <span>{{code.numberOfCodes}} codes</span>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    
+    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    <nav aria-label="Page navigation example">
+        <ul class="pagination mt-3 justify-content-center">
+            <li class="page-item {% if page <= 1 %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('codes', app.request.query|merge({page: page-1})) }}">Previous</a>
+            </li>
+            {% for i in 1.. pagesNumber %}
+                <li class="page-item {% if i == page %}active{%endif%}"><a class="page-link" href="{{ path('codes', app.request.query|merge({page: i})) }}">{{ i }}</a></li>
+            {% endfor %}
+            <li class="page-item {% if page >= pagesNumber %}disabled{%endif%}">
+                <a class="page-link" href="{{ path('codes', app.request.query|merge({page: page+1})) }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+{% endblock %}

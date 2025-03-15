@@ -1,0 +1,23 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Create code': path('create_code_lab', {'id': lab.id}) }) -%}
+    {{ parent() }}
+{% endblock %}
+
+
+
+{% block wrapper %}
+
+<div class="content-title">
+    <h1>Invite users to {{lab.name}}</h1>
+</div>
+<div class="content-body">
+    <p class="text-muted">List of emails separated by a comma. No spaces must be between the comma and the email.</p>
+    {{ form_start(form) }}
+    {{ form_end(form) }}
+    <div class="row">
+        <div class="col">{{ react_component('CodeManager', {'props': props}) }}</div>
+    </div>
+</div>
+{% endblock %}

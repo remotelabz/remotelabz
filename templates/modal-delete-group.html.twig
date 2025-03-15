@@ -10,7 +10,7 @@
       <div class="modal-body">
         {% block content %}{% endblock %}
         {% block body %}
-        <div><a class="btn btn-danger" href="{{ path('delete_group', {slug: group.slug}) }}">Yes</a></div>
+        <div><a class="btn btn-danger" href="{{ path('delete_group', {slug: group.path}) }}">Yes</a></div>
         {% endblock %}        
       </div>
     </div>
