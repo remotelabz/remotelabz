@@ -21,4 +21,6 @@ return [
     Remotelabz\NetworkBundle\RemotelabzNetworkBundle::class => ['all' => true],
     Remotelabz\Message\RemotelabzMessageBundle::class => ['all' => true],
     CalendarBundle\CalendarBundle::class => ['all' => true],
+    Symfony\Bundle\DebugBundle\DebugBundle::class => ['dev' => true],
+    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test' => true],
 ];
