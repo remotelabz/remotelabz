@@ -13,6 +13,7 @@ cp config/system/sudoers /etc/sudoers.d/remotelabz
 cp config/system/remotelabz.service /etc/systemd/system/
 cp config/system/remotelabz-proxy.service /etc/systemd/system/
 rm config/templates/*
+chmod 664 config/templates
 chown remotelabz:www-data * -R
 chmod g+w /opt/remotelabz/var -R
 chmod g+w /opt/remotelabz/public/uploads -R
