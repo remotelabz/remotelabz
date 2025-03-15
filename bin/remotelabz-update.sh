@@ -10,10 +10,12 @@ php bin/console doctrine:migrations:migrate
 php bin/console cache:clear
 cp config/logrotate/remotelabz /etc/logrotate.d/
 cp config/system/sudoers /etc/sudoers.d/remotelabz
-cp config/system/remotelabz.service /etc/systemd/system/
-cp config/system/remotelabz-proxy.service /etc/systemd/system/
-rm config/templates/*
-chmod 664 config/templates
+rm /etc/systemd/system/remotelabz.service
+rm /etc/systemd/system/remotelabz-proxy.service
+cp bin/remotelabz.service /etc/systemd/system/
+cp bin/remotelabz-proxy.service /etc/systemd/system/
+rm config/templates/* -f
+chmod 774 config/templates
 chown remotelabz:www-data * -R
 chmod g+w /opt/remotelabz/var -R
 chmod g+w /opt/remotelabz/public/uploads -R
