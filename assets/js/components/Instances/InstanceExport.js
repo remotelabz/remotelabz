@@ -7,11 +7,11 @@ class InstanceExport extends Component {
 
         this.exportName = React.createRef();
         //console.log("export");
-        console.log(props.deviceInstance.device);
+        //console.log(props.deviceInstance.device);
     }
 
     handleSubmit() {
-        this.props.exportDeviceTemplate(this.props.deviceInstance, this.exportName.current.value);
+        this.props.exportTemplate(this.props.instance, this.exportName.current.value);
     }
 
     render() {
@@ -25,7 +25,8 @@ class InstanceExport extends Component {
                     variant="primary" 
                     onClick={() => this.handleSubmit()}
                 > 
-                Export Device
+                {this.props.type == "device" && "Export Device"}
+                {this.props.type == "lab" && "Export Lab"}
                 </Button>
             </div>
         )

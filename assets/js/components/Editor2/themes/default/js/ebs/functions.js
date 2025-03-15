@@ -5,7 +5,6 @@ function setStartupData(id, set_data = false, config = null, name = null) {
     var form_data = form2ArrayByRow('node', id);
 
     var promises = [];
-    logger(1, 'DEBUG: posting form-node-edit form.');
     var url = '/api/labs/' + lab_filename + '/node/' + id;
     var type = 'PUT';
     form_data['id'] = id;
@@ -30,7 +29,7 @@ function setStartupData(id, set_data = false, config = null, name = null) {
             data: JSON.stringify(form_data),
             success: function (data) {
                 if (data['status'] == 'success') {
-                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
+                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved from setStartupData.');
                     addMessage(data['status'], data['message']);
                     // Close the modal
                     if(set_data) {
@@ -88,7 +87,7 @@ export function initEditor () {
 
 
     editor.show();
-    console.log(textarea.val())
+    //console.log(textarea.val())
     textarea.hide();
     ace_conf_panel.show();
     $('#editor').css('height', $('#nodeconfig').height());

@@ -9,36 +9,93 @@ import JitsiCallButton from '../JitsiCall/JitsiCallButton';
 import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
 import moment from 'moment/moment';
 
-function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false}) { 
+function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCallEnabled: false, isSandbox: false, hasBooking: false}) { 
     const [labInstance, setLabInstance] = useState(props.labInstance)
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
-    const [viewAs, setViewAs] = useState({ type: 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
+    const [viewAs, setViewAs] = useState({ type: props.user.code ? 'guest' : 'user', uuid: props.user.uuid, value: props.user.id, label: props.user.name })
+    const [timerCountDown, setTimerCountDown] = useState("");
     const isSandbox=props.isSandbox
+    const timer=null
     
-    //console.log("instancemanage");
-    //console.log(props.labInstance);
-    //console.log("instancemanage labinstance after function");
-    //console.log(labInstance);
     useEffect(() => {
-        setLoadingInstanceState(true)
+        setLoadingInstanceState(false)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 5000)
+        const interval = setInterval(refreshInstance, 10000)
+        
         return () => {
             clearInterval(interval)
             setLabInstance(null)
             setLoadingInstanceState(true)
         }
+
     }, [viewAs])
 
-    
+    useEffect(()=> {
+        if (props.lab.hasTimer == true) {
+            countdown()
+        }
+    }, [labInstance]);
+
+    function countdown() {
+        if (labInstance) {
+            var timerEnd = new Date(labInstance.timerEnd).getTime();
+            const timer = setInterval(function () {
+            var now = new Date().getTime();
+            var timeInterval = timerEnd - now;
+
+            var hours = Math.floor((timeInterval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((timeInterval % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((timeInterval % (1000 * 60)) / 1000);
+
+            if (hours.toString().length == 1) {
+                hours = '0'+hours
+            }
+            if (minutes.toString().length <= 1) {
+                minutes = '0'+minutes
+            }
+            if (seconds.toString().length <= 1) {
+                seconds = '0'+seconds
+            }
+            let intervalResult = 'Timer: '+ hours+':'+ minutes+':'+seconds;
+            setTimerCountDown(intervalResult);
+            if (timeInterval < 0) {
+                clearInterval(timer);
+                setTimerCountDown('Timer: STOPPED');
+                stopDevices()
+            }
+            },1000)
+        }
+    }
+
+    function stopDevices() {
+
+        for(let deviceInstance of labInstance.deviceInstances) {
+            if (deviceInstance.state != 'stopped') {
+                try {
+                    Remotelabz.instances.device.stop(deviceInstance.uuid)
+                } catch (error) {
+                    console.error(error)
+                    new Noty({
+                        text: 'An error happened while stopping a device. Please try again later.',
+                        type: 'error'
+                    }).show()
+                }
+                clearInterval(timer);
+            }
+        }
+    }
 
     function refreshInstance() {
         let request
 
         if (viewAs.type === 'user') {
            request = Remotelabz.instances.lab.getByLabAndUser(props.lab.uuid, viewAs.uuid)
-        } else {
+        } 
+        else if (viewAs.type === 'guest') {
+            request = Remotelabz.instances.lab.getByLabAndGuest(props.lab.uuid, viewAs.uuid)
+         }
+        else {
            request = Remotelabz.instances.lab.getByLabAndGroup(props.lab.uuid, viewAs.uuid)
         }
 
@@ -90,13 +147,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         if (group.type === 'user') {
             return true
         }
-        /*console.log("props.user:")
-        console.log(props.user)
-        console.log("group:")
-        console.log(group)*/
+
+        if (props.user.code) {
+            return true
+        }
+  
         const _group = props.user.groups.find(g => g.uuid === group.uuid);
-        /*console.log("_group")
-        console.log(_group)*/
+
         return _group ? (_group.role == 'admin' || _group.role == 'owner') : false
     }
 
@@ -122,28 +179,38 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
         try {
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false)
-            setLoadingInstanceState(false)
+            setLoadingInstanceState(true)
             setLabInstance(response.data)
-            $.ajax({
-                type: "POST",
-                url: `/api/editButton/display`,
-                data: JSON.stringify({
-                    'user': props.user,
-                    'lab': props.lab,
-                    'labInstance': response.data
-                }),
-                dataType:"json",
-                success: function (response) {
-                    console.log(response.data.html);
-                    $("#instanceButtons").html(response.data.html);              
-                }  
-            });  
+            if (!isSandbox) {
+                $.ajax({
+                    type: "POST",
+                    url: `/api/editButton/display`,
+                    data: JSON.stringify({
+                        'user': props.user,
+                        'lab': props.lab,
+                        'labInstance': response.data
+                    }),
+                    dataType:"json",
+                    success: function (response) {
+                        $("#instanceButtons").html(response.data.html);              
+                    }  
+                });  
+            }
         } catch (error) {
-            console.error(error)
-            new Noty({
-                text: 'There was an error creating an instance. Please try again later.',
-                type: 'error'
-            }).show()
+            //console.error(error)
+            if (error.response.data.message.includes("No worker available")) {
+                new Noty({
+                    text: 'No worker available - Please contact an administrator',
+                    type: 'error',
+                    timeout: 10000
+                }).show()
+            }
+            else {
+                new Noty({
+                    text: 'There was an error creating an instance. Please try again later.',
+                    type: 'error'
+                }).show()
+            }
             setLoadingInstanceState(false)
         }
     }
@@ -151,30 +218,45 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     async function onLeaveLab() {
         setShowLeaveLabModal(false)
         setLoadingInstanceState(true)
+        clearInterval(timer);
 
         try {
             await Remotelabz.instances.lab.delete(labInstance.uuid)
             setLabInstance({ ...labInstance, state: "deleting" })
-            $.ajax({
-                type: "POST",
-                url: `/api/editButton/display`,
-                data: JSON.stringify({
-                    'user': props.user,
-                    'lab': props.lab,
-                    'labInstance': null
-                }),
-                dataType:"json",
-                success: function (response) {
-                    console.log(response.data.html);
-                    $("#instanceButtons").html(response.data.html);              
-                }  
-            }); 
+            if (!isSandbox) {
+                $.ajax({
+                    type: "POST",
+                    url: `/api/editButton/display`,
+                    data: JSON.stringify({
+                        'user': props.user,
+                        'lab': props.lab,
+                        'labInstance': null
+                    }),
+                    dataType:"json",
+                    success: function (response) {
+                        $("#instanceButtons").html(response.data.html);    
+                                
+                    }  
+                }); 
+            }
+            if(isSandbox) {
+                setTimeout(function() {window.location.href="/admin/sandbox"}, 1500);
+            }  
+            
         } catch (error) {
             console.error(error)
-            new Noty({
-                text: 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show()
+            if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
+                new Noty({
+                    text: error.response.data.message,
+                    type: 'error'
+                }).show()
+            }
+            else {
+                new Noty({
+                    text: 'An error happened while leaving the lab. Please try again later.',
+                    type: 'error'
+                }).show()
+            }
             setLoadingInstanceState(false)
         }
         
@@ -187,7 +269,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     return (<>
-        {!isSandbox &&
+        {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
                 <div className="flex-grow-1 ml-2">
@@ -209,6 +291,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
                     </div>
                     <div>
+                        {props.lab.virtuality == 1 && props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
+                        }
+                        {props.lab.virtuality == 1 && props.lab.hasTimer == false && <span>No timer</span>
+                        }
+                    </div>
+                    <div>
                     {labInstance.state === "created" &&
                         <Button href="/profile/vpn" variant="primary">
                             <SVG name="download" className="v-sub image-sm"></SVG>
@@ -224,8 +312,12 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         />
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" &&
+                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
                         <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
+                    }
+                    {
+                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && viewAs.type === "guest" &&
+                        <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
                         <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() || labInstance.state === "creating" || labInstance.state === "deleting"}>Leave lab</Button>
@@ -251,7 +343,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)}>
+                    <InstanceList instances={labInstance.deviceInstances} labInstance={labInstance} isSandbox={isSandbox} lab={props.lab} onStateUpdate={onInstanceStateUpdate} showControls={isCurrentUserGroupAdmin(viewAs)} user={props.user} allInstancesPage={false}>
                     </InstanceList>
                 }
                 {labInstance.state === "exporting" &&
@@ -274,24 +366,32 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         Loading...
                     </ListGroupItem>
                     :
+                    
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                        {viewAs.type === 'user' ?
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                You haven&apos;t joined this lab yet.
+                        {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
+                        
+                            (viewAs.type === 'user' || viewAs.type === 'guest' ?
+                                <div className="d-flex align-items-center justify-content-center flex-column">
+                                    You haven&apos;t joined this lab yet.
 
-                                <div className="mt-3">
-                                    <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
-                                </div>
-                            </div>
-                            :
-                            <div className="d-flex align-items-center justify-content-center flex-column">
-                                This group hasn&apos;t joined this lab yet.
-
-                                {isCurrentUserGroupAdmin(viewAs) &&
                                     <div className="mt-3">
                                         <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
                                     </div>
-                                }
+                                </div>
+                                :
+                                <div className="d-flex align-items-center justify-content-center flex-column">
+                                    This group hasn&apos;t joined this lab yet.
+
+                                    {isCurrentUserGroupAdmin(viewAs) &&
+                                        <div className="mt-3">
+                                            <Button onClick={onJoinLab} disabled={isLoadingInstanceState}>Join this lab</Button>
+                                        </div>
+                                    }
+                                </div>
+                            )
+                        : 
+                            <div className="d-flex align-items-center justify-content-center flex-column">
+                                You can&apos;t join this lab yet.
                             </div>
                         }
                     </ListGroupItem>

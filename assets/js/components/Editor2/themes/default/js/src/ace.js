@@ -1202,7 +1202,7 @@ exports.inherits = function(ctor, superCtor) {
 };
 
 exports.mixin = function(obj, mixin) {
-    console.log(obj, mixin);
+    //console.log(obj, mixin);
     for (var key in mixin) {
         obj[key] = mixin[key];
     }

@@ -8,13 +8,17 @@ import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstra
 import moment from 'moment/moment';
 
 function AllInstancesManager(props) { 
-    const [labInstance, setLabInstance] = useState(props.props)
+    const [labInstance, setLabInstance] = useState([])
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
+    const [showStopLabModal, setShowStopLabModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
 
+    useEffect(()=> {
+        setLabInstance(props.props);
+    })
     function hasInstancesStillRunning() {
-        //return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
-        return false;
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error') && (i.state != 'reset'));
+        //return false;
     }
 
     async function onInstanceStateUpdate() {
@@ -38,23 +42,59 @@ function AllInstancesManager(props) {
         }
     }
 
+    function stopDevices() {
+        setShowStopLabModal(false);
+        var deviceInstancesToStop = [];
+        let promises = []
+        if (hasInstancesStillRunning()) {
+            promises.push(()=> {
+                for(let deviceInstance of labInstance.deviceInstances) {
+                    if (deviceInstance.state != "stopped" && deviceInstance.state != "exported" && deviceInstance.state != "error" && deviceInstance.state != "reset") {
+                        try {
+                            Remotelabz.instances.device.stop(deviceInstance.uuid)
+                        } catch (error) {
+                            console.error(error)
+                            new Noty({
+                                text: 'An error happened while stopping a device. Please try again later.',
+                                type: 'error'
+                            }).show()
+                        }
+                    }
+                }
+            });
+
+            promises.reduce((prev, promise) => {
+                return prev
+                  .then(promise)
+                  .catch(err => {
+                    console.warn('err', err.message);
+                  });
+              }, Promise.resolve());   
+        }
+    }
+
     return (<>
         {
             <ListGroup>
                 <ListGroupItem className="d-flex align-items-center justify-content-between">
                     <div>
                         <h4 className="mb-0">Instances</h4>
-                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
+                        <span>Started: { moment(props.props.createdAt).format("DD/MM/YYYY hh:mm A") } on {labInstance.workerIp} </span>
                     </div>
                     <div>
                     {
                         (!props.props.lab.name.startsWith('Sandbox_')) && 
                         <Button variant="danger" className="ml-2" href={`/labs/${props.props.lab.id}/see/${props.props.id}`}>See Lab</Button>
                     }
-                    {
-                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} disabled={hasInstancesStillRunning() }>Leave lab</Button>
+                    {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_TEACHER_EDITOR") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
+                        <Button variant="danger" className="ml-2" onClick={() => setShowStopLabModal(true)}>Stop lab</Button>
                     }
-                    <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                    {
+                        <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)} >Leave lab</Button>
+                    }
+                    {(props.user.roles.includes("ROLE_TEACHER") || props.user.roles.includes("ROLE_TEACHER_EDITOR") || props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) &&
+                        <input type="checkbox" value={props.props.uuid} name="checkLab" class="ml-4 checkLab"></input>
+                    }
                     </div>
                 </ListGroupItem>
                 {labInstance.state === "creating" &&
@@ -76,7 +116,7 @@ function AllInstancesManager(props) {
                     </ListGroupItem>
                 }
                 {labInstance.state === "created" &&
-                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true}>
+                    <InstanceList instances={labInstance.deviceInstances} lab={props.props.lab} onStateUpdate={onInstanceStateUpdate} showControls={true} user={props.user} allInstancesPage={true}>
                     </InstanceList>
                 }
             </ListGroup>
@@ -91,6 +131,18 @@ function AllInstancesManager(props) {
             <Modal.Footer>
                 <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
                 <Button variant="danger" onClick={onLeaveLab}>Leave</Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal show={showStopLabModal} onHide={() => setShowStopLabModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Stop devices</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                Are you sure you want to stop the devices ?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="default" onClick={() => setShowStopLabModal(false)}>Close</Button>
+                <Button variant="danger" onClick={stopDevices}>Stop</Button>
             </Modal.Footer>
         </Modal>
     </>)

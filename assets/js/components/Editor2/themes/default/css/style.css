@@ -450,3 +450,24 @@ li.plus-minus-slider #zoomslide{
 #form-picture-add button:first-of-type{
  margin-right: 10px;
 }
+
+#bannerDropzone {
+	margin-bottom: 20px;
+	border: 1px solid #d2d6de;
+	border-radius: 2% 2% 2% 2%;
+}
+
+#bannerDropzoneText {
+	background-color: #eee;
+	padding-bottom: 5px;
+	text-align:center;
+}
+
+#bannerDropzoneText:hover {
+	cursor:pointer;
+}
+
+#bannerDropzoneText img {
+	margin-bottom: 5px;
+	background-color: white;
+}

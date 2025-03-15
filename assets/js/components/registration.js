@@ -16,6 +16,10 @@ import SandboxManager from './Sandbox/SandboxManager';
 import AllInstancesList from './Instances/AllInstancesList';
 import InstanceFilterSelect from './Instances/InstanceFilterSelect';
 import FilterInstancesList from './Instances/FilterInstancesList';
+import CodeManager from './Lab/CodeManager';
+import GroupInstancesList from './Instances/GroupInstancesList';
+import DownloadLxcDevice from './Form/DownloadLxcDevice';
+import WorkerConfig from './Form/WorkerConfig';
 
 ReactOnRails.register({
     InstanceOwnerSelect,
@@ -27,11 +31,15 @@ ReactOnRails.register({
     InstanceManager,
     InstanceList,
     LabImporter,
+    CodeManager,
     Editor,
     SandboxManager,
     AllInstancesManager,
     AllInstancesList,
     FilterInstancesList,
     InstanceFilterSelect,
-    LabSelect
+    GroupInstancesList,
+    LabSelect,
+    DownloadLxcDevice,
+    WorkerConfig
 });

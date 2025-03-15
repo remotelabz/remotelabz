@@ -26,6 +26,9 @@ import 'datatables.net-bs4';
 import 'datatables.net-buttons-bs4';
 import 'datatables.net-select-bs4';
 import '@novnc/novnc/core/rfb';
+import 'select2';
+import 'select2/dist/css/select2.css';
+import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
 
 import './components/registration';
 

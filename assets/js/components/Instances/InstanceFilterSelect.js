@@ -5,7 +5,7 @@ import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-export default function InstanceFilterSelect(props = {labInstances}) {
+export default function InstanceFilterSelect(props) {
     const [itemFilter, setItemFilter] = useState([]);
     const [options, setOptions] = useState();
     const [filter, setFilter] = useState("none");
@@ -25,7 +25,7 @@ export default function InstanceFilterSelect(props = {labInstances}) {
     useEffect(() => {
         setLoadingInstanceState(true)
         refreshInstance()
-        const interval = setInterval(refreshInstance, 20000)
+        const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
             setInstances(null)
@@ -34,7 +34,42 @@ export default function InstanceFilterSelect(props = {labInstances}) {
     }, [filter, item]);
 
     useEffect(() => {
-        console.log(filter);
+        refreshInstance();
+    }, [item]);
+
+    useEffect(() => {
+        if (instances != undefined && instances !== "") {
+            const list = instances.map((labInstance) => {
+                return (
+                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+                    <div>
+                        <div>
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            </a>
+                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` :
+                            labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
+                        </div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user} ></AllInstancesManager></div>
+                    </div>
+                </div>)
+            });
+    
+            setInstancesList(list)
+        }
+        if (instances === "") {
+            const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
+                            <span class="lab-item-name">
+                                None
+                            </span>
+                        </div>
+
+            setInstancesList(list)
+        }
+        
+    }, [instances]);
+
+    useEffect(() => {
         if (filter == "group") {
             optionsList = itemFilter.map((group) => (
                 <><option
@@ -105,64 +140,114 @@ export default function InstanceFilterSelect(props = {labInstances}) {
         let filterValue = document.getElementById("instanceSelect").value;
         return new Promise(resolve => {
             if (filterValue == "group") {
-                Remotelabz.groups.all()
-                .then(response => {
-                    setItemFilter(response.data);
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.groups.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allGroups");
+                    })
+                }
+                else {
+                    setItemFilter(props.user.groups);
                     setFilter(filterValue);
                     setItem("allGroups");
-                })
+                }
+                
             }
             else if (filterValue == "lab") {
-                Remotelabz.labs.all()
-                .then(response => {
-                    setItemFilter(response.data);
-                    setFilter(filterValue);
-                    setItem("allLabs");
-                })
+                if (props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR'))
+                {
+                    Remotelabz.labs.all()
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
+                else {
+                    Remotelabz.labs.getByTeacher(props.user.id)
+                    .then(response => {
+                        setItemFilter(response.data);
+                        setFilter(filterValue);
+                        setItem("allLabs");
+                    })
+                }
             }
             else if (filterValue == "teacher" || filterValue == "student" || filterValue == "admin") {
-                Remotelabz.users.all()
-                .then(response => {
-                    const usersList = response.data;
-                    for(let user of usersList) {
-                        let teacher = false;
-                        let admin = false;
-                        for(let role of user.roles) {
-                            if (role == "ROLE_TEACHER") {
-                                teacher = true;
-                                break;
-                            }
-                            if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
-                                admin = true;
-                                break;
-                            }
-                        }
 
-                        if (teacher == true) {
-                            teachers.push(user);
+                if (props.user.roles.includes("ROLE_ADMINISTRATOR") || props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")) {
+                    Remotelabz.users.fetchAll()
+                    .then(response => {
+                        const usersList = response.data;
+                        for(let user of usersList) {
+                            let teacher = false;
+                            let admin = false;
+                            for(let role of user.roles) {
+                                if (role == "ROLE_TEACHER") {
+                                    teacher = true;
+                                    break;
+                                }
+                                if (role == "ROLE_ADMINISTRATOR" || role == "ROLE_SUPER_ADMINISTRATOR") {
+                                    admin = true;
+                                    break;
+                                }
+                            }
+    
+                            if (teacher == true) {
+                                teachers.push(user);
+                            }
+                            else if (admin == true) {
+                                admins.push(user)
+                            }
+                            else {
+                                students.push(user);
+                            }
                         }
-                        else if (admin == true) {
-                            admins.push(user)
+    
+                        if (filterValue == "teacher") {
+                            setItemFilter(teachers);
+                            setItem("allTeachers");
+                        }
+                        else if (filterValue == "admin") {
+                            setItemFilter(admins);
+                            setItem("allAdmins");
                         }
                         else {
-                            students.push(user);
+                            setItemFilter(students);
+                            setItem("allStudents");
                         }
-                    }
-
+                        setFilter(filterValue);
+                    })
+                }
+                else {
                     if (filterValue == "teacher") {
-                        setItemFilter(teachers);
-                        setItem("allTeachers");
-                    }
-                    else if (filterValue == "admin") {
-                        setItemFilter(admins);
-                        setItem("allAdmins");
+                        Remotelabz.users.fetchUserTypeByGroupOwner("teachers", props.user.id)
+                        .then(response => {
+                            setItemFilter(response.data);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allTeachers");
+                            setFilter(filterValue);
+                        })
                     }
                     else {
-                        setItemFilter(students);
-                        setItem("allStudents");
+                        Remotelabz.users.fetchUserTypeByGroupOwner("students", props.user.id)
+                        .then(response => {
+                            setItemFilter(response.data);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        }).catch(()=>{
+                            setItemFilter([]);
+                            setItem("allStudents");
+                            setFilter(filterValue);
+                        })
                     }
-                    setFilter(filterValue);
-                })
+                }
+                
             }
             else if (filterValue == "none"){
                 setItem("allInstances");
@@ -171,28 +256,27 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
         })
     }
+    function changeItem() {
+        let itemValue = document.getElementById("itemSelect").value;
+        setItem(itemValue);
+        //refreshInstance();
+    }
 
     function refreshInstance() {
         
         let request;
-        console.log(filter);
-        console.log(item);
 
         if (item == "allGroups") {
-            request = Remotelabz.instances.lab.getOwnedByGroup();  
-            console.log("a");  
+            request = Remotelabz.instances.lab.getByGroups();    
         }
         else if (filter == "group" && item != "allGroups") {
             request = Remotelabz.instances.lab.getByGroup(item);
-            console.log("b"); 
         }
         else if (item == "allLabs") {
             request = Remotelabz.instances.lab.getOrderedByLab();
-            console.log("c"); 
         }
         else if (filter == "lab" && item != "allLabs") {
             request = Remotelabz.instances.lab.getByLab(item);
-            console.log("g"); 
         }
         else if (item == "allTeachers" || item == "allStudents" || item == "allAdmins") {
             let userType = "";
@@ -207,15 +291,12 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
 
             request = Remotelabz.instances.lab.getOwnedByUserType(userType);
-            console.log("d"); 
         }
         else if ((filter == "teacher" && item != "allTeachers") || (filter == "student" && item != "allStudents") || (filter == "admin" && item != "allAdmins")) {
             request = Remotelabz.instances.lab.getByUser(item);
-            console.log("e"); 
         }
         else if (item == "allInstances"){
             request = Remotelabz.instances.lab.getAll(); 
-            console.log("f"); 
         }
         
         request.then(response => {
@@ -223,7 +304,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                 response.data
             )
 
-            console.log(response.data)
             const list = response.data.map((labInstance) => {
                 return (
                 <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
@@ -232,10 +312,11 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
                             </a>
                             Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` :
+                            labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` :  ` group ${labInstance.owner.name}` )}<br/>
                         </div>
                         
-                        <div className="col"><AllInstancesManager props={labInstance}></AllInstancesManager></div>
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
                     </div>
                 </div>)
             });
@@ -246,6 +327,13 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             if (error.response) {
                 if (error.response.status <= 500) {
                     setInstances(null)
+                    const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
+                            <span class="lab-item-name">
+                                None
+                            </span>
+                        </div>
+
+                    setInstancesList(list)
                     setLoadingInstanceState(false)
                 } else {
                     new Noty({
@@ -256,178 +344,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             }
         })
     }
-
-    /*function getInstances() {
-        let itemValue = document.getElementById("itemSelect").value;
-        console.log(itemValue);
-        return new Promise(resolve => {
-            if (itemValue == "allGroups") {
-                    Remotelabz.instances.lab.getOwnedByGroup()
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                setItem(itemValue);
-                console.log("1"); 
-            }
-            else if (filter == "group" && itemValue != "allGroups") {
-                console.log("2"); 
-                Remotelabz.instances.lab.getByGroup(itemValue)
-                .then(response => {
-                    if (response == null || response == undefined) {
-                        console.log("no instance of this group")
-                    }
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-            }
-            else if (itemValue == "allLabs") {
-                Remotelabz.instances.lab.getOrderedByLab()
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                console.log("3"); 
-                setItem(itemValue);
-            }
-            else if (filter == "lab" && itemValue != "allLabs") {
-                Remotelabz.instances.lab.getByLab(itemValue)
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                })
-                .catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                });
-                console.log("g"); 
-            }
-            else if (itemValue == "allTeachers" || itemValue == "allStudents" || itemValue == "allAdmins") {
-                let userType = ""
-                if(itemValue == "allTeachers") {
-                    userType = "teacher"
-                }
-                else if (itemValue == "allStudents") {
-                    userType = "student"
-                }
-                else if (itemValue == "allAdmins") {
-                    userType = "admin"
-                }
-                Remotelabz.instances.lab.getOwnedByUserType(userType)
-                    .then((response) => {
-                        setInstances(response.data)
-                    })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status <= 500) {
-                                setInstances(undefined)
-                            } else {
-                                setInstances(undefined)
-                                new Noty({
-                                    text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()
-                            }
-                        }
-                    })
-                setItem(itemValue);
-                console.log("4"); 
-                
-            }
-            else if ((filter == "teacher" && itemValue != "allTeachers") || (filter == "student" && itemValue != "allStudents") || (filter == "admin" && itemValue != "allAdmins")) {
-                Remotelabz.instances.lab.getByUser(itemValue)
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                    
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-                console.log("5"); 
-            }
-            else if (itemValue == "allInstances"){
-                Remotelabz.instances.lab.getAll()
-                .then(response => {
-                    setItem(itemValue);
-                    setInstances(response.data);
-                    console.log(response.data);
-                }).catch(error => {
-                    if (error.response) {
-                        if (error.response.status <= 500) {
-                            setInstances(undefined)
-                        } else {
-                            setInstances(undefined)
-                            new Noty({
-                                text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                                type: 'error'
-                            }).show()
-                        }
-                    }
-                })
-                console.log("6"); 
-            }
-        })
-    }*/
 
     function checkAll() {
         const boxes = document.querySelectorAll(".checkLab");
@@ -457,7 +373,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        console.log(force);
 
         for (var i=0; i<boxes.length; i++) {
             // And stick the checked ones onto an array...
@@ -470,7 +385,6 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             for(let instanceToDelete of instancesToDelete) {
                 Remotelabz.instances.lab.get(instanceToDelete)
                 .then((response) => {
-                    console.log(hasInstancesStillRunning(response.data));
                     if (hasInstancesStillRunning(response.data)) {
                         running = true;
                         for(let deviceInstance of response.data.deviceInstances) {
@@ -479,10 +393,8 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                             }
                         }
 
-                        console.log(running);
     
                         if (running == true) {
-                            console.log("modal");
                             setShowForceLeaveLabModal(true);
                         }
                     }
@@ -499,7 +411,12 @@ export default function InstanceFilterSelect(props = {labInstances}) {
             for(let instanceToDelete of instancesToDelete) {
                 try {
                     Remotelabz.instances.lab.delete(instanceToDelete)
-                    //setLabInstance({ ...labInstance, state: "deleting" })
+                    setInstances(instances.map((instance)=> {
+                        if (instance.uuid == instanceToDelete) {
+                            instance.state = "deleting"
+                        }
+                        return instance
+                    }))
                 } catch (error) {
                     console.error(error)
                     new Noty({
@@ -532,7 +449,8 @@ export default function InstanceFilterSelect(props = {labInstances}) {
 
     return (
         <div>
-            <div>
+            {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
+            <><div>
                 <div><span>Filter by : </span></div>
                 <div className="d-flex align-items-center mb-2">
                 <select className='form-control' id="instanceSelect" onChange={onChange}>
@@ -541,19 +459,24 @@ export default function InstanceFilterSelect(props = {labInstances}) {
                     <option value="lab">Lab</option>
                     <option value="student">Student</option>
                     <option value="teacher">Teacher</option>
-                    <option value="admin">Administrator</option>
+                    {
+                        (!props.user.roles.includes('ROLE_TEACHER')) &&
+                        <option value="admin">Administrator</option>
+                    }  
                 </select>
-                <select className='form-control' id="itemSelect" onChange={refreshInstance}>
+                <select className='form-control' id="itemSelect" onChange={changeItem}>
                     {options}
                 </select>
                 </div>
             </div>
             <div className="d-flex justify-content-end mb-2">
-                {
+                {instances &&
                     <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
                 }
-                <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
-            </div>
+                {instances &&
+                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                }
+            </div></>}
             {instancesList}
 
             <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>

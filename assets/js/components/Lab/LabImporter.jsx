@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
 import Noty from 'noty';
 import { Formik, Form, Field, useFormikContext } from 'formik';
@@ -12,11 +12,21 @@ export default function LabImporter()
         redirect: ''
     });
     const [fileContent, setFileContent] = useState('');
+    const[labTemplateList, setLabTemplateList] = useState();
+    var labTemplatesOptions = [];
+
+    useEffect(() => {
+        Remotelabz.labs.getTemplates().then((response)=> {
+            labTemplatesOptions = response.data;
+            setLabTemplateList(labTemplatesOptions.map((template) => {
+                return <option id={template.id}  key={template.id} value={template.id}>{template.name}</option>
+            }))
+        })
+    }, []);
 
     const onDrop = useCallback(acceptedFiles => {
         acceptedFiles.forEach((file) => {
             const reader = new FileReader()
-      
             reader.onabort = () => console.log('file reading was aborted')
             reader.onerror = () => console.log('file reading has failed')
             reader.onload = (e) => {
@@ -46,6 +56,27 @@ export default function LabImporter()
         }
 
         return error;
+    }
+
+    function submitTemplate() {
+        let value = document.getElementById("lab_template_list").value;
+        let lab;
+
+        Remotelabz.labs.getTemplate(value).then(response => {
+            lab = response.data;
+
+            Remotelabz.labs.import(JSON.stringify(lab)).then(response => {
+                //console.log(response.request)
+                setSuccess({
+                    wasCreated: true,
+                    redirect: response.request.responseURL
+                });
+            }).catch(err => {
+                new Noty({ text: 'An error happened while importing lab. Please try again later or contact an administrator.', type: 'error' }).show();
+            })
+        }).catch(err => {
+            new Noty({ text: 'An error happened while fetching lab. Please try again later.', type: 'error' }).show();
+        })
     }
 
     return (
@@ -78,7 +109,7 @@ export default function LabImporter()
                 onSubmit={ (values, actions) => {
                     actions.setSubmitting(true);
                     Remotelabz.labs.import(values.json).then(response => {
-                        console.log(response.request)
+                        //console.log(response.request)
                         setSuccess({
                             wasCreated: true,
                             redirect: response.request.responseURL
@@ -110,6 +141,17 @@ export default function LabImporter()
                     </Form>
                 )}
                 </Formik>
+
+                <div className="lined-separator">OR</div>
+                <section>
+                    <p>Select from lab template</p>
+                    <select id="lab_template_list" className="form-control">
+                        {labTemplateList}
+                    </select>
+                    <hr></hr>
+                    <Button variant="success" type="submit" onClick={submitTemplate}>Submit</Button>
+                </section>
+
             </div>
         }
         </div>

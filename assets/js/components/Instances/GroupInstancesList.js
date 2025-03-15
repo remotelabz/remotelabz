@@ -1,20 +1,19 @@
+import React, { useState, useEffect} from 'react';
 import Noty from 'noty';
 import Remotelabz from '../API';
-import InstanceList from './InstanceList';
-import { GroupRoles } from '../Groups/Groups';
-import React, { useState, useEffect } from 'react';
-import InstanceOwnerSelect from './InstanceOwnerSelect';
-import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
-import moment from 'moment/moment';
+import FilterInstancesList from './FilterInstancesList';
+import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import AllInstancesManager from './AllInstancesManager';
 
-function AllInstancesList(props = {labInstances: [], user:{}}) { 
-    const [labInstances, setLabInstances] = useState(props)
-    const [instancesList, setInstancesList] = useState(null)
+export default function GroupInstancesList(props = {instances, group, user}) {
+    const [options, setOptions] = useState();
+    const [instances, setInstances] = useState();
+    //const [filter, setFilter] = useState("allLabs");
     const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
     const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
     const [showForceStopModal, setShowForceStopModal] = useState(false)
     const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
+    const [instancesList, setInstancesList] = useState(null)
 
     let deviceInstancesToStop = [];
 
@@ -24,58 +23,112 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         const interval = setInterval(refreshInstance, 30000)
         return () => {
             clearInterval(interval)
-            setLabInstances(null)
+            setInstances(null)
             setLoadingInstanceState(true)
         }
-    }, [])
+    }, []);
 
+    /*useEffect(() => {
+        let optionsList = props.labs.map((lab) => {
+            return(
+            <><option
+                  key={lab.id}
+                  value={lab.uuid}
+                >{lab.name}</option></>)
+        });
+
+        optionsList.unshift(<><option
+            key={"0"}
+            value ="allLabs"
+          >All Labs</option></>);
+
+        setOptions(optionsList);
+    }, []);*/
+
+    useEffect(() => {
+
+        if (instances != undefined && instances !== "") {
+            const list = instances.map((labInstance) => {
+                return (
+                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+                    <div>
+                        <div>
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            </a>
+                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
+                        </div>
+                        
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
+                    </div>
+                </div>)
+            });
     
+            setInstancesList(list);
+        }
+
+        if (instances === "") {
+            const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
+            <span class="lab-item-name">
+                None
+            </span>
+        </div>
+
+            setInstancesList(list);
+        }
+        
+        
+    }, [instances]);
+
+    function onChange() {
+        let filterValue = document.getElementById("labSelect").value;
+        setFilter(filterValue);
+    }
+
+    function getParentPath(group, path) {
+        //console.log(path);
+        if (group.parent !== undefined) {
+            path = getParentPath(group.parent, group.parent.slug) + "/" + path;
+            //console.log(path);
+        }
+        return path;
+    }
+
     function refreshInstance() {
         
-        let request
-        let filter = document.getElementById("instance_filter").value;
-        let subFilter = document.getElementById("instance_subFilter").value;
-        let page = document.getElementById("instance_page").value;
+        let request;
 
-        request = Remotelabz.instances.lab.getAll(filter, subFilter, page);
-    
-        
+        let path = getParentPath(props.group, props.group.slug);
+
+        let filter = document.getElementById("group_instance_filter").value;
+        let page = document.getElementById("group_instance_page").value;
+
+        request = Remotelabz.instances.lab.getGroupInstances(path, filter, page)
+
         request.then(response => {
-            setLabInstances(
-                response.data
-            )
-
-            if (response.data === "") {
-                const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
-                                <span class="lab-item-name">
-                                    None
-                                </span>
-                            </div>
-                setInstancesList(list)
-            }
-            else {
-                const list = response.data.map((labInstance) => {
-                    return (
-                    <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+            setInstances(response.data);
+            const list = response.data.map((labInstance) => {
+                return (
+                <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
+                    <div>
                         <div>
-                            <div>
-                                <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
-                                </a>
-                                Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                                {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` : 
-                                labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` : ` group ${labInstance.owner.name}` )}<br/>
-                            </div>
-                            
-                            <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
+                            <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
+                            </a>
+                            Lab&nbsp; {labInstance.lab.name}&nbsp;started by
+                            {labInstance !=  null && (labInstance.ownedBy == "user" ? `user ${labInstance.owner.name}` : `group ${labInstance.owner.name}` )}<br/>
                         </div>
-                    </div>)
-                });
-                setInstancesList(list)
-            }
+                        
+                        <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
+                    </div>
+                </div>)
+            });
+
+            setInstancesList(list)
+
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
-                    setLabInstances(null)
+                    setInstances(null)
                     setLoadingInstanceState(false)
                 } else {
                     new Noty({
@@ -104,8 +157,8 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     function hasInstancesStillRunning(labInstance) {
-        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error') && (i.state != 'reset'));    }
-
+        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error'));
+    }
 
     async function onLeaveLab(force) {
         setShowLeaveLabModal(false)
@@ -115,9 +168,9 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         let instancesToDelete = [];
         let running = false;
         deviceInstancesToStop = [];
-        let promises = []
 
         for (var i=0; i<boxes.length; i++) {
+            // And stick the checked ones onto an array...
             if (boxes[i].checked) {
                 instancesToDelete.push(boxes[i].value);
             }
@@ -125,35 +178,25 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
 
         if (force == false) {
             for(let instanceToDelete of instancesToDelete) {
-                promises.push(()=> {return Remotelabz.instances.lab.get(instanceToDelete)
-                    .then((response) => {
-                        if (hasInstancesStillRunning(response.data)) {
-                            running = true;
-                            for(let deviceInstance of response.data.deviceInstances) {
-                                if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
-                                    deviceInstancesToStop.push(deviceInstance);
-                                }
-                            }  
-                            
-                        }                    
-                    })
+                Remotelabz.instances.lab.get(instanceToDelete)
+                .then((response) => {
+                    if (hasInstancesStillRunning(response.data)) {
+                        running = true;
+                        for(let deviceInstance of response.data.deviceInstances) {
+                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error')) {
+                                deviceInstancesToStop.push(deviceInstance);
+                            }
+                        }
+    
+                        if (running == true) {
+                            setShowForceLeaveLabModal(true);
+                        }
+                    }
+                    else {
+                        onLeaveLab(true);
+                    }
                 })
             }
-            promises.push(()=>{
-                if (running == true) {
-                    setShowForceLeaveLabModal(true);
-                }
-                else {
-                    onLeaveLab(true);
-                }
-            })
-            promises.reduce((prev, promise) => {
-                return prev
-                  .then(promise)
-                  .catch(err => {
-                    console.warn('err', err.message);
-                  });
-              }, Promise.resolve());         
             
         }
 
@@ -161,13 +204,15 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
 
             for(let instanceToDelete of instancesToDelete) {
                 try {
+
                     Remotelabz.instances.lab.delete(instanceToDelete)
-                    setLabInstances(labInstances.map((instance)=> {
+                    let newInstances = instances.map((instance)=>{
                         if (instance.uuid == instanceToDelete) {
                             instance.state = "deleting"
                         }
-                        return instance
-                    }))
+                        return instance;
+                    });
+                    setInstances(newInstances)
                 } catch (error) {
                     console.error(error)
                     new Noty({
@@ -245,15 +290,30 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         
     }
 
-    return (<>
-        {instancesList && labInstances !== "" && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
-        <div className="d-flex justify-content-end mb-2">
-            <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
-            <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
-            <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
-        </div>}
-        {instancesList}  
-        <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
+    return (
+        <div>
+            {/*<div>
+                <div><span>Filter by lab : </span></div>
+                <div className="d-flex align-items-center mb-2 mt-2">
+                <select className='form-control' id="labSelect" onChange={onChange}>
+                    {options}
+                </select>
+                </div>
+            </div>*/}
+            <div className="d-flex justify-content-end mb-2">
+                {instances !== "" &&
+                    <>
+                    <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
+                    <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
+                    </>
+                }
+                {instances !== "" &&
+                    <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
+                }
+            </div>
+            {instancesList}
+
+            <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>Leave labs</Modal.Title>
                 </Modal.Header>
@@ -290,7 +350,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     <Button variant="danger" onClick={stopAllDevices}>Continue</Button>
                 </Modal.Footer>
             </Modal>
-    </>)
-}
+        </div>
+    );
 
-export default AllInstancesList;
+}

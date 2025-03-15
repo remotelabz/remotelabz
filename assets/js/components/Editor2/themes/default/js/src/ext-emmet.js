@@ -1132,7 +1132,7 @@ exports.runEmmetCommand = function runEmmetCommand(editor) {
             return true;
         }
         editor._signal("changeStatus", typeof e == "string" ? e : e.message);
-        console.log(e);
+        //console.log(e);
         result = false;
     }
     return result;

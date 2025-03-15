@@ -58,7 +58,7 @@ $(function () {
                 defaultContent: 'Local only',
                 render: (data, type) => {
                     if (type !== 'None' && data !== undefined) {
-                        console.log(data);
+                        //console.log(data);
                         var render = data.protocol;
 
                         return render;
@@ -69,7 +69,7 @@ $(function () {
                 defaultContent: 'None',
                 render: (data, type) => {
                     if (type !== 'None' && data !== undefined) {
-                        console.log(data);
+                        //(data);
                         var render = data;
 
                         return render;

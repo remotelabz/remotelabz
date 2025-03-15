@@ -138,6 +138,19 @@ const url = require('url');
  * @property {{id: number, name: string, role: UserGroupRole}} users
  * @property {Group[]} children
  * 
+ * @typedef {Object} InvitationCode
+ * @property {number} id
+ * @property {string} mail
+ * @property {string} code
+ * @property {string} expiryDate Datetime format.
+ * @property {{id: number, name: string}} lab
+ * 
+ * @typedef {Object} ConfigWorker
+ * @property {number} id
+ * @property {string} IPv4
+ * @property {string} queueName
+ * @property {boolean} available
+ * 
  * @typedef {"stopped"|"starting"|"started"|"stopping"|"error"} InstanceStateType
  * @typedef {"lab"|"device"} InstanceType
  * @typedef {"user"|"group"} InstanceOwnerType
@@ -145,7 +158,7 @@ const url = require('url');
  * @typedef {"qemu"|"lxc"} Hypervisor
  * @typedef {"tap"} NetworkInterfaceType
  * @typedef {"VNC"|null} NetworkInterfaceAccess
- * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
+ * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_TEACHER_EDITOR"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
  * @typedef {"user"|"admin"|"owner"} UserGroupRole
  */
 
@@ -197,6 +210,31 @@ export class RemotelabzAPI {
                     search
                 }
             })
+        },
+
+        /**
+         * Get a collection of users.
+         * 
+         * Implements GET `/api/fetch/users`
+
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchAll() {
+            return axios.get('/fetch/users')
+        },
+
+        /**
+         * Get a collection of users in group of $user.
+         * 
+         * Implements GET `/api/fetch/{userType}/by-group-owner/{id}`
+         * 
+         * @param {number} id ID of the user
+         * @param {string} userType type of the users to search
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<User[]>>}
+         */
+        fetchUserTypeByGroupOwner(userType, id) {
+            return axios.get(`/fetch/${userType}/by-group-owner/${id}`)
         },
 
         /**
@@ -361,6 +399,17 @@ export class RemotelabzAPI {
         },
 
         /**
+         * Get a collection of labs by teacher ID.
+         * 
+         * Implements GET `/api/labs/teacher/{id}`
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab[]>>}
+         */
+        getByTeacher(id) {
+            return axios.get(`/labs/teacher/${id}`)
+        },
+
+        /**
          * Get a lab by ID.
          * 
          * Implements GET `/api/labs/{id}`
@@ -371,6 +420,31 @@ export class RemotelabzAPI {
          */
         get(id) {
             return axios.get(`/labs/${id}`);
+        },
+
+        /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template/{id}`
+         * 
+         *  @param {number} id  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplate(id) {
+            return axios.get(`/labs/template/${id}`);
+        },
+
+        /**
+         * Get a labs template.
+         * 
+         * Implements GET `/api/labs/template`
+         *  
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<Lab>>}
+         */
+        getTemplates() {
+            return axios.get(`/labs/template`);
         },
 
         /**
@@ -404,6 +478,20 @@ export class RemotelabzAPI {
         },
 
         /**
+         * copy a banner by lab ID.
+         * 
+         * Implements GET `/api/labs/{id}/banner/{newId}`
+         * 
+         * @param {number} id 
+         * @param {number} newId 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<{url: string}>>}
+         */
+        copyBanner(id, newId) {
+            return axios.get(`/labs/${id}/banner/${newId}`);
+        },
+
+        /**
          * Updates a banner for a lab by ID.
          * 
          * Implements PUT `/api/labs/{id}/banner`
@@ -431,8 +519,51 @@ export class RemotelabzAPI {
 
         addDeviceInLab(id,options) {
             return axios.post(`/labs/${id}/devices`,options);
-        }
+        },
 
+        /**
+         * 
+         * Add device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}`
+         * @param {int} id
+         * @returns 
+         */
+
+        delete(id) {
+            return axios.delete(`/labs/${id}`);
+        }
+        
+    }
+
+    /**
+     * InvitationCode endpoint.
+     */
+    invitationCode = {
+        /**
+         * Get a invitation code by lab ID.
+         * 
+         * Implements GET `/api/codes/by-lab/{id}`
+         * 
+         * @param {number} id 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<InvitationCode>>}
+         */
+        getByLab(id) {
+            return axios.get(`/codes/by-lab/${id}`);
+        },
+        /**
+         * delete an invitation code by lab UUID.
+         * 
+         * Implements DELETE `/api/codes/{uuid}`
+         * 
+         * @param {number} uuid 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<void>>}
+         */
+        delete(uuid) {
+            return axios.delete(`/codes/${uuid}`);
+        }
     }
 
     /**
@@ -517,6 +648,22 @@ export class RemotelabzAPI {
         get(uuid) {
             return axios.get(`/instances/by-uuid/${uuid}`);
         },
+
+        /**
+             * Request an async instance by UUID.
+             * 
+             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * 
+             * @param {string} uuid
+             * @param {string} name
+             * @param {string} type
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+        export(uuid,new_name,type) {
+            return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_name, type: type}});
+        },
+
         /**
          * Lab instances methods
          */
@@ -566,8 +713,8 @@ export class RemotelabzAPI {
              * 
              * @returns {Promise<import('axios').AxiosResponse<Array<LabInstance>>>}
              */
-            getAll() {
-                return axios.get(`/instances`);
+            getAll(filter="none", subFilter="allInstances", page=1) {
+                return axios.get(`/instances`, {params: {"instance[filter]": filter, "instance[subFilter]": subFilter, page}});
             },
 
             /**
@@ -582,6 +729,20 @@ export class RemotelabzAPI {
              */
             getByLabAndUser(labUuid, userUuid) {
                 return axios.get(`/instances/lab/${labUuid}/by-user/${userUuid}`);
+            },
+
+            /**
+             * Get a lab instance by lab and user UUID.
+             * 
+             * Implements GET `/api/instances/lab/{labUuid}/by-guest/{guestUuid}`
+             * 
+             * @param {string} labUuid
+             * @param {string} guestUuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getByLabAndGuest(labUuid, guestUuid) {
+                return axios.get(`/instances/lab/${labUuid}/by-guest/${guestUuid}`);
             },
 
             /**
@@ -638,15 +799,42 @@ export class RemotelabzAPI {
             },
 
             /**
-             * Get lab instances owned by group.
+             * Get lab instances of group.
              * 
-             * Implements GET `/api/instances/lab/owned-by-group`
+             * Implements GET `/api/groups/{slug}/instances`
+             * 
+             * @param {string} slug
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstances(slug, filter="allLabs", page=1) {
+                return axios.get(`/groups/${slug}/instances`, {params: {"group_instance[filter]": filter, page}});
+            },
+
+            /**
+             * Get lab instances of group by lab.
+             * 
+             * Implements GET `/api/groups/{slug}/lab/{uuid}/labInstances`
+             * 
+             * @param {string} slug
+             * @param {string} uuid
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
+             */
+            getGroupInstancesByLab(slug, uuid) {
+                return axios.get(`/groups/${slug}/lab/${uuid}/labInstances`);
+            },
+
+            /**
+             * Get lab instances of user group.
+             * 
+             * Implements GET `/api/instances/lab/by-group`
              * 
              * 
              * @returns {Promise<import('axios').AxiosResponse<LabInstance>>}
              */
-            getOwnedByGroup() {
-                return axios.get(`/instances/lab/owned-by-group`);
+            getByGroups() {
+                return axios.get(`/instances/lab/by-group`);
             },
 
             /**
@@ -731,22 +919,21 @@ export class RemotelabzAPI {
                 return axios.get(`/instances/stop/by-uuid/${uuid}`);
             },
 
-            logs(uuid) {
-                return axios.get(`/instances/${uuid}/logs`);
-            },
-            
             /**
-             * Request an async device instance stop by UUID.
+             * Request an async device instance reset by UUID.
              * 
-             * Implements GET `/api/instances/export/by-uuid/{uuid}`
+             * Implements GET `/api/instances/reset/by-uuid/{uuid}`
              * 
-             * @param {string} uuid
-             * @param {string} name
+             * @param {string} uuid 
              * 
              * @returns {Promise<import('axios').AxiosResponse<void>>}
              */
-            export(uuid,new_device_name) {
-                return axios.get(`/instances/export/by-uuid/${uuid}`,{ params: { name: new_device_name}});
+            reset(uuid) {
+                return axios.get(`/instances/reset/by-uuid/${uuid}`);
+            },
+
+            logs(uuid) {
+                return axios.get(`/instances/${uuid}/logs`);
             }
         },
     }
@@ -781,6 +968,103 @@ export class RemotelabzAPI {
          */
         join(labUuid, groupUuid) {
             return axios.get(`/jitsi-call/${labUuid}/${groupUuid}/join`);
+        }
+    }
+
+    /**
+     * configWorker endpoint.
+     */
+    configWorker = {
+        /**
+         * Get a collection of workers.
+         * 
+         * Implements GET `/api/config/workers`
+         * 
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker[]>>}
+         */
+        all() {
+            return axios.get('/config/workers')
+        },
+        /**
+             * Add a worker.
+             * 
+             * Implements POST `/api/config/worker/new`
+             * 
+             * @param {ConfigWorker} options Fields to set and their values
+            * 
+            * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+             */
+        new(options) {
+            return axios.post(`/config/worker/new`, options);
+        },
+         /**
+         * Updates a worker.
+         * 
+         * Implements PUT `/api/config/worker/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * @param {ConfigWorker} options Fields to set and their values
+         * 
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+         */
+         update(id, options) {
+            return axios.put(`/config/worker/${id}`, options)
+        },
+        /**
+         * Delete a worker.
+         * 
+         * Implements DELETE `/api/config/worker/{id}`
+         * 
+         * @param {number} id ID of the device to update
+         * @returns {Promise<import('axios').AxiosResponse<ConfigWorker>>}
+         */
+        delete(id) {
+            return axios.delete(`/config/worker/${id}`)
+        }
+    }
+
+    /**
+     * textObject endpoint.
+     */
+    textObjects = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements POST `/api/labs/{labid}/textobjects
+         * 
+         * @typedef {Object} newTextObjectParams
+         * @property {number} id ID of the lab of the textobject
+         * @property {Object} fields Fields of textobject
+         * 
+         * @param {newTextObjectParams} params 
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        new(params) {
+            return axios.post(`/labs/${params.labid}/textobjects`, params.fields);
+        }
+    }
+
+    /**
+     * picture endpoint.
+     */
+    pictures = {
+        /**
+         * Start a Call in lab instance by UUID.
+         * 
+         * Implements POST `/api/labs/{labid}/pictures
+         * 
+         * @typedef {Object} newPictureParams
+         * @property {number} id ID of the lab of the picture
+         * @property {Object} fields Fields of picture
+         * 
+         * @param {newPictureParams} params 
+         * 
+         * @return {Promise<import('axios').AxiosResponse<void>>}
+         */
+        new(params) {
+            return axios.post(`/labs/${params.labid}/pictures`, params.fields);
         }
     }
 }

@@ -1,6 +1,6 @@
 function toogleIEGrayscle(img, addGrayscale){
 	if (!img) {
-		console.log('no images')
+		//console.log('no images')
 		return;
 	}
 	if (addGrayscale === undefined){
@@ -14,10 +14,10 @@ function toogleIEGrayscle(img, addGrayscale){
 		window.selector = selector
 		// console.log("asd1")
 		if(!img.parent().hasClass('img_wrapper')) {
-		console.log("asd2")
+		//console.log("asd2")
 			addIEGrayscaleWrapper(img);
 		}
-		console.log('gray')
+		//console.log('gray')
 		selector.eq(0).stop().animate({opacity:0}, 200);
 		selector.eq(1).stop().animate({opacity:1}, 200);
 		// $('.img_grayscale').stop().animate({opacity:0}, 200);
@@ -38,8 +38,8 @@ function addIEGrayscaleWrapper(img){
 		el.dequeue();
 	});
 	var src = img.attr('src')
-	console.log(img.attr('src', grayscaleIE10(src)));
-	console.log('imng', img)
+	//console.log(img.attr('src', grayscaleIE10(src)));
+	//console.log('imng', img)
 	return img
 }
 

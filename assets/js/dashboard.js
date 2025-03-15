@@ -7,7 +7,7 @@
             link.addEventListener('click', () => {
                 let invertDisplay = display === 'short' ? 'full' : 'short';
                 labDescription.setAttribute('data-display', invertDisplay);
-                console.log(labDescription);
+                //console.log(labDescription);
                 labDescription.querySelector('.short').classList.toggle('d-none');
                 labDescription.querySelector('.full').classList.toggle('d-none');
                 lab.querySelector('.lab-display-more').classList.toggle('d-none');
