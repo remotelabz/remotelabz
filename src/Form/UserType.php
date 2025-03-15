@@ -37,6 +37,7 @@ class UserType extends AbstractType
                 'choices' => [
                     'Student' => 'ROLE_USER',
                     'Teacher' => 'ROLE_TEACHER',
+                    'Editor teacher' => 'ROLE_TEACHER_EDITOR',
                     'Administrator' => 'ROLE_ADMINISTRATOR',
                     'Super Administrator' => 'ROLE_SUPER_ADMINISTRATOR',
                 ],

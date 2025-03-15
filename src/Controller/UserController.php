@@ -14,6 +14,7 @@ use App\Repository\UserRepository;
 use App\Repository\GroupRepository;
 use App\Service\VPN\VPNConfiguratorGeneratorInterface;
 use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\SerializationContext;
 use Doctrine\Common\Collections\Criteria;
 use App\Service\ProfilePictureFileUploader;
 use Symfony\Component\Validator\Validation;
@@ -29,12 +30,15 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email as Email;
 use Symfony\Component\Validator\Constraints\Email as ConstraintsEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use GuzzleHttp\Client;
 
 class UserController extends Controller
 {
@@ -53,7 +57,7 @@ class UserController extends Controller
         MailerInterface $mailer,
         SerializerInterface $serializer,
         LoggerInterface $logger,
-        string $ip_check_internet,
+        string $url_check_internet,
         string $remotevpn_addr,
         string $contact_mail)
     {
@@ -63,7 +67,7 @@ class UserController extends Controller
         $this->mailer = $mailer;
         $this->serializer = $serializer;
         $this->logger = $logger;
-        $this->ip_check_internet = $ip_check_internet;
+        $this->url_check_internet = $url_check_internet;
         $this->remotevpn_addr = $remotevpn_addr;
         $this->contact_mail = $contact_mail;
     }
@@ -72,6 +76,8 @@ class UserController extends Controller
      * @Route("/admin/users", name="users", methods={"GET", "POST"})
      * 
      * @Rest\Get("/api/users", name="api_users")
+     * 
+     * @IsGranted("ROLE_TEACHER", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -100,6 +106,9 @@ class UserController extends Controller
         $adminCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
         })->count();
+        $teacherEditorCount = $users->filter(function ($user) {
+            return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+        })->count();
         $teacherCount = $users->filter(function ($user) {
             return $user->getHighestRole() === 'ROLE_TEACHER';
         })->count();
@@ -114,12 +123,16 @@ class UserController extends Controller
                         return $user->getHighestRole() === 'ROLE_ADMINISTRATOR' || $user->getHighestRole() === 'ROLE_SUPER_ADMINISTRATOR';
                     });
                 break;
+                case 'editor':
+                    $users = $users->filter(function ($user) {
+                        return $user->getHighestRole() === 'ROLE_TEACHER_EDITOR';
+                    });
+                break;
                 case 'teacher':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_TEACHER';
                     });
                 break;
-                
                 case 'student':
                     $users = $users->filter(function ($user) {
                         return $user->getHighestRole() === 'ROLE_USER';
@@ -178,14 +191,21 @@ class UserController extends Controller
             return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], [$request->get('_route')]);
         }
 
+        $currentUser=$this->serializer->serialize(
+            $this->getUser(),
+            'json',
+            SerializationContext::create()->setGroups(['api_users'])
+        );
         return $this->render('user/index.html.twig', [
             'users' => $users->slice($page * $limit - $limit, $limit),
+            'currentUser' => $currentUser,
             'addUserFromFileForm' => $addUserFromFileForm->createView(),
             'search' => $search,
             'count' => [
                 'total' => $count,
                 'current' => $users->count(),
                 'admins' => $adminCount,
+                'teacherEditors' => $teacherEditorCount,
                 'teachers' => $teacherCount,
                 'students' => $studentCount
             ],
@@ -195,14 +215,58 @@ class UserController extends Controller
     }
 
     /**
+     * @Rest\Get("/api/fetch/users", name="api_fetch_users")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
+     */
+    public function fetchUsersAction(Request $request)
+    {
+        $users = $this->userRepository->findAll();
+        usort($users, function ($a,$b) {return strcmp($a->getLastName(), $b->getLastName());});
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
+     */
+    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
+    {
+        $owner = $this->userRepository->find($id);
+        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
+
+        if (!$users) {
+            throw new NotFoundHttpException();
+        }
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($users, 200, [], ["api_users"]);
+        }
+
+
+    }*/
+
+    /**
      * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.")
      */
     public function showAction(Request $request, int $id)
     {
         $user = $this->userRepository->find($id);
+        $currentUser = $this->getUser();
 
         if (!$user) {
             throw new NotFoundHttpException();
+        }
+
+        if (!$currentUser->isAdministrator() && $user !== $currentUser) {
+            throw new AccessDeniedHttpException("Access denied.");
         }
 
         return $this->json($user, 200, [], [$request->get('_route')]);
@@ -317,6 +381,8 @@ class UserController extends Controller
      * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="GET")
      * 
      * @Rest\Patch("/api/users/{id<\d+>}", name="api_toggle_user")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function toggleAction(Request $request, $id)
     {
@@ -359,6 +425,8 @@ class UserController extends Controller
      * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
      * 
      * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function deleteAction(Request $request, $id)
     {
@@ -390,6 +458,14 @@ class UserController extends Controller
                         $this->logger->debug("Modify lab's author: ".$lab->getName());
                         $this->addFlash('success', "The author of laboratory ".$lab->getName()." is modified to ".$this->getUser()->getName());
                         $lab->setAuthor($this->getUser());
+                    }
+                }
+                $devices = $user->getCreatedDevices();
+                if ($devices->count() > 0) {
+                    foreach ($devices as $device) {
+                        $this->logger->debug("Modify device's author: ".$device->getName());
+                        $this->addFlash('success', "The author of device ".$device->getName()." is modified to ".$this->getUser()->getName());
+                        $device->setAuthor($this->getUser());
                     }
                 }
                 $this->logger->info("User ".$user->getName()." is deleted by user ".$this->getUser()->getName());
@@ -467,38 +543,41 @@ class UserController extends Controller
                             $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
                             if ($validEmail && $this->userRepository->findByEmail($email) == null) {
+                                var_dump($user->getName());
                                 $entityManager->persist($user);
                                 $this->sendNewAccountEmail($user, $password);
                                 $addedUsers[$row] = $user;
-                            }
 
-                        }
-                        if ($group != "") {
-                            if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
-                                $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
-                                $group_wanted = new Group();
-                                $group_wanted->setName($group);
-                                $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                $slug_wanted=str_replace(" ","-",$group);
-
-                                $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
-                                $i=1;
-                                while($slug_list) {
-                                    if ($slug_wanted==$slug_list->getSlug()) {
-                                        $this->logger->debug("The slug ".$slug_wanted." exists");
-                                        $slug_wanted=$slug_wanted.$i;
-                                        $i++;
+                                if ($group != "") {
+                                    if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
+                                        $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
+                                        $group_wanted = new Group();
+                                        $group_wanted->setName($group);
+                                        $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
+                                        $slug_wanted=str_replace(" ","-",$group);
+        
+                                        $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                        $i=1;
+                                        while($slug_list) {
+                                            if ($slug_wanted==$slug_list->getSlug()) {
+                                                $this->logger->debug("The slug ".$slug_wanted." exists");
+                                                $slug_wanted=$slug_wanted.$i;
+                                                $i++;
+                                            }
+                                            $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                        }
+                                        $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
+                                        $group_wanted->setSlug($slug_wanted);
+                                        $entityManager->persist($group_wanted);
+                                        $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
                                     }
-                                    $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                    if (!$user->isMemberOf($group_wanted))
+                                        $group_wanted->addUser($user);
                                 }
-                                $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
-                                $group_wanted->setSlug($slug_wanted);
-                                $entityManager->persist($group_wanted);
-                                $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
                             }
-                            if (!$user->isMemberOf($group_wanted))
-                                $group_wanted->addUser($user);
+
                         }
+                        
                         $row++;
                     }
                     $entityManager->flush();
@@ -634,25 +713,24 @@ class UserController extends Controller
             $response->headers->set('Content-Type', 'image/png');
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
         } else {
-            $url=Gravatar::getGravatar($user->getEmail(), $size);
+            //$url=Gravatar::getGravatar($user->getEmail(), $size);
             $picture=""; $file="";
+            //$this->logger->debug("no picture for: ".$user->getName());
 
-            if ($this->checkInternet()){
+            /* if ($this->checkInternet()){
                 try {
-                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '4.0']] ));
+                    $picture = file_get_contents($url,0,stream_context_create( ["http"=> ["timeout" => '1.0']] ));
                 }
                 catch (Exception $e){
-                    $this->logger->debug("exception");
-                    $this->logger->error("No access to internet");
-                    $this->logger->error($e->getMessage());
+                    $this->logger->error("No access to gravatar: ".$e->getMessage());
                 }
             }
             else
-            {
+            { */
                 $fileName = $this->getParameter('image_default_profile');
                 $file=$this->getParameter('directory.public.images').'/'.$fileName;
                 $picture = file_get_contents($file);
-            }
+            //}
             $response=new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
         //$this->logger->debug("No profile picture saved in user profile");
@@ -660,6 +738,7 @@ class UserController extends Controller
     }
 
     /**
+     * This function is called by the page admin/users
      * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
     public function getUserProfilePictureAction(
@@ -670,7 +749,6 @@ class UserController extends Controller
     {
         $user = $this->userRepository->find($id);
         $size = $request->query->get('size', 128);
-        // TODO #661 : error app.ERROR: Call to a member function getProfilePicture() on null
         $profilePicture = $user->getProfilePicture();
 
         if ($profilePicture && is_file($profilePicture)) {
@@ -693,20 +771,21 @@ class UserController extends Controller
 
             return $response;
         } else {
-        
+
         $picture="";
-        $url=Gravatar::getGravatar($user->getEmail(), $size);
+       /* $url=Gravatar::getGravatar($user->getEmail(), $size);
         try {
             $picture = file_get_contents($url);
             }
         catch (Exception $e){
             $this->logger->error("getUserProfilePictureAction: Impossible to connect to ".$url);
             $this->logger->error($e->getMessage());
+            */
             $fileName = $this->getParameter('image_default_profile');
             $file=$this->getParameter('directory.public.images').'/'.$fileName;
             $picture=file_get_contents($file);
-        }
-        //$this->logger->debug("fonction getUserProfilePictureAction");
+        //}
+
         return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
         }
     }
@@ -733,10 +812,10 @@ class UserController extends Controller
             $response->headers->set('Content-Disposition', 'inline; filename="' . $user->getProfilePictureFilename() . '"');
 
             return $response;
-        } else {
+        }/* else {
             
     
-            $url=Gravatar::getGravatar($user->getEmail(), $size);
+         /*   $url=Gravatar::getGravatar($user->getEmail(), $size);
             try {
                 $picture = file_get_contents($url);
     
@@ -746,11 +825,13 @@ class UserController extends Controller
                 $this->logger->error("Impossible to connect to ".$url);
                 $this->logger->error($e->getMessage());
                 }
-        }
+        }*/
     }
 
     /**
      * @Rest\Get("/api/users/me", name="api_users_me")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.")
      */
     public function meAction()
     {
@@ -822,18 +903,19 @@ class UserController extends Controller
     function checkInternet()
     {
         $response="";
+        $client = new Client();
             try {
                 //Test if internet access
                 // Test without name resolution otherwise the timeout has no effect on the name resolution. Only on the connection to the server !
-                $fp= stream_socket_client("tcp://".$this->ip_check_internet.":80",$errno,$errstr,2);
-            
-                if ($fp) // If no exception
+                $result = $client->get($this->url_check_internet,['timeout' => 1, 'max'             => 1]);
+                if ($result)
                 {
                     $response=true;
                 }
             }
             catch (Exception $e){
                 $response=false;
+                $this->logger->error("Checkinternet process - No internet access: ".$e->getMessage());
             }
         return $response;
     }

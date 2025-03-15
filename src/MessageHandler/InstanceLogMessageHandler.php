@@ -27,7 +27,7 @@ class InstanceLogMessageHandler implements MessageHandlerInterface
 
     public function __invoke(InstanceLogMessage $message)
     {
-        # TODO: show lab logs in instance manager (front)
+
         $this->logger->info("Received Instance log message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),

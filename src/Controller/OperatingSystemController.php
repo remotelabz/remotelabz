@@ -20,12 +20,18 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use App\Repository\ConfigWorkerRepository;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+
+
 
 class OperatingSystemController extends Controller
 {
     /**
      * @var OperatingSystemRepository
      */
+    private $workerRepository;
     private $operatingSystemRepository;
     private $logger;
     private $serializer;
@@ -34,12 +40,15 @@ class OperatingSystemController extends Controller
     public function __construct(LoggerInterface $logger,
         OperatingSystemRepository $operatingSystemRepository,
         SerializerInterface $serializerInterface,
-        MessageBusInterface $bus)
+        MessageBusInterface $bus,
+        ConfigWorkerRepository $configWorkerRepository
+        )
     {
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->serializer = $serializerInterface;
         $this->bus = $bus;
+        $this->configWorkerRepository = $configWorkerRepository;
 
     }
 
@@ -47,6 +56,8 @@ class OperatingSystemController extends Controller
      * @Route("/admin/operating-systems", name="operating_systems")
      * 
      * @Rest\Get("/api/operating-systems", name="api_operating_systems")
+     * 
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -55,7 +66,7 @@ class OperatingSystemController extends Controller
         $criteria = Criteria::create()
             ->where(Criteria::expr()->contains('name', $search))
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ]);
 
         $operatingSystems = $this->operatingSystemRepository->matching($criteria)->getValues();
@@ -74,6 +85,8 @@ class OperatingSystemController extends Controller
      * @Route("/admin/operating-systems/{id<\d+>}", name="show_operating_system")
      * 
      * @Rest\Get("/api/operating-systems/{id<\d+>}", name="api_get_operating_system")
+     * 
+     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
      */
     public function showAction(Request $request, int $id)
     {
@@ -125,7 +138,8 @@ class OperatingSystemController extends Controller
                         $entityManager->flush();
 
                         $this->addFlash('success', 'Operating system has been created.');
-                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$imageFileName);
+                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$operatingSystem->getImageFilename());
+
 
                     }
                 return $this->redirectToRoute('operating_systems');
@@ -273,34 +287,16 @@ class OperatingSystemController extends Controller
     /**
      * @Route("/admin/operating-systems/{id<\d+>}/delete", name="delete_operating_system", methods="GET")
      */
-    public function deleteAction($id, ImageFileUploader $imageFileUploader)
+    public function deleteAction($id)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
-        $filesystem = new Filesystem();
+        $operatingSystemName=$operatingSystem->getImageFilename();
+        $operatingSystemHypervisor=$operatingSystem->getHypervisor()->getName();
+
 
         if (null === $operatingSystem) {
             throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
         }
-
-        if (null !== $operatingSystem->getImageFilename()) {
-
-
-            try {
-                $filesystem->remove($imageFileUploader->getTargetDirectory() . '/' . $operatingSystem->getImageFilename());
-            } catch (IOExceptionInterface $exception) {
-                throw $exception;
-            }
-            $context = SerializationContext::create()->setGroups('api_delete_os');
-            $labJson = $this->serializer->serialize($operatingSystem, 'json', $context);
-            $this->logger->debug('Param of operating system to delete; uuid:'.$id);
-            
-            $this->logger->debug('Sending delete OS id '.$id.' export message.', json_decode($labJson, true));
-            $this->bus->dispatch(
-                new InstanceActionMessage($labJson, $id, InstanceActionMessage::ACTION_DELETEOS)
-            );
-        }
-        //Send message to worker to delete the system
-        
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($operatingSystem);
@@ -310,6 +306,26 @@ class OperatingSystemController extends Controller
 
             $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
 
+            if (null !== $operatingSystemName) {
+                $workers = $this->configWorkerRepository->findAll();
+    
+                foreach ($workers as $otherWorker) {
+                    $otherWorkerIP=$otherWorker->getIPv4();
+                    $tmp=array();
+                    $tmp['Worker_Dest_IP'] = $otherWorkerIP;
+                    $tmp['hypervisor'] = $operatingSystemHypervisor;
+                    $tmp['os_imagename'] = $operatingSystemName;
+                    $deviceJsonToCopy = json_encode($tmp, 0, 4096);
+                    // the case of qemu image with link.
+                    $this->logger->debug("OS to delete on worker ".$otherWorkerIP,$tmp);
+                    $this->bus->dispatch(
+                        new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_DELETEOS), [
+                            new AmqpStamp($otherWorkerIP, AMQP_NOPARAM, [])
+                            ]
+                        );            
+                }
+            }
+            
             return $this->redirectToRoute('operating_systems');
         } catch (ForeignKeyConstraintViolationException $e) {
             $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());

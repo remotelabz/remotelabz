@@ -24,13 +24,13 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, options={"default": "tap"})
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker", "api_get_lab_template"})
      */
     private $type = 'tap';
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $name;
 
@@ -54,15 +54,28 @@ class NetworkInterface implements InstanciableInterface
 
     /**
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $vlan;
 
     /**
      * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $connection;
+
+     /**
+     * @ORM\Column(type="string", nullable=true, options={"default": null})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     * @Assert\Choice({"Straight","Bezier", "Flowchart"})
+     */
+    private $connectorType;
+
+    /**
+     * @ORM\Column(type="string", nullable=true, options={"default": null})
+     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $connectorLabel;
 
     /**
      * @ORM\Column(type="boolean", options={"default": 0})
@@ -173,9 +186,33 @@ class NetworkInterface implements InstanciableInterface
         return $this->connection;
     }
 
-    public function setConnection(int $connection): self
+    public function setConnection(?int $connection): self
     {
         $this->connection = $connection;
+
+        return $this;
+    }
+
+    public function getConnectorType(): ?string
+    {
+        return $this->connectorType;
+    }
+
+    public function setConnectorType(?string $connectorType): self
+    {
+        $this->connectorType = $connectorType;
+
+        return $this;
+    }
+
+    public function getConnectorLabel(): ?string
+    {
+        return $this->connectorLabel;
+    }
+
+    public function setConnectorLabel(?string $connectorLabel): self
+    {
+        $this->connectorLabel = $connectorLabel;
 
         return $this;
     }

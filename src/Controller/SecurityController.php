@@ -245,4 +245,12 @@ class SecurityController extends AbstractController
             'newPasswordForm' => $newPasswordForm->createView()
         ]);
     }
+
+    /**
+     * @Route("/login/code", name="code_login", methods={"GET", "POST"})
+     */
+    public function Codelogin(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
+    {
+        return $this->render('security/code_login.html.twig');
+    }
 }

@@ -5,32 +5,38 @@ namespace App\Controller;
 use App\Entity\NetworkSettings;
 use App\Entity\NetworkInterface;
 use App\Form\NetworkInterfaceType;
+use App\Security\ACL\LabVoter;
 use FOS\RestBundle\Context\Context;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Repository\DeviceRepository;
+use App\Repository\LabRepository;
 use Symfony\Component\Routing\Annotation\Route;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpFoundation\Response;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class NetworkInterfaceController extends Controller
 {
     public $networkInterfaceRepository;
 
-    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository)
+    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository, LabRepository $labRepository)
     {
         $this->networkInterfaceRepository = $networkInterfaceRepository;
         $this->deviceRepository = $deviceRepository;
+        $this->labRepository = $labRepository;
     }
 
     /**
      * @Route("/admin/network-interfaces", name="network_interfaces")
      * 
      * @Rest\Get("/api/network-interfaces", name="api_get_network_interfaces")
+     * 
+     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
@@ -42,7 +48,7 @@ class NetworkInterfaceController extends Controller
                 ->where(Criteria::expr()->contains('name', $search))
                 ->andWhere(Criteria::expr()->eq('isTemplate', $template))
                 ->orderBy([
-                    'id' => Criteria::DESC
+                    'name' => Criteria::ASC
                 ]);
 
             $networkInterfaces = $this->networkInterfaceRepository->matching($criteria);
@@ -73,20 +79,20 @@ class NetworkInterfaceController extends Controller
     /**
      * @Rest\Get("/api/network-interfaces/{id<\d+>}", name="api_get_network_interface")
      */
-    public function showAction(Request $request, int $id)
+    /*public function showAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id))
             throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
 
         return $this->json($networkInterface, 200, [], [$request->get('_route')]);
-    }
+    }*/
 
     /**
      * @Route("/admin/network-interfaces/new", name="new_network_interface", methods={"GET", "POST"})
      * 
      * @Rest\Post("/api/network-interfaces", name="api_new_network_interface")
      */
-    public function newAction(Request $request)
+    /*public function newAction(Request $request)
     {
         $networkInterface = new NetworkInterface();
         $networkInterfaceForm = $this->createForm(NetworkInterfaceType::class, $networkInterface);
@@ -99,7 +105,7 @@ class NetworkInterfaceController extends Controller
 
         if ($networkInterfaceForm->isSubmitted() && $networkInterfaceForm->isValid()) {
             /** @var NetworkInterface $networkInterface */
-            $networkInterface = $networkInterfaceForm->getData();
+            /*$networkInterface = $networkInterfaceForm->getData();
             $networkSettings = new NetworkSettings();
             $networkSettings
                 ->setName($networkInterface->getName() . '_settings');
@@ -125,20 +131,28 @@ class NetworkInterfaceController extends Controller
         return $this->render('network_interface/new.html.twig', [
             'networkInterfaceForm' => $networkInterfaceForm->createView()
         ]);
-    }
+    }*/
 
      /**
      * @Rest\Put("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_update_device_interfaces")
      */
     public function updateNetworkInterface(Request $request, int $labId, int $deviceId)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
+
         $device = $this->deviceRepository->find($deviceId);
         $data = json_decode($request->getContent(), true);
         $i=count($device->getNetworkInterfaces());
         $networkInterface = new NetworkInterface();
         //$networkInterface = $this->networkInterfaceRepository->findByDeviceAndName($deviceId, "eth". $data["interface id"]);
         //$networkInterface->setDevice($device);
-        $networkInterface->setName($device->getName()."_net".$data["interface id"]);
+        if ($device->getNetworkInterfaceTemplate() == "") {
+            $networkInterface->setName("eth".$data["interface id"]);
+        }
+        else {
+            $networkInterface->setName($device->getNetworkInterfaceTemplate().$data["interface id"]);
+        }
         $networkSettings = new NetworkSettings();
         $networkSettings->setName($networkInterface->getName()."_set".$data["interface id"]);
         $networkInterface->setSettings($networkSettings);
@@ -152,6 +166,12 @@ class NetworkInterfaceController extends Controller
         }
 
         $networkInterface->setConnection($data["connection"]);
+        if (isset($data["connector"])) {
+            $networkInterface->setConnectorType($data["connector"]);
+        }
+        if (isset($data["connector_label"]) && $data["connector_label"]!== "") {
+            $networkInterface->setConnectorLabel($data["connector_label"]);
+        }
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($device);
         $entityManager->flush();
@@ -168,11 +188,43 @@ class NetworkInterfaceController extends Controller
     }
 
     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{vlan<\d+>}", name="api_remove_connection")
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}/edit", name="api_edit_connection")
      */
-    public function removeConnection(int $labId, int $vlan)
+    public function editConnection(Request $request, int $labId, int $connection)
     {
-        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndVlan($labId, $vlan);
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
+
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
+        $data = json_decode($request->getContent(), true);
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        foreach($networkInterfaces as $networkInterface) {
+            $networkInterface->setConnectorType($data["connector"]);
+            $networkInterface->setConnectorLabel($data["connector_label"]);
+            
+        }
+        $entityManager->flush();
+
+        $response = new Response();
+        $response->setContent(json_encode([
+            'code'=> 201,
+            'status'=>'success',
+            'message' => 'Lab has been saved (60023).']));
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+
+    }
+
+    /**
+     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}", name="api_remove_connection")
+     */
+    public function removeConnection(int $labId, int $connection)
+    {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
+
+        $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
         
         $entityManager = $this->getDoctrine()->getManager();
         foreach($networkInterfaces as $networkInterface) {
@@ -197,6 +249,8 @@ class NetworkInterfaceController extends Controller
      */
     public function getVlan(Request $request, int $labId)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
         //get the vlan id to set to the device
         $vlans = $this->networkInterfaceRepository->getVlans($labId);
         if ($vlans == null) {
@@ -225,6 +279,9 @@ class NetworkInterfaceController extends Controller
      */
     public function getConnection(Request $request, int $labId)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
+
         //get the connection id to set to the device
         $connections = $this->networkInterfaceRepository->getConnections($labId);
         if ($connections == null) {
@@ -253,10 +310,65 @@ class NetworkInterfaceController extends Controller
      */
     public function getTopology(Request $request, int $labId)
     {
+        $lab = $this->labRepository->find($labId);
+        $this->denyAccessUnlessGranted(LabVoter::SEE_INTERFACE, $lab);
+
         $topology = $this->networkInterfaceRepository->getTopology($labId);
         $data = [];
         foreach($topology as $line) {
-            array_push($data, [
+            if ($line['connectors'] == NULL) {
+                $connector = 'Straight';
+            }
+            else {
+                if (count(explode(",", $line["connectors"]))==1) {
+                    $connector = $line["connectors"];
+                }
+                else {
+                    $connectors = explode(",", $line["connectors"]);
+                    if($connectors[0] == $connectors[1]) {
+                        $connector = $connectors[0];
+                    }
+                    else {
+                        $bezier = false;
+                        $flowchart = false;
+                        foreach($connectors as $connectorType) {
+                            if ($connectorType == 'Bezier') {
+                                $bezier = true;
+                            }
+                            if ($connectorType == 'Flowchart') {
+                                $flowchart = true;
+                            }
+                        }
+                        if ($bezier == true && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else if ($bezier == true && $flowchart == false) {
+                            $connector = 'Bezier';
+                        }
+                        else if ($bezier == false && $flowchart == true) {
+                            $connector = 'Flowchart';
+                        }
+                        else {
+                            $connector = 'Straight';
+                        }
+                    }
+                }
+            }
+
+            if ($line['connectorsLabel'] == NULL) {
+                $connectorLabel = NULL;
+            }
+            else {
+                if (count(explode(",", $line["connectorsLabel"]))==1) {
+                    $connectorLabel = $line["connectorsLabel"];
+                }
+                else {
+                    $connectorsLabel = explode(",", $line["connectorsLabel"]);
+                    $connectorLabel = $connectorsLabel[0];
+                }
+            }
+            
+            /*array_push($data, [
                 "type"=>"ethernet",
                 "source"=> "node".explode(",", $line["devices"])[0],
                 "source_type"=> "node",
@@ -264,8 +376,25 @@ class NetworkInterfaceController extends Controller
                 "destination"=> "node".explode(",", $line["devices"])[1],
                 "destination_type"=> "node",
                 "destination_label"=> explode(",", $line["names"])[1],
-                "network_id"=> $line["vlan"],   
-            ]);
+                "network_id"=> $line["connection"], 
+                "vlan"=> $line["vlan"], 
+                "connector" => $connector,  
+                "connector_label" => $connectorLabel,  
+            ]);*/
+
+            $data[$line['connection']] = [
+                "type"=>"ethernet",
+                "source"=> "node".explode(",", $line["devices"])[0],
+                "source_type"=> "node",
+                "source_label"=> explode(",", $line["names"])[0],
+                "destination"=> "node".explode(",", $line["devices"])[1],
+                "destination_type"=> "node",
+                "destination_label"=> explode(",", $line["names"])[1],
+                "network_id"=> $line["connection"], 
+                "vlan"=> $line["vlan"], 
+                "connector" => $connector,  
+                "connector_label" => $connectorLabel,  
+            ];
         }
         $response = new Response();
         $response->setContent(json_encode([
@@ -284,7 +413,7 @@ class NetworkInterfaceController extends Controller
      * 
      * @Rest\Put("/api/network-interfaces/{id<\d+>}", name="api_edit_network_interface")
      */
-    public function editAction(Request $request, int $id)
+    /*public function editAction(Request $request, int $id)
     {
         $networkInterface = $this->networkInterfaceRepository->find($id);
 
@@ -302,7 +431,7 @@ class NetworkInterfaceController extends Controller
 
         if ($networkInterfaceForm->isSubmitted() && $networkInterfaceForm->isValid()) {
             /** @var NetworkInterface $networkInterface */
-            $networkInterface = $networkInterfaceForm->getData();
+            /*$networkInterface = $networkInterfaceForm->getData();
             $networkSettings = $networkInterface->getSettings();
             $networkSettings
                 ->setName($networkInterface->getName() . '_settings');
@@ -328,14 +457,14 @@ class NetworkInterfaceController extends Controller
             'networkInterfaceForm' => $networkInterfaceForm->createView(),
             'networkInterface' => $networkInterface
         ]);
-    }
+    }*/
 
     /**
      * @Route("/admin/network-interfaces/{id<\d+>}/delete", name="delete_network_interface", methods="GET")
      * 
      * @Rest\Delete("/api/network-interfaces/{id<\d+>}", name="api_delete_network_interface")
      */
-    public function deleteAction(Request $request, int $id)
+    /*public function deleteAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id)) {
             throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
@@ -352,5 +481,5 @@ class NetworkInterfaceController extends Controller
         $this->addFlash('success', $networkInterface->getName() . ' has been deleted.');
 
         return $this->redirectToRoute('network_interfaces');
-    }
+    }*/
 }

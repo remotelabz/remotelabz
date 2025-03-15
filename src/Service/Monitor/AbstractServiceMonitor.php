@@ -11,7 +11,7 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
     protected $serviceName;
     
     
-    public function isStarted(): bool
+    public function isStarted()
     {
 
         $process = new Process([
@@ -35,7 +35,11 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
+            return false;
         }
+
+        return true;
+
     }
 
     public function stop()
@@ -49,7 +53,9 @@ abstract class AbstractServiceMonitor implements ServiceMonitorInterface
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
+            return false;
         }
+        return true;
     }
 
     public static abstract function getServiceName(): string;

@@ -20,7 +20,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setBrand('Test')
             ->setModel('Test model')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-x-small'))
             ->setOperatingSystem($this->getReference('operating-system-Alpine'))
             ->setType('vm')
@@ -29,6 +29,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('vnc'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
 
@@ -41,7 +43,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setBrand('Debian')
             ->setModel('Version Bulleye')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
             ->setOperatingSystem($this->getReference('MigrationOS'))
             ->setType('container')
@@ -50,6 +52,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
@@ -57,43 +61,47 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
         $device = new Device();
         $device
-            ->setName('Ubuntu20LTS-cnt')
+            ->setName('Ubuntu24LTS-cnt')
             ->setBrand('Ubuntu')
-            ->setModel('Version Focal 20 LTS')
+            ->setModel('Version 24 LTS')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Ubuntu20LTSOS'))
+            ->setOperatingSystem($this->getReference('Ubuntu24LTSOS'))
             ->setType('container')
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
-        $this->addReference('Ubuntu20LTS-cnt', $device);
+        $this->addReference('Ubuntu24LTS-cnt', $device);
 
         $device = new Device();
         $device
-            ->setName('Alpine3.15-cnt')
+            ->setName('Alpine-stable-cnt')
             ->setBrand('Alpine')
-            ->setModel('Version 3.15')
+            ->setModel('Version stable')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Alpine3.15OS'))
+            ->setOperatingSystem($this->getReference('Alpine-stableOS'))
             ->setType('container')
             ->setHypervisor($this->getReference('lxc'))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
             
         ;
         $manager->persist($device);
-        $this->addReference('Alpine3.15-cnt', $device);
+        $this->addReference('Alpine-stable-cnt', $device);
 
         $device = new Device();
         $device
@@ -101,7 +109,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setBrand('Debian')
             ->setModel('Stable')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
             ->setOperatingSystem($this->getReference('DebianOS'))
             ->setType('container')
@@ -110,6 +118,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->addControlProtocolType($this->getReference('login'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Server_Linux.png")
 
         ;
         $manager->persist($device);
@@ -120,7 +130,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setName('Natif')
             ->setBrand('Natif')
             ->setLaunchOrder(0)
-            ->setVirtuality(0)
+            ->setVirtuality(1)
             ->setFlavor($this->getReference('flavor-xx-small'))
             ->setOperatingSystem($this->getReference('Natif'))
             ->setType('switch')
@@ -130,6 +140,8 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login'))
+            ->setNetworkInterfaceTemplate("eth")
+            ->setIcon("Switch.png")
             
         ;
         $manager->persist($device);

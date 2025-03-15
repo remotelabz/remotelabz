@@ -19,6 +19,41 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    public function findUserTypesByGroups(string $userType, User $owner)
+    {
+        $users = $this->findAll();
+        $result = [];
+        if ($userType == "teachers") {
+            $highestRole = "ROLE_TEACHER";
+        }
+        else if ($userType == "editors") {
+            $highestRole = "ROLE_TEACHER_EDITOR";
+        }
+        else {
+            $highestRole = "ROLE_USER";
+        }
+        foreach ($owner->getGroups() as $groupuser) {
+            $group=$groupuser->getGroup();
+            if ($group->isElevatedUser($owner)) {
+                foreach($users as $user){
+                    if ($user->isMemberOf($group) && $user->getHighestRole() === $highestRole) {
+                        array_push($result, $user);
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function findByRole(string $role)
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.roles LIKE :role')
+            ->setParameter('role', $role)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
     // /**
     //  * @return User[] Returns an array of User objects
     //  */

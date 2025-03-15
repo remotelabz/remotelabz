@@ -21,7 +21,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
+     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker","sandbox", "api_get_booking"})
      *
      * @var int
      */
@@ -85,11 +85,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     private $labInstances;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="user")
+     * @Serializer\Groups({"api_get_user"})
+     *
+     * @var Collection|Booking[]
+     */
+    private $bookings;
+
+    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
      *
      * @var Collection|Lab[]
      */
     private $createdLabs;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Device", mappedBy="author")
+     *
+     * @var Collection|Device[]
+     */
+    private $createdDevices;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -136,6 +151,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         $this->courses = new ArrayCollection();
         $this->labInstances = new ArrayCollection();
         $this->createdLabs = new ArrayCollection();
+        $this->createdDevices = new ArrayCollection();
         $this->createdActivities = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->ownedGroups = new ArrayCollection();
@@ -197,6 +213,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     {
         if (in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles)) return 'ROLE_SUPER_ADMINISTRATOR';
         if (in_array('ROLE_ADMINISTRATOR', $this->roles)) return 'ROLE_ADMINISTRATOR';
+        if (in_array('ROLE_TEACHER_EDITOR', $this->roles)) return 'ROLE_TEACHER_EDITOR';
         if (in_array('ROLE_TEACHER', $this->roles)) return 'ROLE_TEACHER';
         return 'ROLE_USER';
     }
@@ -211,6 +228,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     public function isAdministrator(): bool
     {
         return in_array('ROLE_SUPER_ADMINISTRATOR', $this->roles) || in_array('ROLE_ADMINISTRATOR', $this->roles);
+    }
+
+    public function isEditor(): bool
+    {
+        return in_array('ROLE_TEACHER_EDITOR', $this->roles);
     }
 
     public function hasRole(string $role): bool
@@ -344,6 +366,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     }
 
     /**
+     * @return Collection|Booking[]
+     */
+    public function getBookings()
+    {
+        return $this->bookings;
+    }
+
+    public function addBooking(Booking $booking): self
+    {
+        if (!$this->bookings->contains($booking)) {
+            $this->bookings[] = $booking;
+            $booking->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooking(Booking $booking): self
+    {
+        if ($this->bookings->contains($booking)) {
+            $this->bookings->removeElement($booking);
+            // set the owning side to null (unless already changed)
+            if ($booking->getUser() === $this) {
+                $booking->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * @return Collection|Lab[]
      */
     public function getCreatedLabs()
@@ -368,6 +421,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
             // set the owning side to null (unless already changed)
             if ($createdLab->getAuthor() === $this) {
                 $createdLab->setAuthor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Device[]
+     */
+    public function getCreatedDevices()
+    {
+        return $this->createdDevices;
+    }
+
+    public function addCreatedDevices(Lab $createdDevice): self
+    {
+        if (!$this->createdDevices->contains($createdDevice)) {
+            $this->createdDevices[] = $createdDevice;
+            $createdDevice->setAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatedDevices(Lab $createdDevice): self
+    {
+        if ($this->createdDevices->contains($createdDevice)) {
+            $this->createdDevices->removeElement($createdDevice);
+            // set the owning side to null (unless already changed)
+            if ($createdDevice->getAuthor() === $this) {
+                $createdDevice->setAuthor(null);
             }
         }
 
@@ -425,7 +509,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      * @return Collection|Group[]
      * @Serializer\VirtualProperty()
      * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"api_get_lab","group_details", "user", "api_users", "api_get_user"})
+     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "group_details", "user", "api_users", "api_get_user"})
      */
     public function getGroups()
     {

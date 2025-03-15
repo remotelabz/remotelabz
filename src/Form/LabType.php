@@ -45,6 +45,8 @@ class LabType extends AbstractType
             ->add('isInternetAuthorized', CheckboxType::class, [
 
             ])
+            ->add('hasTimer', CheckboxType::class)
+            ->add('timer')
             ->add('submit', SubmitType::class)
             ->add('reset', ResetType::class);
     }

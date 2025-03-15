@@ -8,18 +8,22 @@ use App\Entity\Device;
 use App\Entity\Network;
 use App\Entity\Activity;
 use App\Entity\LabInstance;
+use App\Entity\EditorData;
 use App\Entity\DeviceInstance;
 use App\Entity\NetworkInterfaceInstance;
 use App\Entity\NetworkInterface;
 use App\Entity\NetworkSettings;
+use App\Security\ACL\LabVoter;
 use GuzzleHttp\Psr7;
 use App\Form\LabType;
 use GuzzleHttp\Client;
 use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
 use App\Repository\LabRepository;
+use App\Repository\ConfigWorkerRepository;
 use App\Exception\WorkerException;
 use App\Repository\UserRepository;
+use App\Repository\BookingRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
 use Remotelabz\Message\Message\InstanceActionMessage;
@@ -34,9 +38,11 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
 use App\Repository\OperatingSystemRepository;
+use App\Repository\HypervisorRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\NetworkInterfaceRepository;
 use App\Service\Lab\LabImporter;
+use App\Service\Lab\BannerManager;
 use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
@@ -47,14 +53,22 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\ORMException;
 use Exception;
+use ZipArchive;
+use PharData;
+use Phar;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class LabController extends Controller
@@ -75,15 +89,20 @@ class LabController extends Controller
     private $flavorRepository;
     private $serializer;
     private $labInstanceRepository;
+    private $bookingRepository;
+    private $configWorkerRepository;
 
     public function __construct(
         LoggerInterface $logger,
         LabRepository $labRepository,
         DeviceRepository $deviceRepository,
         operatingSystemRepository $operatingSystemRepository,
+        HypervisorRepository $hypervisorRepository,
         FlavorRepository $flavorRepository,
         SerializerInterface $serializerInterface,
-        LabInstanceRepository $labInstanceRepository)
+        LabInstanceRepository $labInstanceRepository,
+        BookingRepository $bookingRepository,
+        ConfigWorkerRepository $configWorkerRepository)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -92,9 +111,12 @@ class LabController extends Controller
         $this->labRepository = $labRepository;
         $this->deviceRepository = $deviceRepository;
         $this->operatingSystemRepository=$operatingSystemRepository;
+        $this->hypervisorRepository=$hypervisorRepository;
         $this->flavorRepository=$flavorRepository;
         $this->serializer = $serializerInterface;
         $this->labInstanceRepository = $labInstanceRepository;
+        $this->bookingRepository = $bookingRepository;
+        $this->configWorkerRepository = $configWorkerRepository;
     }
 
     /**
@@ -102,6 +124,8 @@ class LabController extends Controller
      * 
      * @Rest\Get("/api/labs", name="api_get_labs")
      * @Rest\QueryParam(name="limit", requirements="\d+", default="10")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request, UserRepository $userRepository)
     {
@@ -116,6 +140,7 @@ class LabController extends Controller
         
         $limit = $request->query->get('limit', 10);
         $page = $request->query->get('page', 1);
+        $virtuality = $request->query->get('virtuality');
         $orderBy = $request->query->get('order_by', 'lastUpdated');
         $sortDirection = $request->query->get('sort_direction', Criteria::DESC);
 
@@ -135,6 +160,7 @@ class LabController extends Controller
         }
 
         $criteria
+            ->andWhere(Criteria::expr()->eq('isTemplate', false))
             ->orderBy([
                 $orderBy => $sortDirection
             ])
@@ -142,7 +168,27 @@ class LabController extends Controller
 
         $labs = $this->labRepository->matching($criteria);
         $count = $labs->count();
+        $virtualCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 1;
+        })->count();
+        $physicalCount = $labs->filter(function ($lab) {
+            return $lab->getVirtuality() === 0;
+        })->count();
 
+        if ($virtuality !== null) {
+            if ($virtuality === "1") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 1;
+                });
+            }
+            elseif ($virtuality === "0") {
+                $labs = $labs->filter(function ($lab) {
+                    return $lab->getVirtuality() === 0;
+                });
+            }
+        }
+
+        $currentCount = $labs->count();
         // paging results
         try {
             $labs = $labs->slice($page * $limit - $limit, $limit);
@@ -156,7 +202,12 @@ class LabController extends Controller
 
         return $this->render('lab/index.html.twig', [
             'labs' => $labs,
-            'count' => $count,
+            'count' => [
+                'total' => $count,
+                'current' => $currentCount,
+                'virtual' => $virtualCount,
+                'physical' => $physicalCount
+            ],
             'search' => $search,
             'limit' => $limit,
             'page' => $page,
@@ -183,7 +234,7 @@ class LabController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC
+                'name' => Criteria::ASC
             ])
         ;
 
@@ -201,6 +252,59 @@ class LabController extends Controller
     }
 
     /**
+     * 
+     * @Rest\Get("/api/labs/template", name="api_get_labs_template")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     */
+    public function getLabTemplates(Request $request, UserRepository $userRepository)
+    {
+
+        $labs = $this->labRepository->findBy(["isTemplate" => true]);
+        
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($labs, 200, [], ["api_get_lab"]);
+        }
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/template/{id<\d+>}", name="api_get_lab_template_by_uuid")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
+     */
+    public function getOneLabTemplate(Request $request, int $id)
+    {
+
+        $labs = $this->labRepository->find($id);
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($labs, 200, [], ["api_get_lab_template"]);
+        }
+    }
+
+    /**
+     * 
+     * @Rest\Get("/api/labs/teacher", name="api_get_lab_by_teacher")
+     * 
+     * 
+     */
+    /*public function getTeacherLabs(Request $request, UserRepository $userRepository)
+    {
+        //$user = $userRepository->find(['id' => $id]);
+        $user = $this->getUser();
+        if ($user && $user->hasRole("ROLE_TEACHER")) {
+            $labs = $this->labRepository->findByAuthorAndGroups($user);
+
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json($labs, 200, [], ["api_get_lab"]);
+            }
+        }
+        else {
+            throw new BadRequestHttpException("User ".$user->getName()." is not a teacher");
+        }
+    }*/
+
+    /**
      * @Route("/labs/{id<\d+>}", name="show_lab", methods="GET")
      * 
      * @Rest\Get("/api/labs/{id<\d+>}", name="api_get_lab")
@@ -214,13 +318,87 @@ class LabController extends Controller
         SerializerInterface $serializer)
     {
         $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
 
         if (!$lab) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
-
+        
         // Remove all instances not belongs to current user (changes are not stored in database)
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
+        // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
+        $deviceStarted = [];
+
+        foreach ($lab->getDevices()->getValues() as $device) {
+            $deviceStarted[$device->getId()] = false;
+
+            if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
+                $deviceStarted[$device->getId()] = true;
+            }
+        }
+
+        $bookings = $this->bookingRepository->findBy(["lab" => $lab],['startDate'=>'ASC']);
+        $hasBooking = false;
+        foreach ($bookings as $booking) {
+            $now = new \DateTime("now");
+            if ($booking->getStartDate() <= $now && $now < $booking->getEndDate()) {
+                $hasBooking = ['uuid' => $booking->getOwner()->getUuid(), 'type' => $booking->getReservedFor()];
+                break;
+            }
+        }
+        if ('json' === $request->getRequestFormat()) {
+            $context=$request->get('_route');
+            //Change the context value to limit the return information
+            return $this->json($lab, 200, [], [$context]);
+        }
+
+        $instanceManagerProps = [
+            'user' => $this->getUser(),
+            'labInstance' => $userLabInstance,
+            'lab' => $lab,
+            'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
+            'isSandbox' => false,
+            'hasBooking' => $hasBooking
+        ];
+
+        $props=$serializer->serialize(
+            $instanceManagerProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+        );
+        //$this->logger->debug("show_lab props".$props);
+        return $this->render('lab/view.html.twig', [
+            'lab' => $lab,
+            'labInstance' => $userLabInstance,
+            'deviceStarted' => $deviceStarted,
+            'user' => $user,
+            'props' => $props,
+        ]);
+    }
+
+    /**
+     * @Route("/labs/guest/{id<\d+>}", name="show_lab_to_guest", methods="GET")
+     * 
+     */
+    public function showToGuestAction(
+        int $id,
+        Request $request,
+        UserInterface $guestUser,
+        LabInstanceRepository $labInstanceRepository,
+        LabRepository $labRepository,
+        SerializerInterface $serializer)
+    {
+        $lab = $labRepository->find($id);
+
+        if (!$lab) {
+            throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+        if ($lab != $this->getUser()->getLab()) {
+            return $this->redirectToRoute("show_lab_to_guest", ["id" => $this->getUser()->getLab()->getId()]);
+        }
+        // Remove all instances not belongs to current user (changes are not stored in database)
+        $userLabInstance = $labInstanceRepository->findByGuestAndLab($guestUser, $lab);
         // $lab->setInstances($userLabInstance != null ? [$userLabInstance] : []);
         $deviceStarted = [];
 
@@ -243,28 +421,27 @@ class LabController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isJitsiCallEnabled' => (bool) $this->getParameter('app.enable_jitsi_call'),
-            'isSandbox' => false
+            'isSandbox' => false,
+            'hasBooking' => false
         ];
 
         $props=$serializer->serialize(
             $instanceManagerProps,
             'json',
             //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
-            SerializationContext::create()->setGroups(['api_get_lab','api_get_lab_instance'])
+            SerializationContext::create()->setGroups(['api_invitation_codes','api_get_lab','api_get_lab_instance'])
         );
         //$this->logger->debug("show_lab props".$props);
-        return $this->render('lab/view.html.twig', [
+        return $this->render('lab/guest_view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
             'deviceStarted' => $deviceStarted,
-            'user' => $user,
+            'user' => $guestUser,
             'props' => $props,
         ]);
     }
 
     /**
-     * @Route("/labs/info/{id<\d+>}", name="show_lab_test", methods="GET")
-     * 
      * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
      */
     public function showActionTest(
@@ -275,16 +452,21 @@ class LabController extends Controller
         LabRepository $labRepository,
         SerializerInterface $serializer)
     {
-        $lab = $labRepository->findLabInfoById($id);
+        $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+        $labInfo = $labRepository->findLabInfoById($id);
         $data = [
-            "id"=>$lab["id"],
-            "name"=>$lab["name"],
-            "description"=>$lab["description"],
-            "body"=>$lab["body"],
-            "author"=>$lab["author"],
-            "version"=>$lab["version"],
-            "scripttimeout"=>$lab["scripttimeout"],
-            "lock"=>$lab["locked"],
+            "id"=>$labInfo["id"],
+            "name"=>$labInfo["name"],
+            "description"=>$labInfo["description"],
+            "body"=>$labInfo["body"],
+            "author"=>$labInfo["author"],
+            "version"=>$labInfo["version"],
+            "scripttimeout"=>$labInfo["scripttimeout"],
+            "lock"=>$labInfo["locked"],
+            "banner"=>$labInfo["banner"],
+            "timer"=>$labInfo["timer"]
         ];
 
         $response = new Response();
@@ -298,6 +480,7 @@ class LabController extends Controller
 
     /**
      * @Route("/labs/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab")
+     * @Route("/labs/guest/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab_guest")
      */
     public function seeAction(Request $request, int $id, int $instanceId)
     {
@@ -305,7 +488,7 @@ class LabController extends Controller
         $lab = $this->labRepository->find($id);
         //$labInstance = $this->labInstanceRepository->findByUserAndLab($this->getUser(), $lab);
         $labInstance = $this->labInstanceRepository->find($instanceId);
-        if($labInstance == null) {
+        if($labInstance == null || $labInstance->getLab() != $lab) {
             //$redirectTo = $this->getRedirectUrl();
                /* return new JsonResponse(array(
                     'status' => 'error',
@@ -314,6 +497,39 @@ class LabController extends Controller
                 ), Response::HTTP_FORBIDDEN);*/
                 return new Response('Forbidden', Response::HTTP_FORBIDDEN);
             //throw new NotFoundHttpException("Lab " . $id . " does not exist.");
+        }
+        if ($request->get('_route') == "see_lab_guest") {
+            if ($lab != $this->getUser()->getLab() || $labInstance->getOwner() != $this->getUser()) {
+                return $this->redirectToRoute("show_lab_to_guest", ["id"=>$this->getUser()->getLab()->getId()]);
+            }
+        }
+        else {
+            $isMember = false;
+            $isGroupAdmin = false;
+            foreach($lab->getGroups() as $group) {
+                if ($this->getUser()->isMemberOf($group)) {
+                    $isMember = true;
+                }
+                if ($group->isElevatedUser($this->getUser())) {
+                    $isGroupAdmin = true;
+                }
+            }
+            $isAdmin = ($this->getUser()->isAdministrator());
+            $isLabAuthor = ($lab->getAuthor() == $this->getUser());
+            if (!$isAdmin && !$isLabAuthor && !$isMember) {
+                return $this->redirectToRoute("index");
+            }
+            $isOwner = false;
+            if ($labInstance->getOwnedBy() == "group") {
+                $isOwner = $this->getUser()->isMemberOf($labInstance->getOwner());
+            }
+            else if ($labInstance->getOwnedBy() == "user"){
+                $isOwner = ($this->getUser() == $labInstance->getOwner());
+            }
+                 
+            if (!$isAdmin && !$isLabAuthor && !$isGroupAdmin && !$isOwner) {
+                return $this->redirectToRoute("index");
+            }
         }
 
         if ( !is_null($lab))
@@ -353,21 +569,28 @@ class LabController extends Controller
         LabRepository $labRepository,
         SerializerInterface $serializer)
     {
-        $lab = $labRepository->findLabDetailsById($id);
+        $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+
+        $details = $labRepository->findLabDetailsById($id);
 
         $response = new Response();
         $response->setContent(json_encode([
             'code '=> 200,
             'status'=>'success',
-            'data' => $lab['tasks']]));
+            'data' => $details['tasks']]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
 
     /**
      * @Route("/labs/new", name="new_lab")
+     * @Route("/labsSandbox/new", name="new_lab_template")
+     * @Route("/labsPhysical/new", name="new_physical_lab")
      * 
      * @Rest\Post("/api/labs", name="api_new_lab")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newAction(Request $request)
     {
@@ -390,9 +613,20 @@ class LabController extends Controller
         $lab->setName($name)
             ->setAuthor($this->getUser());
 
+        if ('new_physical_lab' == $request->get('_route')) {
+            $lab->setVirtuality(false);
+        }
+        else {
+            $lab->setVirtuality(true);
+        }
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($lab);
         $entityManager->flush();
+
+        if ('new_lab_template' == $request->get('_route')) {
+            $lab->setIsTemplate(true);
+        }
 
         $filesystem = new Filesystem();
             try {
@@ -420,6 +654,12 @@ class LabController extends Controller
         }
         $entityManager->flush();
 
+        if ('new_lab_template' == $request->get('_route')) {
+            return $this->redirectToRoute('edit_lab_template', [
+                'id' => $lab->getId()
+            ]);
+        }
+
         return $this->redirectToRoute('edit_lab', [
             'id' => $lab->getId()
         ]);
@@ -432,6 +672,8 @@ class LabController extends Controller
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
@@ -480,26 +722,49 @@ class LabController extends Controller
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
+                $entityManager = $this->getDoctrine()->getManager();
                 $this->logger->debug("Add device in lab form submitted is valid");
+
+                $editorData = new EditorData();
+                $editorData->setX($device_array['editorData']['x']);
+                $editorData->setY($device_array['editorData']['y']);
+                $entityManager->persist($editorData);
+
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
+                $new_device->setEditorData($editorData);
+                //$new_device->setCount($device_array['count']);
+                if (isset($device_array['icon'])) {
+                    $new_device->setIcon($device_array['icon']);
+                }
+                if (isset($device_array['template'])) {
+                    $new_device->setTemplate($device_array['template']);
+                }
+                $new_device->setType($device_array['type']);
+                $new_device->setAuthor($this->getUser());
+                $hypervisor = $this->hypervisorRepository->find($device_array['hypervisor']);
+                $new_device->setHypervisor($hypervisor);
+                $new_device->setVirtuality($device_array['virtuality']);
                 $this->logger->debug("Device added : ".$new_device->getName());
-                
-                $entityManager = $this->getDoctrine()->getManager();
                 $entityManager->persist($new_device);
+                $editorData->setDevice($new_device);
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
                 $this->logger->debug("Source device id adds is :".$device_array['id']);
-                $i=0;
+                //$i=0;
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
                         $new_network_inter=new NetworkInterface();
                         $new_setting=new NetworkSettings();
                         $new_setting=clone $network_int->getSettings();
                         $new_network_inter->setSettings($new_setting);
-                        $new_network_inter->setName($device->getName()."_"."int".$i);
-                        $i=$i+1;
+                        $new_network_inter->setName($network_int->getName());
+                        //$i=$i+1;
                         $new_network_inter->setIsTemplate(true);
+                        $new_network_inter->setVlan($network_int->getVlan());
+                        $new_network_inter->setConnection($network_int->getConnection());
+                        $new_network_inter->setConnectorType($network_int->getConnectorType());
+                        $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
                         $new_device->addNetworkInterface($new_network_inter);
                         $new_setting->setName($new_network_inter->getName());
                         $entityManager->persist($new_network_inter);
@@ -513,7 +778,6 @@ class LabController extends Controller
                 }
                 $entityManager->persist($new_device);
                 $entityManager->flush();
-
                 $this->adddeviceinlab($new_device, $lab);
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
@@ -539,25 +803,10 @@ class LabController extends Controller
             $this->logger->debug("Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
-        else 
-            $new_device->setType('vm');
 
         $entityManager = $this->getDoctrine()->getManager();
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
-/*        foreach ($new_device->getNetworkInterfaces() as $network_int) {
-            $this->logger->debug("Add Network interface".$network_int->getName());
-            $new_network_inter=new NetworkInterface();
-            $new_setting=new NetworkSettings();
-            $new_setting=clone $network_int->getSettings();
-            $entityManager->persist($new_setting);
-            $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($new_device->getName());
-            $new_network_inter->setIsTemplate(true);
-            $new_device->addNetworkInterface($new_network_inter);
-            $entityManager->persist($new_network_inter);
-        }*/
-
 
         $entityManager->flush();
         $lab->addDevice($new_device);
@@ -606,6 +855,7 @@ class LabController extends Controller
 
     /**
      * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
+     * @Route("/admin/labs_template/{id<\d+>}/edit", name="edit_lab_template")
      */
     public function edit2Action(Request $request, int $id)
     {
@@ -642,6 +892,9 @@ class LabController extends Controller
      */
     public function updateAction(Request $request, int $id)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
         $device=null;
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -663,7 +916,7 @@ class LabController extends Controller
 
             $lab_name=$lab->getName();
             $this->logger->debug("API Lab updated: ".$lab_name);
-            if (strstr($lab_name,"Sandbox_")) 
+            if (strstr($lab_name,"Sandbox_Device_")) 
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
@@ -747,16 +1000,25 @@ class LabController extends Controller
     /**
      * @Rest\Put("/api/labs/test/{id<\d+>}", name="api_edit_lab_test")
      */
-    public function updateActionTest(Request $request, int $id)
+    public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
-        $data = json_decode($request->getContent(), true);   
+        $data = json_decode($request->getContent(), true); 
 
         $lab->setName($data['name']);
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
+        if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "00:00:00") {
+            $lab->setHasTimer(true);
+            $lab->setTimer($data['timer']);
+        }
+        else {
+            $lab->setHasTimer(false);
+            $lab->setTimer(null);          
+        }
         //$lab->setDescription($data['body']);
 
         $entityManager = $this->getDoctrine()->getManager();
@@ -781,6 +1043,7 @@ class LabController extends Controller
     public function updateSubjectAction(Request $request, int $id)
     {
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $data = json_decode($request->getContent(), true);   
 
@@ -814,6 +1077,7 @@ class LabController extends Controller
         }
 
         $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
         
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
@@ -863,16 +1127,28 @@ class LabController extends Controller
                 $entityManager->remove($device);
                 //$entityManager->flush();
             }
+
+            if (null !== $lab->getPictures()) {
+                foreach($lab->getPictures() as $picture) {
+                    $type = explode("image/",$picture->getType())[1];
+                    if(is_file($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                        unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                    }
+                }
+            }
             $entityManager->remove($lab);
             $entityManager->flush();
             return 0;
         }
+
     }
 
     /**
      * @Route("/admin/labs/import", name="import_lab", methods="POST")
      * 
      * @Rest\Post("/api/labs/import", name="api_import_lab")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function importAction(Request $request, LabImporter $labImporter)
     {
@@ -892,16 +1168,77 @@ class LabController extends Controller
             throw new NotFoundHttpException();
         }
         
+        $workers = $this->configWorkerRepository->findBy(["available" => true]);
         $data = $labImporter->export($lab);
 
-        $response = new Response($data);
+        $fileSystem = new FileSystem();
+        $fileSystem->remove($this->getParameter('kernel.project_dir').'/public/uploads/lab/export');
+        $fileSystem->mkdir($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid());
+        set_time_limit(120);
+        foreach($lab->getDevices() as $device) {
+            if ($device->getOperatingSystem()->getHypervisor()->getName() == "qemu" && $device->getOperatingSystem()->getImageFileName() == $device->getOperatingSystem()->getImage()) {
+                $image = $device->getOperatingSystem()->getImage();
+                if ($workers !== null) {
+                    if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image)) {
+                        $break = false;
+                        foreach($workers as $worker) {
+                            $this->logger->debug("worker ".$worker->getIPv4());
+                            $workerPort = $this->getParameter('app.worker_port');
+                            $imageName = str_replace(".img", "", $image);
+                            $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
+                            $this->logger->debug("curl http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            $curl = curl_init();
+                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+                            curl_setopt($curl, CURLOPT_TIMEOUT, 600);
+                            curl_setopt($curl, CURLOPT_FILE, $resource);
+                            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+                            curl_exec($curl);
+                                                        
+                            if (curl_errno($curl)) { 
+                                $this->logger->debug("curl error of image download: ".curl_error($curl));
+                            }
+                            else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200) {
+                                $this->logger->debug("http code of  image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
+                            }
+                            else {
+                                break;
+                            }
+                            curl_close($curl);
+                            fclose($resource);
 
+                        }
+                    }
+                }
+            } 
+            else if($device->getOperatingSystem()->getHypervisor()->getName() == "lxc") {
+                if (!$fileSystem->exists($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$device->getOperatingSystem()->getImageFileName().".tar.gz")) {
+                    exec("ls /var/lib/lxc/", $containersOutput);
+                    foreach ($containersOutput as $container) {
+                        if ($container == $device->getOperatingSystem()->getImageFileName()) {
+                            $this->logger->debug("compressing container ".$device->getOperatingSystem()->getImageFileName());
+                            exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$device->getOperatingSystem()->getImageFileName().".tar.gz -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
+                            break;
+                        }
+                    }
+                }
+            }           
+        }
+        $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
+
+        $this->logger->debug("compressing to tar.gz");
+        exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
+        $this->logger->debug("starting download");
+        $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
+        $response = new StreamedResponse(function() use ($filePath) {
+            readfile($filePath);exit;
+        });
+        
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'lab_'.$lab->getUuid().'.json'
+            'lab_'.$lab->getUuid().'.tar.gz'
         );
 
-        $response->headers->set('Content-Type', 'application/json');
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
@@ -913,6 +1250,9 @@ class LabController extends Controller
      */
     public function getBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::SEE, $lab);
+        
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
@@ -936,6 +1276,8 @@ class LabController extends Controller
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
+        
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $pictureFile = $request->files->get('banner');
         
@@ -954,6 +1296,18 @@ class LabController extends Controller
         }
 
         return new JsonResponse(null, 400);
+    }
+
+    /**
+     * @Rest\Get("/api/labs/{id<\d+>}/banner/{newId<\d+>}", name="api_copy_lab_banner")
+     */
+    public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
+       
+        $lab = $this->labRepository->find($newId);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+        return $bannerManager->copyBanner($id, $newId);
+
     }
 
     /**
@@ -1048,7 +1402,7 @@ class LabController extends Controller
     {
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1080,7 +1434,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("start_lab");
@@ -1114,7 +1468,7 @@ class LabController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $user = $this->getUser();
         $client = new Client();
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");
@@ -1143,7 +1497,7 @@ class LabController extends Controller
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
 
-        $workerUrl = (string) getenv('WORKER_SERVER');
+        $workerUrl = $labInstance->getWorketIp();
         $workerPort = (string) getenv('WORKER_PORT');
 
         $context = SerializationContext::create()->setGroups("lab");
@@ -1194,6 +1548,7 @@ class LabController extends Controller
         int $id)
     {
         $lab = $labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
         $lab->setLocked(1);
         $response = new Response();
@@ -1217,7 +1572,8 @@ class LabController extends Controller
         int $id)
     {
         $lab = $labRepository->find($id);
-
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
         $lab->setLocked(0);
         $response = new Response();
         $response->setContent(json_encode([

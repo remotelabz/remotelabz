@@ -180,7 +180,6 @@ class DeviceInstance extends Instance
     public function getOwnerId()
     {
         $id = null;
-        // TODO: refractor to "getOwnerId"
         switch ($this->ownedBy) {
             case self::OWNED_BY_USER:
                 $id = $this->user;
@@ -386,6 +385,10 @@ class DeviceInstance extends Instance
                     $networkInterfaceInstance->setUser($this->user);
                     break;
 
+                case self::OWNED_BY_GUEST:
+                    $networkInterfaceInstance->setGuest($this->guest);
+                    break;
+
                 case self::OWNED_BY_GROUP:
                     $networkInterfaceInstance->setGroup($this->_group);
                     break;
@@ -406,6 +409,10 @@ class DeviceInstance extends Instance
                 switch ($this->ownedBy) {
                     case self::OWNED_BY_USER:
                         $controlProtocolTypeInstance->setUser($this->user);
+                        break;
+
+                    case self::OWNED_BY_GUEST:
+                        $controlProtocolTypeInstance->setGuest($this->guest);
                         break;
     
                     case self::OWNED_BY_GROUP:

@@ -31,7 +31,8 @@ class NetworkInterfaceFixtures extends Fixture implements DependentFixtureInterf
                 )
             )
             //->setMacAddress('52:54:00:00:00:01')
-            ->setIsTemplate(true);
+            ->setIsTemplate(true)
+            ->setConnection(0);
 
         $manager->persist($networkInterface);
 

@@ -66,10 +66,17 @@ class LabInstance extends Instance
      */
     private $state;
 
+    /**
+     * @ORM\Column(type="datetime", nullable="true")
+     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     */
+    private $timerEnd;
 
-    //TODO add hypervisor IP to manage cluster of hypervisor
-    //@ORM\Column(type=.., length=)
-    //private $hypervisor_address
+    /**
+     * @ORM\Column(type="string", nullable="true")
+     * @Serializer\Groups({"api_get_lab_instance", "worker"})
+     */
+    private $workerIp;
 
 
     /**
@@ -263,6 +270,30 @@ class LabInstance extends Instance
         return $this;
     }
 
+    public function getTimerEnd(): ?\DateTimeInterface
+    {
+        return $this->timerEnd;
+    }
+
+    public function setTimerEnd(\DateTimeInterface $timerEnd): self
+    {
+        $this->timerEnd = $timerEnd;
+
+        return $this;
+    }
+
+    public function getWorkerIp(): ?string
+    {
+        return $this->workerIp;
+    }
+
+    public function setWorkerIp(?string $workerIp): self
+    {
+        $this->workerIp = $workerIp;
+
+        return $this;
+    }
+
     public function isCreated(): ?bool
     {
         return InstanceStateMessage::STATE_CREATED === $this->state;
@@ -299,6 +330,10 @@ class LabInstance extends Instance
             switch ($this->ownedBy) {
                 case self::OWNED_BY_USER:
                     $deviceInstance->setUser($this->user);
+                    break;
+
+                case self::OWNED_BY_GUEST:
+                    $deviceInstance->setGuest($this->guest);
                     break;
 
                 case self::OWNED_BY_GROUP:

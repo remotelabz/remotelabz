@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Utils\Uuid;
 use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
+use App\Entity\PduOutletDevice;
 use App\Entity\ControlProtocolType;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
@@ -22,13 +23,13 @@ class Device implements InstanciableInterface
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance", "api_get_lab_template"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
      * @Assert\NotBlank
      * @Assert\Type(type="string")
      */
@@ -36,14 +37,14 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template", "worker"})
      * @Assert\Type(type="string")
      */
     private $brand;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template", "worker"})
      * @Assert\Type(type="string")
      */
     private $model;
@@ -63,9 +64,16 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist","remove"})
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      */
     private $networkInterfaces;
+
+    /**
+     * @ORM\Column(type="string", length=20, options={"default": "eth"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
+     * @Assert\NotNull
+     */
+    private $networkInterfaceTemplate = "eth";
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
@@ -75,55 +83,73 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance"})
-     * @Assert\NotNull
-     * @Assert\Choice({"vm","container", "switch"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance", "api_get_lab_template"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
-     * @Assert\NotNull
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbCpu;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbCore;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbSocket;
 
     /**
      * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      */
     private $nbThread;
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template", "api_get_lab_instance", "sandbox"})
      */
     private $virtuality;
+
+     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Assert\Ip(version="4")
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $ip;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     *
+     * @Assert\Range(min=0, max=65536)
+     * @Serializer\XmlAttribute
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
+     */
+    private $port;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\PduOutletDevice", mappedBy="device")
+     * @Serializer\Groups({"worker", "api_get_device"})
+     */
+    private $outlet;
 
     /**
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
-     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox"})
-     * @Assert\NotNull
-     * @Assert\Valid
+     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox", "api_get_lab_template"})
      */
     private $hypervisor;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -136,7 +162,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -144,7 +170,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "worker"})
+     * @Serializer\Groups({"api_get_device", "worker", "api_get_lab_template"})
      */
     private $uuid;
 
@@ -163,7 +189,7 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocolType", mappedBy="devices", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox", "api_get_lab_template"})
      * @Assert\NotNull
      * @Assert\Valid
      */
@@ -172,7 +198,7 @@ class Device implements InstanciableInterface
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
      * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
      */
     private $editorData;
 
@@ -193,13 +219,13 @@ class Device implements InstanciableInterface
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      */
-    private $icon;
+    private $icon = "Server_Linux.png";
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      */
     private $template;
 
@@ -239,6 +265,12 @@ class Device implements InstanciableInterface
      * @Serializer\Groups({"api_get_device"})
      */
     private $ethernet = 1;
+
+     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdDevices")
+     * @Serializer\Groups({"api_get_device"})
+     */
+    private $author;
 
     public function __construct()
     {
@@ -351,6 +383,18 @@ class Device implements InstanciableInterface
         return $this;
     }
 
+    public function getNetworkInterfaceTemplate(): ?string
+    {
+        return $this->networkInterfaceTemplate;
+    }
+
+    public function setNetworkInterfaceTemplate(string $networkInterfaceTemplate): self
+    {
+        $this->networkInterfaceTemplate = $networkInterfaceTemplate;
+
+        return $this;
+    }
+
     /**
      * @return Collection|Lab[]
      */
@@ -426,6 +470,50 @@ class Device implements InstanciableInterface
     public function setVirtuality(int $virtuality): self
     {
         $this->virtuality = $virtuality;
+
+        return $this;
+    }
+
+    public function getIp(): ?string
+    {
+        return $this->ip;
+    }
+
+    public function setIp(?string $ip): self
+    {
+        $this->ip = $ip;
+
+        return $this;
+    }
+
+    public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function setPort(?int $port): self
+    {
+        $this->port = $port;
+
+        return $this;
+    }
+
+    public function getOutlet(): ?PduOutletDevice
+    {
+        return $this->outlet;
+    }
+
+    public function setOutlet(?PduOutletDevice $outlet): self
+    {
+        if ($outlet == null) {
+            if ($this->outlet != null) {
+                $this->outlet->setDevice(null);
+            }
+        }
+        else {
+            $outlet->setDevice($this);
+        }
+        $this->outlet = $outlet;
 
         return $this;
     }
@@ -592,41 +680,17 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    /*public function getConsole(): ?string
+    public function getAuthor(): ?User
     {
-        return $this->console;
+        return $this->author;
     }
 
-    public function setConsole(string $console): self
+    public function setAuthor(?User $author): self
     {
-        $this->console = $console;
+        $this->author = $author;
 
         return $this;
     }
-
-    public function getImage(): ?string
-    {
-        return $this->image;
-    }
-
-    public function setImage(string $image): self
-    {
-        $this->image = $image;
-
-        return $this;
-    }
-
-    public function getUrl(): ?string
-    {
-        return $this->url;
-    }
-
-    public function setUrl(string $url): self
-    {
-        $this->url = $url;
-
-        return $this;
-    }*/
 
     public function getTemplate(): ?string
     {
@@ -675,18 +739,6 @@ class Device implements InstanciableInterface
 
         return $this;
     }
-
-    /*public function getPort(): ?int
-    {
-        return $this->port;
-    }
-
-    public function setPort(int $port): self
-    {
-        $this->port = $port;
-
-        return $this;
-    }*/
 
     public function getConfig(): ?int
     {

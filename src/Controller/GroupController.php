@@ -7,9 +7,12 @@ use App\Entity\Group;
 use App\Entity\User;
 use App\Form\GroupParentType;
 use App\Form\GroupType;
+use App\Form\GroupInstanceType;
 use App\Repository\GroupRepository;
 use App\Repository\UserRepository;
 use App\Repository\LabRepository;
+use App\Repository\LabInstanceRepository;
+use App\Repository\InstanceRepository;
 use App\Security\ACL\GroupVoter;
 use App\Service\GroupPictureFileUploader;
 use App\Utils\Uuid;
@@ -29,6 +32,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 class GroupController extends Controller
 {
@@ -43,12 +48,16 @@ class GroupController extends Controller
         GroupRepository $groupRepository,
         LoggerInterface $logger,
         LabRepository $labRepository,
+        LabInstanceRepository $labInstanceRepository,
+        SerializerInterface $serializer,
         UserRepository $userRepository
     )
     {
         $this->groupRepository = $groupRepository;
         $this->logger = $logger;
         $this->labRepository = $labRepository;
+        $this->labInstanceRepository = $labInstanceRepository;
+        $this->serializer = $serializer;
         $this->userRepository = $userRepository;
     }
 
@@ -66,7 +75,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'name' => Criteria::ASC,
             ])
         ;
 
@@ -91,6 +100,8 @@ class GroupController extends Controller
      * @Route("/explore/groups", name="dashboard_explore_groups")
      *
      * @Rest\Get("/api/groups", name="api_groups")
+     * 
+     * @IsGranted("ROLE_USER", message="Access denied.") 
      */
     public function dashboardIndexAction(Request $request)
     {
@@ -108,7 +119,7 @@ class GroupController extends Controller
 
         $criteria
             ->orderBy([
-                'id' => Criteria::DESC,
+                'name' => Criteria::ASC
             ]);
 
         /** @param Group $value */
@@ -163,6 +174,107 @@ class GroupController extends Controller
         ]);
     }
 
+    /**
+     * @Route("/group/{slug}/instances", name="dashboard_group_instances", requirements={"slug"="[\w\-\/]+"})
+     *
+     * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances", requirements={"slug"="[\w\-\/]+"})
+     */
+    public function dashboardGroupInstancesAction(Request $request , string $slug, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+        $labs = [];
+        $groupInstance = $request->query->get('group_instance');
+        $filter = $groupInstance ? $groupInstance['filter'] : "allLabs";
+        $page = (int)$request->query->get('page', 1);
+        $limit = 10;
+        
+        $groupInstanceForm = $this->createForm(GroupInstanceType::class, ["action"=> "/group/".$slug."/instances", "method"=>"GET", "slug"=>$slug, "filter"=>$filter]);
+        $groupInstanceForm->handleRequest($request);
+
+        if ($filter == "allLabs") {
+            $instances = $labInstanceRepository->findByGroup($group, $this->getUser());
+        }
+        else {
+            $instances = $this->fetchGroupInstancesByLabUuid($slug, $filter);
+        }
+        /*foreach ($instances as $instance) {
+            $exists = false;
+            foreach($labs as $lab) {
+                if ($instance->getLab() == $lab) {
+                    $exists = true;
+                }
+            }
+            if ($exists == false) {
+                array_push($labs, $instance->getLab());
+            }
+        }*/
+        $AllLabInstances = [];
+        foreach ($instances as $instance) {
+            
+            array_push($AllLabInstances, $instance);
+        }
+
+        $count = count($instances);
+        try {
+            $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
+        } catch (ORMException $e) {
+            throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
+        }
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
+        }
+        
+        $GroupInstancesProps = [
+            //'instances'=> $instances,
+            //'labs'=> $labs,
+            'group'=> $group,
+            'user'=>$this->getUser()
+        ];
+
+        $props=$serializer->serialize(
+            $GroupInstancesProps,
+            'json',
+            //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance'])
+            SerializationContext::create()->setGroups(['api_get_lab_instance','api_get_lab',])
+        );
+
+        return $this->render('group/dashboard_group_instances.html.twig', [
+            'labInstances' => $AllLabInstances,
+            'group' => $group,
+            //'labs' => $labs,
+            'props' => $props,
+            'groupInstanceForm' => $groupInstanceForm->createView(),
+            'count'=>$count,
+            'limit'=>$limit,
+            'page'=>$page
+        ]);
+    }
+
+    public function fetchGroupInstancesByLabUuid(string $slug, string $uuid)
+    {
+        if (!$group = $this->groupRepository->findOneBySlug($slug)) {
+            throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
+        }
+    
+        if (!$lab = $this->labRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('Lab with UUID '.$uuid.' does not exist.');
+        }
+        
+        if (!$group->getLabs()->contains($lab)) {
+            throw new BadRequestHttpException('This lab '.$lab->getName().' in not in the group '.$slug.'.');
+        }
+        $instances = $this->labInstanceRepository->findByGroupAndLabUuid($group, $lab);
+
+        if (!$instances) $instances = [];
+
+        return $instances;
+
+    }
+
     private function filterAccessDeniedGroups($groups) {
         return $groups->filter(function ($group) {
             if (count($group->getChildren()) > 0) {
@@ -182,6 +294,8 @@ class GroupController extends Controller
      * @Route("/groups/new", name="new_group")
      *
      * @Rest\Post("/api/groups", name="api_new_group")
+     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function newAction(Request $request, ValidatorInterface $validator)
     {
@@ -280,6 +394,7 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
+     * @Rest\Delete("/api/groups/{slug}/user/{userId<\d+>}", name="api_delete_user_group", requirements={"slug"="[\w\-\/]+"})
      */
     public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
     {
@@ -346,6 +461,7 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
 
         $groupForm = $this->createForm(GroupType::class, $group);
         $groupForm->handleRequest($request);
@@ -392,6 +508,7 @@ class GroupController extends Controller
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
 
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         $parentId = $request->request->get('parent');
 
         if ($parentId !== null) {
@@ -456,6 +573,8 @@ class GroupController extends Controller
 
     /**
      * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
+     * 
+     * @Rest\Get("/api/groups/{slug}/members", name="app_group_members", requirements={"slug"="[\w\-\/]+"})
      */
     public function dashboardMembersAction(string $slug, SerializerInterface $serializer, Request $request)
     {
@@ -508,6 +627,9 @@ class GroupController extends Controller
                 'slug'=>$slug,
             ]);
 
+        }
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($group, 200, [], ['api_groups']);
         }
 
         return $this->render('group/dashboard_members.html.twig', [
@@ -609,6 +731,8 @@ class GroupController extends Controller
     public function getGroupPictureAction(Request $request, string $slug, KernelInterface $kernel)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
+        $this->denyAccessUnlessGranted(GroupVoter::VIEW, $group);
+
         $size = $request->query->get('size', 128);
         $picture = $group->getPicture();
 
@@ -634,6 +758,8 @@ class GroupController extends Controller
     public function uploadGroupPictureAction(Request $request, GroupPictureFileUploader $fileUploader, string $slug)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
+
         $fileUploader->setGroup($group);
 
         $pictureFile = $request->files->get('picture');
@@ -753,6 +879,7 @@ class GroupController extends Controller
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
             throw new NotFoundHttpException('Group with URL '.$slug.' does not exist.');
         }
+        $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
         //$lab= Fetch all laboratories of privileged user of this group
         $labs=$group->getLabs();
         

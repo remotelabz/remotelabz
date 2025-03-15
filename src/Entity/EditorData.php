@@ -21,7 +21,7 @@ class EditorData
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)
@@ -30,7 +30,7 @@ class EditorData
 
     /**
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab"})
+     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
      * 
      * @Assert\Type(type="int")
      * @Assert\GreaterThanOrEqual(0)

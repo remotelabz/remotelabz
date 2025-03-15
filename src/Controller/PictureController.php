@@ -79,7 +79,7 @@ class PictureController extends Controller
      * @Rest\Get("/api/labs/{id<\d+>}/pictures", name="api_get_pictures")
      * 
      */
-    public function indexAction(int $id, Request $request, UserRepository $userRepository)
+    /*public function indexAction(int $id, Request $request, UserRepository $userRepository)
     {
         $pictures = $this->pictureRepository->findByLab($id);
         $data = [];
@@ -102,13 +102,13 @@ class PictureController extends Controller
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_get_picture")
      */
-    public function showAction(
+    /*public function showAction(
         int $labId,
         int $id,
         Request $request,
@@ -145,13 +145,13 @@ class PictureController extends Controller
         }
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}/data", name="api_get_picture_data")
      */
-    public function getPictureData(
+    /*public function getPictureData(
         int $labId,
         int $id,
         Request $request,
@@ -181,17 +181,17 @@ class PictureController extends Controller
 		}
 
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        $file = '/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName;      
+        $file = $this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName;      
 
         $response = new BinaryFileResponse($file);
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Post("/api/labs/{id<\d+>}/pictures", name="api_new_picture")
      */
-    public function newAction(Request $request, int $id)
+    /*public function newAction(Request $request, int $id)
     {
         $picture = new Picture();
         $lab = $this->labRepository->findById($id);
@@ -199,44 +199,60 @@ class PictureController extends Controller
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
 
-        $data = $_POST;
-        if (!empty($_FILES)) {
-			foreach ($_FILES as $file) {
-				if (file_exists($file['tmp_name'])) {
-					$fp = fopen($file['tmp_name'], 'r');
-					$size = filesize($file['tmp_name']);
-					if ($fp !== False) {
-						//$finfo = new finfo(FILEINFO_MIME);
-						$data['data'] = fread($fp, $size);
-                        $data['type'] = mime_content_type($file['tmp_name']);
-					}
-				}
-			}
-		}
-        else {
-            $response->setContent(json_encode([
-                'code' => 400,
-                'status'=> 'fail',
-                'message' => 'No attachment has been done']));
-            return $response;
+        if(null == ($data = json_decode($request->getContent(), true))) {
+            $data = $_POST;
+            if (!empty($_FILES)) {
+                foreach ($_FILES as $file) {
+                    if (file_exists($file['tmp_name'])) {
+                        $fp = fopen($file['tmp_name'], 'r');
+                        $size = filesize($file['tmp_name']);
+                        if ($fp !== False) {
+                            //$finfo = new finfo(FILEINFO_MIME);
+                            $data['data'] = fread($fp, $size);
+                            $data['type'] = mime_content_type($file['tmp_name']);
+                        }
+                    }
+                }
+            }
+            else {
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'No attachment has been done']));
+                return $response;
+            }
+            if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
+                $response->setContent(json_encode([
+                    'code' => 400,
+                    'status'=> 'fail',
+                    'message' => 'This is not a valid picture type']));
+                return $response;
+            }
+            list($width, $height) = getimagesizefromstring($data['data']);
+            $picture->setWidth($width);
+            $picture->setHeight($height);
+
         }
-        if($data['type'] !== 'image/png' && $data['type'] !== 'image/jpeg') {
-            $response->setContent(json_encode([
-                'code' => 400,
-                'status'=> 'fail',
-                'message' => 'This is not a valid picture type']));
-            return $response;
+        else {
+            $data = json_decode($request->getContent(), true);
+            $picture->setWidth($data['width']);
+            $picture->setHeight($data['height']);
+            $type = explode("image/",$data['type'])[1];
+            $fileName = $this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$data['labid'].'-'.$data['name'].'.'.$type;
+            $fp = fopen($fileName, 'r');
+            $size = filesize($fileName);
+            if ($fp !== False) {
+                //$finfo = new finfo(FILEINFO_MIME);
+                $data['data'] = fread($fp, $size);
+            }
         }
         $type = explode("image/",$data['type'])[1];
         $picture->setLab($lab);
+        $picture->setData($data['data']);
         $picture->setName($data['name']);
         $picture->setType($data['type']);
-        $picture->setData($data['data']);
-        file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
+        file_put_contents($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
 
-        list($width, $height) = getimagesizefromstring($data['data']);
-        $picture->setWidth($width);
-        $picture->setHeight($height);
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($picture);
@@ -253,18 +269,18 @@ class PictureController extends Controller
             'id' => $lab->getId()
         ]);*/
         
-        $response->setContent(json_encode([
+        /*$response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).']));
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_update_picture")
      */
-    public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
+    /*public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         $data = json_decode($request->getContent(), true);   
@@ -280,8 +296,8 @@ class PictureController extends Controller
         }
         if(isset($data['name']) && $data['name'] !== $picture->getName()){
             $type = explode("image/",$picture->getType())[1];
-            unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$picture->getName().'.'.$type);
-            file_put_contents('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$data['name'].'.'.$type, $picture->getData());
+            unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$picture->getName().'.'.$type);
+            file_put_contents($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$data['name'].'.'.$type, $picture->getData());
             $picture->setName($data['name']);
         }
         $picture->setMap($data['map']);
@@ -298,18 +314,18 @@ class PictureController extends Controller
             'status'=> 'success',
             'message' => 'Lab has been saved (60023).']));
         return $response;
-    }
+    }*/
 
     /**
      * 
      * @Rest\Delete("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_delete_picture")
      */
-    public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
+    /*public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
         
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
-        unlink('/opt/remotelabz/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
+        unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
 
         $entityManager = $doctrine->getManager();
         $entityManager->remove($picture);
@@ -324,5 +340,5 @@ class PictureController extends Controller
         $response->headers->set('Content-Type', 'application/json');
         return $response;
 
-    }
+    }*/
 }

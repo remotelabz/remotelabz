@@ -20,7 +20,6 @@ use App\Form\DeviceType;
 use Psr\Log\LoggerInterface;
 use App\Repository\TextObjectRepository;
 use App\Repository\LabRepository;
-use App\Exception\WorkerException;
 use App\Repository\UserRepository;
 use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
@@ -62,16 +61,11 @@ use Doctrine\Persistence\ManagerRegistry;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 
 
 class TemplateController extends Controller
 {
-    private $workerServer;
-
-    private $workerPort;
-
-    private $workerAddress;
-
     /** @var LoggerInterface $logger */
     private $logger;
 
@@ -84,9 +78,6 @@ class TemplateController extends Controller
         DeviceRepository $deviceRepository
         )
     {
-        $this->workerServer = (string) getenv('WORKER_SERVER');
-        $this->workerPort = (int) getenv('WORKER_PORT');
-        $this->workerAddress = $this->workerServer . ":" . $this->workerPort;
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
@@ -96,32 +87,38 @@ class TemplateController extends Controller
     }
 
     /**
-     * @Route("/templates", name="templates")
+     * @Rest\Post("/api/list/templates", name="api_get_templates")
      * 
-     * @Rest\Get("/api/list/templates", name="api_get_templates")
-     * 
+     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
      */
     public function indexAction(Request $request)
     {
 
+        $data = json_decode($request->getContent(), true);
+
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
-            if (!is_file('/opt/remotelabz/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
-               $this->newAction($template);
+            if (count($template->getLabs())==0) {
+                if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
+                    $this->newAction($template);
+                 }
             }
         }
         $node_templates = Array();
         $node_config = Array();
-        foreach ( scandir('/opt/remotelabz/config/templates/') as $element ) {
-                if (is_file('/opt/remotelabz/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
+        foreach ( scandir($this->getParameter('kernel.project_dir').'/config/templates/') as $element ) {
+                if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
                         $cur_name = preg_replace('/.yaml/','',$element ) ;
-                        $cur_templ = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$element));
-                        if ( isset($cur_templ['description']) ) {
+                        $cur_templ = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$element));
+                        if (isset($cur_templ["virtuality"]) && $cur_templ['virtuality'] == $data["virtuality"]){
+                            if ( isset($cur_templ['description']) ) {
                                 $node_templates[$cur_name] =  $cur_templ['description'] ;
+                            }
+                            if ( isset($cur_templ['config_script']) ) {
+                                    $node_config[$cur_name] =  $cur_templ['config_script'] ;
+                            }
                         }
-                        if ( isset($cur_templ['config_script']) ) {
-                                $node_config[$cur_name] =  $cur_templ['config_script'] ;
-                        }
+                        
                 }
         }
         
@@ -140,37 +137,49 @@ class TemplateController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/templates/{id<\d+>}", name="show_template", methods="GET")
+    /** 
+     * @Rest\Post("/api/list/templates/{id<\d+>}", name="api_get_template")
      * 
-     * @Rest\Get("/api/list/templates/{id<\d+>}", name="api_get_template")
+     * @Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message="Access denied.")
      */
-    public function showAction(
-        int $id,
-        Request $request)
+    public function showAction(int $id, Request $request)
     {
+        $data = json_decode($request->getContent(), true);
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
         $this->logger->debug("Device id request : ".$id);
 
         $device = $this->deviceRepository->find($id);
+
+        if (!$device) {
+            throw new NotFoundHttpException("Device Template " . $id . " does not exist.");
+        }
+        
         $deviceName = u($device->getName())->camel();
  
-        if (!is_file('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
+        if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
             $this->newAction($device);
          }
-        $p = Yaml::parse(file_get_contents('/opt/remotelabz/config/templates/'.$id.'-'.$deviceName.'.yaml'));
-        $p['template'] = $deviceName;
+        $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
+        $p['template'] = $id."-".$deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
 
             $response->setContent(json_encode([
                 'code' => 400,
                 'status'=>'fail',
-                'message' => 'Requested template is not valid (60033).',
-                'data' =>$data])
+                'message' => 'Requested template is not valid (60033).'
+                ])
             );
             return $response;
+        }
+       
+        if (!isset($p['virtuality']) || $p['virtuality'] != $data['virtuality']) {
+            $response->setContent(json_encode([
+                'code' => 403,
+                'status' => 'forbidden',
+                'message' => 'Template virtuality is not equal to lab virtuality.'
+            ]));
         }
 
         $data = Array();
@@ -218,12 +227,10 @@ class TemplateController extends Controller
                 'value' => $p['model'] ?? ''
             );
 
-            $data['options']['type'] = Array(
-                'name' => 'Type',
-                'type' => 'list',
-                'multiple'=> false,
-                'value' => $p['type'] ?? 'container',
-                'list' => Array('vm'=>'vm', 'container'=>'container', 'switch' => 'switch')
+            $data['options']['networkInterfaceTemplate'] = Array(
+                'name' => 'Network interface template',
+                'type' => 'input',
+                'value' => $p['networkInterfaceTemplate'] ?? 'eth'
             );
 
             $data['options']['flavor'] = Array(
@@ -263,16 +270,7 @@ class TemplateController extends Controller
                 'type' => 'list',
                 'multiple'=> false,
                 'value' => $p['operatingSystem'] ?? '',
-                'list' => $this->listOperatingSystems()
-            );
-
-            
-            $data['options']['hypervisor'] = Array(
-                'name' => 'Hypervisor',
-                'type' => 'list',
-                'multiple'=> false,
-                'value' => $p['hypervisor'] ?? '',
-                'list' => $this->listHypervisors()
+                'list' => $this->listOperatingSystems($p['virtuality'])
             );
 
             $data['options']['controlProtocol'] = Array(
@@ -281,6 +279,12 @@ class TemplateController extends Controller
                 'multiple'=> true,
                 'value' => $p['controlProtocol'] ?? '',
                 'list' => $this->listControlProtocolTypes()
+            );
+
+            $data['options']['template'] = Array(
+                'name' => 'Template',
+                'type' => 'boolean',
+                'value' => $p['template'] ?? ''
             );
         
         //}
@@ -296,8 +300,8 @@ class TemplateController extends Controller
 
     public function listNodeIcons() {
         $results = Array();
-        foreach (scandir('/opt/remotelabz/assets/images/icons') as $filename) {
-            if (is_file('/opt/remotelabz/assets/images/icons/'.$filename) && preg_match('/^.+\.[png$\|jpg$]/', $filename)) {
+        foreach (scandir($this->getParameter('kernel.project_dir').'/assets/images/icons') as $filename) {
+            if (is_file($this->getParameter('kernel.project_dir').'/assets/images/icons/'.$filename) && preg_match('/^.+\.[png$\|jpg$]/', $filename)) {
                 $patterns[0] = '/^(.+)\.\(png$\|jpg$\)/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);
@@ -309,8 +313,8 @@ class TemplateController extends Controller
 
     function listNodeConfigTemplates() {
         $results = Array();
-        foreach (scandir('/opt/remotelabz/assets/js/components/Editor2/configs') as $filename) {
-            if (is_file('/opt/remotelabz/assets/js/components/Editor2/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
+        foreach (scandir($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/configs') as $filename) {
+            if (is_file($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/configs/'.$filename) && preg_match('/^.+\.php$/', $filename)) {
                 $patterns[0] = '/^(.+)\.php$/';  // remove extension
                 $replacements[0] = '$1';
                 $name = preg_replace($patterns, $replacements, $filename);
@@ -340,13 +344,13 @@ class TemplateController extends Controller
         return $hypervisorList;
     }
 
-    public function listOperatingSystems() {
+    public function listOperatingSystems($virtuality) {
 
         $operatingSystemList= [];
-            $operatingSystems = $this->operatingSystemRepository->findAll();
-            foreach($operatingSystems as $operatingSystem){
-                $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
-            }
+        $operatingSystems = $this->operatingSystemRepository->findByVirtuality($virtuality);
+        foreach($operatingSystems as $operatingSystem){
+            $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
+        }
         return $operatingSystemList;
     }
     
@@ -385,6 +389,7 @@ class TemplateController extends Controller
         "brand" => $template->getBrand(),
         "model" => $template->getModel(),
         "description" => $template->getName(),
+        "networkInterfaceTemplate" => $template->getNetworkInterfaceTemplate(),
         "cpu" => $template->getNbCpu(),
         "core" => $template->getNbCore(),
         "socket" => $template->getNbSocket(),
@@ -392,10 +397,11 @@ class TemplateController extends Controller
         "context" => "remotelabz",
         "config_script" => "embedded",
         "ethernet" => 1,
+        "virtuality" => $template->getVirtuality()
     ];
 
     $yamlContent = Yaml::dump($templateData,2);
 
-    file_put_contents("/opt/remotelabz/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
+    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
     }
 }

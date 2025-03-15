@@ -23,6 +23,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
     private $instanceManager;
     private $entityManager;
     private $logger;
+    private $rootDirectory;
     //private $router;
 
     public function __construct(
@@ -31,7 +32,8 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         OperatingSystemRepository $operatingSystemRepository,
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        string $rootDirectory
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -39,6 +41,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
         $this->instanceManager = $instanceManager;
         $this->entityManager = $entityManager;
         $this->logger = $logger;
+        $this->rootDirectory = $rootDirectory;
     }
 
     public function __invoke(InstanceStateMessage $message)
@@ -47,7 +50,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
             'state_message' => $message->getState()
-        ]);
+            ]);
 
         // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
         // So if it's an error, in all case, we have to return, from the worker
@@ -83,6 +86,11 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
                         $instance->setState(InstanceStateMessage::STATE_STARTED);
                         break;
                     
+                    case InstanceStateMessage::STATE_RESETTING:
+                        $this->logger->debug('Instance in '.$instance->getState());
+                        $instance->setState(InstanceStateMessage::STATE_STOPPED);
+                        break;
+
                     case InstanceStateMessage::STATE_CREATING:
                         $this->logger->debug('Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);
@@ -100,30 +108,14 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                     case InstanceStateMessage::STATE_EXPORTING:
                         $this->logger->debug('Instance in '.$instance->getState());
-                        $instance->setState(InstanceStateMessage::STATE_DELETED);
-                        //$instance->setState(InstanceStateMessage::STATE_ERROR);
+                        if ($message->getOptions()['error_code'] === 1) //Device never started
+                            $instance->setState(InstanceStateMessage::STATE_ERROR);
+                        else
+                            $instance->setState(InstanceStateMessage::STATE_DELETED);
+                        
                         $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
 
-                        /* Remove newdevice template and OS created
-                        As the worker doesn't send message with some information like name chosen by the user for the new device template created,
-                        if we have an error, we have to delete creation done as soon as we click on Export button.
-                        The solution to execute the new template creation only if the worker doesn't report an error, need to pass the name chosen
-                        by the user. But this action is driven by message state receive and the worker doesn't send information in their message. It's only 
-                        state message.
-                        The format of $message->getUuid(), in this case is :
-                            InstanceStateMessage::STATE_ERROR,
-                            $deviceInstance['uuid'],
-                            $labInstance["newOS_id"],
-                            $labInstance["newDevice_id"],
-                            $labInstance["new_os_name"],
-                            $labInstance["new_os_imagename"]
-
-                        */
-                        //Uuid of the device created but to delete because an error occurs
-                        //$message->getUuid();
-                        // Test using options
-                        // For transition, all uuid are copy in options
-                        //$this->instanceManager->deleteDev_fromexport($message->getUuid(),$message->getOptions());
+                       
                         break;
 
                     default:
@@ -155,10 +147,20 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 //                    $device=$instance->getDevice();
 //                    $lab=$instance->getLab();
                     $this->instanceManager->delete($instance->getLabInstance());
+                    $options_exported=$message->getOptions();
+
+                    $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$options_exported['new_os_imagename']);
 
                     //TODO redirect to route labs
-                    //$signUpPage = $this->router->generate('labs');
+                    //$this->redirectToRoute('labs');
+                    
                 break;
+                case InstanceStateMessage::STATE_OS_DELETED:
+                    $options_exported=$message->getOptions();
+                    $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);                  
+                break;
+
+                
             }
         }
         if (!is_null($instance)) {
@@ -166,6 +168,7 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
             if ($instance->getState() === InstanceStateMessage::STATE_DELETED) {
                 $this->logger->debug("Instance state deleted received");
                 //When the instance is from a sandbox, we can delete the lab and its devices.
+                
                 $lab=$instance->getLab();
                 $this->entityManager->remove($instance);
                 $this->entityManager->flush();
@@ -179,6 +182,15 @@ class InstanceStateMessageHandler implements MessageHandlerInterface
 
                         $this->logger->debug("Delete device name: ".$device->getName());
                         $this->entityManager->remove($device);
+                    }
+                    if (null !== $lab->getPictures()) {
+                    
+                        foreach($lab->getPictures() as $picture) {
+                            $type = explode("image/",$picture->getType())[1];
+                            if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                                unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                            }
+                        }
                     }
                     $this->entityManager->remove($lab);
 
