@@ -7,27 +7,21 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserFixtures extends Fixture implements ContainerAwareInterface
+class UserFixtures extends Fixture 
 {
-    /**
-     * The dependency injection container.
-     *
-     * @var ContainerInterface
-     */
-    protected $container;
+    private KernelInterface $kernel;
 
     private $passwordHasher;
 
-    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    public function __construct(UserPasswordHasherInterface $passwordHasher, KernelInterface $kernel)
     {
         $this->passwordHasher = $passwordHasher;
+        $this->kernel = $kernel;
     }
 
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         /* Static data, for super-admin */
         $user = new User();
@@ -50,7 +44,7 @@ class UserFixtures extends Fixture implements ContainerAwareInterface
 
         /* Other data, test purpose */
         /** @var KernelInterface $kernel */
-        $kernel = $this->container->get('kernel');
+        $environment = $this->kernel->getEnvironment();
         $manager->flush();
     }
 

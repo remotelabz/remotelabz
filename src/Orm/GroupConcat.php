@@ -3,7 +3,9 @@
 namespace App\Orm;
 
 use Doctrine\ORM\Query\AST\Functions\FunctionNode;
-use Doctrine\ORM\Query\Lexer;
+use Doctrine\ORM\Query\TokenType;  
+use Doctrine\ORM\Query\Parser;
+use Doctrine\ORM\Query\SqlWalker;
 
 class GroupConcat extends FunctionNode
 {
@@ -15,45 +17,45 @@ class GroupConcat extends FunctionNode
 
     public $orderBy = null;
 
-    public function parse(\Doctrine\ORM\Query\Parser $parser): void
+    public function parse(Parser $parser): void
     {
-        $parser->match(Lexer::T_IDENTIFIER);
-        $parser->match(Lexer::T_OPEN_PARENTHESIS);
+        $parser->match(TokenType::T_IDENTIFIER);
+        $parser->match(TokenType::T_OPEN_PARENTHESIS);
 
         $lexer = $parser->getLexer();
-        if ($lexer->isNextToken(Lexer::T_DISTINCT)) {
-            $parser->match(Lexer::T_DISTINCT);
+        if ($lexer->isNextToken(TokenType::T_DISTINCT)) {
+            $parser->match(TokenType::T_DISTINCT);
 
             $this->isDistinct = true;
         }
 
         // first Path Expression is mandatory
         $this->pathExp = [];
-        if ($lexer->isNextToken(Lexer::T_IDENTIFIER)) {
+        if ($lexer->isNextToken(TokenType::T_IDENTIFIER)) {
             $this->pathExp[] = $parser->StringExpression();
         } else {
             $this->pathExp[] = $parser->SingleValuedPathExpression();
         }
 
-        while ($lexer->isNextToken(Lexer::T_COMMA)) {
-            $parser->match(Lexer::T_COMMA);
+        while ($lexer->isNextToken(TokenType::T_COMMA)) {
+            $parser->match(TokenType::T_COMMA);
             $this->pathExp[] = $parser->StringPrimary();
         }
 
-        if ($lexer->isNextToken(Lexer::T_ORDER)) {
+        if ($lexer->isNextToken(TokenType::T_ORDER)) {
             $this->orderBy = $parser->OrderByClause();
         }
 
-        if ($lexer->isNextToken(Lexer::T_IDENTIFIER)) {
+        if ($lexer->isNextToken(TokenType::T_IDENTIFIER)) {
             if (strtolower($lexer->lookahead['value']) !== 'separator') {
                 $parser->syntaxError('separator');
             }
-            $parser->match(Lexer::T_IDENTIFIER);
+            $parser->match(TokenType::T_IDENTIFIER);
 
             $this->separator = $parser->StringPrimary();
         }
 
-        $parser->match(Lexer::T_CLOSE_PARENTHESIS);
+        $parser->match(TokenType::T_CLOSE_PARENTHESIS);
     }
 
     public function getSql(\Doctrine\ORM\Query\SqlWalker $sqlWalker): string

@@ -19,7 +19,6 @@ use App\Repository\DeviceRepository;
 use App\Repository\InvitationCodeRepository;
 use App\Repository\ConfigWorkerRepository;
 
-
 use App\Service\Proxy\ProxyManager;
 use App\Service\Instance\InstanceManager;
 
@@ -47,12 +46,19 @@ use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Security\Http\Attribute\Security;
 
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
+use Doctrine\ORM\EntityManagerInterface;
 
 class InstanceController extends Controller
 {
@@ -82,7 +88,8 @@ class InstanceController extends Controller
         UserRepository $userRepository,
         SerializerInterface $serializerInterface,
         bool $remotelabzProxyUseWss,
-        ConfigWorkerRepository $configworkerRepository
+        ConfigWorkerRepository $configworkerRepository,
+        EntityManagerInterface $entityManager
     ) {
         $this->logger = $logger;
         $this->labInstanceRepository = $labInstanceRepository;
@@ -95,15 +102,13 @@ class InstanceController extends Controller
         $this->serializer = $serializerInterface;
         $this->remotelabzProxyUseWss = $remotelabzProxyUseWss;
         $this->configworkerRepository = $configworkerRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/instances", name="instances")
-     * 
-     * @Rest\Get("/api/instances", name="api_get_instances")
-     * 
-     * @Security("is_granted('ROLE_USER')", message="Access denied.")
-     */
+    
+	#[Get('/api/instances', name: 'api_get_instances')]
+	#[Security("is_granted('ROLE_USER')", message: "Access denied.")]
+    #[Route(path: '/instances', name: 'instances')]
     public function indexAction(
         Request $request,
         SerializerInterface $serializer,
@@ -115,7 +120,9 @@ class InstanceController extends Controller
         $user=$this->getUser();
 
         $search = $request->query->get('search', '');
-        $instance = $request->query->get('instance');
+        #$instance = $request->query->get('instance');
+        $instance = $request->query->all('instance');
+
         $filter = $instance ? $instance['filter'] : "none";
         $subFilter = $instance ? $instance['subFilter'] : "allInstances";
         $page = (int)$request->query->get('page', 1);
@@ -245,11 +252,9 @@ class InstanceController extends Controller
         return $instances;
     }
 
-    /**
-     * @Rest\Get("/api/filter", name="api_list_instances_filter")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Get('/api/filter', name: 'api_list_instances_filter')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
     public function listInstancesFilterAction(
         Request $request)
     {
@@ -386,14 +391,17 @@ class InstanceController extends Controller
         return new JsonResponse($subFilter);
     }
 
-    /**
-     * @Rest\Post("/api/instances/create", name="api_create_instance")
-     */
+    
+	#[Post('/api/instances/create', name: 'api_create_instance')]
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
-        $labUuid = $request->request->get('lab');
-        $instancierUuid = $request->request->get('instancier');
-        $instancierType = $request->request->get('instancierType');
+        #$labUuid = $request->request->get('lab');
+        $labUuid = $request->request->all()['lab'] ?? [];
+        #$instancierUuid = $request->request->get('instancier');
+        $instancierUuid = $request->request->all()['instancier'] ?? [];
+        #$instancierType = $request->request->get('instancierType');
+        $instancierType = $request->request->all()['instancierType'] ?? [];
+
 
         switch ($instancierType) {
             case 'user':
@@ -428,7 +436,6 @@ class InstanceController extends Controller
             }
 
             $instance = $instanceManager->create($lab, $instancier);                        
-            
             if (!is_null($instance)) {
                 switch($instancierType) {
                     case "guest":
@@ -444,33 +451,19 @@ class InstanceController extends Controller
                         $this->logger->info("Lab instance ".$instance->getUuid()." executed on Worker ".$instance->getWorkerIp());
                         break;
                 }
-            
-                return $this->json($instance, 200, [], ['api_get_lab_instance']);
             }
-            
-            else { //instance is null, so no worker available
-                $this->logger->info("No worker available for lab ".$lab->getName()." ".$lab->getUuid());
-                return null;
-                
-                //Generate an error message if we return a 503 error to the promess
-                // in sandboxListItems.js (line 52)
-                /*  return new JsonResponse([
-                        'code' => 503,
-                        'status' => 'Service Unavailable',
-                        'message' => 'No worker available for lab '.$lab->getName().' '.$lab->getUuid()
-                    ], 503);
-                */
-            }
+            else
+                $this->logger->info("User ".$username." has already an instance of the lab ".$lab->getName());
+
         } catch (Exception $e) {
             throw $e;
         }
 
-       
+        return $this->json($instance, 200, [], ['api_get_lab_instance']);
     }
 
-    /**
-     * @Rest\Get("/api/instances/start/by-uuid/{uuid}", name="api_start_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/start/by-uuid/{uuid}', name: 'api_start_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function startByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
@@ -484,9 +477,8 @@ class InstanceController extends Controller
         return $this->json($json, $status, [], [], true);
     }
 
-    /**
-     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/start", name="api_start_instance_by_id")
-     */
+    
+	#[Post('/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/start', name: 'api_start_instance_by_id')]
     public function startByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
     {
         $lab = $labRepository->find($labId);
@@ -522,7 +514,7 @@ class InstanceController extends Controller
         }
 
         $this->denyAccessUnlessGranted(InstanceVoter::START_DEVICE, $deviceInstance);
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         //var_dump($deviceInstance->getDevice()); exit;
         $json = $instanceManager->start($deviceInstance);
         $status = empty($json) ? 204 : 200;
@@ -540,9 +532,8 @@ class InstanceController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Get("/api/instances/stop/by-uuid/{uuid}", name="api_stop_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/stop/by-uuid/{uuid}', name: 'api_stop_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function stopByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
@@ -557,9 +548,8 @@ class InstanceController extends Controller
         return $this->json();
     }
 
-    /**
-     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/stop", name="api_stop_instance_by_id")
-     */
+    
+	#[Post('/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/stop', name: 'api_stop_instance_by_id')]
     public function stopByIdAction(Request $request, int $labId, int $deviceId, InstanceManager $instanceManager, LabRepository $labRepository, DeviceRepository $deviceRepository)
     {
         $lab = $labRepository->find($labId);
@@ -594,7 +584,7 @@ class InstanceController extends Controller
         }
         $this->denyAccessUnlessGranted(InstanceVoter::STOP_DEVICE, $deviceInstance);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         //var_dump($deviceInstance->getDevice()); exit;
         $json = $instanceManager->stop($deviceInstance);
         $status = empty($json) ? 204 : 200;
@@ -612,9 +602,8 @@ class InstanceController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Get("/api/instances/reset/by-uuid/{uuid}", name="api_reset_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/reset/by-uuid/{uuid}', name: 'api_reset_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function resetByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
@@ -627,10 +616,8 @@ class InstanceController extends Controller
         return $this->json();
     }
 
-
-    /**
-     * @Rest\Get("/api/instances/export/by-uuid/{uuid}", name="api_export_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/export/by-uuid/{uuid}', name: 'api_export_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function exportByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         $name = $request->query->get('name', '');
@@ -670,9 +657,8 @@ class InstanceController extends Controller
     }
 
     
-    /**
-     * @Rest\Get("/api/instances/by-uuid/{uuid}", name="api_get_instance_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/by-uuid/{uuid}', name: 'api_get_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function fetchByUuidAction(Request $request, string $uuid)
     {
         $data = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
@@ -692,9 +678,8 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/by-user/{userUuid}", name="api_get_lab_instance_by_user", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/lab/{labUuid}/by-user/{userUuid}', name: 'api_get_lab_instance_by_user', requirements: ["labUuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function fetchLabInstanceByUserAction(
         Request $request,
         string $labUuid,
@@ -718,9 +703,8 @@ class InstanceController extends Controller
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/by-guest/{guestUuid}", name="api_get_lab_instance_by_guest", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/lab/{labUuid}/by-guest/{guestUuid}', name: 'api_get_lab_instance_by_guest', requirements: ["labUuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function fetchLabInstanceByGuestAction(
         Request $request,
         string $labUuid,
@@ -745,9 +729,8 @@ class InstanceController extends Controller
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
-    /**
-     * @Rest\Get("/api/instances/lab/{labUuid}/by-group/{groupUuid}", name="api_get_lab_instance_by_group", requirements={"labUuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/lab/{labUuid}/by-group/{groupUuid}', name: 'api_get_lab_instance_by_group', requirements: ["labUuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function fetchLabInstanceByGroupAction(
         Request $request,
         string $labUuid,
@@ -772,10 +755,7 @@ class InstanceController extends Controller
         return $this->json($labInstance, 200, [], ['api_get_lab_instance']);
     }
 
-    /**
-     * @Rest\Get("/api/instances/by-user/{uuid}", name="api_get_instance_by_user", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    /*public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
+    /*    /*public function fetchByUserAction(Request $request, string $uuid, UserRepository $userRepository)
     {
         $type = $request->query->get('type', 'lab');
         $user = is_numeric($uuid) ? $userRepository->find($uuid) : $userRepository->findOneBy(['uuid' => $uuid]);
@@ -802,11 +782,7 @@ class InstanceController extends Controller
         return $this->json($data, 200, [], $groups);
     }*/
 
-
-    /**
-     * @Rest\Get("/api/instances/by-group/{uuid}", name="api_get_instance_by_group", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
-    /*public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
+    /*    /*public function fetchByGroupAction(Request $request, string $uuid, GroupRepository $groupRepository)
     {
         $type = $request->query->get('type', 'lab');
         $group = is_numeric($uuid) ? $groupRepository->find($uuid) : $groupRepository->findOneBy(['uuid' => $uuid]);
@@ -846,7 +822,6 @@ class InstanceController extends Controller
         else {
             $data = $this->labInstanceRepository->findByUserOfOwnerGroup($user, $currentUser);
         }
-
 
         if (!$data) $data=[];
 
@@ -920,7 +895,6 @@ class InstanceController extends Controller
         }
         
 
-
         if (!$data) $data= [];
 
         return $data;
@@ -940,7 +914,6 @@ class InstanceController extends Controller
         }*/
        
 
-
         if (!$data) $data =[];
 
         return $data;
@@ -950,7 +923,6 @@ class InstanceController extends Controller
     {
         $user = $this->getUser();
         $data = $this->labInstanceRepository->findByUserGroups($user);
-
 
         if (!$data) $data=[];
 
@@ -970,7 +942,6 @@ class InstanceController extends Controller
         else {
             $data = $this->labInstanceRepository->findByLabAndUserGroup($lab, $user);
         }
-
 
         if (!$data) $data=[];
 
@@ -999,9 +970,8 @@ class InstanceController extends Controller
         return $data;
     }
 
-    /**
-     * @Rest\Delete("/api/instances/{uuid}", name="api_delete_instance", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Delete('/api/instances/{uuid}', name: 'api_delete_instance', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function deleteRestAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         if (!$instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
@@ -1028,9 +998,7 @@ class InstanceController extends Controller
         return $this->json();
     }
 
-    /**
-     * @Route("/admin/instances/{type}/{id<\d+>}/delete", name="delete_instance", methods="GET")
-     */
+    #[Route(path: '/admin/instances/{type}/{id<\d+>}/delete', name: 'delete_instance', methods: 'GET')]
     public function deleteAction(Request $request, string $type, int $id)
     {
         switch ($type) {
@@ -1054,7 +1022,7 @@ class InstanceController extends Controller
 
         if (!$instance) throw new NotFoundHttpException('Instance not found.');
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->entityManager;
         $em->remove($instance);
         $em->flush();
 
@@ -1067,12 +1035,7 @@ class InstanceController extends Controller
         return $this->redirectToRoute('instances');
     }
 
-    /**
-     * @Route("/instances/{uuid}/view/{type}", name="view_instance", requirements={
-     * "uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}","type"="vnc|login|serial|admin"
-     * }
-     * )
-     */
+    #[Route(path: '/instances/{uuid}/view/{type}', name: 'view_instance', requirements: ['uuid' => '[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}', 'type' => 'vnc|login|serial|admin'])]
     public function viewInstanceAction(Request $request, string $uuid, string $type)
     {        
         
@@ -1174,9 +1137,8 @@ class InstanceController extends Controller
         ]);
     }
 
-    /**
-     * @Rest\Get("/api/instances/{uuid}/logs", name="api_get_instance_logs", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     */
+    
+	#[Get('/api/instances/{uuid}/logs', name: 'api_get_instance_logs', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)
     {
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
@@ -1195,9 +1157,8 @@ class InstanceController extends Controller
         return $this->json($logs);
     }
 
-    /**
-    * @Rest\Post("/api/editButton/display", name="api_display_edit_button")
-    */
+    
+	#[Post('/api/editButton/display', name: 'api_display_edit_button')]
     public function displayEditButtonAction(Request $request)
     {
         $data = json_decode($request->getContent(), true);

@@ -29,14 +29,14 @@
         background-color: theme-color("dark-lighter");
 
         .dropdown-divider {
-            border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+            border-top-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
 
         .dropdown-item {
             color: theme-color("light");
 
             &:hover {
-                background-color: lighten(theme-color("dark-lighter"), 5%);
+                background-color: lighten(map-get($theme-colors, "dark-lighter"), 5%);
             }
         }
     }

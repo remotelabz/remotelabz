@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use App\Service\Network\NetworkManager;
 
-
 /**
  * Provides custom JSON handling using JMSSerializer.
  *
@@ -50,35 +49,26 @@ class Controller extends AbstractFOSRestController
         return new JsonResponse($data, $status, $headers, true);
     }
 
-    /**
-     * @Route("/", name="index")
-     */
+    #[Route(path: '/', name: 'index')]
     public function defaultAction()
     {
         return $this->render('dashboard/index.html.twig');
     }
 
-    /**
-     * @Route("/admin", name="admin")
-     */
+    #[Route(path: '/admin', name: 'admin')]
     public function adminAction()
     {
         return $this->render('dashboard/index.html.twig');
     }
     
 
-
-    /**
-     * @Route("/react/{reactRouting}", name="index_react", defaults={"reactRouting": null})
-     */
+    #[Route(path: '/react/{reactRouting}', name: 'index_react', defaults: ['reactRouting' => 'null'])]
     public function defaultReactAction()
     {
         return $this->render('react.html.twig');
     }
 
-    /**
-     * @Route("/icon", name="icon")
-     */
+    #[Route(path: '/icon', name: 'icon')]
     public function defaulticonAction()
     {
         // To obtain this list from the bash

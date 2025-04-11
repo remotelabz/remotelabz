@@ -39,7 +39,7 @@ class GroupRepository extends ServiceEntityRepository
         return $group ?: null;
     }
 
-    
+
     // @return : Group[] Return an array of group objects for which the $user is owner or admin
     public function findGroupByUserElevated(User $user) {
         $ElevatedUserOfGroups=[];

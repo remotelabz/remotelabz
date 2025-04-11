@@ -3,6 +3,10 @@
 namespace App\DataFixtures;
 
 use App\Entity\Device;
+use App\Entity\Flavor;
+use App\Entity\OperatingSystem;
+use App\Entity\Hypervisor;
+use App\Entity\ControlProtocolType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -10,7 +14,7 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 class DeviceFixtures extends Fixture implements DependentFixtureInterface
 {
     
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
 
         $device = new Device();
@@ -21,14 +25,14 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setModel('Test model')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-x-small'))
-            ->setOperatingSystem($this->getReference('operating-system-Alpine'))
+            ->setFlavor($this->getReference('flavor-x-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('operating-system-Alpine', OperatingSystem::class))
             ->setType('vm')
-            ->setHypervisor($this->getReference('qemu'))
+            ->setHypervisor($this->getReference('qemu', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
-            ->addControlProtocolType($this->getReference('vnc'))
+            ->addControlProtocolType($this->getReference('vnc', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
             
@@ -44,14 +48,14 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setModel('Version Bulleye')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('MigrationOS'))
+            ->setFlavor($this->getReference('flavor-xx-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('MigrationOS', OperatingSystem::class))
             ->setType('container')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
-            ->addControlProtocolType($this->getReference('login'))
+            ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
             
@@ -66,14 +70,14 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setModel('Version 24 LTS')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Ubuntu24LTSOS'))
+            ->setFlavor($this->getReference('flavor-xx-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('Ubuntu24LTSOS', OperatingSystem::class))
             ->setType('container')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
-            ->addControlProtocolType($this->getReference('login'))
+            ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
             
@@ -88,14 +92,14 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setModel('Version stable')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Alpine-stableOS'))
+            ->setFlavor($this->getReference('flavor-xx-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('Alpine-stableOS', OperatingSystem::class))
             ->setType('container')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
-            ->addControlProtocolType($this->getReference('login'))
+            ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
             
@@ -110,14 +114,14 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setModel('Stable')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('DebianOS'))
+            ->setFlavor($this->getReference('flavor-xx-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('DebianOS', OperatingSystem::class))
             ->setType('container')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
-            ->addControlProtocolType($this->getReference('login'))
+            ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
 
@@ -131,15 +135,15 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setBrand('Natif')
             ->setLaunchOrder(0)
             ->setVirtuality(1)
-            ->setFlavor($this->getReference('flavor-xx-small'))
-            ->setOperatingSystem($this->getReference('Natif'))
+            ->setFlavor($this->getReference('flavor-xx-small', Flavor::class))
+            ->setOperatingSystem($this->getReference('Natif', OperatingSystem::class))
             ->setType('switch')
-            ->setHypervisor($this->getReference('natif'))
+            ->setHypervisor($this->getReference('natif', Hypervisor::class))
             ->setCreatedAt(new \DateTime())
             ->setIsTemplate(true)
             ->setNbCpu(1)
             ->setIcon("Switch.png")
-            ->addControlProtocolType($this->getReference('login'))
+            ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Switch.png")
             
@@ -151,7 +155,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
         $manager->flush();
     }
 
-    public function getDependencies()
+    public function getDependencies(): array
     {
         return [
             FlavorFixtures::class,

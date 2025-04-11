@@ -10,20 +10,21 @@ use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use App\Controller\OperatingSystemController;
 //use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-class InstanceStateMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+class InstanceStateMessageHandler
 {
-    private $deviceInstanceRepository;
-    private $labInstanceRepository;
-    private $operatingSystemRepository;
-    private $instanceManager;
-    private $entityManager;
-    private $logger;
-    private $rootDirectory;
+    private DeviceInstanceRepository $deviceInstanceRepository;
+    private EntityManagerInterface $entityManager;
+    private LoggerInterface $logger;
+    private LabInstanceRepository $labInstanceRepository;
+    private OperatingSystemRepository $operatingSystemRepository;
+    private InstanceManager $instanceManager;
+    private string $rootDirectory;
     //private $router;
 
     public function __construct(

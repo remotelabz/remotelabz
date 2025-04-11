@@ -366,7 +366,7 @@ class IPTools extends Bridge
 // TODO : test if the json_decode return NULL
 // The Kea DHCP accept comment with // but it's not json valide
         $tab = json_decode($fileContent, true);
-        
+
         if (!static::NetworkIfExistDHCP($host, $port, $filename, $address)) {
             $idMAX = 1;
             //looking for the last ID to generate a new ID for the new pool
@@ -402,9 +402,9 @@ class IPTools extends Bridge
             "service" => [ "dhcp4" ],
             "arguments" => $tab
         );
-    
+
         $contenu = json_encode($json);
-        
+
         #on envoie le json à l'agent KEA
         $options = array(
             'http' => array(
@@ -413,24 +413,24 @@ class IPTools extends Bridge
                 'content' => $contenu
             )
         );
-    
+
         $url = "http://$host:$port";
         $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
         $response = json_decode($result);
-    
+
         #on met le json des arguments de la commande write sous forme de tab php
         $arguments = '{"filename": '.$filename.'}';
         $arguments = json_decode($arguments, true);
-        
+
         $json = array(
             "command" => "config-write",
             "service" => [ "dhcp4" ],
             "arguments" => $tab
         );
-    
+
         $contenu = json_encode($json);
-    
+
         #on envoie le json à l'agent KEA
         $options = array(
             'http' => array(
@@ -439,11 +439,11 @@ class IPTools extends Bridge
                 'content' => $contenu
             )
         );
-    
+
         $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
         $response = json_decode($result);
-        
+
         //return true;
     
     }

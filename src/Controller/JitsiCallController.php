@@ -11,22 +11,29 @@ use Remotelabz\Message\Message\InstanceStateMessage;
 use App\Service\JitsiJWTCreator;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Doctrine\ORM\EntityManagerInterface;
 
 class JitsiCallController extends Controller
 {
     private $jitsiCallRepository;
 
-    public function __construct(JitsiCallRepository $jitsiCallRepository)
+    public function __construct(JitsiCallRepository $jitsiCallRepository, EntityManagerInterface $entityManager)
     {
         $this->jitsiCallRepository = $jitsiCallRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Rest\Get("/api/jitsi-call/{labUuid}/{groupUuid}/start", name="api_start_jitsi_call")
-     */
+    
+	#[Get('/api/jitsi-call/{labUuid}/{groupUuid}/start', name: 'api_start_jitsi_call')]
     public function startJitsiCall(
         Request $request,
         string $labUuid,
@@ -54,16 +61,15 @@ class JitsiCallController extends Controller
         }
 
         $jitsiCall->setState(InstanceStateMessage::STATE_STARTED);
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($jitsiCall);
         $entityManager->flush();
 
         return $this->json();
     }
 
-    /**
-     * @Rest\Get("/api/jitsi-call/{labUuid}/{groupUuid}/join", name="api_join_jitsi_call")
-     */
+    
+	#[Get('/api/jitsi-call/{labUuid}/{groupUuid}/join', name: 'api_join_jitsi_call')]
     public function joinJitsiCall(
         Request $request,
         string $labUuid,

@@ -6,6 +6,7 @@ namespace DoctrineMigrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 
 /**
  * Auto-generated Migration: Please modify to your needs!
@@ -20,7 +21,7 @@ final class Version20221003141443 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('CREATE TABLE control_protocol_type (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE control_protocol_type_device (control_protocol_type_id INT NOT NULL, device_id INT NOT NULL, INDEX IDX_65BC8659B7C02C3E (control_protocol_type_id), INDEX IDX_65BC865994A4C7D4 (device_id), PRIMARY KEY(control_protocol_type_id, device_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
@@ -43,7 +44,7 @@ final class Version20221003141443 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE control_protocol_type_device DROP FOREIGN KEY FK_65BC8659B7C02C3E');
         $this->addSql('ALTER TABLE control_protocol_type_instance DROP FOREIGN KEY FK_AA90BE39B7C02C3E');

@@ -95,6 +95,7 @@ $(document).on('keydown', 'body', function (e) {
     }
 });
 
+
 // Accept privacy
 $(document).on('click', '#privacy', function () {
     $.cookie('privacy', 'true', {
@@ -167,7 +168,7 @@ export function ObjectPosUpdate (event ,ui) {
           id = node.id
           $('#'+id).addClass('dragstopped')
           if ( id.search('node') != -1 ) {
-               logger(1, 'DEBUG: setting ' + id + ' position.');
+               logger(1, 'DEBUG: setting' + id + ' position.');
                tmp_nodes.push( { id : id.replace('node','') , left: eLeft, top: eTop } )
           } else if  ( id.search('network') != -1 )  {
               logger(1, 'DEBUG: setting ' + id + ' position.');
@@ -337,17 +338,8 @@ $(document).on('contextmenu', '.context-menu', function (e) {
 
     if ($(this).hasClass('node_frame')) {
         logger(1, 'DEBUG: opening node context menu');
-       
-        $(this).each(function() {
-            $.each(this.attributes, function() {
-                if(this.specified) {
-                    logger(1, 'DEUBG: attr ' + "name: "+this.name +" value: "+ this.value);
-                }
-            });
-        });
 
     var node_id = $(this).attr('data-path');
-   
         if(parseInt($('#node'+node_id).attr('data-status')) != 2){
             if ($(this).attr('data-type') != "switch") {
                 content += '<li><a class="action-nodestart  menu-manage" data-path="' + node_id + '" data-name="' + title + '" href="javascript:void(0)">' +
@@ -1007,7 +999,7 @@ $(document).on('click', '.action-nodeinterfaces', function (e) {
     $('#context-menu').remove();
 });
 
-// Deattach network lab node
+// Deatach network lab node
 $(document).on('click', '.action-nodeedit', function (e) {
     logger(1, 'DEBUG: action = action-nodeedit');
     var disabled  = $(this).hasClass('disabled')
@@ -1016,7 +1008,6 @@ $(document).on('click', '.action-nodeedit', function (e) {
     var id = $(this).attr('data-path');
     $.when(getNodes(id)).done(function (values) {
         values['id'] = id;
-        logger(1,"DEBUG: template: "+values['template']);
         printFormNode('edit', values, fromNodeList)
     }).fail(function (message) {
         addModalError(message);
@@ -1093,6 +1084,7 @@ $(document).on('click', '.action-lablist', function (e) {
     } else {
         printPageLabList(FOLDER);
     }
+
 });
 
 // Open a lab
@@ -1148,12 +1140,14 @@ $(document).on('click', '.action-labtopologyrefresh', function (e) {
             $('.customShape').resizable('disable');
          }
     });
+
 });
 
 // Lock lab
 $(document).on('click', '.action-lock-lab', function (e) {
     logger(1, 'DEBUG: action = lock lab');
     lockLab();
+
 });
 
 // Unlock lab
@@ -1854,7 +1848,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
         data: JSON.stringify(form_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved from submit edit.');
+                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
                 // Close the modal
                 $(e.target).parents('.modal').attr('skipRedraw', true);
                 $(e.target).parents('.modal').modal('hide');
@@ -1907,6 +1901,7 @@ $(document).on('submit', '#form-subject-lab', function (e) {
     e.preventDefault();  // Prevent default behaviour
     var lab_filename = $('#lab-viewport').attr('data-path');
     var form_data = form2Array('lab');
+    logger(1, 'DEBUG: posting form-subject-lab form.');
     var url = '/api/labs/subject/' + lab_filename;
     var type = 'PUT';
     form_data['count'] = 1;
@@ -1921,7 +1916,7 @@ $(document).on('submit', '#form-subject-lab', function (e) {
         data: JSON.stringify(form_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved from submit subject lab.');
+                logger(1, 'DEBUG: lab "' + form_data['name'] + '" saved.');
                 // Close the modal
                 $(e.target).parents('.modal').attr('skipRedraw', true);
                 $(e.target).parents('.modal').modal('hide');
@@ -1998,12 +1993,15 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
     }
 		
     if ($(this).attr('id') == 'form-node-add') {
+        logger(1, 'DEBUG: posting form-node-add form.');
         var url = '/api/labs/' + lab_filename + '/node';
         var type = 'POST';
     } else {
+        logger(1, 'DEBUG: posting form-node-edit form.');
         var url = '/api/labs/' + lab_filename + '/node/' + form_data['id'];
         var type = 'PUT';
     }
+
 
     if ($(this).attr('id') == 'form-node-add') {
         // If adding need to manage multiple add
@@ -2030,7 +2028,7 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
             data: JSON.stringify(form_data),
             success: function (data) {
                 if (data['status'] == 'success') {
-                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved from submit add or edit.');
+                    logger(1, 'DEBUG: node "' + form_data['name'] + '" saved.');
                     // Close the modal
                     $('body').children('.modal').attr('skipRedraw', true);
                     $('body').children('.modal.second-win').modal('hide');
@@ -2261,7 +2259,7 @@ $('body').on('submit', '.custom-shape-form', function (e) {
             addMessage('DANGER', getJsonMessage(message));
         });
     }).done(function () {
-        addMessage('SUCCESS', 'Lab has been saved.');
+        addMessage('SUCCESS', 'Lab has been saved (60023).');
     }).fail(function (message) {
         addMessage('DANGER', getJsonMessage(message));
     });

@@ -15,93 +15,58 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\DeviceInstanceRepository")
- * @Serializer\XmlRoot("device_instance")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\DeviceInstanceRepository')]
+#[Serializer\XmlRoot('device_instance')]
 class DeviceInstance extends Instance
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_device_instance","sandbox", "api_get_lab_instance"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_device_instance', 'sandbox', 'api_get_lab_instance'])]
     private $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device")
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Device')]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     protected $device;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbCpu;
 
-        /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+        #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbCore;
 
-        /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+        #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbSocket;
 
-        /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+        #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $nbThread;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\LabInstance", inversedBy="deviceInstances", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\LabInstance', inversedBy: 'deviceInstances', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance'])]
     protected $labInstance;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterfaceInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device_instance", "worker","sandbox", "api_get_lab_instance"})
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\NetworkInterfaceInstance', mappedBy: 'deviceInstance', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_device_instance', 'worker', 'sandbox', 'api_get_lab_instance'])]
     protected $networkInterfaceInstances;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $state;
 
-     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ControlProtocolTypeInstance", mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+     #[ORM\OneToMany(targetEntity: 'App\Entity\ControlProtocolTypeInstance', mappedBy: 'deviceInstance', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $controlProtocolTypeInstances;
     
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
-     */
-    //private $remotePort;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker"})
-     */
-    //private $serialPort;
-
-    /**
-     * @ORM\OneToMany(targetEntity=DeviceInstanceLog::class, mappedBy="deviceInstance", cascade={"persist"})
-     * @Serializer\Exclude
-     */
+    #[ORM\OneToMany(targetEntity: DeviceInstanceLog::class, mappedBy: 'deviceInstance', cascade: ['persist'])]
+    #[Serializer\Exclude]
     private $logs;
 
     public function __construct()
@@ -171,12 +136,10 @@ class DeviceInstance extends Instance
         $this->nbThread = $nb;
     }
     
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\SerializedName("owner")
-     * @Serializer\Groups({"api_get_device_instance","worker"})
-     * @Serializer\XmlAttribute
-     */
+    #[Serializer\VirtualProperty]
+    #[Serializer\SerializedName('owner')]
+    #[Serializer\Groups(['api_get_device_instance', 'worker'])]
+    #[Serializer\XmlAttribute]
     public function getOwnerId()
     {
         $id = null;
@@ -229,7 +192,7 @@ class DeviceInstance extends Instance
      *
      * @return Collection|NetworkInterfaceInstance[]
      */
-    public function getNetworkInterfaceInstances(): Collection
+    public function getNetworkInterfaceInstances()
     {
         return $this->networkInterfaceInstances;
     }
@@ -334,7 +297,7 @@ class DeviceInstance extends Instance
      *
      * @return Collection|ControlProtocolTypeInstance[]
      */
-    public function getControlProtocolTypeInstances(): Collection
+    public function getControlProtocolTypeInstances()
     {
         return $this->controlProtocolTypeInstances;
     }

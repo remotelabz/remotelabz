@@ -9,23 +9,17 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\JitsiCallRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\JitsiCallRepository')]
 class JitsiCall
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab_instance'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab_instance'])]
     private $state;
 
     public function __construct()

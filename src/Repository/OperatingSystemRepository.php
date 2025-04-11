@@ -54,7 +54,7 @@ class OperatingSystemRepository extends ServiceEntityRepository
             ->getResult()
         ;
         }
-    
+
         return $operatingSystems;
     }
     // /**

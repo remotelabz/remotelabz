@@ -29,7 +29,7 @@ class CalendarSubscriber implements EventSubscriberInterface
         $this->tokenStorageInterface = $tokenStorageInterface;
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             CalendarEvents::SET_DATA => 'onCalendarSetData',

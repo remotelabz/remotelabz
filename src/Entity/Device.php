@@ -14,262 +14,181 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\DeviceRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\DeviceRepository')]
 class Device implements InstanciableInterface
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab", "api_get_network_interface", "api_get_device_instance","sandbox", "api_get_lab_instance", "api_get_lab_template"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab', 'api_get_network_interface', 'api_get_device_instance', 'sandbox', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab", "worker","sandbox","api_get_device_instance","api_get_lab_instance"})
-     * @Assert\NotBlank
-     * @Assert\Type(type="string")
-     */
+    #[Assert\NotBlank]
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab', 'worker', 'sandbox', 'api_get_device_instance', 'api_get_lab_instance'])]
     private $name;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template", "worker"})
-     * @Assert\Type(type="string")
-     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
     private $brand;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template", "worker"})
-     * @Assert\Type(type="string")
-     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
     private $model;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({})
-     * @Assert\Type(type="integer")
-     */
-    private $launchOrder;
+    #[Assert\Type(type: 'integer')]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups([])]
+    private int $launchOrder;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Assert\File(mimeTypes={ "text/x-shellscript", "application/x-sh" })
-     */
+    #[Assert\File(mimeTypes: ['text/x-shellscript', 'application/x-sh'])]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $launchScript;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\NetworkInterface", mappedBy="device", cascade={"persist","remove"})
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\NetworkInterface', mappedBy: 'device', cascade: ['persist', 'remove'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
     private $networkInterfaces;
 
-    /**
-     * @ORM\Column(type="string", length=20, options={"default": "eth"})
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
+    #[ORM\Column(type: 'string', length: 20, options: ['default' => 'eth'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
     private $networkInterfaceTemplate = "eth";
 
-    /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Lab", mappedBy="devices")
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Lab', mappedBy: 'devices')]
+    #[Serializer\Groups(['api_get_device'])]
     private $labs;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_instance", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $type;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $nbCpu;
 
-    /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $nbCore;
 
-    /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $nbSocket;
 
-    /**
-     * @ORM\Column(type="integer",nullable=true)
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $nbThread;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template", "api_get_lab_instance", "sandbox"})
-     */
-    private $virtuality;
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_lab_instance', 'sandbox'])]
+    private int $virtuality;
 
-     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     *
-     * @Assert\Ip(version="4")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+     #[Assert\Ip(version: 4)]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $ip;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     *
-     * @Assert\Range(min=0, max=65536)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[Assert\Range(min: 0, max: 65536)]
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $port;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\PduOutletDevice", mappedBy="device")
-     * @Serializer\Groups({"worker", "api_get_device"})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\PduOutletDevice', mappedBy: 'device')]
+    #[Serializer\Groups(['worker', 'api_get_device'])]
     private $outlet;
 
-    /**
-     *
-     * @ORM\ManyToOne(targetEntity="App\Entity\Hypervisor")
-     * @Serializer\Groups({"api_get_device", "api_get_device_instance", "api_get_lab_instance", "export_lab", "worker","sandbox", "api_get_lab_template"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Hypervisor')]
+    #[Serializer\Groups(['api_get_device', 'api_get_device_instance', 'api_get_lab_instance', 'export_lab', 'worker', 'sandbox', 'api_get_lab_template'])]
     private $hypervisor;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\OperatingSystem")
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_instance", "worker", "api_get_lab_template"})
-     * @Assert\NotNull
-     * @Assert\Valid
-     */
+    #[Assert\NotNull]
+    #[Assert\Valid]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\OperatingSystem')]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_instance', 'worker', 'api_get_lab_template'])]
     private $operatingSystem;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\NetworkInterface", cascade={"persist", "remove"})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\NetworkInterface', cascade: ['persist', 'remove'])]
     private $controlInterface;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Flavor")
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     * @Assert\NotNull
-     * @Assert\Valid
-     */
+    #[Assert\NotNull]
+    #[Assert\Valid]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Flavor')]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $flavor;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_device", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_device', 'worker', 'api_get_lab_template'])]
     private $uuid;
 
-    /**
-     * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_device"})
-     * @Assert\Type(type="\DateTime")
-     */
+    #[Assert\Type(type: '\DateTime')]
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_get_device'])]
     private $createdAt;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_get_device'])]
     private $lastUpdated;
 
-    /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ControlProtocolType", mappedBy="devices", cascade={"persist"})
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker","sandbox", "api_get_lab_template"})
-     * @Assert\NotNull
-     * @Assert\Valid
-     */
+    #[Assert\NotNull]
+    #[Assert\Valid]
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\ControlProtocolType', mappedBy: 'devices', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'sandbox', 'api_get_lab_template'])]
     private $controlProtocolTypes;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\EditorData", cascade={"persist"})
-     * @ORM\JoinColumn(name="editor_data_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_device", "export_lab", "api_get_lab_template"})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\EditorData', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'editor_data_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
     private $editorData;
 
-    /**
-     * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     * @Assert\NotNull
-     * @Assert\Type(type="boolean")
-     */
+    #[Assert\NotNull]
+    #[Assert\Type(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device'])]
     private $isTemplate;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device'])]
     private $delay = 0;
 
 
-    /**
-     * @ORM\Column(type="string", length=100, nullable=true)
-     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
     private $icon = "Server_Linux.png";
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
     private $template;
 
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_device'])]
     private $count;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_device'])]
     private $postfix;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device'])]
     private $config = 0;
 
-    /**
-     * @ORM\Column(type="string", options={"default": ""})
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'string', options: ['default' => ''])]
+    #[Serializer\Groups(['api_get_device'])]
     private $config_data = "";
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_device'])]
     private $status = 0;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 1})
-     * @Serializer\Groups({"api_get_device"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 1])]
+    #[Serializer\Groups(['api_get_device'])]
     private $ethernet = 1;
 
-     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdDevices")
-     * @Serializer\Groups({"api_get_device"})
-     */
+     #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdDevices')]
+    #[Serializer\Groups(['api_get_device'])]
     private $author;
 
     public function __construct()

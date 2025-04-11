@@ -10,26 +10,31 @@ use App\Repository\PduOutletDeviceRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class PduOutletDeviceController extends Controller
 {
     public $pduOutletDeviceRepository;
 
-    public function __construct(PduOutletDeviceRepository $pduOutletDeviceRepository)
+    public function __construct(PduOutletDeviceRepository $pduOutletDeviceRepository, EntityManagerInterface $entityManager)
     {
         $this->pduOutletDeviceRepository = $pduOutletDeviceRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/pdu/outlet/{id<\d+>}/edit", name="edit_pdu_outlet")
-     * 
-     * @Rest\Put("/api/pdu/outlet/{id<\d+>}/edit", name="edit_add_pdu_outlet")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Put('/api/pdu/outlet/{id<\d+>}/edit', name: 'edit_add_pdu_outlet')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdu/outlet/{id<\d+>}/edit', name: 'edit_pdu_outlet')]
     public function editPduOutlet(Request $request, int $id)
     {   
         if (!$pduOutletDevice = $this->pduOutletDeviceRepository->find($id)) {
@@ -56,7 +61,7 @@ class PduOutletDeviceController extends Controller
                 $pduOutlet->setDevice($oldDevice);
                 $this->addFlash('danger', 'The outlet device has not been edited. It is already in use.');
             }
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $pduOutletDevice->setDevice($pduOutlet->getDevice());
             $entityManager->persist($pduOutlet);
             $entityManager->flush();
@@ -71,20 +76,17 @@ class PduOutletDeviceController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/outlet/{id<\d+>}/delete", name="delete_outlet", methods="GET")
-     * 
-     * @Rest\Delete("/api/outlet/{id<\d+>}/delete", name="api_delete_outlet")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Delete('/api/outlet/{id<\d+>}/delete', name: 'api_delete_outlet')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/outlet/{id<\d+>}/delete', name: 'delete_outlet', methods: 'GET')]
     public function deleteAction(Request $request, int $id)
     {
         if (!$pduOutletDevice = $this->pduOutletDeviceRepository->find($id)) {
             throw new NotFoundHttpException("PDU outlet " . $id . " does not exist.");
         }
         $pdu = $pduOutletDevice->getPdu();
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($pduOutletDevice);
         $entityManager->flush();
 

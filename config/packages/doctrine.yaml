@@ -9,22 +9,29 @@ doctrine:
     dbal:
         # configure these for your database server
         driver: 'pdo_mysql'
-        server_version: '%env(MYSQL_VERSION)%'
+        server_version: '%env(resolve:MYSQL_VERSION)%'
         charset: utf8mb4
         default_table_options:
             charset: utf8mb4
             collate: utf8mb4_unicode_ci
         schema_filter: '~^(?!messenger_messages)~'
 
+        types:
+            array: App\Doctrine\ArrayType
+
+
         url: 'mysql://%env(MYSQL_USER)%:%env(MYSQL_PASSWORD)%@%env(MYSQL_SERVER)%/%env(MYSQL_DATABASE)%'
     orm:
         auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
+        controller_resolver:
+            auto_mapping: false
         mappings:
             App:
                 is_bundle: false
-                type: annotation
+                type: attribute
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App

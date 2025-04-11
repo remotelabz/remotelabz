@@ -2,11 +2,16 @@
 
 namespace App\Controller;
 
-
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -20,7 +25,7 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class DatabaseController extends Controller
 {
@@ -35,10 +40,7 @@ class DatabaseController extends Controller
         $this->logger = $logger;
     }
 
-    /**
-    * @Route("/admin/database", name="admin_database")
-    * 
-    */
+    #[Route(path: '/admin/database', name: 'admin_database')]
     public function indexAction(Request $request, SerializerInterface $serializer)
     {
         $files = scandir($this->getParameter('kernel.project_dir').'/backups/');
@@ -98,12 +100,10 @@ class DatabaseController extends Controller
         ]);
     }
 
-    /**
-    * @Route("/admin/database/backup", name="admin_database_backup", methods="GET")
-    * @Rest\Get("/api/database/backup", name="api_database_backup")
-    *
-    * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-    */
+    
+	#[Get('/api/database/backup', name: 'api_database_backup')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/database/backup', name: 'admin_database_backup', methods: 'GET')]
     public function databaseBackup(Request $request)
     {
 
@@ -178,11 +178,7 @@ class DatabaseController extends Controller
         return $this->redirectToRoute('admin_database');
     }
 
-    /**
-    * 
-    * @Route("/admin/database/backup/download/{name}", name="admin_database_backup_download", requirements={"name"="backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
-    * 
-    */
+    #[Route(path: '/admin/database/backup/download/{name}', name: 'admin_database_backup_download', requirements: ['name' => 'backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}'])]
     public function downloadBackup(Request $request, string $name)
     {
         $file = $name .".zip";
@@ -199,11 +195,7 @@ class DatabaseController extends Controller
 
     }
 
-    /**
-    * 
-    * @Route("/admin/database/backup/delete/{name}", name="admin_database_backup_delete", requirements={"name"="backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}"})
-    * 
-    */
+    #[Route(path: '/admin/database/backup/delete/{name}', name: 'admin_database_backup_delete', requirements: ['name' => 'backup_[\d]{2}-[\d]{2}-[\d]{4}_[\d]{2}-[\d]{2}-[\d]{2}'])]
     public function deleteBackup(Request $request, string $name)
     {
         $file = $name .".zip";

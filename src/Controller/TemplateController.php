@@ -43,7 +43,13 @@ use App\Service\Lab\LabImporter;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -61,8 +67,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use JMS\Serializer\SerializerBuilder;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-
+use Symfony\Component\Security\Http\Attribute\Security;
 
 class TemplateController extends Controller
 {
@@ -86,11 +91,9 @@ class TemplateController extends Controller
         $this->deviceRepository = $deviceRepository;
     }
 
-    /**
-     * @Rest\Post("/api/list/templates", name="api_get_templates")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/list/templates', name: 'api_get_templates')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
     public function indexAction(Request $request)
     {
 
@@ -137,12 +140,12 @@ class TemplateController extends Controller
         return $response;
     }
 
-    /** 
-     * @Rest\Post("/api/list/templates/{id<\d+>}", name="api_get_template")
-     * 
-     * @Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message="Access denied.")
-     */
-    public function showAction(int $id, Request $request)
+    
+	#[Post('/api/list/templates/{id<\d+>}', name: 'api_get_template')]
+	#[Security("is_granted('ROLE_USER') or is_granted('ROLE_GUEST')", message: "Access denied.")]
+    public function showAction(
+        int $id,
+        Request $request)
     {
         $data = json_decode($request->getContent(), true);
         $response = new Response();
@@ -161,7 +164,7 @@ class TemplateController extends Controller
             $this->newAction($device);
          }
         $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
-        $p['template'] = $id."-".$deviceName;
+        $p['template'] = $deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
 

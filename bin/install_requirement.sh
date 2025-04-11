@@ -2,17 +2,24 @@
 
 apt-get update
 apt-get -y upgrade
-apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php7.4
-apt install -y php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip 
+add-apt-repository -y ppa:ondrej/php # PPRI0603 : Ajout pour l'installation de PHP8.1
+apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php8.1 # PPRI0603 : changement de version des modules PHP pour passer en PHP8.1
+apt install -y php8.1 php8.1-bcmath php8.1-curl php8.1-gd php8.1-intl php8.1-mbstring php8.1-mysql php8.1-xml php8.1-zip # PPRI0603 : changement version des modules PHP pour passer en PHP8.1
+apt-get update # PPRI0603 : Ajout
+phpenmod -v 8.1 dom # PPRI0603 : Ajout
+update-alternatives --set php /usr/bin/php8.1 # PPRI0603 : Ajout des 3 lignes suivantes pour forcer l'utilisation de php8.1
+update-alternatives --set phar /usr/bin/phar8.1
+update-alternatives --set phar.phar /usr/bin/phar.phar8.1
 systemctl restart apache2
-php -r "copy('https://getcomposer.org/download/2.2.6/composer.phar', 'composer.phar');"
+php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - # PPRI0603 : Passage de nodejs 14 vers nodejs 16
 apt-get install -y nodejs
 npm install -g yarn
 npm install -g configurable-http-proxy
 apt-get install -y mysql-server
+systemctl restart mysql
 cat > mysql_secure_sql.sql << EOF
 ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED BY 'RemoteLabz-2022$';
 DELETE FROM mysql.user WHERE User='';
@@ -29,7 +36,8 @@ mysql -sfu root < mysql_secure_sql.sql
 rm ./mysql_secure_sql.sql
 
 echo "The MySQL is configured with user \"user\" and the password \"Mysql-Pa33wrd$\""
-apt-get install -y rabbitmq-server php-amqp
+apt-get install -y rabbitmq-server php8.1-amqp # PPRI0603 : Modification du module pour l'adapter à PHP 8.1
+systemctl restart rabbitmq-server
 if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
     rabbitmqctl add_user 'remotelabz-amqp' 'password-amqp'
 fi
@@ -43,7 +51,7 @@ rabbitmq-plugins enable rabbitmq_management
 #rabbitmqctl authenticate_user 'remotelabz-amqp' "password-amqp"
 
 cd ~
-wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz 
+wget -q https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.8/EasyRSA-3.0.8.tgz
 tar -xzf EasyRSA-3.0.8.tgz
 ln -s EasyRSA-3.0.8 EasyRSA
 cd EasyRSA

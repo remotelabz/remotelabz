@@ -11,55 +11,41 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Entity\Lab;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\TextObjectRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\TextObjectRepository')]
 class TextObject implements InstanciableInterface
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_text_object", "api_get_lab"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_text_object', 'api_get_lab'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_text_object", "api_get_lab", "api_get_lab_instance", "api_get_lab_template", "export_lab"})
-     * @Assert\NotBlank
-     * @Assert\Type(type="string")
-     */
+    #[Assert\NotBlank]
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_text_object', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'export_lab'])]
     private $name;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_text_object", "export_lab", "api_get_lab","api_get_lab_instance", "api_get_lab_template"})
-     * @Assert\NotBlank
-     * @Assert\Type(type="string")
-     */
+    #[Assert\NotBlank]
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_text_object', 'export_lab', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $type;
 
-    /**
-     * @ORM\Column(type="string", length=1500, nullable=true)
-     * @Serializer\Groups({"api_get_text_object", "export_lab", "api_get_lab","api_get_lab_instance", "api_get_lab_template"})
-     * @Assert\NotBlank
-     * @Assert\Type(type="string")
-     */
+    #[Assert\NotBlank]
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 1500, nullable: true)]
+    #[Serializer\Groups(['api_get_text_object', 'export_lab', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $data;
 
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     * @Serializer\Groups({"api_get_text_object", "export_lab", "api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
-     * @Assert\Type(type="array")
-     */
+    #[Assert\Type(type: 'array')]
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Serializer\Groups(['api_get_text_object', 'export_lab', 'api_get_lab', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $newdata;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="textobjects", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=true, onDelete="CASCADE")
-     * @Serializer\Groups({"api_get_text_object"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'textobjects', cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    #[Serializer\Groups(['api_get_text_object'])]
     private $lab;
 
 

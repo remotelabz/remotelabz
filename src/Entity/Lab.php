@@ -14,168 +14,124 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\LabRepository')]
 class Lab implements InstanciableInterface
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_device", "api_get_lab_instance", "api_groups", "api_get_group","api_addlab","sandbox", "api_get_lab_template", "api_get_booking"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_get_device', 'api_get_lab_instance', 'api_groups', 'api_get_group', 'api_addlab', 'sandbox', 'api_get_lab_template', 'api_get_booking'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "api_get_lab_instance", "export_lab", "worker","api_addlab","sandbox", "api_get_booking"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_get_lab_instance', 'export_lab', 'worker', 'api_addlab', 'sandbox', 'api_get_booking'])]
     private $name;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $shortDescription;
 
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $description;
 
-    /**
-     * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $isTemplate;
 
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $tasks;
 
-    /**
-     * @ORM\Column(type="string", length=10, options={"default": "1"})
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 10, options: ['default' => 1])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $version = "1";
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 300})
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 300])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $scripttimeout = 300;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_lab", "export_lab"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $locked = 0;
 
-    /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Device", inversedBy="labs",cascade={"persist"})
-     * @ORM\JoinTable(name="lab_device",
-     *      joinColumns={@ORM\JoinColumn(name="lab_id", referencedColumnName="id", onDelete="CASCADE")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")}
-     * ))
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab","sandbox", "api_get_lab_instance"})
-     */
+    #[ORM\JoinTable(name: 'lab_device')]
+    #[ORM\JoinColumn(name: 'lab_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'device_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Device', inversedBy: 'labs', cascade: ['persist'])]
     private $devices;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance'])]
     private $author;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "worker","api_get_lab_instance","sandbox"})
-     */
-    private $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'worker', 'api_get_lab_instance', 'sandbox'])]
+    private string $uuid;
 
-     /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "export_lab", "worker", "api_get_lab_template", "api_get_booking"})
-     */
-    private $virtuality;
+     #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_booking'])]
+    private int $virtuality;
 
-    /**
-     * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_lab"})
-     */
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_get_lab'])]
     private $createdAt;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_get_lab"})
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_get_lab'])]
     private $lastUpdated;
 
-    /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({})
-     */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups([])]
     private $isInternetAuthorized = false;
 
-    /**
-     * @ORM\ManyToMany(targetEntity=Group::class, inversedBy="labs")
-     */
+    #[ORM\ManyToMany(targetEntity: Group::class, inversedBy: 'labs')]
     private $groups;
 
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     * @Serializer\Exclude
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Serializer\Exclude]
     private $banner;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\TextObject", mappedBy="lab")
-     * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template", "export_lab"})
      *
      * @var Collection|TextObject[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\TextObject', mappedBy: 'lab')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'export_lab'])]
     private $textobjects;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Picture", mappedBy="lab")
-     * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "api_get_lab_template"})
      *
      * @var Collection|Picture[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Picture', mappedBy: 'lab')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $pictures;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="lab")
-     * @Serializer\Groups({"api_get_lab"})
      *
      * @var Collection|Booking[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Booking', mappedBy: 'lab')]
+    #[Serializer\Groups(['api_get_lab'])]
     private $bookings;
 
-    /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
-     */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $hasTimer = false;
 
     /**
-     * @ORM\Column(type="string", nullable="true")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_template", "export_lab"})
-     * @Assert\Time
-     * @var string A "H:i:s" formatted value 
+     * @var string A "H:i:s" formatted value
      */
+    #[Assert\Time]
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $timer;
   
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\InvitationCode", mappedBy="lab", cascade={"persist", "remove"})
-     * @Serializer\Groups({})
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
+    #[Serializer\Groups([])]
     private $invitationCodes;
 
     public function __construct()
@@ -414,7 +370,7 @@ class Lab implements InstanciableInterface
     /**
      * @return Collection|Group[]
      */
-    public function getGroups(): Collection
+    public function getGroups()
     {
         return $this->groups;
     }

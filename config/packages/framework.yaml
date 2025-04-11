@@ -23,8 +23,12 @@ framework:
     router:
         utf8: true
 
-    form:
-        legacy_error_messages: false
+    form: ~
+
+    messenger: ~
     
-    messenger:
-        reset_on_message: true
+    http_method_override: true
+    handle_all_throwables: true
+
+    annotations:
+        enabled: false

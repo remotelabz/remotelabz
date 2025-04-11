@@ -36,7 +36,7 @@ export var LOCK = 0 ;
 export var EDITION;
 export var isIE = getInternetExplorerVersion() > -1;
 export var FOLLOW_WRAPPER_IMG_STATE = 'resized'
-//export var EVE_VERSION = "5.0.1-19";
+export var EVE_VERSION = "5.0.1-19";
 export var AUTHOR;
 export var TEMPLATE;
 export var ISGROUPOWNER;
@@ -118,7 +118,7 @@ $(document).ready(function() {
 		// Privacy policy already been accepted, check if user is already authenticated
 		$.when(getUserInfo()).done(function() {
 			// User is authenticated
-			//logger(1, 'DEBUG: loading language.');
+			logger(1, 'DEBUG: loading language.');
 			/*$.getScript('./components/Editor2/themes/default/js/messages_' + LANG + '.js')
 				.done(function() {*/
 					postLogin();
@@ -128,7 +128,7 @@ $(document).ready(function() {
 				});*/
 		}).fail(function(data) {
 			// User is not authenticated, or error on API
-			//logger(1, 'DEBUG: loading authentication page.');
+			logger(1, 'DEBUG: loading authentication page.');
 			printPageAuthentication();
 		});
 	}

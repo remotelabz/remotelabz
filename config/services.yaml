@@ -146,6 +146,8 @@ services:
     App\Security\ShibbolethAuthenticator:
         arguments:
             $authorized_affiliation: '%app.user.authorized_affiliation%'
+            $idpUrl: null
+            $remoteUserVar: null
 
     App\EventSubscriber\RenderExceptionSubscriber:
         arguments:

@@ -10,7 +10,9 @@ framework:
                         type: direct
                     queues:
                         messages_worker1:
-                            binding_keys: [127.0.0.1]
+                            binding_keys: [172.16.56.20]
+                        messages_worker2:
+                            binding_keys: [172.16.56.40]
                 retry_strategy:
                     max_retries: 3
                     delay: 5000

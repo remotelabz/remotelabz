@@ -20,7 +20,13 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Exception;
 use FOS\RestBundle\Context\Context;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,8 +38,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Http\Attribute\Security;
+use Doctrine\ORM\EntityManagerInterface;
 
 class GroupController extends Controller
 {
@@ -50,7 +57,8 @@ class GroupController extends Controller
         LabRepository $labRepository,
         LabInstanceRepository $labInstanceRepository,
         SerializerInterface $serializer,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager
     )
     {
         $this->groupRepository = $groupRepository;
@@ -59,11 +67,10 @@ class GroupController extends Controller
         $this->labInstanceRepository = $labInstanceRepository;
         $this->serializer = $serializer;
         $this->userRepository = $userRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/groups", name="groups")
-     */
+    #[Route(path: '/admin/groups', name: 'groups')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -95,14 +102,11 @@ class GroupController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/groups", name="dashboard_groups")
-     * @Route("/explore/groups", name="dashboard_explore_groups")
-     *
-     * @Rest\Get("/api/groups", name="api_groups")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Get('/api/groups', name: 'api_groups')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/groups', name: 'dashboard_groups')]
+    #[Route(path: '/explore/groups', name: 'dashboard_explore_groups')]
     public function dashboardIndexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -174,11 +178,9 @@ class GroupController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/group/{slug}/instances", name="dashboard_group_instances", requirements={"slug"="[\w\-\/]+"})
-     *
-     * @Rest\Get("/api/groups/{slug}/instances", name="api_group_instances", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Get('/api/groups/{slug}/instances', name: 'api_group_instances', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/group/{slug}/instances', name: 'dashboard_group_instances', requirements: ['slug' => '[\w\-\/]+'])]
     public function dashboardGroupInstancesAction(Request $request , string $slug, LabInstanceRepository $labInstanceRepository, SerializerInterface $serializer)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -290,13 +292,10 @@ class GroupController extends Controller
         });
     }
 
-    /**
-     * @Route("/groups/new", name="new_group")
-     *
-     * @Rest\Post("/api/groups", name="api_new_group")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/groups', name: 'api_new_group')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    #[Route(path: '/groups/new', name: 'new_group')]
     public function newAction(Request $request, ValidatorInterface $validator)
     {
         $group = new Group();
@@ -331,7 +330,7 @@ class GroupController extends Controller
                 throw new BadRequestHttpException((string) $errors);
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($group);
             $entityManager->flush();
 
@@ -351,9 +350,7 @@ class GroupController extends Controller
         return $this->render('group/new.html.twig', $data);
     }
 
-    /**
-     * @Route("/groups/{slug}/users", name="add_user_group", methods="POST", requirements={"slug"="[\w\-\/]+"})
-     */
+    #[Route(path: '/groups/{slug}/users', name: 'add_user_group', methods: 'POST', requirements: ['slug' => '[\w\-\/]+'])]
     public function addUserAction(Request $request, string $slug, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -362,7 +359,9 @@ class GroupController extends Controller
 
         $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
 
-        $users = $request->request->get('users');
+        #$users = $request->request->get('users');
+        $users = $request->request->all()['users'] ?? [];
+
         $role = $request->request->get('role', 'user');
         // trim empty values
         $users = array_filter(array_map('trim', $users), 'strlen');
@@ -381,7 +380,7 @@ class GroupController extends Controller
                 $this->logger->info("User ".$user->getName()." added in group ".$group->getPath()." by ".$this->getUser()->getName());
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($group);
             $entityManager->flush();
 
@@ -392,10 +391,9 @@ class GroupController extends Controller
         return $this->redirectToRoute('dashboard_group_members', ['slug' => $group->getPath()]);
     }
 
-    /**
-     * @Route("/groups/{slug}/user/{userId<\d+>}/delete", name="remove_user_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
-     * @Rest\Delete("/api/groups/{slug}/user/{userId<\d+>}", name="api_delete_user_group", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Delete('/api/groups/{slug}/user/{userId<\d+>}', name: 'api_delete_user_group', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/groups/{slug}/user/{userId<\d+>}/delete', name: 'remove_user_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function removeUserAction(Request $request, string $slug, int $userId, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -410,7 +408,7 @@ class GroupController extends Controller
 
         $group->removeUser($user);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($group);
         $entityManager->flush();
 
@@ -419,9 +417,8 @@ class GroupController extends Controller
         return $this->redirectToRoute('dashboard_group_members', ['slug' => $slug]);
     }
 
-    /**
-     * @Rest\Put("/api/groups/{slug}/user/{id<\d+>}/role", name="update_user_role_group", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Put('/api/groups/{slug}/user/{id<\d+>}/role', name: 'update_user_role_group', requirements: ["slug"=>"[\w\-\/]+"])]
     public function updateUserRoleAction(Request $request, string $slug, int $id, UserRepository $userRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -440,7 +437,7 @@ class GroupController extends Controller
             throw new BadRequestHttpException("Role must be one of 'user' or 'admin'.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($group);
         $entityManager->flush();
 
@@ -451,11 +448,9 @@ class GroupController extends Controller
         return new Response();
     }
 
-    /**
-     * @Route("/groups/{slug}/edit", name="dashboard_edit_group", requirements={"slug"="[\w\-\/]+"})
-     *
-     * @Rest\Put("/api/groups/{slug}", name="api_edit_group", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Put('/api/groups/{slug}', name: 'api_edit_group', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/groups/{slug}/edit', name: 'dashboard_edit_group', requirements: ['slug' => '[\w\-\/]+'])]
     public function updateAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -476,7 +471,7 @@ class GroupController extends Controller
             $group = $groupForm->getData();
             $group->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($group);
             $entityManager->flush();
 
@@ -499,9 +494,7 @@ class GroupController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/groups/{slug}/edit/parent", name="dashboard_edit_group_parent", requirements={"slug"="[\w\-\/]+"})
-     */
+    #[Route(path: '/groups/{slug}/edit/parent', name: 'dashboard_edit_group_parent', requirements: ['slug' => '[\w\-\/]+'])]
     public function updateParentAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -509,7 +502,8 @@ class GroupController extends Controller
         }
 
         $this->denyAccessUnlessGranted(GroupVoter::EDIT, $group);
-        $parentId = $request->request->get('parent');
+        #$parentId = $request->request->get('parent');
+        $parentId = $request->request->all()['parent'] ?? [];
 
         if ($parentId !== null) {
             $parent = $this->groupRepository->find($parentId);
@@ -517,12 +511,11 @@ class GroupController extends Controller
             $parent = null;
         }
 
-
         if ($parent === null || $parent->getId() !== $group->getId()) {
             $group->setParent($parent);
             $group->setUpdatedAt(new \DateTime());
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($group);
             $entityManager->flush();
 
@@ -532,11 +525,9 @@ class GroupController extends Controller
         return $this->redirectToRoute('dashboard_show_group', ['slug' => $group->getPath()]);
     }
 
-    /**
-     * @Route("/groups/{slug}/delete", name="delete_group", methods="GET", requirements={"slug"="[\w\-\/]+"})
-     *
-     * @Rest\Delete("/api/groups/{slug}", name="api_delete_group", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Delete('/api/groups/{slug}', name: 'api_delete_group', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/groups/{slug}/delete', name: 'delete_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function deleteAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -545,7 +536,7 @@ class GroupController extends Controller
 
         $this->denyAccessUnlessGranted(GroupVoter::DELETE, $group);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($group);
 
         try {
@@ -571,11 +562,9 @@ class GroupController extends Controller
         return $this->redirectToRoute('dashboard_groups');
     }
 
-    /**
-     * @Route("/groups/{slug}/members", name="dashboard_group_members", requirements={"slug"="[\w\-\/]+"})
-     * 
-     * @Rest\Get("/api/groups/{slug}/members", name="app_group_members", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Get('/api/groups/{slug}/members', name: 'app_group_members', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/groups/{slug}/members', name: 'dashboard_group_members', requirements: ['slug' => '[\w\-\/]+'])]
     public function dashboardMembersAction(string $slug, SerializerInterface $serializer, Request $request)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -653,7 +642,7 @@ class GroupController extends Controller
         $row = 0;
         $line = array();
         $addedUsers = array();
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
 
         $error=false;
 
@@ -697,9 +686,8 @@ class GroupController extends Controller
         return $addedUsers;
         }
     }
-    /**
-     * @Rest\get("/api/groups/{slug}/members/{id<\d+>}", name="dashboard_group_badges", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+    #[Get('/api/groups/{slug}/members/{id<\d+>}', name: 'dashboard_group_badges', requirements: ["slug"=>"[\w\-\/]+"])]
     public function updateRoleDisplay(string $slug, SerializerInterface $serializer, int $id)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -725,9 +713,7 @@ class GroupController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/groups/{slug}/picture", name="get_group_picture", requirements={"slug"="[\w\-\/]+"}, methods="GET")
-     */
+    #[Route(path: '/groups/{slug}/picture', name: 'get_group_picture', requirements: ['slug' => '[\w\-\/]+'], methods: 'GET')]
     public function getGroupPictureAction(Request $request, string $slug, KernelInterface $kernel)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
@@ -752,9 +738,7 @@ class GroupController extends Controller
         }
     }
 
-    /**
-     * @Route("/groups/{slug}/picture", name="upload_group_picture", requirements={"slug"="[\w\-\/]+"}, methods="POST")
-     */
+    #[Route(path: '/groups/{slug}/picture', name: 'upload_group_picture', requirements: ['slug' => '[\w\-\/]+'], methods: 'POST')]
     public function uploadGroupPictureAction(Request $request, GroupPictureFileUploader $fileUploader, string $slug)
     {
         $group = $this->groupRepository->findOneBySlug($slug);
@@ -768,7 +752,7 @@ class GroupController extends Controller
             $group->setPictureFilename($pictureFileName);
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($group);
         $entityManager->flush();
 
@@ -777,13 +761,7 @@ class GroupController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/groups/{slug}",
-     *  name="admin_show_group",
-     *  methods="GET",
-     *  requirements={"slug"="[\w\-\/]+"}
-     * )
-     */
+    #[Route(path: '/admin/groups/{slug}', name: 'admin_show_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function showAction(string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -797,10 +775,7 @@ class GroupController extends Controller
         ]);
     }
 
-     /**
-     * @Route("/groups/{slug}/addlab", name="add_lab_group", methods="POST",
-     * requirements={"slug"="[\w\-\/]+"})
-     */
+     #[Route(path: '/groups/{slug}/addlab', name: 'add_lab_group', methods: 'POST', requirements: ['slug' => '[\w\-\/]+'])]
     public function addLabAction(Request $request, string $slug, LabRepository $labRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -809,7 +784,7 @@ class GroupController extends Controller
 
         $this->denyAccessUnlessGranted(GroupVoter::ADD_MEMBER, $group);
         
-        $labs = $request->request->get('labs');
+        $labs = $request->request->all()['labs'] ?? [];
         
         $labs = array_filter(array_map('trim', $labs), 'strlen');
 
@@ -827,7 +802,7 @@ class GroupController extends Controller
                 $this->logger->info("Laboratory ".$lab->getName()." added in group ".$group->getPath()." by ".$this->getUser()->getName());
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($group);
             $entityManager->flush();
 
@@ -839,10 +814,7 @@ class GroupController extends Controller
         ]);
     }
 
-     /**
-     * @Route("/groups/{slug}/removelab/{id<\d+>}", name="rem_lab_group", methods="GET",
-     * requirements={"slug"="[\w\-\/]+"})
-     */
+     #[Route(path: '/groups/{slug}/removelab/{id<\d+>}', name: 'rem_lab_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function removeLabAction(Request $request, string $slug, int $id, LabRepository $labRepository)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -858,7 +830,7 @@ class GroupController extends Controller
 
         $this->addFlash('success', 'Laboratory '.$lab[0]->getName().' has been added to the group '.$group->getName().'.');
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($group);
         $entityManager->flush();
 
@@ -869,11 +841,7 @@ class GroupController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/groups/{slug}/group_labs", name="dashboard_add_lab_group", methods="GET",
-     * requirements={"slug"="[\w\-\/]+"})
-     *
-     */
+    #[Route(path: '/groups/{slug}/group_labs', name: 'dashboard_add_lab_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function showaddlabAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -891,15 +859,9 @@ class GroupController extends Controller
 
     
 
-    /**
-     * @Route("/groups/{slug}",
-     *  name="dashboard_show_group",
-     *  methods="GET",
-     *  requirements={"slug"="[\w\-\/]+"}
-     * )
-     *
-     * @Rest\Get("/api/groups/{slug}", name="api_get_group", requirements={"slug"="[\w\-\/]+"})
-     */
+    
+	#[Get('/api/groups/{slug}', name: 'api_get_group', requirements: ["slug"=>"[\w\-\/]+"])]
+    #[Route(path: '/groups/{slug}', name: 'dashboard_show_group', methods: 'GET', requirements: ['slug' => '[\w\-\/]+'])]
     public function showDashboardAction(Request $request, string $slug)
     {
         if (!$group = $this->groupRepository->findOneBySlug($slug)) {
@@ -918,7 +880,6 @@ class GroupController extends Controller
             'group' => $group,
         ]);
     }
-
 
     
 }

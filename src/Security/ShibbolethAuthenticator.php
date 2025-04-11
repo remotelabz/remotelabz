@@ -65,8 +65,8 @@ class ShibbolethAuthenticator extends AbstractAuthenticator
 
     public function __construct(
         UrlGeneratorInterface $urlGenerator,
-        $idpUrl = null,
-        $remoteUserVar = null,
+        $idpUrl,
+        $remoteUserVar,
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager = null,
         UserPasswordHasherInterface $passwordHasher = null,

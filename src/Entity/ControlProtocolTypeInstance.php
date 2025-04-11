@@ -10,34 +10,24 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 
-/**
- * @ORM\Entity(repositoryClass=ControlProtocolTypeInstanceRepository::class)
- */
+#[ORM\Entity(repositoryClass: ControlProtocolTypeInstanceRepository::class)]
 class ControlProtocolTypeInstance extends Instance
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $port;
 
-     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\ControlProtocolType", inversedBy="controlProtocolTypeInstances", cascade={"persist"})
-     * @Serializer\Groups({"api_get_lab_instance","api_get_device_instance", "worker","sandbox"})
-     */
+     #[ORM\ManyToOne(targetEntity: 'App\Entity\ControlProtocolType', inversedBy: 'controlProtocolTypeInstances', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
     private $controlProtocolType;
 
-     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\DeviceInstance", inversedBy="controlProtocolTypeInstances", cascade={"persist"})
-     * @ORM\JoinColumn(onDelete="CASCADE")
-     */
+     #[ORM\ManyToOne(targetEntity: 'App\Entity\DeviceInstance', inversedBy: 'controlProtocolTypeInstances', cascade: ['persist'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private $deviceInstance;
 
     public function __construct()

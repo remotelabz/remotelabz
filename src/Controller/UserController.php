@@ -24,7 +24,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -37,8 +43,9 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email as Email;
 use Symfony\Component\Validator\Constraints\Email as ConstraintsEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use GuzzleHttp\Client;
+use Doctrine\ORM\EntityManagerInterface;
 
 class UserController extends Controller
 {
@@ -59,7 +66,8 @@ class UserController extends Controller
         LoggerInterface $logger,
         string $url_check_internet,
         string $remotevpn_addr,
-        string $contact_mail)
+        string $contact_mail,
+        EntityManagerInterface $entityManager)
     {
         $this->passwordHasher = $passwordHasher;
         $this->userRepository = $userRepository;
@@ -70,15 +78,13 @@ class UserController extends Controller
         $this->url_check_internet = $url_check_internet;
         $this->remotevpn_addr = $remotevpn_addr;
         $this->contact_mail = $contact_mail;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/users", name="users", methods={"GET", "POST"})
-     * 
-     * @Rest\Get("/api/users", name="api_users")
-     * 
-     * @IsGranted("ROLE_TEACHER", message="Access denied.")
-     */
+    
+	#[Get('/api/users', name: 'api_users')]
+	#[IsGranted("ROLE_TEACHER", message: "Access denied.")]
+    #[Route(path: '/admin/users', name: 'users', methods: ['GET', 'POST'])]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -214,11 +220,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * @Rest\Get("/api/fetch/users", name="api_fetch_users")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
     public function fetchUsersAction(Request $request)
     {
         $users = $this->userRepository->findAll();
@@ -228,14 +230,9 @@ class UserController extends Controller
             return $this->json($users, 200, [], ["api_users"]);
         }
 
-
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/fetch/{userType<\w+>}/by-group-owner/{id<\d+>}", name="api_fetch_user_type_by_group_owner")
-     */
-    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
+    /*    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
     {
         $owner = $this->userRepository->find($id);
         $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
@@ -248,14 +245,11 @@ class UserController extends Controller
             return $this->json($users, 200, [], ["api_users"]);
         }
 
-
     }*/
 
-    /**
-     * @Rest\Get("/api/users/{id<\d+>}", name="api_get_user")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.")
-     */
+    
+	#[Get('/api/users/{id<\d+>}', name: 'api_get_user')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function showAction(Request $request, int $id)
     {
         $user = $this->userRepository->find($id);
@@ -272,9 +266,7 @@ class UserController extends Controller
         return $this->json($user, 200, [], [$request->get('_route')]);
     }
 
-    /**
-     * @Route("/admin/users/new", name="new_user", methods={"GET", "POST"})
-     */
+    #[Route(path: '/admin/users/new', name: 'new_user', methods: ['GET', 'POST'])]
     public function newAction(Request $request)
     {
         $user = new User();
@@ -297,7 +289,7 @@ class UserController extends Controller
                 $this->addFlash('danger', "You must provide a password.");
             } elseif ($password === $confirmPassword) {
                 $user->setPassword($this->passwordHasher->hashPassword($user, $password));
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->entityManager;
             try {
                 $entityManager->persist($user);
                 $entityManager->flush();
@@ -330,9 +322,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/users/{id<\d+>}/edit", name="edit_user", methods={"GET", "POST"})
-     */
+    #[Route(path: '/admin/users/{id<\d+>}/edit', name: 'edit_user', methods: ['GET', 'POST'])]
     public function editAction(Request $request, int $id)
     {
         $user = $this->userRepository->find($id);
@@ -362,7 +352,7 @@ class UserController extends Controller
                 }
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($user);
             $entityManager->flush();
 
@@ -377,13 +367,10 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/users/{id<\d+>}/toggle", name="toggle_user", methods="GET")
-     * 
-     * @Rest\Patch("/api/users/{id<\d+>}", name="api_toggle_user")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Patch('/api/users/{id<\d+>}', name: 'api_toggle_user')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/users/{id<\d+>}/toggle', name: 'toggle_user', methods: 'GET')]
     public function toggleAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
@@ -407,7 +394,7 @@ class UserController extends Controller
             }
             
 
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->entityManager;
             $em->persist($user);
             $em->flush();
         }
@@ -421,13 +408,10 @@ class UserController extends Controller
         return $this->redirectToRoute('users');
     }
 
-    /**
-     * @Route("/admin/users/{id<\d+>}", name="delete_user", methods={"GET", "DELETE"})
-     * 
-     * @Rest\Delete("/api/users/{id<\d+>}", name="api_delete_user")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Delete('/api/users/{id<\d+>}', name: 'api_delete_user')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/users/{id<\d+>}', name: 'delete_user', methods: ['GET', 'DELETE'])]
     public function deleteAction(Request $request, $id)
     {
         $user = $this->userRepository->find($id);
@@ -447,7 +431,7 @@ class UserController extends Controller
             }
             
             else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->entityManager;
                 if ($user->getGroups()->count() > 0) {
                     foreach ($user->getGroups() as $group)
                         $group->getGroup()->removeUser($user);
@@ -483,7 +467,6 @@ class UserController extends Controller
             return $this->json();
         }
 
-
         return $this->redirectToRoute('users');
     }
 
@@ -498,7 +481,7 @@ class UserController extends Controller
         $line = array();
         $addedUsers = array();
         $validator = Validation::createValidator();
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
 
         $error=false;
 
@@ -619,9 +602,7 @@ class UserController extends Controller
             }
     }
 
-    /**
-     * @Route("/profile", name="user_profile")
-     */
+    #[Route(path: '/profile', name: 'user_profile')]
     public function profileAction(Request $request)
     {
         $user = $this->getUser();
@@ -633,7 +614,7 @@ class UserController extends Controller
         if ($userForm->isSubmitted() && $userForm->isValid()) {
             $user = $userForm->getData();
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($user);
             $entityManager->flush();
 
@@ -649,7 +630,7 @@ class UserController extends Controller
                 if ($newPassword == $confirmPassword) {
                     $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
 
-                    $entityManager = $this->getDoctrine()->getManager();
+                    $entityManager = $this->entityManager;
                     $entityManager->persist($user);
                     $entityManager->flush();
 
@@ -671,9 +652,7 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/profile/picture", name="post_user_profile_picture", methods="POST")
-     */
+    #[Route(path: '/profile/picture', name: 'post_user_profile_picture', methods: 'POST')]
     public function profilePictureAction(Request $request, ProfilePictureFileUploader $fileUploader)
     {
         $user = $this->getUser();
@@ -684,16 +663,14 @@ class UserController extends Controller
             $user->setProfilePictureFilename($pictureFileName);
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($user);
         $entityManager->flush();
 
         return $this->redirectToRoute('user_profile');
     }
 
-    /**
-     * @Route("/profile/picture", name="get_current_user_profile_picture", methods="GET")
-     */
+    #[Route(path: '/profile/picture', name: 'get_current_user_profile_picture', methods: 'GET')]
     public function getProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
@@ -739,8 +716,8 @@ class UserController extends Controller
 
     /**
      * This function is called by the page admin/users
-     * @Route("/users/{id<\d+>}/picture", name="get_user_profile_picture", methods="GET")
      */
+    #[Route(path: '/users/{id<\d+>}/picture', name: 'get_user_profile_picture', methods: 'GET')]
     public function getUserProfilePictureAction(
         Request $request,
         int $id,
@@ -790,9 +767,7 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * @Route("/profile/picture", name="delete_user_profile_picture", methods="DELETE")
-     */
+    #[Route(path: '/profile/picture', name: 'delete_user_profile_picture', methods: 'DELETE')]
     public function deleteProfilePictureAction(Request $request, KernelInterface $kernel)
     {
         $user = $this->getUser();
@@ -813,12 +788,11 @@ class UserController extends Controller
 
             return $response;
         }/* else {
-            
-    
+
          /*   $url=Gravatar::getGravatar($user->getEmail(), $size);
             try {
                 $picture = file_get_contents($url);
-    
+
                 return new Response($picture, 200, ['Content-Type' => 'image/jpeg']);
                 }
             catch (Exception $e){
@@ -828,19 +802,15 @@ class UserController extends Controller
         }*/
     }
 
-    /**
-     * @Rest\Get("/api/users/me", name="api_users_me")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.")
-     */
+    
+	#[Get('/api/users/me', name: 'api_users_me')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function meAction()
     {
         return $this->redirectToRoute('api_get_user', ['id' => $this->getUser()->getId()]);
     }
 
-    /** 
-     * @Route("/profile/vpn", name="get_user_vpn_config", methods="GET")
-     */
+    #[Route(path: '/profile/vpn', name: 'get_user_vpn_config', methods: 'GET')]
     public function vpnConfigurationGenerateAction(VPNConfiguratorGeneratorInterface $VPNConfigurationGenerator)
     {
         $user = $this->getUser();

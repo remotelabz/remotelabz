@@ -35,3 +35,7 @@ fos_rest:
 #            App\Exception\MyException: 403
 #        messages:
 #            App\Exception\MyException: Forbidden area.
+
+    body_converter:
+        enabled: false
+    routing_loader: false

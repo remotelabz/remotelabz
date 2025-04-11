@@ -11,71 +11,49 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\LabRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\LabRepository')]
 class Booking implements InstanciableInterface
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     private $name;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="createdLabs")
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     private $author;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
-    private $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
+    private string $uuid;
 
-    /**
-     * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     private $startDate;
 
-    /**
-     * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     private $endDate;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="bookings")
-     * @Serializer\Groups({"api_get_booking"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'bookings')]
+    #[Serializer\Groups(['api_get_booking'])]
     protected $user;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="bookings")
-     * @Serializer\Groups({"api_get_booking"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Group', inversedBy: 'bookings')]
+    #[Serializer\Groups(['api_get_booking'])]
     protected $_group;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="bookings")
-     * @Serializer\Groups({"api_get_booking"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'bookings')]
+    #[Serializer\Groups(['api_get_booking'])]
     protected $lab;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     protected $reservedFor = self::RESERVED_FOR_USER;
   
     public const RESERVED_FOR_USER  = 'user';
@@ -214,10 +192,9 @@ class Booking implements InstanciableInterface
      * Return the owner entity.
      *
      * @return InstancierInterface
-     * 
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_get_lab", "api_get_booking"})
      */
+    #[Serializer\VirtualProperty]
+    #[Serializer\Groups(['api_get_lab', 'api_get_booking'])]
     public function getOwner(): InstancierInterface
     { 
         return $this->isReservedForUser() ? $this->getUser() : $this->getGroup();

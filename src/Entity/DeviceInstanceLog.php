@@ -5,44 +5,30 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 
-/**
- * @ORM\Entity(repositoryClass=DeviceInstanceLogRepository::class)
- */
+#[ORM\Entity(repositoryClass: DeviceInstanceLogRepository::class)]
 class DeviceInstanceLog
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
 
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: 'text')]
     private $content;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
+    #[ORM\Column(type: 'datetime')]
     private $createdAt;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=DeviceInstance::class, inversedBy="logs", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(onDelete="CASCADE")
-     * @Serializer\Exclude
-     */
+    #[ORM\ManyToOne(targetEntity: DeviceInstance::class, inversedBy: 'logs', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    #[Serializer\Exclude]
     private $deviceInstance;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
+    #[ORM\Column(type: 'string', length: 255)]
     private $type;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $scope;
+    #[ORM\Column(type: 'string', length: 255)]
+    private string $scope;
 
     const SCOPE_PUBLIC = "public";
     const SCOPE_PRIVATE = "private";

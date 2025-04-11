@@ -11,18 +11,19 @@ use App\Repository\DeviceRepository;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Remotelabz\Message\Message\WorkerHandshakeMessage;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-class WorkerHandshakeMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+class WorkerHandshakeMessageHandler
 {
-    private $deviceInstanceRepository;
-    private $deviceRepository;
-    private $entityManager;
-    private $serializer;
-    private $logger;
-    private $bus;
+    private DeviceInstanceRepository $deviceInstanceRepository;
+    private DeviceRepository $deviceRepository;
+    private EntityManagerInterface $entityManager;
+    private SerializerInterface $serializer;
+    private LoggerInterface $logger;
+    private MessageBusInterface $bus;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,

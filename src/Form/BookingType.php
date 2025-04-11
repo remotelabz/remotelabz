@@ -25,7 +25,7 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;;
 
 
 class BookingType extends AbstractType implements DataMapperInterface
@@ -43,7 +43,7 @@ class BookingType extends AbstractType implements DataMapperInterface
         $this->security = $security;
     }
 
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $booking = $builder->getData();
         $user = $this->security->getUser();
@@ -589,7 +589,7 @@ class BookingType extends AbstractType implements DataMapperInterface
         }
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Booking::class,

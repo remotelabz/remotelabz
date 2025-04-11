@@ -10,21 +10,21 @@
 [theme=dark] {
     .page-link {
         background-color: theme-color("dark");
-        border-color: lighten(theme-color("dark-lighter"), 7.5%);
+        border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
     }
 
     .page-item {
         &.disabled {
             .page-link {
                 background-color: theme-color("dark-lighter");
-                border-color: lighten(theme-color("dark-lighter"), 2.55%);
+                border-color: lighten(map-get($theme-colors, "dark-lighter"), 2.55%);
             }
         }
 
         &.active {
             .page-link {
-                background-color: lighten(theme-color(primary), 30%);
-                border-color: lighten(theme-color(primary), 30%);
+                background-color: lighten(map-get($theme-colors, primary), 30%);
+                border-color: lighten(map-get($theme-colors, primary), 30%);
             }
         }
     }

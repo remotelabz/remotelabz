@@ -11,78 +11,54 @@ use Exception;
 use JMS\Serializer\Annotation as Serializer;
 use Remotelabz\NetworkBundle\Entity\Network;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\LabInstanceRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\LabInstanceRepository')]
 class LabInstance extends Instance
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance","sandbox", "api_get_user"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'sandbox', 'api_get_user'])]
     private $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab")
-     * @Serializer\Groups({"api_get_lab_instance", "worker","sandbox"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab')]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker', 'sandbox'])]
     protected $lab;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\DeviceInstance", mappedBy="labInstance", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance", "worker","sandbox"})
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\DeviceInstance', mappedBy: 'labInstance', cascade: ['persist', 'remove'])]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker', 'sandbox'])]
     private $deviceInstances;
 
-    /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $isInterconnected;
 
-    /**
-    * @ORM\Column(type="datetime")
-    * @Serializer\Groups({"api_get_lab_instance"})
-    */
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_get_lab_instance'])]
     private $createdAt;
 
-    /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $isInternetConnected;
 
-    /**
-     * @ORM\OneToOne(targetEntity="Remotelabz\NetworkBundle\Entity\Network", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\OneToOne(targetEntity: 'Remotelabz\NetworkBundle\Entity\Network', cascade: ['persist', 'remove'])]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $network;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $state;
 
-    /**
-     * @ORM\Column(type="datetime", nullable="true")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $timerEnd;
 
-    /**
-     * @ORM\Column(type="string", nullable="true")
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
     private $workerIp;
 
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\JitsiCall", cascade={"persist", "remove"})
-     * @Serializer\Groups({"api_get_lab_instance"})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\JitsiCall', cascade: ['persist', 'remove'])]
+    #[Serializer\Groups(['api_get_lab_instance'])]
     private $jitsiCall;
 
     const SCOPE_STANDALONE = 'standalone';
@@ -116,11 +92,10 @@ class LabInstance extends Instance
 
     /**
      * Generate a bridge name with instance UUID.
-     *
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_get_lab_instance", "worker"})
-     * @Serializer\XmlAttribute
      */
+    #[Serializer\VirtualProperty]
+    #[Serializer\Groups(['api_get_lab_instance', 'worker'])]
+    #[Serializer\XmlAttribute]
     public function getBridgeName(): string
     {
         return 'br-'.substr($this->uuid, 0, 8);

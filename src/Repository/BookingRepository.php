@@ -61,9 +61,9 @@ class BookingRepository extends ServiceEntityRepository
                     "lab_uuid" => $booking->getLab()->getUUid(),
                 ]);
             }
-            
+
         }
-        
+
 
         return $result;
 

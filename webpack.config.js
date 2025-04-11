@@ -81,7 +81,7 @@ Encore
     .autoProvidejQuery()
 
     .configureBabel(function (babelConfig) {
-        babelConfig.plugins.push('@babel/plugin-proposal-class-properties');
+        babelConfig.plugins.push('@babel/plugin-transform-class-properties');
         babelConfig.plugins.push('@babel/plugin-transform-runtime');
     })
 
@@ -92,7 +92,7 @@ Encore
         // optional target path, relative to the output dir
         to: 'images/[path][name].[ext]',
         // only copy files matching this pattern
-        //pattern: /\.(png|jpg|jpeg)$/
+        //pattern: /\.(png|jpg|jpeg|gif)$/
     })
     .copyFiles({
         from: './assets/svg',
@@ -545,3 +545,15 @@ defaultConfig.externals = [
 
 
 module.exports = defaultConfig;
+
+const TerserPlugin = require('terser-webpack-plugin');
+
+if (defaultConfig.optimization && defaultConfig.optimization.minimizer) {
+    const terser = defaultConfig.optimization.minimizer.find(
+        (plugin) => plugin instanceof TerserPlugin
+    );
+    if (terser) {
+        terser.options.exclude = /\.min\.js$/;
+    }
+}
+

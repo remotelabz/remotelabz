@@ -14,57 +14,50 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use App\Utils\Uuid;
 
-/**
- * @ORM\Table(uniqueConstraints={@ORM\UniqueConstraint(name="IDX_LAB_MAIL", columns={"lab_id", "mail"})})
- * @ORM\Entity
- * @UniqueEntity(fields={"mail","lab"})
- */
+#[UniqueEntity(fields: ['mail', 'lab'])]
+#[ORM\Table]
+#[ORM\UniqueConstraint(name: 'IDX_LAB_MAIL', columns: ['lab_id', 'mail'])]
+#[ORM\Entity]
 class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterface, InstancierInterface
 {
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
      *
      * @var int
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_invitation_codes', 'worker', 'api_get_lab_instance'])]
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=8, unique=true)
-     * @Serializer\Groups({"api_invitation_codes"})
      *
      * @var string
      */
+    #[ORM\Column(type: 'string', length: 8, unique: true)]
+    #[Serializer\Groups(['api_invitation_codes'])]
     private $code;
 
     /**
-     * @ORM\Column(type="string", length=180)
-     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
-     * @Assert\Email
-     * 
+     *
      * @var string
      */
+    #[Assert\Email]
+    #[ORM\Column(type: 'string', length: 180)]
+    #[Serializer\Groups(['api_invitation_codes', 'worker', 'api_get_lab_instance'])]
     private $mail;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Lab", inversedBy="invitationCodes")
-     * @Serializer\Groups({"api_invitation_codes"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'invitationCodes')]
+    #[Serializer\Groups(['api_invitation_codes'])]
     private $lab;
 
-    /**
-     * @ORM\Column(type="datetime")
-     * @Serializer\Groups({"api_invitation_codes"})
-     */
+    #[ORM\Column(type: 'datetime')]
+    #[Serializer\Groups(['api_invitation_codes'])]
     private $expiryDate;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_invitation_codes", "worker", "api_get_lab_instance"})
-     */
-    private $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_invitation_codes', 'worker', 'api_get_lab_instance'])]
+    private string $uuid;
 
     public function __construct()
     {

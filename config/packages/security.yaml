@@ -1,7 +1,6 @@
 parameters:
     enable_shibboleth: '%env(ENABLE_SHIBBOLETH)%'
 security:
-    enable_authenticator_manager: true
     password_hashers:
         App\Entity\User:
             algorithm: 'sodium'
@@ -64,6 +63,7 @@ security:
             security: false
 
         default:
+            provider: all_users
             custom_authenticators:
                 - App\Security\LoginFormAuthenticator
                 - App\Security\ShibbolethAuthenticator

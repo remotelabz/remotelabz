@@ -9,41 +9,28 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
-/**
- * @ORM\Entity(repositoryClass=PduOutletDeviceRepository::class)
- * @UniqueEntity(
- *     fields={"outlet", "pdu"},
- *     message="This outlet is already in use on that pdu."
- * )
- */
+#[UniqueEntity(fields: ['outlet', 'pdu'], message: 'This outlet is already in use on that pdu.')]
+#[ORM\Entity(repositoryClass: PduOutletDeviceRepository::class)]
 class PduOutletDevice
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Assert\GreaterThan(value=0)
-     * @Assert\LessThanOrEqual(value=42)
-     * @Serializer\Groups({"worker", "api_get_device"})
-     */
+    #[Assert\GreaterThan(value: 0)]
+    #[Assert\LessThanOrEqual(value: 42)]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['worker', 'api_get_device'])]
     private $outlet;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Pdu", inversedBy="outlets")
-     * @ORM\JoinColumn(name="pdu_id", referencedColumnName="id")
-     * @Serializer\Groups({"worker", "api_get_device"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Pdu', inversedBy: 'outlets')]
+    #[ORM\JoinColumn(name: 'pdu_id', referencedColumnName: 'id')]
+    #[Serializer\Groups(['worker', 'api_get_device'])]
     private $pdu;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Device", inversedBy="outlet")
-     * @ORM\JoinColumn(name="device_id", referencedColumnName="id")
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\Device', inversedBy: 'outlet')]
+    #[ORM\JoinColumn(name: 'device_id', referencedColumnName: 'id')]
     private $device;
     
 

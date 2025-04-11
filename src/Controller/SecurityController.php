@@ -23,7 +23,14 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
+use Doctrine\ORM\EntityManagerInterface;
 
 class SecurityController extends AbstractController
 {
@@ -56,7 +63,8 @@ class SecurityController extends AbstractController
         UserPasswordHasherInterface $passwordHasher,
         bool $maintenance,
         string $general_message = null,
-        string $contact_mail
+        string $contact_mail,
+        EntityManagerInterface $entityManager
     )
     {
         $this->urlGenerator = $urlGenerator;
@@ -66,11 +74,10 @@ class SecurityController extends AbstractController
         $this->maintenance = $maintenance;
         $this->general_message=$general_message;
         $this->contact_mail = $contact_mail;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/login", name="login", methods={"GET", "POST"})
-     */
+    #[Route(path: '/login', name: 'login', methods: ['GET', 'POST'])]
     public function login(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
     {
         // get the login error if there is one
@@ -93,28 +100,21 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/login/shibboleth", name="shibboleth_login", methods={"GET", "POST"})
-     */
+    #[Route(path: '/login/shibboleth', name: 'shibboleth_login', methods: ['GET', 'POST'])]
     public function shibboleth(UrlGeneratorInterface $urlGenerator): Response
     {
         return new RedirectResponse('/');
     }
 
-    /**
-     * @Route("/api/auth", name="api_login_check", methods={"POST"})
-     */
+    #[Route(path: '/api/auth', name: 'api_login_check', methods: ['POST'])]
     public function jsonLogin(Request $request)
     {
         // logic is managed by JWT
     }
 
-
-    /**
-     * @Route("/logout", name="logout")
-     * 
-     * @Rest\Get("/api/logout", name="api_logout")
-     */
+    
+	#[Get('/api/logout', name: 'api_logout')]
+    #[Route(path: '/logout', name: 'logout')]
     public function logout()
     {
         $response = new Response();
@@ -127,9 +127,7 @@ class SecurityController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/password/reset", name="reset_password", methods={"GET", "POST"})
-     */
+    #[Route(path: '/password/reset', name: 'reset_password', methods: ['GET', 'POST'])]
     public function resetPasswordAction(Request $request, MailerInterface $mailer): Response
     {
         $resetPasswordForm = $this->createFormBuilder([])
@@ -156,7 +154,7 @@ class SecurityController extends AbstractController
                     ->setCreatedAt(new DateTime())
                 ;
 
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->entityManager;
                 $entityManager->persist($passwordResetRequest);
                 $entityManager->flush();
 
@@ -193,9 +191,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/password/reset/new", name="new_password", methods={"GET", "POST"})
-     */
+    #[Route(path: '/password/reset/new', name: 'new_password', methods: ['GET', 'POST'])]
     public function newPasswordAction(Request $request)
     {
         $newPasswordForm = $this->createForm(NewPasswordType::class);
@@ -220,7 +216,7 @@ class SecurityController extends AbstractController
                     if ($newPassword == $confirmPassword) {
                         $user->setPassword($this->passwordHasher->hashPassword($user, $newPassword));
 
-                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager = $this->entityManager;
                         $entityManager->persist($user);
 
                         foreach ($this->passwordResetRequestRepository->findBy(['user' => $user]) as $request) {
@@ -246,9 +242,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/login/code", name="code_login", methods={"GET", "POST"})
-     */
+    #[Route(path: '/login/code', name: 'code_login', methods: ['GET', 'POST'])]
     public function Codelogin(AuthenticationUtils $authenticationUtils, KernelInterface $kernel): Response
     {
         return $this->render('security/code_login.html.twig');

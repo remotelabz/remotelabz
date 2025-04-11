@@ -95,7 +95,7 @@ class NetworkInterfaceRepository extends ServiceEntityRepository
         ;
 
         $networkInterface = $query->getResult();
-        
+
         return $networkInterface[0];
     }
 

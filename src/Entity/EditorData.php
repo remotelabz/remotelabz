@@ -6,42 +6,30 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\EditorDataRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\EditorDataRepository')]
 class EditorData
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups([])]
     private $id;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
-     * 
-     * @Assert\Type(type="int")
-     * @Assert\GreaterThanOrEqual(0)
-     */
-    private $x;
+    #[Assert\Type(type: 'int')]
+    #[Assert\GreaterThanOrEqual(0)]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
+    private int $x;
 
-    /**
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device", "api_get_lab_template", "export_lab"})
-     * 
-     * @Assert\Type(type="int")
-     * @Assert\GreaterThanOrEqual(0)
-     */
-    private $y;
+    #[Assert\Type(type: 'int')]
+    #[Assert\GreaterThanOrEqual(0)]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
+    private int $y;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Device", cascade={"persist"})
-     * @ORM\JoinColumn(name="device_id", referencedColumnName="id", onDelete="CASCADE")
-     * @Serializer\Groups({})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\Device', cascade: ['persist'])]
+    #[ORM\JoinColumn(name: 'device_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[Serializer\Groups([])]
     private $device;
 
     public function __construct()

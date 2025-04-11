@@ -9,7 +9,7 @@ use Doctrine\Persistence\ObjectManager;
 
 class HypervisorFixtures extends Fixture
 {
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $hypervisor = new Hypervisor();
 

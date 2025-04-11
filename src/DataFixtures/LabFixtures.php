@@ -8,25 +8,25 @@ use Doctrine\Persistence\ObjectManager;
 
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 
-class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface, ContainerAwareInterface
+class LabFixtures extends Fixture implements DependentFixtureInterface, FixtureGroupInterface
 {
-    /**
-     * The dependency injection container.
-     *
-     * @var ContainerInterface
-     */
-    protected $container;
+    
+    private KernelInterface $kernel;
 
-    public function load(ObjectManager $manager)
+    public function __construct(KernelInterface $kernel)
+    {
+        $this->kernel = $kernel;
+    }
+
+    public function load(ObjectManager $manager): void
     {
         /** @var KernelInterface $kernel */
-        $kernel = $this->container->get('kernel');
+        $environment = $this->kernel->getEnvironment();
    }
 
-    public function getDependencies()
+    public function getDependencies(): array
     {
         return [
             UserFixtures::class,

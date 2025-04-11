@@ -8,26 +8,31 @@ use App\Repository\FlavorRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class FlavorController extends Controller
 {
     public $flavorRepository;
 
-    public function __construct(FlavorRepository $flavorRepository)
+    public function __construct(FlavorRepository $flavorRepository, EntityManagerInterface $entityManager)
     {
         $this->flavorRepository = $flavorRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/flavors", name="flavors")
-     * 
-     * @Rest\Get("/api/flavors", name="api_flavors")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/flavors', name: 'api_flavors')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/flavors', name: 'flavors')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -50,11 +55,9 @@ class FlavorController extends Controller
         ]);
     }
 
-    /**
-     * @Rest\Get("/api/flavors/{id<\d+>}", name="api_get_flavor")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/flavors/{id<\d+>}', name: 'api_get_flavor')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function showAction(Request $request, int $id)
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
@@ -64,13 +67,10 @@ class FlavorController extends Controller
         return $this->json($flavor, 200, [], [$request->get("_route")]);
     }
 
-    /**
-     * @Route("/admin/flavors/new", name="new_flavor", methods={"GET", "POST"})
-     * 
-     * @Rest\Post("/api/flavors", name="api_new_flavor")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Post('/api/flavors', name: 'api_new_flavor')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/flavors/new', name: 'new_flavor', methods: ['GET', 'POST'])]
     public function newAction(Request $request)
     {
         $flavor = new Flavor();
@@ -86,7 +86,7 @@ class FlavorController extends Controller
             /** @var Flavor $flavor */
             $flavor = $flavorForm->getData();
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($flavor);
             $entityManager->flush();
 
@@ -108,13 +108,10 @@ class FlavorController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/flavors/{id<\d+>}/edit", name="edit_flavor")
-     * 
-     * @Rest\Put("/api/flavors/{id<\d+>}", name="api_edit_flavor")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Put('/api/flavors/{id<\d+>}', name: 'api_edit_flavor')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/flavors/{id<\d+>}/edit', name: 'edit_flavor')]
     public function editAction(Request $request, int $id)
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
@@ -133,7 +130,7 @@ class FlavorController extends Controller
             /** @var Flavor $flavor */
             $flavor = $flavorForm->getData();
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($flavor);
             $entityManager->flush();
 
@@ -156,20 +153,17 @@ class FlavorController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/flavors/{id<\d+>}", name="delete_flavor", methods="DELETE")
-     * 
-     * @Rest\Delete("/api/flavors/{id<\d+>}", name="api_delete_flavor")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Delete('/api/flavors/{id<\d+>}', name: 'api_delete_flavor')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/flavors/{id<\d+>}', name: 'delete_flavor', methods: 'DELETE')]
     public function deleteAction(Request $request, int $id)
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
             throw new NotFoundHttpException("Flavor " . $id . " does not exist.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($flavor);
         $entityManager->flush();
 

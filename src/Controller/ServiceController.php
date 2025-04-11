@@ -20,13 +20,20 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use GuzzleHttp\Client;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use App\Repository\ConfigWorkerRepository;
 use App\Entity\ConfigWorker;
 use App\Repository\LabInstanceRepository;
 use App\Entity\LabInstance;
 use App\Repository\DeviceInstanceRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 
 class ServiceController extends Controller
 {
@@ -50,7 +57,8 @@ class ServiceController extends Controller
         ProxyManager $proxyManager,
         ConfigWorkerRepository $configWorkerRepository,
         LabInstanceRepository $labInstanceRepository,
-        DeviceInstanceRepository $deviceInstanceRepository
+        DeviceInstanceRepository $deviceInstanceRepository,
+        EntityManagerInterface $entityManager
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
@@ -62,6 +70,7 @@ class ServiceController extends Controller
         $this->deviceInstanceRepository = $deviceInstanceRepository;
         $this->proxyManager = $proxyManager;
         $this->logger = $logger ?: new NullLogger();       
+        $this->entityManager = $entityManager;
     }
 
     /**
@@ -76,9 +85,7 @@ class ServiceController extends Controller
         ];
     }
 
-    /**
-     * @Route("/admin/services", name="services")
-     */
+    #[Route(path: '/admin/services', name: 'services')]
     public function index()
     {
         $serviceStatus = [];
@@ -124,7 +131,7 @@ class ServiceController extends Controller
                         //The service is not response
                         $worker = $this->configWorkerRepository->findBy(['IPv4' => $worker->getIPv4()]);
                         $worker[0]->setAvailable(0);
-                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager = $this->entityManager;
                         $entityManager->persist($worker[0]);
                         $entityManager->flush();
                     }
@@ -138,9 +145,7 @@ class ServiceController extends Controller
         ]); 
     }
 
-    /**
-     * @Route("/admin/service/start", name="start_service", methods="GET")
-     */
+    #[Route(path: '/admin/service/start', name: 'start_service', methods: 'GET')]
     public function startServiceAction(Request $request)
     {
         $requestedService = $request->query->get('service');     
@@ -152,7 +157,6 @@ class ServiceController extends Controller
         $remotelabzProxyApiPort=$this->getParameter('app.services.proxy.port.api');
 
         $this->logger->debug("Requested service: ".$requestedService);
-
 
         //try {
             foreach ($this->getRegistredServices() as $registeredService => $type) {
@@ -203,9 +207,7 @@ class ServiceController extends Controller
         return $this->redirectToRoute('services');
     }
 
-    /**
-     * @Route("/admin/service/stop", name="stop_service", methods="GET")
-     */
+    #[Route(path: '/admin/service/stop', name: 'stop_service', methods: 'GET')]
     public function stopServiceAction(Request $request)
     {
         $requestedService = $request->query->get('service');
@@ -259,9 +261,7 @@ class ServiceController extends Controller
 
         return $this->redirectToRoute('services');
     }
-         /**
-     * @Route("/admin/resources", name="resources", methods="GET")
-     */
+         #[Route(path: '/admin/resources', name: 'resources', methods: 'GET')]
     public function ResourceAction(Request $request,ManagerRegistry $doctrine)
     {
         $workers = $this->configWorkerRepository->findBy(['available' => true]);

@@ -201,7 +201,7 @@
 [theme="dark"] {
     .sidebar {
         background-color: theme-color("dark-lighter");
-        box-shadow: inset -1px 0 0 lighten(theme-color("dark"), 7.5%);
+        box-shadow: inset -1px 0 0 lighten(map-get($theme-colors, dark), 7.5%);
         color: theme-color("light");
 
         .context-header {
@@ -222,7 +222,7 @@
         .nav {
             .nav-item {
                 .toggle-sidebar {
-                    border-color: lighten(theme-color("dark"), 7.5%);
+                    border-color: lighten(map-get($theme-colors, dark), 7.5%);
                 }
                 
                 .nav-link {
@@ -237,15 +237,15 @@
                 }
 
                 &.active {
-                    box-shadow: inset 4px 0 0 lighten(theme-color(primary), 30%);
+                    box-shadow: inset 4px 0 0 lighten(map-get($theme-colors, primary), 30%);
 
                     > .nav-link {
                         .menu-title,
                         i,
                         svg {
                             font-weight: 600;
-                            color: lighten(theme-color(primary), 30%);
-                            fill: lighten(theme-color(primary), 30%);
+                            color: lighten(map-get($theme-colors, primary), 30%);
+                            fill: lighten(map-get($theme-colors, primary), 30%);
                         }
                     }
                 }

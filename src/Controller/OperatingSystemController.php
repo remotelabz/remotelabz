@@ -11,7 +11,13 @@ use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -20,11 +26,10 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
-
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class OperatingSystemController extends Controller
 {
@@ -41,7 +46,8 @@ class OperatingSystemController extends Controller
         OperatingSystemRepository $operatingSystemRepository,
         SerializerInterface $serializerInterface,
         MessageBusInterface $bus,
-        ConfigWorkerRepository $configWorkerRepository
+        ConfigWorkerRepository $configWorkerRepository,
+        EntityManagerInterface $entityManager
         )
     {
         $this->logger = $logger;
@@ -49,16 +55,13 @@ class OperatingSystemController extends Controller
         $this->serializer = $serializerInterface;
         $this->bus = $bus;
         $this->configWorkerRepository = $configWorkerRepository;
-
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/operating-systems", name="operating_systems")
-     * 
-     * @Rest\Get("/api/operating-systems", name="api_operating_systems")
-     * 
-     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
-     */
+    
+	#[Get('/api/operating-systems', name: 'api_operating_systems')]
+	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
+    #[Route(path: '/admin/operating-systems', name: 'operating_systems')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -81,13 +84,10 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/operating-systems/{id<\d+>}", name="show_operating_system")
-     * 
-     * @Rest\Get("/api/operating-systems/{id<\d+>}", name="api_get_operating_system")
-     * 
-     * @IsGranted("ROLE_TEACHER_EDITOR", message="Access denied.")
-     */
+    
+	#[Get('/api/operating-systems/{id<\d+>}', name: 'api_get_operating_system')]
+	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
+    #[Route(path: '/admin/operating-systems/{id<\d+>}', name: 'show_operating_system')]
     public function showAction(Request $request, int $id)
     {
         if (!$operatingSystem = $this->operatingSystemRepository->find($id)) {
@@ -105,9 +105,7 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/operating-systems/new", name="new_operating_system")
-     */
+    #[Route(path: '/admin/operating-systems/new', name: 'new_operating_system')]
     public function newAction(Request $request, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = new OperatingSystem();
@@ -133,13 +131,12 @@ class OperatingSystemController extends Controller
                             $imageFileName = $imageFileUploader->upload($imageFile);
                             $operatingSystem->setImageFilename($imageFileName);
                         }
-                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager = $this->entityManager;
                         $entityManager->persist($operatingSystem);
                         $entityManager->flush();
 
                         $this->addFlash('success', 'Operating system has been created.');
                         $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$operatingSystem->getImageFilename());
-
 
                     }
                 return $this->redirectToRoute('operating_systems');
@@ -151,9 +148,7 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/operating-systems/{id<\d+>}/edit", name="edit_operating_system", methods={"GET", "POST"})
-     */
+    #[Route(path: '/admin/operating-systems/{id<\d+>}/edit', name: 'edit_operating_system', methods: ['GET', 'POST'])]
     public function editAction(Request $request, int $id, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
@@ -187,12 +182,11 @@ class OperatingSystemController extends Controller
                 $operatingSystemEdited->setImageFilename($image_filename_modified);
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($operatingSystemEdited);
             $entityManager->flush();
 
             //Send a message to change the name of the image on the worker filesystem
-
 
             $new_name_os=array(
                 "old_name" => $operatingSystemFilename,
@@ -222,7 +216,6 @@ class OperatingSystemController extends Controller
 */
             /** @var UploadedFile|null $imageFile */
             //$imageFile = $operatingSystemForm['upload_image_filename']->getData();
-            
 
           /*  if (!is_null($imageUrl) && !is_null($upload_image_filename)) {
                 $this->logger->debug("url and file empty");
@@ -238,7 +231,6 @@ class OperatingSystemController extends Controller
                     else
                     $this->logger->debug("imageUrl not null");
 
-                    
                 if ($upload_image_filename && strtolower($upload_image_filename->getClientOriginalExtension()) != 'img') {
                     $this->logger->debug("imagefile not empty and not img");
                     $this->addFlash('danger', "Only .img files are accepted.");
@@ -265,7 +257,7 @@ class OperatingSystemController extends Controller
                         }
                     }
 
-                    $entityManager = $this->getDoctrine()->getManager();
+                    $entityManager = $this->entityManager;
                     $entityManager->persist($operatingSystemEdited);
                     $entityManager->flush();
 
@@ -284,21 +276,18 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/operating-systems/{id<\d+>}/delete", name="delete_operating_system", methods="GET")
-     */
+    #[Route(path: '/admin/operating-systems/{id<\d+>}/delete', name: 'delete_operating_system', methods: 'GET')]
     public function deleteAction($id)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
         $operatingSystemName=$operatingSystem->getImageFilename();
         $operatingSystemHypervisor=$operatingSystem->getHypervisor()->getName();
 
-
         if (null === $operatingSystem) {
             throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($operatingSystem);
 
         try {
@@ -337,9 +326,7 @@ class OperatingSystemController extends Controller
         }
     }
 
-
     public function cancel_renameos($names) {
-
 
     }
 

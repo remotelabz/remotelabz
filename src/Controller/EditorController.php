@@ -7,7 +7,13 @@ use App\Repository\LabInstanceRepository;
 use App\Entity\InvitationCode;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -32,10 +38,8 @@ class EditorController extends Controller
         $this->labInstanceRepository = $labInstanceRepository;
     }
 
-    /**
-     * @Rest\Post("/api/user/rights/lab/{id<\d+>}", name="api_user_rights")
-     * 
-     */
+    
+	#[Post('/api/user/rights/lab/{id<\d+>}', name: 'api_user_rights')]
     public function getToken(Request $request, int $id)
     {
         $response = new Response();

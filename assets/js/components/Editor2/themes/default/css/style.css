@@ -14,7 +14,7 @@ body.no-height{
 }
 
 blockquote {
-	background-image: url("/assets/images/diagonal.gif");
+/*	background-image: url("/assets/images/diagonal.gif");*/
 	border: 1px solid #d6d7d7;
 	border-left: 5px solid #0066aa;
 	font-family: 'Ubuntu Regular', Helvetica, Arial, sans-serif;
@@ -267,7 +267,7 @@ body.folders #main{
 }
 
 #toc {
-	background-image: url("/assets/images/diagonal.gif");
+	/*background-image: url("/assets/images/diagonal.gif");*/
     margin: 30px 30px 15px 50px;
     padding: 0px;
 }

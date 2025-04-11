@@ -11,7 +11,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Validator\Constraints\Email as EmailConstraint;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Psr\Log\LoggerInterface;
@@ -20,7 +26,8 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Security\Http\Attribute\Security;
+use Doctrine\ORM\EntityManagerInterface;
 
 class InvitationController extends Controller
 {
@@ -32,20 +39,20 @@ class InvitationController extends Controller
         ValidatorInterface $validator,
         LoggerInterface $logger,
         MailerInterface $mailer,
-        InvitationCodeRepository $invitationCodeRepository)
+        InvitationCodeRepository $invitationCodeRepository,
+        EntityManagerInterface $entityManager)
     {
         $this->labRepository = $labRepository;
         $this->validator = $validator;
         $this->logger = $logger;
         $this->mailer = $mailer;
         $this->invitationCodeRepository = $invitationCodeRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-    * @Route("/codes", name="codes")
-    * 
-    * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-    */
+    
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    #[Route(path: '/codes', name: 'codes')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -77,10 +84,7 @@ class InvitationController extends Controller
         ]);
     }
 
-    /**
-    * @Route("/labs/code/{id<\d+>}", name="create_code_lab")
-    * 
-    */
+    #[Route(path: '/labs/code/{id<\d+>}', name: 'create_code_lab')]
     public function createCodeAction(Request $request, int $id, SerializerInterface $serializer)
     {
 
@@ -116,10 +120,8 @@ class InvitationController extends Controller
         ]);
     }
 
-    /**
-    * @Rest\Get("api/codes/by-lab/{id<\d+>}", name="api_invitation_codes_by_lab")
-    * 
-    */
+    
+	#[Get('api/codes/by-lab/{id<\d+>}', name: 'api_invitation_codes_by_lab')]
     public function fetchByLab(Request $request, int $id)
     {
 
@@ -134,10 +136,8 @@ class InvitationController extends Controller
 
     }
 
-    /**
-    * @Rest\Get("api/expiredToken/instances", name="api_expired_invitation_codes_instances")
-    * 
-    */
+    
+	#[Get('api/expiredToken/instances', name: 'api_expired_invitation_codes_instances')]
     public function fetchExpiredTokenInstances(Request $request)
     {  
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
@@ -186,10 +186,8 @@ class InvitationController extends Controller
 
     }
 
-    /**
-    * @Rest\Get("api/expiredToken", name="api_expired_invitation_codes")
-    * 
-    */
+    
+	#[Get('api/expiredToken', name: 'api_expired_invitation_codes')]
     public function fetchExpiredToken(Request $request)
     {
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
@@ -204,10 +202,8 @@ class InvitationController extends Controller
 
     }
 
-    /**
-    * @Rest\Delete("api/codes/{uuid}", name="api_delete_invitation_codes", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-    * 
-    */
+    
+	#[Delete('api/codes/{uuid}', name: 'api_delete_invitation_codes', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function deleteCodeAction(Request $request, string $uuid)
     {
         $invitationCode = $this->invitationCodeRepository->findBy(['uuid'=>$uuid]);
@@ -216,7 +212,7 @@ class InvitationController extends Controller
             $this->denyAccessUnlessGranted(LabVoter::EDIT_CODE, $invitationCode[0]->getLab());
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $this->logger->info("Code for user ".$invitationCode[0]->getMail()." and lab ".$invitationCode[0]->getLab()->getName()." is deleted");
         $entityManager->remove($invitationCode[0]);
         $entityManager->flush();
@@ -297,7 +293,7 @@ class InvitationController extends Controller
     }
 
     public function registerCode($email, $lab, $code, $duration) {
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
 
         $invitationCode = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
         $date = new \DateTime();

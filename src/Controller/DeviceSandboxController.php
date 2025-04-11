@@ -15,7 +15,6 @@ use Psr\Log\LoggerInterface;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -37,9 +36,7 @@ class DeviceSandboxController extends Controller
         $this->deviceRepository = $deviceRepository;
     }
 
-    /**
-     * @Route("/admin/sandbox", name="sandbox")
-     */
+    #[Route(path: '/admin/sandbox', name: 'sandbox')]
      public function indexAction(Request $request, SerializerInterface $serializer)
     {
         $search = $request->query->get('search', '');
@@ -86,9 +83,7 @@ class DeviceSandboxController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/sandbox/{id<\d+>}", name="sandbox_view")
-     */
+    #[Route(path: '/admin/sandbox/{id<\d+>}', name: 'sandbox_view')]
     public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {
         //$this->logger->debug("Request in DeviceSandboxCtrl viewAction: ".$request);

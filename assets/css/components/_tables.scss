@@ -23,11 +23,11 @@
         color: theme-color("light");
 
         th, td {
-            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+            border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
 
         thead th {
-            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+            border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
     }
 }

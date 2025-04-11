@@ -12,30 +12,19 @@ use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\ProxyRedirectionRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\ProxyRedirectionRepository')]
 class ProxyRedirection
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
+    #[ORM\Column(type: 'string', length: 255)]
     private $path;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * 
-     * @Assert\Url(
-     *     relativeProtocol = true
-     * )
-     */
+    #[Assert\Url(relativeProtocol: true)]
+    #[ORM\Column(type: 'string', length: 255)]
     private $target;
 
 

@@ -28,7 +28,13 @@ use App\Security\ACL\LabVoter;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -41,8 +47,9 @@ use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-
+use Symfony\Component\Security\Http\Attribute\Security;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 class DeviceController extends Controller
 {
@@ -70,7 +77,9 @@ class DeviceController extends Controller
         HypervisorRepository $hypervisorRepository,
         OperatingSystemRepository $operatingSystemRepository,
         FlavorRepository $flavorRepository,
-        NetworkInterfaceRepository $networkInterfaceRepository)
+        NetworkInterfaceRepository $networkInterfaceRepository,
+        ManagerRegistry $managerRegistry,
+        EntityManagerInterface $entityManager)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -83,15 +92,14 @@ class DeviceController extends Controller
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
         $this->networkInterfaceRepository = $networkInterfaceRepository;
+        $this->managerRegistry = $managerRegistry;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/devices", name="devices")
-     * 
-     * @Rest\Get("/api/devices", name="api_devices")
-     * 
-     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
-     */
+    
+	#[Get('/api/devices', name: 'api_devices')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/devices', name: 'devices')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -157,12 +165,9 @@ class DeviceController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/devices", name="get_devices")
-     * 
-     * @Rest\Post("/api/labs/{id<\d+>}/nodes", name="api_get_devices")
-     * 
-     */
+    
+	#[Post('/api/labs/{id<\d+>}/nodes', name: 'api_get_devices')]
+    #[Route(path: '/devices', name: 'get_devices')]
     public function indexActionTest(Request $request, int $id)
     {
         $lab = $this->labRepository->findById($id);
@@ -285,13 +290,10 @@ class DeviceController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/admin/devices/{id<\d+>}", name="show_device", methods="GET")
-     * @Route("/devices/{id<\d+>}", name="show_device_public", methods="GET")
-     * 
-     * @Rest\Get("/api/devices/{id<\d+>}", name="api_get_device")
-     * 
-     */
+    
+	#[Get('/api/devices/{id<\d+>}', name: 'api_get_device')]
+    #[Route(path: '/admin/devices/{id<\d+>}', name: 'show_device', methods: 'GET')]
+    #[Route(path: '/devices/{id<\d+>}', name: 'show_device_public', methods: 'GET')]
     public function showAction(Request $request, int $id)
     {
         $device = $this->deviceRepository->find($id);
@@ -352,10 +354,8 @@ class DeviceController extends Controller
         return $this->render('device/view.html.twig', ['device' => $device]);
     }
 
-    /**
-     * 
-     * @Rest\Post("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_get_node")
-     */
+    
+	#[Post('/api/labs/{labId<\d+>}/nodes/{id<\d+>}', name: 'api_get_node')]
     public function showActionTest(Request $request, int $id, int $labId)
     {
         $lab = $this->labRepository->find($labId);
@@ -479,14 +479,11 @@ class DeviceController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/admin/devices/new", name="new_device")
-     * @Route("/admin/devices/physical/new", name="new_physical_device")
-     * 
-     * @Rest\Post("/api/devices", name="api_new_device")
-     * 
-     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/devices', name: 'api_new_device')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/devices/new', name: 'new_device')]
+    #[Route(path: '/admin/devices/physical/new', name: 'new_physical_device')]
     public function newAction(Request $request)
     {
         $device = new Device();
@@ -534,7 +531,7 @@ class DeviceController extends Controller
             $device->setIcon('Server_Linux.png');
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
             if ($device->getIsTemplate() == true) {
@@ -592,14 +589,11 @@ class DeviceController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/devices/new_lxc", name="new_lxc_device")
-     * 
-     * @Rest\Post("/api/devices/lxc_params", name="api_new_lxc_device_params")
-     * @Rest\Post("/api/devices/lxc", name="api_new_lxc_device")
-     * 
-     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/devices/lxc_params', name: 'api_new_lxc_device_params')]
+	#[Post('/api/devices/lxc', name: 'api_new_lxc_device')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/devices/new_lxc', name: 'new_lxc_device')]
     public function newLxcAction(Request $request, UrlGeneratorInterface $router)
     {
         $file=file_get_contents("https://images.linuxcontainers.org/images");
@@ -652,7 +646,7 @@ class DeviceController extends Controller
         if ($request->get("_route") == "api_new_lxc_device") {
             $data = json_decode($request->getContent(), true);
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $osName = ucfirst($data['os'])."-".$data['version'];
             if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
                 $newOs = new OperatingSystem();
@@ -672,11 +666,8 @@ class DeviceController extends Controller
         ]);
     }
 
-    /**
-     * 
-     * 
-     * @Rest\Post("/api/labs/{id<\d+>}/node", name="api_new_devices")
-     */
+    
+	#[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
     public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
@@ -845,15 +836,13 @@ class DeviceController extends Controller
             $this->logger->debug("template number: ".$templateNumber[1]);
             
                     $template = $this->deviceRepository->find($templateNumber[2]);
-                    if (!is_null($template)) {
-                        $device->setIp($template->getIp());
-                        $device->setPort($template->getPort());
-                    }
+                    $device->setIp($template->getIp());
+                    $device->setPort($template->getPort());
             }
         } else $this->logger->debug("Device has no template");
         
         
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $lab->addDevice($device);
         $entityManager->flush();
@@ -864,13 +853,10 @@ class DeviceController extends Controller
 
         return $device->getId();
     }
-    /**
-     * @Route("/admin/devices/{id<\d+>}/edit", name="edit_device")
-     * 
-     * @Rest\Put("/api/devices/{id<\d+>}", name="api_edit_device")
-     * 
-     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
-     */
+    
+	#[Put('/api/devices/{id<\d+>}', name: 'api_edit_device')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/devices/{id<\d+>}/edit', name: 'edit_device')]
     public function updateAction(Request $request, int $id)
     {
         if (!$device = $this->deviceRepository->find($id)) {
@@ -893,7 +879,7 @@ class DeviceController extends Controller
             $proto->removeDevice($device);
             //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
         }
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $entityManager->flush();
 
@@ -926,7 +912,6 @@ class DeviceController extends Controller
 
         if ($deviceForm->isSubmitted() && $deviceForm->isValid()) {
             /** @var Device $device */
-
 
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
@@ -1005,7 +990,7 @@ class DeviceController extends Controller
                 file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
 
@@ -1036,10 +1021,8 @@ class DeviceController extends Controller
         ]);
     }
 
-    /**
-     * 
-     * @Rest\Put("/api/labs/{labId<\d+>}/node/{id<\d+>}", name="api_edit_node")
-     */
+    
+	#[Put('/api/labs/{labId<\d+>}/node/{id<\d+>}', name: 'api_edit_node')]
     public function updateActionTest(Request $request, int $id, int $labId)
     {
         if (!$lab = $this->labRepository->find($labId)){
@@ -1090,7 +1073,7 @@ class DeviceController extends Controller
                 $proto->removeDevice($device);
                 //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
             }
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
 
@@ -1197,34 +1180,16 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
 
-       /* preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+        preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
         if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
             $template = $this->deviceRepository->find($templateNumber[0][0]);
             $device->setIp($template->getIp());
             $device->setPort($template->getPort());
-        }*/
-        if ($device->getTemplate() != null) {
-            
-            preg_match('/^(\d+)(.*)$/', $device->getTemplate(), $templateNumber);
-                        
-            $this->logger->debug("Device template: ".$device->getTemplate());
-            if ($templateNumber != null) {
-            $this->logger->debug("template number: ".$templateNumber[1]);
-            
-                    $template = $this->deviceRepository->find($templateNumber[2]);
-                    if (!is_null($template)) {
-                        $device->setIp($template->getIp());
-                        $device->setPort($template->getPort());
-                    }
-            }
-        } else $this->logger->debug("Device has no template");
+        }
 
-        
-
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $entityManager->flush();
-
 
         $this->logger->info("Device named" . $device->getName() . " modified");
 
@@ -1237,13 +1202,10 @@ class DeviceController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Put("/api/devices/{id<\d+>}/editor-data", name="api_edit_device_editor_data")
-     */
-    /*public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
+    /*    /*public function updateEditorDataAction(Request $request, int $id, EditorDataRepository $editorDataRepository)
     {*/
         /** @var EditorDataRepository $editorDataRepository */
-        /*$editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);
+        /*$editorDataRepository = $this->managerRegistry->getRepository(EditorData::class);
         $deviceEditorData = $editorDataRepository->findByDeviceId($id);
         //$device = $this->deviceRepository->find($id);
 
@@ -1270,7 +1232,7 @@ class DeviceController extends Controller
         $lab = $deviceEditorData->getDevice()->getLabs()[0];
         $lab->setLastUpdated(new \DateTime());
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($deviceEditorData);
         $entityManager->persist($lab);
         $entityManager->flush();
@@ -1278,9 +1240,8 @@ class DeviceController extends Controller
         return new JsonResponse();
     }*/
 
-    /**
-     * @Rest\Put("/api/labs/{id<\d+>}/editordata", name="api_edit_node_editor_data")
-     */
+    
+	#[Put('/api/labs/{id<\d+>}/editordata', name: 'api_edit_node_editor_data')]
     public function updateEditorDataActionTest(Request $request, int $id, EditorDataRepository $editorDataRepository)
     {
         $lab = $this->labRepository->findById($id);
@@ -1293,9 +1254,9 @@ class DeviceController extends Controller
         }
 
         /** @var EditorDataRepository $editorDataRepository */
-        $editorDataRepository = $this->getDoctrine()->getRepository(EditorData::class);
+        $editorDataRepository = $this->managerRegistry->getRepository(EditorData::class);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
 
         foreach ($editorDataList as $editorData) {
             $deviceEditorData = $editorDataRepository->findByDeviceId($editorData['id']);
@@ -1326,13 +1287,10 @@ class DeviceController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/admin/devices/{id<\d+>}/delete", name="delete_device", methods="GET")
-     * 
-     * @Rest\Delete("/api/devices/{id<\d+>}", name="api_delete_device")
-     * 
-     * @Security("is_granted('ROLE_TEACHER_EDITOR')", message="Access denied.")
-     */
+    
+	#[Delete('/api/devices/{id<\d+>}', name: 'api_delete_device')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'GET')]
     public function deleteAction(Request $request, int $id)
     {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -1345,7 +1303,6 @@ class DeviceController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json();
         }
-
 
         return $this->redirectToRoute('devices');
     }
@@ -1362,7 +1319,7 @@ class DeviceController extends Controller
             }
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             if ($labId != null) {
@@ -1380,7 +1337,7 @@ class DeviceController extends Controller
         try {
             $entityManager->remove($device);
             $entityManager->flush();        
-        //$this->addFlash('success', $device->getName() . ' has been deleted.');
+        $this->addFlash('success', $device->getName() . ' has been deleted.');
 
         }
         catch (ForeignKeyConstraintViolationException $e) {
@@ -1390,10 +1347,8 @@ class DeviceController extends Controller
         }
     }
 
-    /**
-     * 
-     * @Rest\Delete("/api/labs/{labId<\d+>}/nodes/{id<\d+>}", name="api_delete_device_test")
-     */
+    
+	#[Delete('/api/labs/{labId<\d+>}/nodes/{id<\d+>}', name: 'api_delete_device_test')]
     public function deleteActionTest(Request $request, int $id, int $labId)
     {
         if(!$lab = $this->labRepository->find($labId)) {
@@ -1435,7 +1390,7 @@ class DeviceController extends Controller
     }
 
     private function removeNetworkInterface(Device $device) {
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $networkInterface = $device->getNetworkInterfaces()->last();
         $entityManager->remove($networkInterface);
         //$networkInterface->removeNetworkSetting($networkInterface->getSetting());
@@ -1444,10 +1399,7 @@ class DeviceController extends Controller
         $entityManager->flush();
     }
 
-    /**
-     * @Rest\Get("/api/device/{id<\d+>}/networkinterface", name="api_get_device_interface")
-     */
-    /*public function getNetworkInterface(Request $request, int $id)
+    /*    /*public function getNetworkInterface(Request $request, int $id)
     {
         $device = $this->deviceRepository->find($id);
 
@@ -1467,9 +1419,8 @@ class DeviceController extends Controller
         
     }*/
 
-     /**
-     * @Rest\Get("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_get_device_interfaces")
-     */
+     
+	#[Get('/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces', name: 'api_get_device_interfaces')]
     public function getNetworkInterfaces(Request $request, int $labId, int $deviceId)
     {
         if (!$lab = $this->labRepository->find($labId)) {

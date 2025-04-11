@@ -71,14 +71,14 @@ class LabInstanceRepository extends ServiceEntityRepository
         $result=$this->findByUser($user);
         foreach ($user->getGroups() as $groupuser) {
             $group=$groupuser->getGroup();
-            
+
             foreach ($group->getLabInstances() as $labinstance) {
                 array_push($result,$labinstance);
             }
         }
         return $result;
     }
-    
+
     /* Return all instances started by the $user and groups for which
     the $user is the owner or the admin
     */
@@ -269,7 +269,7 @@ class LabInstanceRepository extends ServiceEntityRepository
                             }
                         }
                     }
-                    
+
                 }
             }
         }
@@ -306,7 +306,7 @@ class LabInstanceRepository extends ServiceEntityRepository
         }
         return $result;
     }
-    
+
     public function findByDefaultGroup()
     {
         $instances = $this->findAll();

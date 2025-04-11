@@ -13,31 +13,36 @@ use App\Repository\NetworkInterfaceRepository;
 use App\Repository\DeviceRepository;
 use App\Repository\LabRepository;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpFoundation\Response;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class NetworkInterfaceController extends Controller
 {
     public $networkInterfaceRepository;
 
-    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository, LabRepository $labRepository)
+    public function __construct(NetworkInterfaceRepository $networkInterfaceRepository, DeviceRepository $deviceRepository, LabRepository $labRepository, EntityManagerInterface $entityManager)
     {
         $this->networkInterfaceRepository = $networkInterfaceRepository;
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/network-interfaces", name="network_interfaces")
-     * 
-     * @Rest\Get("/api/network-interfaces", name="api_get_network_interfaces")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Get('/api/network-interfaces', name: 'api_get_network_interfaces')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/network-interfaces', name: 'network_interfaces')]
     public function indexAction(Request $request)
     {
         if ('json' === $request->getRequestFormat()) {
@@ -63,7 +68,7 @@ class NetworkInterfaceController extends Controller
         if ($networkInterfaceForm->isSubmitted() && $networkInterfaceForm->isValid()) {
             $networkInterface = $networkInterfaceForm->getData();
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($networkInterface);
             $entityManager->flush();
 
@@ -75,11 +80,7 @@ class NetworkInterfaceController extends Controller
         ]);
     }
 
-
-    /**
-     * @Rest\Get("/api/network-interfaces/{id<\d+>}", name="api_get_network_interface")
-     */
-    /*public function showAction(Request $request, int $id)
+    /*    /*public function showAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id))
             throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
@@ -87,11 +88,7 @@ class NetworkInterfaceController extends Controller
         return $this->json($networkInterface, 200, [], [$request->get('_route')]);
     }*/
 
-    /**
-     * @Route("/admin/network-interfaces/new", name="new_network_interface", methods={"GET", "POST"})
-     * 
-     * @Rest\Post("/api/network-interfaces", name="api_new_network_interface")
-     */
+    
     /*public function newAction(Request $request)
     {
         $networkInterface = new NetworkInterface();
@@ -111,7 +108,7 @@ class NetworkInterfaceController extends Controller
                 ->setName($networkInterface->getName() . '_settings');
             $networkInterface->setSettings($networkSettings);
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($networkInterface);
             $entityManager->flush();
 
@@ -133,9 +130,8 @@ class NetworkInterfaceController extends Controller
         ]);
     }*/
 
-     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces", name="api_update_device_interfaces")
-     */
+     
+	#[Put('/api/labs/{labId<\d+>}/nodes/{deviceId<\d+>}/interfaces', name: 'api_update_device_interfaces')]
     public function updateNetworkInterface(Request $request, int $labId, int $deviceId)
     {
         $lab = $this->labRepository->find($labId);
@@ -172,7 +168,7 @@ class NetworkInterfaceController extends Controller
         if (isset($data["connector_label"]) && $data["connector_label"]!== "") {
             $networkInterface->setConnectorLabel($data["connector_label"]);
         }
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $entityManager->flush();
 
@@ -187,9 +183,8 @@ class NetworkInterfaceController extends Controller
 
     }
 
-    /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}/edit", name="api_edit_connection")
-     */
+    
+	#[Put('/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}/edit', name: 'api_edit_connection')]
     public function editConnection(Request $request, int $labId, int $connection)
     {
         $lab = $this->labRepository->find($labId);
@@ -197,12 +192,12 @@ class NetworkInterfaceController extends Controller
 
         $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
         $data = json_decode($request->getContent(), true);
-        
-        $entityManager = $this->getDoctrine()->getManager();
+
+        $entityManager = $this->entityManager;
         foreach($networkInterfaces as $networkInterface) {
             $networkInterface->setConnectorType($data["connector"]);
             $networkInterface->setConnectorLabel($data["connector_label"]);
-            
+
         }
         $entityManager->flush();
 
@@ -216,17 +211,16 @@ class NetworkInterfaceController extends Controller
 
     }
 
-    /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}", name="api_remove_connection")
-     */
+    
+	#[Put('/api/labs/{labId<\d+>}/interfaces/{connection<\d+>}', name: 'api_remove_connection')]
     public function removeConnection(int $labId, int $connection)
     {
         $lab = $this->labRepository->find($labId);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_INTERFACE, $lab);
 
         $networkInterfaces = $this->networkInterfaceRepository->findByLabAndConnection($labId, $connection);
-        
-        $entityManager = $this->getDoctrine()->getManager();
+
+        $entityManager = $this->entityManager;
         foreach($networkInterfaces as $networkInterface) {
             $device = $networkInterface->getDevice();
             $device->removeNetworkInterface($networkInterface);
@@ -243,10 +237,9 @@ class NetworkInterfaceController extends Controller
         return $response;
 
     }
+
     
-    /**
-     * @Rest\Get("/api/labs/{labId<\d+>}/vlans", name="api_get_vlan")
-     */
+	#[Get('/api/labs/{labId<\d+>}/vlans', name: 'api_get_vlan')]
     public function getVlan(Request $request, int $labId)
     {
         $lab = $this->labRepository->find($labId);
@@ -274,9 +267,8 @@ class NetworkInterfaceController extends Controller
 
     }
 
-    /**
-     * @Rest\Get("/api/labs/{labId<\d+>}/connections", name="api_get_connection")
-     */
+    
+	#[Get('/api/labs/{labId<\d+>}/connections', name: 'api_get_connection')]
     public function getConnection(Request $request, int $labId)
     {
         $lab = $this->labRepository->find($labId);
@@ -305,9 +297,8 @@ class NetworkInterfaceController extends Controller
 
     }
 
-    /**
-     * @Rest\Get("/api/labs/{labId<\d+>}/topology", name="api_get_topology")
-     */
+    
+	#[Get('/api/labs/{labId<\d+>}/topology', name: 'api_get_topology')]
     public function getTopology(Request $request, int $labId)
     {
         $lab = $this->labRepository->find($labId);
@@ -367,7 +358,7 @@ class NetworkInterfaceController extends Controller
                     $connectorLabel = $connectorsLabel[0];
                 }
             }
-            
+
             /*array_push($data, [
                 "type"=>"ethernet",
                 "source"=> "node".explode(",", $line["devices"])[0],
@@ -408,11 +399,7 @@ class NetworkInterfaceController extends Controller
 
     }
 
-    /**
-     * @Route("/admin/network-interfaces/{id<\d+>}/edit", name="edit_network_interface", methods={"GET", "POST"})
-     * 
-     * @Rest\Put("/api/network-interfaces/{id<\d+>}", name="api_edit_network_interface")
-     */
+    
     /*public function editAction(Request $request, int $id)
     {
         $networkInterface = $this->networkInterfaceRepository->find($id);
@@ -436,7 +423,7 @@ class NetworkInterfaceController extends Controller
             $networkSettings
                 ->setName($networkInterface->getName() . '_settings');
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($networkInterface);
             $entityManager->flush();
 
@@ -459,18 +446,13 @@ class NetworkInterfaceController extends Controller
         ]);
     }*/
 
-    /**
-     * @Route("/admin/network-interfaces/{id<\d+>}/delete", name="delete_network_interface", methods="GET")
-     * 
-     * @Rest\Delete("/api/network-interfaces/{id<\d+>}", name="api_delete_network_interface")
-     */
-    /*public function deleteAction(Request $request, int $id)
+    /*    /*public function deleteAction(Request $request, int $id)
     {
         if (!$networkInterface = $this->networkInterfaceRepository->find($id)) {
             throw new NotFoundHttpException("Network interface " . $id . " does not exist.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($networkInterface);
         $entityManager->flush();
 

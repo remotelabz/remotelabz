@@ -21,7 +21,13 @@ use App\Repository\HypervisorRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -29,7 +35,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Response;
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class StartupConfigController extends Controller
 {
@@ -51,7 +57,8 @@ class StartupConfigController extends Controller
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         HypervisorRepository $hypervisorRepository,
         OperatingSystemRepository $operatingSystemRepository,
-        FlavorRepository $flavorRepository)
+        FlavorRepository $flavorRepository,
+        EntityManagerInterface $entityManager)
     {
         $this->deviceRepository = $deviceRepository;
         $this->labRepository = $labRepository;
@@ -61,14 +68,10 @@ class StartupConfigController extends Controller
         $this->flavorRepository = $flavorRepository;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->hypervisorRepository = $hypervisorRepository;
+        $this->entityManager = $entityManager;
     }
 
-
-    /**
-     * 
-     * @Rest\Get("/api/labs/{id<\d+>}/configs", name="api_get_configs")
-     * 
-     */
+    
     /*public function indexAction(Request $request, int $id)
     {
         $devices = $this->deviceRepository->findByLab($id);
@@ -98,11 +101,7 @@ class StartupConfigController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/{labId<\d+>}/configs/{id<\d+>}", name="api_show_config")
-     * 
-     */
+    
     /*public function showAction(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
@@ -123,10 +122,7 @@ class StartupConfigController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Put("/api/labs/{labId<\d+>}/configs/{id<\d+>}", name="api_edit_config")
-     */
+    
     /*public function updateAction(Request $request, int $id, int $labId)
     {
         $device = $this->deviceRepository->find($id);
@@ -135,9 +131,8 @@ class StartupConfigController extends Controller
 
         $device->setConfigData($data['data']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->flush();
-
 
         $this->logger->info("Device named" . $device->getName() . " modified");
 

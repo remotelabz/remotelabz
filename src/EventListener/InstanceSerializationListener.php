@@ -11,7 +11,7 @@ class InstanceSerializationListener implements JMSEventSubscriberInterface
 {
     /** @var UrlGeneratorInterface */
     private $router;
-    
+
     public function __construct(
         UrlGeneratorInterface $router
     ) {

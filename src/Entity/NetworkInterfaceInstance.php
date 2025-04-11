@@ -8,41 +8,27 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceInstanceRepository")
- * @UniqueEntity(
- *     fields="macAddress",
- *     errorPath="macAddress",
- *     message="This MAC address is already used by another interface."
- * )
- */
+#[UniqueEntity(fields: 'macAddress', errorPath: 'macAddress', message: 'This MAC address is already used by another interface.')]
+#[ORM\Entity(repositoryClass: 'App\Repository\NetworkInterfaceInstanceRepository')]
 class NetworkInterfaceInstance extends Instance
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_device_instance", "api_get_lab_instance"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_device_instance', 'api_get_lab_instance'])]
     private $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\NetworkInterface")
-     * @Serializer\Groups({"api_get_device_instance", "worker", "api_get_lab_instance"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\NetworkInterface')]
+    #[Serializer\Groups(['api_get_device_instance', 'worker', 'api_get_lab_instance'])]
     protected $networkInterface;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\DeviceInstance", inversedBy="networkInterfaceInstances", cascade={"persist"})
-     * @ORM\JoinColumn(onDelete="CASCADE")
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\DeviceInstance', inversedBy: 'networkInterfaceInstances', cascade: ['persist'])]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private $deviceInstance;
 
-    /**
-     * @ORM\Column(type="string", length=17)
-     * @Serializer\Groups({"api_get_device_instance", "worker", "api_get_lab_instance"})
-     * @Assert\Regex("/^[a-fA-F0-9:]{17}$/")
-     */
+    #[Assert\Regex('/^[a-fA-F0-9:]{17}$/')]
+    #[ORM\Column(type: 'string', length: 17)]
+    #[Serializer\Groups(['api_get_device_instance', 'worker', 'api_get_lab_instance'])]
     private $macAddress;
 
     public function __construct()

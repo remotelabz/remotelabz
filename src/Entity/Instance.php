@@ -9,37 +9,25 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
-/**
- * @ORM\MappedSuperclass
- */
+#[ORM\MappedSuperclass]
 class Instance implements InstanciableInterface
 {
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "worker"})
-     */
-    protected $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker'])]
+    protected string $uuid;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "worker"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'worker'])]
     protected $ownedBy = self::OWNED_BY_USER;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="labInstances")
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'labInstances')]
     protected $user;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Group", inversedBy="labInstances")
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Group', inversedBy: 'labInstances')]
     protected $_group;
 
-     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\InvitationCode", inversedBy="labInstances")
-     */
+     #[ORM\ManyToOne(targetEntity: 'App\Entity\InvitationCode', inversedBy: 'labInstances')]
     protected $guest;
 
     public const OWNED_BY_USER  = 'user';
@@ -109,10 +97,9 @@ class Instance implements InstanciableInterface
      * Return the owner entity.
      *
      * @return InstancierInterface
-     * 
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"api_get_lab_instance", "api_get_device_instance", "api_get_user", "api_get_instance_by_uuid", "worker"})
      */
+    #[Serializer\VirtualProperty]
+    #[Serializer\Groups(['api_get_lab_instance', 'api_get_device_instance', 'api_get_user', 'api_get_instance_by_uuid', 'worker'])]
     public function getOwner(): InstancierInterface
     { 
         if ($this->isOwnedByUser()){

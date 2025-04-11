@@ -12,7 +12,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 {
     public const COUNT = 5;
 
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
 
         $operatingSystem = new OperatingSystem();
@@ -20,7 +20,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Alpine3.10')
             ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.img')
-            ->setHypervisor($this->getReference('qemu'))
+            ->setHypervisor($this->getReference('qemu', Hypervisor::class))
         ;
 
         $manager->persist($operatingSystem);
@@ -58,7 +58,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Migration')
             ->setImageFilename('Migration')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
         ;
         $manager->persist($operatingSystem);
         $this->setReference('MigrationOS', $operatingSystem);
@@ -67,7 +67,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Ubuntu24.04SrvLTS')
             ->setImageFilename('Ubuntu24LTS')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
         ;
         $manager->persist($operatingSystem);
         $this->setReference('Ubuntu24LTSOS', $operatingSystem);
@@ -76,7 +76,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Debian11.4')
             ->setImageFilename('Debian')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
         ;
         $manager->persist($operatingSystem);
         $this->setReference('DebianOS', $operatingSystem);
@@ -86,7 +86,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Alpine-stable')
             ->setImageFilename('Alpine-stable')
-            ->setHypervisor($this->getReference('lxc'))
+            ->setHypervisor($this->getReference('lxc', Hypervisor::class))
         ;
         $manager->persist($operatingSystem);
         $this->setReference('Alpine-stableOS', $operatingSystem);
@@ -95,7 +95,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem
             ->setName('Natif')
             ->setImageFilename('Natif')
-            ->setHypervisor($this->getReference('natif'))
+            ->setHypervisor($this->getReference('natif', Hypervisor::class))
         ;
         $manager->persist($operatingSystem);
         $this->setReference('Natif', $operatingSystem);
@@ -103,7 +103,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $manager->flush();
     }
-    public function getDependencies()
+    public function getDependencies(): array
     {
         return [
             HypervisorFixtures::class

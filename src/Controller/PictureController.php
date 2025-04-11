@@ -28,7 +28,13 @@ use App\Service\Lab\LabImporter;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -44,7 +50,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class PictureController extends Controller
 {
@@ -64,7 +70,8 @@ class PictureController extends Controller
         LoggerInterface $logger,
         SerializerInterface $serializerInterface,
         LabRepository $labRepository,
-        PictureRepository $pictureRepository)
+        PictureRepository $pictureRepository,
+        EntityManagerInterface $entityManager)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -72,13 +79,10 @@ class PictureController extends Controller
         $this->logger = $logger;
         $this->labRepository = $labRepository;
         $this->pictureRepository = $pictureRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/{id<\d+>}/pictures", name="api_get_pictures")
-     * 
-     */
+    
     /*public function indexAction(int $id, Request $request, UserRepository $userRepository)
     {
         $pictures = $this->pictureRepository->findByLab($id);
@@ -104,10 +108,7 @@ class PictureController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_get_picture")
-     */
+    
     /*public function showAction(
         int $labId,
         int $id,
@@ -136,7 +137,7 @@ class PictureController extends Controller
                 "height"=> $picture->getHeight(),
                 "map" => $picture->getMap()
             ];
-           
+
             $response->setContent(json_encode([
                 'code' => 200,
                 'status'=>'success',
@@ -147,10 +148,7 @@ class PictureController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/{labId<\d+>}/pictures/{id<\d+>}/data", name="api_get_picture_data")
-     */
+    
     /*public function getPictureData(
         int $labId,
         int $id,
@@ -187,10 +185,7 @@ class PictureController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Post("/api/labs/{id<\d+>}/pictures", name="api_new_picture")
-     */
+    
     /*public function newAction(Request $request, int $id)
     {
         $picture = new Picture();
@@ -253,11 +248,9 @@ class PictureController extends Controller
         $picture->setType($data['type']);
         file_put_contents($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$id.'-'.$data['name'].'.'.$type, $data['data']);
 
-
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($picture);
         $entityManager->flush();
-
 
         $this->logger->info("Picture named" . $picture->getName() . " created");
 
@@ -268,7 +261,7 @@ class PictureController extends Controller
        /* return $this->redirectToRoute('edit_lab', [
             'id' => $lab->getId()
         ]);*/
-        
+
         /*$response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
@@ -276,10 +269,7 @@ class PictureController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Put("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_update_picture")
-     */
+    
     /*public function updateAction(Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
@@ -302,13 +292,12 @@ class PictureController extends Controller
         }
         $picture->setMap($data['map']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($picture);
         $entityManager->flush();
 
-
         $this->logger->info("Picture named" . $picture->getName() . " modified");
-        
+
         $response->setContent(json_encode([
             'code' => 201,
             'status'=> 'success',
@@ -316,14 +305,11 @@ class PictureController extends Controller
         return $response;
     }*/
 
-    /**
-     * 
-     * @Rest\Delete("/api/labs/{labId<\d+>}/pictures/{id<\d+>}", name="api_delete_picture")
-     */
+    
     /*public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, PictureRepository $pictureRepository)
     {
         $picture = $pictureRepository->findByIdAndLab($id, $labId);
-        
+
         $fileName = $picture->getName() . "." . explode('image/', $picture->getType())[1];
         unlink($this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures/lab'.$labId.'-'.$fileName);
 

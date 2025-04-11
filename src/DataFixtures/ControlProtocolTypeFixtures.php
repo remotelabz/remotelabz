@@ -8,7 +8,7 @@ use Doctrine\Persistence\ObjectManager;
 
 class ControlProtocolTypeFixtures extends Fixture
 {
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
 
         $controlProtocolType = new ControlProtocolType();

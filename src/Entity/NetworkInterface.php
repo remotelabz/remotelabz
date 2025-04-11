@@ -9,81 +9,57 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\NetworkInterfaceRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\NetworkInterfaceRepository')]
 class NetworkInterface implements InstanciableInterface
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device_instance","api_get_device", "api_get_lab_instance"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device_instance', 'api_get_device', 'api_get_lab_instance'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255, options={"default": "tap"})
-     * @Serializer\Groups({"api_get_network_interface", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'string', length: 255, options: ['default' => 'tap'])]
+    #[Serializer\Groups(['api_get_network_interface', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $type = 'tap';
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $name;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\NetworkSettings", cascade={"persist", "remove"})
-     */
+    #[ORM\OneToOne(targetEntity: 'App\Entity\NetworkSettings', cascade: ['persist', 'remove'])]
     private $settings;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Device", inversedBy="networkInterfaces", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"api_get_network_interface"})
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Device', inversedBy: 'networkInterfaces', cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Serializer\Groups(['api_get_network_interface'])]
     private $device;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device","worker"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'worker'])]
     private $uuid;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $vlan;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $connection;
 
-     /**
-     * @ORM\Column(type="string", nullable=true, options={"default": null})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     * @Assert\Choice({"Straight","Bezier", "Flowchart"})
-     */
+     #[Assert\Choice(['Straight', 'Bezier', 'Flowchart'])]
+    #[ORM\Column(type: 'string', nullable: true, options: ['default' => null])]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $connectorType;
 
-    /**
-     * @ORM\Column(type="string", nullable=true, options={"default": null})
-     * @Serializer\Groups({"api_get_network_interface", "api_get_device", "export_lab", "worker", "api_get_lab_template"})
-     */
+    #[ORM\Column(type: 'string', nullable: true, options: ['default' => null])]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $connectorLabel;
 
-    /**
-     * @ORM\Column(type="boolean", options={"default": 0})
-     * @Serializer\Groups({"api_get_network_interface"})
-     * @Assert\NotNull
-     * @Assert\Type(type="boolean")
-     */
-    private $isTemplate;
+    #[Assert\NotNull]
+    #[Assert\Type(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    #[Serializer\Groups(['api_get_network_interface'])]
+    private bool $isTemplate;
 
     const TYPE_TAP = 'tap';
     const TYPE_OVS = 'ovs';
@@ -136,10 +112,8 @@ class NetworkInterface implements InstanciableInterface
         return $this;
     }
 
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({})
-     */
+    #[Serializer\VirtualProperty]
+    #[Serializer\Groups([])]
     public function getAccessType(): ?string
     {
         return $this->settings->getProtocol();

@@ -78,8 +78,6 @@
             
         {#TODO: #666 Create a component for this element to manage all the instance in React and avoid to refresh the page when we have to delete an instance or to detect a new instance  
         <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">#}
-        {#TODO: #666 Create a component for this element to manage all the instance in React and avoid to refresh the page when we have to delete an instance or to detect a new instance  
-        <div class="wrapper align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">#}
             {# <div class="float-right">
                 {% if not instance.state == 'started' %}
                 <a href="{{ path('start_lab', {'id': instance.lab.id}) }}" class="btn btn-success" role="button" title="Start lab" data-toggle="tooltip" data-placement="top">
@@ -94,7 +92,6 @@
                 </a>
                 {% endif %}
             </div> 
-            </div> 
 
             <div>
                 <div>
@@ -103,16 +100,11 @@
                     Lab&nbsp; {{- element.instance.lab.name -}}&nbsp;started by
                     {% if not element is null %}#}
                     {# In some cases, one instance can stay up but it is empty. It's an issue to solve
-                    {% if not element is null %}#}
-                    {# In some cases, one instance can stay up but it is empty. It's an issue to solve
                         {% if element.instance.isOwnedByUser() %}
                             user {{ element.instance.user.name }}
                         {% else %}
                             group {{ element.instance.group.name }}
                         {% endif %}
-                    {% endif %}<br/> #}
-                    {# UUID:&nbsp; {{- element.instance.uuid -}} 
-                </div>#}
                     {% endif %}<br/> #}
                     {# UUID:&nbsp; {{- element.instance.uuid -}} 
                 </div>#}
@@ -126,7 +118,6 @@
                     {% endif %}
                 </span> #}
                 
-                {#<div class="col">{{ react_component('AllInstancesManager', {'props': element.props}) }}</div>
                 {#<div class="col">{{ react_component('AllInstancesManager', {'props': element.props}) }}</div>
             </div>
         </div>

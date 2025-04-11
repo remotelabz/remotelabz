@@ -188,10 +188,7 @@ class WorkerManager
         $memoryScore = ($maxMemory - $memory) / $maxMemory; // Le plus bas sera pénalisant
         $diskScore = ($maxDisk - $disk) / $maxDisk; // Idem pour le disque
         $cpuScore = ($maxCpu - $cpu) / $maxCpu; // Idem pour le CPU
-        if (is_numeric($lxcfs)) 
-            $lxcfsScore = ($maxlxcfs - $lxcfs) / $maxlxcfs;
-        else 
-            $lxcfsScore = 180;
+        $lxcfsScore = ($maxlxcfs - $lxcfs) / $maxlxcfs;
 
         // Pondérer les scores pour obtenir un score final. On peut donner plus de poids à un paramètre en particulier si besoin.
         $finalScore = ($memoryScore * 0.3) + ($diskScore * 0.1) + ($cpuScore * 0.3) + ($lxcfsScore * 0.3);

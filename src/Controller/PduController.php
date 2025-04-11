@@ -10,27 +10,32 @@ use App\Repository\PduRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class PduController extends Controller
 {
     public $pduRepository;
 
-    public function __construct(PduRepository $pduRepository)
+    public function __construct(PduRepository $pduRepository, EntityManagerInterface $entityManager)
     {
         $this->pduRepository = $pduRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/pdus", name="pdus")
-     * 
-     * @Rest\Get("/api/pdus", name="api_pdus")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/pdus', name: 'api_pdus')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdus', name: 'pdus')]
     public function indexAction(Request $request)
     {
         $pdus = $this->pduRepository->findAll();
@@ -44,13 +49,10 @@ class PduController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/pdu/{id<\d+>}", name="show_pdu")
-     * 
-     * @Rest\Get("/api/pdu/{id<\d+>}", name="api_show_pdu")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/pdu/{id<\d+>}', name: 'api_show_pdu')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdu/{id<\d+>}', name: 'show_pdu')]
     public function showAction(Request $request, int $id)
     {
         if (!$pdu = $this->pduRepository->find($id)) {
@@ -66,13 +68,10 @@ class PduController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/pdus/new", name="new_pdu", methods={"GET", "POST"})
-     * 
-     * @Rest\Post("/api/pdus", name="api_new_pdu")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Post('/api/pdus', name: 'api_new_pdu')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdus/new', name: 'new_pdu', methods: ['GET', 'POST'])]
     public function newAction(Request $request)
     {
         $pdu = new Pdu();
@@ -88,7 +87,7 @@ class PduController extends Controller
             /** @var Pdu $pdu */
             $pdu = $pduForm->getData();
             $numberOfOutlets = $pdu->getNumberOfOutlets();
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($pdu);
             $entityManager->flush();
             for ($i =1; $i<=$numberOfOutlets; $i++) {
@@ -117,13 +116,10 @@ class PduController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/pdus/{id<\d+>}/outlet", name="add_pdu_outlet")
-     * 
-     * @Rest\Put("/api/pdus/{id<\d+>}/outlet", name="api_add_pdu_outlet")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Put('/api/pdus/{id<\d+>}/outlet', name: 'api_add_pdu_outlet')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdus/{id<\d+>}/outlet', name: 'add_pdu_outlet')]
     public function addPduOutlet(Request $request, int $id)
     {   
         if (!$pdu = $this->pduRepository->find($id)) {
@@ -158,7 +154,7 @@ class PduController extends Controller
                     $pduOutlet->setDevice(null);
                     $this->addFlash('warning', 'The device is already connected to another outlet');
                 }
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->entityManager;
                 $pduOutlet->setPdu($pdu);
                 $pduOutlet->setOutlet($outletNumber);
                 $entityManager->persist($pduOutlet);
@@ -175,13 +171,10 @@ class PduController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/pdus/{id<\d+>}/edit", name="edit_pdu")
-     * 
-     * @Rest\Put("/api/pdus/{id<\d+>}", name="api_edit_pdu")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Put('/api/pdus/{id<\d+>}', name: 'api_edit_pdu')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdus/{id<\d+>}/edit', name: 'edit_pdu')]
     public function editAction(Request $request, int $id)
     {
         if (!$pdu = $this->pduRepository->find($id)) {
@@ -202,7 +195,7 @@ class PduController extends Controller
             /** @var Flavor $flavor */
             $pdu = $pduForm->getData();
             $numberOfOutlets = $pdu->getNumberOfOutlets();
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($pdu);
             $entityManager->flush();
             if ($numberOfOutlets < $oldNumberOfOutlets) {
@@ -254,20 +247,17 @@ class PduController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/pdu/{id<\d+>}/delete", name="delete_pdu", methods="GET")
-     * 
-     * @Rest\Delete("/api/pdu/{id<\d+>}/delete", name="api_delete_pdu")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Delete('/api/pdu/{id<\d+>}/delete', name: 'api_delete_pdu')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/pdu/{id<\d+>}/delete', name: 'delete_pdu', methods: 'GET')]
     public function deleteAction(Request $request, int $id)
     {
         if (!$pdu = $this->pduRepository->find($id)) {
             throw new NotFoundHttpException("PDU " . $id . " does not exist.");
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($pdu);
         $entityManager->flush();
 

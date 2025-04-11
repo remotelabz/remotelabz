@@ -12,138 +12,126 @@ use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\UserRepository')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, InstancierInterface
 {
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab", "api_get_group", "api_groups", "api_get_lab_instance","api_get_device_instance", "worker","sandbox", "api_get_booking"})
      *
      * @var int
      */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab', 'api_get_group', 'api_groups', 'api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox', 'api_get_booking'])]
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=180, unique=true)
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_group", "worker"})
      *
      * @var string
      */
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_group', 'worker'])]
     private $email;
 
     /**
-     * @ORM\Column(type="json")
-     * @Serializer\Accessor(getter="getRoles")
-     * @Serializer\Groups({"api_users", "api_get_user", "api_get_lab_instance"})
      *
      * @var array|string[]
      */
+    #[ORM\Column(type: 'json')]
+    #[Serializer\Accessor(getter: 'getRoles')]
+    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab_instance'])]
     private $roles = [];
 
     /**
-     * @ORM\Column(type="string")
-     * @Serializer\Exclude
      *
      * @var string The hashed password
      */
+    #[ORM\Column(type: 'string')]
+    #[Serializer\Exclude]
     private $password;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var string
      */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $lastName;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var string
      */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $firstName;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_users", "api_get_user"})
      *
      * @var bool
      */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $enabled = true;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\LabInstance", mappedBy="user")
-     * @Serializer\Groups({"api_get_user"})
      *
      * @var Collection|LabInstance[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\LabInstance', mappedBy: 'user')]
+    #[Serializer\Groups(['api_get_user'])]
     private $labInstances;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Booking", mappedBy="user")
-     * @Serializer\Groups({"api_get_user"})
      *
      * @var Collection|Booking[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Booking', mappedBy: 'user')]
+    #[Serializer\Groups(['api_get_user'])]
     private $bookings;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Lab", mappedBy="author")
-     *
      * @var Collection|Lab[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Lab', mappedBy: 'author')]
     private $createdLabs;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Device", mappedBy="author")
-     *
      * @var Collection|Device[]
      */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Device', mappedBy: 'author')]
     private $createdDevices;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
-     * @Serializer\Exclude
      *
      * @var string
      */
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Serializer\Exclude]
     private $profilePictureFilename;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_users", "api_get_user"})
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $createdAt;
 
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"api_users", "api_get_user"})
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Serializer\Groups(['api_users', 'api_get_user'])]
     private $lastActivity;
 
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\GroupUser", mappedBy="user", cascade={"persist"})
-     * @Serializer\Exclude
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\GroupUser', mappedBy: 'user', cascade: ['persist'])]
+    #[Serializer\Exclude]
     private $_groups;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"api_get_lab","api_users", "api_get_user", "api_get_lab_instance", "api_get_device_instance", "worker","sandbox"})
-     */
-    private $uuid;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['api_get_lab', 'api_users', 'api_get_user', 'api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox'])]
+    private string $uuid;
 
     /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({"api_get_user"})
      *
      * @var bool
      */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_get_user'])]
     private $isShibbolethUser = false;
 
     public function __construct()
@@ -297,11 +285,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         return $this;
     }
 
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab", "group_explore", "instance_manager", "group_users", "user", "groups", "api_users", "api_get_user", "api_groups", "api_get_group", "api_get_lab", "api_get_lab_instance"})
-     */
+    #[Serializer\VirtualProperty]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab', 'details', 'start_lab', 'stop_lab', 'group_explore', 'instance_manager', 'group_users', 'user', 'groups', 'api_users', 'api_get_user', 'api_groups', 'api_get_group', 'api_get_lab', 'api_get_lab_instance'])]
     public function getName(): string
     {
         return $this->firstName.' '.$this->lastName;
@@ -324,11 +310,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
         return $this;
     }
 
-    /**
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"user_instances", "details"})
-     * @Serializer\XmlList(inline=false, entry="instances")
-     */
+    #[Serializer\VirtualProperty]
+    #[Serializer\Groups(['user_instances', 'details'])]
+    #[Serializer\XmlList(inline: false, entry: 'instances')]
     public function getInstances()
     {
         return $this->labInstances;
@@ -507,10 +491,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
 
     /**
      * @return Collection|Group[]
-     * @Serializer\VirtualProperty()
-     * @Serializer\SerializedName("groups")
-     * @Serializer\Groups({"api_get_lab", "api_get_lab_instance", "group_details", "user", "api_users", "api_get_user"})
      */
+    #[Serializer\VirtualProperty]
+    #[Serializer\SerializedName('groups')]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'group_details', 'user', 'api_users', 'api_get_user'])]
     public function getGroups()
     {
         return $this->_groups;

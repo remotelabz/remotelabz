@@ -17,7 +17,7 @@ use App\Repository\UserRepository;
 
 class MailType extends AbstractType
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('to', TextType::class, [
@@ -72,7 +72,7 @@ class MailType extends AbstractType
             ));*/
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
     }
 }

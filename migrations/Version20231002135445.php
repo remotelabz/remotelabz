@@ -6,6 +6,7 @@ namespace DoctrineMigrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 
 /**
  * Auto-generated Migration: Please modify to your needs!
@@ -20,7 +21,7 @@ final class Version20231002135445 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE control_protocol_type_instance ADD guest_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE control_protocol_type_instance ADD CONSTRAINT FK_AA90BE399A4AA658 FOREIGN KEY (guest_id) REFERENCES invitation_code (id)');
@@ -40,7 +41,7 @@ final class Version20231002135445 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE control_protocol_type_instance DROP FOREIGN KEY FK_AA90BE399A4AA658');
         $this->addSql('DROP INDEX IDX_AA90BE399A4AA658 ON control_protocol_type_instance');

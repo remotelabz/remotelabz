@@ -14,19 +14,24 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Remotelabz\Message\Message\InstanceActionMessage;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use App\Repository\OperatingSystemRepository;
 use App\Entity\OperatingSystem;
 use App\Service\Worker\WorkerManager;
-
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class ConfigWorkerController extends Controller
 {
@@ -45,7 +50,8 @@ class ConfigWorkerController extends Controller
         SerializerInterface $serializer,
         MessageBusInterface $bus,
         OperatingSystemRepository $operatingSystemRepository,
-        WorkerManager $workerManager
+        WorkerManager $workerManager,
+        EntityManagerInterface $entityManager
         
     ) {
         $this->logger = $logger;
@@ -58,15 +64,13 @@ class ConfigWorkerController extends Controller
         $this->bus = $bus;
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->workerManager = $workerManager;
+        $this->entityManager = $entityManager;
     }
 
-
-    /**
-     * @Route("/admin/config", name="admin_config")
-     * @Rest\Get("/api/config/workers", name="api_get_workers")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Get('/api/config/workers', name: 'api_get_workers')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/config', name: 'admin_config')]
     public function indexAction(Request $request)
     {
         $workers = $this->configWorkerRepository->findAll();
@@ -91,11 +95,9 @@ class ConfigWorkerController extends Controller
         ]);
     }
 
-    /**
-     * @Rest\Post("/api/config/worker/new", name="api_new_worker")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Post('/api/config/worker/new', name: 'api_new_worker')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function newAction(Request $request) {
         $data = json_decode($request->getContent(), true);
 
@@ -104,7 +106,7 @@ class ConfigWorkerController extends Controller
         $worker->setAvailable(true);
         $worker->setQueueName($this->getQueueName());
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($worker);
         $entityManager->flush();
         $this->logger->debug("worker ". $worker->getIPv4(). " has been created.");
@@ -136,11 +138,9 @@ class ConfigWorkerController extends Controller
         return $queueName;
     }
 
-    /**
-     * @Rest\Put("/api/config/worker/{id<\d+>}", name="api_update_worker")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Put('/api/config/worker/{id<\d+>}', name: 'api_update_worker')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function updateAction(Request $request, int $id) {
         $workerPort = $this->getParameter('app.worker_port');
         $data = json_decode($request->getContent(), true);
@@ -180,9 +180,9 @@ class ConfigWorkerController extends Controller
                           $this->logger->debug("OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
 
                             if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
-                                $this->logger->debug($operatingSystem->getName()." already exists");
+                                $this->logger->debug($operatingSystem->getName()." is in the array");
                             else
-                                $this->logger->debug($operatingSystem->getName()." doesn't exist");
+                                $this->logger->debug($operatingSystem->getName()." is NOT in the array");
 
                             if ($operatingSystem->getHypervisor()->getName() === "lxc" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"])) {
                                 $tmp=array();
@@ -207,7 +207,7 @@ class ConfigWorkerController extends Controller
                                 $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                                 if (!is_null($operatingSystem->getImageFilename())) { // the case of qemu image with link.
-                                $this->logger->info("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                                $this->logger->debug("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
                                 $this->bus->dispatch(
                                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                                         new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),
@@ -228,7 +228,7 @@ class ConfigWorkerController extends Controller
             }
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->flush();
 
         if (isset($data['IPv4'])) {
@@ -238,11 +238,9 @@ class ConfigWorkerController extends Controller
         return $this->json($worker, 200, [], ['api_get_worker_config']);
     }
 
-    /**
-     * @Rest\Delete("/api/config/worker/{id<\d+>}", name="api_delete_worker")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.")
-     */
+    
+	#[Delete('/api/config/worker/{id<\d+>}', name: 'api_delete_worker')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function deleteAction(Request $request, int $id) {
         $data = json_decode($request->getContent(), true);
 
@@ -255,7 +253,7 @@ class ConfigWorkerController extends Controller
         }
         $queueName = $worker->getQueueName();
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($worker);
         $entityManager->flush(); 
         $this->logger->debug("Worker ". $worker->getIPv4(). " has been deleted.");
@@ -270,21 +268,39 @@ class ConfigWorkerController extends Controller
             $this->logger->info("The creation of the queue ". $queueName. " succeed.");
         } else
         {
-            $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
-            $process = new Process($cmd);
+            // $cmd = ['rabbitmqadmin', "declare", "queue", "name=".$queueName,"type=direct"];
+            // $process = new Process($cmd);
 
-            $process->run();
+            // $process->run();
 
-            if (!$process->isSuccessful()) {
-                $this->addFlash("danger", "The queue of worker ".$ipAdress. " has not been created");
-                $this->logger->error("The creation of the queue ". $queueName. " failed.");
-                //throw new ProcessFailedException($process);
-            }
-            else {
-                $this->logger->info("The creation of the queue ". $queueName. " succeed.");
-                $this->logger->debug($process->getOutput());
+            // if (!$process->isSuccessful()) {
+            //     $this->addFlash("danger", "The queue of worker ".$ipAdress. " has not been created");
+            //     $this->logger->error("The creation of the queue ". $queueName. " failed.");
+            //     //throw new ProcessFailedException($process);
+            // }
+            // else {
+            //     $this->logger->info("The creation of the queue ". $queueName. " succeed.");
+            //     $this->logger->debug($process->getOutput());
+            //     $this->bindQueue($ipAdress, $queueName);
+            // }
+
+
+            $cmd = ['rabbitmqadmin', 'declare', 'queue', "name=$queueName", 'durable=true'];
+            try {
+                $process = new Process($cmd);
+                $process->run();
+            
+                if (!$process->isSuccessful()) {
+                    throw new ProcessFailedException($process);
+                }
+            
+                $this->logger->info("La création de la queue $queueName a réussi.");
                 $this->bindQueue($ipAdress, $queueName);
+            } catch (ProcessFailedException $exception) {
+                $this->logger->error("La création de la queue $queueName a échoué : " . $exception->getMessage());
+                throw $exception;
             }
+            
         }
     }
 
@@ -334,8 +350,6 @@ class ConfigWorkerController extends Controller
         // Vérifie si la sortie contient le nom de la queue
         return strpos($output, $queueName) !== false;
     }
-
-
 
     
     private function modifyMessengerConfig() {

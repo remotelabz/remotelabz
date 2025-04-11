@@ -12,7 +12,7 @@ use Symfony\Component\Form\CallbackTransformer;
 
 class InvitationCodeType extends AbstractType
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('emailAdresses', TextareaType::class, [
@@ -40,7 +40,7 @@ class InvitationCodeType extends AbstractType
             ));
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
     }
 }

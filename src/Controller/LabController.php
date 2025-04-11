@@ -47,7 +47,14 @@ use App\Repository\FlavorRepository;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\QueryParam;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -60,7 +67,7 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Security\Http\Attribute\Security;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -69,7 +76,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class LabController extends Controller
 {
@@ -102,7 +109,8 @@ class LabController extends Controller
         SerializerInterface $serializerInterface,
         LabInstanceRepository $labInstanceRepository,
         BookingRepository $bookingRepository,
-        ConfigWorkerRepository $configWorkerRepository)
+        ConfigWorkerRepository $configWorkerRepository,
+        EntityManagerInterface $entityManager)
     {
         $this->workerServer = (string) getenv('WORKER_SERVER');
         $this->workerPort = (int) getenv('WORKER_PORT');
@@ -117,16 +125,14 @@ class LabController extends Controller
         $this->labInstanceRepository = $labInstanceRepository;
         $this->bookingRepository = $bookingRepository;
         $this->configWorkerRepository = $configWorkerRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/labs", name="labs")
-     * 
-     * @Rest\Get("/api/labs", name="api_get_labs")
-     * @Rest\QueryParam(name="limit", requirements="\d+", default="10")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Get('/api/labs', name: 'api_get_labs')]
+	#[QueryParam(name: "limit", requirements: "\d+", default: "10")]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    #[Route(path: '/labs', name: 'labs')]
     public function indexAction(Request $request, UserRepository $userRepository)
     {
         $search = $request->query->get('search', '');
@@ -215,9 +221,7 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/dashboard/labs", name="dashboard_labs")
-     */
+    #[Route(path: '/dashboard/labs', name: 'dashboard_labs')]
     public function dashboardIndexAction(Request $request, UserRepository $userRepository)
     {
         $search = $request->query->get('search', '');
@@ -251,12 +255,9 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/template", name="api_get_labs_template")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Get('/api/labs/template', name: 'api_get_labs_template')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
     public function getLabTemplates(Request $request, UserRepository $userRepository)
     {
 
@@ -267,12 +268,7 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/template/{id<\d+>}", name="api_get_lab_template_by_uuid")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
     public function getOneLabTemplate(Request $request, int $id)
     {
 
@@ -282,33 +278,25 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/teacher", name="api_get_lab_by_teacher")
-     * 
-     * 
-     */
+    
     /*public function getTeacherLabs(Request $request, UserRepository $userRepository)
-    {
-        //$user = $userRepository->find(['id' => $id]);
-        $user = $this->getUser();
-        if ($user && $user->hasRole("ROLE_TEACHER")) {
-            $labs = $this->labRepository->findByAuthorAndGroups($user);
-
-            if ('json' === $request->getRequestFormat()) {
-                return $this->json($labs, 200, [], ["api_get_lab"]);
+        {
+            //$user = $userRepository->find(['id' => $id]);
+            $user = $this->getUser();
+            if ($user && $user->hasRole("ROLE_TEACHER")) {
+                $labs = $this->labRepository->findByAuthorAndGroups($user);
+    
+                if ('json' === $request->getRequestFormat()) {
+                    return $this->json($labs, 200, [], ["api_get_lab"]);
+                }
             }
-        }
-        else {
-            throw new BadRequestHttpException("User ".$user->getName()." is not a teacher");
-        }
-    }*/
-
-    /**
-     * @Route("/labs/{id<\d+>}", name="show_lab", methods="GET")
-     * 
-     * @Rest\Get("/api/labs/{id<\d+>}", name="api_get_lab")
-     */
+            else {
+                throw new BadRequestHttpException("User ".$user->getName()." is not a teacher");
+            }
+        }*/
+    
+	#[Get('/api/labs/{id<\d+>}', name: 'api_get_lab')]
+    #[Route(path: '/labs/{id<\d+>}', name: 'show_lab', methods: 'GET')]
     public function showAction(
         int $id,
         Request $request,
@@ -377,10 +365,7 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/labs/guest/{id<\d+>}", name="show_lab_to_guest", methods="GET")
-     * 
-     */
+    #[Route(path: '/labs/guest/{id<\d+>}', name: 'show_lab_to_guest', methods: 'GET')]
     public function showToGuestAction(
         int $id,
         Request $request,
@@ -441,9 +426,8 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Rest\Get("/api/labs/info/{id<\d+>}", name="api_get_lab_test")
-     */
+    
+	#[Get('/api/labs/info/{id<\d+>}', name: 'api_get_lab_test')]
     public function showActionTest(
         int $id,
         Request $request,
@@ -478,10 +462,8 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab")
-     * @Route("/labs/guest/{id<\d+>}/see/{instanceId<\d+>}", name="see_lab_guest")
-     */
+    #[Route(path: '/labs/{id<\d+>}/see/{instanceId<\d+>}', name: 'see_lab')]
+    #[Route(path: '/labs/guest/{id<\d+>}/see/{instanceId<\d+>}', name: 'see_lab_guest')]
     public function seeAction(Request $request, int $id, int $instanceId)
     {
 
@@ -557,10 +539,8 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * 
-     * @Rest\Get("/api/labs/{id<\d+>}/html", name="api_get_lab_details")
-     */
+    
+	#[Get('/api/labs/{id<\d+>}/html', name: 'api_get_lab_details')]
     public function getLabDetails(
         int $id,
         Request $request,
@@ -583,21 +563,18 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/labs/new", name="new_lab")
-     * @Route("/labsSandbox/new", name="new_lab_template")
-     * @Route("/labsPhysical/new", name="new_physical_lab")
-     * 
-     * @Rest\Post("/api/labs", name="api_new_lab")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/labs', name: 'api_new_lab')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    #[Route(path: '/labs/new', name: 'new_lab')]
+    #[Route(path: '/labsSandbox/new', name: 'new_lab_template')]
+    #[Route(path: '/labsPhysical/new', name: 'new_physical_lab')]
     public function newAction(Request $request)
     {
 
         $lab = json_decode($request->getContent(), true);
 
-        $this->logger->debug($lab);
+        $this->logger->debug('New lab data: ' . json_encode($lab));
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->startsWith('name', 'Untitled Lab'));
@@ -620,7 +597,7 @@ class LabController extends Controller
             $lab->setVirtuality(true);
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($lab);
         $entityManager->flush();
 
@@ -665,10 +642,8 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * 
-     * @Rest\Post("/api/labs/{id<\d+>}/devices", name="api_add_device_lab")
-     */
+    
+	#[Post('/api/labs/{id<\d+>}/devices', name: 'api_add_device_lab')]
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
         $lab = $this->labRepository->find($id);
@@ -722,7 +697,7 @@ class LabController extends Controller
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->entityManager;
                 $this->logger->debug("Add device in lab form submitted is valid");
 
                 $editorData = new EditorData();
@@ -804,7 +779,7 @@ class LabController extends Controller
             $new_device->setType('container');
         }
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
 
@@ -815,9 +790,7 @@ class LabController extends Controller
         $this->logger->debug("Add device in lab done");
     }
 
-    /**
-     * @Route("/admin/labs/{id<\d+>}/edit2", name="edit2_lab")
-     */
+    #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
     public function editAction(Request $request, int $id)
     {
 
@@ -853,10 +826,8 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * @Route("/admin/labs/{id<\d+>}/edit", name="edit_lab")
-     * @Route("/admin/labs_template/{id<\d+>}/edit", name="edit_lab_template")
-     */
+    #[Route(path: '/admin/labs/{id<\d+>}/edit', name: 'edit_lab')]
+    #[Route(path: '/admin/labs_template/{id<\d+>}/edit', name: 'edit_lab_template')]
     public function edit2Action(Request $request, int $id)
     {
 
@@ -887,9 +858,8 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * @Rest\Put("/api/labs/{id<\d+>}", name="api_edit_lab")
-     */
+    
+	#[Put('/api/labs/{id<\d+>}', name: 'api_edit_lab')]
     public function updateAction(Request $request, int $id)
     {
         $lab = $this->labRepository->find($id);
@@ -907,7 +877,7 @@ class LabController extends Controller
         $labForm->submit($lab, false);
 
         if ($labForm->isSubmitted() && $labForm->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             /** @var Lab $lab */
             $lab = $labForm->getData();
             $lab->setLastUpdated(new \DateTime());
@@ -936,7 +906,7 @@ class LabController extends Controller
         }
 
         /*if ($labForm->isSubmitted() && $labForm->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
            
             $lab = $labForm->getData();
             $lab->setLastUpdated(new \DateTime());
@@ -997,9 +967,8 @@ class LabController extends Controller
         return $newDevice;
     }
 
-    /**
-     * @Rest\Put("/api/labs/test/{id<\d+>}", name="api_edit_lab_test")
-     */
+    
+	#[Put('/api/labs/test/{id<\d+>}', name: 'api_edit_lab_test')]
     public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
@@ -1021,10 +990,9 @@ class LabController extends Controller
         }
         //$lab->setDescription($data['body']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($lab);
         $entityManager->flush();
-
 
         $this->logger->info("Lab named" . $lab->getName() . " modified");
 
@@ -1037,9 +1005,8 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Put("/api/labs/subject/{id<\d+>}", name="api_edit_lab_subject")
-     */
+    
+	#[Put('/api/labs/subject/{id<\d+>}', name: 'api_edit_lab_subject')]
     public function updateSubjectAction(Request $request, int $id)
     {
         $lab = $this->labRepository->find($id);
@@ -1049,10 +1016,9 @@ class LabController extends Controller
 
         $lab->setDescription($data['body']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($lab);
         $entityManager->flush();
-
 
         $this->logger->info("Lab named" . $lab->getName() . " modified");
 
@@ -1065,11 +1031,9 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/admin/labs/{id<\d+>}/delete", name="delete_lab", methods="GET")
-     * 
-     * @Rest\Delete("/api/labs/{id<\d+>}", name="api_delete_lab")
-     */
+    
+	#[Delete('/api/labs/{id<\d+>}', name: 'api_delete_lab')]
+    #[Route(path: '/admin/labs/{id<\d+>}/delete', name: 'delete_lab', methods: 'GET')]
     public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)
     {
         if (!$lab = $this->labRepository->find($id)) {
@@ -1108,7 +1072,7 @@ class LabController extends Controller
     }
 
     public function delete_lab(Lab $lab){
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $labInstanceRepository=$entityManager->getRepository(LabInstance::class);
         
         
@@ -1119,7 +1083,7 @@ class LabController extends Controller
         else {
             foreach ($lab->getDevices() as $device) {
                 foreach($device->getNetworkInterfaces() as $net_int) {
-                    
+
                     $entityManager->remove($net_int);
                     $entityManager->flush();
                 }
@@ -1143,25 +1107,22 @@ class LabController extends Controller
 
     }
 
-    /**
-     * @Route("/admin/labs/import", name="import_lab", methods="POST")
-     * 
-     * @Rest\Post("/api/labs/import", name="api_import_lab")
-     * 
-     * @Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message="Access denied.")
-     */
+    
+	#[Post('/api/labs/import', name: 'api_import_lab')]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+    #[Route(path: '/admin/labs/import', name: 'import_lab', methods: 'POST')]
     public function importAction(Request $request, LabImporter $labImporter)
     {
-        $json = $request->request->get('json');
+        #$json = $request->request->get('json');
+        $json = $request->request->all()['json'] ?? [];
+
 
         $data = $labImporter->import($json);
 
         return $this->redirectToRoute('show_lab', ['id' => $data]);
     }
 
-    /**
-     * @Route("/admin/labs/{id<\d+>}/export", name="export_lab", methods="GET")
-     */
+    #[Route(path: '/admin/labs/{id<\d+>}/export', name: 'export_lab', methods: 'GET')]
     public function exportAction(int $id, LabImporter $labImporter)
     {
         if (!$lab = $this->labRepository->find($id)) {
@@ -1244,10 +1205,9 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/banner", name="get_lab_banner", methods="GET")
-     * @Rest\Get("/labs/{id<\d+>}/banner", name="api_get_lab_banner")
-     */
+    
+	#[Get('/labs/{id<\d+>}/banner', name: 'api_get_lab_banner')]
+    #[Route(path: '/labs/{id<\d+>}/banner', name: 'get_lab_banner', methods: 'GET')]
     public function getBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader)
     {
         $lab = $this->labRepository->find($id);
@@ -1268,9 +1228,8 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * @Rest\Post("/api/labs/{id<\d+>}/banner", name="api_upload_lab_banner")
-     */
+    
+	#[Post('/api/labs/{id<\d+>}/banner', name: 'api_upload_lab_banner')]
     public function uploadBannerAction(Request $request, int $id, LabBannerFileUploader $fileUploader, UrlGeneratorInterface $router)
     {
         if (!$lab = $this->labRepository->find($id)) {
@@ -1288,7 +1247,7 @@ class LabController extends Controller
             //$this->logger->debug("Add banner with picture file: ".$pictureFileName);
             $lab->setBanner($pictureFileName);
 
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($lab);
             $entityManager->flush();
 
@@ -1298,9 +1257,8 @@ class LabController extends Controller
         return new JsonResponse(null, 400);
     }
 
-    /**
-     * @Rest\Get("/api/labs/{id<\d+>}/banner/{newId<\d+>}", name="api_copy_lab_banner")
-     */
+    
+	#[Get('/api/labs/{id<\d+>}/banner/{newId<\d+>}', name: 'api_copy_lab_banner')]
     public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
        
         $lab = $this->labRepository->find($newId);
@@ -1310,9 +1268,7 @@ class LabController extends Controller
 
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/connect", name="connect_internet")
-     */
+    #[Route(path: '/labs/{id<\d+>}/connect', name: 'connect_internet')]
     public function connectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
@@ -1332,9 +1288,7 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/disconnect", name="disconnect_internet")
-     */
+    #[Route(path: '/labs/{id<\d+>}/disconnect', name: 'disconnect_internet')]
     public function disconnectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
@@ -1354,9 +1308,7 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/interconnect", name="interconnect")
-     */
+    #[Route(path: '/labs/{id<\d+>}/interconnect', name: 'interconnect')]
     public function interconnectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
@@ -1376,9 +1328,7 @@ class LabController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/labs/{id<\d+>}/disinterconnect", name="disinterconnect")
-     */
+    #[Route(path: '/labs/{id<\d+>}/disinterconnect', name: 'disinterconnect')]
     public function disinterconnectLabInstanceAction(int $id, UserInterface $user)
     {
         $lab = $this->labRepository->find($id);
@@ -1431,7 +1381,7 @@ class LabController extends Controller
             "user" => $this->getUser()->getEmail(),
         ]);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $user = $this->getUser();
         $client = new Client();
         $workerUrl = $labInstance->getWorketIp();
@@ -1465,7 +1415,7 @@ class LabController extends Controller
 
     private function interconnectLabInstance(LabInstance $labInstance)
     {
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $user = $this->getUser();
         $client = new Client();
         $workerUrl = $labInstance->getWorketIp();
@@ -1492,7 +1442,7 @@ class LabController extends Controller
 
     private function disinterconnectLabInstance(LabInstance $labInstance)
     {
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $user = $this->getUser();
         $client = new Client();
         $serializer = $this->container->get('jms_serializer');
@@ -1519,11 +1469,9 @@ class LabController extends Controller
         }
     }
 
-    /**
-     * @Route("/labs/close", name="close_lab", methods="GET")
-     * 
-     * @Rest\Delete("/api/labs/close", name="api_close_lab")
-     */
+    
+	#[Delete('/api/labs/close', name: 'api_close_lab')]
+    #[Route(path: '/labs/close', name: 'close_lab', methods: 'GET')]
     public function closeLab(
         Request $request,
         UserInterface $user,
@@ -1537,10 +1485,8 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * 
-     * @Rest\Put("/api/labs/{id<\d+>}/Lock", name="api_lock_lab")
-     */
+    
+	#[Put('/api/labs/{id<\d+>}/Lock', name: 'api_lock_lab')]
     public function lockLab(
         Request $request,
         UserInterface $user,
@@ -1561,10 +1507,8 @@ class LabController extends Controller
         return $response;
     }
 
-    /**
-     * 
-     * @Rest\Put("/api/labs/{id<\d+>}/Unlock", name="api_unlock_lab")
-     */
+    
+	#[Put('/api/labs/{id<\d+>}/Unlock', name: 'api_unlock_lab')]
     public function unlockLab(
         Request $request,
         UserInterface $user,

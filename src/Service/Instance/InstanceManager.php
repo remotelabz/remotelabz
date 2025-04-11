@@ -169,16 +169,15 @@ class InstanceManager
                 throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
         }     
 
-        $worker = $this->workerManager->getFreeWorker($lab);
-        //$this->logger->info("Worker choosen is :".$worker);
-        if ($worker == null) {
-            $this->logger->error('Could not create instance. No worker available');
-            return null;
-            throw new Exception('No worker available');
-        }
+        if (is_null($is_exist_labinstance)) {
 
-        if (is_null($is_exist_labinstance)) { // Instance doesn't exist
-            
+                $worker = $this->workerManager->getFreeWorker($lab);
+
+            if ($worker == null) {
+                $this->logger->error('Could not create instance. No worker available');
+                throw new Exception('No worker available');
+            }
+            //$this->logger->info("Worker choosen is :".$worker);
             $this->logger->debug("Worker available from create function in InstanceManager:".$worker);
             
             $labInstance = LabInstance::create()
@@ -217,15 +216,15 @@ class InstanceManager
                 ->setState(InstanceStateMessage::STATE_CREATING)
                 ->setNetwork($network)
                 ->populate();
-        
-            if (!$this->singleServer) {// One server for the Front and one server for the worker
-                if (IPTools::routeExists($network))
-                    $this->logger->debug("Route to ".$network." exists, via ".$worker);
-                else {
-                    $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
-                    IPTools::routeAdd($network,$worker);
-                }
+        //TODO: test with local env if deploy the front and the worker on the same server
+        if (!$this->singleServer) {// One server for the Front and one server for the worker
+            if (IPTools::routeExists($network))
+                $this->logger->debug("Route to ".$network." exists, via ".$worker);
+            else {
+                $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+                IPTools::routeAdd($network,$worker);
             }
+        }
 
             if ($lab->getHasTimer() == true) {
                 $timer = explode(":",$lab->getTimer());
@@ -246,7 +245,9 @@ class InstanceManager
                 ]
             );
             return $labInstance;
-        }        
+        } else 
+            return null;
+        
     }
 
     /**
@@ -596,7 +597,7 @@ class InstanceManager
             $this->logger->error('Could not export lab. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
-                 
+
         $this->entityManager->persist($lab);
         $this->entityManager->flush();
         if (count($lab->getPictures()) >= 1) {
@@ -609,7 +610,7 @@ class InstanceManager
         if (count($labInstance->getDeviceInstances()) >= 1) {
             foreach($labInstance->getDeviceInstances() as $deviceInstance) {               
                 $device = $deviceInstance->getDevice();
-                
+
                 $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
                 //$id = uniqid();
                 $new_name .= '_' . $now->format('YmdHis');
@@ -617,7 +618,7 @@ class InstanceManager
                 if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
                     $this->stop($deviceInstance);                   
                     $newDevice=$this->exportDevice($deviceInstance, $new_name);                  
-                   
+
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
 
@@ -629,7 +630,7 @@ class InstanceManager
                         $new_network_inter=new NetworkInterface();
                         $new_setting=new NetworkSettings();
                         $new_setting=clone $network_int->getSettings();
-                        
+
                         $new_network_inter->setSettings($new_setting);
                         $new_network_inter->setName($network_int->getName());
                         $new_network_inter->setVlan($network_int->getVlan());
@@ -647,9 +648,9 @@ class InstanceManager
                     $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
                     $id = uniqid();
                     $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
-        
+
                     $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
-        
+
                     $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
                     $newDevice = $this->copyDevice($device, $newOS, $deviceName);
                     if ($device->getTemplate() !== null) {
@@ -662,7 +663,7 @@ class InstanceManager
                     //$newDevice->setEditorData($device->getEditorData());
                     //$this->logger->debug('Export process. '.$new_name." Coordinates X,Y:".$device->getEditorData()->getX().",".$device->getEditorData()->getY());                    
                     $this->entityManager->persist($newDevice);
-                    
+
                     $lab->addDevice($newDevice);
 
                     $this->entityManager->persist($lab);
@@ -672,7 +673,7 @@ class InstanceManager
                     $context = SerializationContext::create()->setGroups('api_get_lab_instance');
                     $labJson = $this->serializer->serialize($labInstance, 'json', $context);
                     //$this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
-        
+
                     $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
                     for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
                         if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
@@ -682,7 +683,7 @@ class InstanceManager
                             $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
                         }
                     }
-        
+
                     $labJson = json_encode($tmp, 0, 4096);
                     */
                 } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") { 
@@ -690,7 +691,7 @@ class InstanceManager
                     $this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
                     //$newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $new_name, $new_name);
                     $newDevice = $this->copyDevice($device, $device->getOperatingSystem(), $new_name);
-                    
+
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
 

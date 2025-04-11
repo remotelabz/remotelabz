@@ -9,40 +9,30 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 
-/**
- * @ORM\Entity(repositoryClass=WorkerRepository::class)
- * @UniqueEntity("IPv4")
- * @UniqueEntity("queueName")
- */
+#[UniqueEntity('IPv4')]
+#[UniqueEntity('queueName')]
+#[ORM\Entity(repositoryClass: WorkerRepository::class)]
 class ConfigWorker
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     *  @Serializer\Groups({ "api_get_worker_config"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['api_get_worker_config'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255, unique=true)
-     * @Assert\Ip(version="4")
-     * @Assert\Unique
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_worker_config"})
-     */
+    #[Assert\Ip(version: 4)]
+    #[Assert\Unique]
+    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_worker_config'])]
     private $IPv4;
 
-     /**
-     * @ORM\Column(type="string", length=255, unique=true)
-     * @Assert\Unique
-     * @Serializer\Groups({"api_get_device", "export_lab", "worker", "api_get_worker_config"})
-     */
+     #[Assert\Unique]
+    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_worker_config'])]
     private $queueName;
 
-    /**
-     * @ORM\Column(type="boolean")
-     * @Serializer\Groups({ "api_get_worker_config"})
-     */
+    #[ORM\Column(type: 'boolean')]
+    #[Serializer\Groups(['api_get_worker_config'])]
     private $available;
 
 

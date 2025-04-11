@@ -10,7 +10,13 @@ use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\ControlProtocolTypeRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -18,7 +24,8 @@ use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class ControlProtocolTypeController extends Controller
 {
@@ -33,22 +40,20 @@ class ControlProtocolTypeController extends Controller
     public function __construct(LoggerInterface $logger,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         SerializerInterface $serializerInterface,
-        MessageBusInterface $bus)
+        MessageBusInterface $bus,
+        EntityManagerInterface $entityManager)
     {
         $this->logger = $logger;
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->serializer = $serializerInterface;
         $this->bus = $bus;
-
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/admin/controlProtocolType", name="controlProtocolType")
-     * 
-     * @Rest\Get("/api/controlProtocolType", name="api_controlProtocolType")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/controlProtocolType', name: 'api_controlProtocolType')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/controlProtocolType', name: 'controlProtocolType')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -71,13 +76,10 @@ class ControlProtocolTypeController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/controlProtocolType/{id<\d+>}", name="show_controlProtocolType")
-     * 
-     * @Rest\Get("/api/controlProtocolType/{id<\d+>}", name="api_get_controlProtocolType")
-     * 
-     * @IsGranted("ROLE_ADMINISTRATOR", message="Access denied.") 
-     */
+    
+	#[Get('/api/controlProtocolType/{id<\d+>}', name: 'api_get_controlProtocolType')]
+	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[Route(path: '/admin/controlProtocolType/{id<\d+>}', name: 'show_controlProtocolType')]
     public function showAction(Request $request, int $id)
     {
 
@@ -97,9 +99,7 @@ class ControlProtocolTypeController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/controlProtocolType/new", name="new_controlProtocolType")
-     */
+    #[Route(path: '/admin/controlProtocolType/new', name: 'new_controlProtocolType')]
     public function newAction(Request $request)
     {
         $controlProtocolType = new ControlProtocolType();
@@ -110,7 +110,7 @@ class ControlProtocolTypeController extends Controller
             /** @var ControlProtocolType $controlProtocolType */
 
             $controlProtocolType = $controlProtocolTypeForm->getData();
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($controlProtocolType);
             $entityManager->flush();
 
@@ -129,9 +129,7 @@ class ControlProtocolTypeController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/controlProtocolType/{id<\d+>}/edit", name="edit_controlProtocolType", methods={"GET", "POST"})
-     */
+    #[Route(path: '/admin/controlProtocolType/{id<\d+>}/edit', name: 'edit_controlProtocolType', methods: ['GET', 'POST'])]
     public function editAction(Request $request, int $id)
     {
         $controlProtocolType = $this->controlProtocolTypeRepository->find($id);
@@ -145,7 +143,7 @@ class ControlProtocolTypeController extends Controller
         if ($controlProtocolTypeForm->isSubmitted() && $controlProtocolTypeForm->isValid()) {
             $controlProtocolType = $controlProtocolTypeForm->getData();
             
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($controlProtocolType);
             $entityManager->flush();
 
@@ -163,9 +161,7 @@ class ControlProtocolTypeController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/admin/controlProtocolType/{id<\d+>}/delete", name="delete_controlProtocolType", methods="GET")
-     */
+    #[Route(path: '/admin/controlProtocolType/{id<\d+>}/delete', name: 'delete_controlProtocolType', methods: 'GET')]
     public function deleteAction($id)
     {
         $controlProtocolType = $this->controlProtocolTypeRepository->find($id);
@@ -176,7 +172,7 @@ class ControlProtocolTypeController extends Controller
         }
      
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($controlProtocolType);
 
         try {

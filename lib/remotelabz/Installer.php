@@ -252,6 +252,11 @@ class Installer
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
             chmod($this->installPath."/config/packages/messenger.yaml", 0664);
+
+            if (!file_exists($this->installPath."/config/templates")) { # PPRI0603 : Ajout de la création du répertoire templates, s'il n'existe pas (problème rencontré dans le script d'installation d'origine)
+                mkdir($this->installPath."/config/templates", 0775, true);
+            }
+            
             $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
             chmod($this->installPath."/config/templates", 0774);
             @mkdir($this->installPath."/backups");

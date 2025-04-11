@@ -7,7 +7,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -101,7 +101,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         );
     }
 
- 
+
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         /*if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
@@ -124,7 +124,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             $user->setLastActivity(new DateTime());
             $this->entityManager->persist($user);
             $this->entityManager->flush();
-            
+
             if ($request->query->has('ref_url')) {
                 $response->setTargetUrl(urldecode($request->query->get('ref_url')));
             } else if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
@@ -135,7 +135,7 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             return $response;
         } else 
             return $response->setTargetUrl($this->router->generate('login'));
-            
+
     }
 
 

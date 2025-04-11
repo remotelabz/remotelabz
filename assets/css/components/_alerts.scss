@@ -1,8 +1,8 @@
 [theme="dark"] {
     @each $color, $value in $theme-colors {
         .alert-#{$color} {
-            background-color: darken(theme-color("#{$color}"), 15%);
-            border-color: darken(theme-color("#{$color}"), 7.5%);
+            background-color: darken(map-get($theme-colors, "#{$color}"), 15%);
+            border-color: darken(map-get($theme-colors, "#{$color}"), 7.5%);
             color: theme-color("light");
         }
     }

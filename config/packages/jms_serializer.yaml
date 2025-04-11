@@ -18,3 +18,5 @@ jms_serializer:
             network-bundle:
                 namespace_prefix: "Remotelabz\\NetworkBundle"
                 path: '%kernel.project_dir%/config/serializer/network-bundle/'
+
+        auto_detection: false

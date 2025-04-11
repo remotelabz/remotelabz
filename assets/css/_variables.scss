@@ -86,7 +86,7 @@ $theme-colors: (
 // $content-bg: #f3f5f7;
 $content-bg: $white;
 $footer-bg: $content-bg;
-$footer-color: color(dark);
+$footer-color: map-get($theme-colors, dark);
 // $border-color: #f2f2f2;
 $border-color: #e1e1e1;
 
@@ -195,7 +195,7 @@ $social-btn-icon-size: 1rem;
 
 /////////  FORMS VARIABLES /////////
 
-$input-bg: color(white);
+$input-bg: white;
 // $input-border-radius: 2px;
 $input-border-color: #dfdfdf;
 $input-border-radius: 4px;
@@ -216,7 +216,7 @@ $table-hover-bg: $content-bg;
 $table-cell-padding: 15px;
 $table-border-color: $border-color;
 $table-inverse-bg: theme-color(dark);
-$table-inverse-color: color(white);
+$table-inverse-color: white;
 
 //////// TABLES VARIABLES ////////
 

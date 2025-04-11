@@ -15,11 +15,18 @@ use App\Repository\GroupRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\ORM\EntityManagerInterface;
 
 class BookingController extends Controller
 {
@@ -36,7 +43,8 @@ class BookingController extends Controller
         LabInstanceRepository $labInstanceRepository, 
         DeviceInstanceRepository $deviceInstanceRepository, 
         UserRepository $userRepository, 
-        GroupRepository $groupRepository
+        GroupRepository $groupRepository,
+        EntityManagerInterface $entityManager
     )
     {
         $this->labRepository = $labRepository;
@@ -45,15 +53,13 @@ class BookingController extends Controller
         $this->bookingRepository = $bookingRepository;
         $this->userRepository = $userRepository;
         $this->groupRepository = $groupRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Route("/bookings", name="bookings")
-     * 
-     * @Rest\Get("/api/bookings", name="api_bookings")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Get('/api/bookings', name: 'api_bookings')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings', name: 'bookings')]
     public function indexAction(Request $request)
     {
         $search = $request->query->get('search', '');
@@ -70,12 +76,9 @@ class BookingController extends Controller
         ]);
     }
 
-
-    /**
-     * @Route("/bookings/{id<\d+>}", name="show_booking")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings/{id<\d+>}', name: 'show_booking')]
     public function showAction(Request $request, int $id)
     {
         $booking = $this->bookingRepository->find($id);
@@ -130,12 +133,10 @@ class BookingController extends Controller
 
     }
 
-    /**
-     *  @Route("/bookings/lab/{id<\d+>}", name="show_lab_bookings")
-     * @Rest\Get("/api/bookings/lab/{id<\d+>}", name="api_show_lab_bookings")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Get('/api/bookings/lab/{id<\d+>}', name: 'api_show_lab_bookings')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings/lab/{id<\d+>}', name: 'show_lab_bookings')]
     public function showLabBookings(Request $request, int $id)
     {
         if (!$lab = $this->labRepository->find($id)) {
@@ -162,13 +163,10 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/bookings/lab/{id<\d+>}/new", name="new_booking", methods={"GET", "POST"})
-     * 
-     * @Rest\Post("/api/bookings/lab/{id<\d+>}", name="api_new_booking")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/lab/{id<\d+>}', name: 'api_new_booking')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings/lab/{id<\d+>}/new', name: 'new_booking', methods: ['GET', 'POST'])]
     public function newAction(Request $request, int $id)
     {
         $booking = new Booking();
@@ -211,7 +209,7 @@ class BookingController extends Controller
                         $booking->setLab($lab);
                         $booking->setStartDate($dateStart);
                         $booking->setEndDate($dateEnd);
-                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager = $this->entityManager;
                         $entityManager->persist($booking);
                         $entityManager->flush();
                         if ('json' === $request->getRequestFormat()) {
@@ -257,13 +255,10 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/bookings/{id<\d+>}/edit", name="edit_booking")
-     * 
-     * @Rest\Put("/api/bookings/{id<\d+>}", name="api_edit_booking")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Put('/api/bookings/{id<\d+>}', name: 'api_edit_booking')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings/{id<\d+>}/edit', name: 'edit_booking')]
     public function editAction(Request $request, int $id)
     {
         if (!$booking = $this->bookingRepository->find($id)) {
@@ -338,7 +333,7 @@ class BookingController extends Controller
                         }
                         $booking->setStartDate(new \DateTime($bookingForm["dayStart"]->getData()."-".$bookingForm['monthStart']->getData()."-".$bookingForm['yearStart']->getData()." ".$bookingForm["hourStart"]->getData().":".$bookingForm["minuteStart"]->getData()));
                         $booking->setEndDate(new \DateTime($bookingForm["dayEnd"]->getData()."-".$bookingForm['monthEnd']->getData()."-".$bookingForm['yearEnd']->getData()." ".$bookingForm["hourEnd"]->getData().":".$bookingForm["minuteEnd"]->getData()));
-                        $entityManager = $this->getDoctrine()->getManager();
+                        $entityManager = $this->entityManager;
                         $entityManager->persist($booking);
                         $entityManager->flush();
         
@@ -381,13 +376,10 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * @Route("/bookings/{id<\d+>}/delete", name="delete_booking", methods="GET")
-     * 
-     * @Rest\Delete("/api/bookings/{id<\d+>}", name="api_delete_booking")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Delete('/api/bookings/{id<\d+>}', name: 'api_delete_booking')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
+    #[Route(path: '/bookings/{id<\d+>}/delete', name: 'delete_booking', methods: 'GET')]
     public function deleteAction(Request $request, int $id)
     {
         if (!$booking = $this->bookingRepository->find($id)) {
@@ -418,7 +410,7 @@ class BookingController extends Controller
         }
         $lab = $booking->getLab();
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->remove($booking);
         $entityManager->flush();
 
@@ -429,11 +421,8 @@ class BookingController extends Controller
         return $this->redirectToRoute('show_lab_bookings', ['id' => $lab->getId()]);
     }
 
-    /**
-     * 
-     * @Rest\Delete("/api/bookings/by_uuid/{uuid}", name="api_delete_booking_by_uuid", requirements={"uuid"="[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"})
-     * 
-     */
+    
+	#[Delete('/api/bookings/by_uuid/{uuid}', name: 'api_delete_booking_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function deleteActionByUuid(Request $request, string $uuid)
     {
         if (!$booking = $this->bookingRepository->findOneBy(["uuid" =>$uuid])) {
@@ -444,7 +433,7 @@ class BookingController extends Controller
         }
         $lab = $booking->getLab();
         if (!$labInstance = $this->labInstanceRepository->findBy(["lab" => $lab])) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->remove($booking);
             $entityManager->flush();
         }
@@ -486,10 +475,8 @@ class BookingController extends Controller
         
     }
 
-    /** 
-     * @Rest\Get("/api/bookings/old", name="api_get_old_bookings")
-     * 
-     */
+    
+	#[Get('/api/bookings/old', name: 'api_get_old_bookings')]
     public function getOldBookings(Request $request) {
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
             throw new AccessDeniedHttpException("Access denied.");
@@ -514,11 +501,9 @@ class BookingController extends Controller
 
     }
 
-    /**
-     * @Rest\Post("/api/bookings/owner", name="api_owner_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/owner', name: 'api_owner_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
 
     public function onReservedForChange(Request $request)
     {
@@ -586,11 +571,9 @@ class BookingController extends Controller
         return $this->json($ownerList, 200, [], []);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/yearStart", name="api_year_start_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/yearStart', name: 'api_year_start_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onYearStartChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -755,11 +738,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/monthStart", name="api_month_start_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/monthStart', name: 'api_month_start_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onMonthStartChange(Request $request)
     {
         $data = json_decode($request->getContent(), true);
@@ -884,11 +865,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/dayStart", name="api_day_start_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/dayStart', name: 'api_day_start_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onDayStartChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -963,11 +942,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/hourStart", name="api_hour_start_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/hourStart', name: 'api_hour_start_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onHourStartChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -1017,11 +994,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/yearEnd", name="api_year_end_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/yearEnd', name: 'api_year_end_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onYearEndChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -1181,11 +1156,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/monthEnd", name="api_month_end_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/monthEnd', name: 'api_month_end_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onMonthEndChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -1316,11 +1289,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/dayEnd", name="api_day_end_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/dayEnd', name: 'api_day_end_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onDayEndChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 
@@ -1408,11 +1379,9 @@ class BookingController extends Controller
         return $this->json($choices);
     }
 
-    /** 
-     * @Rest\Post("/api/bookings/hourEnd", name="api_hour_end_change")
-     * 
-     * @IsGranted("ROLE_USER", message="Access denied.") 
-     */
+    
+	#[Post('/api/bookings/hourEnd', name: 'api_hour_end_change')]
+	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function onHourEndChange(Request $request)
     {
         $data = json_decode($request->getContent(), true); 

@@ -41,7 +41,13 @@ use App\Service\Lab\LabImporter;
 use App\Service\LabBannerFileUploader;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\Controller\Annotations\Patch;
+use FOS\RestBundle\Controller\Annotations\Delete;
+use FOS\RestBundle\Controller\Annotations\View;
+use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -56,7 +62,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Doctrine\Persistence\ManagerRegistry;
-
+use Doctrine\ORM\EntityManagerInterface;
 
 class TextObjectController extends Controller
 {
@@ -71,17 +77,17 @@ class TextObjectController extends Controller
         operatingSystemRepository $operatingSystemRepository,
         SerializerInterface $serializerInterface,
         TextObjectRepository $textobjectRepository,
-        LabRepository $labRepository)
+        LabRepository $labRepository,
+        EntityManagerInterface $entityManager)
     {
         $this->logger = $logger;
         $this->textobjectRepository = $textobjectRepository;
         $this->labRepository = $labRepository;
+        $this->entityManager = $entityManager;
     }
 
-    /**
-     * @Rest\Get("/api/labs/{id<\d+>}/textobjects", name="api_get_textobjects")
-     * 
-     */
+    
+	#[Get('/api/labs/{id<\d+>}/textobjects', name: 'api_get_textobjects')]
     public function indexAction(int $id, Request $request, UserRepository $userRepository)
     {
         $lab = $this->labRepository->find($id);
@@ -115,9 +121,8 @@ class TextObjectController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Get("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_get_textobject")
-     */
+    
+	#[Get('/api/labs/{labId<\d+>}/textobjects/{id<\d+>}', name: 'api_get_textobject')]
     public function showAction(
         int $labId,
         int $id,
@@ -152,9 +157,8 @@ class TextObjectController extends Controller
     }
     
 
-    /**
-     * @Rest\Post("/api/labs/{id<\d+>}/textobjects", name="api_new_textobject")
-     */
+    
+	#[Post('/api/labs/{id<\d+>}/textobjects', name: 'api_new_textobject')]
     public function newAction(Request $request, int $id)
     {
         $lab = $this->labRepository->find($id);
@@ -171,10 +175,9 @@ class TextObjectController extends Controller
         $textobject->setData($data['data']);
         $textobject->setType($data['type']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($textobject);
         $entityManager->flush();
-
 
         $this->logger->info("TextObject named" . $textobject->getName() . " created");
 
@@ -202,9 +205,8 @@ class TextObjectController extends Controller
         return $response;
     }
 
-    /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_edit_textobject")
-     */
+    
+	#[Put('/api/labs/{labId<\d+>}/textobjects/{id<\d+>}', name: 'api_edit_textobject')]
     public function updateAction(Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
     {
         $lab = $this->labRepository->find($labId);
@@ -218,10 +220,9 @@ class TextObjectController extends Controller
         }
         $textobject->setData($data['data']);
 
-        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager = $this->entityManager;
         $entityManager->persist($textobject);
         $entityManager->flush();
-
 
         $this->logger->info("TextObject named" . $textobject->getName() . " modified");
 
@@ -241,9 +242,8 @@ class TextObjectController extends Controller
         return $response;
     }
 
-     /**
-     * @Rest\Put("/api/labs/{labId<\d+>}/textobjects", name="api_edit_textobjects")
-     */
+     
+	#[Put('/api/labs/{labId<\d+>}/textobjects', name: 'api_edit_textobjects')]
     public function updateMultipleTextObjectsAction(Request $request, int $labId, TextObjectRepository $textobjectRepository, ManagerRegistry $doctrine)
     {
         $lab = $this->labRepository->find($labId);
@@ -254,7 +254,7 @@ class TextObjectController extends Controller
         foreach($data as $dataObject){
             $textobject = $textobjectRepository->findByIdAndLab($dataObject['id'], $labId);
             $textobject->setData($dataObject['data']);
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($textobject);
             $entityManager->flush();
         }
@@ -270,10 +270,8 @@ class TextObjectController extends Controller
 
     }
 
-    /**
-     * 
-     * @Rest\Delete("/api/labs/{labId<\d+>}/textobjects/{id<\d+>}", name="api_delete_textobject")
-     */
+    
+	#[Delete('/api/labs/{labId<\d+>}/textobjects/{id<\d+>}', name: 'api_delete_textobject')]
     public function deleteAction(ManagerRegistry $doctrine, Request $request, int $id, int $labId, TextObjectRepository $textobjectRepository)
     {
         $lab = $this->labRepository->find($labId);

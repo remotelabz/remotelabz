@@ -6,6 +6,7 @@ namespace DoctrineMigrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use App\Repository\LabRepository;
@@ -24,7 +25,7 @@ final class Version20211014100807 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('CREATE TABLE lab_group (lab_id INT NOT NULL, group_id INT NOT NULL, INDEX IDX_A0C920D628913D5 (lab_id), INDEX IDX_A0C920DFE54D947 (group_id), PRIMARY KEY(lab_id, group_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE lab_group ADD CONSTRAINT FK_A0C920D628913D5 FOREIGN KEY (lab_id) REFERENCES lab (id) ON DELETE CASCADE');
@@ -41,7 +42,7 @@ final class Version20211014100807 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf(!$this->connection->getDatabasePlatform() instanceof MySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('DROP TABLE lab_group');
         $this->addSql('ALTER TABLE lab ADD _group_id INT DEFAULT NULL');

@@ -6,67 +6,47 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\NetworkSettingsRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\NetworkSettingsRepository')]
 class NetworkSettings
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\Groups({"primary_key"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\Groups(['primary_key'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "details", "start_lab", "stop_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab', 'details', 'start_lab', 'stop_lab'])]
     private $name;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     *
-     * @Assert\Ip(version="4")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
+    #[Assert\Ip(version: 4)]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab', 'start_lab', 'stop_lab'])]
     private $ip;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     *
-     * @Assert\Ip(version="6")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
+    #[Assert\Ip(version: 6)]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab', 'start_lab', 'stop_lab'])]
     private $ipv6;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     *
-     * @Assert\Ip
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab"})
-     */
+    #[Assert\Ip]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab', 'start_lab', 'stop_lab'])]
     private $gateway;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"network_interfaces", "lab", "start_lab", "stop_lab"})
-     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['network_interfaces', 'lab', 'start_lab', 'stop_lab'])]
     private $protocol;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     *
-     * @Assert\Range(min=0, max=65536)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"lab"})
-     */
+    #[Assert\Range(min: 0, max: 65536)]
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['lab'])]
     private $port;
 
     public function getId(): ?int

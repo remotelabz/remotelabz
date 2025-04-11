@@ -18,7 +18,7 @@ class PictureRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Picture::class);
     }
-    
+
     public function findByLab($id)
     {
        return  $this->createQueryBuilder('p')

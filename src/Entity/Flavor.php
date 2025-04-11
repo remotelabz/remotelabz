@@ -6,48 +6,34 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\FlavorRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\FlavorRepository')]
 class Flavor
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_flavor", "api_get_device", "api_get_lab_template"})
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_flavor', 'api_get_device', 'api_get_lab_template'])]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_flavor", "export_lab", "api_get_device", "api_get_lab_template"})
-     * @Assert\NotBlank
-     */
+    #[Assert\NotBlank]
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_flavor', 'export_lab', 'api_get_device', 'api_get_lab_template'])]
     private $name;
 
-    /**
-     * @ORM\Column(type="bigint")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_flavor", "export_lab", "worker", "api_get_lab_template"})
-     * @Assert\NotBlank
-     * @Assert\GreaterThan(
-     *     value = 0
-     * )
-     */
+    #[Assert\NotBlank]
+    #[Assert\GreaterThan(value: 0)]
+    #[ORM\Column(type: 'bigint')]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_flavor', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $memory;
 
-    /**
-     * @ORM\Column(type="bigint")
-     * @Serializer\XmlAttribute
-     * @Serializer\Groups({"api_get_flavor", "export_lab", "worker", "api_get_lab_template"})
-     * @Assert\NotBlank
-     * @Assert\GreaterThan(
-     *     value = 0
-     * )
-     */
+    #[Assert\NotBlank]
+    #[Assert\GreaterThan(value: 0)]
+    #[ORM\Column(type: 'bigint')]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_flavor', 'export_lab', 'worker', 'api_get_lab_template'])]
     private $disk;
 
     public function getId(): ?int

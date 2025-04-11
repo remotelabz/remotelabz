@@ -9,10 +9,8 @@ use JMS\Serializer\Annotation as Serializer;
  */
 interface InstancierInterface
 {
-    /*
-     * @Serializer\VirtualProperty()
-     * @Serializer\Groups({"lab", "start_lab", "stop_lab", "api_get_lab_instance", "api_get_device_instance", "instances"})
-     */
+    #[VirtualProperty]
+    #[Groups(["lab", "start_lab", "stop_lab", "api_get_lab_instance", "api_get_device_instance", "instances"])]
     public function getUuid(): string;
 
     public function getName(): ?string;

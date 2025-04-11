@@ -7,13 +7,14 @@ use App\Entity\DeviceInstanceLog;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\DeviceInstanceRepository;
 use Remotelabz\Message\Message\InstanceLogMessage;
-use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-class InstanceLogMessageHandler implements MessageHandlerInterface
+#[AsMessageHandler]
+class InstanceLogMessageHandler
 {
-    private $deviceInstanceRepository;
-    private $entityManager;
-    private $logger;
+    private DeviceInstanceRepository $deviceInstanceRepository;
+    private EntityManagerInterface $entityManager;
+    private LoggerInterface $logger;
 
     public function __construct(
         DeviceInstanceRepository $deviceInstanceRepository,

@@ -29,7 +29,7 @@ class TextObjectRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
-    
+
     public function findByLab($id)
     {
        return  $this->createQueryBuilder('o')

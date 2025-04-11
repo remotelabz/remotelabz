@@ -6,8 +6,10 @@ use App\Entity\Device;
 use App\Service\FileUploader;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Doctrine\ORM\Event\PostLoadEventArgs;
 
 class LaunchScriptUploadListener
 {
@@ -18,9 +20,9 @@ class LaunchScriptUploadListener
         $this->uploader = $uploader;
     }
 
-    public function postLoad(LifecycleEventArgs $args)
+    public function postLoad(PostLoadEventArgs $args): void
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
 
         if (!$entity instanceof Device) {
             return;
@@ -31,21 +33,21 @@ class LaunchScriptUploadListener
         }
     }
 
-    public function prePersist(LifecycleEventArgs $args)
+    public function prePersist(PrePersistEventArgs $args): void
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
 
         $this->uploadFile($entity);
     }
 
-    public function preUpdate(PreUpdateEventArgs $args)
+    public function preUpdate(PreUpdateEventArgs $args): void
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
 
         $this->uploadFile($entity);
     }
 
-    private function uploadFile($entity)
+    private function uploadFile($entity): void
     {
         // upload only works for Device entities
         if (!$entity instanceof Device) {
