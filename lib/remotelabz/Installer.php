@@ -462,7 +462,7 @@ class Installer
         chdir($this->installPath);
         $output = [];
         $returnCode = 0;
-        exec("yarn install", $output, $returnCode);
+        exec("yarn install --frozen-lockfile", $output, $returnCode);
         $this->logger->debug($output);
         if ($returnCode) {
             throw new Exception("Could not restart install Yarn packages correctly.");
