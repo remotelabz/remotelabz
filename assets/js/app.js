@@ -20,6 +20,8 @@ import 'simplemde/dist/simplemde.min.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 import 'cropperjs/dist/cropper.min.css';
 
+import $ from 'jquery';
+global.$ = global.jQuery = $;
 import 'popper.js';
 import 'bootstrap';
 import 'datatables.net-bs4';
