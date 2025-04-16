@@ -142,17 +142,17 @@ class Installer
         echo "🎶 Downloading Composer packages... ";
         if ($this->configureComposer()) {
             $this->logger->debug("Finished downloading Composer packages");
-            echo "OK ✔️\n";
+            echo "Composer install OK ✔️\n";
         } else {
             throw new Exception("There was an error downloading composer packages.");
         }
 
         $this->logger->debug("Installing Yarn packages");
-        echo "📦 Downloading Yarn packages... ";
+        echo "📦 Downloading Yarn packages... \n";
         try {
             $this->configureYarn();
             $this->logger->debug("Finished downloading Yarn packages");
-            echo "OK ✔️\n";
+            echo "Downloading Yarn packages OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("There was an error downloading Yarn packages.");
         }
@@ -252,6 +252,7 @@ class Installer
             $this->rchown($this->installPath."/public/uploads", "www-data", "www-data");
             $this->rchown($this->installPath."/var", "www-data", "www-data");
             chmod($this->installPath."/config/packages/messenger.yaml", 0664);
+            @mkdir($this->installPath."/config/templates");
             $this->rchown($this->installPath."/config/templates", "www-data", "www-data");
             chmod($this->installPath."/config/templates", 0774);
             @mkdir($this->installPath."/backups");
