@@ -326,7 +326,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (lab.devices.length == labDeviceLength) && isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (instance.deviceInstances.length == labDeviceLength) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>
                                 {showExport ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>

@@ -5,6 +5,26 @@
       <tool tool-id="symfony" tool-name="Symfony"/>
     </header>
     <body>
+      <trans-unit id="delete_the_lab" resname="Delete the lab">
+        <source>Delete the lab</source>
+        <target>Delete the lab</target>
+      </trans-unit>
+      <trans-unit id="yes" resname="Yes">
+        <source>Yes</source>
+        <target>Yes</target>
+      </trans-unit>
+      <trans-unit id="codes" resname="Codes">
+        <source>Codes</source>
+        <target>Codes</target>
+      </trans-unit>
+      <trans-unit id="export" resname="Export">
+        <source>Export</source>
+        <target>Export</target>
+      </trans-unit>
+      <trans-unit id="delete" resname="Delete">
+        <source>Delete</source>
+        <target>Delete</target>
+      </trans-unit>
       <trans-unit id="awzJBNC" resname="Users">
         <source>Users</source>
         <target>Users</target>

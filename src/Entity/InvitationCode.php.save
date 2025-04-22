@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\Entity\Instance;
+use App\Entity\Instance
 use App\Entity\Lab;
 use Doctrine\ORM\Mapping as ORM;
 use App\Instance\InstanciableInterface;
@@ -60,13 +60,13 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
     #[Serializer\Groups(['api_invitation_codes', 'worker', 'api_get_lab_instance'])]
     private string $uuid;
 
-    #[ORM\OneToMany(mappedBy: 'guest', targetEntity: LabInstance::class)]
+    #[ORM\OneToMany(mappedBy: 'guest', targetEntity: Instance::class)]
     private Collection $labInstances;
 
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
-	$this->labInstances = new ArrayCollection();
+	$this->labInstances = new ArrayCollections();
     }
 
     public function getId(): ?int

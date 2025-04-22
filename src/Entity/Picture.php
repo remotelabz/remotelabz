@@ -48,7 +48,7 @@ class Picture implements InstanciableInterface
     #[Serializer\Groups(['api_get_picture', 'export_lab', 'api_get_lab_instance', 'api_get_lab', 'api_get_lab_template'])]
     private $width;
 
-    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'textobjects', cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Lab', inversedBy: 'pictures', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     private $lab;
 
