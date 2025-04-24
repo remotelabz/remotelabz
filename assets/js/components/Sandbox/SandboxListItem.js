@@ -52,11 +52,11 @@ class SandboxListItem extends Component {
         await this.api.post("/api/labs").then(response => {
             lab = response.data
         });
-        if(this.props.itemType == "device") {
+        if(this.props.itemType === "device") {
             var labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
             var fields = {name: labName};
         }
-        else if (this.props.itemType == "lab") {
+        else if (this.props.itemType === "lab") {
             var labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
             var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
             if (this.props.item.hasTimer) {
@@ -67,8 +67,9 @@ class SandboxListItem extends Component {
         var labObj = { id: lab.id, fields: fields};
         Remotelabz.labs.update(labObj);
 
-        if (this.props.itemType == "lab") {
-            Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{$
+        if (this.props.itemType === "lab") {
+            Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{
+		console.log("Banner copied", response);
             })
             for(var textobject of item.textobjects){
                 var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
@@ -84,36 +85,37 @@ class SandboxListItem extends Component {
             }
         }
         // Add device to lab
-        if(this.props.itemType == "device") {
+        if(this.props.itemType === "device") {
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
             item.hypervisor = item.hypervisor.id;
             item.isTemplate = false;
             item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-            //item.networkInterfaces.forEach(element => console.log(element.id));
+            item.networkInterfaces.forEach(element => console.log(element.id));
             item.networkInterfaces = networkInterfaces;
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
             item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
-            /*console.log("OnModify");
-            console.log(device);*/
+            console.log("OnModify")
+            console.log(device);
             await this.api.post('/api/labs/' + lab.id + '/devices', item);
         }
-        else if (this.props.itemType == "lab") {
+        else if (this.props.itemType === "lab") {
             for(var device of item.devices) {
                 device.flavor = device.flavor.id;
                 device.operatingSystem = device.operatingSystem.id;
                 device.hypervisor = device.hypervisor.id;
                 device.isTemplate = false;
                 device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-                //device.networkInterfaces.forEach(element => console.log(element.id));
+                device.networkInterfaces.forEach(element => console.log(element.id));
                 device.networkInterfaces = networkInterfaces;
                 device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-                //device.controlProtocolTypes.forEach(element => console.log(element.id));
+                device.controlProtocolTypes.forEach(element => console.log(element.id));
                 device.controlProtocolTypes = controlProtocolTypes;
                 await this.api.post('/api/labs/' + lab.id + '/devices', device);
             }
         }
+
         // Create and start a lab instance
         await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
   
@@ -135,6 +137,7 @@ class SandboxListItem extends Component {
     render() {
         let divBorder;
         let button;
+	    console.log("Rendering SandboxListItem for", this.props.item.name);
 
         if(this.state.isLoading) {
             button = (<Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
@@ -270,5 +273,5 @@ class SandboxListItem extends Component {
         );
     }
 }
-
+console.log("test")
 export default SandboxListItem;

@@ -10,7 +10,8 @@ import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
+
+function InstanceListItem({ instance, labDeviceLength, allInstance,  showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
     const [isLoading, setLoading] = useState(true)
     const [isComputing, setComputing] = useState(false)
     const [isExporting, setExporting] = useState(false)
@@ -20,7 +21,8 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
-   
+    
+    console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         fetchLogs()
         //Collect log every 30 seconds
@@ -230,10 +232,10 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
     }
     
     let controls;
-/*    console.log('instance',instance)
-    console.log('user',user)
-    console.log('lab',lab)
-*/
+    console.log('instance',instance);
+    console.log('user',user);
+    console.log('lab',lab);
+
     switch (instance.state) {
         case 'error':
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
@@ -245,6 +247,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
                 <SVG name="play" />
             </Button>);
+		console.log("test stopped");
             break;
 
         case 'reset':
@@ -295,7 +298,7 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
             
             break;
     }
-
+console.log("test 2");
     return (
         <><ListGroupItem>
             {isLoading ?
@@ -324,9 +327,12 @@ function InstanceListItem({ instance, labDeviceLength, showControls, onStateUpda
                             {instance.uuid}
                         </div>
                     </div>
-
+{console.log("test3")}
+{console.log("is sandbox", isSandbox)}
+{console.log("device length", instance.length)}
+{console.log("labdevicelength", labDeviceLength)}
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported')&&  (instance.deviceInstances.length == labDeviceLength) && isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>
                                 {showExport ?
                                     <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>

@@ -12,6 +12,7 @@ class SandboxManager extends Component {
             <SandboxList devices={this.props.devices} user={this.props.user} labs={this.props.labs}></SandboxList>
         )
     }
+
 }
 
 export default SandboxManager;
