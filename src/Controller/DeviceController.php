@@ -1356,8 +1356,8 @@ class DeviceController extends Controller
         }
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
 
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $username=$user->getUserIdentifier();
+        $user = $this->getUser();
+        $username = $user ? $user->getUserIdentifier() : 'anonymous';
 
         if(!$device = $this->deviceRepository->find($id)) {
             throw new NotFoundHttpException("Device ". $id. "does not exist.");
