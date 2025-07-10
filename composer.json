@@ -10,7 +10,7 @@
         "doctrine/doctrine-bundle": "^2",
         "doctrine/doctrine-fixtures-bundle": "^3",
         "doctrine/doctrine-migrations-bundle": "^3",
-        "doctrine/orm": "^2 || ^3.3",
+        "doctrine/orm": ">=3.5",
         "friendsofsymfony/jsrouting-bundle": "^3.0",
         "friendsofsymfony/rest-bundle": "^3.0",
         "gesdinet/jwt-refresh-token-bundle": "^1.4",

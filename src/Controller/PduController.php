@@ -25,6 +25,27 @@ use Doctrine\ORM\EntityManagerInterface;
 class PduController extends Controller
 {
     public $pduRepository;
+    public $entityManager;
+    /**
+     * PduController constructor.
+     *
+     * @param PduRepository $pduRepository
+     * @param EntityManagerInterface $entityManager
+     */
+    // Constructor injection for PduRepository and EntityManagerInterface
+    // This allows us to use these services in the controller methods
+    // to interact with the database and perform operations on PDU entities.
+    // The PduRepository is used to fetch PDU entities, while the EntityManagerInterface
+    // is used to persist changes to the database.
+    // This is a common pattern in Symfony applications to keep controllers clean and focused on handling requests
+    // while delegating data access logic to repositories.
+    // This approach promotes separation of concerns and makes the code more maintainable and testable.
+    // It also allows for easier mocking of these services in unit tests.
+    // By injecting these dependencies, we can easily swap out implementations or mock them for testing purposes
+    // without changing the controller code.
+    // This is a best practice in Symfony and helps to keep the codebase clean and organized
+    // while adhering to the principles of dependency injection and inversion of control.
+    // This constructor is called automatically by Symfony's dependency injection container     
 
     public function __construct(PduRepository $pduRepository, EntityManagerInterface $entityManager)
     {

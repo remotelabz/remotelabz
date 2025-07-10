@@ -73,6 +73,8 @@ class InstanceController extends Controller
     protected $remotelabzProxyUseWss;
     private $configworkerRepository;
 
+    /** @var EntityManagerInterface */
+    protected $entityManager;
     
     /** @var LabRepository $labRepository */
     private $labRepository;

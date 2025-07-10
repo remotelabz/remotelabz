@@ -98,6 +98,24 @@ class LabController extends Controller
     private $labInstanceRepository;
     private $bookingRepository;
     private $configWorkerRepository;
+    private $hypervisorRepository;
+    private $entityManager;
+    /**
+     * LabController constructor.
+     *
+     * @param LoggerInterface $logger
+     * @param LabRepository $labRepository
+     * @param DeviceRepository $deviceRepository
+     * @param operatingSystemRepository $operatingSystemRepository
+     * @param HypervisorRepository $hypervisorRepository
+     * @param FlavorRepository $flavorRepository
+     * @param SerializerInterface $serializerInterface
+     * @param LabInstanceRepository $labInstanceRepository
+     * @param BookingRepository $bookingRepository
+     * @param ConfigWorkerRepository $configWorkerRepository
+     * @param EntityManagerInterface $entityManager
+     */
+    
 
     public function __construct(
         LoggerInterface $logger,

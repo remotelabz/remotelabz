@@ -4,11 +4,11 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
-            channels: ["!request", "!event", "!doctrine", "!security"]
+            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php", "!app"]
         security:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_security.log"
-            level: debug
+            level: info
             channels: ["security"]
         doctrine:
             type: stream
@@ -19,7 +19,7 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_app.log"
             level: debug
-            channels: ["app"]
+            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php"]
         messenger:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_messenger.log"
@@ -35,6 +35,11 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%_request.log"
             level: debug
             channels: ["request"]
+        event:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%_event.log"
+            level: debug
+            channels: ["event"]
         # uncomment to get logging in your browser
         # you may have to allow bigger header sizes in your Web server configuration
         #firephp:

@@ -50,6 +50,15 @@ class GroupController extends Controller
 
     /** @var GroupRepository */
     protected $groupRepository;
+    /** @var LabInstanceRepository */
+    protected $labInstanceRepository;
+    /** @var EntityManagerInterface */
+    protected $entityManager;
+    /** @var SerializerInterface */
+    protected $serializer;
+    /** @var GroupPictureFileUploader */
+    private $groupPictureFileUploader;
+    
 
     public function __construct(
         GroupRepository $groupRepository,

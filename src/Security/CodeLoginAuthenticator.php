@@ -53,6 +53,20 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
      */
     protected $refreshTokenManager;
     private $config;
+    private $urlGenerator;
+    /**
+     * CodeLoginAuthenticator constructor.
+     *
+     * @param EntityManagerInterface $entityManager
+     * @param RouterInterface $router
+     * @param CsrfTokenManagerInterface $csrfTokenManager
+     * @param UserPasswordHasherInterface $passwordHasher
+     * @param JWTTokenManagerInterface $JWTManager
+     * @param RefreshTokenManagerInterface $refreshTokenManager
+     * @param ContainerBagInterface $config
+     * @param UrlGeneratorInterface $urlGenerator
+     */
+    
 
     public function __construct(
         EntityManagerInterface $entityManager,

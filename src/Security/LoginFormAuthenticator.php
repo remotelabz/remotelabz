@@ -55,6 +55,22 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
     protected $refreshTokenManager;
     private $config;
     protected $maintenance;
+    private $urlGenerator;
+    /**
+     * LoginFormAuthenticator constructor.
+     *
+     * @param EntityManagerInterface $entityManager
+     * @param RouterInterface $router
+     * @param CsrfTokenManagerInterface $csrfTokenManager
+     * @param UserPasswordHasherInterface $passwordHasher
+     * @param JWTTokenManagerInterface $JWTManager
+     * @param RefreshTokenManagerInterface $refreshTokenManager
+     * @param ContainerBagInterface $config
+     * @param UrlGeneratorInterface $urlGenerator
+     * @param bool $maintenance
+     * @param LoggerInterface $logger
+     */
+    
 
     public function __construct(
         EntityManagerInterface $entityManager,

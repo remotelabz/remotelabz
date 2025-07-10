@@ -22,7 +22,7 @@ doctrine:
 
         url: 'mysql://%env(MYSQL_USER)%:%env(MYSQL_PASSWORD)%@%env(MYSQL_SERVER)%/%env(MYSQL_DATABASE)%'
     orm:
-        auto_generate_proxy_classes: true
+        auto_generate_proxy_classes: false
         enable_lazy_ghost_objects: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
@@ -38,3 +38,4 @@ doctrine:
         dql:
             string_functions:
                 GROUP_CONCAT: App\Orm\GroupConcat
+        

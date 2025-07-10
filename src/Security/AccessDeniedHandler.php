@@ -15,6 +15,15 @@ class AccessDeniedHandler implements AccessDeniedHandlerInterface
 {
     private $logger;
     private $router;
+    private $security;
+    /**
+     * AccessDeniedHandler constructor.
+     *
+     * @param LoggerInterface $logger
+     * @param Security $security
+     * @param UrlGeneratorInterface $router
+     */
+    
 
     public function __construct(
         LoggerInterface $logger,

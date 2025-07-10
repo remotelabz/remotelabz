@@ -56,6 +56,20 @@ class UserController extends Controller
      
     /** @var LoggerInterface $logger */
      private $logger;
+    /** @var EntityManagerInterface $entityManager */
+    private $entityManager;
+    /** @var string $url_check_internet */
+    private $url_check_internet;
+    /** @var string $remotevpn_addr */
+    private $remotevpn_addr;
+    /** @var string $contact_mail */
+    private $contact_mail;
+    protected $groupRepository;
+    protected $kernel;
+    protected $vpnConfiguratorGenerator;
+    protected $profilePictureFileUploader;
+    
+
 
     public function __construct(
         UserPasswordHasherInterface $passwordHasher,
