@@ -243,8 +243,15 @@ class ConfigWorkerController extends Controller
 	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function deleteAction(Request $request, int $id) {
         $data = json_decode($request->getContent(), true);
-
+        if (!isset($id)) {
+            $this->logger->error("No worker ID provided for deletion.");
+            throw new BadRequestHttpException('No worker ID provided for deletion.');
+        }
         $worker = $this->configWorkerRepository->find(["id" => $id]);
+        if (!$worker) {
+            $this->logger->error("Worker with ID ".$id." not found.");
+            throw new BadRequestHttpException('Worker with ID '.$id.' not found.');
+        }
         $labInstances = $this->labInstanceRepository->findByWorkerIP($worker->getIPv4());
         if (count($labInstances) != 0) {
             

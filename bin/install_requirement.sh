@@ -2,14 +2,14 @@
 
 apt-get update
 apt-get -y upgrade
-add-apt-repository -y ppa:ondrej/php # PPRI0603 : Ajout pour l'installation de PHP8.1
-apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php8.1 # PPRI0603 : changement de version des modules PHP pour passer en PHP8.1
-apt install -y php8.1 php8.1-bcmath php8.1-curl php8.1-gd php8.1-intl php8.1-mbstring php8.1-mysql php8.1-xml php8.1-zip # PPRI0603 : changement version des modules PHP pour passer en PHP8.1
+#add-apt-repository -y ppa:ondrej/php # PPRI0603 : Ajout pour l'installation de PHP8.1
+apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php
+apt install -y php php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip # PPRI0603 : changement version des modules PHP pour passer en PHP8.1
 apt-get update # PPRI0603 : Ajout
-phpenmod -v 8.1 dom # PPRI0603 : Ajout
-update-alternatives --set php /usr/bin/php8.1 # PPRI0603 : Ajout des 3 lignes suivantes pour forcer l'utilisation de php8.1
-update-alternatives --set phar /usr/bin/phar8.1
-update-alternatives --set phar.phar /usr/bin/phar.phar8.1
+#phpenmod -v 8.1 dom # PPRI0603 : Ajout
+#update-alternatives --set php /usr/bin/php # PPRI0603 : Ajout des 3 lignes suivantes pour forcer l'utilisation de php8.1
+#update-alternatives --set phar /usr/bin/phar
+#update-alternatives --set phar.phar /usr/bin/phar.phar
 systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
 cp composer.phar /usr/local/bin/composer
