@@ -149,7 +149,7 @@ class LabController extends Controller
     
 	#[Get('/api/labs', name: 'api_get_labs')]
 	#[QueryParam(name: "limit", requirements: "\d+", default: "10")]
-	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+	//#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
     #[Route(path: '/labs', name: 'labs')]
     public function indexAction(Request $request, UserRepository $userRepository)
     {
@@ -909,7 +909,7 @@ class LabController extends Controller
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
                 $device=$this->deviceRepository->findBy(['name' => 'Service', 'isTemplate' => true]);
-                $this->logger->debug("Device Service found ? : ",$device);
+                $this->logger->debug("Device \"DHCP Service\" found ? : ",$device);
                 if (!is_null($device) && count($device)>0 ) {
                     $srv_device=$this->copyDevice($device[0],'Service_sandbox');
                     $srv_device->setIsTemplate(false);

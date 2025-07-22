@@ -131,7 +131,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
 
         $device = new Device();
         $device
-            ->setName('Natif')
+            ->setName('Switch internet')
             ->setBrand('Natif')
             ->setLaunchOrder(0)
             ->setVirtuality(1)

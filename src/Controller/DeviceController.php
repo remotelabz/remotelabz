@@ -1293,8 +1293,8 @@ class DeviceController extends Controller
     #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'GET')]
     public function deleteAction(Request $request, int $id)
     {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $username=$user->getUserIdentifier();
+        $user = $this->getUser();
+        $username = $user ? $user->getUserIdentifier() : 'anonymous';
         $device = $this->deviceRepository->find($id);
 
         $this->delete_device($device);

@@ -52,7 +52,6 @@ parameters:
     app.user.url_check_internet: '%env(resolve:URL_TO_CHECK_INTERNET)%'
     app.user.authorized_affiliation: '%env(resolve:AUTHORIZED_SHIBBOLETH_DOMAIN)%'
 
-
     app.ssl.ca.cert: '%env(resolve:SSL_CA_CERT)%'
     app.ssl.ca.key: '%env(resolve:SSL_CA_KEY)%'
     app.ssl.ca.key.passphrase: '%env(resolve:SSL_CA_KEY_PASSPHRASE)%'
@@ -91,7 +90,7 @@ services:
             - '../src/Tests/'
             
     Psr\Log\LoggerInterface: '@monolog.logger'
-
+    
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
     App\Controller\:
@@ -249,4 +248,7 @@ services:
     network_manager: '@App\Service\Network\NetworkManager'
     proxy_manager: '@App\Service\Proxy\ProxyManager'
 
-    
+    App\Monolog\Handler\IgnoreSecurityEventsHandler:
+        arguments:
+            $stream: '%kernel.logs_dir%/%kernel.environment%_app.log'
+            $level: 'debug'

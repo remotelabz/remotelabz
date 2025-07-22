@@ -4,22 +4,23 @@ monolog:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
-            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php", "!app"]
+            channels: ["!event", "!doctrine","!request", "!messenger", "!php","!security_events"]
         security:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_security.log"
-            level: info
+            level: debug
             channels: ["security"]
         doctrine:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_doctrine.log"
             level: debug
             channels: ["doctrine"]
+        
         app:
-            type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%_app.log"
-            level: debug
+            type: service
+            id: App\Monolog\Handler\IgnoreSecurityEventsHandler
             channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php"]
+            
         messenger:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_messenger.log"
