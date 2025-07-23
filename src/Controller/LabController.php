@@ -908,10 +908,17 @@ class LabController extends Controller
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
-                $device=$this->deviceRepository->findBy(['name' => 'Service', 'isTemplate' => true]);
-                $this->logger->debug("Device \"DHCP Service\" found ? : ",$device);
+                $device = $this->deviceRepository->findBy([
+                    'operatingSystem' => $this->operatingSystemRepository->findOneBy(['name' => 'Service']),
+                    'isTemplate' => true
+                ]);
+                if ($device != null && count($device) > 0) {
+                    $this->logger->debug("Device \"DHCP Service\" found ? : ",$device);
+                } else {
+                    $this->logger->debug("Device \"DHCP Service\" not found, creating a new one.");
+                }
                 if (!is_null($device) && count($device)>0 ) {
-                    $srv_device=$this->copyDevice($device[0],'Service_sandbox');
+                    $srv_device=$this->copyDevice($device[0],'DHCP_service');
                     $srv_device->setIsTemplate(false);
                     $entityManager->persist($srv_device);
                     $this->logger->debug("Add additional device ".$srv_device->getName()." to lab ".$lab_name);
