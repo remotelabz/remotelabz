@@ -43,7 +43,7 @@ class SandboxListItem extends Component {
     }
 
     async onModifyClick(item) {
-        
+        //console.log("onModifyClick", item);
         this.setState({ isLoading: true});
         let lab;
         let networkInterfaces = [];
@@ -69,8 +69,8 @@ class SandboxListItem extends Component {
 
         if (this.props.itemType === "lab") {
             Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{
-		console.log("Banner copied", response);
-            })
+		       // console.log("Banner copied", response);
+                })
             for(var textobject of item.textobjects){
                 var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
                 if (typeof textobject.newdata !== 'undefined') {
@@ -84,7 +84,10 @@ class SandboxListItem extends Component {
                
             }
         }
+   		//console.log("Banner copied", response);
+
         // Add device to lab
+        //console.log("itemType", this.props.itemType);
         if(this.props.itemType === "device") {
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
@@ -96,12 +99,16 @@ class SandboxListItem extends Component {
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
             item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
-            console.log("OnModify")
-            console.log(device);
+            //console.log("OnModify")
+            //console.log(device);
             await this.api.post('/api/labs/' + lab.id + '/devices', item);
         }
         else if (this.props.itemType === "lab") {
-            for(var device of item.devices) {
+            console.log("Modify lab id:", lab.id);
+            console.log("this.props.item.devices", this.props.item.devices);
+            console.log("this.props.item.devices.length", this.props.item.devices.length);
+
+            /*for(var device of this.props.item.devices) {
                 device.flavor = device.flavor.id;
                 device.operatingSystem = device.operatingSystem.id;
                 device.hypervisor = device.hypervisor.id;
@@ -113,7 +120,7 @@ class SandboxListItem extends Component {
                 device.controlProtocolTypes.forEach(element => console.log(element.id));
                 device.controlProtocolTypes = controlProtocolTypes;
                 await this.api.post('/api/labs/' + lab.id + '/devices', device);
-            }
+            }*/
         }
 
         // Create and start a lab instance
