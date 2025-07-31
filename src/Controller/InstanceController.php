@@ -981,17 +981,16 @@ class InstanceController extends Controller
         }
 
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
-            
             $this->denyAccessUnlessGranted(InstanceVoter::DELETE, $instance);
         }
-        
-        
+
         $lab=$instance->getLab();
+        $this->logger->debug("[InstanceController:deleteRestAction]::Instance ".$instance->getUuid()." of lab ".$lab->getName()." will be delete from API by user ".$this->getUser()->getName()." ".$this->getUser()->getUuid());
         $device=$lab->getDevices();
         
         $from_export=strstr($request->headers->get('referer'),"sandbox");
         
-            $instanceManager->delete($instance);
+        $instanceManager->delete($instance);
             //$this->logger->debug("Delete from export");
             /*$instanceManager->entityManager->remove($lab);
             $instanceManager->entityManager->persist($lab);

@@ -246,8 +246,7 @@ class InstanceManager
             );
             return $labInstance;
         } else 
-            return null;
-        
+            return null;   
     }
 
     /**
@@ -267,7 +266,7 @@ class InstanceManager
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
             $network=$labInstance->getNetwork();
             if (IPTools::routeExists($network)) {
-                $this->logger->debug("Route to ".$network." exists via ".$workerIP);
+                $this->logger->debug("[InstanceManager:delete]::Route to ".$network." exists via ".$workerIP);
                try {
                 //IPTools::routeDelete($network,$workerIP);
                 IPTools::routeDelete($network,null);
@@ -277,7 +276,7 @@ class InstanceManager
                }
             }
             else {
-            $this->logger->debug("Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
+            $this->logger->debug("[InstanceManager:delete]::Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
             }
 
             $this->entityManager->persist($labInstance);

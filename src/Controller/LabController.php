@@ -672,7 +672,7 @@ class LabController extends Controller
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("[LabController:addDeviceAction]:Add device to a lab from API by : ".$this->getUser()->getUserIdentifier());
+            $this->logger->debug("[LabController:addDeviceAction]::Add device to a lab from API by : ".$this->getUser()->getUserIdentifier());
         
         $device = new Device();
         
@@ -681,7 +681,7 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_array = json_decode($request->getContent(), true);
-            //$this->logger->debug("[LabController:addDeviceAction]json:",$device_array);
+            //$this->logger->debug("[LabController:addDeviceAction]::json:",$device_array);
             /*$json_example='{
                 "id": 121,
                 "name": "FortiGate-v7.2.0",
@@ -711,14 +711,14 @@ class LabController extends Controller
             //Delete this key otherwise the validation doesn't work.
             unset($device_array['controlProtocolTypes']);
             $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
-            $this->logger->debug("[LabController:addDeviceAction]Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            $this->logger->debug("[LabController:addDeviceAction]::Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             $deviceForm->submit($device_array);
         }
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
                 $entityManager = $this->entityManager;
-                $this->logger->debug("[LabController:addDeviceAction]Add device in lab form submitted is valid");
+                $this->logger->debug("[LabController:addDeviceAction]::Add device in lab form submitted is valid");
 
                 $editorData = new EditorData();
                 $editorData->setX($device_array['editorData']['x']);
@@ -740,12 +740,12 @@ class LabController extends Controller
                 $hypervisor = $this->hypervisorRepository->find($device_array['hypervisor']);
                 $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);
-                $this->logger->debug("[LabController:addDeviceAction]Device added : ".$new_device->getName());
+                $this->logger->debug("[LabController:addDeviceAction]::Device added : ".$new_device->getName());
                 $entityManager->persist($new_device);
                 $editorData->setDevice($new_device);
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
-                $this->logger->debug("[LabController:addDeviceAction]Source device id adds is :".$device_array['id']);
+                $this->logger->debug("[LabController:addDeviceAction]::Source device id adds is :".$device_array['id']);
                 //$i=0;
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
@@ -777,10 +777,10 @@ class LabController extends Controller
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
             } else {
-                $this->logger->debug("[LabController:addDeviceAction]Add device in lab form submitted is not valid");
+                $this->logger->debug("[LabController:addDeviceAction]::Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors(true) as $error) {
-                    $this->logger->debug("[LabController:addDeviceAction]Error validating :".$error->getMessage());
+                    $this->logger->debug("[LabController:addDeviceAction]::Error validating :".$error->getMessage());
                 }
             }
         }
@@ -1087,16 +1087,19 @@ class LabController extends Controller
     #[Route(path: '/admin/labs/{id<\d+>}/delete', name: 'delete_lab', methods: 'GET')]
     public function deleteAction(Request $request, int $id, UserInterface $user,LabInstanceRepository $labInstanceRepository)
     {
+
         if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException();
         }
 
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        $this->logger->debug("[LabController:deleteAction]::Lab ".$lab->getName()." will be deleted by : ".$this->getUser()->getUserIdentifier());
+
         
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("[LabController:deleteAction]Lab deleted by : ".$this->getUser()->getUserIdentifier());
+            $this->logger->debug("[LabController:deleteAction]::Lab deleted by : ".$this->getUser()->getUserIdentifier());
 
         $return=$this->delete_lab($lab);
         if ($return > 0) {
@@ -1109,7 +1112,7 @@ class LabController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json();
             }
-            $this->logger->info($user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
+            $this->logger->info("[LabController:deleteAction]::".$user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
 
             $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');

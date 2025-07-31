@@ -62,17 +62,17 @@ class SandboxListItem extends Component {
             var labObj = {id: lab.id, fields: fields};
 
             // Add the fields to the lab and a service device if configured on the Remotelabz
-            console.log("labobj", labObj);
+            //console.log("labobj", labObj);
             await Remotelabz.labs.update(labObj);
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
             item.hypervisor = item.hypervisor.id;
             item.isTemplate = false;
             item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-            item.networkInterfaces.forEach(element => console.log(element.id));
+            //item.networkInterfaces.forEach(element => console.log(element.id));
             item.networkInterfaces = networkInterfaces;
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-            item.controlProtocolTypes.forEach(element => console.log(element.id));
+            //item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
             //Add Service device if Service OS was configured on the FemoteLabz
             await this.api.post('/api/labs/' + lab.id + '/devices', item);
@@ -120,8 +120,9 @@ class SandboxListItem extends Component {
     }
 
     async deleteLab(id) {
+        this.setState({ isLoading: true, exist: true});
         await Remotelabz.labs.delete(id);
-        this.setState({ isLoading: true, exist: false});
+        this.setState({ isLoading: false, exist: false});
 
         window.location.href = "/admin/sandbox"
     }
