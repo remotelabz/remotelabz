@@ -592,7 +592,7 @@ class LabController extends Controller
 
         $lab = json_decode($request->getContent(), true);
 
-        $this->logger->debug('[LabController:newAction]:New lab data: ' . json_encode($lab));
+        //$this->logger->debug('[LabController:newAction]:New lab data: ' . json_encode($lab));
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->startsWith('name', 'Untitled Lab'));

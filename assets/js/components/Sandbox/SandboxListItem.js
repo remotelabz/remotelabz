@@ -53,12 +53,13 @@ class SandboxListItem extends Component {
         // If we want to modify a device
         if(this.props.itemType === "device") {
             // Create a new lab to work on a copy of the original lab
+            // /api/labs returns the id of the created lab
             await this.api.post("/api/labs").then(response => {
                 lab = response.data
             });
             labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
             var fields = {id: lab.id, fields: fields, name: labName};
-            
+            // Add the fields to the lab and a service device if configured on the Remotelabz
             await Remotelabz.labs.update(fields);
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
@@ -70,10 +71,8 @@ class SandboxListItem extends Component {
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
             item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
-            //console.log("OnModify")
-            //console.log(device);
-           await this.api.post('/api/labs/' + lab.id + '/devices', item);
-
+            //Add Service device if Service OS was configured on the FemoteLabz
+            await this.api.post('/api/labs/' + lab.id + '/devices', item);
         }      
         // If we want to modify a lab       
         else if (this.props.itemType === "lab") {
