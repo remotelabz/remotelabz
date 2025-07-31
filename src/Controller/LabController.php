@@ -660,7 +660,9 @@ class LabController extends Controller
         ]);
     }
 
-    
+    /*
+    Add a device submitted from API to the lab $id
+    */
 	#[Post('/api/labs/{id<\d+>}/devices', name: 'api_add_device_lab')]
     public function addDeviceAction(Request $request, int $id, NetworkInterfaceRepository $networkInterfaceRepository)
     {
@@ -679,7 +681,7 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_array = json_decode($request->getContent(), true);
-            //$this->logger->debug("[LabController:]json:",$device_array);
+            //$this->logger->debug("[LabController:addDeviceAction]json:",$device_array);
             /*$json_example='{
                 "id": 121,
                 "name": "FortiGate-v7.2.0",
@@ -709,14 +711,14 @@ class LabController extends Controller
             //Delete this key otherwise the validation doesn't work.
             unset($device_array['controlProtocolTypes']);
             $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
-            $this->logger->debug("[LabController:]Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            $this->logger->debug("[LabController:addDeviceAction]Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             $deviceForm->submit($device_array);
         }
 
         if ($deviceForm->isSubmitted()) {
             if ($deviceForm->isValid()) {
                 $entityManager = $this->entityManager;
-                $this->logger->debug("[LabController:]Add device in lab form submitted is valid");
+                $this->logger->debug("[LabController:addDeviceAction]Add device in lab form submitted is valid");
 
                 $editorData = new EditorData();
                 $editorData->setX($device_array['editorData']['x']);
@@ -738,12 +740,12 @@ class LabController extends Controller
                 $hypervisor = $this->hypervisorRepository->find($device_array['hypervisor']);
                 $new_device->setHypervisor($hypervisor);
                 $new_device->setVirtuality($device_array['virtuality']);
-                $this->logger->debug("[LabController:]Device added : ".$new_device->getName());
+                $this->logger->debug("[LabController:addDeviceAction]Device added : ".$new_device->getName());
                 $entityManager->persist($new_device);
                 $editorData->setDevice($new_device);
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
-                $this->logger->debug("[LabController:]Source device id adds is :".$device_array['id']);
+                $this->logger->debug("[LabController:addDeviceAction]Source device id adds is :".$device_array['id']);
                 //$i=0;
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
@@ -775,10 +777,10 @@ class LabController extends Controller
 
                 return $this->json($new_device, 201, [], ['api_get_device']);
             } else {
-                $this->logger->debug("[LabController:]Add device in lab form submitted is not valid");
+                $this->logger->debug("[LabController:addDeviceAction]Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors(true) as $error) {
-                    $this->logger->debug("[LabController:]Error validating :".$error->getMessage());
+                    $this->logger->debug("[LabController:addDeviceAction]Error validating :".$error->getMessage());
                 }
             }
         }
@@ -793,7 +795,7 @@ class LabController extends Controller
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
         if ($new_device->getHypervisor()->getName() === 'lxc') {
-            $this->logger->debug("[LabController:]Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
+            $this->logger->debug("[LabController:adddeviceinlab]Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
 
@@ -805,15 +807,15 @@ class LabController extends Controller
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
         $entityManager->flush();
-        $this->logger->debug("[LabController:]Add device in lab done");
+        $this->logger->debug("[LabController:adddeviceinlab]Add device in lab done");
     }
 
-    #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
+    /* #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
     public function editAction(Request $request, int $id)
     {
 
         $lab = $this->labRepository->find($id);
-        $this->logger->debug("[LabController:]Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
+        $this->logger->debug("[LabController:editAction]Lab '".$lab->getName()."' is edited by : ".$this->getUser()->getUserIdentifier());
 
         if ( !is_null($lab) and (($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator()) )
         {
@@ -843,6 +845,7 @@ class LabController extends Controller
             return $this->redirectToRoute('index');
         }
     }
+    */
 
     #[Route(path: '/admin/labs/{id<\d+>}/edit', name: 'edit_lab')]
     #[Route(path: '/admin/labs_template/{id<\d+>}/edit', name: 'edit_lab_template')]
@@ -876,17 +879,14 @@ class LabController extends Controller
         }
     }
     
+    // Update the lab $id to add an Service device.
 	#[Put('/api/labs/{id<\d+>}', name: 'api_edit_lab')]
-    public function updateAction(Request $request, int $id)
-    {
-
+    public function updateAction(Request $request, int $id) {
         $lab_org = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_org);
 
         $this->logger->debug("[LabController:updateAction]:Lab id ".$id." is modified with Sandbox menu ".$lab_org->getName($id)." by " . $this->getUser()->getUserIdentifier() . " is updated");
         $this->logger->info("Lab ".$lab_org->getName($id)." is modified from Sandbox by " . $this->getUser()->getUserIdentifier());
-
-
         $device=null;
         if (!$lab_org = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
@@ -930,25 +930,7 @@ class LabController extends Controller
                 }
             $entityManager->persist($lab);
             }
-            elseif ((strstr($lab_name,"Sandbox_Lab_")) ) {
-                $this->logger->debug("[LabController:updateAction]:Update of Lab Sandbox detected: ".$lab_name);
-                // TODO Copy all device
-                //Find all devices with of the lab $id
-                $devices = $lab->getDevices();
-                if ($devices == null || count($devices) == 0) {
-                    $this->logger->debug("[LabController:]No devices found in lab ".$lab_name);
-                }
-                foreach ($devices as $device) {
-                    $this->logger->debug("[LabController:updateAction]:Device found: ".$device->getName());
-
-                        $this->logger->debug("[LabController:updateAction]:Device ".$device->getName()." is a sandbox device, copying it.");
-                        $new_device=$this->copyDevice($device,'Sandbox_Lab_'.$device->getName());
-                        $new_device->setIsTemplate(false);
-                        $entityManager->persist($new_device);
-                        $this->logger->debug("[LabController:updateAction]:Add device ".$new_device->getName()." to lab ".$lab_name);
-                        $this->adddeviceinlab($srv_device,$lab);
-                }
-            }
+            
             $entityManager->flush();
             return $this->json($lab, 200, [], ['api_get_lab']);
         }
@@ -1019,6 +1001,47 @@ class LabController extends Controller
         return $newDevice;
     }
 
+    //Return the id of the new lab created from the copy of the lab $id.
+  	#[Post('/api/labs/{id<\d+>}/createcopy/', name: 'api_create_copy_lab')]
+    public function createcopyLab(Request $request,int $id): JsonResponse 
+    {
+        $this->logger->debug("[LabController:createcopyLab]:Request:" . $request->getContent());
+        $entityManager = $this->entityManager;
+        $lab_name = json_decode($request->getContent(), true)['name'];
+        $new_lab= new Lab();
+        $new_lab->setName($lab_name);
+        $new_lab->setAuthor($this->getUser());
+        $new_lab->setVirtuality(true);
+        $new_lab->setIsTemplate(false);
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+
+        $this->logger->debug("[LabController:createcopyLab]:Lab id ".$id." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier() . " is created");
+        $this->logger->info("Lab ".$lab->getName()." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier());
+        
+        //Find all devices with of the lab $id
+        $devices = $lab->getDevices();
+        if ($devices == null || count($devices) == 0) {
+            $this->logger->debug("[LabController:createcopyLab]No devices found in lab ".$lab_name);
+        }
+        foreach ($devices as $device) {
+            $this->logger->debug("[LabController:createcopyLab]:Device ".$device->getName()." is a sandbox device, copying it.");
+            $new_device=$this->copyDevice($device,'Sandbox_Lab_'.$device->getName());
+            $new_device->setIsTemplate(false);
+            $entityManager->persist($new_device);
+            $this->logger->debug("[LabController:createcopyLab]:Add device ".$new_device->getName()." to lab ".$lab_name);
+            $this->adddeviceinlab($new_device,$new_lab);
+        }
+        $entityManager->persist($new_lab);
+        $entityManager->flush();
+        
+        return $this->json([
+            'id' => $new_lab->getId(),
+            'uuid' => $new_lab->getUuid()
+        ], 200);
+
+    }
+
     
 	#[Put('/api/labs/test/{id<\d+>}', name: 'api_edit_lab_test')]
     public function updateActionTest(Request $request, int $id, LabBannerFileUploader $fileUploader)
@@ -1056,7 +1079,6 @@ class LabController extends Controller
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
-
     
 	#[Put('/api/labs/subject/{id<\d+>}', name: 'api_edit_lab_subject')]
     public function updateSubjectAction(Request $request, int $id)
@@ -1309,10 +1331,33 @@ class LabController extends Controller
         return new JsonResponse(null, 400);
     }
 
-    
+    /* #[Post('/api/labs/{lab_id_src<\d+>}/copyDevices/{lab_id_dst<\d+>}', name: 'api_copy_devices')]
+    public function copyDevices(Request $request, int $lab_id_src, int $lab_id_dst){
+        $this->logger->debug("[LabController:copyDevices]:Copying devices from lab id ".$lab_id_src." to lab id ".$lab_id_dst);
+        $lab_src = $this->labRepository->find($lab_id_src);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_src);
+
+        $lab_dst = $this->labRepository->find($lab_id_dst);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_dst);
+        for ($i = 0; $i < count($lab_src->getDevices()); $i++) {
+            $device = $lab_src->getDevices()[$i];
+            $this->logger->debug("[LabController:copyDevices]:Copying device ".$device->getName()." from lab id ".$lab_id_src." to lab id ".$lab_id_dst);
+            $new_device = $this->copyDevice($device, $device->getName());
+            $new_device->setIsTemplate(false);
+            $new_device->setLab($lab_dst);
+            $new_device->setAuthor($this->getUser());
+            $new_device->setUuid(Uuid::v4());
+            $new_device->setCreatedAt(new \DateTime());
+            $new_device->setLastUpdated(new \DateTime());        
+            $this->entityManager->persist($new_device);
+        }
+        $this->entityManager->flush();
+    }
+    */
+
 	#[Get('/api/labs/{id<\d+>}/banner/{newId<\d+>}', name: 'api_copy_lab_banner')]
     public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
-       
+       $this->logger->debug("[LabController:copyBannerAction]:Copying banner from lab id ".$id." to lab id ".$newId);
         $lab = $this->labRepository->find($newId);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 

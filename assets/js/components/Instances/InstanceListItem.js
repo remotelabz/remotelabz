@@ -22,7 +22,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
     
-    console.log("Nombre total d'instances :", allInstance?.length);
+    //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         fetchLogs()
         //Collect log every 30 seconds
@@ -232,9 +232,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
     
     let controls;
-    console.log('instance',instance);
-    console.log('user',user);
-    console.log('lab',lab);
+    //console.log('instance',instance);
+    //console.log('user',user);
+    //console.log('lab',lab);
 
     switch (instance.state) {
         case 'error':
@@ -247,7 +247,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
                 <SVG name="play" />
             </Button>);
-		console.log("test stopped");
+		//console.log("test stopped");
             break;
 
         case 'reset':
@@ -298,7 +298,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             
             break;
     }
-console.log("test 2");
+//console.log("test 2");
     return (
         <><ListGroupItem>
             {isLoading ?
@@ -327,10 +327,7 @@ console.log("test 2");
                             {instance.uuid}
                         </div>
                     </div>
-{console.log("test3")}
-{console.log("is sandbox", isSandbox)}
-{console.log("device length", instance.length)}
-{console.log("labdevicelength", labDeviceLength)}
+
                     <div className="d-flex align-items-center">
                         {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>

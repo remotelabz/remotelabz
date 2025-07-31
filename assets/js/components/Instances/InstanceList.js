@@ -7,15 +7,15 @@ import Remotelabz from '../API';
 import Noty from 'noty';
 
 const InstanceList = (props) => {
-    console.log("props", props);
+    //console.log("props", props);
     const [showExport, setShowExport] = useState(false);
     let deviceLengthMax = 1;
 
-    console.log("Sandbox", props.isSandbox);
+    //console.log("Sandbox", props.isSandbox);
     if (props.isSandbox) {
         for (const instance of props.instances) {
             const device = instance.device;
-            console.log("device:", device);
+            //console.log("device:", device);
             if (device.name === "Service_sandbox") {
                 deviceLengthMax = 2;
             }
@@ -87,5 +87,5 @@ const InstanceList = (props) => {
     );
 };
 
-console.log("test de InstanceList");
+//console.log("test de InstanceList");
 export default InstanceList;

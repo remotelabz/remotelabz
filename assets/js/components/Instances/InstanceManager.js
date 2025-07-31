@@ -213,7 +213,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
 useEffect(() => {
     if (labInstance?.deviceInstances) {
-        console.log("Instances depuis InstanceManager :", labInstance.deviceInstances);
+        //console.log("Instances depuis InstanceManager :", labInstance.deviceInstances);
     }
 }, [labInstance]);
 
@@ -362,5 +362,5 @@ useEffect(() => {
         </Modal>
     </>)
 }
-console.log("test de InstanceManager");
+//console.log("test de InstanceManager");
 export default InstanceManager;

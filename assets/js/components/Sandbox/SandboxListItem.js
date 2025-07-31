@@ -46,49 +46,20 @@ class SandboxListItem extends Component {
         //console.log("onModifyClick", item);
         this.setState({ isLoading: true});
         let lab;
+        let labName;
         let networkInterfaces = [];
         let controlProtocolTypes = [];
-        // Create Lab
-        await this.api.post("/api/labs").then(response => {
-            lab = response.data
-        });
+        
+        // If we want to modify a device
         if(this.props.itemType === "device") {
-            var labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
-            var fields = {name: labName};
-        }
-        else if (this.props.itemType === "lab") {
-            var labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
-            var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
-            if (this.props.item.hasTimer) {
-                let timerArray = this.props.item.timer.split(":");
-                fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}}
-            }
-        }
-        var labObj = { id: lab.id, fields: fields};
-        Remotelabz.labs.update(labObj);
-
-        if (this.props.itemType === "lab") {
-            Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{
-		       // console.log("Banner copied", response);
-                })
-            for(var textobject of item.textobjects){
-                var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
-                if (typeof textobject.newdata !== 'undefined') {
-                    textObj = {...textObj, newdata: textobject.newdata};
-                }
-                await Remotelabz.textObjects.new(textObj);
-            }
-            for(var picture of item.pictures){
-                var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
-                await Remotelabz.pictures.new(pictureObj);
-               
-            }
-        }
-   		//console.log("Banner copied", response);
-
-        // Add device to lab
-        //console.log("itemType", this.props.itemType);
-        if(this.props.itemType === "device") {
+            // Create a new lab to work on a copy of the original lab
+            await this.api.post("/api/labs").then(response => {
+                lab = response.data
+            });
+            labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
+            var fields = {id: lab.id, fields: fields, name: labName};
+            
+            await Remotelabz.labs.update(fields);
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
             item.hypervisor = item.hypervisor.id;
@@ -101,26 +72,41 @@ class SandboxListItem extends Component {
             item.controlProtocolTypes = controlProtocolTypes;
             //console.log("OnModify")
             //console.log(device);
-            await this.api.post('/api/labs/' + lab.id + '/devices', item);
-        }
-        else if (this.props.itemType === "lab") {
-            console.log("Modify lab id:", lab.id);
-            console.log("this.props.item.devices", this.props.item.devices);
-            console.log("this.props.item.devices.length", this.props.item.devices.length);
+           await this.api.post('/api/labs/' + lab.id + '/devices', item);
 
-            /*for(var device of this.props.item.devices) {
-                device.flavor = device.flavor.id;
-                device.operatingSystem = device.operatingSystem.id;
-                device.hypervisor = device.hypervisor.id;
-                device.isTemplate = false;
-                device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-                device.networkInterfaces.forEach(element => console.log(element.id));
-                device.networkInterfaces = networkInterfaces;
-                device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-                device.controlProtocolTypes.forEach(element => console.log(element.id));
-                device.controlProtocolTypes = controlProtocolTypes;
-                await this.api.post('/api/labs/' + lab.id + '/devices', device);
-            }*/
+        }      
+        // If we want to modify a lab       
+        else if (this.props.itemType === "lab") {
+            labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
+            var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
+            if (this.props.item.hasTimer) {
+                let timerArray = this.props.item.timer.split(":");
+                fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}
+                };
+            }
+
+            for(var textobject of item.textobjects){
+                var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
+                if (typeof textobject.newdata !== 'undefined') {
+                    textObj = {...textObj, newdata: textobject.newdata};
+                }
+                await Remotelabz.textObjects.new(textObj);
+            }
+            for(var picture of item.pictures){
+                var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
+                await Remotelabz.pictures.new(pictureObj);
+               
+            }
+
+            await Remotelabz.labs.createcopyLab(this.props.item.id,labName).then((response)=>{
+                const { id: id_lab, uuid } = response.data;
+                lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
+                
+                //console.log("Lab id:", lab.id);
+                //console.log("Modified lab id:", lab.id);
+                Remotelabz.labs.copyBanner(this.props.item.id, lab.id)
+                //console.log("Lab copied", response);
+            });
         }
 
         // Create and start a lab instance
@@ -128,7 +114,7 @@ class SandboxListItem extends Component {
   
         this.setState({ isLoading: false, exist: true, lab: lab});
         // Redirect to Sandbox
-        window.location.href = "/admin/sandbox/" + lab.id; 
+        window.location.href = "/admin/sandbox/" + lab.id;
     }
 
     async deleteLab(id) {
@@ -144,7 +130,7 @@ class SandboxListItem extends Component {
     render() {
         let divBorder;
         let button;
-	    console.log("Rendering SandboxListItem for", this.props.item.name);
+	    //console.log("Rendering SandboxListItem for", this.props.item.name);
 
         if(this.state.isLoading) {
             button = (<Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
@@ -280,5 +266,5 @@ class SandboxListItem extends Component {
         );
     }
 }
-console.log("test")
+//console.log("test")
 export default SandboxListItem;

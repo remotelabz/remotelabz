@@ -532,7 +532,23 @@ export class RemotelabzAPI {
 
         delete(id) {
             return axios.delete(`/labs/${id}`);
+        },
+        
+        /**
+         * 
+         * Create a new lab from copy device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}`
+         * @param {int} id
+         * @param {string} name
+         * @returns id of new lab
+         */
+        createcopyLab(id,name) {
+            console.log("/labs/" + id + "/createcopy/ with name: " + name);
+            return axios.post(`/labs/${id}/createcopy/`, {name: name});
         }
+
+        
         
     }
 
