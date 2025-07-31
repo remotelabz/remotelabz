@@ -881,22 +881,21 @@ class LabController extends Controller
     
     // Update the lab $id to add an Service device.
 	#[Put('/api/labs/{id<\d+>}', name: 'api_edit_lab')]
-    public function updateAction(Request $request, int $id) {
-        $lab_org = $this->labRepository->find($id);
-        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_org);
-
-        $this->logger->debug("[LabController:updateAction]:Lab id ".$id." is modified with Sandbox menu ".$lab_org->getName($id)." by " . $this->getUser()->getUserIdentifier() . " is updated");
-        $this->logger->info("Lab ".$lab_org->getName($id)." is modified from Sandbox by " . $this->getUser()->getUserIdentifier());
+    public function updateAction(Request $request, int $id)
+    {
+        $lab = $this->labRepository->find($id);
+        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
+        
         $device=null;
-        if (!$lab_org = $this->labRepository->find($id)) {
+        if (!$lab = $this->labRepository->find($id)) {
             throw new NotFoundHttpException("Lab " . $id . " does not exist.");
         }
 
-        $labForm = $this->createForm(LabType::class, $lab_org);
+        $labForm = $this->createForm(LabType::class, $lab);
         $labForm->handleRequest($request);
 
-        $lab_org = json_decode($request->getContent(), true);
-        $labForm->submit($lab_org, false);
+        $lab = json_decode($request->getContent(), true);
+        $labForm->submit($lab, false);
 
         if ($labForm->isSubmitted() && $labForm->isValid()) {
             $entityManager = $this->entityManager;
@@ -912,10 +911,12 @@ class LabController extends Controller
             { // Add Service container to provide IP address with DHCP
                 $this->logger->debug("[LabController:updateAction]:Update of Lab Sandbox detected: ".$lab_name);
                 $srv_device=new Device();
+                
                 $device = $this->deviceRepository->findBy([
                     'operatingSystem' => $this->operatingSystemRepository->findOneBy(['name' => 'Service']),
                     'isTemplate' => true
                 ]);
+
                 if ($device != null && count($device) > 0) {
                     $this->logger->debug("[LabController:updateAction]:Device \"DHCP Service\" found ? : ",$device);
                 } else {
@@ -928,37 +929,13 @@ class LabController extends Controller
                     $this->logger->debug("[LabController:updateAction]:Add additional device ".$srv_device->getName()." to lab ".$lab_name);
                     $this->adddeviceinlab($srv_device,$lab);
                 }
+
             $entityManager->persist($lab);
             }
-            
             $entityManager->flush();
             return $this->json($lab, 200, [], ['api_get_lab']);
         }
-
-        /*if ($labForm->isSubmitted() && $labForm->isValid()) {
-            $entityManager = $this->entityManager;
-           
-            $lab = $labForm->getData();
-            $lab->setLastUpdated(new \DateTime());
-            
-            if (strstr($lab_name,"Sandbox_")) 
-            { // Add Service container to provide IP address with DHCP
-                $this->logger->debug("[LabController:]Update of Lab Sandbox detected: ".$lab_name);
-                $srv_device=new Device();
-                $device=$this->deviceRepository->findBy(['name' => 'Service']);
-                $srv_device=$device;
-                $srv_device->IsTemplate(false);
-                $entityManager->persist($srv_device);
-                $this->adddeviceinlab($srv_device,$lab);
-            }
-
-            $entityManager->persist($lab);
-            $entityManager->flush();
-
-            return $this->json($lab, 200, [], ['api_get_lab']);
-        }*/
-
-        return $this->json($labForm, 200, [], ['api_get_lab']);
+         return $this->json($labForm, 200, [], ['api_get_lab']);
     }
 
     // This function copies a device and sets it as a template.

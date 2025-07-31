@@ -58,9 +58,12 @@ class SandboxListItem extends Component {
                 lab = response.data
             });
             labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
-            var fields = {id: lab.id, fields: fields, name: labName};
+            var fields = {name: labName};
+            var labObj = {id: lab.id, fields: fields};
+
             // Add the fields to the lab and a service device if configured on the Remotelabz
-            await Remotelabz.labs.update(fields);
+            console.log("labobj", labObj);
+            await Remotelabz.labs.update(labObj);
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
             item.hypervisor = item.hypervisor.id;
@@ -118,6 +121,8 @@ class SandboxListItem extends Component {
 
     async deleteLab(id) {
         await Remotelabz.labs.delete(id);
+        this.setState({ isLoading: true, exist: false});
+
         window.location.href = "/admin/sandbox"
     }
 
