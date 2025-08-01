@@ -795,7 +795,7 @@ class LabController extends Controller
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
         if ($new_device->getHypervisor()->getName() === 'lxc') {
-            $this->logger->debug("[LabController:adddeviceinlab]Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
+            $this->logger->debug("[LabController:adddeviceinlab]::Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
 
@@ -807,7 +807,7 @@ class LabController extends Controller
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
         $entityManager->flush();
-        $this->logger->debug("[LabController:adddeviceinlab]Add device in lab done");
+        $this->logger->debug("[LabController:adddeviceinlab]::Add device in lab done");
     }
 
     /* #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
@@ -982,7 +982,7 @@ class LabController extends Controller
   	#[Post('/api/labs/{id<\d+>}/createcopy/', name: 'api_create_copy_lab')]
     public function createcopyLab(Request $request,int $id): JsonResponse 
     {
-        $this->logger->debug("[LabController:createcopyLab]:Request:" . $request->getContent());
+        //$this->logger->debug("[LabController:createcopyLab]::Request:" . $request->getContent());
         $entityManager = $this->entityManager;
         $lab_name = json_decode($request->getContent(), true)['name'];
         $new_lab= new Lab();
@@ -990,24 +990,31 @@ class LabController extends Controller
         $new_lab->setAuthor($this->getUser());
         $new_lab->setVirtuality(true);
         $new_lab->setIsTemplate(false);
+        $entityManager->persist($new_lab);
+
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 
-        $this->logger->debug("[LabController:createcopyLab]:Lab id ".$id." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier() . " is created");
+        $this->logger->debug("[LabController:createcopyLab]::Lab id ".$id." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier() . " is created");
         $this->logger->info("Lab ".$lab->getName()." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier());
         
         //Find all devices with of the lab $id
         $devices = $lab->getDevices();
         if ($devices == null || count($devices) == 0) {
-            $this->logger->debug("[LabController:createcopyLab]No devices found in lab ".$lab_name);
+            $this->logger->debug("[LabController:createcopyLab]::No devices found in lab ".$lab_name);
         }
-        foreach ($devices as $device) {
-            $this->logger->debug("[LabController:createcopyLab]:Device ".$device->getName()." is a sandbox device, copying it.");
-            $new_device=$this->copyDevice($device,'Sandbox_Lab_'.$device->getName());
-            $new_device->setIsTemplate(false);
-            $entityManager->persist($new_device);
-            $this->logger->debug("[LabController:createcopyLab]:Add device ".$new_device->getName()." to lab ".$lab_name);
-            $this->adddeviceinlab($new_device,$new_lab);
+        try {
+            foreach ($devices as $device) {
+                $this->logger->debug("[LabController:createcopyLab]::Device ".$device->getName()." is a sandbox device, copying it.");
+                $new_device=$this->copyDevice($device,'Sandbox_Lab_'.$device->getName());
+                $new_device->setIsTemplate(false);
+                $entityManager->persist($new_device);
+                $this->logger->debug("[LabController:createcopyLab]::Add device ".$new_device->getName()." to lab ".$lab_name);
+                $this->adddeviceinlab($new_device,$new_lab);
+            }
+        } catch (\Exception $e) {
+            $this->logger->error("[LabController:createcopyLab]::An error occurred while copying devices: " . $e->getMessage());
+            return $this->json(['error' => 'An error occurred while copying devices.'], 500);
         }
         $entityManager->persist($new_lab);
         $entityManager->flush();
@@ -1112,7 +1119,7 @@ class LabController extends Controller
             if ('json' === $request->getRequestFormat()) {
                 return $this->json();
             }
-            $this->logger->info("[LabController:deleteAction]::".$user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
+            $this->logger->info($user->getUserIdentifier() . " has deleted lab \"" . $lab->getName()."\"");
 
             $this->addFlash('success',$lab->getName() . ' has been deleted.');
             return $this->redirectToRoute('labs');

@@ -100,23 +100,39 @@ class SandboxListItem extends Component {
                
             }
 
-            await Remotelabz.labs.createcopyLab(this.props.item.id,labName).then((response)=>{
-                const { id: id_lab, uuid } = response.data;
-                lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
-                
-                //console.log("Lab id:", lab.id);
-                //console.log("Modified lab id:", lab.id);
-                Remotelabz.labs.copyBanner(this.props.item.id, lab.id)
-                //console.log("Lab copied", response);
-            });
-        }
+            try {
+                const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
+                //console.log("response:", response);
 
-        // Create and start a lab instance
-        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-  
-        this.setState({ isLoading: false, exist: true, lab: lab});
-        // Redirect to Sandbox
-        window.location.href = "/admin/sandbox/" + lab.id;
+                if(response.status === 200) {
+                    this.setState({ isLoading: true, exist: true, lab: lab});
+                    const { id: id_lab, uuid } = response.data;
+                    lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
+                    
+                    //console.log("Lab id:", lab.id);
+                    Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
+
+                    await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                    window.location.href = "/admin/sandbox/" + lab.id;
+                } else {
+                    //console.error("Error creating lab copy:", response.statusText);
+                    this.setState({ isLoading: false, exist: false, lab: lab});
+                    window.location.href = "/admin/sandbox/";
+                }
+            }
+            catch (error) {
+                    //console.error("Error creating lab copy", error);
+                    this.setState({ isLoading: false, exist: false, lab: lab});
+                    window.location.href = "/admin/sandbox/";
+                   /* Noty.error({
+                        text: "Error creating lab copy: " + error.message,
+                        timeout: 5000,
+                        progressBar: true,
+                        closeWith: ['click', 'button'],
+                    });*/
+                }
+        }
+        
     }
 
     async deleteLab(id) {
@@ -150,30 +166,38 @@ class SandboxListItem extends Component {
         if(this.props.itemsLength != (this.props.index +1)) {
             divBorder = (
             
-            <div class="wrapper d-flex align-items-center lab-item border-bottom">
-                <div class="lab-item-left d-flex flex-column">
+            <div className="wrapper d-flex align-items-center lab-item border-bottom">
+                <div className="lab-item-left d-flex flex-column">
                     <div>
                         {this.props.item.name}
                     </div>
                     { this.props.itemType == "device" &&
-                        <div class="lab-item-infos text-muted">
+                        <div className="lab-item-infos text-muted">
                             (Type: {this.props.item.type}, OS: {this.props.item.operatingSystem.name})
                         </div>
                     }
                 </div>
-                <div class="separator flex-grow-1"></div>
+                <div className="separator flex-grow-1"></div>
 
-                <div class="lab-item-right d-flex flex-column text-right">
+                <div className="lab-item-right d-flex flex-column text-right">
                     <div>
-                    {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && this.props.item.author.id == this.props.user.id)) &&
-                        <>
-                        <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
-                        <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
+                    {
+                        this.props.itemType == "lab"
+                        && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") 
+                                || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR")
+                                || (
+                                    (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR"))
+                                    && this.props.item.author.id == this.props.user.id
+                                    )
+                            ) 
+                        && <>
+                        <a className="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
+                        <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
-                     //   <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
+                     //   <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
                     { this.state.exist ?
@@ -196,30 +220,30 @@ class SandboxListItem extends Component {
         }
         else {
             divBorder = (
-                <div class="wrapper d-flex align-items-center lab-item">
-                <div class="lab-item-left d-flex flex-column">
+                <div className="wrapper d-flex align-items-center lab-item">
+                <div className="lab-item-left d-flex flex-column">
                     <div>
                         {this.props.item.name}
                     </div>
                     {this.props.itemType == "device" &&
-                        <div class="lab-item-infos text-muted">
+                        <div className="lab-item-infos text-muted">
                             (Type: {this.props.item.type}, OS: {this.props.item.operatingSystem.name})
                         </div>
                     }
                 </div>
-                <div class="separator flex-grow-1"></div>
+                <div className="separator flex-grow-1"></div>
 
-                <div class="lab-item-right d-flex flex-column text-right">
+                <div className="lab-item-right d-flex flex-column text-right">
                     <div>
                     {this.props.itemType == "lab" && (this.props.user.roles.includes("ROLE_ADMINISTRATOR") || this.props.user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && this.props.item.author.id == this.props.user.id)) &&
                         <>
-                        <a class="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
-                        <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
+                        <a className="btn btn-secondary mr-2 mt-2" role="button" href={"/admin/labs_template/"+this.props.item.id+"/edit"}>Edit</a>
+                        <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteLabModal: true})}>Delete</a>
                         </>
                     }
 
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
-                      //  <a class="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
+                      //  <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     { this.state.exist ?
                         <a 

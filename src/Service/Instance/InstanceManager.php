@@ -166,7 +166,7 @@ class InstanceManager
                     $is_exist_labinstance=null;
                 break;
             default:
-                throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
+                throw new BadRequestHttpException('[InstanceManager:create]::Instancier type must be one of "user" or "group".');
         }     
 
         if (is_null($is_exist_labinstance)) {
@@ -174,11 +174,11 @@ class InstanceManager
                 $worker = $this->workerManager->getFreeWorker($lab);
 
             if ($worker == null) {
-                $this->logger->error('Could not create instance. No worker available');
-                throw new Exception('No worker available');
+                $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
+                throw new Exception('[InstanceManager:create]::No worker available');
             }
             //$this->logger->info("Worker choosen is :".$worker);
-            $this->logger->debug("Worker available from create function in InstanceManager:".$worker);
+            $this->logger->debug("[InstanceManager:create]::Worker available from create function in InstanceManager:".$worker);
             
             $labInstance = LabInstance::create()
                 ->setLab($lab)
@@ -202,7 +202,7 @@ class InstanceManager
                     break;
 
                 default:
-                    throw new Exception('Instancier must be an instance of User or Group.');
+                    throw new Exception('[InstanceManager:create]::Instancier must be an instance of User or Group.');
             }
 
             $network = $this->networkManager->getAvailableSubnet();
@@ -219,9 +219,9 @@ class InstanceManager
         //TODO: test with local env if deploy the front and the worker on the same server
         if (!$this->singleServer) {// One server for the Front and one server for the worker
             if (IPTools::routeExists($network))
-                $this->logger->debug("Route to ".$network." exists, via ".$worker);
+                $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
             else {
-                $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+                $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
                 IPTools::routeAdd($network,$worker);
             }
         }
@@ -272,7 +272,7 @@ class InstanceManager
                 IPTools::routeDelete($network,null);
                }
                catch (ErrorException $e) {
-                $this->logger->error("ERROR route delete : ".$e->getMessage());
+                $this->logger->error("[InstanceManager:delete]::ERROR route delete : ".$e->getMessage());
                }
             }
             else {
@@ -288,8 +288,8 @@ class InstanceManager
             );
         }
         else {
-            $this->logger->error('Could not delete instance. Worker '.$workerIP.' is suspended.');
-            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+            $this->logger->error('[InstanceManager:delete]::Could not delete instance. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('[InstanceManager:delete]::Worker '.$workerIP.' is suspended');
         }
         
     }
@@ -309,7 +309,7 @@ class InstanceManager
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTED ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_RESETTING) {
             $this->logger->info('Device instance '.$deviceInstance->getUuid().' is already running.');
-            throw new BadRequestHttpException('Device already running or started');
+            throw new BadRequestHttpException('[InstanceManager:start]::Device already running or started');
         } else {
             $this->logger->info('Starting device instance '.$deviceInstance->getUuid().'.');
             
@@ -365,7 +365,7 @@ class InstanceManager
                 return $labJson;
             }
             else {
-                $this->logger->error('Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+                $this->logger->error('[InstanceManager:start]::Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
                 throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
             }
         }
