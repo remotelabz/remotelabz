@@ -182,7 +182,7 @@ axios.interceptors.response.use(
                 break;
             case 404:
             default:
-                console.error(error);
+                console.error(error.message);
         }
         return Promise.reject(error);
     }
@@ -543,30 +543,21 @@ export class RemotelabzAPI {
          * @param {string} name
          * @returns id of new lab
          */
-/*        createcopyLab(id,name) {
-            //console.log("/labs/" + id + "/createcopy/ with name: " + name);
-            return axios.post(`/labs/${id}/createcopy/`, {name: name});
-        }
-*/
         async createcopyLab(id, name) {
+            let response;
             try {
-                const response = await axios.post(`/labs/${id}/createcopy/`, { name });
+                response = await axios.post(`/labs/${id}/createcopy/`, { name });
                 //console.log("status response",response.status);
-                return response;
+                
             } catch (error) {
-                if (error.response) {
-                //console.log(error.response.data.message);
-                return error.response.status;
-                } else if (error.request) {
-                //console.log('No answer from server');
-                } else {
-                //console.log('Request error:', error.message);
+                console.error("Error create lab sandbox:",error.message);
+                return {
+                    status: error.response?.status || 500,
+                    error: error.message
                 }
-                return null; // Valeur de secours en cas d'erreur
             }
+            return response;
         }
-        
-        
     }
 
     /**

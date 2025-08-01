@@ -115,13 +115,11 @@ class SandboxListItem extends Component {
                     await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
                     window.location.href = "/admin/sandbox/" + lab.id;
                 } else {
-                    //console.error("Error creating lab copy:", response.statusText);
                     this.setState({ isLoading: false, exist: false, lab: lab});
-                    window.location.href = "/admin/sandbox/";
                 }
             }
             catch (error) {
-                    //console.error("Error creating lab copy", error);
+                    console.error("Catch error : Error creating lab copy", error);
                     this.setState({ isLoading: false, exist: false, lab: lab});
                     window.location.href = "/admin/sandbox/";
                    /* Noty.error({
