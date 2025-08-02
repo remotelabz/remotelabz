@@ -921,7 +921,7 @@ class LabController extends Controller
                     $this->logger->debug("[LabController:updateAction]:Device \"DHCP Service\" not found, creating a new one.");
                 }
                 if (!is_null($device) && count($device)>0 ) {
-                    $srv_device=$this->copyDevice($device[0],'DHCP_service');
+                    $srv_device=$this->deviceRepository->find($this->copyDevice($device[0],'DHCP_service'));
                     $srv_device->setIsTemplate(false);
                     $entityManager->persist($srv_device);
                     $this->logger->debug("[LabController:updateAction]:Add additional device ".$srv_device->getName()." to lab ".$lab_name);
@@ -957,7 +957,8 @@ class LabController extends Controller
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setIsTemplate(true);
-
+        $newDevice->setEditorData($device->getEditorData());
+        $newDevice->setIcon($device->getIcon());
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
@@ -1356,33 +1357,9 @@ class LabController extends Controller
         return new JsonResponse(null, 400);
     }
 
-    /* #[Post('/api/labs/{lab_id_src<\d+>}/copyDevices/{lab_id_dst<\d+>}', name: 'api_copy_devices')]
-    public function copyDevices(Request $request, int $lab_id_src, int $lab_id_dst){
-        $this->logger->debug("[LabController:copyDevices]:Copying devices from lab id ".$lab_id_src." to lab id ".$lab_id_dst);
-        $lab_src = $this->labRepository->find($lab_id_src);
-        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_src);
-
-        $lab_dst = $this->labRepository->find($lab_id_dst);
-        $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab_dst);
-        for ($i = 0; $i < count($lab_src->getDevices()); $i++) {
-            $device = $lab_src->getDevices()[$i];
-            $this->logger->debug("[LabController:copyDevices]:Copying device ".$device->getName()." from lab id ".$lab_id_src." to lab id ".$lab_id_dst);
-            $new_device = $this->copyDevice($device, $device->getName());
-            $new_device->setIsTemplate(false);
-            $new_device->setLab($lab_dst);
-            $new_device->setAuthor($this->getUser());
-            $new_device->setUuid(Uuid::v4());
-            $new_device->setCreatedAt(new \DateTime());
-            $new_device->setLastUpdated(new \DateTime());        
-            $this->entityManager->persist($new_device);
-        }
-        $this->entityManager->flush();
-    }
-    */
-
 	#[Get('/api/labs/{id<\d+>}/banner/{newId<\d+>}', name: 'api_copy_lab_banner')]
     public function copyBannerAction(Request $request, int $id, int $newId, UrlGeneratorInterface $router, BannerManager $bannerManager){
-       $this->logger->debug("[LabController:copyBannerAction]:Copying banner from lab id ".$id." to lab id ".$newId);
+       $this->logger->debug("[LabController:copyBannerAction]::Copying banner from lab id ".$id." to lab id ".$newId);
         $lab = $this->labRepository->find($newId);
         $this->denyAccessUnlessGranted(LabVoter::EDIT, $lab);
 

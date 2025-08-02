@@ -18,7 +18,6 @@ class SandboxListItem extends Component {
             showDeleteLabModal: false,
             showDeleteDeviceModal: false
         }
-
         this.fetchLabInstance();
     }
     
@@ -274,7 +273,7 @@ class SandboxListItem extends Component {
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={()=>this.setState({showDeleteLabModal: false})}>Close</Button>
-                <Button variant="danger" onClick={()=>this.deleteLab(this.props.item.id)}>Leave</Button>
+                <Button variant="danger" onClick={()=>this.deleteLab(this.props.item.id)}>Delete</Button>
             </Modal.Footer>
         </Modal>
         <Modal show={this.state.showDeleteDeviceModal} onHide={()=>this.setState({showDeleteDeviceModal: false})}>

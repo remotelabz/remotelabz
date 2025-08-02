@@ -429,7 +429,7 @@ class InstanceController extends Controller
         }*/
         try {
             $username=$this->getUser()->getName();
-            $this->logger->debug("Lab instance creation: ".$lab->getName());
+            $this->logger->debug("[InstanceController:createAction]::Lab instance creation: ".$lab->getName());
             if ($instancierType == "guest") {
                 $this->logger->info("The guest".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             }

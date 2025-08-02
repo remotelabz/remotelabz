@@ -459,7 +459,7 @@ export function getNodes(node_id) {
         data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
+                //logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -1355,7 +1355,9 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (2,'action = ' + action)
+    logger (2,'action = ' + action);
+    logger (2,'values = ' + values);
+    logger (2,'fromNodeList = ' + fromNodeList);
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
@@ -1394,6 +1396,7 @@ export function printFormNode(action, values, fromNodeList) {
         $('#form-node-template').change(function (e2) {
             id = (id == '') ? null : id;    // Ugly fix for change template after selection
             template = $(this).find("option:selected").val();
+            // TODO : probléme avec le split car template undefined! 
             var idTemplate = template.split(/(\d+)/)[1];
             if (template != '') {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
@@ -2515,7 +2518,7 @@ function printPageLabOpen(lab) {
         if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
               $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
          }
-         $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
+         //$('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
          //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
          if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
          $('#lab-sidebar ul').append('<li><a class="action-textobjectsget" href="javascript:void(0)" title="' + MESSAGES[150] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');
