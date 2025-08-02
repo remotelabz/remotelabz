@@ -795,19 +795,17 @@ class LabController extends Controller
     private function adddeviceinlab(Device $new_device, Lab $lab) {
         
         if ($new_device->getHypervisor()->getName() === 'lxc') {
-            $this->logger->debug("[LabController:adddeviceinlab]::Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
+            //$this->logger->debug("[LabController:adddeviceinlab]::Set type to container to device ". $new_device->getName() .",".$new_device->getUuid());
             $new_device->setType('container');
         }
 
         $entityManager = $this->entityManager;
         $lab->setLastUpdated(new \DateTime());
         $entityManager->persist($new_device);
-
-        $entityManager->flush();
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
         $entityManager->flush();
-        $this->logger->debug("[LabController:adddeviceinlab]::Add device in lab done");
+        $this->logger->debug("[LabController:adddeviceinlab]::Add device ".$new_device->getName()." in lab ".$lab->getName()."is done");
     }
 
     /* #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
@@ -941,9 +939,11 @@ class LabController extends Controller
     // This function copies a device and sets it as a template.
     // It also copies the network interfaces and their settings.
     // The name of the new device is set to the provided name.
-    //@Return a new Device object.
-    public function copyDevice(Device $device,string $name): Device
+    //@Return the id of the new Device created
+    public function copyDevice(Device $device,string $name): int
     {
+        $entityManager = $this->entityManager;
+
         $newDevice = new Device();
         $newDevice->setName($name);
         $newDevice->setBrand($device->getBrand());
@@ -961,22 +961,50 @@ class LabController extends Controller
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
-            $new_setting=new NetworkSettings();
-            $new_setting=clone $network_int->getSettings();
-            
-            $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName("int".$i."_".$name);
-            $i=$i+1;
+            $this->copyNetworkInterface($network_int, $new_network_inter);
+            $entityManager->persist($new_network_inter);
+            $new_network_inter->setDevice($newDevice);
             $new_network_inter->setIsTemplate(true);
-            $newDevice->addNetworkInterface($new_network_inter);
         }
 
         foreach ($device->getControlProtocolTypes() as $control_protocol) {
             $newDevice->addControlProtocolType($control_protocol);
         }
-
-        return $newDevice;
+        $entityManager->persist($newDevice);
+        $entityManager->flush();
+        return $newDevice->getId();
     }
+
+    public function copyNetworkInterface(NetworkInterface $Net_int_src, NetworkInterface $Net_int_dst) {
+        $entityManager = $this->entityManager;
+        $Net_int_dst->setType($Net_int_src->getType());
+        $Net_int_dst->setName($Net_int_src->getName());
+        $Net_int_dst->setSettings($Net_int_src->getSettings());
+        $Net_int_dst->setVlan($Net_int_src->getVlan());
+        $Net_int_dst->setConnection($Net_int_src->getConnection());
+        $Net_int_dst->setConnectorType($Net_int_src->getConnectorType());
+        $Net_int_dst->setConnectorLabel($Net_int_src->getConnectorLabel());
+        $Net_int_dst->setIsTemplate($Net_int_src->getIsTemplate());
+        $new_setting=new NetworkSettings();
+        $this->copyNetworkSetting($Net_int_src->getSettings(), $new_setting);
+        $Net_int_dst->setSettings($new_setting);
+        $entityManager->persist($Net_int_dst);
+        $entityManager->persist($new_setting);
+        $entityManager->flush();
+        $this->logger->debug("[LabController:copyNetworkInterface]::Network interface settings copied from ".$Net_int_src->getName()." to ".$Net_int_dst->getName());
+    }
+
+    public function copyNetworkSetting(NetworkSettings $Net_src, NetworkSettings $Net_dst) {
+        $entityManager = $this->entityManager;
+        $Net_dst->setName($Net_src->getName());
+        $Net_dst->setIp($Net_src->getIp());
+        $Net_dst->setIpv6($Net_src->getIpv6());
+        $Net_dst->setGateway($Net_src->getGateway());
+        $Net_dst->setProtocol($Net_src->getProtocol());
+        $Net_dst->setPort($Net_src->getPort());
+        $this->logger->debug("[LabController:copyNetworkSetting]::Network settings copied from ".$Net_src->getName()." to ".$Net_dst->getName());
+    }
+
 
     //Return the id of the new lab created from the copy of the lab $id.
   	#[Post('/api/labs/{id<\d+>}/createcopy/', name: 'api_create_copy_lab')]
@@ -998,22 +1026,32 @@ class LabController extends Controller
         $this->logger->debug("[LabController:createcopyLab]::Lab id ".$id." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier() . " is created");
         $this->logger->info("Lab ".$lab->getName()." is copied to create a new lab ".$lab_name." by " . $this->getUser()->getUserIdentifier());
         
-        //Find all devices with of the lab $id
+        //Find all devices of the lab $id
         $devices = $lab->getDevices();
         if ($devices == null || count($devices) == 0) {
             $this->logger->debug("[LabController:createcopyLab]::No devices found in lab ".$lab_name);
         }
+        $entityManager->flush();
+        
         try {
             foreach ($devices as $device) {
                 $this->logger->debug("[LabController:createcopyLab]::Device ".$device->getName()." is a sandbox device, copying it.");
-                $new_device=$this->copyDevice($device,'Sandbox_Lab_'.$device->getName());
+                $new_device= $this->deviceRepository->find($this->copyDevice($device,'Sandbox_Lab_'.$device->getName()));
                 $new_device->setIsTemplate(false);
+                $new_device->setAuthor($this->getUser());                 
                 $entityManager->persist($new_device);
-                $this->logger->debug("[LabController:createcopyLab]::Add device ".$new_device->getName()." to lab ".$lab_name);
+
+                $entityManager->flush();
+                $this->logger->debug("[LabController:createcopyLab]::flush done");                
+                
+
+                $this->logger->debug("[LabController:createcopyLab]::New device ".$new_device->getName()." created");
+                
                 $this->adddeviceinlab($new_device,$new_lab);
+                $this->logger->debug("[LabController:createcopyLab]::Device ".$new_device->getName()." added to lab ".$lab_name);
             }
         } catch (\Exception $e) {
-            $this->logger->error("[LabController:createcopyLab]::An error occurred while copying devices: " . $e->getMessage());
+            $this->logger->error("[LabController:createcopyLab]::An error occurred while copy devices into lab: " . $e->getMessage());
             return $this->json(['error' => 'An error occurred while copying devices.'], 500);
         }
         $entityManager->persist($new_lab);

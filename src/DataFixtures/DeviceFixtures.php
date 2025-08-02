@@ -145,7 +145,7 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
-            ->setIcon("Switch.png")
+
             
         ;
         $manager->persist($device);
