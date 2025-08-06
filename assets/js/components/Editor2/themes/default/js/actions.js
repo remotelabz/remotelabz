@@ -1008,6 +1008,7 @@ $(document).on('click', '.action-nodeedit', function (e) {
     var id = $(this).attr('data-path');
     $.when(getNodes(id)).done(function (values) {
         values['id'] = id;
+        
         printFormNode('edit', values, fromNodeList)
     }).fail(function (message) {
         addModalError(message);

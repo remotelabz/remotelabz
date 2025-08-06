@@ -564,19 +564,19 @@ export function getTopology() {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got topology from lab "' + lab_filename + '".');
+//                logger(1, 'DEBUG: got topology from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
@@ -587,7 +587,7 @@ export function getTopology() {
 function getTemplates(template) {
     var deferred = $.Deferred();
     var templateData;
-    var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
+    var url =  (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -598,19 +598,19 @@ function getTemplates(template) {
         data: JSON.stringify({'virtuality': VIRTUALITY}),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got template(s).');
+                //logger(1, 'DEBUG: got template(s).');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
@@ -1355,9 +1355,9 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (2,'action = ' + action);
-    logger (2,'values = ' + values);
-    logger (2,'fromNodeList = ' + fromNodeList);
+    logger (2,'action2 = ' + action);
+    console.log('values2 = ',values);
+    logger (2,'fromNodeList2 = ' + fromNodeList);
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
@@ -1368,16 +1368,18 @@ export function printFormNode(action, values, fromNodeList) {
     var template_disabled = (values == null || values['template'] == null ) ? '' : 'disabled ';
 
     $.when(getTemplates(null)).done(function (templates) {
+        //TODO : template sauvegardé dans la base ne correspond pas au template sauvegardé dans /config/templates
         var html = '';
+        console.log(templates);
+        console.log("id:" + id);
         html += '<form id="form-node-' + action + '" >'+
                     '<div class="form-group col-sm-12">'+
                         '<label class="control-label">' + MESSAGES[84] + '</label>' +
                             '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">'+
                                 '<option value="">' + MESSAGES[102] + '</option>';
         $.each(templates, function (key, value) {
-        var valdisabled  = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
-        //var valdisabled  = '' ;
-            // Adding all templates
+            console.log("ID:", key, "Nom:", value);
+            var valdisabled  = (/missing/i.test(value)) ? 'disabled="disabled"' : '';        
             if (! /hided/i.test(value) ) html += '<option value="' + key + '" '+ valdisabled +' >' + value.replace('.missing','') + '</option>';
         });
         html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
@@ -1396,7 +1398,6 @@ export function printFormNode(action, values, fromNodeList) {
         $('#form-node-template').change(function (e2) {
             id = (id == '') ? null : id;    // Ugly fix for change template after selection
             template = $(this).find("option:selected").val();
-            // TODO : probléme avec le split car template undefined! 
             var idTemplate = template.split(/(\d+)/)[1];
             if (template != '') {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
@@ -1546,7 +1547,7 @@ export function printFormNode(action, values, fromNodeList) {
         if (action == 'edit') {
             // If editing a node, disable the select and trigger
             $('#form-node-template').val(template).change();
-            $('#form-node-template').prop('disabled', 'disabled');
+            //$('#form-node-template').prop('disabled', 'disabled');
             //$('#form-node-template').val(template).change();
         }
 

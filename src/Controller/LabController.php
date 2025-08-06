@@ -720,14 +720,17 @@ class LabController extends Controller
                 $entityManager = $this->entityManager;
                 $this->logger->debug("[LabController:addDeviceAction]::Add device in lab form submitted is valid");
 
-                $editorData = new EditorData();
-                $editorData->setX($device_array['editorData']['x']);
-                $editorData->setY($device_array['editorData']['y']);
-                $entityManager->persist($editorData);
+                /*$editorData = new EditorData();
+                $editorData->
+                $editorData->
+                $entityManager->persist($editorData);*/
+                
 
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();
-                $new_device->setEditorData($editorData);
+                $editorData=$new_device->getEditorData();
+                $editorData->setX($device_array['editorData']['x']);
+                $editorData->setY($device_array['editorData']['y']);
                 //$new_device->setCount($device_array['count']);
                 if (isset($device_array['icon'])) {
                     $new_device->setIcon($device_array['icon']);
@@ -745,7 +748,7 @@ class LabController extends Controller
                 $editorData->setDevice($new_device);
                 $entityManager->flush();
                 $device = $this->deviceRepository->find($device_array['id']);
-                $this->logger->debug("[LabController:addDeviceAction]::Source device id adds is :".$device_array['id']);
+                //$this->logger->debug("[LabController:addDeviceAction]::Source device id adds is :".$device_array['id']);
                 //$i=0;
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
@@ -805,7 +808,7 @@ class LabController extends Controller
         $lab->addDevice($new_device);
         $entityManager->persist($lab);
         $entityManager->flush();
-        $this->logger->debug("[LabController:adddeviceinlab]::Add device ".$new_device->getName()." in lab ".$lab->getName()."is done");
+        $this->logger->debug("[LabController:adddeviceinlab]::Add device ".$new_device->getName()." in lab ".$lab->getName()." is done");
     }
 
     /* #[Route(path: '/admin/labs/{id<\d+>}/edit2', name: 'edit2_lab')]
@@ -897,53 +900,62 @@ class LabController extends Controller
 
         if ($labForm->isSubmitted() && $labForm->isValid()) {
             $entityManager = $this->entityManager;
-            /** @var Lab $lab */
-            $lab = $labForm->getData();
-            $lab->setLastUpdated(new \DateTime());
-            $entityManager->persist($lab);
-            $entityManager->flush();
 
-            $lab_name=$lab->getName();
-            $this->logger->debug("[LabController:updateAction]:API Lab updated: ".$lab_name);
-            if (strstr($lab_name,"Sandbox_Device_")) 
-            { // Add Service container to provide IP address with DHCP
-                $this->logger->debug("[LabController:updateAction]:Update of Lab Sandbox detected: ".$lab_name);
-                $srv_device=new Device();
-                
-                $device = $this->deviceRepository->findBy([
-                    'operatingSystem' => $this->operatingSystemRepository->findOneBy(['name' => 'Service']),
-                    'isTemplate' => true
-                ]);
+            try {
+                /** @var Lab $lab */
+                $lab = $labForm->getData();
+                $lab->setLastUpdated(new \DateTime());
+                $entityManager->persist($lab);
+                $entityManager->flush();
 
-                if ($device != null && count($device) > 0) {
-                    $this->logger->debug("[LabController:updateAction]:Device \"DHCP Service\" found ? : ",$device);
-                } else {
-                    $this->logger->debug("[LabController:updateAction]:Device \"DHCP Service\" not found, creating a new one.");
+                $lab_name=$lab->getName();
+                $this->logger->debug("[LabController:updateAction]::API Lab updated: ".$lab_name);
+                if (strstr($lab_name,"Sandbox_Device_")) 
+                { // Add Service container to provide IP address with DHCP
+                    $this->logger->debug("[LabController:updateAction]::Update of Lab Sandbox detected: ".$lab_name);
+                    $srv_device=new Device();
+                    
+                    $device = $this->deviceRepository->findBy([
+                        'operatingSystem' => $this->operatingSystemRepository->findOneBy(['name' => 'Service']),
+                        'isTemplate' => true
+                    ]);
+
+                    if (!is_null($device) && count($device) > 0) {
+                        $this->logger->debug("[LabController:updateAction]::Device \"DHCP Service\" found");
+                        $srv_device=$this->copyDevice($device[0],'DHCP_service');
+                        $srv_device->setIsTemplate(false);
+                        $entityManager->persist($srv_device);
+                        $this->logger->debug("[LabController:updateAction]::Add additional device ".$srv_device->getName()." to lab ".$lab_name);
+                        $this->adddeviceinlab($srv_device,$lab);
+                    } else {
+                        $this->logger->debug("[LabController:updateAction]::Device \"DHCP Service\" not found, creating a new one.");
+                    }
+
+                $entityManager->persist($lab);
+                $entityManager->flush();
                 }
-                if (!is_null($device) && count($device)>0 ) {
-                    $srv_device=$this->deviceRepository->find($this->copyDevice($device[0],'DHCP_service'));
-                    $srv_device->setIsTemplate(false);
-                    $entityManager->persist($srv_device);
-                    $this->logger->debug("[LabController:updateAction]:Add additional device ".$srv_device->getName()." to lab ".$lab_name);
-                    $this->adddeviceinlab($srv_device,$lab);
+                return $this->json($lab, 200, [], ['api_get_lab']);
+            } catch (\Exception $e) {
+                $this->logger->error("[LabController:updateAction]::Error updating lab: " . $e->getMessage());
+                // Evite d'utiliser un EM potentiellement fermé
+                if (!is_null($this->labRepository->find($id))){
+                    $this->delete_lab($lab);
+                    // Récupère un nouvel EntityManager                       
                 }
-
-            $entityManager->persist($lab);
+                return $this->json(['error' => 'An error occurred while updating the lab.'], 500);
             }
-            $entityManager->flush();
-            return $this->json($lab, 200, [], ['api_get_lab']);
         }
-         return $this->json($labForm, 200, [], ['api_get_lab']);
+        return $this->json($labForm, 200, [], ['api_get_lab']);
     }
 
     // This function copies a device and sets it as a template.
     // It also copies the network interfaces and their settings.
     // The name of the new device is set to the provided name.
     //@Return the id of the new Device created
-    public function copyDevice(Device $device,string $name): int
+    public function copyDevice(Device $device,string $name): Device
     {
         $entityManager = $this->entityManager;
-
+        $this->logger->debug("[LabController:copyDevice]::Copy of device ".$device->getName()." with new name ".$name);
         $newDevice = new Device();
         $newDevice->setName($name);
         $newDevice->setBrand($device->getBrand());
@@ -957,8 +969,18 @@ class LabController extends Controller
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
         $newDevice->setIsTemplate(true);
-        $newDevice->setEditorData($device->getEditorData());
+        $newDevice->setAuthor($this->getUser());
+        
+        //$this->logger->debug("[LabController:copyDevice]::editorData ".$device->getEditorData()->getId()." X:".$device->getEditorData()->getX()." Y:".$device->getEditorData()->getY());
+        
+        $editorData=$newDevice->getEditorData();
+        $editorData->setX($device->getEditorData()->getX());
+        $editorData->setY($device->getEditorData()->getY());
+        $newDevice->setAuthor($this->getUser());
+        
         $newDevice->setIcon($device->getIcon());
+        if (!is_null($device->getTemplate()))
+            $newDevice->setTemplate($device->getTemplate());
         $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
@@ -973,7 +995,7 @@ class LabController extends Controller
         }
         $entityManager->persist($newDevice);
         $entityManager->flush();
-        return $newDevice->getId();
+        return $newDevice;
     }
 
     public function copyNetworkInterface(NetworkInterface $Net_int_src, NetworkInterface $Net_int_dst) {

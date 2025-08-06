@@ -42,7 +42,7 @@ class SandboxListItem extends Component {
     }
 
     async onModifyClick(item) {
-        //console.log("onModifyClick", item);
+        //console.log("SandboxListItem onModifyClick item:", item);
         this.setState({ isLoading: true});
         let lab;
         let labName;
@@ -59,23 +59,37 @@ class SandboxListItem extends Component {
             labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
             var fields = {name: labName};
             var labObj = {id: lab.id, fields: fields};
+            //console.log("SandboxListItem onModifyClick labObj:", labObj);
 
             // Add the fields to the lab and a service device if configured on the Remotelabz
             //console.log("labobj", labObj);
-            await Remotelabz.labs.update(labObj);
-            item.flavor = item.flavor.id;
-            item.operatingSystem = item.operatingSystem.id;
-            item.hypervisor = item.hypervisor.id;
-            item.isTemplate = false;
-            item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-            //item.networkInterfaces.forEach(element => console.log(element.id));
-            item.networkInterfaces = networkInterfaces;
-            item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-            //item.controlProtocolTypes.forEach(element => console.log(element.id));
-            item.controlProtocolTypes = controlProtocolTypes;
-            //Add Service device if Service OS was configured on the FemoteLabz
-            await this.api.post('/api/labs/' + lab.id + '/devices', item);
-        }      
+           try {
+            const response = await Remotelabz.labs.update(labObj);
+            //console.log("SandboxListItem onModifyClick response:", response);
+            if(response.status === 200) {
+                    this.setState({ isLoading: true, exist: true, lab: lab});
+                    item.flavor = item.flavor.id;
+                    item.operatingSystem = item.operatingSystem.id;
+                    item.hypervisor = item.hypervisor.id;
+                    item.isTemplate = false;
+                    item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
+                    //item.networkInterfaces.forEach(element => console.log(element.id));
+                    item.networkInterfaces = networkInterfaces;
+                    item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
+                    //item.controlProtocolTypes.forEach(element => console.log(element.id));
+                    item.controlProtocolTypes = controlProtocolTypes;
+                    //Add Service device if Service OS was configured on the FemoteLabz
+                    await this.api.post('/api/labs/' + lab.id + '/devices', item);
+                    } else {
+                    this.setState({ isLoading: false, exist: false, lab: lab});
+                    }
+            }
+            catch (error) {
+                        console.error("Catch error : Error creating device sandbox");
+                        this.setState({ isLoading: false, exist: false, lab: lab});
+                        window.location.href = "/admin/sandbox/";
+            }      
+        }
         // If we want to modify a lab       
         else if (this.props.itemType === "lab") {
             labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
