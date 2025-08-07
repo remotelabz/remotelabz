@@ -112,7 +112,7 @@ class DeviceSandboxController extends Controller
             'isSandbox' => true,
             "hasBooking" => false
         ];
-        //$this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
+        $this->logger->debug("[DeviceSandboxController:viewAction]::instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
         preg_match("/^Sandbox_(Lab).*$/",$lab->getName(),$result);
         //$this->logger->debug("Sandbox lab: ",$result);

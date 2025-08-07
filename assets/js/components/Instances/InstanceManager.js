@@ -157,12 +157,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             if (error.response?.data?.message.includes("No worker available")) {
+                console.error("No worker available - Please contact an administrator");
                 new Noty({
                     text: 'No worker available - Please contact an administrator',
                     type: 'error',
                     timeout: 10000
                 }).show();
             } else {
+                console.error("There was an error creating an instance. Please try again later.");
                 new Noty({
                     text: 'There was an error creating an instance. Please try again later.',
                     type: 'error'
