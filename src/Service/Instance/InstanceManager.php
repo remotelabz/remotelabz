@@ -302,7 +302,7 @@ class InstanceManager
     public function start(DeviceInstance $deviceInstance)
     {
 
-        $this->logger->info('Device instance state'.$deviceInstance->getState());
+        $this->logger->info('Device instance state '.$deviceInstance->getState());
         
         if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
@@ -533,7 +533,7 @@ class InstanceManager
         
         $this->logger->debug("[InstanceManage:exportDevice]::Device ".$newDevice->getName()." is copied");
         $this->entityManager->flush();
-        $this->logger->debug("[InstanceManage:exportDevice]::Flush2 done");
+        $this->logger->debug("[InstanceManage:exportDevice]::Flush done");
         $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         //$this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));

@@ -330,7 +330,7 @@ class LabImporter
             $this->entityManager->flush();
             }
             catch (IOExceptionInterface $exception) {
-                $this->logger->error("An error occurred while creating your directory at ".$exception->getPath());
+                $this->logger->error("[LabImporter:import]::An error occurred while creating your directory at ".$exception->getPath());
             }
         }
         foreach($lab->getPictures() as $picture) {

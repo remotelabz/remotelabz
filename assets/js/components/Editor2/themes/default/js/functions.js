@@ -1355,9 +1355,9 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (2,'action2 = ' + action);
-    console.log('values2 = ',values);
-    logger (2,'fromNodeList2 = ' + fromNodeList);
+    //logger (2,'action2 = ' + action);
+    console.log('functions.js printFormNode values = ',values);
+    //logger (2,'fromNodeList2 = ' + fromNodeList);
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
@@ -1370,8 +1370,6 @@ export function printFormNode(action, values, fromNodeList) {
     $.when(getTemplates(null)).done(function (templates) {
         //TODO : template sauvegardé dans la base ne correspond pas au template sauvegardé dans /config/templates
         var html = '';
-        console.log(templates);
-        console.log("id:" + id);
         html += '<form id="form-node-' + action + '" >'+
                     '<div class="form-group col-sm-12">'+
                         '<label class="control-label">' + MESSAGES[84] + '</label>' +
@@ -1383,7 +1381,7 @@ export function printFormNode(action, values, fromNodeList) {
             if (! /hided/i.test(value) ) html += '<option value="' + key + '" '+ valdisabled +' >' + value.replace('.missing','') + '</option>';
         });
         html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
-
+        
         // Show the form
         addModal(title, html, '', 'second-win');
         $('.selectpicker').selectpicker();
@@ -1403,6 +1401,8 @@ export function printFormNode(action, values, fromNodeList) {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
                 $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
                     // TODO: this event is called twice
+                    console.log("templates_values:",template_values);
+                    console.log("node_values",node_values);
                     id = (id == null) ? '' : id;
                     var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
                     if (action == 'add') {
@@ -1505,12 +1505,13 @@ export function printFormNode(action, values, fromNodeList) {
                                             '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_'+ key  +'" onClick="javascript:document.getElementById(\'link_'+key+'\').style.visibility=\'visible\'""/>'+
                                          '</div>';
                             if ( key  == 'qemu_options' ) {
-			         html_data += '<div class="form-group'+ widthClass+'">'+
+			                html_data += '<div class="form-group'+ widthClass+'">'+
                                             '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value']  + '" type="text" disabled/>'+
                                          '</div>';
                             }
                         }
-                    });
+                    }
+                );
                     html_data += '<div class="form-group col-sm-6">'+
                                     '<label class=" control-label">' + MESSAGES[93] + '</label>'+
                                     '<input class="form-control" name="node[left]" value="' + left + '" type="text"/>'+
@@ -1547,6 +1548,7 @@ export function printFormNode(action, values, fromNodeList) {
         if (action == 'edit') {
             // If editing a node, disable the select and trigger
             $('#form-node-template').val(template).change();
+            console.log("template: " + template);
             //$('#form-node-template').prop('disabled', 'disabled');
             //$('#form-node-template').val(template).change();
         }

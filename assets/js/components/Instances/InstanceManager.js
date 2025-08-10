@@ -1,4 +1,6 @@
-import Noty from 'noty';
+//import Noty from 'noty';
+// To replace Noty
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import InstanceList from './InstanceList';
@@ -70,11 +72,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 try {
                     Remotelabz.instances.device.stop(deviceInstance.uuid);
                 } catch (error) {
-                    console.error(error);
-                    new Noty({
+                    console.error("An error happened while stopping a device. Please try again later.");
+                    /*new Noty({
                         text: 'An error happened while stopping a device. Please try again later.',
                         type: 'error'
-                    }).show();
+                    }).show();*/
+                    toast.error('An error happened while stopping a device. Please try again later.', {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    });
                 }
             }
         }
@@ -102,10 +113,19 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     setLabInstance(null);
                     setLoadingInstanceState(false);
                 } else {
-                    new Noty({
+                    /*new Noty({
                         text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
                         type: 'error'
-                    }).show();
+                    }).show();*/
+                    toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    });
                 }
             }
         });
@@ -158,17 +178,36 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         } catch (error) {
             if (error.response?.data?.message.includes("No worker available")) {
                 console.error("No worker available - Please contact an administrator");
-                new Noty({
+                /*new Noty({
                     text: 'No worker available - Please contact an administrator',
                     type: 'error',
                     timeout: 10000
-                }).show();
+                }).show();*/
+                toast.error('No worker available - Please contact an administrator', {
+                    position: "top-right",
+                    autoClose: 10000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+
             } else {
                 console.error("There was an error creating an instance. Please try again later.");
-                new Noty({
+                /*new Noty({
                     text: 'There was an error creating an instance. Please try again later.',
                     type: 'error'
-                }).show();
+                }).show();*/
+                toast.error('There was an error creating an instance. Please try again later.', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
             }
             setLoadingInstanceState(false);
         }
@@ -197,10 +236,19 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             console.error(error);
-            new Noty({
+            /*new Noty({
                 text: error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.',
                 type: 'error'
-            }).show();
+            }).show();*/
+            toast.error(error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.', {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
             setLoadingInstanceState(false);
         }
     }
@@ -320,6 +368,7 @@ useEffect(() => {
                     :
                     
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
+                    {console.log(props.lab)}
                         {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
                         
                             (viewAs.type === 'user' || viewAs.type === 'guest' ?
@@ -342,6 +391,7 @@ useEffect(() => {
                                 </div>
                             )
                         : 
+                        
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You can&apos;t join this lab yet.
                             </div>

@@ -64,6 +64,8 @@ const InstanceList = (props) => {
     }
 
     const deviceInstances = props.labInstance?.deviceInstances || [];
+    console.log('[InstanceList]::instance',instancesList);
+    console.log('[InstanceList]::props',props);
 
     return (
         <>
@@ -72,7 +74,7 @@ const InstanceList = (props) => {
                 <div className="d-flex justify-content-center mt-2" onClick={() => setShowExport(!showExport)}>
                     <Button variant="default">
                         <SVG name={showExport ? "chevron-down" : "chevron-right"} />
-                        Export
+                        Export lab
                     </Button>
                 </div>
             }

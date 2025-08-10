@@ -35,7 +35,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('vnc', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
-            
         ;
 
         $manager->persist($device);
@@ -58,7 +57,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
-            
         ;
         $manager->persist($device);
         $this->addReference('Migration', $device);
@@ -80,7 +78,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
-            
         ;
         $manager->persist($device);
         $this->addReference('Ubuntu24LTS-cnt', $device);
@@ -102,7 +99,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
-            
         ;
         $manager->persist($device);
         $this->addReference('Alpine-stable-cnt', $device);
@@ -124,7 +120,6 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
             ->setNetworkInterfaceTemplate("eth")
             ->setIcon("Server_Linux.png")
-
         ;
         $manager->persist($device);
         $this->addReference('Debian-cnt', $device);
@@ -144,14 +139,11 @@ class DeviceFixtures extends Fixture implements DependentFixtureInterface
             ->setNbCpu(1)
             ->setIcon("Switch.png")
             ->addControlProtocolType($this->getReference('login', ControlProtocolType::class))
-            ->setNetworkInterfaceTemplate("eth")
-
-            
+            ->setNetworkInterfaceTemplate("eth")            
         ;
         $manager->persist($device);
         $this->addReference('dev_natif', $device);
 
-        
         $manager->flush();
     }
 

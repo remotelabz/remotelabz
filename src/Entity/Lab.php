@@ -70,7 +70,7 @@ class Lab implements InstanciableInterface
     private string $uuid;
 
      #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_lab', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_booking'])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_booking','sandbox'])]
     private int $virtuality;
 
     #[ORM\Column(type: 'datetime')]

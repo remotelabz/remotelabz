@@ -58,7 +58,7 @@ class BannerManager
         $this->entityManager->flush();
         }
         catch (IOExceptionInterface $exception) {
-            $this->logger->error("An error occurred while creating your directory at ".$exception->getPath());
+            $this->logger->error("[BannerManager:copyBanner]::An error occurred while creating your directory at ".$exception->getPath().":" . $exception->getMessage() );
         }
 
         return new JsonResponse(['url' => $this->router->generate('api_get_lab_banner', ['id' => $newId], UrlGeneratorInterface::ABSOLUTE_URL)]);

@@ -63,90 +63,124 @@ class InstanceStateMessageHandler
             $instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
         else if ($message->getType() === InstanceStateMessage::TYPE_DEVICE)
             $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
+        $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance uuid:".$instance->getUuid());
 
         // if an error happened, set device instance in its previous state
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
-            $this->logger->debug("Error state received from instance uuid ". $message->getUuid());
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Error state received from instance uuid ". $message->getUuid());
+            
             $options=$message->getOptions();
             if (!is_null($options)) {
-                $this->logger->debug('Show options of error message received : ', $options);
+                $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Show options of error message received : ', $options);
                 if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
                     $this->cancel_renameos($message->getUuid(),$options["old_name"],$options["new_name"]);
                 }
             }
             if (!is_null($instance)) {
-                $this->logger->debug("Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
+                //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
                 switch ($instance->getState()) {
                     case InstanceStateMessage::STATE_STARTING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_ERROR);
                         break;
 
                     case InstanceStateMessage::STATE_STOPPING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_STARTED);
                         break;
                     
                     case InstanceStateMessage::STATE_RESETTING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_STOPPED);
                         break;
 
                     case InstanceStateMessage::STATE_CREATING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);
                         break;
 
                     case InstanceStateMessage::STATE_CREATED:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);
                         break;
 
                     case InstanceStateMessage::STATE_DELETING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_CREATED);
                         break;
 
                     case InstanceStateMessage::STATE_EXPORTING:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
                         if ($message->getOptions()['error_code'] === 1) //Device never started
                             $instance->setState(InstanceStateMessage::STATE_ERROR);
                         else
                             $instance->setState(InstanceStateMessage::STATE_DELETED);
-                        
-                        $this->logger->debug('Error received during exporting, message options :',$message->getOptions());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Error received during exporting, message options :',$message->getOptions());
+                        break;
 
-                       
+                    case InstanceStateMessage::STATE_DELETED:
+                        $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state deleted received");
+                        //When the instance is from a sandbox, we can delete the lab and its devices.
+                
+                        if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
+                            $lab=$instance->getLab();
+                            $this->entityManager->remove($instance);
+                            $this->entityManager->flush();
+
+                            if (strstr($instance->getLab()->getName(),"Sandbox_")) {
+                                foreach ($lab->getDevices() as $device) {
+                                    foreach($device->getNetworkInterfaces() as $net_int) {
+                                        $this->entityManager->remove($net_int);
+                                    }
+                                    $this->entityManager->flush();
+
+                                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Delete device name: ".$device->getName());
+                                    $this->entityManager->remove($device);
+                                }
+                                if (null !== $lab->getPictures()) {
+                                
+                                    foreach($lab->getPictures() as $picture) {
+                                        $type = explode("image/",$picture->getType())[1];
+                                        if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                                            unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                                        }
+                                    }
+                                }
+                                $this->entityManager->remove($lab);
+
+                            }
+                        }
                         break;
 
                     default:
-                        $this->logger->debug('Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Default case; Instance in '.$instance->getState());
                         $instance->setState($message->getState());
                 }
+                $this->entityManager->persist($instance);
             } else {
-                $this->logger->debug("Instance null and Error received from : ". $message->getUuid() ." ".$message->getState());
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance null and Error received from : ". $message->getUuid() ." ".$message->getState());
             }
-            $this->logger->debug("Test message : ". $message->getUuid() ." ".$message->getState());
-
-        } else {
-            $this->logger->debug("No error received from : ". $message->getUuid() ." ".$message->getState());
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Test message : ". $message->getUuid() ." ".$message->getState());
+        }
+        else {
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::No error received from : ". $message->getUuid() ." ".$message->getState());
             if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
-                $this->logger->debug("InstanceStateMessageHandler Instance is not null");
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is not null");
                 $instance->setState($message->getState());
                 $this->entityManager->persist($instance);
             }
             else 
-                $this->logger->debug("InstanceStateMessageHandler Instance is null");
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is null");
 
             switch ($message->getState()) {
                 case InstanceStateMessage::STATE_STOPPED:
                     $this->instanceManager->setStopped($instance);
                 break;
                 case InstanceStateMessage::STATE_EXPORTED:
-                    $this->logger->debug("Instance state exported received");
+                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state exported received");
                     //In export process, the instance is a device
-//                    $device=$instance->getDevice();
-//                    $lab=$instance->getLab();
+                    //$device=$instance->getDevice();
+                    //$lab=$instance->getLab();
                     $this->instanceManager->delete($instance->getLabInstance());
                     $options_exported=$message->getOptions();
 
@@ -164,43 +198,10 @@ class InstanceStateMessageHandler
                 
             }
         }
+        $this->entityManager->persist($instance);
+
         if (!is_null($instance)) {
-
-            if ($instance->getState() === InstanceStateMessage::STATE_DELETED) {
-                $this->logger->debug("Instance state deleted received");
-                //When the instance is from a sandbox, we can delete the lab and its devices.
-                
-                $lab=$instance->getLab();
-                $this->entityManager->remove($instance);
-                $this->entityManager->flush();
-
-                if (strstr($instance->getLab()->getName(),"Sandbox_")) {
-                    foreach ($lab->getDevices() as $device) {
-                        foreach($device->getNetworkInterfaces() as $net_int) {
-                            $this->entityManager->remove($net_int);
-                        }
-                        $this->entityManager->flush();
-
-                        $this->logger->debug("Delete device name: ".$device->getName());
-                        $this->entityManager->remove($device);
-                    }
-                    if (null !== $lab->getPictures()) {
-                    
-                        foreach($lab->getPictures() as $picture) {
-                            $type = explode("image/",$picture->getType())[1];
-                            if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
-                                unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
-                            }
-                        }
-                    }
-                    $this->entityManager->remove($lab);
-
-                }
-                
-            } else {
-                $this->logger->debug("Instance state received: ".$instance->getState());
-                $this->entityManager->persist($instance);
-                }
+           
         }
         $this->entityManager->flush();
     }

@@ -828,19 +828,16 @@ class DeviceController extends Controller
         //preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
         
         if ($device->getTemplate() != null) {
-            
             preg_match('/^(\d+)(.*)$/', $device->getTemplate(), $templateNumber);
                         
-            $this->logger->debug("Device template: ".$device->getTemplate());
+            $this->logger->debug("[DeviceController:addDevice]::Device template: ".$device->getTemplate());
             if ($templateNumber != null) {
-            $this->logger->debug("template number: ".$templateNumber[1]);
-            
-                    $template = $this->deviceRepository->find($templateNumber[2]);
-                    $device->setIp($template->getIp());
-                    $device->setPort($template->getPort());
+                $this->logger->debug("[DeviceController:addDevice]::Template number: ".$templateNumber[1]);
+                $template = $this->deviceRepository->find($templateNumber[1]);
+                $device->setIp($template->getIp());
+                $device->setPort($template->getPort());
             }
         } else $this->logger->debug("Device has no template");
-        
         
         $entityManager = $this->entityManager;
         $entityManager->persist($device);

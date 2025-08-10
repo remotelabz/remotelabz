@@ -232,9 +232,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
     
     let controls;
-    //console.log('instance',instance);
-    //console.log('user',user);
-    //console.log('lab',lab);
+    console.log('[InstanceListItem]::instance',instance);
+    console.log('[InstanceListItem]::user',user);
+    console.log('[InstanceListItem]::lab',lab);
 
     switch (instance.state) {
         case 'error':
@@ -331,11 +331,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     <div className="d-flex align-items-center">
                         {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox) &&
                             <div onClick={() => setShowExport(!showExport)}>
-                                {showExport ?
-                                    <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
-                                    :
-                                    <Button variant="default"><SVG name="chevron-right"></SVG> Export</Button>
-                                }
+                                <Button variant="default">
+                                    <SVG name={showExport ? "chevron-down" : "chevron-right"} />
+                                        Export device
+                                </Button>
                             </div>
                         }
                         {instance.state !== 'stopped' && 
@@ -347,7 +346,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 }
                             </div>
                         }
-                        
+
                         { 
                         (instance.ownedBy != 'group' 
                         && (instance.state === 'stopped' || instance.state === 'error') 

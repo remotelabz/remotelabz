@@ -724,7 +724,6 @@ class LabController extends Controller
                 $editorData->
                 $editorData->
                 $entityManager->persist($editorData);*/
-                
 
                 /** @var Device $device */
                 $new_device = $deviceForm->getData();

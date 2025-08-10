@@ -80,6 +80,8 @@ class SandboxListItem extends Component {
                     item.controlProtocolTypes = controlProtocolTypes;
                     //Add Service device if Service OS was configured on the FemoteLabz
                     await this.api.post('/api/labs/' + lab.id + '/devices', item);
+                    await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                    window.location.href = "/admin/sandbox/" + lab.id;
                     } else {
                     this.setState({ isLoading: false, exist: false, lab: lab});
                     }
