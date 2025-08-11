@@ -165,13 +165,13 @@ class InstanceStateMessageHandler
         else {
             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::No error received from : ". $message->getUuid() ." ".$message->getState());
             if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
-                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is not null");
+                //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is not null");
                 $instance->setState($message->getState());
                 $this->entityManager->persist($instance);
             }
-            else 
+/*            else 
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is null");
-
+*/
             switch ($message->getState()) {
                 case InstanceStateMessage::STATE_STOPPED:
                     $this->instanceManager->setStopped($instance);
@@ -194,15 +194,41 @@ class InstanceStateMessageHandler
                     $options_exported=$message->getOptions();
                     $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);                  
                 break;
+                case InstanceStateMessage::STATE_DELETED:
+                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state deleted received");
+                    //When the instance is from a sandbox, we can delete the lab and its devices.
+            
+                    if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
+                        $lab=$instance->getLab();
+                        $this->entityManager->remove($instance);
+                        $this->entityManager->flush();
 
-                
+                        if (strstr($instance->getLab()->getName(),"Sandbox_")) {
+                            foreach ($lab->getDevices() as $device) {
+                                foreach($device->getNetworkInterfaces() as $net_int) {
+                                    $this->entityManager->remove($net_int);
+                                }
+                                $this->entityManager->flush();
+
+                                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Delete device name: ".$device->getName());
+                                $this->entityManager->remove($device);
+                            }
+                            if (null !== $lab->getPictures()) {
+                            
+                                foreach($lab->getPictures() as $picture) {
+                                    $type = explode("image/",$picture->getType())[1];
+                                    if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
+                                        unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
+                                    }
+                                }
+                            }
+                            $this->entityManager->remove($lab);
+                        }
+                    }
+                    break;
             }
         }
-        $this->entityManager->persist($instance);
-
-        if (!is_null($instance)) {
-           
-        }
+        $this->entityManager->persist($instance);        
         $this->entityManager->flush();
     }
 
