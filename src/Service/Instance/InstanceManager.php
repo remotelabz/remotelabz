@@ -266,7 +266,7 @@ class InstanceManager
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
             $network=$labInstance->getNetwork();
             if (IPTools::routeExists($network)) {
-                $this->logger->debug("[InstanceManager:delete]::Route to ".$network." exists via ".$workerIP);
+                $this->logger->debug("[InstanceManager:delete]::Route to ".$network." exists via ".$workerIP." and will be delete");
                try {
                 //IPTools::routeDelete($network,$workerIP);
                 IPTools::routeDelete($network,null);
@@ -571,7 +571,7 @@ class InstanceManager
                 $tmp['os_imagename'] = $imageName;
                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                 // the case of qemu image with link.
-                $this->logger->debug("OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                $this->logger->debug("[InstanceManager:Sync2OS]::OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
                 $this->bus->dispatch(
                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                         new AmqpStamp($workerIP, AMQP_NOPARAM, [])

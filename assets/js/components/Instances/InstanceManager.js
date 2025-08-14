@@ -312,11 +312,11 @@ useEffect(() => {
                         />
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
+                        (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
                         <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && viewAs.type === "guest" &&
+                        (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && viewAs.type === "guest" &&
                         <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
@@ -368,7 +368,8 @@ useEffect(() => {
                     :
                     
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
-                    {console.log(props.lab)}
+                    {//console.log(props.lab)
+                    }
                         {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
                         
                             (viewAs.type === 'user' || viewAs.type === 'guest' ?

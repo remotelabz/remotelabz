@@ -232,9 +232,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
     
     let controls;
-    console.log('[InstanceListItem]::instance',instance);
+    /*console.log('[InstanceListItem]::instance',instance);
     console.log('[InstanceListItem]::user',user);
-    console.log('[InstanceListItem]::lab',lab);
+    console.log('[InstanceListItem]::lab',lab);*/
 
     switch (instance.state) {
         case 'error':
@@ -329,7 +329,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox && instance.device.name !== "DHCP_service") &&
                             <div onClick={() => setShowExport(!showExport)}>
                                 <Button variant="default">
                                     <SVG name={showExport ? "chevron-down" : "chevron-right"} />

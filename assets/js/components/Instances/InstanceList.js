@@ -16,7 +16,7 @@ const InstanceList = (props) => {
         for (const instance of props.instances) {
             const device = instance.device;
             //console.log("device:", device);
-            if (device.name === "Service_sandbox") {
+            if (device.name === "DHCP_service") {
                 deviceLengthMax = 2;
             }
         }
@@ -64,8 +64,8 @@ const InstanceList = (props) => {
     }
 
     const deviceInstances = props.labInstance?.deviceInstances || [];
-    console.log('[InstanceList]::instance',instancesList);
-    console.log('[InstanceList]::props',props);
+    /*console.log('[InstanceList]::instance',instancesList);
+    console.log('[InstanceList]::props',props);*/
 
     return (
         <>

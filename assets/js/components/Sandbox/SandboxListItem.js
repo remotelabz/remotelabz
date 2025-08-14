@@ -280,7 +280,7 @@ class SandboxListItem extends Component {
         return (
             <>
             {divBorder}
-            <Modal show={this.state.showDeleteLabModal} onHide={()=>this.setState({showDeleteLabModal: false})}>
+        <Modal show={this.state.showDeleteLabModal} onHide={()=>this.setState({showDeleteLabModal: false})}>
             <Modal.Header closeButton>
                 <Modal.Title>Leave lab</Modal.Title>
             </Modal.Header>

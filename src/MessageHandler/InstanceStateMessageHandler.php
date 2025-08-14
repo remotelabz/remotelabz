@@ -11,7 +11,10 @@ use App\Repository\DeviceInstanceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
 use App\Controller\OperatingSystemController;
-//use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+//To redirect to a route
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -34,6 +37,7 @@ class InstanceStateMessageHandler
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
         LoggerInterface $logger,
+        UrlGeneratorInterface $urlGenerator,
         string $rootDirectory
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -43,10 +47,14 @@ class InstanceStateMessageHandler
         $this->entityManager = $entityManager;
         $this->logger = $logger;
         $this->rootDirectory = $rootDirectory;
+        $this->urlGenerator = $urlGenerator;
     }
 
     public function __invoke(InstanceStateMessage $message)
     {
+    try {
+        //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Message received:",$message->toArray());
+
         $this->logger->info("Received InstanceState message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
@@ -118,40 +126,6 @@ class InstanceStateMessageHandler
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Error received during exporting, message options :',$message->getOptions());
                         break;
 
-                    case InstanceStateMessage::STATE_DELETED:
-                        $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state deleted received");
-                        //When the instance is from a sandbox, we can delete the lab and its devices.
-                
-                        if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
-                            $lab=$instance->getLab();
-                            $this->entityManager->remove($instance);
-                            $this->entityManager->flush();
-
-                            if (strstr($instance->getLab()->getName(),"Sandbox_")) {
-                                foreach ($lab->getDevices() as $device) {
-                                    foreach($device->getNetworkInterfaces() as $net_int) {
-                                        $this->entityManager->remove($net_int);
-                                    }
-                                    $this->entityManager->flush();
-
-                                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Delete device name: ".$device->getName());
-                                    $this->entityManager->remove($device);
-                                }
-                                if (null !== $lab->getPictures()) {
-                                
-                                    foreach($lab->getPictures() as $picture) {
-                                        $type = explode("image/",$picture->getType())[1];
-                                        if(is_file($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type)) {
-                                            unlink($this->rootDirectory.'/assets/js/components/Editor2/images/pictures/lab'.$lab->getId().'-'.$picture->getName().'.'.$type);
-                                        }
-                                    }
-                                }
-                                $this->entityManager->remove($lab);
-
-                            }
-                        }
-                        break;
-
                     default:
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Default case; Instance in '.$instance->getState());
                         $instance->setState($message->getState());
@@ -163,55 +137,60 @@ class InstanceStateMessageHandler
             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Test message : ". $message->getUuid() ." ".$message->getState());
         }
         else {
-            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::No error received from : ". $message->getUuid() ." ".$message->getState());
-            if (!is_null($instance)) {//DeleteOS used instanceState message but with no instance. So $instance is null
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::No error received from :". $message->getUuid() .", instance message state:".$message->getState());
+            if (!is_null($instance)) {
                 //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is not null");
                 $instance->setState($message->getState());
                 $this->entityManager->persist($instance);
+                $this->entityManager->flush();
+
             }
-/*            else 
-                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is null");
-*/
+            /*  else 
+                  $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is null");
+            */
             switch ($message->getState()) {
                 case InstanceStateMessage::STATE_STOPPED:
                     $this->instanceManager->setStopped($instance);
                 break;
                 case InstanceStateMessage::STATE_EXPORTED:
                     $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state exported received");
-                    //In export process, the instance is a device
-                    //$device=$instance->getDevice();
-                    //$lab=$instance->getLab();
+                    
                     $this->instanceManager->delete($instance->getLabInstance());
                     $options_exported=$message->getOptions();
 
                     $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$options_exported['new_os_imagename']);
 
-                    //TODO redirect to route labs
-                    //$this->redirectToRoute('labs');
-                    
+                    $url = $this->urlGenerator->generate('sandbox');
+                    $response = new RedirectResponse($url);
+                    $response->setStatusCode(Response::HTTP_FOUND);                    
+                    return $response;
                 break;
                 case InstanceStateMessage::STATE_OS_DELETED:
                     $options_exported=$message->getOptions();
                     $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);                  
                 break;
                 case InstanceStateMessage::STATE_DELETED:
-                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state deleted received");
-                    //When the instance is from a sandbox, we can delete the lab and its devices.
-            
+                                
                     if ($message->getType() === InstanceStateMessage::TYPE_LAB) {
+                        $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message is type Lab");
                         $lab=$instance->getLab();
+                        
                         $this->entityManager->remove($instance);
                         $this->entityManager->flush();
 
-                        if (strstr($instance->getLab()->getName(),"Sandbox_")) {
+                        if (strstr($lab->getName(),"Sandbox_")) {
+                            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::\"Deleted\" Instance state message from Sandbox: ".$lab->getName());
+
                             foreach ($lab->getDevices() as $device) {
-                                foreach($device->getNetworkInterfaces() as $net_int) {
+                                
+                                // cascade so, no need to remove network interfaces
+                                /*foreach($device->getNetworkInterfaces() as $net_int) {
                                     $this->entityManager->remove($net_int);
-                                }
-                                $this->entityManager->flush();
+                                }*/
 
                                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Delete device name: ".$device->getName());
                                 $this->entityManager->remove($device);
+                                //$this->entityManager->persist($device);
                             }
                             if (null !== $lab->getPictures()) {
                             
@@ -223,13 +202,22 @@ class InstanceStateMessageHandler
                                 }
                             }
                             $this->entityManager->remove($lab);
+                            
                         }
                     }
                     break;
             }
         }
-        $this->entityManager->persist($instance);        
+        
         $this->entityManager->flush();
+        }
+        catch (\Exception $e) {
+            $this->logger->error("[InstanceStateMessageHandler:__invoke]::Error while processing message: " . $e->getMessage());
+            if (!is_null($lab))
+                $this->logger->error("[InstanceStateMessageHandler:__invoke]::Lab name:" . $lab->getName()." uuid:".$lab->getUuid());
+            if (!is_null($device))
+                $this->logger->error("[InstanceStateMessageHandler:__invoke]::Device name:" . $device->getName()." uuid:".$device->getUuid());
+        }
     }
 
     public function cancel_renameos($id,$old_name,$new_name){
