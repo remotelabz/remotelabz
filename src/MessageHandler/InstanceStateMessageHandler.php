@@ -160,10 +160,6 @@ class InstanceStateMessageHandler
 
                     $this->instanceManager->Sync2OS($options_exported['workerIP'],$options_exported['hypervisor'],$options_exported['new_os_imagename']);
 
-                    $url = $this->urlGenerator->generate('sandbox');
-                    $response = new RedirectResponse($url);
-                    $response->setStatusCode(Response::HTTP_FOUND);                    
-                    return $response;
                 break;
                 case InstanceStateMessage::STATE_OS_DELETED:
                     $options_exported=$message->getOptions();

@@ -1,4 +1,5 @@
 import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
@@ -43,10 +44,14 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             if (error.response.status === 404) {
                 setLogs([]);
             } else {
-                new Noty({
+                /*new Noty({
                     text: 'An error happened while fetching instance logs. If this error persist, please contact an administrator.',
                     type: 'error'
-                }).show();
+                }).show();*/
+                 
+                toast.error('An error happened while fetching instance logs. If this error persist, please contact an administrator.', {
+                });
+
                 setDevice(null)
             }
         });
@@ -56,34 +61,43 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         setComputing(true)
 
         Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Instance start requested.',
                 timeout: 10000
-            }).show();
+            }).show();*/
+            toast.success('Instance start requested.', {
+            });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error',
                     timeout: 5000
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 5000,
+                });
             } else if (error.response.data.message.includes("Device")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error',
                     timeout: 5000
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 5000,
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
-//                    text: error.response.data.message,
                     text: 'Error while requesting instance start. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error("Error while requesting instance start. Please try again later.", {                    
+                });
             }
             setComputing(false)
         })
@@ -96,26 +110,34 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
 
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Instance stop requested.',
                 timeout: 10000
-            }).show();
+            }).show();*/
+            toast.success("Instance stop requested.", {
+                });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+            });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance stop. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error('Error while requesting instance stop. Please try again later.', {
+                    autoClose: 10000
+                });
             }
             setComputing(false)
         })
@@ -126,26 +148,33 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         setComputing(true);
 
         Remotelabz.instances.device.reset(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Device reset requested.',
                 timeout: 5000
-            }).show();
-
+            }).show();*/
+            toast.success('Device reset requested.', {
+            });
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance reset. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error('Error while requesting instance reset. Please try again later.', {
+                    autoClose: 10000
+                });
             }
             setComputing(false)
         })
@@ -159,26 +188,34 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         setExporting(true)
         
         Remotelabz.instances.export(deviceInstance.uuid, name, "device").then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Instance export requested.',
                 timeout: 5000
-            }).show();
+            }).show();*/
+            toast.success('Instance export requested.', {
+                });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("No worker available")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance export. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                 toast.error('Error while requesting instance export. Please try again later.', {
+                    autoClose: 10000
+                });
             }
 
             setExporting(false)
@@ -300,7 +337,8 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
 //console.log("test 2");
     return (
-        <><ListGroupItem>
+        <>
+         <ListGroupItem>
             {isLoading ?
                 <div className="d-flex align-items-center">
                     <div className="m-3">

@@ -269,6 +269,14 @@ useEffect(() => {
 
 
     return (<>
+    <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
@@ -371,8 +379,15 @@ useEffect(() => {
                     {//console.log(props.lab)
                     }
                         {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
-                        
-                            (viewAs.type === 'user' || viewAs.type === 'guest' ?
+
+                            (
+                                props.lab.name.startsWith('Sandbox_') ?
+                                (
+                                    setTimeout(() => { window.location.href = `/admin/sandbox`; }, 1500)
+                                ) :
+                                (
+                                
+                                viewAs.type === 'user' || viewAs.type === 'guest' ?
                                 <div className="d-flex align-items-center justify-content-center flex-column">
                                     You haven&apos;t joined this lab yet.
 
@@ -390,12 +405,14 @@ useEffect(() => {
                                         </div>
                                     }
                                 </div>
+                                )
                             )
                         : 
-                        
+                            (
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You can&apos;t join this lab yet.
                             </div>
+                            )
                         }
                     </ListGroupItem>
                 }

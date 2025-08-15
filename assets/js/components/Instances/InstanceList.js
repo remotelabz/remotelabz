@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 import InstanceListItem from './InstanceListItem';
 import { Button } from 'react-bootstrap';
 import SVG from '../Display/SVG';
