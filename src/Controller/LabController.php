@@ -286,10 +286,10 @@ class LabController extends Controller
         }
     }
 
-    
+    #[Get('/api/labs/template/{id<\d+>}', name: 'api_get_lab_template_by_uuid')]
+    #[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message:"Access denied.")]
     public function getOneLabTemplate(Request $request, int $id)
     {
-
         $labs = $this->labRepository->find($id);
         if ('json' === $request->getRequestFormat()) {
             return $this->json($labs, 200, [], ["api_get_lab_template"]);
@@ -1236,7 +1236,6 @@ class LabController extends Controller
     {
         #$json = $request->request->get('json');
         $json = $request->request->all()['json'] ?? [];
-
 
         $data = $labImporter->import($json);
 

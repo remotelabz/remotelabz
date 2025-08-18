@@ -4,6 +4,8 @@ import Noty from 'noty';
 import { Formik, Form, Field, useFormikContext } from 'formik';
 import { useDropzone } from 'react-dropzone';
 import Remotelabz from '../API';
+import { ToastContainer, toast } from 'react-toastify';
+
 
 export default function LabImporter()
 {
@@ -72,10 +74,14 @@ export default function LabImporter()
                     redirect: response.request.responseURL
                 });
             }).catch(err => {
-                new Noty({ text: 'An error happened while importing lab. Please try again later or contact an administrator.', type: 'error' }).show();
+                //new Noty({ text: 'An error happened while importing lab. Please try again later or contact an administrator.', type: 'error' }).show();
+                toast.error('An error happened while importing lab. Please try again later or contact an administrator.', {
+                });
             })
         }).catch(err => {
-            new Noty({ text: 'An error happened while fetching lab. Please try again later.', type: 'error' }).show();
+            //new Noty({ text: 'An error happened while fetching lab. Please try again later.', type: 'error' }).show();
+            toast.error('An error happened while fetching lab. Please try again later.', {
+                });
         })
     }
 

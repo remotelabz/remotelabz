@@ -89,11 +89,13 @@ class LabImporter
      */
     public function import(string $json): int
     {
+        $this->logger->debug("[LabImporter:import]::JSON import", ["string" => $json]);
+
         $labJson = json_decode($json, true, 4096, JSON_OBJECT_AS_ARRAY);
 
         if (!is_array($labJson)) {
             // invalid json
-            $this->logger->error("Invalid JSON was provided!", ["string" => $json]);
+            $this->logger->error("[LabImporter:import]::Invalid JSON was provided!", ["string" => $json]);
 
             throw new InvalidArgumentException("Invalid JSON was provided!");
         }

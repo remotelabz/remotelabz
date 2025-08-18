@@ -78,13 +78,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         type: 'error'
                     }).show();*/
                     toast.error('An error happened while stopping a device. Please try again later.', {
-                        position: "top-right",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
+                        autoClose: 10000
                     });
                 }
             }
@@ -118,13 +112,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                         type: 'error'
                     }).show();*/
                     toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
-                        position: "top-right",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
+                        autoClose: 10000
                     });
                 }
             }
@@ -184,13 +172,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     timeout: 10000
                 }).show();*/
                 toast.error('No worker available - Please contact an administrator', {
-                    position: "top-right",
-                    autoClose: 10000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
+                    autoClose: 10000
                 });
 
             } else {
@@ -200,13 +182,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     type: 'error'
                 }).show();*/
                 toast.error('There was an error creating an instance. Please try again later.', {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
+                    autoClose: 10000
                 });
             }
             setLoadingInstanceState(false);
@@ -241,13 +217,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 type: 'error'
             }).show();*/
             toast.error(error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.', {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
+                autoClose:10000
             });
             setLoadingInstanceState(false);
         }
@@ -381,9 +351,9 @@ useEffect(() => {
                         {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
 
                             (
-                                props.lab.name.startsWith('Sandbox_') ?
+                                isSandbox?
                                 (
-                                    setTimeout(() => { window.location.href = `/admin/sandbox`; }, 1500)
+                                    window.location.href = '/admin/sandbox'
                                 ) :
                                 (
                                 

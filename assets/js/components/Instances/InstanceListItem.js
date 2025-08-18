@@ -1,4 +1,4 @@
-import Noty from 'noty';
+//import Noty from 'noty';
 import { ToastContainer, toast } from 'react-toastify';
 import API from '../../api';
 import Remotelabz from '../API';
@@ -78,7 +78,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     timeout: 5000
                 }).show()*/
                 toast.error(error.response.data.message, {
-                    autoClose: 5000,
+                    autoClose: 10000,
                 });
             } else if (error.response.data.message.includes("Device")) {
                 /*new Noty({
@@ -523,6 +523,5 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         </>
     )
 }
-
 
 export default InstanceListItem;

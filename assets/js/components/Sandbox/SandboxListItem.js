@@ -9,6 +9,7 @@ class SandboxListItem extends Component {
     api = API.getInstance();
 
     constructor(props) {
+        //console.log("SandboxListItem constructor props:", props);
         super(props);
 
         this.state = {
@@ -37,7 +38,9 @@ class SandboxListItem extends Component {
 
             if(lab) {
                 this.setState({exist: true, lab: lab[0]});
+                //console.log("SandboxListItem fetchLabInstance lab:", lab[0]);
             }
+            //else console.log("SandboxListItem no fetchLabInstance lab:", lab[0]);
         })
     }
 
@@ -94,6 +97,8 @@ class SandboxListItem extends Component {
         }
         // If we want to modify a lab       
         else if (this.props.itemType === "lab") {
+            this.setState({ isLoading: true, exist: true, lab: this.props.item});
+            //console.log("SandboxListItem onModifyClick lab:", this.props.item);
             labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
             var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
             if (this.props.item.hasTimer) {
@@ -112,24 +117,30 @@ class SandboxListItem extends Component {
             for(var picture of item.pictures){
                 var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
                 await Remotelabz.pictures.new(pictureObj);
-               
             }
 
             try {
                 const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
                 //console.log("response:", response);
+                
 
                 if(response.status === 200) {
                     this.setState({ isLoading: true, exist: true, lab: lab});
+                    //console.log("Rendering state.lab in modify function is", this.state.lab);
+
                     const { id: id_lab, uuid } = response.data;
-                    lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
-                    
-                    //console.log("Lab id:", lab.id);
+                    //lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
+                    lab = { ...this.state.lab, id: id_lab, uuid }; // don't solve the problem
+                    //console.log("Rendering lab in modify function is", lab);
+
                     Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
 
                     await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                    //console.log("Rendering lab in modify function after lab create ", lab);
+
                     window.location.href = "/admin/sandbox/" + lab.id;
                 } else {
+                    console.log("status not 200 Lab:", lab);
                     this.setState({ isLoading: false, exist: false, lab: lab});
                 }
             }
@@ -164,7 +175,9 @@ class SandboxListItem extends Component {
     render() {
         let divBorder;
         let button;
-	    //console.log("Rendering SandboxListItem for", this.props.item.name);
+        //console.log("Rendering SandboxListItem for", this.props.item.name);
+        //console.log("Rendering state is", this.state);
+        //console.log("Rendering props ", this.props);
 
         if(this.state.isLoading) {
             button = (<Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
@@ -213,7 +226,7 @@ class SandboxListItem extends Component {
                      //   <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
                     
-                    { this.state.exist ?
+                    { this.state.exist && this.state.lab != null ?
                         <a 
                             href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3 mr-2 mt-2"
@@ -258,7 +271,7 @@ class SandboxListItem extends Component {
                     {//this.props.itemType == "device" && this.props.item.author && this.props.item.author.id == this.props.user.id && (this.props.item.author.roles.includes("ROLE_TEACHER") || this.props.item.author.roles.includes("ROLE_TEACHER_EDITOR")) && (!this.state.exist) &&
                       //  <a className="btn btn-danger mr-2 mt-2" role="button" onClick={()=>this.setState({showDeleteDeviceModal: true})}>Delete</a>
                     }
-                    { this.state.exist ?
+                    { this.state.exist && this.state.lab != null ?
                         <a 
                             href={"/admin/sandbox/" + this.state.lab.id}
                             className="btn btn-primary ml-3 mr-2 mt-2"
