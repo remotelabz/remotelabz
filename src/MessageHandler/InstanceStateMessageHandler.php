@@ -8,11 +8,12 @@ use Remotelabz\Message\Message\InstanceActionMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\LabInstanceRepository;
 use App\Repository\DeviceInstanceRepository;
+use App\Repository\DeviceRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Service\Instance\InstanceManager;
 use App\Controller\OperatingSystemController;
 //To redirect to a route
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+//use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -27,6 +28,7 @@ class InstanceStateMessageHandler
     private LabInstanceRepository $labInstanceRepository;
     private OperatingSystemRepository $operatingSystemRepository;
     private InstanceManager $instanceManager;
+    private DeviceRepository $deviceRepository;
     private string $rootDirectory;
     //private $router;
 
@@ -37,7 +39,7 @@ class InstanceStateMessageHandler
         EntityManagerInterface $entityManager,
         InstanceManager $instanceManager,
         LoggerInterface $logger,
-        UrlGeneratorInterface $urlGenerator,
+        DeviceRepository $deviceRepository,
         string $rootDirectory
     ) {
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -47,7 +49,7 @@ class InstanceStateMessageHandler
         $this->entityManager = $entityManager;
         $this->logger = $logger;
         $this->rootDirectory = $rootDirectory;
-        $this->urlGenerator = $urlGenerator;
+        $this->deviceRepository = $deviceRepository;
     }
 
     public function __invoke(InstanceStateMessage $message)
@@ -81,7 +83,17 @@ class InstanceStateMessageHandler
             if (!is_null($options)) {
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Show options of error message received : ', $options);
                 if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
+                    $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel renameOS');
                     $this->cancel_renameos($message->getUuid(),$options["old_name"],$options["new_name"]);
+                }
+                if ( $options["state"] === InstanceActionMessage::ACTION_EXPORT_DEV ) {
+                    $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported');
+                    //TODO Delete the device created during the export
+                    $new_device_exported = $this->deviceRepository->findOneBy(['id' => $options["newDevice_id"]]);
+                    $new_os_exported = $new_device_exported->getOperatingSystem();
+                    $this->entityManager->remove($new_os_exported);
+                    $this->entityManager->remove($new_device_exported);
+                    $this->entityManager->flush();
                 }
             }
             if (!is_null($instance)) {

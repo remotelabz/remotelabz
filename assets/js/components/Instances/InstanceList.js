@@ -30,7 +30,7 @@ const InstanceList = (props) => {
                 instance={deviceInstance}
                 labDeviceLength={deviceLengthMax}
                 key={index}
-		allInstance={props.instances}
+		        allInstance={props.instances}
                 {...props}
             />
         )
@@ -56,7 +56,6 @@ const InstanceList = (props) => {
                 });
 
                 props.onStateUpdate();
-                location.href = "/admin/sandbox";
             })
             .catch(() => {
                 /*new Noty({

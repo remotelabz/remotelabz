@@ -187,12 +187,13 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     function exportDeviceTemplate(deviceInstance, name) {
         setExporting(true)
         
-        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then(() => {
+        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then((response) => {
             /*new Noty({
                 type: 'success',
                 text: 'Instance export requested.',
                 timeout: 5000
             }).show();*/
+            //console.log("response export device:", response);
             toast.success('Instance export requested.', {
                 });
 

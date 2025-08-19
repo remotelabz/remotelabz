@@ -498,14 +498,14 @@ class InstanceManager
         $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
-            $this->logger->error('[InstanceManage:exportDevice]::Could not export device. No worker available');
+            $this->logger->error('[InstanceManager:exportDevice]::Could not export device. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
         $deviceInstance->setState(InstanceState::EXPORTING);
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
 
-        $this->logger->debug('[InstanceManage:exportDevice]::Exporting device instance process with UUID ' . $uuid . '.');
+        $this->logger->debug('[InstanceManager:exportDevice]::Exporting device instance process with UUID ' . $uuid . '.');
         
         $device = $deviceInstance->getDevice();
         $hypervisor=$device->getHypervisor();
@@ -516,7 +516,7 @@ class InstanceManager
         $id = uniqid();
         $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
         
-        $this->logger->debug('[InstanceManage:exportDevice]::Export process. Hypervisor is '.$hypervisor->getName());
+        $this->logger->debug('[InstanceManager:exportDevice]::Export process. Hypervisor is '.$hypervisor->getName());
 
         switch ($hypervisor->getName()) {
             case "qemu":
@@ -525,15 +525,15 @@ class InstanceManager
             default:
                 $imageName=$imageName;
         }
-        $this->logger->debug('[InstanceManage:exportDevice]::Export process. The lab name will be '.$imageName);
+        $this->logger->debug('[InstanceManager:exportDevice]::Export process. The exported device name will be '.$imageName);
         
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
-        $this->logger->debug("[InstanceManage:exportDevice]::OS is copied");
+        $this->logger->debug("[InstanceManager:exportDevice]::OS is copied");
         $newDevice = $this->deviceRepository->find($this->copyDevice($device, $newOS, $name));
         
-        $this->logger->debug("[InstanceManage:exportDevice]::Device ".$newDevice->getName()." is copied");
+        $this->logger->debug("[InstanceManager:exportDevice]::Device ".$newDevice->getName()." is copied");
         $this->entityManager->flush();
-        $this->logger->debug("[InstanceManage:exportDevice]::Flush done");
+        $this->logger->debug("[InstanceManager:exportDevice]::Flush done");
         $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         //$this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
@@ -552,7 +552,6 @@ class InstanceManager
             ]
         );
         return $newDevice;
-       
     }
 
     // Copy OS on all other workers
@@ -593,7 +592,6 @@ class InstanceManager
 
         $lab = $this->copyLab($labInstance->getLab(), $name);
 
-
         $worker = $this->workerManager->getFreeWorker($lab);
         if ($worker == null) {
             $this->logger->error('Could not export lab. No worker available');
@@ -613,11 +611,11 @@ class InstanceManager
             foreach($labInstance->getDeviceInstances() as $deviceInstance) {               
                 $device = $deviceInstance->getDevice();
 
-                $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
-                //$id = uniqid();
-                $new_name .= '_' . $now->format('YmdHis');
-
                 if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
+                    $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
+                    //$id = uniqid();
+                    $new_name .= '_' . $now->format('YmdHis');
+
                     $this->stop($deviceInstance);                   
                     $newDevice=$this->exportDevice($deviceInstance, $new_name);                  
 

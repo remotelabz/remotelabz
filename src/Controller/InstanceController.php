@@ -627,37 +627,46 @@ class InstanceController extends Controller
 
         if($name == '') {
             throw new BadRequestHttpException('Name must not be empty.');
+            return $this->json(['error' => 'Name must not be empty.'], 400);
         }
 
         if($type == '') {
             throw new BadRequestHttpException('Instance type must not be empty.');
+            return $this->json(['error' => 'Instance type must not be empty.'], 400);
         }
-        
-        if ($type == "device") {
-            if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
-                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        try {
+            if ($type == "device") {
+                if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                    throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                    return $this->json(['error' => 'No instance with UUID ' . $uuid . '.'], 404);
+                }
+
+                $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $deviceInstance);
+
+                $instanceManager->exportDevice($deviceInstance, $name);
             }
+            else if ($type == "lab") {
+                if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                    throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                    return $this->json(['error' => 'No instance with UUID ' . $uuid . '.'], 404);
+                }
 
-            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $deviceInstance);
-
-            $instanceManager->exportDevice($deviceInstance, $name);
-        }
-        else if ($type == "lab") {
-            if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
-                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $labInstance);
+                
+                $instanceManager->exportLab($labInstance, $name);
             }
-
-            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $labInstance);
-
-            $instanceManager->exportLab($labInstance, $name);
+            else {
+                throw new BadRequestHttpException('Instance type must be device or lab.');
+                return $this->json(['error' => 'Instance type must be device or lab.'], 400);
+            }
         }
-        else {
-            throw new BadRequestHttpException('Instance type must be device or lab.');
+        catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
         }
-
-        return $this->json();
+        $this->logger->debug("[InstanceController:exportByUuidAction]::Export instance with UUID ".$uuid." as ".$name." type ".$type. " json:". $this->json());
+        return $this->json(['success' => true]);
     }
-
+    
     
     
 	#[Get('/api/instances/by-uuid/{uuid}', name: 'api_get_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
