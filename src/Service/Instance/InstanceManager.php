@@ -614,7 +614,7 @@ class InstanceManager
                 if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
                     $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
                     //$id = uniqid();
-                    $new_name .= '_' . $now->format('YmdHis');
+                    //$new_name .= '_' . $now->format('YmdHis');
 
                     $this->stop($deviceInstance);                   
                     $newDevice=$this->exportDevice($deviceInstance, $new_name);                  

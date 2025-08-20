@@ -88,12 +88,43 @@ class InstanceStateMessageHandler
                 }
                 if ( $options["state"] === InstanceActionMessage::ACTION_EXPORT_DEV ) {
                     $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported');
-                    //TODO Delete the device created during the export
+                    
                     $new_device_exported = $this->deviceRepository->findOneBy(['id' => $options["newDevice_id"]]);
-                    $new_os_exported = $new_device_exported->getOperatingSystem();
-                    $this->entityManager->remove($new_os_exported);
-                    $this->entityManager->remove($new_device_exported);
-                    $this->entityManager->flush();
+//                    $new_os_exported = $new_device_exported->getOperatingSystem();
+                    //TODO Verify the name of the lab to know if it is a sandbox or not
+                    try {
+                        $labs = $new_device_exported->getLabs();
+                        if (count($labs) > 0){
+                            $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Device exists in labs '.$new_device_exported->getName());
+                            for ($i = 0; $i < count($labs); $i++) {
+                                $lab = $labs[$i];
+                                $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported from lab: '.$lab->getName());
+                                $devices= $lab->getDevices();
+                                $this->logger->debug('[InstanceStateMessageHandler:__invoke]::'.count($devices) .' devices found in the lab');
+                                for ($j = 0; $j < count($devices); $j++) {
+                                    $device = $devices[$j];
+                                    $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported device in labs; Delete device: '.$device->getName());
+                                    $os=$device->getOperatingSystem();
+                                    $this->entityManager->remove($device);
+                                    if ( $os->getName() != "Natif" && $os->getName() != "Service" ) {
+                                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported OS in labs; Delete OS: '.$os->getImageFilename());
+                                        $this->entityManager->remove($os);
+                                    }
+                                }
+                                $this->entityManager->remove($lab);
+                            }
+                        }
+                        else {
+                            $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Device doesn\'t exist in labs');
+                            $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported device; Delete device: '.$device->getName());
+                            $this->entityManager->remove($new_device_exported);
+                            $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported device; Delete OS: '.$os->getImageFilename());
+                            $this->entityManager->remove($new_os_exported);
+                        }
+                        $this->entityManager->flush();
+                    } catch (\Exception $e) {
+                        $this->logger->error('[InstanceStateMessageHandler:__invoke]::Error while removing devices and OS during export cancel: '.$e->getMessage());
+                    }
                 }
             }
             if (!is_null($instance)) {

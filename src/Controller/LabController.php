@@ -1058,7 +1058,8 @@ class LabController extends Controller
         try {
             foreach ($devices as $device) {
                 $this->logger->debug("[LabController:createcopyLab]::Device ".$device->getName()." is a sandbox device, copying it.");
-                $new_device= $this->deviceRepository->find($this->copyDevice($device,'Sandbox_Lab_'.$device->getName()));
+                //$new_device= $this->deviceRepository->find($this->copyDevice($device,'Sandbox_Lab_'.$device->getName()));
+                $new_device= $this->deviceRepository->find($this->copyDevice($device,$device->getName()));
                 $new_device->setIsTemplate(false);
                 $new_device->setAuthor($this->getUser());                 
                 $entityManager->persist($new_device);
