@@ -4,19 +4,21 @@ import { Button } from 'react-bootstrap';
 import SVG from '../Display/SVG';
 import InstanceExport from './InstanceExport';
 import Remotelabz from '../API';
-import Noty from 'noty';
+//import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
+
 
 const InstanceList = (props) => {
-    console.log("props", props);
+    //console.log("props", props);
     const [showExport, setShowExport] = useState(false);
     let deviceLengthMax = 1;
 
-    console.log("Sandbox", props.isSandbox);
+    //console.log("Sandbox", props.isSandbox);
     if (props.isSandbox) {
         for (const instance of props.instances) {
             const device = instance.device;
-            console.log("device:", device);
-            if (device.name === "Service_sandbox") {
+            //console.log("device:", device);
+            if (device.name === "DHCP_service") {
                 deviceLengthMax = 2;
             }
         }
@@ -28,7 +30,7 @@ const InstanceList = (props) => {
                 instance={deviceInstance}
                 labDeviceLength={deviceLengthMax}
                 key={index}
-		allInstance={props.instances}
+		        allInstance={props.instances}
                 {...props}
             />
         )
@@ -45,25 +47,31 @@ const InstanceList = (props) => {
     function exportLabTemplate(labInstance, name) {
         Remotelabz.instances.export(labInstance.uuid, name, "lab")
             .then(() => {
-                new Noty({
+                /*new Noty({
                     type: 'success',
                     text: 'Instance export requested.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.success('Instance export requested.', {
+                });
 
                 props.onStateUpdate();
-                location.href = "/admin/sandbox";
             })
             .catch(() => {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance export. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error('Error while requesting instance export. Please try again later.', {
+                    autoClose: 10000,
+                });
             });
     }
 
     const deviceInstances = props.labInstance?.deviceInstances || [];
+    /*console.log('[InstanceList]::instance',instancesList);
+    console.log('[InstanceList]::props',props);*/
 
     return (
         <>
@@ -72,7 +80,7 @@ const InstanceList = (props) => {
                 <div className="d-flex justify-content-center mt-2" onClick={() => setShowExport(!showExport)}>
                     <Button variant="default">
                         <SVG name={showExport ? "chevron-down" : "chevron-right"} />
-                        Export
+                        Export lab
                     </Button>
                 </div>
             }
@@ -87,5 +95,5 @@ const InstanceList = (props) => {
     );
 };
 
-console.log("test de InstanceList");
+//console.log("test de InstanceList");
 export default InstanceList;

@@ -429,7 +429,7 @@ class InstanceController extends Controller
         }*/
         try {
             $username=$this->getUser()->getName();
-            $this->logger->debug("Lab instance creation: ".$lab->getName());
+            $this->logger->debug("[InstanceController:createAction]::Lab instance creation: ".$lab->getName());
             if ($instancierType == "guest") {
                 $this->logger->info("The guest".$this->getUser()->getMail()." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             }
@@ -627,37 +627,46 @@ class InstanceController extends Controller
 
         if($name == '') {
             throw new BadRequestHttpException('Name must not be empty.');
+            return $this->json(['error' => 'Name must not be empty.'], 400);
         }
 
         if($type == '') {
             throw new BadRequestHttpException('Instance type must not be empty.');
+            return $this->json(['error' => 'Instance type must not be empty.'], 400);
         }
-        
-        if ($type == "device") {
-            if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
-                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+        try {
+            if ($type == "device") {
+                if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                    throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                    return $this->json(['error' => 'No instance with UUID ' . $uuid . '.'], 404);
+                }
+
+                $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $deviceInstance);
+
+                $instanceManager->exportDevice($deviceInstance, $name);
             }
+            else if ($type == "lab") {
+                if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+                    throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                    return $this->json(['error' => 'No instance with UUID ' . $uuid . '.'], 404);
+                }
 
-            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $deviceInstance);
-
-            $instanceManager->exportDevice($deviceInstance, $name);
-        }
-        else if ($type == "lab") {
-            if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
-                throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
+                $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $labInstance);
+                
+                $instanceManager->exportLab($labInstance, $name);
             }
-
-            $this->denyAccessUnlessGranted(InstanceVoter::EXPORT_INSTANCE, $labInstance);
-
-            $instanceManager->exportLab($labInstance, $name);
+            else {
+                throw new BadRequestHttpException('Instance type must be device or lab.');
+                return $this->json(['error' => 'Instance type must be device or lab.'], 400);
+            }
         }
-        else {
-            throw new BadRequestHttpException('Instance type must be device or lab.');
+        catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
         }
-
-        return $this->json();
+        $this->logger->debug("[InstanceController:exportByUuidAction]::Export instance with UUID ".$uuid." as ".$name." type ".$type. " json:". $this->json());
+        return $this->json(['success' => true]);
     }
-
+    
     
     
 	#[Get('/api/instances/by-uuid/{uuid}', name: 'api_get_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
@@ -981,17 +990,16 @@ class InstanceController extends Controller
         }
 
         if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
-            
             $this->denyAccessUnlessGranted(InstanceVoter::DELETE, $instance);
         }
-        
-        
+
         $lab=$instance->getLab();
+        $this->logger->debug("[InstanceController:deleteRestAction]::Instance ".$instance->getUuid()." of lab ".$lab->getName()." will be delete from API by user ".$this->getUser()->getName()." ".$this->getUser()->getUuid());
         $device=$lab->getDevices();
         
         $from_export=strstr($request->headers->get('referer'),"sandbox");
         
-            $instanceManager->delete($instance);
+        $instanceManager->delete($instance);
             //$this->logger->debug("Delete from export");
             /*$instanceManager->entityManager->remove($lab);
             $instanceManager->entityManager->persist($lab);

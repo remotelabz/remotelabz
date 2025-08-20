@@ -1001,13 +1001,14 @@ $(document).on('click', '.action-nodeinterfaces', function (e) {
 
 // Deatach network lab node
 $(document).on('click', '.action-nodeedit', function (e) {
-    logger(1, 'DEBUG: action = action-nodeedit');
+    //logger(1, 'DEBUG: action = action-nodeedit');
     var disabled  = $(this).hasClass('disabled')
     if(disabled) return;
     var fromNodeList  = $(this).hasClass('control')
     var id = $(this).attr('data-path');
     $.when(getNodes(id)).done(function (values) {
         values['id'] = id;
+        
         printFormNode('edit', values, fromNodeList)
     }).fail(function (message) {
         addModalError(message);
@@ -1018,7 +1019,7 @@ $(document).on('click', '.action-nodeedit', function (e) {
 
 // Print lab nodes
 $(document).on('click', '.action-nodesget', function (e) {
-    logger(1, 'DEBUG: action = nodesget');
+    //logger(1, 'DEBUG: action = nodesget');
     $("#lab-viewport").append("<div id='progress-loader'><label style='float:left'>Generating node list...</label><div class='loader'></div></div>")
     $.when(getNodes(null)).done(function (nodes) {
         printListNodes(nodes);

@@ -166,7 +166,7 @@ class InstanceManager
                     $is_exist_labinstance=null;
                 break;
             default:
-                throw new BadRequestHttpException('Instancier type must be one of "user" or "group".');
+                throw new BadRequestHttpException('[InstanceManager:create]::Instancier type must be one of "user" or "group".');
         }     
 
         if (is_null($is_exist_labinstance)) {
@@ -174,11 +174,11 @@ class InstanceManager
                 $worker = $this->workerManager->getFreeWorker($lab);
 
             if ($worker == null) {
-                $this->logger->error('Could not create instance. No worker available');
-                throw new Exception('No worker available');
+                $this->logger->error('[InstanceManager:create]::Could not create instance. No worker available');
+                throw new Exception('[InstanceManager:create]::No worker available');
             }
             //$this->logger->info("Worker choosen is :".$worker);
-            $this->logger->debug("Worker available from create function in InstanceManager:".$worker);
+            $this->logger->debug("[InstanceManager:create]::Worker available from create function in InstanceManager:".$worker);
             
             $labInstance = LabInstance::create()
                 ->setLab($lab)
@@ -202,7 +202,7 @@ class InstanceManager
                     break;
 
                 default:
-                    throw new Exception('Instancier must be an instance of User or Group.');
+                    throw new Exception('[InstanceManager:create]::Instancier must be an instance of User or Group.');
             }
 
             $network = $this->networkManager->getAvailableSubnet();
@@ -219,9 +219,9 @@ class InstanceManager
         //TODO: test with local env if deploy the front and the worker on the same server
         if (!$this->singleServer) {// One server for the Front and one server for the worker
             if (IPTools::routeExists($network))
-                $this->logger->debug("Route to ".$network." exists, via ".$worker);
+                $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
             else {
-                $this->logger->debug("Route to ".$network." doesn't exist, via ".$worker);
+                $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
                 IPTools::routeAdd($network,$worker);
             }
         }
@@ -246,8 +246,7 @@ class InstanceManager
             );
             return $labInstance;
         } else 
-            return null;
-        
+            return null;   
     }
 
     /**
@@ -267,17 +266,17 @@ class InstanceManager
             $labInstance->setState(InstanceStateMessage::STATE_DELETING);
             $network=$labInstance->getNetwork();
             if (IPTools::routeExists($network)) {
-                $this->logger->debug("Route to ".$network." exists via ".$workerIP);
+                $this->logger->debug("[InstanceManager:delete]::Route to ".$network." exists via ".$workerIP." and will be delete");
                try {
                 //IPTools::routeDelete($network,$workerIP);
                 IPTools::routeDelete($network,null);
                }
                catch (ErrorException $e) {
-                $this->logger->error("ERROR route delete : ".$e->getMessage());
+                $this->logger->error("[InstanceManager:delete]::ERROR route delete : ".$e->getMessage());
                }
             }
             else {
-            $this->logger->debug("Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
+            $this->logger->debug("[InstanceManager:delete]::Route to ".$network." doesn't exist. The gateway must be ".$workerIP);
             }
 
             $this->entityManager->persist($labInstance);
@@ -289,8 +288,8 @@ class InstanceManager
             );
         }
         else {
-            $this->logger->error('Could not delete instance. Worker '.$workerIP.' is suspended.');
-            throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
+            $this->logger->error('[InstanceManager:delete]::Could not delete instance. Worker '.$workerIP.' is suspended.');
+            throw new BadRequestHttpException('[InstanceManager:delete]::Worker '.$workerIP.' is suspended');
         }
         
     }
@@ -303,14 +302,14 @@ class InstanceManager
     public function start(DeviceInstance $deviceInstance)
     {
 
-        $this->logger->info('Device instance state'.$deviceInstance->getState());
+        $this->logger->info('Device instance state '.$deviceInstance->getState());
         
         if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTED ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_RESETTING) {
             $this->logger->info('Device instance '.$deviceInstance->getUuid().' is already running.');
-            throw new BadRequestHttpException('Device already running or started');
+            throw new BadRequestHttpException('[InstanceManager:start]::Device already running or started');
         } else {
             $this->logger->info('Starting device instance '.$deviceInstance->getUuid().'.');
             
@@ -366,7 +365,7 @@ class InstanceManager
                 return $labJson;
             }
             else {
-                $this->logger->error('Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
+                $this->logger->error('[InstanceManager:start]::Could not start device instance '.$uuid.'. Worker '.$workerIP.' is suspended.');
                 throw new BadRequestHttpException('Worker '.$workerIP.' is suspended');
             }
         }
@@ -499,14 +498,14 @@ class InstanceManager
         $worker = $deviceInstance->getLabInstance()->getWorkerIp();
 
         if ($worker == null) {
-            $this->logger->error('Could not export device. No worker available');
+            $this->logger->error('[InstanceManager:exportDevice]::Could not export device. No worker available');
             throw new BadRequestHttpException('No worker available');
         }
         $deviceInstance->setState(InstanceState::EXPORTING);
         $this->entityManager->persist($deviceInstance);
         $this->entityManager->flush();
 
-        $this->logger->debug('Exporting device instance process with UUID ' . $uuid . '.');
+        $this->logger->debug('[InstanceManager:exportDevice]::Exporting device instance process with UUID ' . $uuid . '.');
         
         $device = $deviceInstance->getDevice();
         $hypervisor=$device->getHypervisor();
@@ -517,7 +516,7 @@ class InstanceManager
         $id = uniqid();
         $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
         
-        $this->logger->debug('Export process. Hypervisor is :'.$hypervisor->getName());
+        $this->logger->debug('[InstanceManager:exportDevice]::Export process. Hypervisor is '.$hypervisor->getName());
 
         switch ($hypervisor->getName()) {
             case "qemu":
@@ -526,12 +525,15 @@ class InstanceManager
             default:
                 $imageName=$imageName;
         }
-        $this->logger->debug('Export process. New name will be :'.$imageName);
+        $this->logger->debug('[InstanceManager:exportDevice]::Export process. The exported device name will be '.$imageName);
         
         $newOS = $this->copyOperatingSystem($operatingSystem, $name, $imageName);
-        $newDevice = $this->copyDevice($device, $newOS, $name);
-        $this->entityManager->flush();
+        $this->logger->debug("[InstanceManager:exportDevice]::OS is copied");
+        $newDevice = $this->deviceRepository->find($this->copyDevice($device, $newOS, $name));
         
+        $this->logger->debug("[InstanceManager:exportDevice]::Device ".$newDevice->getName()." is copied");
+        $this->entityManager->flush();
+        $this->logger->debug("[InstanceManager:exportDevice]::Flush done");
         $context = SerializationContext::create()->setGroups('api_get_lab_instance');
         $labJson = $this->serializer->serialize($deviceInstance->getLabInstance(), 'json', $context);
         //$this->logger->debug('Param of device instance '.$uuid, json_decode($labJson, true));
@@ -550,7 +552,6 @@ class InstanceManager
             ]
         );
         return $newDevice;
-       
     }
 
     // Copy OS on all other workers
@@ -569,7 +570,7 @@ class InstanceManager
                 $tmp['os_imagename'] = $imageName;
                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                 // the case of qemu image with link.
-                $this->logger->debug("OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                $this->logger->debug("[InstanceManager:Sync2OS]::OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
                 $this->bus->dispatch(
                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                         new AmqpStamp($workerIP, AMQP_NOPARAM, [])
@@ -591,7 +592,6 @@ class InstanceManager
 
         $lab = $this->copyLab($labInstance->getLab(), $name);
 
-
         $worker = $this->workerManager->getFreeWorker($lab);
         if ($worker == null) {
             $this->logger->error('Could not export lab. No worker available');
@@ -611,11 +611,11 @@ class InstanceManager
             foreach($labInstance->getDeviceInstances() as $deviceInstance) {               
                 $device = $deviceInstance->getDevice();
 
-                $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
-                //$id = uniqid();
-                $new_name .= '_' . $now->format('YmdHis');
-
                 if ($device->getHypervisor()->getName() != "natif" && $device->getOperatingSystem()->getName() != "Service") {
+                    $new_name = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $device->getName()."_".$name);
+                    //$id = uniqid();
+                    //$new_name .= '_' . $now->format('YmdHis');
+
                     $this->stop($deviceInstance);                   
                     $newDevice=$this->exportDevice($deviceInstance, $new_name);                  
 
@@ -688,9 +688,9 @@ class InstanceManager
                     */
                 } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") { 
                     // Switch interne or DHCP server
-                    $this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
+                    //$this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
                     //$newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $new_name, $new_name);
-                    $newDevice = $this->copyDevice($device, $device->getOperatingSystem(), $new_name);
+                    $newDevice = $this->deviceRepository->find($this->copyDevice($device, $device->getOperatingSystem(), $new_name));
 
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
@@ -837,52 +837,72 @@ class InstanceManager
         return $newLab;
     }
 
-    public function copyDevice(Device $device, OperatingSystem $os, string $name): Device
+     // This function copies a device and sets it as a template.
+    // It also copies the network interfaces and their settings.
+    // The name of the new device is set to the provided name.
+    //@Return the id of the new Device created
+    public function copyDevice(Device $device,OperatingSystem $os, string $name): int
     {
+        $entityManager = $this->entityManager;
+
         $newDevice = new Device();
         $newDevice->setName($name);
         $newDevice->setBrand($device->getBrand());
         $newDevice->setModel($device->getModel());
         $newDevice->setFlavor($device->getFlavor());
         $newDevice->setType($device->getType());
-        $newDevice->setNbCpu($device->getNbCpu());
         $newDevice->setHypervisor($device->getHypervisor());
         $newDevice->setOperatingSystem($os);
-        $newDevice->setIsTemplate(true);
-        $newDevice->setNetworkInterfaceTemplate($device->getNetworkInterfaceTemplate());
-        if($device->getIcon() != NULL) {
-            $newDevice->setIcon($device->getIcon());
-        }
+        $newDevice->setNbCpu($device->getNbCpu());
         $newDevice->setNbSocket($device->getNbSocket());
         $newDevice->setNbCore($device->getNbCore());
         $newDevice->setNbThread($device->getNbThread());
-        $newDevice->setAuthor($this->tokenStorage->getToken()->getUser());
-        $newDevice->setVirtuality($device->getVirtuality());
+        $newDevice->setIsTemplate(true);
 
-        //$newCoordinate=new EditorData();
-        //$newDevice->setEditorData($newCoordinate);
-        //$this->entityManager->persist($newCoordinate);
-
-        //$i=0;
+        $i=0;
         foreach ($device->getNetworkInterfaces() as $network_int) {
             $new_network_inter=new NetworkInterface();
-            $new_setting=new NetworkSettings();
-            $new_setting=clone $network_int->getSettings();
-            
-            $new_network_inter->setSettings($new_setting);
-            $new_network_inter->setName($network_int->getName());
-            $new_network_inter->setVlan($network_int->getVlan());
-            $new_network_inter->setConnection($network_int->getConnection());
-            $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
-            $new_network_inter->setConnectorType($network_int->getConnectorType());
-            //$i=$i+1;
+            $this->copyNetworkInterface($network_int, $new_network_inter);
+            $entityManager->persist($new_network_inter);
+            $new_network_inter->setDevice($newDevice);
             $new_network_inter->setIsTemplate(true);
-            $newDevice->addNetworkInterface($new_network_inter);
         }
+
         foreach ($device->getControlProtocolTypes() as $control_protocol) {
             $newDevice->addControlProtocolType($control_protocol);
         }
-        $this->entityManager->persist($newDevice);
-        return $newDevice;
+        $entityManager->persist($newDevice);
+        $entityManager->flush();
+        return $newDevice->getId();
+    }
+
+    public function copyNetworkInterface(NetworkInterface $Net_int_src, NetworkInterface $Net_int_dst) {
+        $entityManager = $this->entityManager;
+        $Net_int_dst->setType($Net_int_src->getType());
+        $Net_int_dst->setName($Net_int_src->getName());
+        $Net_int_dst->setSettings($Net_int_src->getSettings());
+        $Net_int_dst->setVlan($Net_int_src->getVlan());
+        $Net_int_dst->setConnection($Net_int_src->getConnection());
+        $Net_int_dst->setConnectorType($Net_int_src->getConnectorType());
+        $Net_int_dst->setConnectorLabel($Net_int_src->getConnectorLabel());
+        $Net_int_dst->setIsTemplate($Net_int_src->getIsTemplate());
+        $new_setting=new NetworkSettings();
+        $this->copyNetworkSetting($Net_int_src->getSettings(), $new_setting);
+        $Net_int_dst->setSettings($new_setting);
+        $entityManager->persist($Net_int_dst);
+        $entityManager->persist($new_setting);
+        $entityManager->flush();
+        $this->logger->debug("[LabController:copyNetworkInterface]::Network interface settings copied from ".$Net_int_src->getName()." to ".$Net_int_dst->getName());
+    }
+
+    public function copyNetworkSetting(NetworkSettings $Net_src, NetworkSettings $Net_dst) {
+        $entityManager = $this->entityManager;
+        $Net_dst->setName($Net_src->getName());
+        $Net_dst->setIp($Net_src->getIp());
+        $Net_dst->setIpv6($Net_src->getIpv6());
+        $Net_dst->setGateway($Net_src->getGateway());
+        $Net_dst->setProtocol($Net_src->getProtocol());
+        $Net_dst->setPort($Net_src->getPort());
+        $this->logger->debug("[LabController:copyNetworkSetting]::Network settings copied from ".$Net_src->getName()." to ".$Net_dst->getName());
     }
 }

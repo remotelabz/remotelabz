@@ -459,7 +459,7 @@ export function getNodes(node_id) {
         data: JSON.stringify(node_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
+                //logger(1, 'DEBUG: got node(s) from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -564,19 +564,19 @@ export function getTopology() {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got topology from lab "' + lab_filename + '".');
+//                logger(1, 'DEBUG: got topology from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
@@ -587,7 +587,7 @@ export function getTopology() {
 function getTemplates(template) {
     var deferred = $.Deferred();
     var templateData;
-    var url = (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
+    var url =  (template == null) ? '/api/list/templates' : '/api/list/templates/' + template;
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -598,19 +598,19 @@ function getTemplates(template) {
         data: JSON.stringify({'virtuality': VIRTUALITY}),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got template(s).');
+                //logger(1, 'DEBUG: got template(s).');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },
         error: function (data) {
             // Server error
             var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
+            //logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
+            //logger(1, 'DEBUG: ' + message);
             deferred.reject(message);
         }
     });
@@ -1355,7 +1355,9 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (2,'action = ' + action)
+    //logger (2,'action2 = ' + action);
+    console.log('functions.js printFormNode values = ',values);
+    //logger (2,'fromNodeList2 = ' + fromNodeList);
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
@@ -1366,6 +1368,7 @@ export function printFormNode(action, values, fromNodeList) {
     var template_disabled = (values == null || values['template'] == null ) ? '' : 'disabled ';
 
     $.when(getTemplates(null)).done(function (templates) {
+        //TODO : template sauvegardé dans la base ne correspond pas au template sauvegardé dans /config/templates
         var html = '';
         html += '<form id="form-node-' + action + '" >'+
                     '<div class="form-group col-sm-12">'+
@@ -1373,13 +1376,12 @@ export function printFormNode(action, values, fromNodeList) {
                             '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">'+
                                 '<option value="">' + MESSAGES[102] + '</option>';
         $.each(templates, function (key, value) {
-        var valdisabled  = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
-        //var valdisabled  = '' ;
-            // Adding all templates
+            console.log("ID:", key, "Nom:", value);
+            var valdisabled  = (/missing/i.test(value)) ? 'disabled="disabled"' : '';        
             if (! /hided/i.test(value) ) html += '<option value="' + key + '" '+ valdisabled +' >' + value.replace('.missing','') + '</option>';
         });
         html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
-
+        
         // Show the form
         addModal(title, html, '', 'second-win');
         $('.selectpicker').selectpicker();
@@ -1399,6 +1401,8 @@ export function printFormNode(action, values, fromNodeList) {
                 // Getting template only if a valid option is selected (to avoid requests during typewriting)
                 $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
                     // TODO: this event is called twice
+                    console.log("templates_values:",template_values);
+                    console.log("node_values",node_values);
                     id = (id == null) ? '' : id;
                     var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
                     if (action == 'add') {
@@ -1501,12 +1505,13 @@ export function printFormNode(action, values, fromNodeList) {
                                             '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_'+ key  +'" onClick="javascript:document.getElementById(\'link_'+key+'\').style.visibility=\'visible\'""/>'+
                                          '</div>';
                             if ( key  == 'qemu_options' ) {
-			         html_data += '<div class="form-group'+ widthClass+'">'+
+			                html_data += '<div class="form-group'+ widthClass+'">'+
                                             '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value']  + '" type="text" disabled/>'+
                                          '</div>';
                             }
                         }
-                    });
+                    }
+                );
                     html_data += '<div class="form-group col-sm-6">'+
                                     '<label class=" control-label">' + MESSAGES[93] + '</label>'+
                                     '<input class="form-control" name="node[left]" value="' + left + '" type="text"/>'+
@@ -1543,7 +1548,8 @@ export function printFormNode(action, values, fromNodeList) {
         if (action == 'edit') {
             // If editing a node, disable the select and trigger
             $('#form-node-template').val(template).change();
-            $('#form-node-template').prop('disabled', 'disabled');
+            console.log("template: " + template);
+            //$('#form-node-template').prop('disabled', 'disabled');
             //$('#form-node-template').val(template).change();
         }
 
@@ -2515,7 +2521,7 @@ function printPageLabOpen(lab) {
         if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
               $('#lab-sidebar ul').append('<li class="action-labobjectadd-li"><a class="action-labobjectadd" href="javascript:void(0)" title="' + MESSAGES[56] + '"><i class="glyphicon glyphicon-plus"></i></a></li>');
          }
-         $('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
+         //$('#lab-sidebar ul').append('<li class="action-nodesget-li"><a class="action-nodesget" href="javascript:void(0)" title="' + MESSAGES[62] + '"><i class="glyphicon glyphicon-hdd"></i></a></li>');
          //$('#lab-sidebar ul').append('<li><a class="action-configsget"  href="javascript:void(0)" title="' + MESSAGES[58] + '"><i class="glyphicon glyphicon-align-left"></i></a></li>');
          if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && LOCK == 0 ) {
          $('#lab-sidebar ul').append('<li><a class="action-textobjectsget" href="javascript:void(0)" title="' + MESSAGES[150] + '"><i class="glyphicon glyphicon-text-background"></i></a></li>');

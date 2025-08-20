@@ -182,7 +182,7 @@ axios.interceptors.response.use(
                 break;
             case 404:
             default:
-                console.error(error);
+                console.error(error.message);
         }
         return Promise.reject(error);
     }
@@ -532,8 +532,32 @@ export class RemotelabzAPI {
 
         delete(id) {
             return axios.delete(`/labs/${id}`);
-        }
+        },
         
+        /**
+         * 
+         * Create a new lab from copy device in the lab ID
+         * 
+         * Implements POST `/api/labs/{id<\d+>}`
+         * @param {int} id
+         * @param {string} name
+         * @returns id of new lab
+         */
+        async createcopyLab(id, name) {
+            let response;
+            try {
+                response = await axios.post(`/labs/${id}/createcopy/`, { name });
+                //console.log("status response",response.status);
+                
+            } catch (error) {
+                console.error("Error create lab sandbox:",error.message);
+                return {
+                    status: error.response?.status || 500,
+                    error: error.message
+                }
+            }
+            return response;
+        }
     }
 
     /**

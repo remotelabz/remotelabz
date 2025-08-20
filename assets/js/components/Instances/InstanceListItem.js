@@ -1,4 +1,5 @@
-import Noty from 'noty';
+//import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
@@ -22,7 +23,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
     
-    console.log("Nombre total d'instances :", allInstance?.length);
+    //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         fetchLogs()
         //Collect log every 30 seconds
@@ -43,10 +44,14 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             if (error.response.status === 404) {
                 setLogs([]);
             } else {
-                new Noty({
+                /*new Noty({
                     text: 'An error happened while fetching instance logs. If this error persist, please contact an administrator.',
                     type: 'error'
-                }).show();
+                }).show();*/
+                 
+                toast.error('An error happened while fetching instance logs. If this error persist, please contact an administrator.', {
+                });
+
                 setDevice(null)
             }
         });
@@ -56,34 +61,43 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         setComputing(true)
 
         Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Instance start requested.',
                 timeout: 10000
-            }).show();
+            }).show();*/
+            toast.success('Instance start requested.', {
+            });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error',
                     timeout: 5000
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000,
+                });
             } else if (error.response.data.message.includes("Device")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error',
                     timeout: 5000
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 5000,
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
-//                    text: error.response.data.message,
                     text: 'Error while requesting instance start. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error("Error while requesting instance start. Please try again later.", {                    
+                });
             }
             setComputing(false)
         })
@@ -96,26 +110,34 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
 
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Instance stop requested.',
                 timeout: 10000
-            }).show();
+            }).show();*/
+            toast.success("Instance stop requested.", {
+                });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+            });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance stop. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error('Error while requesting instance stop. Please try again later.', {
+                    autoClose: 10000
+                });
             }
             setComputing(false)
         })
@@ -126,26 +148,33 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         setComputing(true);
 
         Remotelabz.instances.device.reset(deviceInstance.uuid).then(() => {
-            new Noty({
+            /*new Noty({
                 type: 'success',
                 text: 'Device reset requested.',
                 timeout: 5000
-            }).show();
-
+            }).show();*/
+            toast.success('Device reset requested.', {
+            });
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance reset. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                toast.error('Error while requesting instance reset. Please try again later.', {
+                    autoClose: 10000
+                });
             }
             setComputing(false)
         })
@@ -158,27 +187,36 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     function exportDeviceTemplate(deviceInstance, name) {
         setExporting(true)
         
-        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then(() => {
-            new Noty({
+        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then((response) => {
+            /*new Noty({
                 type: 'success',
                 text: 'Instance export requested.',
                 timeout: 5000
-            }).show();
+            }).show();*/
+            //console.log("response export device:", response);
+            toast.success('Instance export requested.', {
+                });
 
             onStateUpdate();
         }).catch((error) => {
             if (error.response.data.message.includes("No worker available")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000
+                });
             }
             else {
-                new Noty({
+                /*new Noty({
                     type: 'error',
                     text: 'Error while requesting instance export. Please try again later.',
                     timeout: 5000
-                }).show();
+                }).show();*/
+                 toast.error('Error while requesting instance export. Please try again later.', {
+                    autoClose: 10000
+                });
             }
 
             setExporting(false)
@@ -232,9 +270,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
     
     let controls;
-    console.log('instance',instance);
-    console.log('user',user);
-    console.log('lab',lab);
+    /*console.log('[InstanceListItem]::instance',instance);
+    console.log('[InstanceListItem]::user',user);
+    console.log('[InstanceListItem]::lab',lab);*/
 
     switch (instance.state) {
         case 'error':
@@ -247,7 +285,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
                 <SVG name="play" />
             </Button>);
-		console.log("test stopped");
+		//console.log("test stopped");
             break;
 
         case 'reset':
@@ -298,9 +336,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             
             break;
     }
-console.log("test 2");
+//console.log("test 2");
     return (
-        <><ListGroupItem>
+        <>
+         <ListGroupItem>
             {isLoading ?
                 <div className="d-flex align-items-center">
                     <div className="m-3">
@@ -327,18 +366,14 @@ console.log("test 2");
                             {instance.uuid}
                         </div>
                     </div>
-{console.log("test3")}
-{console.log("is sandbox", isSandbox)}
-{console.log("device length", instance.length)}
-{console.log("labdevicelength", labDeviceLength)}
+
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox) &&
+                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox && instance.device.name !== "DHCP_service") &&
                             <div onClick={() => setShowExport(!showExport)}>
-                                {showExport ?
-                                    <Button variant="default"><SVG name="chevron-down"></SVG> Export</Button>
-                                    :
-                                    <Button variant="default"><SVG name="chevron-right"></SVG> Export</Button>
-                                }
+                                <Button variant="default">
+                                    <SVG name={showExport ? "chevron-down" : "chevron-right"} />
+                                        Export device
+                                </Button>
                             </div>
                         }
                         {instance.state !== 'stopped' && 
@@ -350,7 +385,7 @@ console.log("test 2");
                                 }
                             </div>
                         }
-                        
+
                         { 
                         (instance.ownedBy != 'group' 
                         && (instance.state === 'stopped' || instance.state === 'error') 
@@ -489,6 +524,5 @@ console.log("test 2");
         </>
     )
 }
-
 
 export default InstanceListItem;

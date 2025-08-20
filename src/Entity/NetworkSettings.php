@@ -88,31 +88,7 @@ class NetworkSettings
         $this->ipv6 = $ipv6;
 
         return $this;
-    }
-
-    public function getPrefix4(): ?int
-    {
-        return $this->prefix4;
-    }
-
-    public function setPrefix4(?int $prefix4): self
-    {
-        $this->prefix4 = $prefix4;
-
-        return $this;
-    }
-
-    public function getPrefix6(): ?int
-    {
-        return $this->prefix6;
-    }
-
-    public function setPrefix6(?int $prefix6): self
-    {
-        $this->prefix6 = $prefix6;
-
-        return $this;
-    }
+    }    
 
     public function getGateway(): ?string
     {

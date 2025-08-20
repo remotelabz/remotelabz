@@ -16,6 +16,7 @@ use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class DeviceSandboxController extends Controller
@@ -112,7 +113,7 @@ class DeviceSandboxController extends Controller
             'isSandbox' => true,
             "hasBooking" => false
         ];
-        //$this->logger->debug("instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
+        $this->logger->debug("[DeviceSandboxController:viewAction]::instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
         preg_match("/^Sandbox_(Lab).*$/",$lab->getName(),$result);
         //$this->logger->debug("Sandbox lab: ",$result);

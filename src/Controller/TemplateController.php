@@ -98,6 +98,7 @@ class TemplateController extends Controller
     {
 
         $data = json_decode($request->getContent(), true);
+        $this->logger->debug("[TemplateController:indexAction]::request data :",$data);
 
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
@@ -113,6 +114,7 @@ class TemplateController extends Controller
                 if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
                         $cur_name = preg_replace('/.yaml/','',$element ) ;
                         $cur_templ = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$element));
+                        $this->logger->debug("[TemplateController:indexAction]::template file :",$cur_templ);
                         if (isset($cur_templ["virtuality"]) && $cur_templ['virtuality'] == $data["virtuality"]){
                             if ( isset($cur_templ['description']) ) {
                                 $node_templates[$cur_name] =  $cur_templ['description'] ;
@@ -120,6 +122,7 @@ class TemplateController extends Controller
                             if ( isset($cur_templ['config_script']) ) {
                                     $node_config[$cur_name] =  $cur_templ['config_script'] ;
                             }
+                            $this->logger->debug("[TemplateController:indexAction]:: Template in the yaml file :".$cur_templ['description']);
                         }
                         
                 }
@@ -137,6 +140,8 @@ class TemplateController extends Controller
             'message' => 'Successfully listed node templates (60003).',
             'data' => $node_templates]));
         $response->headers->set('Content-Type', 'application/json');
+        $this->logger->debug("[TemplateController:indexAction]:: Response json :".$response);
+
         return $response;
     }
 
@@ -150,7 +155,7 @@ class TemplateController extends Controller
         $data = json_decode($request->getContent(), true);
         $response = new Response();
         $response->headers->set('Content-Type', 'application/json');
-        $this->logger->debug("Device id request : ".$id);
+        $this->logger->debug("[TemplateController:showAction]::Device id request : ".$id);
 
         $device = $this->deviceRepository->find($id);
 
@@ -161,10 +166,12 @@ class TemplateController extends Controller
         $deviceName = u($device->getName())->camel();
  
         if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
+        //if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$deviceName.'.yaml')) {
             $this->newAction($device);
          }
         $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
-        $p['template'] = $deviceName;
+        //$p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$deviceName.'.yaml'));
+        $p['template'] = $id."-".$deviceName;
 
         if (!isset($p['context']) || !isset($p['template'])) {
 
@@ -405,6 +412,9 @@ class TemplateController extends Controller
 
     $yamlContent = Yaml::dump($templateData,2);
 
+    //Modify this line to delete the id in the beginning of the file name.
+    // TODO : try to know if the id is needed in the file name
     file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
+    //file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".u($template->getName())->camel() . ".yaml", $yamlContent);
     }
 }

@@ -20,7 +20,7 @@ class Lab implements InstanciableInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_get_device', 'api_get_lab_instance', 'api_groups', 'api_get_group', 'api_addlab', 'sandbox', 'api_get_lab_template', 'api_get_booking'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'api_get_device', 'api_get_lab_instance', 'api_groups', 'api_get_group', 'api_addlab', 'sandbox', 'api_get_booking'])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 255)]
@@ -59,6 +59,7 @@ class Lab implements InstanciableInterface
     #[ORM\JoinColumn(name: 'lab_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(name: 'device_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\ManyToMany(targetEntity: 'App\Entity\Device', inversedBy: 'labs', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_lab_template', 'export_lab'])]
     private $devices;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]
@@ -70,7 +71,7 @@ class Lab implements InstanciableInterface
     private string $uuid;
 
      #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_lab', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_booking'])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_booking','sandbox'])]
     private int $virtuality;
 
     #[ORM\Column(type: 'datetime')]

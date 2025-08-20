@@ -1,4 +1,6 @@
-import Noty from 'noty';
+//import Noty from 'noty';
+// To replace Noty
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import InstanceList from './InstanceList';
@@ -70,11 +72,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 try {
                     Remotelabz.instances.device.stop(deviceInstance.uuid);
                 } catch (error) {
-                    console.error(error);
-                    new Noty({
+                    console.error("An error happened while stopping a device. Please try again later.");
+                    /*new Noty({
                         text: 'An error happened while stopping a device. Please try again later.',
                         type: 'error'
-                    }).show();
+                    }).show();*/
+                    toast.error('An error happened while stopping a device. Please try again later.', {
+                        autoClose: 10000
+                    });
                 }
             }
         }
@@ -102,10 +107,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     setLabInstance(null);
                     setLoadingInstanceState(false);
                 } else {
-                    new Noty({
+                    /*new Noty({
                         text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
                         type: 'error'
-                    }).show();
+                    }).show();*/
+                    toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
+                        autoClose: 10000
+                    });
                 }
             }
         });
@@ -157,16 +165,25 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             if (error.response?.data?.message.includes("No worker available")) {
-                new Noty({
+                console.error("No worker available - Please contact an administrator");
+                /*new Noty({
                     text: 'No worker available - Please contact an administrator',
                     type: 'error',
                     timeout: 10000
-                }).show();
+                }).show();*/
+                toast.error('No worker available - Please contact an administrator', {
+                    autoClose: 10000
+                });
+
             } else {
-                new Noty({
+                console.error("There was an error creating an instance. Please try again later.");
+                /*new Noty({
                     text: 'There was an error creating an instance. Please try again later.',
                     type: 'error'
-                }).show();
+                }).show();*/
+                toast.error('There was an error creating an instance. Please try again later.', {
+                    autoClose: 10000
+                });
             }
             setLoadingInstanceState(false);
         }
@@ -195,10 +212,13 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             console.error(error);
-            new Noty({
+            /*new Noty({
                 text: error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.',
                 type: 'error'
-            }).show();
+            }).show();*/
+            toast.error(error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.', {
+                autoClose:10000
+            });
             setLoadingInstanceState(false);
         }
     }
@@ -213,12 +233,20 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
 
 useEffect(() => {
     if (labInstance?.deviceInstances) {
-        console.log("Instances depuis InstanceManager :", labInstance.deviceInstances);
+        //console.log("Instances depuis InstanceManager :", labInstance.deviceInstances);
     }
 }, [labInstance]);
 
 
     return (<>
+    <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">
                 <div>View as : </div>
@@ -262,11 +290,11 @@ useEffect(() => {
                         />
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
+                        (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && (viewAs.type === "user" || viewAs.type === "group") &&
                         <Button variant="danger" className="ml-2" href={`/labs/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {
-                        (!props.lab.name.startsWith('Sandbox_')) && labInstance.state === "created" && viewAs.type === "guest" &&
+                        (!props.lab.name.startsWith('Sandbox_Device')) && labInstance.state === "created" && viewAs.type === "guest" &&
                         <Button variant="danger" className="ml-2" href={`/labs/guest/${props.lab.id}/see/${labInstance.id}`}>See Lab</Button>
                     }
                     {isCurrentUserGroupAdmin(viewAs) &&
@@ -318,9 +346,18 @@ useEffect(() => {
                     :
                     
                     <ListGroupItem className="d-flex align-items-center justify-content-center flex-column">
+                    {//console.log(props.lab)
+                    }
                         {props.lab.virtuality == 1 || (props.lab.virtuality == 0 && props.hasBooking.uuid == viewAs.uuid && props.hasBooking.type == viewAs.type)?
-                        
-                            (viewAs.type === 'user' || viewAs.type === 'guest' ?
+
+                            (
+                                isSandbox?
+                                (
+                                    window.location.href = '/admin/sandbox'
+                                ) :
+                                (
+                                
+                                viewAs.type === 'user' || viewAs.type === 'guest' ?
                                 <div className="d-flex align-items-center justify-content-center flex-column">
                                     You haven&apos;t joined this lab yet.
 
@@ -338,11 +375,14 @@ useEffect(() => {
                                         </div>
                                     }
                                 </div>
+                                )
                             )
                         : 
+                            (
                             <div className="d-flex align-items-center justify-content-center flex-column">
                                 You can&apos;t join this lab yet.
                             </div>
+                            )
                         }
                     </ListGroupItem>
                 }
@@ -362,5 +402,5 @@ useEffect(() => {
         </Modal>
     </>)
 }
-console.log("test de InstanceManager");
+//console.log("test de InstanceManager");
 export default InstanceManager;

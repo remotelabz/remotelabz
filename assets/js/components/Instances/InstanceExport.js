@@ -18,13 +18,13 @@ class InstanceExport extends Component {
         return(
             <div className="d-flex align-items-center justify-content-center">
                 <label>
-                    New Name
-                </label> 
-                <input type="text" ref={this.exportName}/> 
+                    New Name&nbsp;&nbsp;
+                </label>
+                <input type="text" ref={this.exportName}/>&nbsp;&nbsp; 
                 <Button 
                     variant="primary" 
                     onClick={() => this.handleSubmit()}
-                > 
+                >
                 {this.props.type == "device" && "Export Device"}
                 {this.props.type == "lab" && "Export Lab"}
                 </Button>
