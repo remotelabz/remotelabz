@@ -48,15 +48,16 @@ class DeviceType extends AbstractType
                         return $operaringSystemRepository->createQueryBuilder('o')
                         ->join('o.hypervisor', 'h')
                         ->where('h.name = :name')
-                        ->setParameter('name', 'physical');
+                        ->setParameter('name', 'physical')
+                        ->orderBy('o.name', 'ASC');
                     }
                     else {
                         return $operaringSystemRepository->createQueryBuilder('o')
                         ->join('o.hypervisor', 'h')
                         ->where('h.name != :name')
-                        ->setParameter('name', 'physical');
-                    }
-                    
+                        ->setParameter('name', 'physical')
+                        ->orderBy('o.name', 'ASC');
+                    }                 
                 },
                 'choice_label' => 'name',
                 'help' => 'Image disk used for this device.'
