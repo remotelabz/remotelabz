@@ -142,17 +142,17 @@ class Installer
         echo "🎶 Downloading Composer packages... ";
         if ($this->configureComposer()) {
             $this->logger->debug("Finished downloading Composer packages");
-            echo "OK ✔️\n";
+            echo "Composer install OK ✔️\n";
         } else {
             throw new Exception("There was an error downloading composer packages.");
         }
 
         $this->logger->debug("Installing Yarn packages");
-        echo "📦 Downloading Yarn packages... ";
+        echo "📦 Downloading Yarn packages... \n";
         try {
             $this->configureYarn();
             $this->logger->debug("Finished downloading Yarn packages");
-            echo "OK ✔️\n";
+            echo "Downloading Yarn packages OK ✔️\n";
         } catch (Exception $e) {
             throw new Exception("There was an error downloading Yarn packages.");
         }
