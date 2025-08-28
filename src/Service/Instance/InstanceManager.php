@@ -634,11 +634,11 @@ class InstanceManager
                     $this->entityManager->persist($lab);
                     $this->entityManager->flush();
 
-                } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") { 
+                } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") {
                     // Switch interne or DHCP server
                     //$this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
                     //$newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $new_name, $new_name);
-                    $newDevice = $this->deviceRepository->find($this->copyDevice($device, $device->getOperatingSystem(), $new_name));
+                    $newDevice = $this->deviceRepository->find($this->copyDevice($device, $device->getOperatingSystem(), $device->getName()."_".$name));
 
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
