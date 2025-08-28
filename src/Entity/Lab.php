@@ -59,6 +59,7 @@ class Lab implements InstanciableInterface
     #[ORM\JoinColumn(name: 'lab_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(name: 'device_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\ManyToMany(targetEntity: 'App\Entity\Device', inversedBy: 'labs', cascade: ['persist'])]
+    #[Serializer\Groups(['api_get_lab', 'export_lab'])]
     private $devices;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]

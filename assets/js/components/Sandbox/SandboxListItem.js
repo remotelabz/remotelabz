@@ -69,7 +69,7 @@ class SandboxListItem extends Component {
 
         if (this.props.itemType === "lab") {
             Remotelabz.labs.copyBanner(this.props.item.id, lab.id).then((response)=>{
-		console.log("Banner copied", response);
+		//console.log("Banner copied", response);
             })
             for(var textobject of item.textobjects){
                 var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
