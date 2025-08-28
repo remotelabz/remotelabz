@@ -85,19 +85,20 @@ class SandboxListItem extends Component {
             }
         }
         // Add device to lab
+        console.log("props",this.props)
         if(this.props.itemType === "device") {
             item.flavor = item.flavor.id;
             item.operatingSystem = item.operatingSystem.id;
             item.hypervisor = item.hypervisor.id;
             item.isTemplate = false;
             item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-            item.networkInterfaces.forEach(element => console.log(element.id));
+            //item.networkInterfaces.forEach(element => console.log(element.id));
             item.networkInterfaces = networkInterfaces;
             item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-            item.controlProtocolTypes.forEach(element => console.log(element.id));
+            //item.controlProtocolTypes.forEach(element => console.log(element.id));
             item.controlProtocolTypes = controlProtocolTypes;
-            console.log("OnModify")
-            console.log(device);
+            //console.log("OnModify")
+            //console.log(device);
             await this.api.post('/api/labs/' + lab.id + '/devices', item);
         }
         else if (this.props.itemType === "lab") {
@@ -107,10 +108,10 @@ class SandboxListItem extends Component {
                 device.hypervisor = device.hypervisor.id;
                 device.isTemplate = false;
                 device.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-                device.networkInterfaces.forEach(element => console.log(element.id));
+                //device.networkInterfaces.forEach(element => console.log(element.id));
                 device.networkInterfaces = networkInterfaces;
                 device.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-                device.controlProtocolTypes.forEach(element => console.log(element.id));
+                //device.controlProtocolTypes.forEach(element => console.log(element.id));
                 device.controlProtocolTypes = controlProtocolTypes;
                 await this.api.post('/api/labs/' + lab.id + '/devices', device);
             }

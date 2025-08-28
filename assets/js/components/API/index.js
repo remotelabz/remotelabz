@@ -180,6 +180,8 @@ axios.interceptors.response.use(
             case 401:
                 window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
                 break;
+            case 403:
+                window.location.href = '/login?ref_url=' + encodeURIComponent(window.location.href);
             case 404:
             default:
                 console.error(error);
