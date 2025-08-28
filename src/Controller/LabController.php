@@ -583,7 +583,7 @@ class LabController extends Controller
 
     
 	#[Post('/api/labs', name: 'api_new_lab')]
-	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR') or is_granted('ROLE_SUPER_ADMINISTRATOR')", message: "Access denied.")]
     #[Route(path: '/labs/new', name: 'new_lab')]
     #[Route(path: '/labsSandbox/new', name: 'new_lab_template')]
     #[Route(path: '/labsPhysical/new', name: 'new_physical_lab')]

@@ -308,8 +308,8 @@ class InstanceManager
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTED ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_RESETTING) {
-            $this->logger->info('Device instance '.$deviceInstance->getUuid().' is already running.');
-            throw new BadRequestHttpException('[InstanceManager:start]::Device already running or started');
+            $this->logger->error('Device instance '.$deviceInstance->getUuid().' is already running.');
+            //throw new BadRequestHttpException('[InstanceManager:start]::Device already running or started');
         } else {
             $this->logger->info('Starting device instance '.$deviceInstance->getUuid().'.');
             
@@ -626,42 +626,7 @@ class InstanceManager
                     if($device->getIcon() != NULL) {
                         $newDevice->setIcon($device->getIcon()); 
                     }
-                    /*foreach ($device->getNetworkInterfaces() as $network_int) {
-                        $new_network_inter=new NetworkInterface();
-                        $new_setting=new NetworkSettings();
-                        $new_setting=clone $network_int->getSettings();
-
-                        $new_network_inter->setSettings($new_setting);
-                        $new_network_inter->setName($network_int->getName());
-                        $new_network_inter->setVlan($network_int->getVlan());
-                        $new_network_inter->setConnection($network_int->getConnection());
-                        $new_network_inter->setConnectorLabel($network_int->getConnectorLabel());
-                        $new_network_inter->setConnectorType($network_int->getConnectorType());
-                        //$i=$i+1;
-                        $new_network_inter->setIsTemplate(true);
-                        $newDevice->addNetworkInterface($new_network_inter);
-                    }*/
-
-                    /* $osName = $device->getOperatingSystem()->getName()."_".$name;
-                    $deviceName = $device->getName()."_".$name;
-                    $deviceInstanceUuid = $deviceInstance->getUuid();
-                    $imageName = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $osName);
-                    $id = uniqid();
-                    $imageName .= '_' . $now->format('YmdHis') . '_' . substr($id, strlen($id) -3, strlen($id) -1);
-
-                    $this->logger->debug('Export process. New operatingSystem name will be :'.$imageName);
-
-                    $newOS = $this->copyOperatingSystem($device->getOperatingSystem(), $osName, $imageName);
-                    $newDevice = $this->copyDevice($device, $newOS, $deviceName);
-                    if ($device->getTemplate() !== null) {
-                        $newDevice->setTemplate($device->getTemplate());
-                    }
-                    $this->entityManager->persist($newOS);
-                    */
-
-                    //$newEditorData = new EditorData();
-                    //$newDevice->setEditorData($device->getEditorData());
-                    //$this->logger->debug('Export process. '.$new_name." Coordinates X,Y:".$device->getEditorData()->getX().",".$device->getEditorData()->getY());                    
+                    
                     $this->entityManager->persist($newDevice);
 
                     $lab->addDevice($newDevice);
@@ -669,23 +634,6 @@ class InstanceManager
                     $this->entityManager->persist($lab);
                     $this->entityManager->flush();
 
-                    /*
-                    $context = SerializationContext::create()->setGroups('api_get_lab_instance');
-                    $labJson = $this->serializer->serialize($labInstance, 'json', $context);
-                    //$this->logger->debug('Param of device instance '.$deviceInstanceUuid, json_decode($labJson, true));
-
-                    $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
-                    for($i = 0; $i < count($tmp['deviceInstances']); $i++) {
-                        if ($tmp['deviceInstances'][$i]['uuid'] == $deviceInstanceUuid) {
-                            $tmp['deviceInstances'][$i]['new_os_name'] = $deviceName;
-                            $tmp['deviceInstances'][$i]['new_os_imagename'] = $imageName;
-                            $tmp['deviceInstances'][$i]['newOS_id'] = $newOS->getId();
-                            $tmp['deviceInstances'][$i]['newDevice_id'] = $newDevice->getId();
-                        }
-                    }
-
-                    $labJson = json_encode($tmp, 0, 4096);
-                    */
                 } elseif ($device->getHypervisor()->getName() == "natif" || $device->getOperatingSystem()->getName() == "Service") { 
                     // Switch interne or DHCP server
                     //$this->logger->debug("Copying \"system\" device instance with UUID " . $deviceInstance->getUuid() . " and name ".$deviceInstance->getDevice()->getName().".");
