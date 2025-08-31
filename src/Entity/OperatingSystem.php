@@ -45,6 +45,7 @@ class OperatingSystem
     /**
      * @var string
      */
+    #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Serializer\Groups(['api_delete_os'])]
     private $imageFilename;
@@ -61,6 +62,16 @@ class OperatingSystem
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Hypervisor')]
     #[Serializer\Groups(['api_get_device', 'api_delete_os', 'export_lab', 'api_get_lab_instance', 'worker'])]
     private $hypervisor;
+
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    private $description;
+
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
+    private $arch;
 
     public function getId(): ?int
     {

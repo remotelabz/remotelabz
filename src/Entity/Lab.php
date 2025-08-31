@@ -93,6 +93,9 @@ class Lab implements InstanciableInterface
     #[Serializer\Exclude]
     private $banner;
 
+    #[ORM\Column(type: 'boolean')]
+    private $shared = false;
+
     /**
      *
      * @var Collection|TextObject[]
@@ -134,6 +137,8 @@ class Lab implements InstanciableInterface
     #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
     #[Serializer\Groups([])]
     private $invitationCodes;
+
+
 
     public function __construct()
     {

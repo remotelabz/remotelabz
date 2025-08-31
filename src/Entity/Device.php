@@ -191,6 +191,41 @@ class Device implements InstanciableInterface
     #[Serializer\Groups(['api_get_device'])]
     private $author;
 
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $cdrom_iso_filename;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $cdrom_bus_type;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $bios_filename;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $bios_type;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $other_options;
+
     public function __construct()
     {
         $this->networkInterfaces = new ArrayCollection();
