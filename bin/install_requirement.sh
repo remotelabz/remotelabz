@@ -10,7 +10,7 @@ add-apt-repository ppa:ondrej/php -y
 apt update
 apt install php8.4 -y
 apt install php8.4-common php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath -y
-a2dismod php8.1 php8.2 php8.3
+a2dismod php7.4 php8.1 php8.2 php8.3
 a2enmod php8.4
 systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
