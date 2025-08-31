@@ -4,12 +4,14 @@ apt-get update
 apt-get -y upgrade
 #add-apt-repository -y ppa:ondrej/php # PPRI0603 : Ajout pour l'installation de PHP8.1
 apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php
-apt install -y php php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip # PPRI0603 : changement version des modules PHP pour passer en PHP8.1
-apt-get update # PPRI0603 : Ajout
-#phpenmod -v 8.1 dom # PPRI0603 : Ajout
-#update-alternatives --set php /usr/bin/php # PPRI0603 : Ajout des 3 lignes suivantes pour forcer l'utilisation de php8.1
-#update-alternatives --set phar /usr/bin/phar
-#update-alternatives --set phar.phar /usr/bin/phar.phar
+apt install -y php php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip libapache2-mod-shib
+# Install php8.4 on Ubuntu 24.04
+add-apt-repository ppa:ondrej/php -y
+apt update
+apt install php8.4 -y
+apt install php8.4-common php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath -y
+a2dismod php8.1 php8.2 php8.3
+a2enmod php8.4
 systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
 cp composer.phar /usr/local/bin/composer
@@ -138,11 +140,15 @@ sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv4.ip_forward =/net.ipv4.ip_forward =/g' /etc/sysctl.conf
 
 # To avoid error message "Too many opened files" and containers don't stop
-sysctl -n -w fs.inotify.max_user_instances=512
-sysctl -n -w fs.inotify.max_user_watches=16384
-echo "fs.inotify.max_user_watches=16384" >> /etc/sysctl.conf
-echo "fs.inotify.max_user_instances=512" >> /etc/sysctl.conf
-
+echo "fs.inotify.max_user_watches=800000" >> /etc/sysctl.conf
+echo "fs.inotify.max_user_instances=500000" >> /etc/sysctl.conf
+echo "fs.file-max=15793398" >> /etc/sysctl.conf
+echo "kernel.pty.max=10000" >> /etc/sysctl.conf
+echo "net.ipv6.route.max_size=20000" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.lo.disable_ipv6=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.default.disable_ipv6=1" >> /etc/sysctl.conf
+sysctl -p
 
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"

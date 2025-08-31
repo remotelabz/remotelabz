@@ -54,9 +54,9 @@ class InstanceStateMessageHandler
 
     public function __invoke(InstanceStateMessage $message)
     {
+        $uuid=null;
     try {
-        //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Message received:",$message->toArray());
-
+      
         $this->logger->info("Received InstanceState message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
@@ -66,14 +66,19 @@ class InstanceStateMessageHandler
         // Problem with instance because when it's an error during exporting, the uuid is a compose value and not only the uuid of the instance.
         // So if it's an error, in all case, we have to return, from the worker
         // the uuid in the first place of the first string.
-        
-        $uuid=$message->getUuid();
-        
+        if (!is_null($message)) {
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Message is not null; uuid:".$message->getUuid());
+            $uuid=$message->getUuid();
+        }
+        else 
+            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Message is null:");
+
+        // Becarefull : in case of ACTION_COPY2WORKER_DEV, the instance has no uuid
         if ($message->getType() === InstanceStateMessage::TYPE_LAB)
             $instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
         else if ($message->getType() === InstanceStateMessage::TYPE_DEVICE)
             $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
-        $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance uuid:".$instance->getUuid());
+
 
         // if an error happened, set device instance in its previous state
         if ($message->getState() === InstanceStateMessage::STATE_ERROR) {

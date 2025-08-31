@@ -8,7 +8,11 @@ framework:
                     exchange:
                         name: worker
                         type: direct
-                    queues: {  }
+                    queues:
+                        messages_worker1:
+                            binding_keys: [192.168.11.132]
+                        messages_worker2:
+                            binding_keys: [192.168.11.133]
                 retry_strategy:
                     max_retries: 3
                     delay: 5000

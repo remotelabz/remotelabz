@@ -1,4 +1,5 @@
-import Noty from 'noty';
+//import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import React, { useState, useEffect } from 'react';
@@ -68,10 +69,13 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         })
         .catch((error)=> {
             if (error.response.data.message.includes("is used by an instance")) {
-                new Noty({
+                /*new Noty({
                     text: error.response.data.message,
                     type: 'error'
-                }).show()
+                }).show()*/
+                toast.error(error.response.data.message, {
+                    autoClose: 10000,
+                });
             }
         });
     }
@@ -83,12 +87,13 @@ function WorkerConfig(props = {workers, nbWorkers}) {
             else 
                 msg='Worker is disabled';
 
-            new Noty({
+            /*new Noty({
                 text: msg,
                 type: 'success',
                 timeout: 2000
-            }).show();
-
+            }).show();*/
+            toast.success(msg, {
+            });
             refresh();
         });
     }
@@ -151,8 +156,10 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                     workersToAdd.push({"IPv4": workerElement.value});
                 }
                 else {
-                    new Noty({ type: 'error', text: 'worker IP ' + workerElement.value +' already exists.' }).show();
-                    
+                    //new Noty({ type: 'error', text: 'worker IP ' + workerElement.value +' already exists.' }).show();
+                    toast.error('Worker IP ' + workerElement.value +' already exists.', {
+                        autoClose: 10000,
+                    });
                 }
             }
         }
@@ -172,12 +179,24 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         requests();
     }
 
-    return (<form onSubmit={handleSubmit}>
-        {form}
-        <div id="newWorkers">{newWorkers}</div>
-        <button type="button" className='btn btn-info mt-2' onClick={addField}><SVG name="plus" /></button>
-        <input type="submit" className='btn btn-success mt-2 ml-3' value="Submit"/>
-    </form>)
+    return (
+        <>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                closeOnClick
+                pauseOnHover
+                draggable
+            />
+            <form onSubmit={handleSubmit}>
+                {form}
+                <div id="newWorkers">{newWorkers}</div>
+                <button type="button" className='btn btn-info mt-2' onClick={addField}><SVG name="plus" /></button>
+                <input type="submit" className='btn btn-success mt-2 ml-3' value="Submit"/>
+            </form>
+        </>
+    )
 }
 
 export default WorkerConfig;

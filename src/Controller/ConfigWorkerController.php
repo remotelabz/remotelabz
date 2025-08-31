@@ -155,7 +155,7 @@ class ConfigWorkerController extends Controller
             $i++;
         }
         $first_available_worker=$workers[$i];
-        $this->logger->debug("Worker ". $first_available_worker->getIPv4(). " is the first available worker.");
+        $this->logger->debug("[ConfigWorkerController:updateAction]::Worker ". $first_available_worker->getIPv4(). " is the first available worker.");
         
         if (isset($data['IPv4'])) {
             $worker->setIPv4($data['IPv4']);
@@ -169,7 +169,8 @@ class ConfigWorkerController extends Controller
 
                 if ($data['available'] == 1) {
                     $operatingSystems=$this->operatingSystemRepository->findAll();
-                    $OS_available_worker=$this->getOS_Worker($worker->getIPv4(),$workerPort); //Find OS available on the worker which is enabled
+                    $workerIP=$worker->getIPv4();
+                    $OS_available_worker=$this->getOS_Worker($workerIP,$workerPort); //Find OS available on the worker which is enabled
                     //$this->logger->debug("OS on enabled worker ". $worker->getIPv4(). ":".$workerPort.": ".$OS_available_worker);
                     if ($OS_available_worker) {
                         $OS_already_exist_on_worker=json_decode($OS_available_worker,true);
@@ -177,21 +178,21 @@ class ConfigWorkerController extends Controller
                         //$this->logger->debug("List of OS",$OS_already_exist_on_worker["lxc"]);
 
                         foreach ($operatingSystems as $operatingSystem) {
-                          $this->logger->debug("OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
+                          $this->logger->debug("[ConfigWorkerController:updateAction]::OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
 
                             if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
-                                $this->logger->debug($operatingSystem->getName()." is in the array");
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getName()." already exist on ".$workerIP);
                             else
-                                $this->logger->debug($operatingSystem->getName()." is NOT in the array");
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getName()." doesn't exit on ".$workerIP);
 
                             if ($operatingSystem->getHypervisor()->getName() === "lxc" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"])) {
                                 $tmp=array();
-                                $tmp['Worker_Dest_IP'] = $worker->getIPv4();
+                                $tmp['Worker_Dest_IP'] = $workerIP;
                                 $tmp['hypervisor'] = $operatingSystem->getHypervisor()->getName();
                                 $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
 
-                                $this->logger->debug("OS to sync:",$tmp);
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::OS to sync:",$tmp);
                                 $this->bus->dispatch(
                                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                                         new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),
@@ -202,12 +203,12 @@ class ConfigWorkerController extends Controller
                             }
                             if ($operatingSystem->getHypervisor()->getName() === "qemu" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["qemu"])) {
                                 $tmp=array();
-                                $tmp['Worker_Dest_IP'] = $worker->getIPv4();
+                                $tmp['Worker_Dest_IP'] = $workerIP;
                                 $tmp['hypervisor'] = $operatingSystem->getHypervisor()->getName();
                                 $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                                 if (!is_null($operatingSystem->getImageFilename())) { // the case of qemu image with link.
-                                $this->logger->debug("OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                                $this->logger->debug("[ConfigWorkerController:updateAction]::OS to sync from ".$first_available_worker->getIPv4()." -> ".$tmp['Worker_Dest_IP'],$tmp);
                                 $this->bus->dispatch(
                                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                                         new AmqpStamp($first_available_worker->getIPv4(), AMQP_NOPARAM, []),
@@ -218,13 +219,13 @@ class ConfigWorkerController extends Controller
                             }
                         }
                     } else {
-                        $this->logger->info("The worker ".$worker->getIPv4()." is not online. Perhaps it's power off");
+                        $this->logger->info("The worker ".$workerIP." is not online. Perhaps it's power off");
                         //$this->addFlash("danger", "This worker seems not to be online");
                     }
                 }
             }
             else {
-                $this->logger->info("Worker ". $worker->getIPv4(). " is offline");
+                $this->logger->info("Worker ". $workerIP. " is offline");
             }
         }
 
@@ -232,7 +233,7 @@ class ConfigWorkerController extends Controller
         $entityManager->flush();
 
         if (isset($data['IPv4'])) {
-            $this->bindQueue($worker->getIPv4(), $worker->getQueueName());
+            $this->bindQueue($workerIP, $worker->getQueueName());
         }
 
         return $this->json($worker, 200, [], ['api_get_worker_config']);

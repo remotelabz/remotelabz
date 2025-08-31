@@ -33,7 +33,7 @@
         security of your site. Stealing sessions via cookie theft is much easier with this disabled.
         -->
         <Sessions lifetime="28800" timeout="3600" relayState="ss:mem"
-                  checkAddress="false" handlerSSL="true" cookieProps="https" handlerURL="/Shibboleth.sso">
+                  checkAddress="false" handlerSSL="true" cookieProps="https" handlerURL="/Shibboleth.sso" redirectLimit="exact">
 
             <!--
             Configures SSO for a default IdP. To allow for >1 IdP, remove
@@ -41,10 +41,14 @@
             (Set discoveryProtocol to "WAYF" for legacy Shibboleth WAYF support.)
             You can also override entityID on /Login query string, or in RequestMap/htaccess.
             -->
-            <SSO discoveryProtocol="SAMLDS" discoveryURL="https://discovery.renater.fr/test">
+            <SSO discoveryProtocol="SAMLDS" discoveryURL="https://discovery.renater.fr/renater/WAYF">
               SAML2
             </SSO>
 
+<!--		<SSO entityID="https://shib.univ-reims.fr/idp/shibboleth">
+		SAML2
+		</SSO>
+-->
             <!-- SAML and local-only logout. -->
             <Logout>SAML2 Local</Logout>
 
@@ -65,7 +69,7 @@
         Allows overriding of error template information/filenames. You can
         also add attributes with values that can be plugged into the templates.
         -->
-        <Errors supportContact="root@localhost.localdomain"
+        <Errors supportContact="contact@remotelabz.com"
 	      metadata="metadataError_fr.html"
 	      access="accessError_fr.html"
 	      ssl="sslError_fr.html"
@@ -74,28 +78,13 @@
 	      helpLocation="/about.html"
 	      styleSheet="/shibboleth-sp/main.css"/>
 
-        <MetadataProvider type="XML" url="https://metadata.federation.renater.fr/test/preview/preview-all-renater-test-metadata.xml" backingFilePath="preview-all-renater-test-metadata.xml" reloadInterval="7200">
+<!--        <MetadataProvider type="XML" url="https://metadata.federation.renater.fr/test/preview/preview-all-renater-test-metadata.xml" backingFilePath="preview-all-renater-test-metadata.xml" reloadInterval="7200">
             <MetadataFilter type="Signature" certificate="renater-metadata-signing-cert-2016.pem"  verifyBackup="false" />
         </MetadataProvider>
-
-        <!-- Example of remotely supplied batch of signed metadata. -->
-        <!--
-        <MetadataProvider type="XML" validate="true"
-              uri="http://example.org/federation-metadata.xml"
-              backingFilePath="federation-metadata.xml" reloadInterval="7200">
-            <MetadataFilter type="RequireValidUntil" maxValidityInterval="2419200"/>
-            <MetadataFilter type="Signature" certificate="fedsigner.pem"/>
-            <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true"
-              attributeName="http://macedir.org/entity-category"
-              attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
-              attributeValue="http://refeds.org/category/hide-from-discovery" />
+-->
+        <MetadataProvider type="XML" url="https://pub.federation.renater.fr/metadata/renater/main/main-all-renater-metadata.xml" backingFilePath="main-all-renater-metadata.xml" reloadInterval="7200">
+            <MetadataFilter type="Signature" certificate="renater-metadata-signing-cert-2016.pem"  verifyBackup="false" />
         </MetadataProvider>
-        -->
-
-        <!-- Example of locally maintained metadata. -->
-        <!--
-        <MetadataProvider type="XML" validate="true" file="partner-metadata.xml"/>
-        -->
 
         <!-- Map to extract attributes from SAML assertions. -->
         <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml"/>
@@ -118,34 +107,6 @@
         Example of a second application (for a second vhost) that has a different entityID.
         Resources on the vhost would map to an applicationId of "admin":
         -->
-        
-<!-- This is for the Enseignement - Recherche Federation -->
-        <ApplicationOverride id="production" entityID="https://remotelabz.localdomain">
-
-<!--        <MetadataProvider type="XML" url="https://metadata.federation.renater.fr/renater/main/main-all-renater-metadata.xml" backingFilePath="main-all-renater-metadata.xml" reloadInterval="7200">
-            <SignatureMetadataFilter certificate="renater-metadata-signing-cert-2016.pem"/>
-        </MetadataProvider>
--->
-		<Sessions lifetime="28800" timeout="3600" checkAddress="false"
-		    handlerURL="/Shibboleth.sso" handlerSSL="true" cookieProps="https">
-            <SSO discoveryProtocol="SAMLDS" discoveryURL="https://discovery.renater.fr/renater/WAYF">
-              SAML2
-            </SSO>
-
-            <!-- SAML and local-only logout. -->
-            <Logout>SAML2 Local</Logout>
-
-            <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
-            <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
-
-            <!-- Session diagnostic service. -->
-            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
-
-            <!-- JSON feed of discovery information. -->
-            <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
-		</Sessions>
-
-	</ApplicationOverride>
         
     </ApplicationDefaults>
 

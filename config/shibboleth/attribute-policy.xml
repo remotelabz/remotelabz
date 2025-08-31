@@ -1,95 +1,81 @@
-<!--
-     ce fichier définit les règles de diffusion d'attributs vers les différentes ressources
-
-     exemple distribué pour la fédération Éducation-Recherche : Il filtre les attributs reçu depuis les IdP.
-
-     les attributs sont décrits sur la page
-     http://federation.renater.fr/technique/attributs
-
-     Documentation de référence :
-     https://spaces.internet2.edu/display/SHIB2/NativeSPAttributeFilter
-
-     Il effectue les controles/filtrage suivants :
-     * Valeurs autorisées pour les attributs d'affiliation: eduPersonScopedAffiliation, eduPersonAffiliation et eduPersonPrimaryAffiliation
-     * Contrôle du scope des attributs scopés : un attribut mal scopé ne sera pas transmis à l'application
-
--->
-
-<AttributeFilterPolicyGroup
-    xmlns="urn:mace:shibboleth:2.0:afp"
+<afp:AttributeFilterPolicyGroup
+    xmlns="urn:mace:shibboleth:2.0:afp:mf:basic"
+    xmlns:saml="urn:mace:shibboleth:2.0:afp:mf:saml"
+    xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic"
+    xmlns:afp="urn:mace:shibboleth:2.0:afp"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <!-- Shared rule for affiliation values. -->
-    <PermitValueRule id="eduPersonAffiliationValues" xsi:type="OR">
-        <Rule xsi:type="Value" value="faculty"/>
-        <Rule xsi:type="Value" value="student"/>
-        <Rule xsi:type="Value" value="staff"/>
-        <Rule xsi:type="Value" value="alum"/>
-        <Rule xsi:type="Value" value="member"/>
-        <Rule xsi:type="Value" value="affiliate"/>
-        <Rule xsi:type="Value" value="employee"/>
-        <Rule xsi:type="Value" value="library-walk-in"/>
-        <Rule xsi:type="Value" value="researcher"/>
-    </PermitValueRule>
-
+    <afp:PermitValueRule id="eduPersonAffiliationValues" xsi:type="OR">
+        <Rule xsi:type="AttributeValueString" value="faculty"/>
+        <Rule xsi:type="AttributeValueString" value="student"/>
+        <Rule xsi:type="AttributeValueString" value="staff"/>
+        <Rule xsi:type="AttributeValueString" value="alum"/>
+        <Rule xsi:type="AttributeValueString" value="member"/>
+        <Rule xsi:type="AttributeValueString" value="affiliate"/>
+        <Rule xsi:type="AttributeValueString" value="employee"/>
+        <Rule xsi:type="AttributeValueString" value="library-walk-in"/>
+        <Rule xsi:type="AttributeValueString" value="researcher"/>
+    </afp:PermitValueRule>
+    
     <!--
     Shared rule for all "scoped" attributes, but you'll have to manually apply it inside
     an AttributeRule for each attribute you want to check.
     -->
-    <PermitValueRule id="ScopingRules" xsi:type="AND">
+    <afp:PermitValueRule id="ScopingRules" xsi:type="AND">
         <Rule xsi:type="NOT">
-            <Rule xsi:type="ValueRegex" regex="@"/>
+            <Rule xsi:type="AttributeValueRegex" regex="@"/>
         </Rule>
-        <Rule xsi:type="ScopeMatchesShibMDScope"/>
-    </PermitValueRule>
+        <Rule xsi:type="saml:AttributeScopeMatchesShibMDScope"/>
+    </afp:PermitValueRule>
 
-    <AttributeFilterPolicy>
+    <afp:AttributeFilterPolicy>
         <!-- This policy is in effect in all cases. -->
-        <PolicyRequirementRule xsi:type="ANY"/>
+        <afp:PolicyRequirementRule xsi:type="ANY"/>
 
         <!-- Filter out undefined affiliations and ensure only one primary. -->
-        <AttributeRule attributeID="affiliation">
-            <PermitValueRule xsi:type="AND">
+        <afp:AttributeRule attributeID="affiliation">
+            <afp:PermitValueRule xsi:type="AND">
                 <RuleReference ref="eduPersonAffiliationValues"/>
                 <RuleReference ref="ScopingRules"/>
-            </PermitValueRule>
-        </AttributeRule>
-        <AttributeRule attributeID="unscoped-affiliation">
-            <PermitValueRuleReference ref="eduPersonAffiliationValues"/>
-        </AttributeRule>
-        <AttributeRule attributeID="primary-affiliation">
-            <PermitValueRuleReference ref="eduPersonAffiliationValues"/>
-        </AttributeRule>
+            </afp:PermitValueRule>
+        </afp:AttributeRule>
+        <afp:AttributeRule attributeID="unscoped-affiliation">
+            <afp:PermitValueRuleReference ref="eduPersonAffiliationValues"/>
+        </afp:AttributeRule>
+        <afp:AttributeRule attributeID="primary-affiliation">
+            <afp:PermitValueRuleReference ref="eduPersonAffiliationValues"/>
+        </afp:AttributeRule>
 
-        <AttributeRule attributeID="subject-id">
-            <PermitValueRuleReference ref="ScopingRules"/>
-        </AttributeRule>
+        <afp:AttributeRule attributeID="subject-id">
+            <afp:PermitValueRuleReference ref="ScopingRules"/>
+        </afp:AttributeRule>
 
-        <AttributeRule attributeID="pairwise-id">
-            <PermitValueRuleReference ref="ScopingRules"/>
-        </AttributeRule>
+        <afp:AttributeRule attributeID="pairwise-id">
+            <afp:PermitValueRuleReference ref="ScopingRules"/>
+        </afp:AttributeRule>
+        
+        <afp:AttributeRule attributeID="eppn">
+            <afp:PermitValueRuleReference ref="ScopingRules"/>
+        </afp:AttributeRule>
 
-        <AttributeRule attributeID="eppn">
-            <PermitValueRuleReference ref="ScopingRules"/>
-        </AttributeRule>
-
-        <AttributeRule attributeID="targeted-id">
-            <PermitValueRuleReference ref="ScopingRules"/>
-        </AttributeRule>
+        <afp:AttributeRule attributeID="targeted-id">
+            <afp:PermitValueRuleReference ref="ScopingRules"/>
+        </afp:AttributeRule>
 
         <!-- Require NameQualifier/SPNameQualifier match IdP and SP entityID respectively. -->
-        <AttributeRule attributeID="persistent-id">
-            <PermitValueRule xsi:type="NameIDQualifierString"/>
-        </AttributeRule>
-
+        <afp:AttributeRule attributeID="persistent-id">
+            <afp:PermitValueRule xsi:type="saml:NameIDQualifierString"/>
+        </afp:AttributeRule>
+        
         <!-- Enforce that the values of schacHomeOrganization are a valid Scope. -->
-        <AttributeRule attributeID="schacHomeOrganization">
-            <PermitValueRule xsi:type="ValueMatchesShibMDScope" />
-        </AttributeRule>
+        <afp:AttributeRule attributeID="schacHomeOrganization">
+            <afp:PermitValueRule xsi:type="saml:AttributeValueMatchesShibMDScope" />
+        </afp:AttributeRule>
 
         <!-- Catch-all that passes everything else through unmolested. -->
-        <AttributeRule attributeID="*" permitAny="true"/>
+        <afp:AttributeRule attributeID="*" permitAny="true"/>
+        
+    </afp:AttributeFilterPolicy>
 
-    </AttributeFilterPolicy>
-
-</AttributeFilterPolicyGroup>
+</afp:AttributeFilterPolicyGroup>
