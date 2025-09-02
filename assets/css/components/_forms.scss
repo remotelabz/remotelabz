@@ -109,7 +109,7 @@ select {
         }
 
         .react-select__value-container {
-            color: theme-color("light");
+            color: theme-color("light") !important;
         }
 
         .react-select__single-value {
@@ -127,7 +127,7 @@ select {
         }
 
         .react-select__input {
-            color: theme-color("light");
+            color: theme-color("light") !important;
         }
 
         .react-select__menu {

@@ -950,7 +950,7 @@ $bg-number: 8;
 
 @for $i from 1 through $bg-number {
   .bg-#{$i} {
-    background-color: hsl($i * (360 / $bg-number + 32), 60%, 90%);
+    background-color: hsl($i * calc(360 / $bg-number + 32), 60%, 90%);
   }
 }
 
@@ -1436,7 +1436,7 @@ $grid-number: 12;
 
   @for $i from 1 through $bg-number {
     .bg-#{$i} {
-      background-color: hsl($i * (360 / $bg-number), 50%, 15%);
+      background-color: hsl($i * calc(360 / $bg-number), 50%, 15%);
     }
   }
 
