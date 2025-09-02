@@ -16,7 +16,7 @@ systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
-curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - # PPRI0603 : Passage de nodejs 14 vers nodejs 16
+curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - # PPRI0603 : Passage de nodejs 14 vers nodejs 16
 apt-get install -y nodejs
 npm install -g yarn
 npm install -g configurable-http-proxy
