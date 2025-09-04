@@ -246,6 +246,8 @@ useEffect(() => {
         closeOnClick
         pauseOnHover
         draggable
+        pauseOnFocusLoss={false}
+
       />
         {!isSandbox && props.user.name && 
             <div className="d-flex align-items-center mb-2">

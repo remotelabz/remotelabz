@@ -95,8 +95,6 @@ class InstanceStateMessageHandler
                     $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported');
                     
                     $new_device_exported = $this->deviceRepository->findOneBy(['id' => $options["newDevice_id"]]);
-//                    $new_os_exported = $new_device_exported->getOperatingSystem();
-                    //TODO Verify the name of the lab to know if it is a sandbox or not
                     try {
                         $labs = $new_device_exported->getLabs();
                         if (count($labs) > 0){
@@ -131,6 +129,10 @@ class InstanceStateMessageHandler
                         $this->logger->error('[InstanceStateMessageHandler:__invoke]::Error while removing devices and OS during export cancel: '.$e->getMessage());
                     }
                 }
+                if ( $options["state"] === InstanceActionMessage::ACTION_COPY2WORKER_DEV ) {
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Error when try to copy '.$message->getUuid().' image to worker '.$options["worker_dest_ip"]);
+                }
+
             }
             if (!is_null($instance)) {
                 //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());

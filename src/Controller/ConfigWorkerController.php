@@ -178,7 +178,7 @@ class ConfigWorkerController extends Controller
                         //$this->logger->debug("List of OS",$OS_already_exist_on_worker["lxc"]);
 
                         foreach ($operatingSystems as $operatingSystem) {
-                          $this->logger->debug("[ConfigWorkerController:updateAction]::OS to sync. Test for ".$operatingSystem->getName()." ".$operatingSystem->getHypervisor()->getName());
+                          $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$operatingSystem->getName()." which is a ".$operatingSystem->getHypervisor()->getName()." image");
 
                             if (in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]))
                                 $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getName()." already exist on ".$workerIP);
@@ -199,7 +199,6 @@ class ConfigWorkerController extends Controller
                                         //new AmqpStamp("192.168.11.132", AMQP_NOPARAM, []),
                                     ]
                                 );
-
                             }
                             if ($operatingSystem->getHypervisor()->getName() === "qemu" && !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["qemu"])) {
                                 $tmp=array();

@@ -116,7 +116,9 @@ function WorkerConfig(props = {workers, nbWorkers}) {
                                 <input type="text" id={worker.id} className="form-control mb-2" name="workers" defaultValue={worker.IPv4} readOnly={!worker.available}/>
                             </div>
                             <div className="col-2">
-                                    {worker.available == true ? <button type="button" className='btn btn-warning mr-2' onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : <button type="button" className='btn btn-success mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
+                                    {worker.available == true ? <button type="button" className='btn btn-warning mr-2' 
+                                    onClick={() => changeAvailable(worker.id, 0)} >Disable</button> : 
+                                    <button type="button" className='btn btn-success mr-2' onClick={() => changeAvailable(worker.id, 1)} >Enable</button>}
                                     <button type="button" className='btn btn-danger' onClick={() => deleteWorker(worker.id)}>Delete</button>
                                 
                             </div>
@@ -181,15 +183,17 @@ function WorkerConfig(props = {workers, nbWorkers}) {
 
     return (
         <>
-            <ToastContainer
+            
+            <form onSubmit={handleSubmit}>
+                <ToastContainer
                 position="top-right"
                 autoClose={5000}
                 hideProgressBar={false}
                 closeOnClick
                 pauseOnHover
                 draggable
-            />
-            <form onSubmit={handleSubmit}>
+                pauseOnFocusLoss={false}
+                />
                 {form}
                 <div id="newWorkers">{newWorkers}</div>
                 <button type="button" className='btn btn-info mt-2' onClick={addField}><SVG name="plus" /></button>
