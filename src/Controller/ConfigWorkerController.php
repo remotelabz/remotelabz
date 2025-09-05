@@ -142,13 +142,13 @@ class ConfigWorkerController extends Controller
 	#[Put('/api/config/worker/{id<\d+>}', name: 'api_update_worker')]
 	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function updateAction(Request $request, int $id) {
+        $entityManager = $this->entityManager;
         $workerPort = $this->getParameter('app.worker_port');
         $data = json_decode($request->getContent(), true);
 
         $worker = $this->configWorkerRepository->find(["id" => $id]);
         
         $workers = $this->configWorkerRepository->findAll();
-        
         
         $i=0;
         while ($i<count($workers)-1 && $workers[$i]->getAvailable()==0) {
@@ -161,15 +161,16 @@ class ConfigWorkerController extends Controller
             $worker->setIPv4($data['IPv4']);
         }
         else if (isset($data['available'])) {
-            if ($this->checkWorkerAvailable($worker->getIPv4(),$workerPort)) {
-                $worker->setAvailable($data['available']); 
+            $workerIP=$worker->getIPv4();
+            if ($this->checkWorkerAvailable($workerIP,$workerPort)) {
+                $worker->setAvailable($data['available']);
+                $entityManager->persist($worker);
                 $available=($worker->getAvailable()==1)?"Available":"Disable";
-                $this->logger->info("Worker ". $worker->getIPv4(). " has been updated (".$available.").");    
+                $this->logger->info("Worker ".$workerIP. " has been updated (".$available.").");    
                 //$this->addFlash('success', 'Worker has been enabled');
 
                 if ($data['available'] == 1) {
                     $operatingSystems=$this->operatingSystemRepository->findAll();
-                    $workerIP=$worker->getIPv4();
                     $OS_available_worker=$this->getOS_Worker($workerIP,$workerPort); //Find OS available on the worker which is enabled
                     //$this->logger->debug("OS on enabled worker ". $worker->getIPv4(). ":".$workerPort.": ".$OS_available_worker);
                     if ($OS_available_worker) {
@@ -225,6 +226,7 @@ class ConfigWorkerController extends Controller
             }
             else {
                 $this->logger->info("Worker ". $workerIP. " is offline");
+                $worker->setAvailable(0);
             }
         }
 

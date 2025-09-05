@@ -41,6 +41,8 @@ class OperatingSystemController extends Controller
     private $logger;
     private $serializer;
     protected $bus;
+    private $configWorkerRepository;
+    private $entityManager;
 
     public function __construct(LoggerInterface $logger,
         OperatingSystemRepository $operatingSystemRepository,

@@ -13,7 +13,9 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class WorkerManager
 {
-    protected $publicAddress;
+    private $publicAddress;
+    private $workerPort;
+    private $workerServer;
 
     public function __construct(
         string $publicAddress,
