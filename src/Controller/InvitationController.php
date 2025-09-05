@@ -29,6 +29,7 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Http\Attribute\Security;
 use Doctrine\ORM\EntityManagerInterface;
 
+
 class InvitationController extends Controller
 {
     /** @var LoggerInterface $logger */
