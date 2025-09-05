@@ -9,12 +9,14 @@ use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 class InvitationCodeType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
+    /*    $builder
             ->add('emailAdresses', TextareaType::class, [
             ])
             ->add('duration', TimeType::class, [
@@ -24,7 +26,21 @@ class InvitationCodeType extends AbstractType
                 'input' => 'array',
                 ])
             ->add('submit', SubmitType::class)
-        ;
+        ;*/
+
+        $builder
+    ->add('emailAdresses', TextareaType::class, [
+    ])
+    ->add('duration', DateTimeType::class, [
+        'widget' => 'single_text',
+        'html5' => true,
+        'data' => new \DateTime('tomorrow 00:00'),
+        'attr' => [
+            'class' => 'form-control'
+        ],
+    ])
+    ->add('submit', SubmitType::class);
+
 
         $builder->get('emailAdresses')
             ->addModelTransformer(new CallbackTransformer(

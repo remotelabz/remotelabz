@@ -21,6 +21,10 @@ use App\Utils\Uuid;
 #[ORM\Entity]
 class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterface, InstancierInterface
 {
+
+    private ?\DateTime $duration = null;
+
+    
     /**
      *
      * @var int
@@ -66,7 +70,9 @@ class InvitationCode implements UserInterface, PasswordAuthenticatedUserInterfac
     public function __construct()
     {
         $this->uuid = (string) new Uuid();
-	$this->labInstances = new ArrayCollection();
+    	$this->labInstances = new ArrayCollection();
+        $this->duration = new \DateTime('tomorrow 00:00');
+
     }
 
     public function getId(): ?int
