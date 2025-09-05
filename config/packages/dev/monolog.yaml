@@ -1,4 +1,5 @@
 monolog:
+    channels: ['app', 'doctrine', 'security', 'request', 'messenger', 'php', 'event', 'security_events', 'console', 'deprecation']
     handlers:
         main:
             type: stream
@@ -15,11 +16,16 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%_doctrine.log"
             level: debug
             channels: ["doctrine"]
+        deprecation:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%_deprecation.log"
+            level: debug
+            channels: ["deprecation"]
         
         app:
             type: service
             id: App\Monolog\Handler\IgnoreSecurityEventsHandler
-            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php"]
+            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php","!deprecation"]
             
         messenger:
             type: stream
@@ -41,6 +47,7 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%_event.log"
             level: debug
             channels: ["event"]
+        
         # uncomment to get logging in your browser
         # you may have to allow bigger header sizes in your Web server configuration
         #firephp:

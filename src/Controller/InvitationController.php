@@ -33,6 +33,17 @@ class InvitationController extends Controller
 {
     /** @var LoggerInterface $logger */
     private $logger;
+    /** @var LabRepository $labRepository */
+    private $labRepository;
+    /** @var ValidatorInterface $validator */
+    private $validator;
+    /** @var MailerInterface $mailer */
+    private $mailer;
+    /** @var InvitationCodeRepository $invitationCodeRepository */
+    private $invitationCodeRepository;
+    /** @var EntityManagerInterface $entityManager */
+    private $entityManager;
+    
 
     public function __construct(
         LabRepository $labRepository,
