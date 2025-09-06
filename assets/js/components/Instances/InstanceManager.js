@@ -1,5 +1,3 @@
-//import Noty from 'noty';
-// To replace Noty
 import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
@@ -73,10 +71,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     Remotelabz.instances.device.stop(deviceInstance.uuid);
                 } catch (error) {
                     console.error("An error happened while stopping a device. Please try again later.");
-                    /*new Noty({
-                        text: 'An error happened while stopping a device. Please try again later.',
-                        type: 'error'
-                    }).show();*/
+                    
                     toast.error('An error happened while stopping a device. Please try again later.', {
                         autoClose: 10000
                     });
@@ -107,10 +102,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                     setLabInstance(null);
                     setLoadingInstanceState(false);
                 } else {
-                    /*new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show();*/
+                    
                     toast.error('An error happened while fetching instance state. If this error persists, please contact an administrator.', {
                         autoClose: 10000
                     });
@@ -166,21 +158,14 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         } catch (error) {
             if (error.response?.data?.message.includes("No worker available")) {
                 console.error("No worker available - Please contact an administrator");
-                /*new Noty({
-                    text: 'No worker available - Please contact an administrator',
-                    type: 'error',
-                    timeout: 10000
-                }).show();*/
+                
                 toast.error('No worker available - Please contact an administrator', {
                     autoClose: 10000
                 });
 
             } else {
                 console.error("There was an error creating an instance. Please try again later.");
-                /*new Noty({
-                    text: 'There was an error creating an instance. Please try again later.',
-                    type: 'error'
-                }).show();*/
+                
                 toast.error('There was an error creating an instance. Please try again later.', {
                     autoClose: 10000
                 });
@@ -212,10 +197,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
             }
         } catch (error) {
             console.error(error);
-            /*new Noty({
-                text: error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show();*/
+           
             toast.error(error.response?.data?.message?.includes("Worker") ? error.response.data.message : 'An error happened while leaving the lab. Please try again later.', {
                 autoClose:10000
             });

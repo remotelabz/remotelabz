@@ -1,4 +1,4 @@
-import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
@@ -78,10 +78,9 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     setLabInstances(null)
                     setLoadingInstanceState(false)
                 } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
+                    toast.error('An error happened while fetching instance state. If this error persist, please contact an administrator.', {
+                        autoClose: 10000,
+                    });
                 }
             }
         })
@@ -152,6 +151,9 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                   .then(promise)
                   .catch(err => {
                     console.warn('err', err.message);
+                    toast.error(err.message, {
+                        autoClose: 10000,
+                    });
                   });
               }, Promise.resolve());         
             
@@ -170,10 +172,10 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     }))
                 } catch (error) {
                     console.error(error)
-                    new Noty({
-                        text: 'An error happened while leaving the lab. Please try again later.',
-                        type: 'error'
-                    }).show()
+                    
+                    toast.error('An error happened while leaving the lab. Please try again later.', {
+                        autoClose: 10000,
+                    });
                     //setLoadingInstanceState(false)
                 }
             }
@@ -188,10 +190,10 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 //setLabInstance({ ...labInstance, state: "deleting" })
             } catch (error) {
                 console.error(error)
-                new Noty({
-                    text: 'An error happened while stopping a device. Please try again later.',
-                    type: 'error'
-                }).show()
+                
+                toast.error('An error happened while stopping a device. Please try again later.', {
+                    autoClose: 10000,
+                });
                 //setLoadingInstanceState(false)
             }
         }
@@ -246,6 +248,15 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     return (<>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                closeOnClick
+                pauseOnHover
+                draggable
+                pauseOnFocusLoss={false}
+            />
         {instancesList && labInstances !== "" && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
         <div className="d-flex justify-content-end mb-2">
             <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>

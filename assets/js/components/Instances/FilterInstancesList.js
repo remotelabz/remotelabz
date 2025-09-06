@@ -1,4 +1,4 @@
-import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import React, { useState, useEffect } from 'react';
 import AllInstancesManager from './AllInstancesManager';
@@ -113,10 +113,10 @@ function FilterInstancesList(props = {labInstances: [], filter, itemValue, itemF
                     setLabInstances(null)
                     setLoadingInstanceState(false)
                 } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
+                    
+                    toast.error('An error happened while fetching instance state. If this error persist, please contact an administrator.', {
+                    autoClose: 10000,
+                });
                 }
             }
         })

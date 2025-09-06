@@ -1,6 +1,5 @@
 "use strict";
 
-import Noty from 'noty';
 import Axios from 'axios';
 const url = require('url');
 
@@ -161,10 +160,6 @@ const url = require('url');
  * @typedef {"ROLE_USER"|"ROLE_TEACHER"|"ROLE_TEACHER_EDITOR"|"ROLE_ADMINISTRATOR"|"ROLE_SUPER_ADMINISTRATOR"} Role
  * @typedef {"user"|"admin"|"owner"} UserGroupRole
  */
-
-Noty.overrideDefaults({
-    timeout: 5000
-});
 
 let options = {};
 options.baseURL = '/api';

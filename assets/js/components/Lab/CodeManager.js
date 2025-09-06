@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Remotelabz from '../API';
 import moment from 'moment/moment';
 import { Button, Modal} from 'react-bootstrap';
-//import Noty from 'noty';
 import { ToastContainer, toast } from 'react-toastify';
 
 
@@ -45,10 +44,7 @@ export default function CodeManager(props = {lab}) {
                                     autoClose: 10000,
                                 });
                                 
-                                /*new Noty({
-                                    text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
-                                    type: 'error'
-                                }).show()*/
+                                
                             });
                         }, 5000) 
                     })
@@ -65,10 +61,7 @@ export default function CodeManager(props = {lab}) {
                         toast.error("An error happened while deleting code. If this error persist, please contact an administrator.", {
                             autoClose: 10000,
                         });
-                        /*new Noty({
-                            text: 'An error happened while deleting code. If this error persist, please contact an administrator.',
-                            type: 'error'
-                        }).show()*/
+                        
                     })
                 }
             })
@@ -110,10 +103,7 @@ export default function CodeManager(props = {lab}) {
                     toast.error("An error happened while fetching codes. If this error persist, please contact an administrator.", {
                         autoClose: 10000,
                     });
-                    /*new Noty({
-                        text: 'An error happened while fetching codes. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()*/
+                    
                 }
             }
         })

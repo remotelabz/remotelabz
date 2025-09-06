@@ -142,6 +142,7 @@ class ConfigWorkerController extends Controller
 	#[Put('/api/config/worker/{id<\d+>}', name: 'api_update_worker')]
 	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     public function updateAction(Request $request, int $id) {
+        $error=false;
         $entityManager = $this->entityManager;
         $workerPort = $this->getParameter('app.worker_port');
         $data = json_decode($request->getContent(), true);
@@ -220,13 +221,14 @@ class ConfigWorkerController extends Controller
                         }
                     } else {
                         $this->logger->info("The worker ".$workerIP." is not online. Perhaps it's power off");
-                        //$this->addFlash("danger", "This worker seems not to be online");
+                        $this->addFlash("danger", "This worker seems not to be online");
                     }
                 }
             }
             else {
                 $this->logger->info("Worker ". $workerIP. " is offline");
                 $worker->setAvailable(0);
+                $error=true;
             }
         }
 
@@ -236,8 +238,10 @@ class ConfigWorkerController extends Controller
         if (isset($data['IPv4'])) {
             $this->bindQueue($workerIP, $worker->getQueueName());
         }
-
-        return $this->json($worker, 200, [], ['api_get_worker_config']);
+        if (!$error)
+            return $this->json($worker, 200, [], ['api_get_worker_config']);
+        else 
+            return $this->json($worker, 400, [], ['api_get_worker_config']);
     }
 
     

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import Select from 'react-select';
-import Noty from 'noty';
 import API from '../../api';
+import { ToastContainer, toast } from 'react-toastify';
+
 
 const options = [{
     value: 'admin',
@@ -33,19 +34,13 @@ export default class GroupRoleSelect extends Component {
         API.getInstance().put(`/api/groups/${this.props.group}/user/${this.props.user}/role`, {role: selectedOption.value})
         .then(() => {
             this.setState({ selectedOption });
-            new Noty({
-                text: "User's role has been changed.",
-                type: "success",
-                timeout: 2000
-            }).show();
+            toast.success("User's role has been changed.", {
+            });
         })
-        .catch(() => {
-            // console.log(error);
-            new Noty({
-                text: "There was an error changing user's role. Please try again later.",
-                type: "error",
-                timeout: 2000
-            }).show();
+        .catch(() => {          
+            toast.error("There was an error changing user's role. Please try again later.", {
+                    autoClose: 10000,
+                });
         })
         .finally(() => {
             this.setState({isLoading: false});
