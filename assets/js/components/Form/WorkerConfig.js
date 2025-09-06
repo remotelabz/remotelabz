@@ -76,16 +76,18 @@ function WorkerConfig(props = {workers, nbWorkers}) {
         });
     }
     function changeAvailable(id, available) {
-        Remotelabz.configWorker.update(id, {"available": available}).then(()=> {
-            let msg;
-            if (available == 1 )
-                msg='Worker is enabled';
-            else 
-                msg='Worker is disabled';
-
-            toast.success(msg, {
-            });
+        Remotelabz.configWorker.update(id, { available: available })
+        .then(() => {
+            const msg = available === 1 ? 'Worker is enabled' : 'Worker is disabled';
+            toast.success(msg, {});
             refresh();
+        })
+        .catch((error) => {
+            // Ce bloc s'exécute si la promesse est rejetée (s'il y a une erreur)
+            console.error("Erreur lors de la mise à jour du worker :", error);
+            toast.error("Échec de la mise à jour du worker.", {
+                // Options supplémentaires pour le toast d'erreur si nécessaire
+            });
         });
     }
     
