@@ -1,4 +1,4 @@
-import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import InstanceList from './InstanceList';
 import { GroupRoles } from '../Groups/Groups';
@@ -34,10 +34,10 @@ function AllInstancesManager(props) {
             setLabInstance({ ...labInstance, state: "deleting" })
         } catch (error) {
             console.error(error)
-            new Noty({
-                text: 'An error happened while leaving the lab. Please try again later.',
-                type: 'error'
-            }).show()
+            
+            toast.error('An error happened while leaving the lab. Please try again later.', {
+                    autoClose: 10000,
+                });
             setLoadingInstanceState(false)
         }
     }
@@ -54,10 +54,9 @@ function AllInstancesManager(props) {
                             Remotelabz.instances.device.stop(deviceInstance.uuid)
                         } catch (error) {
                             console.error(error)
-                            new Noty({
-                                text: 'An error happened while stopping a device. Please try again later.',
-                                type: 'error'
-                            }).show()
+                            toast.error('An error happened while stopping a device. Please try again later.', {
+                                autoClose: 10000,
+                            });
                         }
                     }
                 }
@@ -74,6 +73,15 @@ function AllInstancesManager(props) {
     }
 
     return (<>
+        <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+            pauseOnFocusLoss={false}
+        />
         {
             <ListGroup>
                 <ListGroupItem className="d-flex align-items-center justify-content-between">

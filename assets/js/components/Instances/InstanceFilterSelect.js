@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
@@ -336,10 +336,10 @@ export default function InstanceFilterSelect(props) {
                     setInstancesList(list)
                     setLoadingInstanceState(false)
                 } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
+                    
+                    toast.error('An error happened while fetching instance state. If this error persist, please contact an administrator.', {
+                    autoClose: 10000,
+                });
                 }
             }
         })
@@ -419,11 +419,10 @@ export default function InstanceFilterSelect(props) {
                     }))
                 } catch (error) {
                     console.error(error)
-                    new Noty({
-                        text: 'An error happened while leaving the lab. Please try again later.',
-                        type: 'error'
-                    }).show()
-                    //setLoadingInstanceState(false)
+                    
+                    toast.error('An error happened while leaving the lab. Please try again later.', {
+                    autoClose: 10000,
+                });
                 }
             }
         }
@@ -437,10 +436,9 @@ export default function InstanceFilterSelect(props) {
                 //setLabInstance({ ...labInstance, state: "deleting" })
             } catch (error) {
                 console.error(error)
-                new Noty({
-                    text: 'An error happened while stopping a device. Please try again later.',
-                    type: 'error'
-                }).show()
+                toast.error('An error happened while stopping a device. Please try again later.', {
+                    autoClose: 10000,
+                });
                 //setLoadingInstanceState(false)
             }
         }
@@ -450,7 +448,17 @@ export default function InstanceFilterSelect(props) {
     return (
         <div>
             {(props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
-            <><div>
+            <>
+            <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+            pauseOnFocusLoss={false}
+        />
+            <div>
                 <div><span>Filter by : </span></div>
                 <div className="d-flex align-items-center mb-2">
                 <select className='form-control' id="instanceSelect" onChange={onChange}>

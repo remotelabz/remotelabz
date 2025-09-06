@@ -1,5 +1,4 @@
 import React, { useState, useEffect} from 'react';
-import Noty from 'noty';
 import Remotelabz from '../API';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
 import { ajax } from 'jquery';

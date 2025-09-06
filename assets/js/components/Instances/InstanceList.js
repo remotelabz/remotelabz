@@ -4,7 +4,6 @@ import { Button } from 'react-bootstrap';
 import SVG from '../Display/SVG';
 import InstanceExport from './InstanceExport';
 import Remotelabz from '../API';
-//import Noty from 'noty';
 import { ToastContainer, toast } from 'react-toastify';
 
 
@@ -47,22 +46,14 @@ const InstanceList = (props) => {
     function exportLabTemplate(labInstance, name) {
         Remotelabz.instances.export(labInstance.uuid, name, "lab")
             .then(() => {
-                /*new Noty({
-                    type: 'success',
-                    text: 'Instance export requested.',
-                    timeout: 5000
-                }).show();*/
+               
                 toast.success('Instance export requested.', {
                 });
 
                 props.onStateUpdate();
             })
             .catch(() => {
-                /*new Noty({
-                    type: 'error',
-                    text: 'Error while requesting instance export. Please try again later.',
-                    timeout: 5000
-                }).show();*/
+               
                 toast.error('Error while requesting instance export. Please try again later.', {
                     autoClose: 10000,
                 });

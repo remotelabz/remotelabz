@@ -148,12 +148,7 @@ class SandboxListItem extends Component {
                     console.error("Catch error : Error creating lab copy", error);
                     this.setState({ isLoading: false, exist: false, lab: lab});
                     window.location.href = "/admin/sandbox/";
-                   /* Noty.error({
-                        text: "Error creating lab copy: " + error.message,
-                        timeout: 5000,
-                        progressBar: true,
-                        closeWith: ['click', 'button'],
-                    });*/
+                  
                 }
         }
         

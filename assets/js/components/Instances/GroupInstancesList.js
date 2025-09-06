@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import Noty from 'noty';
+import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import FilterInstancesList from './FilterInstancesList';
 import {ListGroup, ListGroupItem, Button, Modal} from 'react-bootstrap';
@@ -131,10 +131,10 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                     setInstances(null)
                     setLoadingInstanceState(false)
                 } else {
-                    new Noty({
-                        text: 'An error happened while fetching instance state. If this error persist, please contact an administrator.',
-                        type: 'error'
-                    }).show()
+                   
+                    toast.error('An error happened while fetching instance state. If this error persist, please contact an administrator.', {
+                    autoClose: 10000,
+                });
                 }
             }
         })
@@ -215,10 +215,10 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                     setInstances(newInstances)
                 } catch (error) {
                     console.error(error)
-                    new Noty({
-                        text: 'An error happened while leaving the lab. Please try again later.',
-                        type: 'error'
-                    }).show()
+                    
+                    toast.error('An error happened while leaving the lab. Please try again later.', {
+                    autoClose: 10000,
+                });
                     //setLoadingInstanceState(false)
                 }
             }
@@ -233,10 +233,10 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 //setLabInstance({ ...labInstance, state: "deleting" })
             } catch (error) {
                 console.error(error)
-                new Noty({
-                    text: 'An error happened while stopping a device. Please try again later.',
-                    type: 'error'
-                }).show()
+                
+                toast.error('An error happened while stopping a device. Please try again later.', {
+                    autoClose: 10000,
+                });
                 //setLoadingInstanceState(false)
             }
         }
@@ -291,15 +291,17 @@ export default function GroupInstancesList(props = {instances, group, user}) {
     }
 
     return (
+        <>
+        <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            closeOnClick
+            pauseOnHover
+            draggable
+            pauseOnFocusLoss={false}
+        />
         <div>
-            {/*<div>
-                <div><span>Filter by lab : </span></div>
-                <div className="d-flex align-items-center mb-2 mt-2">
-                <select className='form-control' id="labSelect" onChange={onChange}>
-                    {options}
-                </select>
-                </div>
-            </div>*/}
             <div className="d-flex justify-content-end mb-2">
                 {instances !== "" &&
                     <>
@@ -351,6 +353,7 @@ export default function GroupInstancesList(props = {instances, group, user}) {
                 </Modal.Footer>
             </Modal>
         </div>
+        </>
     );
 
 }
