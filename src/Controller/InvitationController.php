@@ -29,6 +29,7 @@ use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Security\Http\Attribute\Security;
 use Doctrine\ORM\EntityManagerInterface;
 
+
 class InvitationController extends Controller
 {
     /** @var LoggerInterface $logger */
@@ -99,8 +100,10 @@ class InvitationController extends Controller
     public function createCodeAction(Request $request, int $id, SerializerInterface $serializer)
     {
 
+        
         $lab = $this->labRepository->find($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_CODE, $lab);
+
 
         $invitationForm = $this->createForm(InvitationCodeType::class);
         $invitationForm->handleRequest($request);
@@ -307,14 +310,14 @@ class InvitationController extends Controller
         $entityManager = $this->entityManager;
 
         $invitationCode = $this->invitationCodeRepository->findBy(['lab'=>$lab, 'mail'=> $email]);
-        $date = new \DateTime();
-        $date->modify('+'.$duration['hour'].' hours + '.$duration['minute'].' minutes');
+        /*$date = new \DateTime();
+        $date->modify('+'.$duration['hour'].' hours + '.$duration['minute'].' minutes');*/
         if (!$invitationCode) {
             $invitation = new InvitationCode();
             $invitation->setCode($code);
             $invitation->setMail($email);
             $invitation->setLab($lab);
-            $invitation->setExpiryDate($date);
+            $invitation->setExpiryDate($duration);
             $entityManager->persist($invitation);
             $entityManager->flush();
 
