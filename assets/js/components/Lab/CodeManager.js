@@ -92,7 +92,7 @@ export default function CodeManager(props = {lab}) {
                     <tr key={invitation.id}>
                         <td>{invitation.mail}</td>
                         <td>{invitation.code}</td>
-                        <td>{moment(invitation.expiryDate).format("DD/MM/YYYY HH:mm:ss")}</td>
+                        <td>{moment.utc(invitation.expiryDate).format("DD/MM/YYYY HH:mm:ss")}</td>
                         <td><button class="btn btn-danger" type="button" onClick={()=>openModalWithUuid(invitation.uuid)}>Delete</button></td>
                     </tr>
                 );
