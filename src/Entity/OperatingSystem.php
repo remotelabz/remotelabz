@@ -10,7 +10,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Represents a disk image with metadata
  *
  *
- * @author Julien Hubert <julien.hubert@outlook.com>
+ * @author Julien Hubert
+ * @author Florent Nolot
  */
 #[ORM\Entity(repositoryClass: 'App\Repository\OperatingSystemRepository')]
 #[Serializer\XmlRoot('operating_system')]
@@ -72,7 +73,7 @@ class OperatingSystem
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
     private $arch;
-
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -138,5 +139,16 @@ class OperatingSystem
         return $this;
     }
 
+    public function getArch(): ?string
+    {
+        return $this->arch;
+    }
+
+    public function setArch(?string $arch): self
+    {
+        $this->arch = $arch;
+
+        return $this;
+    }
     
 }

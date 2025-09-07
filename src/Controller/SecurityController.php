@@ -56,6 +56,9 @@ class SecurityController extends AbstractController
 
     protected $maintenance;
     protected $general_message;
+    protected $contact_mail;
+    protected $entityManager;
+    
 
     public function __construct(UrlGeneratorInterface $urlGenerator,
         UserRepository $userRepository,
