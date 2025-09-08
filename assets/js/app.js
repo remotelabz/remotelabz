@@ -3,7 +3,8 @@
 *
 * Mainly used to customize plugins and loading them.
 *
-* @author Julien Hubert <julien.hubert@outlook.com>
+* @author Julien Hubert
+* @author Florent Nolot
 */
 
 // require('jquery');
