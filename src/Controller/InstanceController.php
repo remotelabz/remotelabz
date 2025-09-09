@@ -1130,9 +1130,9 @@ class InstanceController extends Controller
             $fullscreen = false;
         }
         
-        $this->logger->debug("Fullscreen ?". $fullscreen );
+        $this->logger->debug("[InstanceController:viewInstanceAction]::Want a fullscreen ?". $fullscreen );
         $ssl=($this->remotelabzProxyUseWss ? 'https' : 'http');
-        $this->logger->debug("Proxy in SSL ? ". $ssl);
+        $this->logger->debug("[InstanceController:viewInstanceAction]::Is proxy using SSL ? ". $ssl);
         return $this->render(($fullscreen ? 'lab/vm_view_fullscreen.html.twig' : 'lab/vm_view.html.twig'), [
             'lab' => $lab,
             'uuid' => $uuid,

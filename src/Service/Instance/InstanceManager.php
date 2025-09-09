@@ -571,6 +571,7 @@ class InstanceManager
                 $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                 // the case of qemu image with link.
                 $this->logger->debug("[InstanceManager:Sync2OS]::OS to sync from ".$workerIP." -> ".$tmp['Worker_Dest_IP'],$tmp);
+                $this->logger->info("Send a request to copy ".$tmp['hypervisor']." ".$tmp['os_imagename']." image from ".$workerIP." to ".$tmp['Worker_Dest_IP']);
                 $this->bus->dispatch(
                     new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_COPY2WORKER_DEV), [
                         new AmqpStamp($workerIP, AMQP_NOPARAM, [])
