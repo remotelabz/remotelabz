@@ -1,10 +1,11 @@
 monolog:
+    channels: ['app', 'doctrine', 'security', 'request', 'messenger', 'php', 'event', 'security_events', 'console', 'deprecation']
     handlers:
         main:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: info
-            channels: ["!request", "!event", "!doctrine", "!security"]
+            channels: ["!event", "!doctrine","!request", "!messenger", "!php","!security_events","!deprecation"]
         security:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_security.log"
@@ -15,15 +16,20 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%_doctrine.log"
             level: info
             channels: ["doctrine"]
-        app:
+        deprecation:
             type: stream
-            path: "%kernel.logs_dir%/%kernel.environment%_app.log"
+            path: "%kernel.logs_dir%/%kernel.environment%_deprecation.log"
             level: info
-            channels: ["app"]
+            channels: ["deprecation"]
+        app:
+            type: service
+            id: App\Monolog\Handler\IgnoreSecurityEventsHandler
+            channels: ["!event", "!doctrine", "!security", "!request", "!messenger", "!php","!deprecation"]
+            
         messenger:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%_messenger.log"
-            level: debug
+            level: info
             channels: ["messenger"]
         php:
             type: stream
@@ -35,14 +41,11 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%_request.log"
             level: info
             channels: ["request"]
-        # uncomment to get logging in your browser
-        # you may have to allow bigger header sizes in your Web server configuration
-        #firephp:
-        #    type: firephp
-        #    level: info
-        #chromephp:
-        #    type: chromephp
-        #    level: info
+        event:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%_event.log"
+            level: info
+            channels: ["event"]
         console:
             type: console
             process_psr_3_messages: false
