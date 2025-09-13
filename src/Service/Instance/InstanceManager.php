@@ -308,7 +308,7 @@ class InstanceManager
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTED ||
                 $deviceInstance->getState() == InstanceStateMessage::STATE_RESETTING) {
-            $this->logger->error('Device instance '.$deviceInstance->getUuid().' is already running.');
+            $this->logger->warning('Device instance '.$deviceInstance->getUuid().' is already running.');
             //throw new BadRequestHttpException('[InstanceManager:start]::Device already running or started');
         } else {
             $this->logger->info('Starting device instance '.$deviceInstance->getUuid().'.');
