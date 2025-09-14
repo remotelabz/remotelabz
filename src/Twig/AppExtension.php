@@ -17,6 +17,7 @@ class AppExtension extends AbstractExtension
         return [
             new TwigFilter('cast_to_array', [$this, 'stdClassObject']),
             new TwigFilter('firstLetter', [$this, 'firstLetterFilter']),
+            new TwigFilter('truncate', [$this, 'truncate']),
         ];
     }
 
@@ -72,5 +73,18 @@ class AppExtension extends AbstractExtension
     public function groupicon($value)
     {
         
+    }
+    
+    public function truncate(?string $text, int $length = 50, string $suffix = '...'): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        if (mb_strlen($text) <= $length) {
+            return $text;
+        }
+
+        return mb_substr($text, 0, $length) . $suffix;
     }
 }

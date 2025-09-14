@@ -252,3 +252,6 @@ services:
         arguments:
             $stream: '%kernel.logs_dir%/%kernel.environment%_app.log'
             $level: 'debug'
+
+    App\Twig\AppExtension:
+        tags: ['twig.extension']

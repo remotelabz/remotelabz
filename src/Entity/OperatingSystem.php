@@ -69,10 +69,17 @@ class OperatingSystem
     #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
     private $description;
 
-    #[Assert\Type(type: 'string')]
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    /**
+     * @var string|null
+     */
+    #[Assert\NotBlank(message: 'Architecture is required')]
+    #[Assert\Choice(
+        choices: ['x86', 'x86_64', 'arm', 'arm64'],
+        message: 'Choose a valid architecture: x86, x86_64, arm, or arm64'
+    )]
+    #[ORM\Column(type: 'string', length: 20)]
     #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
-    private $arch;
+    private ?string $arch = null;
     
     public function getId(): ?int
     {
@@ -150,5 +157,14 @@ class OperatingSystem
 
         return $this;
     }
-    
+     public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
 }
