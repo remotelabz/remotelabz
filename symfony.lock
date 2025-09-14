@@ -189,6 +189,9 @@
             "config/packages/prod/jms_serializer.yaml"
         ]
     },
+    "knplabs/knp-paginator-bundle": {
+        "version": "v6.9.1"
+    },
     "laminas/laminas-code": {
         "version": "3.5.1"
     },

@@ -1,5 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block title %}Operating Systems - {{ parent() }}{% endblock %}
+
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ 'Operating systems': path('operating_systems') }) -%}
     {{ parent() }}
@@ -12,50 +14,277 @@
 
 {% block wrapper %}
 <div class="top-panel">
-    <div class="quick-actions">
-        <a class="btn btn-success" role="button" href="{{ path('new_operating_system') }}">
-            New operating system
-        </a>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Operating Systems</h1>
+        <div class="quick-actions">
+            <a class="btn btn-success" role="button" href="{{ path('new_operating_system') }}">
+                <i class="fas fa-plus me-2"></i> New Operating System
+            </a>
+        </div>
     </div>
-    <ul class="nav-links nav nav-tabs">
-        <li class="active"><a href="#"><span>All</span> <span class="badge badge-pill">{{ operatingSystems|length }}</span></a></li>
-        {# <li><a href="#"><span>Images</span> <span class="badge badge-pill">0</span></a></li>
-        <li><a href="#"><span>Links</span> <span class="badge badge-pill">0</span></a></li> #}
+    
+    <ul class="nav-links nav nav-tabs mt-3">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" data-filter="all">
+                <span>All</span> 
+                <span class="badge bg-primary ms-1">{{ operatingSystems|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="file">
+                <span>Files</span> 
+                <span class="badge bg-success ms-1">{{ operatingSystems|filter(os => os.imageFilename is not null)|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="url">
+                <span>URLs</span> 
+                <span class="badge bg-warning ms-1">{{ operatingSystems|filter(os => os.imageUrl is not null)|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="none">
+                <span>No Image</span> 
+                <span class="badge bg-secondary ms-1">{{ operatingSystems|filter(os => os.imageUrl is null and os.imageFilename is null)|length }}</span>
+            </a>
+        </li>
     </ul>
 </div>
-{# <div class="search-panel">
-    <form action="{{ path('operating_systems') }}" method="GET">
-        <input type="search" class="form-control input-sm" name="search"
-        placeholder="Search by name"
-        spellcheck="false" value="{{ search|default('') }}" type="search">
-    </form>
-</div> #}
-<div class="labs-panel">
-    {% for operatingSystem in operatingSystems %}
-    <div class="content-list row align-items-center p-3 {% if not loop.last %}border-bottom{% endif %} lab-item">
-            <div class="col-1">
-                    {% if operatingSystem.imageUrl is not null %}
-                    <label class="badge badge-warning mb-0">Link</label>
-                    {% else %}
-                        {% if operatingSystem.imageFilename is not null %}
-                        <label class="badge badge-success mb-0">File</label>
-                        {% else %}
-                        <label class="badge badge-info mb-0">None</label>
-                        {% endif %}
-                    {% endif %}
+
+<div class="search-panel mt-3">
+    <div class="row">
+        <div class="col-md-6">
+            <form action="{{ path('operating_systems') }}" method="GET" class="d-flex">
+                <input type="search" class="form-control" name="search"
+                       placeholder="Search by name or architecture..."
+                       spellcheck="false" value="{{ search|default('') }}"
+                       id="searchInput">
+                <button class="btn btn-outline-secondary ms-2" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-end">
+                <select class="form-select" style="width: auto;" id="archFilter">
+                    <option value="">All Architectures</option>
+                    <option value="x86">x86 (32-bit)</option>
+                    <option value="x86_64">x86_64 (64-bit)</option>
+                    <option value="arm">ARM (32-bit)</option>
+                    <option value="arm64">ARM64 (64-bit)</option>
+                </select>
             </div>
-            <div class="col-11">
-                <a href="{{ path('show_operating_system', {'id': operatingSystem.id}) }}" class="lab-item-name">
-                {{- operatingSystem.name -}}
-            </a>
-            </div>
-            
+        </div>
     </div>
-    {% endfor %} 
+</div>
+
+<div class="labs-panel mt-3">
+    {% if operatingSystems is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-hdd fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Operating Systems Found</h4>
+            <p class="text-muted">Get started by creating your first operating system.</p>
+            <a href="{{ path('new_operating_system') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create Operating System
+            </a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="100">Type</th>
+                        <th>Name</th>
+                        <th width="120">Architecture</th>
+                        <th width="150">Hypervisor</th>
+                        <th width="100">Size</th>
+                    </tr>
+                </thead>
+                <tbody id="osTableBody">
+                    {% for operatingSystem in operatingSystems %}
+                    <tr class="os-item" 
+                        data-type="{% if operatingSystem.imageUrl is not null %}url{% elseif operatingSystem.imageFilename is not null %}file{% else %}none{% endif %}"
+                        data-arch="{{ operatingSystem.arch|lower }}"
+                        data-name="{{ operatingSystem.name|lower }}">
+                        <td>
+                            {% if operatingSystem.imageUrl is not null %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-link me-1"></i>URL
+                                </span>
+                            {% elseif operatingSystem.imageFilename is not null %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-file me-1"></i>File
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-question me-1"></i>None
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <a href="{{ path('show_operating_system', {'id': operatingSystem.id}) }}" 
+                                       class="text-decoration-none fw-medium">
+                                        {{ operatingSystem.name }}
+                                    </a>
+                                    {% if operatingSystem.description %}
+                                        <small class="text-muted d-block">{{ operatingSystem.description|truncate(50) }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ operatingSystem.arch|upper }}</span>
+                        </td>
+                        <td>
+                            {% if operatingSystem.hypervisor %}
+                                <span class="text-muted">{{ operatingSystem.hypervisor.name }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if operatingSystem.imageFilename %}
+                                <span class="text-muted" title="File size">
+                                    <i class="fas fa-hdd me-1"></i>
+                                    {# You might want to add a getFileSize() method to show actual file size #}
+                                    <small>Local</small>
+                                </span>
+                            {% elseif operatingSystem.imageUrl %}
+                                <span class="text-muted" title="Remote image">
+                                    <i class="fas fa-cloud me-1"></i>
+                                    <small>Remote</small>
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {# Pagination #}
+        {% if pagination.pageCount > 1 %}
+        <div class="row align-items-center mt-4">
+            <div class="col-md-6">
+                <div class="text-muted">
+                    {% set start = (pagination.currentPageNumber - 1) * pagination.itemNumberPerPage + 1 %}
+                    {% set end = pagination.currentPageNumber == pagination.pageCount ? pagination.totalItemCount : pagination.currentPageNumber * pagination.itemNumberPerPage %}
+                    
+                    Showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong> 
+                    of <strong>{{ pagination.totalItemCount }}</strong> operating systems
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end">
+                    {{ knp_pagination_render(pagination) }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Si vous voulez aussi afficher des informations quand il n'y a qu'une page #}
+        {% if pagination.pageCount == 1 and pagination.totalItemCount > 0 %}
+        <div class="text-muted mt-3">
+            Showing all {{ pagination.totalItemCount }} operating systems
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# Delete Confirmation Modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the operating system <strong id="deleteItemName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" class="btn btn-danger" id="confirmDeleteBtn">Delete</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
-    
+
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('operating-system') }} #}
+    <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab filtering
+            const filterTabs = document.querySelectorAll('[data-filter]');
+            const osItems = document.querySelectorAll('.os-item');
+            
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active tab
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    
+                    osItems.forEach(item => {
+                        if (filter === 'all' || item.dataset.type === filter) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // Architecture filter
+            const archFilter = document.getElementById('archFilter');
+            archFilter.addEventListener('change', function() {
+                const selectedArch = this.value.toLowerCase();
+                
+                osItems.forEach(item => {
+                    if (!selectedArch || item.dataset.arch === selectedArch) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                osItems.forEach(item => {
+                    const name = item.dataset.name;
+                    const arch = item.dataset.arch;
+                    
+                    if (name.includes(searchTerm) || arch.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Delete confirmation
+        function confirmDelete(name, deleteUrl) {
+            document.getElementById('deleteItemName').textContent = name;
+            document.getElementById('confirmDeleteBtn').href = deleteUrl;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        
+    </script>
 {% endblock %}

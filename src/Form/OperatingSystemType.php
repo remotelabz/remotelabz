@@ -15,7 +15,7 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
 class OperatingSystemType extends AbstractType
 {
@@ -25,8 +25,11 @@ class OperatingSystemType extends AbstractType
             ->add('name', TextType::class)
             ->add('imageUrl', UrlType::class, [
                 'label' => 'Image URL',
-                'help' => 'You can provide either an image URL or a file, but not both.',
-                'required' => false
+                'help' => 'Provide either an image URL or upload a file, but not both.',
+                'required' => false,
+                'attr' => [
+                    'placeholder' => 'https://example.com/path/to/image.img'
+                ]
             ])
             ->add('image_Filename', TextType::class, [
                 'required' => false
@@ -36,21 +39,48 @@ class OperatingSystemType extends AbstractType
                 'choice_label' => 'name'
             ])
             ->add('imageFilename', FileType::class, [
-                'label' => 'Upload an image file',
-                'help' => 'The maximum size allowed is 3GB. Accepted QEMU only files (qcow2 format) : .img',
+                'label' => 'Upload Image File',
+                'help' => 'Maximum size: 3GB. Supported formats: qcow2 but with suffix .img',
                 'required' => false,
                 'mapped' => false,
-                'attr' => ['placeholder' => 'Choose file'],
+                'attr' => [
+                    'accept' => '.img',
+                    'data-max-size' => '3GB'
+                ],
                 'constraints' => [
                     new File([
                         'maxSize' => '3000M',
-                /*        'mimeTypes' => [
+                        'mimeTypes' => [
                             'application/octet-stream',
-                            'application/*'
+                            'application/x-qemu-disk',
                         ],
-                        'mimeTypesMessage' => "Please upload a valid image file",*/
+                        'mimeTypesMessage' => 'Please upload a valid disk image file.',
                     ])
                 ],
+            ])
+            ->add('arch', ChoiceType::class, [
+                'choices' => [
+                    'x86 (32-bit)' => 'x86',
+                    'x86_64 (64-bit)' => 'x86_64',
+                    'ARM (32-bit)' => 'arm',
+                    'ARM64 (64-bit)' => 'arm64',
+                ],
+                'required' => true,
+                'label' => 'Architecture',
+                'placeholder' => 'Select architecture...',
+                'attr' => [
+                    'class' => 'form-select'
+                ]
+            ])
+            ->add('description', TextareaType::class, [
+                'required' => false,
+                'label' => 'Description',
+                'attr' => [
+                    'placeholder' => 'Brief description of this operating system...',
+                    'rows' => 3,
+                    'maxlength' => 500
+                ],
+                'help' => 'Optional description (max 500 characters)'
             ])
             ->add('submit', SubmitType::class)
         ;
