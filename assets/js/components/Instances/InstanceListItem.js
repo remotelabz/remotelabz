@@ -21,7 +21,24 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
-    
+    const [computingInstances, setComputingInstances] = useState(new Set());
+
+    const setInstanceComputing = (uuid, computing) => {
+        setComputingInstances(prev => {
+            const newSet = new Set(prev);
+            if (computing) {
+                newSet.add(uuid);
+            } else {
+                newSet.delete(uuid);
+            }
+            return newSet;
+        });
+    };
+
+    const isInstanceComputing = (uuid) => {
+        return computingInstances.has(uuid);
+    };
+
     //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         fetchLogs()
@@ -29,12 +46,36 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         const interval = setInterval(fetchLogs, 30000)
         Remotelabz.devices.get(instance.device.id).then(response => {
             setDevice(response.data)
-            setLoading(false)
+            setLoading(false) // Use to load all devices in lab
         })
         return () => {
             clearInterval(interval)
         }
     }, [instance])
+
+    useEffect(() => {
+    // Si l'instance passe en état 'starting', on peut remettre computing à false
+        if (instance.state === 'starting' && isComputing) {
+            //console.log('Instance is now starting, removing local computing state');
+            setComputing(false);
+            setInstanceComputing(instance.uuid, false);
+        }
+    }, [instance.state, isComputing]);
+
+    useEffect(() => {
+        // Quand l'instance passe à started, on retire le spinner
+        if (
+            instance.state === 'started' ||
+            instance.state === 'stopped' ||
+            instance.state === 'error' ||
+            instance.state === 'exported' ||
+            instance.state === 'reset'
+        ) {
+            setInstanceComputing(instance.uuid, false);
+            setComputing(false);
+    }
+}, [instance.state]);
+
 
     function fetchLogs() {
         return Remotelabz.instances.device.logs(instance.uuid).then(response => {
@@ -43,102 +84,76 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             if (error.response.status === 404) {
                 setLogs([]);
             } else {
-               
-                 
                 toast.error('An error happened while fetching instance logs. If this error persist, please contact an administrator.', {
                 });
-
                 setDevice(null)
             }
         });
     }
 
     function startDevice(deviceInstance) {
-        setComputing(true)
-
+        setInstanceComputing(deviceInstance.uuid, true);
         Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
-            
-            toast.success('Instance start requested.', {
-            });
-
+            toast.success('Instance start requested.');
             onStateUpdate();
         }).catch((error) => {
-            if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                
-                toast.error(error.response.data.message, {
-                    autoClose: 10000,
-                });
-            } else if (error.response.data.message.includes("Device")) {
-              
-                toast.error(error.response.data.message, {
-                    autoClose: 5000,
-                });
+            setInstanceComputing(deviceInstance.uuid, false);
+            const errorMessage = error?.response?.data?.message || '';
+            if (errorMessage.includes("Worker") && errorMessage.includes("is suspended")) {
+                toast.error(errorMessage, { autoClose: 10000 });
+            } else if (errorMessage.includes("Device")) {
+                toast.error(errorMessage, { autoClose: 5000 });
+            } else {
+                toast.error("Error while requesting instance start. Please try again later.");
             }
-            else {
-              
-                toast.error("Error while requesting instance start. Please try again later.", {                    
-                });
-            }
-            setComputing(false)
-        })
+        });
     }
 
     function stopDevice(deviceInstance) {
-        setComputing(true)
-        if (showStopDeviceModel == true) {
+        setInstanceComputing(deviceInstance.uuid, true);
+        if (showStopDeviceModel) {
             setShowStopDeviceModel(false);
         }
-
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
-           
-            toast.success("Instance stop requested.", {
-                });
-
+            toast.success('Instance stop requested.');
             onStateUpdate();
         }).catch((error) => {
-            if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-               
-                toast.error(error.response.data.message, {
-                    autoClose: 10000
-            });
+            setInstanceComputing(deviceInstance.uuid, false);
+            const errorMessage = error?.response?.data?.message || '';
+            if (errorMessage.includes("Worker") && errorMessage.includes("is suspended")) {
+                toast.error(errorMessage, { autoClose: 10000 });
+            } else if (errorMessage.includes("Device")) {
+                toast.error(errorMessage, { autoClose: 5000 });
+            } else {
+                toast.error("Error while requesting instance stop. Please try again later.");
             }
-            else {
-               
-                toast.error('Error while requesting instance stop. Please try again later.', {
-                    autoClose: 10000
-                });
-            }
-            setComputing(false)
-        })
+        });
     }
 
     function resetDevice(deviceInstance) {
-        setShowResetDeviceModel(false)
-        setComputing(true);
-
+        setShowResetDeviceModel(false);
+        setInstanceComputing(deviceInstance.uuid, true);
+        
         Remotelabz.instances.device.reset(deviceInstance.uuid).then(() => {
-           
-            toast.success('Device reset requested.', {
-            });
+            toast.success('Instance reset requested.');
             onStateUpdate();
         }).catch((error) => {
-            if (error.response.data.message.includes("Worker") && error.response.data.message.includes("is suspended")) {
-                
-                toast.error(error.response.data.message, {
-                    autoClose: 10000
-                });
+            setInstanceComputing(deviceInstance.uuid, false);
+            const errorMessage = error?.response?.data?.message || '';
+            if (errorMessage.includes("Worker") && errorMessage.includes("is suspended")) {
+                toast.error(errorMessage, { autoClose: 10000 });
+            } else if (errorMessage.includes("Device")) {
+                toast.error(errorMessage, { autoClose: 10000 });
+            } else {
+                toast.error("Error while requesting instance reset. Please try again later.", { autoClose: 10000 });
             }
-            else {
-                toast.error('Error while requesting instance reset. Please try again later.', {
-                    autoClose: 10000
-                });
-            }
-            setComputing(false)
-        })
+        });
     }
 
     function isComputingState(deviceInstance) {
-        return deviceInstance.state === 'starting' || deviceInstance.state === 'stopping';
+        return deviceInstance.state === 'starting' || 
+           deviceInstance.state === 'stopping' || 
+           isInstanceComputing(deviceInstance.uuid);
     }
 
     function exportDeviceTemplate(deviceInstance, name) {
@@ -214,9 +229,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     }
     
     let controls;
-    /*console.log('[InstanceListItem]::instance',instance);
-    console.log('[InstanceListItem]::user',user);
-    console.log('[InstanceListItem]::lab',lab);*/
+    
 
     switch (instance.state) {
         case 'error':
@@ -226,16 +239,38 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             break;
 
         case 'stopped':
-            controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
-                <SVG name="play" />
-            </Button>);
-		//console.log("test stopped");
+            controls = (
+                <Button 
+                    className="ml-3" 
+                    variant="success" 
+                    title="Start device" 
+                    onClick={() => {
+                        //console.log('Button clicked, isComputing before:', isComputing || isInstanceComputing(instance.uuid));
+                        startDevice(instance);
+                    }}
+                    disabled={isComputingState(instance)}
+                >
+                    {(isComputing || isInstanceComputing(instance.uuid)) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                </Button>
+            );
+
             break;
 
         case 'reset':
-            controls = (<Button className="ml-3" variant="success" title="Start device" data-toggle="tooltip" data-placement="top" onClick={() => startDevice(instance)} disabled={isComputingState(instance)}>
-                <SVG name="play" />
-            </Button>);
+            controls = (
+            <Button 
+                    className="ml-3" 
+                    variant="success" 
+                    title="Start device" 
+                    onClick={() => {
+                        //console.log('Button clicked, isComputing before:', isComputing || isInstanceComputing(instance.uuid));
+                        startDevice(instance);
+                    }}
+                    disabled={isComputingState(instance)}
+            >
+                {(isComputing || isInstanceComputing(instance.uuid)) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+            </Button>
+            );
             break;
 
         case 'starting':
@@ -265,22 +300,20 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
 
         case 'started':
             controls = (
-                <Button
-                    className="ml-3"
-                    variant="danger"
-                    title="Stop device"
-                    data-toggle="tooltip"
-                    data-placement="top"
-                    onClick={() => stopDevice(instance)}
+            <Button 
+                    className="ml-3" 
+                    variant="danger" 
+                    title="Stop device" 
+                    onClick={() => {
+                        stopDevice(instance);
+                    }}
                     disabled={isComputingState(instance)}
-                >
-                    <SVG name="stop" />
-                </Button>
+            >
+                {(isComputing || isInstanceComputing(instance.uuid)) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
+            </Button>
             );
-            
             break;
     }
-//console.log("test 2");
     return (
         <>
          <ListGroupItem>
@@ -343,8 +376,19 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                             user.roles.includes("ROLE_TEACHER_EDITOR") )
                         )
                         &&
-                            <Button variant="danger" title="Reset device" data-toggle="tooltip" data-placement="top" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
-                    }        
+                            //<Button variant="danger" title="Reset device" data-toggle="tooltip" data-placement="top" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
+                            <Button 
+                                className="ml-3" 
+                                variant="danger" 
+                                title="Reset device" 
+                                onClick={() => {
+                                    setShowResetDeviceModel(true);
+                                }}
+                                disabled={isComputingState(instance)}
+                            >
+                                {(isComputing || isInstanceComputing(instance.uuid)) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
+                            </Button>
+                        }        
                         {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
                             <Button variant="danger" title="Reset device" data-toggle="tooltip" data-placement="top" className="ml-3" onClick={() => setShowResetDeviceModel(true)}><SVG name="redo"></SVG></Button>
                         }
