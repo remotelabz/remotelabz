@@ -19,8 +19,6 @@ class NetworkSettingsFixtures extends Fixture
             ->setName('ToAlpineDevice')
             ->setIp(NULL)
             ->setIpv6(NULL)
-            ->setPrefix4(NULL)
-            ->setPrefix6(NULL)
             ->setGateway(NULL)
             ->setProtocol("VNC")
             ->setPort(NULL)
