@@ -132,7 +132,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     async function onInstanceStateUpdate() {
-        // Refresh instance if needed
+        refreshInstance();
     }
 
     function onViewAsChange(option) {

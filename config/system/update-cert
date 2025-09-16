@@ -1,0 +1,26 @@
+#!/bin/sh
+# When assume the certificate is renewed on XX server
+# Replace XX and user with the appropriate values
+# Make sure to have SSH keys set up for passwordless authentication
+
+# Add in your crontab (/etc/crontab)
+# Every 16th day of the month at 02:02 AM
+# 02 02   16 * *  root    /etc/apache2/update-cert
+
+# On your XX server, you can use the following certbot command to renew the certificate
+#certbot certonly --authenticator dns-ionos --dns-ionos-credentials /home/fnolot/.ionos-api --dns-ionos-propagation-seconds 60 --server https://acme-v02.api.letsencrypt.org/directory --agree-tos --rsa-key-size 4096 -d *.DOMAIN -d DOMAIN --agree-tos --email USERMAIL --force-renewal
+
+#cp /etc/letsencrypt/live/DOMAIN/privkey.pem /home/user/cert-remotelabz/RemoteLabz-WebServer.key
+#cp /etc/letsencrypt/live/DOMAIN/fullchain.pem  /home/user/cert-remotelabz/RemoteLabz-WebServer.crt
+#chown user: /home/user/cert-remotelabz -R
+#cp /home/user/cert-remotelabz/* /etc/apache2/
+
+service apache2 restart
+
+
+scp user@XX:/home/user/cert-remotelabz/* /etc/apache2/
+cp /etc/apache2/RemoteLabz-WebServer.key /etc/ssl/private/privkey.pem
+cp /etc/apache2/RemoteLabz-WebServer.crt /etc/ssl/certs/fullchain.pem
+
+service apache2 restart
+service remotelabz restart

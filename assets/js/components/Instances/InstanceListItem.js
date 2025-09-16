@@ -270,7 +270,6 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     
     let controls;
     
-
     switch (instance.state) {
         case 'error':
             controls = (
