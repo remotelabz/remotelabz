@@ -138,37 +138,37 @@ class InstanceStateMessageHandler
                 //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
                 switch ($instance->getState()) {
                     case InstanceStateMessage::STATE_STARTING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_ERROR);
                         break;
 
                     case InstanceStateMessage::STATE_STOPPING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_STARTED);
                         break;
                     
                     case InstanceStateMessage::STATE_RESETTING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_STOPPED);
                         break;
 
                     case InstanceStateMessage::STATE_CREATING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);
                         break;
 
                     case InstanceStateMessage::STATE_CREATED:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_DELETED);
                         break;
 
                     case InstanceStateMessage::STATE_DELETING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         $instance->setState(InstanceStateMessage::STATE_CREATED);
                         break;
 
                     case InstanceStateMessage::STATE_EXPORTING:
-                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in '.$instance->getState());
+                        $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                         if ($message->getOptions()['error_code'] === 1) //Device never started
                             $instance->setState(InstanceStateMessage::STATE_ERROR);
                         else
