@@ -41,4 +41,50 @@ class ArchController extends AbstractController
             'archs' => $archs,
         ]);
     }
+
+    #[Route('/admin/arch/delete', name: 'arch_delete')]
+    public function delete(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $id = $request->query->get('id');
+        $arch = $entityManager->getRepository(Arch::class)->find($id);
+
+        if ($arch) {
+            $entityManager->remove($arch);
+            $entityManager->flush();
+            $this->addFlash('success', 'Architecture supprimée !');
+        } else {
+            $this->addFlash('error', 'Architecture non trouvée.');
+        }
+
+        return $this->redirectToRoute('arch_list');
+    }
+
+    
+
+    #[Route('/admin/arch/edit', name: 'arch_edit')]
+    public function edit(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $id = $request->query->get('id');
+        $arch = $entityManager->getRepository(Arch::class)->find($id);
+
+        if (!$arch) {
+            $this->addFlash('error', 'Architecture non trouvée.');
+            return $this->redirectToRoute('arch_list');
+        }
+
+        $form = $this->createForm(ArchType::class, $arch);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Architecture mise à jour !');
+            return $this->redirectToRoute('arch_list');
+        }
+
+        return $this->render('arch/view.html.twig', [
+            'form' => $form->createView(),
+            'arch' => $arch,
+        ]);
+    }
+    
 }
