@@ -2,9 +2,9 @@
 
 namespace App\Form;
 
-use App\Entity\Flavor;
 use App\Entity\Hypervisor;
 use App\Entity\OperatingSystem;
+use App\Entity\Arch;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -59,7 +59,7 @@ class OperatingSystemType extends AbstractType
                 ],
             ])
             ->add('arch', EntityType::class, [
-                'class' => \App\Entity\Arch::class,
+                'class' => Arch::class,
                 'choice_label' => 'name',
                 'required' => true,
                 'label' => 'Architecture',

@@ -38,12 +38,23 @@
                         <!-- Nom de l'ISO -->
                         <div class="mb-4">
                             <div class="form-floating">
-                                {{ form_widget(form.Name, {'attr': {'class': 'form-control', 'placeholder': 'ISO name'|trans}}) }}
-                                {{ form_label(form.Name, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'ISO name'|trans}}) }}
                             </div>
-                            {{ form_errors(form.Name) }}
+                            {{ form_errors(form.name) }}
                             <div class="form-text">
                                 <i class="fa fa-info-circle text-info"></i> {{ 'Enter a descriptive name for your ISO file'|trans }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                {{ form_label(form.arch, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.arch, {'attr': {'class': 'form-control', 'placeholder': 'Architecture'|trans}}) }}
+                            </div>
+                            {{ form_errors(form.arch) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Select the architecture for which this ISO can be used'|trans }}
                             </div>
                         </div>
 
@@ -53,7 +64,7 @@
                             <div class="row g-3 mt-1">
                                 {% for choice in form.fileSourceType %}
                                     <div class="col-sm-6">
-                                        <div class="card file-source-card {% if choice.vars.checked %}border-primary bg-light{% endif %}" 
+                                        <div class="card file-source-card" 
                                              data-source-type="{{ choice.vars.value }}">
                                             <div class="card-body text-center p-3">
                                                 <div class="mb-2">
@@ -157,15 +168,15 @@
             transition: all 0.3s ease;
             border: 2px solid #dee2e6;
         }
-        
+           
         .file-source-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         .file-source-card.active {
-            border-color: #0d6efd;
-            background-color: #f8f9ff !important;
+            border-color: #ffffffff;
+            
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
         
@@ -202,6 +213,64 @@
             opacity: 0.65;
             transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
         }
+
+
+        [theme="dark"] {
+           .file-source-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #252525ff;
+        }
+           
+        .file-source-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .file-source-card.active {
+            border-color: #ffffffff;
+            
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .upload-zone {
+            transition: all 0.3s ease;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9ff;
+        }
+        
+        .upload-zone.drag-over {
+            border-color: #198754;
+            background-color: #f8fff9;
+            transform: scale(1.02);
+        }
+        
+        .file-input:hover + .upload-content,
+        .file-input:focus + .upload-content {
+            color: #0d6efd;
+        }
+        
+        .progress {
+            height: 8px;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+        }
+    }
+
+
+
     </style>
 {% endblock %}
 

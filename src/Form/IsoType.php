@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Iso;
+use App\Entity\Arch;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -16,14 +17,19 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\Url;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Security;
 
 class IsoType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
+        $builder         
             // Champ Name (obligatoire)
-            ->add('Name', TextType::class, [
+            ->add('name', TextType::class, [
                 'label' => 'ISO name',
                 'required' => true,
                 'constraints' => [
@@ -34,6 +40,17 @@ class IsoType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Type the ISO name'
+                ]
+            ])
+            // Champ Architecture (lié à l'entité Arch)
+            ->add('arch', EntityType::class, [
+                'class' => Arch::class,
+                'choice_label' => 'name',
+                'required' => true,
+                'label' => 'Architecture',
+                'placeholder' => 'Select architecture...',
+                'attr' => [
+                    'class' => 'form-select'
                 ]
             ])
             

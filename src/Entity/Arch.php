@@ -24,7 +24,7 @@ class Arch
     )]
     #[ORM\Column(type: 'string', length: 20, nullable: false)]
     #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
-    private ?string $Name = "x86_64";
+    private ?string $name = "x86_64";
 
     public function getId(): ?int
     {
@@ -33,12 +33,12 @@ class Arch
 
     public function getName(): ?string
     {
-        return $this->Name;
+        return $this->name;
     }
 
-    public function setName(string $Name): static
+    public function setName(string $name): static
     {
-        $this->Name = $Name;
+        $this->name = $name;
 
         return $this;
     }

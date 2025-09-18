@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Iso;
+use App\Entity\Arch;
 use App\Form\IsoType;
 use App\Repository\IsoRepository;
 use Doctrine\ORM\EntityManagerInterface;

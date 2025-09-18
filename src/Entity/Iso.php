@@ -14,13 +14,13 @@ class Iso
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $Name = null;
+    private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $Filename = null;
+    private ?string $filename = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $Filename_url = null;
+    private ?string $filename_url = null;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
@@ -34,37 +34,49 @@ class Iso
 
     public function getName(): ?string
     {
-        return $this->Name;
+        return $this->name;
     }
 
-    public function setName(string $Name): static
+    public function setName(string $name): static
     {
-        $this->Name = $Name;
+        $this->name = $name;
 
         return $this;
     }
 
     public function getFilename(): ?string
     {
-        return $this->Filename;
+        return $this->filename;
     }
 
-    public function setFilename(?string $Filename): static
+    public function setFilename(?string $filename): static
     {
-        $this->Filename = $Filename;
+        $this->filename = $filename;
 
         return $this;
     }
 
     public function getFilenameUrl(): ?string
     {
-        return $this->Filename_url;
+        return $this->filename_url;
     }
 
-    public function setFilenameUrl(?string $Filename_url): static
+    public function setFilenameUrl(?string $filename_url): static
     {
-        $this->Filename_url = $Filename_url;
+        $this->filename_url = $filename_url;
 
         return $this;
     }
+
+    public function getArch(): ?Arch
+{
+    return $this->arch;
+}
+
+public function setArch(?Arch $arch): static
+{
+    $this->arch = $arch;
+
+    return $this;
+}
 }
