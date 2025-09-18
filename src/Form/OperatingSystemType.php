@@ -58,13 +58,9 @@ class OperatingSystemType extends AbstractType
                     ])
                 ],
             ])
-            ->add('arch', ChoiceType::class, [
-                'choices' => [
-                    'x86 (32-bit)' => 'x86',
-                    'x86_64 (64-bit)' => 'x86_64',
-                    'ARM (32-bit)' => 'arm',
-                    'ARM64 (64-bit)' => 'arm64',
-                ],
+            ->add('arch', EntityType::class, [
+                'class' => \App\Entity\Arch::class,
+                'choice_label' => 'name',
                 'required' => true,
                 'label' => 'Architecture',
                 'placeholder' => 'Select architecture...',

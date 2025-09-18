@@ -1,0 +1,18 @@
+{# filepath: /home/florent/remotelabz/templates/arch/new.html.twig #}
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}New Architecture - {{ parent() }}{% endblock %}
+
+{% block wrapper %}
+<div class="content-title mb-4">
+    <h1>New Architecture</h1>
+</div>
+<div class="card">
+    <div class="card-body">
+        {{ form(form) }}
+    </div>
+</div>
+<a href="{{ path('arch_list') }}" class="btn btn-outline-secondary mt-3">
+    <i class="fas fa-arrow-left me-2"></i> Back to list
+</a>
+{% endblock %}

@@ -1,0 +1,357 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'ISO': path('app_iso_index'), 'Nouveau': path('app_iso_new') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'app_iso_index' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="content-title">
+        <div class="content-title-infos">
+            <h1>{{ 'New ISO'|trans }}</h1>
+            <p class="text-muted">{{ 'Create a new ISO file entry by uploading a file or providing a URL'|trans }}</p>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('app_iso_index') }}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> {{ 'Back'|trans }}
+            </a>
+        </div>
+    </div>
+
+    <div class="content-body">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fa fa-compact-disc me-2"></i>{{ 'ISO Configuration'|trans }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'class': 'needs-validation', 'novalidate': true}}) }}
+                        
+                        <!-- Nom de l'ISO -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                {{ form_widget(form.Name, {'attr': {'class': 'form-control', 'placeholder': 'ISO name'|trans}}) }}
+                                {{ form_label(form.Name, null, {'label_attr': {'class': 'form-label'}}) }}
+                            </div>
+                            {{ form_errors(form.Name) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Enter a descriptive name for your ISO file'|trans }}
+                            </div>
+                        </div>
+
+                        <!-- Sélecteur de type de source -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">{{ 'File Source Type'|trans }}</label>
+                            <div class="row g-3 mt-1">
+                                {% for choice in form.fileSourceType %}
+                                    <div class="col-sm-6">
+                                        <div class="card file-source-card {% if choice.vars.checked %}border-primary bg-light{% endif %}" 
+                                             data-source-type="{{ choice.vars.value }}">
+                                            <div class="card-body text-center p-3">
+                                                <div class="mb-2">
+                                                    {% if choice.vars.value == 'upload' %}
+                                                        <i class="fa fa-upload fa-2x text-primary"></i>
+                                                    {% else %}
+                                                        <i class="fa fa-link fa-2x text-success"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="form-check">
+                                                    {{ form_widget(choice, {'attr': {'class': 'form-check-input file-source-radio'}}) }}
+                                                    {{ form_label(choice, null, {'label_attr': {'class': 'form-check-label fw-semibold'}}) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {{ form_errors(form.fileSourceType) }}
+                        </div>
+
+                        <!-- Zone d'upload de fichier -->
+                        <div class="mb-4 file-upload-block" {% if form.fileSourceType.vars.value != 'upload' %}style="display:none;"{% endif %}>
+                            <div class="upload-zone border border-dashed border-2 rounded p-4 text-center position-relative">
+                                <div class="upload-content">
+                                    <i class="fa fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <h5 class="mb-2">{{ 'Upload ISO File'|trans }}</h5>
+                                    <p class="text-muted mb-3">{{ 'Drag and drop your ISO file here or click to browse'|trans }}</p>
+                                    {{ form_widget(form.uploadedFile, {'attr': {'class': 'form-control file-input position-absolute w-100 h-100 opacity-0', 'style': 'top: 0; left: 0; cursor: pointer;'}}) }}
+                                    <button type="button" class="btn btn-outline-primary">
+                                        <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
+                                    </button>
+                                </div>
+                                <div class="file-info mt-3 d-none">
+                                    <div class="alert alert-info d-flex align-items-center">
+                                        <i class="fa fa-file me-2"></i>
+                                        <span class="file-name"></span>
+                                        <span class="file-size ms-auto badge bg-secondary"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ form_errors(form.uploadedFile) }}
+                            <div class="form-text">
+                                <i class="fa fa-exclamation-triangle text-warning"></i> 
+                                {{ 'Maximum file size: 5GB. Accepted formats: .iso'|trans }}
+                            </div>
+                        </div>
+
+                        <!-- Zone URL -->
+                        <div class="mb-4 url-block" {% if form.fileSourceType.vars.value != 'url' %}style="display:none;"{% endif %}>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light">
+                                    <i class="fa fa-link text-success"></i>
+                                </span>
+                                {{ form_widget(form.Filename_url, {'attr': {'class': 'form-control', 'placeholder': 'https://example.com/file.iso'}}) }}
+                                <button class="btn btn-outline-secondary" type="button" id="validateUrl">
+                                    <i class="fa fa-check"></i> {{ 'Validate'|trans }}
+                                </button>
+                            </div>
+                            {{ form_errors(form.Filename_url) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> 
+                                {{ 'Enter the direct URL to download the ISO file'|trans }}
+                            </div>
+                        </div>
+
+                        <!-- Progress bar (cachée par défaut) -->
+                        <div class="mb-4 upload-progress d-none">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">{{ 'Upload Progress'|trans }}</span>
+                                <span class="progress-percentage">0%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%" aria-valuenow="0" 
+                                     aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{{ path('app_iso_index') }}" class="btn btn-outline-secondary">
+                                <i class="fa fa-times me-1"></i>{{ 'Cancel'|trans }}
+                            </a>
+                            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4'}}) }}
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .file-source-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+        }
+        
+        .file-source-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .file-source-card.active {
+            border-color: #0d6efd;
+            background-color: #f8f9ff !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .upload-zone {
+            transition: all 0.3s ease;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9ff;
+        }
+        
+        .upload-zone.drag-over {
+            border-color: #198754;
+            background-color: #f8fff9;
+            transform: scale(1.02);
+        }
+        
+        .file-input:hover + .upload-content,
+        .file-input:focus + .upload-content {
+            color: #0d6efd;
+        }
+        
+        .progress {
+            height: 8px;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const radios = document.querySelectorAll('.file-source-radio');
+            const uploadBlock = document.querySelector('.file-upload-block');
+            const urlBlock = document.querySelector('.url-block');
+            const fileInput = document.querySelector('input[type="file"]');
+            const uploadZone = document.querySelector('.upload-zone');
+            const fileInfo = document.querySelector('.file-info');
+            const progressContainer = document.querySelector('.upload-progress');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressPercentage = document.querySelector('.progress-percentage');
+
+            // Gestion des cartes de sélection
+            function updateSourceCards() {
+                document.querySelectorAll('.file-source-card').forEach(card => {
+                    const radio = card.querySelector('input[type="radio"]');
+                    card.classList.toggle('active', radio.checked);
+                });
+            }
+
+            // Gestion du changement de source
+            radios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    if (this.value === 'upload') {
+                        uploadBlock.style.display = '';
+                        urlBlock.style.display = 'none';
+                    } else {
+                        uploadBlock.style.display = 'none';
+                        urlBlock.style.display = '';
+                    }
+                    updateSourceCards();
+                });
+            });
+
+            // Gestion du clic sur les cartes
+            document.querySelectorAll('.file-source-card').forEach(card => {
+                card.addEventListener('click', function () {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+
+            // Gestion du drag & drop
+            if (uploadZone && fileInput) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight(e) {
+                    uploadZone.classList.add('drag-over');
+                }
+
+                function unhighlight(e) {
+                    uploadZone.classList.remove('drag-over');
+                }
+
+                uploadZone.addEventListener('drop', handleDrop, false);
+
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        displayFileInfo(files[0]);
+                    }
+                }
+
+                // Affichage des informations du fichier
+                fileInput.addEventListener('change', function (e) {
+                    if (e.target.files.length > 0) {
+                        displayFileInfo(e.target.files[0]);
+                    }
+                });
+
+                function displayFileInfo(file) {
+                    const fileName = fileInfo.querySelector('.file-name');
+                    const fileSize = fileInfo.querySelector('.file-size');
+                    
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+                    fileInfo.classList.remove('d-none');
+                }
+
+                function formatFileSize(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                }
+            }
+
+            // Validation d'URL
+            const validateUrlBtn = document.getElementById('validateUrl');
+            const urlInput = document.querySelector('input[name="iso[Filename_url]"]');
+            
+            if (validateUrlBtn && urlInput) {
+                validateUrlBtn.addEventListener('click', function () {
+                    const url = urlInput.value.trim();
+                    if (url) {
+                        // Simulation de validation (remplacez par votre logique)
+                        validateUrlBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ 'Validating...'|trans }}';
+                        
+                        setTimeout(() => {
+                            if (isValidUrl(url)) {
+                                validateUrlBtn.innerHTML = '<i class="fa fa-check text-success"></i> {{ 'Valid'|trans }}';
+                                validateUrlBtn.classList.remove('btn-outline-secondary');
+                                validateUrlBtn.classList.add('btn-outline-success');
+                            } else {
+                                validateUrlBtn.innerHTML = '<i class="fa fa-times text-danger"></i> {{ 'Invalid'|trans }}';
+                                validateUrlBtn.classList.remove('btn-outline-secondary');
+                                validateUrlBtn.classList.add('btn-outline-danger');
+                            }
+                        }, 1500);
+                    }
+                });
+            }
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return string.toLowerCase().endsWith('.iso') || string.includes('.iso');
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            // Initialisation
+            updateSourceCards();
+        });
+    </script>
+{% endblock %}

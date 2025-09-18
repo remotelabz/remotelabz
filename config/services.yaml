@@ -13,6 +13,7 @@ parameters:
     directory.public.upload: '%directory.public%/uploads'
     directory.public.upload.lab: '%directory.public.upload%/lab'
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
+    iso_directory: '%directory.public.upload%/iso'
     image_directory: '%kernel.project_dir%/public/uploads/images'
     image_default_profile: 'Circle-icons-profile.png'
     no_internet_access: 'No-Internet.png'
@@ -69,6 +70,7 @@ parameters:
     app.ssh.worker.passwd : '%env(string:SSH_USER_PASSWD)%'
     app.ssh.worker.privatekey : '%env(string:SSH_USER_PRIVATEKEY_FILE)%'
     app.ssh.worker.publickey : '%env(string:SSH_USER_PUBLICKEY_FILE)%'
+
 
 services:
     # default configuration for services in *this* file
@@ -253,5 +255,7 @@ services:
             $stream: '%kernel.logs_dir%/%kernel.environment%_app.log'
             $level: 'debug'
 
-    App\Twig\AppExtension:
+    App\Twig\AppExtension:  
+        arguments:
+            $rootDirectory: '%kernel.project_dir%'  
         tags: ['twig.extension']

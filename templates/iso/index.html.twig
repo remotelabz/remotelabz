@@ -1,0 +1,209 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}ISO Images - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 'ISO': path('app_iso_index') }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'app_iso_index' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">{{ 'ISO Images'|trans }}</h1>
+        <div class="quick-actions">
+            <a class="btn btn-success" role="button" href="{{ path('app_iso_new') }}">
+                <i class="fas fa-plus me-2"></i> {{ 'New ISO'|trans }}
+            </a>
+        </div>
+    </div>
+    <ul class="nav-links nav nav-tabs mt-3">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" data-filter="all">
+                <span>{{ 'All'|trans }}</span>
+                <span class="badge bg-primary ms-1">{{ isos|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="file">
+                <span>{{ 'Files'|trans }}</span>
+                <span class="badge bg-success ms-1">{{ isos|filter(iso => iso.Filename is not null)|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="url">
+                <span>{{ 'URLs'|trans }}</span>
+                <span class="badge bg-info ms-1">{{ isos|filter(iso => iso.FilenameUrl is not null)|length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="none">
+                <span>{{ 'No Source'|trans }}</span>
+                <span class="badge bg-secondary ms-1">{{ isos|filter(iso => iso.Filename is null and iso.FilenameUrl is null)|length }}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="search-panel mt-3">
+    <div class="row">
+        <div class="col-md-6">
+            <form action="{{ path('app_iso_index') }}" method="GET" class="d-flex">
+                <input type="search" class="form-control" name="search"
+                       placeholder="{{ 'Search by name...'|trans }}"
+                       spellcheck="false" value="{{ search|default('') }}"
+                       id="searchInput">
+                <button class="btn btn-outline-secondary ms-2" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="labs-panel mt-3">
+    {% if isos is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-compact-disc fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">{{ 'No ISO found.'|trans }}</h4>
+            <p class="text-muted">{{ 'Get started by creating your first ISO.'|trans }}</p>
+            <a href="{{ path('app_iso_new') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>{{ 'Create ISO'|trans }}
+            </a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="100">{{ 'Type'|trans }}</th>
+                        <th>{{ 'Name'|trans }}</th>
+                        <th width="150">{{ 'Source'|trans }}</th>
+                        <th width="120">{{ 'Actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody id="isoTableBody">
+                    {% for iso in isos %}
+                    <tr class="iso-item"
+                        data-type="{% if iso.FilenameUrl is not null %}url{% elseif iso.Filename is not null %}file{% else %}none{% endif %}"
+                        data-name="{{ iso.Name|lower }}">
+                        <td>
+                            {% if iso.FilenameUrl is not null %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-link me-1"></i>URL
+                                </span>
+                            {% elseif iso.Filename is not null %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-file me-1"></i>File
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-question me-1"></i>None
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="text-decoration-none fw-medium">
+                                {{ iso.Name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if iso.Filename %}
+                                <span class="text-muted"><i class="fas fa-hdd me-1"></i>Local</span>
+                            {% elseif iso.FilenameUrl %}
+                                <span class="text-muted"><i class="fas fa-cloud me-1"></i>Remote</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'View'|trans }}">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                            <a href="{{ path('app_iso_edit', {id: iso.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <form method="post" action="{{ path('app_iso_delete', {id: iso.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
+                                <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {# Pagination (à adapter si tu utilises KnpPaginator) #}
+        {% if pagination is defined and pagination.pageCount > 1 %}
+        <div class="row align-items-center mt-4">
+            <div class="col-md-6">
+                <div class="text-muted">
+                    {% set start = (pagination.currentPageNumber - 1) * pagination.itemNumberPerPage + 1 %}
+                    {% set end = pagination.currentPageNumber == pagination.pageCount ? pagination.totalItemCount : pagination.currentPageNumber * pagination.itemNumberPerPage %}
+                    Showing <strong>{{ start }}</strong> to <strong>{{ end }}</strong>
+                    of <strong>{{ pagination.totalItemCount }}</strong> ISO images
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end">
+                    {{ knp_pagination_render(pagination) }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% if pagination is defined and pagination.pageCount == 1 and pagination.totalItemCount > 0 %}
+        <div class="text-muted mt-3">
+            Showing all {{ pagination.totalItemCount }} ISO images
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab filtering
+            const filterTabs = document.querySelectorAll('[data-filter]');
+            const isoItems = document.querySelectorAll('.iso-item');
+            
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const filter = this.dataset.filter;
+                    isoItems.forEach(item => {
+                        if (filter === 'all' || item.dataset.type === filter) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                isoItems.forEach(item => {
+                    const name = item.dataset.name;
+                    if (name.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -90,14 +90,17 @@ class OperatingSystemController extends Controller
             $queryBuilder->andWhere($queryBuilder->expr()->orX(
                 $queryBuilder->expr()->like('LOWER(os.name)', ':search'),
                 $queryBuilder->expr()->like('LOWER(os.description)', ':search'),
-                $queryBuilder->expr()->like('LOWER(os.arch)', ':search')
+                $queryBuilder->expr()->like('LOWER(a.Name)', ':search'),
+                $queryBuilder->leftJoin('os.arch', 'a')
             ))->setParameter('search', '%' . strtolower($search) . '%');
         }
 
         if ($architecture) {
-            $queryBuilder->andWhere('os.arch = :arch')
-                ->setParameter('arch', $architecture);
-        }
+    $queryBuilder
+        ->leftJoin('os.arch', 'a')
+        ->andWhere('a.Name = :arch')
+        ->setParameter('arch', $architecture);
+}
 
         if ($hypervisorId) {
             $queryBuilder->andWhere('os.hypervisor = :hypervisorId')
@@ -256,61 +259,65 @@ class OperatingSystemController extends Controller
     public function editAction(Request $request, int $id, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
-        if (null === $operatingSystem) {
-            throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
-        }
+    if (null === $operatingSystem) {
+        throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+    }
 
-        $operatingSystemFilename = $operatingSystem->getImageFilename();
-        $operatingSystemEdited = $operatingSystem;
+    $operatingSystemFilename = $operatingSystem->getImageFilename();
+    $operatingSystemArch = $operatingSystem->getArch(); // objet Arch
+    $operatingSystemEdited = $operatingSystem;
 
-        $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
-        $operatingSystemForm->handleRequest($request);
+    $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
+    $operatingSystemForm->handleRequest($request);
 
-        if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
-            $operatingSystemEdited = $operatingSystemForm->getData();
-            $image_filename_upload = $operatingSystemForm->get('imageFilename')->getData();
-            $image_filename_modified=$operatingSystemForm->get('image_Filename')->getData();
-//            $hypervisor=$operatingSystemForm->get('hypervisor')->getData();
-            if ($image_filename_upload) {
-                //Upload function return a modified image filename for security reason
-                $new_ImageFileName = $imageFileUploader->upload($image_filename_upload);
+    if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
+        $operatingSystemEdited = $operatingSystemForm->getData();
+        $image_filename_upload = $operatingSystemForm->get('imageFilename')->getData();
+        $image_filename_modified = $operatingSystemForm->get('imageFilename')->getData();
+        $arch_modified = $operatingSystemForm->get('arch')->getData(); // objet Arch
 
-                if (is_null($operatingSystemForm->get('image_Filename')->getData()) )
-                //No custom filename is given
-                    $operatingSystemEdited->setImageFilename($new_ImageFileName);
-                else
-                //Custom filename is given
-                    $operatingSystemEdited->setImageFilename($image_filename_modified);
-            }
-            else {
+        if ($image_filename_upload) {
+            $new_ImageFileName = $imageFileUploader->upload($image_filename_upload);
+
+            if (is_null($image_filename_modified)) {
+                $operatingSystemEdited->setImageFilename($new_ImageFileName);
+            } else {
                 $operatingSystemEdited->setImageFilename($image_filename_modified);
             }
-
-            $entityManager = $this->entityManager;
-            $entityManager->persist($operatingSystemEdited);
-            $entityManager->flush();
-
-            //Send a message to change the name of the image on the worker filesystem
-
-            $new_name_os=array(
-                "old_name" => $operatingSystemFilename,
-                "new_name" => $operatingSystemEdited->getImageFilename(),
-                "hypervisor" => $operatingSystemEdited->getHypervisor()->getName()
-            );
-
-            $this->bus->dispatch(
-                new InstanceActionMessage(json_encode($new_name_os), $operatingSystemEdited->getId(), InstanceActionMessage::ACTION_RENAMEOS)
-            );
-            $this->addFlash('success', 'Operating system has been edited.');
-            return $this->redirectToRoute('show_operating_system', [
-                        'id' => $id
-            ]);
+        } else {
+            $operatingSystemEdited->setImageFilename($image_filename_modified);
         }
 
-        return $this->render('operating_system/new.html.twig', [
-            'operatingSystem' => $operatingSystem,
-            'operatingSystemForm' => $operatingSystemForm->createView()
+        // Update architecture if changed (compare by id)
+        if ($arch_modified && (!$operatingSystemArch || $arch_modified->getId() !== $operatingSystemArch->getId())) {
+            $operatingSystemEdited->setArch($arch_modified);
+        }
+
+        $entityManager = $this->entityManager;
+        $entityManager->persist($operatingSystemEdited);
+        $entityManager->flush();
+
+        $new_name_os = [
+            "old_name" => $operatingSystemFilename,
+            "new_name" => $operatingSystemEdited->getImageFilename(),
+            "hypervisor" => $operatingSystemEdited->getHypervisor()->getName(),
+            "old_arch" => $operatingSystemArch ? $operatingSystemArch->getName() : null,
+            "new_arch" => $arch_modified ? $arch_modified->getName() : null
+        ];
+
+        $this->bus->dispatch(
+            new InstanceActionMessage(json_encode($new_name_os), $operatingSystemEdited->getId(), InstanceActionMessage::ACTION_RENAMEOS)
+        );
+        $this->addFlash('success', 'Operating system has been edited.');
+        return $this->redirectToRoute('show_operating_system', [
+            'id' => $id
         ]);
+    }
+
+    return $this->render('operating_system/new.html.twig', [
+        'operatingSystem' => $operatingSystem,
+        'operatingSystemForm' => $operatingSystemForm->createView()
+    ]);
     }
 
     /**
@@ -412,13 +419,8 @@ class OperatingSystemController extends Controller
      */
     private function getAvailableArchitectures(): array
     {
-        $qb = $this->operatingSystemRepository->createQueryBuilder('os');
-        $result = $qb->select('DISTINCT os.arch')
-            ->where('os.arch IS NOT NULL')
-            ->orderBy('os.arch', 'ASC')
-            ->getQuery()
-            ->getResult();
+        $archs = $this->entityManager->getRepository(\App\Entity\Arch::class)->findAll();
+        return array_map(fn($arch) => $arch->getName(), $archs);
 
-        return array_column($result, 'arch');
     }
 }

@@ -20,10 +20,12 @@
                 </a>
                 <ul class="collapse list-unstyled" id="deviceSubmenu">
                     {{ sidebar.link("Flavor", 'flavors', null, 'disk', 'flavors', _context) }}
-                    {{ sidebar.link("Control Protocol", 'controlProtocolType', null, 'disk', 'controlProtocolType', _context) }}
+                    {{ sidebar.link("Control Protocol", 'controlProtocolType', null, 'key', 'controlProtocolType', _context) }}
                     {# {{ sidebar.link("Network settings", 'network_settings', null, 'preferences', 'network_settings', _context) }} #}
                     {{ sidebar.link("Hypervisor", 'hypervisor', null, 'cloud-gear', 'hypervisor', _context) }}
+                    {{ sidebar.link("Architecture", 'arch_list', null, 'cpu-processor', 'architectures', _context) }}
                     {{ sidebar.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
+                    {{ sidebar.link("ISO", 'app_iso_index', null, 'dvd', 'isos', _context) }}
                     {{ sidebar.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
                </ul>
             </li>
@@ -41,6 +43,7 @@
                     {{ sidebar.link("Service", 'services', null, 'status-health', 'services', _context) }}
                     {{ sidebar.link("Usage", 'resources', null, 'tachometer', 'resources', _context) }}
                     {{ sidebar.link("Database", 'admin_database', null, 'redo', 'database', _context) }}
+                    {{ sidebar.link("Icon", 'app_icons_gallery', null, 'list-task', '', _context) }}
                 </ul>
             </li>
             <div class="nav-item">

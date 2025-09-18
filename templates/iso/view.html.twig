@@ -1,0 +1,195 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}{{ iso.Name }} - ISO Images - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({
+        'ISO': path('app_iso_index'),
+        (iso.Name): path('app_iso_show', {'id': iso.id})
+    }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'app_iso_index' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+{# Delete Confirmation Modal #}
+{% embed 'modal.html.twig' with {
+    'title': 'Delete ISO'|trans,
+    'class': 'delete-modal',
+    'id': 'deleteModal'
+} %}
+    {% block body %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Warning:</strong> This action cannot be undone.
+    </div>
+    <p>Are you sure you want to delete the ISO <strong>{{ iso.Name }}</strong>?</p>
+    <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <form method="post" action="{{ path('app_iso_delete', {'id': iso.id}) }}" class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-2"></i>Delete ISO
+            </button>
+        </form>
+    </div>
+    {% endblock %}
+{% endembed %}
+
+<div class="content-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="d-flex align-items-center mb-2">
+                <h1 class="display-6 mb-0 me-3">{{ iso.Name }}</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        {# Source Information Card #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-compact-disc me-2"></i> Source Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if iso.FilenameUrl is not null %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Source Type:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-info">Remote URL</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>URL:</strong></div>
+                        <div class="col-sm-9">
+                            <a href="{{ iso.FilenameUrl }}" target="_blank" class="text-break">
+                                {{ iso.FilenameUrl }}
+                                <i class="fas fa-external-link-alt ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% elseif iso.Filename is not null %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Source Type:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-success">Local File</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Filename:</strong></div>
+                        <div class="col-sm-9">
+                            <code>{{ iso.Filename }}</code>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No source configured for this ISO.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ISO Details Card #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i> ISO Details
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if iso.Description %}
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Description:</strong></div>
+                    <div class="col-sm-9">{{ iso.Description }}</div>
+                </div>
+                {% endif %}
+                {% if iso.Size %}
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Size:</strong></div>
+                    <div class="col-sm-9">{{ iso.Size }} MB</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {# Quick Actions Card #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <hr class="my-2">
+                    <a href="{{ path('app_iso_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to list
+                    </a>
+                    <hr class="my-2">
+                    <a href="{{ path('app_iso_edit', {'id': iso.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i> Edit ISO
+                    </a>
+                    <hr class="my-2">
+                    {% if iso.Filename %}
+                    <a href="{{ asset('/uploads/iso/' ~ iso.Filename) }}" class="btn btn-outline-success" target="_blank">
+                        <i class="fas fa-download me-2"></i>Download ISO
+                    </a>
+                    {% endif %}
+                    <button class="btn btn-danger" data-toggle="modal" data-target=".delete-modal">
+                        <i class="fas fa-trash me-2"></i> Delete ISO
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Metadata Card #}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i> Metadata
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>ID:</strong></div>
+                    <div class="col-sm-8"><code>{{ iso.id }}</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Copy to clipboard functionality
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show success toast or notification
+                console.log('Copied to clipboard:', text);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeElements = document.querySelectorAll('code');
+            codeElements.forEach(function(element) {
+                element.style.cursor = 'pointer';
+                element.title = 'Click to copy';
+                element.addEventListener('click', function() {
+                    copyToClipboard(this.textContent);
+                });
+            });
+        });
+    </script>
+{% endblock %}

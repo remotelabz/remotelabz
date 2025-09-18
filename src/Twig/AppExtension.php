@@ -12,6 +12,11 @@ use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 
 class AppExtension extends AbstractExtension
 {
+    public function __construct(string $rootDirectory)
+    {
+        $this->rootDirectory = $rootDirectory;
+    }
+
     public function getFilters(): array
     {
         return [
@@ -26,7 +31,8 @@ class AppExtension extends AbstractExtension
         return [
             new TwigFunction('svg', [$this, 'renderSvg'], ['is_safe' => ['html']]),
             new TwigFunction('category', [$this, 'setActiveCategory'], ['is_safe' => ['html'], 'needs_context' => true]),
-            new TwigFunction('groupicon', [$this, 'getGroupIcon'], ['is_safe' => ['html']])
+            new TwigFunction('groupicon', [$this, 'getGroupIcon'], ['is_safe' => ['html']]),
+            new TwigFunction('svg_icons_list', [$this, 'getSvgIconsList']),
         ];
     }
 
@@ -86,5 +92,29 @@ class AppExtension extends AbstractExtension
         }
 
         return mb_substr($text, 0, $length) . $suffix;
+    }
+
+    /**
+     * Récupère la liste des icônes SVG depuis le fichier icons.svg
+     */
+    public function getSvgIconsList(): array
+    {
+        $svgFile = $this->rootDirectory . '/public/build/svg/icons.svg';
+        
+        if (!file_exists($svgFile)) {
+            return [];
+        }
+
+        $content = file_get_contents($svgFile);
+        $icons = [];
+
+        // Utilisation d'une regex pour extraire les ID des symboles
+        preg_match_all('/<symbol[^>]*id="([^"]*)"/', $content, $matches);
+        
+        if (!empty($matches[1])) {
+            $icons = $matches[1];
+        }
+
+        return $icons;
     }
 }
