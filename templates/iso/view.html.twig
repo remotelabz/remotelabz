@@ -98,28 +98,7 @@
             </div>
         </div>
 
-        {# ISO Details Card #}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i> ISO Details
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if iso.Description %}
-                <div class="row mb-3">
-                    <div class="col-sm-3"><strong>Description:</strong></div>
-                    <div class="col-sm-9">{{ iso.Description }}</div>
-                </div>
-                {% endif %}
-                {% if iso.Size %}
-                <div class="row mb-3">
-                    <div class="col-sm-3"><strong>Size:</strong></div>
-                    <div class="col-sm-9">{{ iso.Size }} MB</div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        
     </div>
 
     <div class="col-lg-4">
@@ -149,21 +128,6 @@
                     <button class="btn btn-danger" data-toggle="modal" data-target=".delete-modal">
                         <i class="fas fa-trash me-2"></i> Delete ISO
                     </button>
-                </div>
-            </div>
-        </div>
-
-        {# Metadata Card #}
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i> Metadata
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-2">
-                    <div class="col-sm-4"><strong>ID:</strong></div>
-                    <div class="col-sm-8"><code>{{ iso.id }}</code></div>
                 </div>
             </div>
         </div>

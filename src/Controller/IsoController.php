@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Iso;
 use App\Entity\Arch;
+use App\Entity\User;
+
 use App\Form\IsoType;
 use App\Repository\IsoRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,11 +15,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Psr\Log\LoggerInterface;
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 #[Route(path: '/admin/isos', name: 'app_iso_')]
 class IsoController extends AbstractController
 {
+
+     /** @var LoggerInterface $logger */
+    private $logger;
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }   
+
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(IsoRepository $isoRepository): Response
     {
@@ -34,6 +45,7 @@ class IsoController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->logger->info('Uploading file to iso_directory: ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             if ($fileSourceType === 'upload') {
@@ -139,7 +151,7 @@ class IsoController extends AbstractController
             return $this->redirectToRoute('app_iso_index');
         }
 
-        return $this->render('iso/edit.html.twig', [
+        return $this->render('iso/new.html.twig', [
             'iso' => $iso,
             'form' => $form,
         ]);

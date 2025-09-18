@@ -22,6 +22,10 @@ class Iso
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $filename_url = null;
 
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'text', nullable: true)]
+    private $description = Null;
+
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
     #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
@@ -79,4 +83,16 @@ public function setArch(?Arch $arch): static
 
     return $this;
 }
+
+public function getDescription(): ?string
+{
+    return $this->description;
+}
+
+public function setDescription(?string $description): self
+{
+    $this->description = $description;
+    return $this;
+}
+
 }

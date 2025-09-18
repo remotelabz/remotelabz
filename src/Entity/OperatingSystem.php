@@ -67,7 +67,7 @@ class OperatingSystem
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'text', nullable: true)]
     #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
-    private $description;
+    private $description = Null;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
