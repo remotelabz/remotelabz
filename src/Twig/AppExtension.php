@@ -12,6 +12,7 @@ use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 
 class AppExtension extends AbstractExtension
 {
+    private $rootDirectory;
     public function __construct(string $rootDirectory)
     {
         $this->rootDirectory = $rootDirectory;

@@ -33,7 +33,10 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'class': 'needs-validation', 'novalidate': true}}) }}
+                        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                        
+                        <!-- Champ caché pour stocker le nom du fichier uploadé -->
+                        <input type="hidden" name="uploaded_filename" id="uploaded_filename" value="">
                         
                         <!-- Nom de l'ISO -->
                         <div class="mb-4">
@@ -91,23 +94,51 @@
                         <!-- Zone d'upload de fichier -->
                         <div class="mb-4 file-upload-block" {% if form.fileSourceType.vars.value != 'upload' %}style="display:none;"{% endif %}>
                             <div class="upload-zone border border-dashed border-2 rounded p-4 text-center position-relative">
-                                <div class="upload-content">
+                                <div class="upload-content" id="upload-content">
                                     <i class="fa fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
                                     <h5 class="mb-2">{{ 'Upload ISO File'|trans }}</h5>
                                     <p class="text-muted mb-3">{{ 'Drag and drop your ISO file here or click to browse'|trans }}</p>
-                                    {{ form_widget(form.uploadedFile, {'attr': {'class': 'form-control file-input position-absolute w-100 h-100 opacity-0', 'style': 'top: 0; left: 0; cursor: pointer;'}}) }}
-                                    <button type="button" class="btn btn-outline-primary">
+                                    <input type="file" id="file-input" class="form-control file-input position-absolute w-100 h-100 opacity-0" style="top: 0; left: 0; cursor: pointer;" accept=".iso">
+                                    <button type="button" class="btn btn-outline-primary" id="browse-button">
                                         <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
                                     </button>
-                                    <button type="button" class="btn btn-outline-primary upload-button">
-                                        <i class="fa fa-folder-open me-1"></i>{{ 'Upload'|trans }}
-                                    </button>
                                 </div>
-                                <div class="file-info mt-3 d-none">
-                                    <div class="alert alert-info d-flex align-items-center">
-                                        <i class="fa fa-file me-2"></i>
-                                        <span class="file-name"></span>
-                                        <span class="file-size ms-auto badge bg-secondary"></span>
+                                
+                                <!-- Zone d'affichage du fichier sélectionné -->
+                                <div class="file-selected d-none" id="file-selected">
+                                    <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-file me-2"></i>
+                                            <div>
+                                                <div class="file-name fw-semibold"></div>
+                                                <small class="file-size text-muted"></small>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-primary" id="upload-button">
+                                                <i class="fa fa-upload me-1"></i>{{ 'Upload'|trans }}
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-file">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Zone d'affichage du fichier uploadé -->
+                                <div class="file-uploaded d-none" id="file-uploaded">
+                                    <div class="alert alert-success d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-check-circle me-2"></i>
+                                            <div>
+                                                <div class="uploaded-file-name fw-semibold"></div>
+                                                <small class="uploaded-file-size text-muted"></small>
+                                                <div><small class="text-success">{{ 'File uploaded successfully'|trans }}</small></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="remove-uploaded-file">
+                                            <i class="fa fa-trash me-1"></i>{{ 'Remove'|trans }}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -138,7 +169,7 @@
                         </div>
 
                         <!-- Progress bar (cachée par défaut) -->
-                        <div class="mb-4 upload-progress d-none">
+                        <div class="mb-4 upload-progress d-none" id="upload-progress">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">{{ 'Upload Progress'|trans }}</span>
                                 <span class="progress-percentage">0%</span>
@@ -154,7 +185,6 @@
                         <div class="mb-4">
                             <div class="form-floating">
                                 <label class="form-label fw-bold">{{ 'Description'|trans }}</label>
-
                                 {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Description'|trans}}) }}
                             </div>
                             {{ form_errors(form.description) }}
@@ -168,10 +198,10 @@
                             <a href="{{ path('app_iso_index') }}" class="btn btn-outline-secondary">
                                 <i class="fa fa-times me-1"></i>{{ 'Cancel'|trans }}
                             </a>
-                            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4'}}) }}
+                            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4', 'id': 'submit-button'}}) }}
                         </div>
 
-                        {{ form_end(form) }}
+                       
                     </div>
                 </div>
             </div>
@@ -194,8 +224,7 @@
         }
         
         .file-source-card.active {
-            border-color: #ffffffff;
-            
+            border-color: #0d6efd;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
         
@@ -203,6 +232,7 @@
             transition: all 0.3s ease;
             min-height: 200px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -233,81 +263,71 @@
             transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
         }
 
-
-        [theme="dark"] {
-           .file-source-card {
+        [theme="dark"] .file-source-card {
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid #252525ff;
         }
            
-        .file-source-card:hover {
+        [theme="dark"] .file-source-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
-        .file-source-card.active {
-            border-color: #ffffffff;
-            
+        [theme="dark"] .file-source-card.active {
+            border-color: #0d6efd;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
         }
         
-        .upload-zone {
+        [theme="dark"] .upload-zone {
             transition: all 0.3s ease;
             min-height: 200px;
             display: flex;
-            flex-direction: column; /* Ajoutez cette ligne */
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
         
-        .upload-zone:hover {
+        [theme="dark"] .upload-zone:hover {
             border-color: #0d6efd;
-            background-color: #f8f9ff;
+            background-color: #1a1d29;
         }
         
-        .upload-zone.drag-over {
+        [theme="dark"] .upload-zone.drag-over {
             border-color: #198754;
-            background-color: #f8fff9;
+            background-color: #1a2e1f;
             transform: scale(1.02);
         }
-        
-        .file-input:hover + .upload-content,
-        .file-input:focus + .upload-content {
-            color: #0d6efd;
-        }
-        
-        .progress {
-            height: 12px;
-        }
-        
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
-            opacity: 0.65;
-            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-        }
-        }
-    }
-
-
-
     </style>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    <script src="{{ asset('build/Iso/upload.js') }}"></script>
     <script>
+    
         document.addEventListener('DOMContentLoaded', function () {
             const radios = document.querySelectorAll('.file-source-radio');
             const uploadBlock = document.querySelector('.file-upload-block');
             const urlBlock = document.querySelector('.url-block');
-            const fileInput = document.querySelector('input[type="file"]');
+            const fileInput = document.getElementById('file-input');
             const uploadZone = document.querySelector('.upload-zone');
-            const fileInfo = document.querySelector('.file-info');
-            const progressContainer = document.querySelector('.upload-progress');
+            const uploadContent = document.getElementById('upload-content');
+            const fileSelected = document.getElementById('file-selected');
+            const fileUploaded = document.getElementById('file-uploaded');
+            const uploadButton = document.getElementById('upload-button');
+            const cancelFileButton = document.getElementById('cancel-file');
+            const removeUploadedFileButton = document.getElementById('remove-uploaded-file');
+            const browseButton = document.getElementById('browse-button');
+            const progressContainer = document.getElementById('upload-progress');
             const progressBar = document.querySelector('.progress-bar');
             const progressPercentage = document.querySelector('.progress-percentage');
             const form = document.querySelector('form');
+            const submitButton = document.getElementById('submit-button');
+            const uploadedFilenameInput = document.getElementById('uploaded_filename');
+
+            let selectedFile = null;
+            let uploadedFile = null;
 
             // Gestion des cartes de sélection
             function updateSourceCards() {
@@ -326,6 +346,8 @@
                     } else {
                         uploadBlock.style.display = 'none';
                         urlBlock.style.display = '';
+                        // Reset upload state when switching to URL
+                        resetUploadState();
                     }
                     updateSourceCards();
                 });
@@ -342,137 +364,259 @@
                 });
             });
 
+            // Clic sur le bouton Browse
+            browseButton.addEventListener('click', function() {
+                fileInput.click();
+            });
+
             // Gestion du drag & drop
-            if (uploadZone && fileInput) {
-                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, preventDefaults, false);
-                });
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, preventDefaults, false);
+            });
 
-                function preventDefaults(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
 
-                ['dragenter', 'dragover'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, highlight, false);
-                });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, highlight, false);
+            });
 
-                ['dragleave', 'drop'].forEach(eventName => {
-                    uploadZone.addEventListener(eventName, unhighlight, false);
-                });
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, unhighlight, false);
+            });
 
-                function highlight(e) {
-                    uploadZone.classList.add('drag-over');
-                }
+            function highlight(e) {
+                uploadZone.classList.add('drag-over');
+            }
 
-                function unhighlight(e) {
-                    uploadZone.classList.remove('drag-over');
-                }
+            function unhighlight(e) {
+                uploadZone.classList.remove('drag-over');
+            }
 
-                uploadZone.addEventListener('drop', handleDrop, false);
+            uploadZone.addEventListener('drop', handleDrop, false);
 
-                function handleDrop(e) {
-                    const dt = e.dataTransfer;
-                    const files = dt.files;
-                    if (files.length > 0) {
-                        fileInput.files = files;
-                        displayFileInfo(files[0]);
-                    }
-                }
-
-                // Affichage des informations du fichier
-                fileInput.addEventListener('change', function (e) {
-                    if (e.target.files.length > 0) {
-                        displayFileInfo(e.target.files[0]);
-                    }
-                });
-
-                function displayFileInfo(file) {
-                    const fileName = fileInfo.querySelector('.file-name');
-                    const fileSize = fileInfo.querySelector('.file-size');
-                    
-                    fileName.textContent = file.name;
-                    fileSize.textContent = formatFileSize(file.size);
-                    fileInfo.classList.remove('d-none');
-                }
-
-                function formatFileSize(bytes) {
-                    if (bytes === 0) return '0 Bytes';
-                    const k = 1024;
-                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                    const i = Math.floor(Math.log(bytes) / Math.log(k));
-                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFileSelection(files[0]);
                 }
             }
 
-            if (form && progressContainer) {
-                form.addEventListener('submit', function(e) {
-                if (fileInput.files.length > 0) {
-                    e.preventDefault(); // Empêche le submit natif
-
-                    const file = fileInput.files[0];
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    progressContainer.classList.remove('d-none');
-                    progressBar.style.width = '0%';
-                    progressPercentage.textContent = '0%';
-
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/admin/isos/upload', true);
-
-                    xhr.upload.onprogress = function(e) {
-                        if (e.lengthComputable) {
-                            const percent = Math.round((e.loaded / e.total) * 100);
-                            progressBar.style.width = percent + '%';
-                            progressBar.setAttribute('aria-valuenow', percent);
-                            progressPercentage.textContent = percent + '%';
-                        }
-                    };
-
-                    xhr.onload = function() {
-                        if (xhr.status === 200) {
-                            progressBar.style.width = '100%';
-                            progressPercentage.textContent = '100%';
-                            // Tu peux ensuite soumettre le formulaire ou afficher un message
-                            form.submit(); // Optionnel : soumettre le reste du formulaire
-                        } else {
-                            alert('Erreur lors de l\'upload');
-                        }
-                    };
-
-                    xhr.onerror = function() {
-                        alert('Erreur réseau');
-                    };
-                    xhr.send(formData);
+            // Sélection de fichier
+            fileInput.addEventListener('change', function (e) {
+                if (e.target.files.length > 0) {
+                    handleFileSelection(e.target.files[0]);
                 }
             });
 
+            function handleFileSelection(file) {
+                selectedFile = file;
+                displaySelectedFile(file);
+                showFileSelected();
             }
-            // Validation d'URL
+
+            function displaySelectedFile(file) {
+                const fileName = fileSelected.querySelector('.file-name');
+                const fileSize = fileSelected.querySelector('.file-size');
+                
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+            }
+
+            function showFileSelected() {
+                uploadContent.classList.add('d-none');
+                fileSelected.classList.remove('d-none');
+                fileUploaded.classList.add('d-none');
+            }
+
+            function showFileUploaded(uploadData) {
+                const uploadedFileName = fileUploaded.querySelector('.uploaded-file-name');
+                const uploadedFileSize = fileUploaded.querySelector('.uploaded-file-size');
+                
+                uploadedFileName.textContent = uploadData.originalName;
+                uploadedFileSize.textContent = formatFileSize(uploadData.size);
+                
+                uploadContent.classList.add('d-none');
+                fileSelected.classList.add('d-none');
+                fileUploaded.classList.remove('d-none');
+                
+                uploadedFile = uploadData;
+                uploadedFilenameInput.value = uploadData.filename;
+            }
+
+            function resetUploadState() {
+                selectedFile = null;
+                uploadedFile = null;
+                uploadedFilenameInput.value = '';
+                
+                uploadContent.classList.remove('d-none');
+                fileSelected.classList.add('d-none');
+                fileUploaded.classList.add('d-none');
+                progressContainer.classList.add('d-none');
+                
+                // Reset file input
+                fileInput.value = '';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Bouton Cancel file
+            cancelFileButton.addEventListener('click', function() {
+                resetUploadState();
+            });
+
+            // Bouton Remove uploaded file
+            removeUploadedFileButton.addEventListener('click', function() {
+                if (!uploadedFile) return;
+
+                // Supprimer le fichier du serveur
+                fetch('{{ path('app_iso_delete_temp_file') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'filename=' + encodeURIComponent(uploadedFile.filename)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resetUploadState();
+                    } else {
+                        alert('{{ 'Error removing file'|trans }}: ' + (data.error || '{{ 'Unknown error'|trans }}'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{{ 'Network error'|trans }}');
+                });
+            });
+
+            // Validation du formulaire avant submit
+            form.addEventListener('submit', function(e) {
+                const fileSourceType = document.querySelector('input[name="iso[fileSourceType]"]:checked').value;
+                
+                if (fileSourceType === 'upload') {
+                    if (!uploadedFile) {
+                        e.preventDefault();
+                        alert('{{ 'Please upload a file first or switch to URL mode'|trans }}');
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+
+            // Validation d'URL améliorée
             const validateUrlBtn = document.getElementById('validateUrl');
             const urlInput = document.querySelector('input[name="iso[Filename_url]"]');
             
             if (validateUrlBtn && urlInput) {
                 validateUrlBtn.addEventListener('click', function () {
                     const url = urlInput.value.trim();
-                    if (url) {
-                        // Simulation de validation (remplacez par votre logique)
-                        validateUrlBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ 'Validating...'|trans }}';
+                    if (!url) {
+                        alert('{{ 'Please enter a URL first'|trans }}');
+                        return;
+                    }
+
+                    // Reset button state
+                    validateUrlBtn.classList.remove('btn-outline-success', 'btn-outline-danger');
+                    validateUrlBtn.classList.add('btn-outline-secondary');
+                    validateUrlBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ 'Validating...'|trans }}';
+                    validateUrlBtn.disabled = true;
+                    
+                    // Faire la validation côté serveur
+                    fetch('{{ path('app_iso_validate_url') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'url=' + encodeURIComponent(url)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        validateUrlBtn.disabled = false;
                         
-                        setTimeout(() => {
-                            if (isValidUrl(url)) {
-                                validateUrlBtn.innerHTML = '<i class="fa fa-check text-success"></i> {{ 'Valid'|trans }}';
-                                validateUrlBtn.classList.remove('btn-outline-secondary');
-                                validateUrlBtn.classList.add('btn-outline-success');
-                            } else {
-                                validateUrlBtn.innerHTML = '<i class="fa fa-times text-danger"></i> {{ 'Invalid'|trans }}';
-                                validateUrlBtn.classList.remove('btn-outline-secondary');
-                                validateUrlBtn.classList.add('btn-outline-danger');
+                        if (data.success && data.valid) {
+                            validateUrlBtn.innerHTML = '<i class="fa fa-check text-success"></i> {{ 'Valid'|trans }}';
+                            validateUrlBtn.classList.remove('btn-outline-secondary');
+                            validateUrlBtn.classList.add('btn-outline-success');
+                            
+                            // Afficher les informations du fichier
+                            let infoMessage = '{{ 'URL is valid'|trans }}';
+                            if (data.fileSize) {
+                                infoMessage += ' - {{ 'Size'|trans }}: ' + formatFileSize(data.fileSize);
                             }
-                        }, 1500);
+                            if (data.fileName) {
+                                infoMessage += ' - {{ 'File'|trans }}: ' + data.fileName;
+                            }
+                            
+                            // Créer ou mettre à jour l'alerte d'information
+                            showUrlValidationResult(infoMessage, 'success');
+                            
+                        } else {
+                            validateUrlBtn.innerHTML = '<i class="fa fa-times text-danger"></i> {{ 'Invalid'|trans }}';
+                            validateUrlBtn.classList.remove('btn-outline-secondary');
+                            validateUrlBtn.classList.add('btn-outline-danger');
+                            
+                            const errorMessage = data.error || '{{ 'Unknown validation error'|trans }}';
+                            showUrlValidationResult(errorMessage, 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        validateUrlBtn.disabled = false;
+                        validateUrlBtn.innerHTML = '<i class="fa fa-times text-danger"></i> {{ 'Error'|trans }}';
+                        validateUrlBtn.classList.remove('btn-outline-secondary');
+                        validateUrlBtn.classList.add('btn-outline-danger');
+                        
+                        showUrlValidationResult('{{ 'Network error during validation'|trans }}', 'danger');
+                    });
+                });
+
+                // Reset validation when URL changes
+                urlInput.addEventListener('input', function() {
+                    validateUrlBtn.classList.remove('btn-outline-success', 'btn-outline-danger');
+                    validateUrlBtn.classList.add('btn-outline-secondary');
+                    validateUrlBtn.innerHTML = '<i class="fa fa-check"></i> {{ 'Validate'|trans }}';
+                    validateUrlBtn.disabled = false;
+                    
+                    // Remove any existing validation result
+                    const existingAlert = urlBlock.querySelector('.url-validation-result');
+                    if (existingAlert) {
+                        existingAlert.remove();
                     }
                 });
+            }
+
+            function showUrlValidationResult(message, type) {
+                // Remove existing alert
+                const existingAlert = urlBlock.querySelector('.url-validation-result');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+                
+                // Create new alert
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} mt-2 url-validation-result`;
+                alertDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fa fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                // Add after the input group
+                const inputGroup = urlBlock.querySelector('.input-group');
+                inputGroup.parentNode.insertBefore(alertDiv, inputGroup.nextSibling);
             }
 
             function isValidUrl(string) {

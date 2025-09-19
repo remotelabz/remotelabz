@@ -1089,6 +1089,23 @@ export class RemotelabzAPI {
             return axios.post(`/labs/${params.labid}/pictures`, params.fields);
         }
     }
+
+    iso = {
+        /**
+         * Upload an ISO file.
+         * Implements POST `/api/admin/isos/upload`
+         * @param {File} file
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, filename: string, error?: string}>>}
+         */
+        upload(file, onUploadProgress) {
+            const formData = new FormData();
+            formData.append('file', file);
+            return axios.post('/isos/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress
+            });
+        }
+    }
 }
 
 const Remotelabz = new RemotelabzAPI();
