@@ -40,9 +40,14 @@ class IsoController extends AbstractController
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
+        $this->logger->debug('[IsoController:new]::New iso is requested. The download directory : ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
+
         $iso = new Iso();
         $form = $this->createForm(IsoType::class, $iso);
         $form->handleRequest($request);
+        $maxUploadSize = min(
+            ini_get('upload_max_filesize'),ini_get('post_max_size')
+        );
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->logger->info('Uploading file to iso_directory: ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
@@ -58,6 +63,7 @@ class IsoController extends AbstractController
                     $newFilename = $safeFilename . '-' . uniqid() . '.' . $uploadedFile->guessExtension();
 
                     try {
+                        
                         $uploadedFile->move(
                             $this->getParameter('iso_directory'),
                             $newFilename
@@ -86,6 +92,7 @@ class IsoController extends AbstractController
 
         return $this->render('iso/new.html.twig', [
             'iso' => $iso,
+            'sizeLimit' => $maxUploadSize,
             'form' => $form,
         ]);
     }
@@ -177,4 +184,53 @@ class IsoController extends AbstractController
 
         return $this->redirectToRoute('app_iso_index');
     }
+
+    #[Route('/upload', name: 'upload', methods: ['POST'])]
+    public function upload(Request $request, SluggerInterface $slugger): Response
+    {
+        $this->logger->info('Uploading file to iso_directory: ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
+
+        $file = $request->files->get('file');
+        if (!$file) {
+            return $this->json(['error' => 'No file uploaded'], 400);
+        }
+
+        $maxSize = $this->convertPHPSizeToBytes(ini_get('upload_max_filesize'));
+        if ($file->getSize() > $maxSize) {
+            return $this->json(['error' => 'File too large'], 413);
+        }
+
+        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+        try {
+            $file->move($this->getParameter('iso_directory'), $newFilename);
+        } catch (FileException $e) {
+            return $this->json(['error' => 'Upload failed'], 500);
+        }
+
+        return $this->json(['success' => true, 'filename' => $newFilename]);
+    }
+
+
+    // Fonction utilitaire pour convertir la taille PHP en octets
+    private function convertPHPSizeToBytes($size)
+    {
+        $unit = strtolower(substr($size, -1));
+        $bytes = (int) $size;
+
+        switch($unit) {
+            case 'g':
+                $bytes *= 1024;
+            case 'm':
+                $bytes *= 1024;
+            case 'k':
+                $bytes *= 1024;
+        }
+
+        return $bytes;
+    }
+
+
 }

@@ -49,10 +49,12 @@
 
                         <div class="mb-4">
                             <div class="form-floating">
-                                {{ form_label(form.arch, null, {'label_attr': {'class': 'form-label'}}) }}
+                                <label class="form-label fw-bold">{{ 'Architecture'|trans }}</label>
                                 {{ form_widget(form.arch, {'attr': {'class': 'form-control', 'placeholder': 'Architecture'|trans}}) }}
+                                
                             </div>
                             {{ form_errors(form.arch) }}
+                            
                             <div class="form-text">
                                 <i class="fa fa-info-circle text-info"></i> {{ 'Select the architecture for which this ISO can be used'|trans }}
                             </div>
@@ -97,6 +99,9 @@
                                     <button type="button" class="btn btn-outline-primary">
                                         <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
                                     </button>
+                                    <button type="button" class="btn btn-outline-primary upload-button">
+                                        <i class="fa fa-folder-open me-1"></i>{{ 'Upload'|trans }}
+                                    </button>
                                 </div>
                                 <div class="file-info mt-3 d-none">
                                     <div class="alert alert-info d-flex align-items-center">
@@ -106,10 +111,11 @@
                                     </div>
                                 </div>
                             </div>
+                            
                             {{ form_errors(form.uploadedFile) }}
                             <div class="form-text">
                                 <i class="fa fa-exclamation-triangle text-warning"></i> 
-                                {{ 'Maximum file size: 5GB. Accepted formats: .iso'|trans }}
+                                {{ "Maximum file size configured on your system : " ~ sizeLimit ~ ". Accepted formats: .iso"|trans }}
                             </div>
                         </div>
 
@@ -144,6 +150,19 @@
                             </div>
                         </div>
 
+                        <!-- Champ Description -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Description'|trans }}</label>
+
+                                {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Description'|trans}}) }}
+                            </div>
+                            {{ form_errors(form.description) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'You can provide an optional description for this ISO'|trans }}
+                            </div>
+                        </div>
+                        
                         <!-- Boutons d'action -->
                         <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
                             <a href="{{ path('app_iso_index') }}" class="btn btn-outline-secondary">
@@ -205,7 +224,7 @@
         }
         
         .progress {
-            height: 8px;
+            height: 12px;
         }
         
         .form-floating > .form-control:focus ~ label,
@@ -237,6 +256,7 @@
             transition: all 0.3s ease;
             min-height: 200px;
             display: flex;
+            flex-direction: column; /* Ajoutez cette ligne */
             align-items: center;
             justify-content: center;
         }
@@ -258,7 +278,7 @@
         }
         
         .progress {
-            height: 8px;
+            height: 12px;
         }
         
         .form-floating > .form-control:focus ~ label,
@@ -287,6 +307,7 @@
             const progressContainer = document.querySelector('.upload-progress');
             const progressBar = document.querySelector('.progress-bar');
             const progressPercentage = document.querySelector('.progress-percentage');
+            const form = document.querySelector('form');
 
             // Gestion des cartes de sélection
             function updateSourceCards() {
@@ -384,6 +405,50 @@
                 }
             }
 
+            if (form && progressContainer) {
+                form.addEventListener('submit', function(e) {
+                if (fileInput.files.length > 0) {
+                    e.preventDefault(); // Empêche le submit natif
+
+                    const file = fileInput.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    progressContainer.classList.remove('d-none');
+                    progressBar.style.width = '0%';
+                    progressPercentage.textContent = '0%';
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/admin/isos/upload', true);
+
+                    xhr.upload.onprogress = function(e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            progressBar.style.width = percent + '%';
+                            progressBar.setAttribute('aria-valuenow', percent);
+                            progressPercentage.textContent = percent + '%';
+                        }
+                    };
+
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            progressBar.style.width = '100%';
+                            progressPercentage.textContent = '100%';
+                            // Tu peux ensuite soumettre le formulaire ou afficher un message
+                            form.submit(); // Optionnel : soumettre le reste du formulaire
+                        } else {
+                            alert('Erreur lors de l\'upload');
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        alert('Erreur réseau');
+                    };
+                    xhr.send(formData);
+                }
+            });
+
+            }
             // Validation d'URL
             const validateUrlBtn = document.getElementById('validateUrl');
             const urlInput = document.querySelector('input[name="iso[Filename_url]"]');

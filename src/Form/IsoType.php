@@ -10,6 +10,8 @@ use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
@@ -105,6 +107,16 @@ class IsoType extends AbstractType
                 'attr' => [
                     'class' => 'form-control url-input',
                     'placeholder' => 'https://exemple.com/fichier.iso'
+                ]
+            ])
+
+            
+            ->add('description', TextareaType::class, [
+                'label' => 'ISO Description (optional)',
+                'required' => false,
+                'attr' => [
+                    'placeholder' => 'Type a description for this ISO (optional)',
+                    'maxlength' => '250'
                 ]
             ])
             

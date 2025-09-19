@@ -98,6 +98,31 @@
             </div>
         </div>
 
+        {# Additional Details Card #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i> Additional Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Description:</strong></div>
+                    <div class="col-sm-9">{{ iso.Description ?: '-' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Architecture:</strong></div>
+                    <div class="col-sm-9">
+                        {% if iso.arch %}
+                            <span class="badge bg-primary">{{ iso.arch.name }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
         
     </div>
 
@@ -156,4 +181,23 @@
             });
         });
     </script>
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+    <style>
+[theme="dark"] {
+
+  .badge {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: $white;
+  }
+  .badge-warning {
+    color: $dark;
+  }
+  .badge-info {
+    color: $dark;
+  }
+}
+    </style>
 {% endblock %}

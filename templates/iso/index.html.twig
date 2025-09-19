@@ -83,7 +83,9 @@
                     <tr>
                         <th width="100">{{ 'Type'|trans }}</th>
                         <th>{{ 'Name'|trans }}</th>
+                        <th>{{ 'Description'|trans }}</th>
                         <th width="150">{{ 'Source'|trans }}</th>
+                        <th width="150">{{ 'Architecture'|trans }}</th>
                         <th width="120">{{ 'Actions'|trans }}</th>
                     </tr>
                 </thead>
@@ -113,10 +115,22 @@
                             </a>
                         </td>
                         <td>
-                            {% if iso.Filename %}
-                                <span class="text-muted"><i class="fas fa-hdd me-1"></i>Local</span>
-                            {% elseif iso.FilenameUrl %}
+                            <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="text-decoration-none fw-medium">
+                                {{ iso.Description | truncate(50) }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if iso.FilenameUrl %}
                                 <span class="text-muted"><i class="fas fa-cloud me-1"></i>Remote</span>
+                            {% elseif iso.Filename %}
+                                <span class="text-muted"><i class="fas fa-hdd me-1"></i>Local</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>   
+                        <td>
+                            {% if iso.arch %}
+                                <span class="badge bg-primary">{{ iso.arch.name }}</span>
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}
@@ -207,3 +221,5 @@
         });
     </script>
 {% endblock %}
+
+

@@ -17,6 +17,7 @@ class Arch
     /**
     * @var string|null
     */
+    #[Assert\Type(type: 'string')]
     #[Assert\NotBlank(message: 'Architecture is required')]
     #[Assert\Choice(
         choices: ['x86', 'x86_64', 'arm', 'arm64'],
