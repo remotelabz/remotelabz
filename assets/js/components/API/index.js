@@ -1104,6 +1104,31 @@ export class RemotelabzAPI {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 onUploadProgress
             });
+        },
+     
+
+        /**
+         * Validate an ISO URL.
+         * Implements POST `/api/admin/isos/validate-url`
+         * @param {string} url
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, valid: boolean, fileSize?: number, fileName?: string, error?: string}>>}
+         */
+        validateUrl(url) {
+            return axios.post('/isos/validate-url', `url=${encodeURIComponent(url)}`, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+        },
+
+        /**
+         * Delete a temporary ISO file.
+         * Implements POST `/api/admin/isos/delete-temp-file`
+         * @param {string} filename
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, error?: string}>>}
+         */
+        deleteTempFile(filename) {
+            return axios.post('/isos/delete-temp-file', `filename=${encodeURIComponent(filename)}`, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
         }
     }
 }

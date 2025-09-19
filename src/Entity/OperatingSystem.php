@@ -139,12 +139,12 @@ class OperatingSystem
         return $this;
     }
 
-    public function getArch(): ?string
+    public function getArch(): ?Arch
     {
         return $this->arch;
     }
 
-    public function setArch(?string $arch): self
+    public function setArch(?Arch $arch): self
     {
         $this->arch = $arch;
 

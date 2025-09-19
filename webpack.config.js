@@ -38,7 +38,7 @@ Encore
     .addEntry('dashboard', './assets/js/dashboard.js')
     .addEntry('editor', './assets/js/editor.js')
     .addEntry('editor-functions', './assets/js/editor-functions.js')
-    .addEntry('Iso/upload', './assets/js/components/Iso/upload.js')
+    .addEntry('iso-form-handler', './assets/js/components/Iso/form-handler.js')
 
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.

@@ -104,7 +104,7 @@
                     {% for operatingSystem in operatingSystems %}
                     <tr class="os-item" 
                         data-type="{% if operatingSystem.imageUrl is not null %}url{% elseif operatingSystem.imageFilename is not null %}file{% else %}none{% endif %}"
-                        data-arch="{{ operatingSystem.arch|lower }}"
+                        data-arch="{% if operatingSystem.arch is not null %}operatingSystem.arch.name|lower"{% else %}none{% endif %}"
                         data-name="{{ operatingSystem.name|lower }}">
                         <td>
                             {% if operatingSystem.imageUrl is not null %}
@@ -135,7 +135,7 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark">{{ operatingSystem.arch|upper }}</span>
+                            {% if operatingSystem.arch is not null %}<span class="badge bg-light text-dark">{{ operatingSystem.arch.name|upper }}</span>{% else  %} - {% endif %}
                         </td>
                         <td>
                             {% if operatingSystem.hypervisor %}

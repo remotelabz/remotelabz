@@ -219,11 +219,9 @@ class IsoController extends AbstractController
         return $this->json(['error' => 'File not found'], 404);
     }
 
-    #[Route('/admin/isos/validate-url', name: 'app_iso_validate_url', methods: ['POST'])]
+    #[Route('/api/isos/validate-url', name: 'app_iso_validate_url', methods: ['POST'])]
     public function validateUrl(Request $request): Response
     {
-        return $this->json(['success' => true], 200);
-
         $this->logger->debug('[IsoController:validateUrl]::Validating ISO URL by user :'.$this->getUser()->getName());
         $url = $request->request->get('url');
         if (!$url) {
