@@ -37,8 +37,21 @@ export class IsoFormHandler {
         // Form
         this.form = document.querySelector('form');
         this.submitButton = document.getElementById('submit-button');
-        this.uploadedFilenameInput = document.getElementById('uploaded_filename');
+        
+        // CORRECTION: Essayer différentes façons de trouver le champ caché
+        this.uploadedFilenameInput = document.getElementById('uploaded_filename') 
+            || document.querySelector('input[name="iso[uploaded_filename]"]')
+            || document.querySelector('input[id*="uploaded_filename"]');
+            
         this.urlInput = document.querySelector('input[name="iso[Filename_url]"]');
+        
+        // Debug des éléments trouvés
+        console.log('DEBUG initElements:', {
+            uploadedFilenameInput: this.uploadedFilenameInput,
+            uploadedFilenameInputId: this.uploadedFilenameInput?.id,
+            uploadedFilenameInputName: this.uploadedFilenameInput?.name,
+            urlInput: this.urlInput
+        });
     }
 
     bindEvents() {
@@ -172,8 +185,39 @@ export class IsoFormHandler {
         this.fileUploaded?.classList.remove('d-none');
         
         this.uploadedFile = uploadData;
+        
+        
+        
+        
         if (this.uploadedFilenameInput) {
             this.uploadedFilenameInput.value = uploadData.filename;
+        
+        } else {
+            console.error('uploadedFilenameInput not found! Trying fallback...');
+            
+            // Fallback: essayer de trouver le champ par différents moyens
+            const fallbackInput = document.getElementById('iso_uploaded_filename') 
+                || document.querySelector('input[name*="uploaded_filename"]')
+                || document.querySelector('input[type="hidden"]');
+                
+            console.log('Fallback input found:', fallbackInput);
+            
+            if (fallbackInput) {
+                fallbackInput.value = uploadData.filename;
+                this.uploadedFilenameInput = fallbackInput; // Mettre à jour la référence
+                console.log('Fallback value set to:', fallbackInput.value);
+            } else {
+                console.error('No hidden input found for uploaded_filename!');
+                // En dernier recours, créer le champ
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'iso[uploaded_filename]';
+                hiddenInput.id = 'uploaded_filename';
+                hiddenInput.value = uploadData.filename;
+                this.form.appendChild(hiddenInput);
+                this.uploadedFilenameInput = hiddenInput;
+                console.log('Created hidden input with value:', hiddenInput.value);
+            }
         }
     }
 
