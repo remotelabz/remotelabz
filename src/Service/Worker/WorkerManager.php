@@ -51,13 +51,7 @@ class WorkerManager
                 array_push($usage, $content);
             } catch (Exception $exception) {
                 $this->logger->error("Usage resources error - Web service or Worker ".$worker->getIPv4()." is not available");               
-                /*
-                $worker->setAvailable(0);
-                $entityManager = $this->doctrine->getManager();
-                $entityManager->persist($worker);
-                $entityManager->flush();
-                $this->logger->info("Worker ".$worker->getIPv4()." is disable");
-                */
+                
             }
         }
         $this->logger->info('Usage of each worker:',$usage);
@@ -135,34 +129,6 @@ class WorkerManager
     }
 
     /*
-    public function checkMemory($usages, $memory) {
-        $workers = [];
-        $this->logger->debug("checkMemory memory param:".$memory);
-
-        foreach ($usages as $usage) {
-            if ($usage['memory_total'] > $memory) {
-                array_push($workers, $usage);
-            }
-        }
-        $this->logger->debug("worker chosen from checkMemory :",$workers);
-
-        return $workers;
-    }
-
-    public function checkCPU($usages) {
-        $cpu = 100;
-        $worker =null;
-        foreach($usages as $usage) {
-            if ($usage['cpu'] < $cpu) {
-                $cpu = $usage['cpu'];
-                $worker = $usage['worker'];
-            }
-        }
-        $this->logger->debug("worker chosen from checkCPU :".$worker);
-        return $worker;
-    }
-    */
-    /*
     $memory : % used memory
     $disk : % used disk
     $cpu : % cpu load
@@ -170,13 +136,13 @@ class WorkerManager
     $worker : IP of the worker to check
     */
     public function loadBalancing($memory, $disk, $cpu, $needmemory, $max_memory, $worker, $lxcfs) {
-        // Limites maximales avant de considérer un serveur surchargé (ajuster selon vos besoins)
-        $maxMemory = 85; // en pourcentage
-        $maxDisk = 90; // en pourcentage
-        $maxCpu = 90; // en pourcentage
-        $maxlxcfs= 180; // max load CPU of lxcfs process, in purcent
+        // Maximum limits before considering a server overloaded (adjust according to your needs)
+        $maxMemory = 85; // %
+        $maxDisk = 90; // %
+        $maxCpu = 90; // %
+        $maxlxcfs= 180; // max load CPU of lxcfs process, in %
 
-        // Mémoire disponible : 
+        // free memory in %: 
         
         $availableMemory = 100 - $memory; // in %
         $availableMemoryKB=$availableMemory*$max_memory;
