@@ -48,12 +48,20 @@ class IsoController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->logger->info('Creating ISO entry by user: ' . $this->getUser()->getName());
+    
+            $this->logger->debug('[IsoController:new]::Form data: ' . json_encode($form->getData()));
+            $this->logger->debug('[IsoController:new]::Request data: ' . json_encode($request->request->all()));
+   
+
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             if ($fileSourceType === 'upload') {
-                // Le fichier est déjà uploadé, on récupère juste le nom depuis le champ caché
-                $uploadedFileName = $request->request->get('uploaded_filename');
-                if ($uploadedFileName) {
+                // Récupérer le nom du fichier depuis le champ du formulaire
+                $uploadedFileName = $form->get('uploaded_filename')->getData();
+                
+                $this->logger->debug('[IsoController:new]::Uploaded filename from form: ' . $uploadedFileName);
+                
+                if ($uploadedFileName && trim($uploadedFileName) !== '') {
                     $iso->setFilename($uploadedFileName);
                     $iso->setFilenameUrl(null);
                 } else {
@@ -64,9 +72,6 @@ class IsoController extends AbstractController
                         'form' => $form,
                     ]);
                 }
-            } else {
-                // Utiliser l'URL, nettoyer le nom de fichier
-                $iso->setFilename(null);
             }
 
             $entityManager->persist($iso);
@@ -74,6 +79,14 @@ class IsoController extends AbstractController
 
             $this->addFlash('success', 'ISO created successfully');
             return $this->redirectToRoute('app_iso_index');
+        }   elseif ($form->isSubmitted()){
+            $this->logger->error('Form submitted but invalid');
+            $this->logger->debug('[IsoController:new]::Form errors: ' . (string) $form->getErrors(true));
+
+            // Afficher les erreurs pour debug
+            foreach ($form->getErrors(true) as $error) {
+                $this->logger->error('Form error: ' . $error->getMessage());
+            }
         }
 
         return $this->render('iso/new.html.twig', [
@@ -132,9 +145,12 @@ class IsoController extends AbstractController
             return $this->redirectToRoute('app_iso_index');
         }
 
+        $maxUploadSize = min(ini_get('upload_max_filesize'),ini_get('post_max_size'));
+
         return $this->render('iso/new.html.twig', [
             'iso' => $iso,
             'form' => $form,
+            'sizeLimit' => $maxUploadSize
         ]);
     }
 
@@ -162,56 +178,65 @@ class IsoController extends AbstractController
     #[Route('/api/isos/upload', name: 'app_iso_upload', methods: ['POST'])]
     public function upload(Request $request, SluggerInterface $slugger): Response
     {
-        $this->logger->info('Uploading file to iso_directory: ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
-        $this->logger->debug('[IsoController:upload]::Uploading file to iso_directory: ' . $this->getParameter('iso_directory')." by user :".$this->getUser()->getName());
-
-        $file = $request->files->get('file');
-        $this->logger->debug('[IsoController:upload]::The file to upload will be '.$file);
-
-        if (!$file) {
-            return $this->json(['error' => 'No file uploaded'], 400);
-        }
-        $maxUploadSize = min(
-            $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),$this->convertPHPSizeToBytes(ini_get('post_max_size'))
-        );
+        $this->logger->info('Uploading ISO file requested by user '.$this->getUser()->getName());
         
-        if ($file->getSize() > $maxUploadSize) {
-            return $this->json(['error' => 'File too large'], 413);
+        $file = $request->files->get('file');
+        
+        if ($file && $file->isValid()) {
+            $this->logger->debug('[IsoController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
+
+            $maxUploadSize = min(
+                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),$this->convertPHPSizeToBytes(ini_get('post_max_size'))
+            );
+
+            if ($file->getSize() > $maxUploadSize) {
+                return $this->json(['error' => 'File too large'], 413);
+            }
+
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+            try {
+                $uploadDir = $this->getParameter('iso_directory');
+                $file->move($uploadDir, $newFilename);
+        
+                $newFile = $uploadDir . '/' . $newFilename;
+                $fileSize = file_exists($newFile) ? filesize($newFile) : null;
+
+                $this->logger->debug('[IsoController:upload]::Move '.$file.' file to '.$newFile);        
+
+            } catch (FileException $e) {
+                return $this->json(['error' => 'Upload failed'], 500);
+            }
+            catch (\Exception $e) {
+                $this->logger->error('[IsoController:upload]::Error during file upload: ' . $e->getMessage());
+                return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
+            }
+
+            return $this->json([
+                'success' => true, 
+                'filename' => $newFilename,
+                'originalName' => $file->getClientOriginalName(),
+                'size' => $fileSize
+            ]);
         }
-
-        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeFilename = $slugger->slug($originalFilename);
-        $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
-
-        try {
-            $this->logger->debug('[IsoController:upload]::Try to move the file to '.$this->getParameter('iso_directory').'/'.$newFilename);
-            $file->move($this->getParameter('iso_directory'), $newFilename);
-            // Après le move, le fichier est dans iso_directory, on peut obtenir sa taille avec filesize()
-            $newFilePath = $this->getParameter('iso_directory') . '/' . $newFilename;
-            $fileSize = file_exists($newFilePath) ? filesize($newFilePath) : null;
-
-        } catch (FileException $e) {
-            return $this->json(['error' => 'Upload failed'], 500);
-        }
-
-        return $this->json([
-            'success' => true, 
-            'filename' => $newFilename,
-            'originalName' => $file->getClientOriginalName(),
-            'size' => $fileSize
-        ]);
+        else return $this->json(['error' => 'No file uploaded'], 400);
     }
 
-    #[Route('/admin/isos/delete-temp-file', name: 'app_iso_delete_temp_file', methods: ['POST'])]
+    #[Route('/api/isos/delete-temp-file', name: 'app_iso_delete_temp_file', methods: ['POST'])]
     public function deleteTempFile(Request $request): Response
     {
+        $this->logger->info('Deleting temporary ISO file requested by user '.$this->getUser()->getName());
         $filename = $request->request->get('filename');
+
         if (!$filename) {
             return $this->json(['error' => 'No filename provided'], 400);
         }
 
         $filePath = $this->getParameter('iso_directory') . '/' . $filename;
         if (file_exists($filePath)) {
+            $this->logger->debug('[IsoController:upload]::Try to delete '.$filename);
             unlink($filePath);
             return $this->json(['success' => true]);
         }

@@ -36,8 +36,7 @@
                         {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
                         
                         <!-- Champ caché pour stocker le nom du fichier uploadé -->
-                        <input type="hidden" name="uploaded_filename" id="uploaded_filename" value="">
-                        
+                        {{ form_widget(form.uploaded_filename) }}                        
                         <!-- Nom de l'ISO -->
                         <div class="mb-4">
                             <div class="form-floating">

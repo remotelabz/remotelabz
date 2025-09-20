@@ -180,7 +180,6 @@ export class IsoFormHandler {
     handleUpload() {
         if (!this.selectedFile) return;
 
-        console.log('Starting upload for file:', this.selectedFile.name);
         this.showUploadProgress();
         this.setUploadButtonState(true, 'Uploading...');
 
@@ -281,15 +280,70 @@ export class IsoFormHandler {
     }
 
     handleFormSubmit(e) {
+        console.log('Form submission attempt');
+    
+        // Récupérer la valeur du type de source sélectionné
         const fileSourceType = document.querySelector('input[name="iso[fileSourceType]"]:checked')?.value;
+        console.log('File source type:', fileSourceType);
         
-        if (fileSourceType === 'upload' && !this.uploadedFile) {
+        // Si le mode upload est sélectionné
+        if (fileSourceType === 'upload') {
+            // CORRECTION: utiliser le bon nom de variable
+            const uploadedFilename = this.uploadedFilenameInput?.value;
+            console.log('Uploaded filename:', uploadedFilename);
+            console.log('Uploaded file object:', this.uploadedFile);
+            
+            // Si aucun fichier n'a été uploadé
+            if (!uploadedFilename || uploadedFilename.trim() === '') {
+                e.preventDefault();
+                
+                // Vérifier si un fichier est sélectionné mais pas encore uploadé
+                if (this.selectedFile) {
+                    alert('Please upload the selected file before submitting the form.');
+                } else {
+                    alert('Please select and upload a file first, or switch to URL mode.');
+                }
+                return false;
+            }
+        } else if (fileSourceType === 'url') {
+            // Vérifier que l'URL n'est pas vide
+            const urlValue = this.urlInput?.value?.trim();
+            console.log('URL value:', urlValue);
+            
+            if (!urlValue) {
+                e.preventDefault();
+                alert('Please enter a valid URL or switch to file upload mode.');
+                return false;
+            }
+        } else {
+            // Aucun type de source sélectionné
             e.preventDefault();
-            alert('Please upload a file first or switch to URL mode');
+            alert('Please select a file source type (Upload or URL).');
             return false;
         }
         
+        console.log('Form validation passed');
         return true;
+    }
+
+    debugFormState() {
+        console.log('=== Form Debug State ===');
+        console.log('Selected file:', this.selectedFile);
+        console.log('Uploaded file:', this.uploadedFile);
+        console.log('Uploaded filename input:', this.uploadedFilenameInput?.value);
+        console.log('URL input:', this.urlInput?.value);
+        
+        const checkedRadio = document.querySelector('input[name="iso[fileSourceType]"]:checked');
+        console.log('Checked radio:', checkedRadio);
+        console.log('File source type:', checkedRadio?.value);
+        
+        // Vérifier tous les éléments du formulaire
+        console.log('Form elements:');
+        const formData = new FormData(this.form);
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
+        console.log('========================');
     }
 
     // Utility methods

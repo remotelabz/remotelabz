@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -70,6 +71,14 @@ class IsoType extends AbstractType
                 'required' => true,
                 'attr' => [
                     'class' => 'file-source-selector'
+                ]
+            ])
+
+             ->add('uploaded_filename', HiddenType::class, [
+                'mapped' => false, // Géré manuellement dans le contrôleur
+                'required' => false,
+                'attr' => [
+                    'id' => 'uploaded_filename'
                 ]
             ])
             
@@ -147,12 +156,12 @@ class IsoType extends AbstractType
             $iso = $event->getData();
             
             $fileSourceType = $form->get('fileSourceType')->getData();
-            $uploadedFile = $form->get('uploadedFile')->getData();
+            $uploadedFilename = $form->get('uploaded_filename')->getData(); // MODIFIÉ : utiliser le champ caché
             $filenameUrl = $iso->getFilenameUrl();
             
             // Validation conditionnelle
-            if ($fileSourceType === 'upload' && !$uploadedFile && !$iso->getFilename()) {
-                $form->get('uploadedFile')->addError(new \Symfony\Component\Form\FormError('Select an ISO file'));
+            if ($fileSourceType === 'upload' && !$uploadedFilename && !$iso->getFilename()) {
+                $form->get('uploaded_filename')->addError(new \Symfony\Component\Form\FormError('Please upload an ISO file first'));
             }
             
             if ($fileSourceType === 'url' && !$filenameUrl) {
