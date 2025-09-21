@@ -127,19 +127,19 @@
                         <td>
                             {% if device.type == 'vm' %}
                                 <span class="badge bg-info">
-                                    <i class="fas fa-desktop me-1"></i>VM
+                                    <i class="fas fa-desktop me-1"></i>&nbsp;VM
                                 </span>
                             {% elseif device.type == 'container' %}
                                 <span class="badge bg-success">
-                                    <i class="fab fa-docker me-1"></i>Container
+                                    <i class="fab fa-docker me-1"></i>&nbsp;Container
                                 </span>
                             {% elseif device.type == 'physical' %}
                                 <span class="badge bg-warning text-dark">
-                                    <i class="fas fa-server me-1"></i>Physical
+                                    <i class="fas fa-server me-1"></i>&nbsp;Physical
                                 </span>
                             {% else %}
                                 <span class="badge bg-secondary">
-                                    <i class="fas fa-question me-1"></i>{{ device.type|title }}
+                                    <i class="fas fa-question me-1"></i>&nbsp;{{ device.type|title }}
                                 </span>
                             {% endif %}
                         </td>

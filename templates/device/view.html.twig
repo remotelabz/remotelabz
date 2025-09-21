@@ -35,24 +35,20 @@
     <div class="row align-items-center">
         <div class="col">
             <div class="d-flex align-items-center mb-2">
-                <h1 class="display-6 mb-0 me-3">{{ device.name }}</h1>
+                <h1 class="display-6 mb-0 me-3">{{ device.name }}&nbsp;</h1>
                 <div class="device-badges">
                     {% if device.type == 'vm' %}
                         <span class="badge bg-info fs-6">
-                            <i class="fas fa-desktop me-1"></i>Virtual Machine
+                            <i class="fas fa-desktop me-1"></i> Virtual Machine
                         </span>
                     {% elseif device.type == 'container' %}
                         <span class="badge bg-success fs-6">
-                            <i class="fab fa-docker me-1"></i>Container
+                            <i class="fab fa-docker me-1"></i> Container
                         </span>
                     {% elseif device.type == 'physical' %}
                         <span class="badge bg-warning text-dark fs-6">
-                            <i class="fas fa-server me-1"></i>Physical Device
+                            <i class="fas fa-server me-1"></i> Physical Device
                         </span>
-                    {% endif %}
-                    
-                    {% if device.isTemplate %}
-                        <span class="badge bg-light text-dark fs-6 ms-2">Template</span>
                     {% endif %}
                 </div>
             </div>
@@ -143,8 +139,8 @@
                     <div class="col-sm-9">
                         <strong>{{ device.flavor.name }}</strong>
                         <div class="text-muted small mt-1">
-                            <i class="fas fa-memory me-1"></i>{{ device.flavor.memory }} MB RAM
-                            <i class="fas fa-hdd ms-3 me-1"></i>{{ device.flavor.disk }} GB Storage
+                            <i class="fas fa-memory me-1"></i> {{ device.flavor.memory }} MB RAM
+                            <i class="fas fa-hdd ms-3 me-1"></i> {{ device.flavor.disk }} GB Storage
                         </div>
                     </div>
                 </div>
@@ -175,55 +171,7 @@
         </div>
         {% endif %}
 
-        {# Network Configuration Card #}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-network-wired me-2"></i> Network Configuration
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-sm-3"><strong>Network Interfaces:</strong></div>
-                    <div class="col-sm-9">
-                        <span class="badge bg-info">{{ device.networkInterfaces|length }} interface{% if device.networkInterfaces|length > 1 %}s{% endif %}</span>
-                    </div>
-                </div>
-                
-                {% if device.networkInterfaceTemplate %}
-                <div class="row mb-3">
-                    <div class="col-sm-3"><strong>Interface Template:</strong></div>
-                    <div class="col-sm-9">
-                        <code>{{ device.networkInterfaceTemplate }}</code>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if device.virtuality == 0 %}
-                <div class="row mb-3">
-                    <div class="col-sm-3"><strong>IP Address:</strong></div>
-                    <div class="col-sm-9">
-                        {% if device.ip %}
-                            <code>{{ device.ip }}</code>
-                        {% else %}
-                            <span class="text-muted">Not specified</span>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="row mb-0">
-                    <div class="col-sm-3"><strong>Port:</strong></div>
-                    <div class="col-sm-9">
-                        {% if device.port %}
-                            <code>{{ device.port }}</code>
-                        {% else %}
-                            <span class="text-muted">Not specified</span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        
 
         {# Control Protocols Card #}
         <div class="card mb-4">
@@ -238,19 +186,19 @@
                         {% for controlProtocolType in device.controlProtocolTypes %}
                             {% if controlProtocolType.name == 'vnc' %}
                                 <span class="badge bg-primary fs-6">
-                                    <i class="fas fa-desktop me-1"></i>{{ controlProtocolType.name|upper }}
+                                    <i class="fas fa-desktop me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
                             {% elseif controlProtocolType.name == 'ssh' or controlProtocolType.name == 'login' %}
                                 <span class="badge bg-success fs-6">
-                                    <i class="fas fa-terminal me-1"></i>{{ controlProtocolType.name|upper }}
+                                    <i class="fas fa-terminal me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
                             {% elseif controlProtocolType.name == 'rdp' %}
                                 <span class="badge bg-info fs-6">
-                                    <i class="fas fa-desktop me-1"></i>{{ controlProtocolType.name|upper }}
+                                    <i class="fas fa-desktop me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
                             {% else %}
                                 <span class="badge bg-secondary fs-6">
-                                    <i class="fas fa-plug me-1"></i>{{ controlProtocolType.name|upper }}
+                                    <i class="fas fa-plug me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
                             {% endif %}
                         {% endfor %}
@@ -303,19 +251,11 @@
                     <i class="fas fa-chart-bar me-2"></i> Statistics
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
+            <div class="card-body text-center">
+                
                             <h5 class="mb-0">{{ device.labs|length }}</h5>
                             <small class="text-muted">Used in Labs</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <h5 class="mb-0">{{ device.networkInterfaces|length }}</h5>
-                        <small class="text-muted">Network Interfaces</small>
-                    </div>
-                </div>
+                
             </div>
         </div>
 

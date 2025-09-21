@@ -97,7 +97,7 @@
                         <th>Name</th>
                         <th width="120">Architecture</th>
                         <th width="150">Hypervisor</th>
-                        <th width="100">Size</th>
+                        <th width="100">Place</th>
                     </tr>
                 </thead>
                 <tbody id="osTableBody">
@@ -109,15 +109,15 @@
                         <td>
                             {% if operatingSystem.imageUrl is not null %}
                                 <span class="badge bg-warning">
-                                    <i class="fas fa-link me-1"></i>URL
+                                    <i class="fas fa-link me-1"></i> URL
                                 </span>
                             {% elseif operatingSystem.imageFilename is not null %}
                                 <span class="badge bg-success">
-                                    <i class="fas fa-file me-1"></i>File
+                                    <i class="fas fa-file me-1"></i> File
                                 </span>
                             {% else %}
                                 <span class="badge bg-secondary">
-                                    <i class="fas fa-question me-1"></i>None
+                                    <i class="fas fa-question me-1"></i> None
                                 </span>
                             {% endif %}
                         </td>
