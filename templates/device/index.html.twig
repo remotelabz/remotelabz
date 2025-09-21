@@ -1,5 +1,7 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block title %}Device Templates - {{ parent() }}{% endblock %}
+
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ 'Devices': is_granted("ROLE_ADMINISTRATOR") ? path('devices') : null }) -%}
     {{ parent() }}
@@ -11,80 +13,274 @@
 {% endblock %}
 
 {% block wrapper %}
-    <div class="content-title">
-        <div class="content-title-infos">
-            <h1>{{ 'Device Templates'|trans }}</h1>
-        </div>
-        <div class="content-title-actions">
-            <a href="{{ path('new_device') }}" class="btn btn-success">{{ 'New virtual device'|trans }}</a>
-        </div>
-        <div class="content-title-actions ml-2">
-            <a href="{{ path('new_physical_device') }}" class="btn btn-success">{{ 'New physical device'|trans }}</a>
-        </div>
-    </div>
-    <div class="top-panel">
-        <ul class="nav-links nav nav-tabs">
-            {% set type = app.request.query.get('type') %}
-            <li {% if type is null %} class="active"{% endif %}>
-                <a href="{{ path('devices', app.request.query|merge({type: null})) }}">
-                    <span>All</span> <span class="badge badge-pill">{{ count.total }}</span>
-                </a>
-            </li>
-            <li {% if type == 'vm' %}class="active"{% endif %}>
-                <a href="{{ path('devices', app.request.query|merge({type: 'vm'})) }}">
-                    <span>VMs</span> <span class="badge badge-pill">{{ count.vms }}</span>
-                </a>
-            </li>
-            <li {% if type == 'container' %}class="active"{% endif %}>
-                <a href="{{ path('devices', app.request.query|merge({type: 'container'})) }}">
-                    <span>Containers</span> <span class="badge badge-pill">{{ count.containers }}</span>
-                </a>
-            </li>
-            <li {% if type == 'physical' %}class="active"{% endif %}>
-                <a href="{{ path('devices', app.request.query|merge({type: 'physical'})) }}">
-                    <span>Physical Devices</span> <span class="badge badge-pill">{{ count.physical }}</span>
-                </a>
-            </li>
-        </ul>
-    </div>
-    <div class="content-body">
-        <form action="{{ path('devices') }}" method="GET">
-            <div class="row">
-                <div class="col">
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">
-                                <i class="fa fa-search"></i>
-                            </span>
-                        </div>
-                        <input type="search" class="form-control input-sm" name="search"
-                        placeholder="Search by name"
-                        spellcheck="false" value="{{ search|default('') }}">
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    {% for device in devices %}
-
-
-    <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
-        <div class="lab-item-left d-flex flex-column">
-            <div>
-            <a href="{{ path('show_device', {'id': device.id}) }}">
-                {{ device.name }}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Device Templates</h1>
+        <div class="quick-actions d-flex gap-2">
+            <a class="btn btn-success" role="button" href="{{ path('new_device') }}">
+                <i class="fas fa-plus me-2"></i> New Virtual Device
             </a>
-            </div>
-            <div class="lab-item-infos text-muted">
-                (Type: {{ device.type }}; OS: {{ device.operatingsystem.name }})
-            </div>
+            <a class="btn btn-outline-success" role="button" href="{{ path('new_physical_device') }}">
+                <i class="fas fa-server me-2"></i> New Physical Device
+            </a>
         </div>
+    </div>
+    
+    <ul class="nav-links nav nav-tabs mt-3">
+        <li class="nav-item">
+            <a class="nav-link {% if app.request.query.get('type') is null %}active{% endif %}" 
+               href="{{ path('devices', app.request.query|merge({type: null})) }}">
+                <span>All</span> 
+                <span class="badge bg-primary ms-1">{{ count.total }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if app.request.query.get('type') == 'vm' %}active{% endif %}" 
+               href="{{ path('devices', app.request.query|merge({type: 'vm'})) }}">
+                <span>Virtual Machines</span> 
+                <span class="badge bg-info ms-1">{{ count.vms }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if app.request.query.get('type') == 'container' %}active{% endif %}" 
+               href="{{ path('devices', app.request.query|merge({type: 'container'})) }}">
+                <span>Containers</span> 
+                <span class="badge bg-success ms-1">{{ count.containers }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if app.request.query.get('type') == 'physical' %}active{% endif %}" 
+               href="{{ path('devices', app.request.query|merge({type: 'physical'})) }}">
+                <span>Physical Devices</span> 
+                <span class="badge bg-warning ms-1">{{ count.physical }}</span>
+            </a>
+        </li>
+    </ul>
 </div>
 
-    {% endfor %}
+<div class="search-panel mt-3">
+    <div class="row">
+        <div class="col-md-6">
+            <form action="{{ path('devices') }}" method="GET" class="d-flex">
+                <input type="search" class="form-control" name="search"
+                       placeholder="Search by name, brand, or model..."
+                       spellcheck="false" value="{{ search|default('') }}"
+                       id="searchInput">
+                <button class="btn btn-outline-secondary ms-2" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-end">
+                <select class="form-select" style="width: auto;" id="osFilter">
+                    <option value="">All Operating Systems</option>
+                    {% set unique_os = [] %}
+                    {% for device in devices %}
+                        {% if device.operatingSystem and device.operatingSystem.name not in unique_os %}
+                            {% set unique_os = unique_os|merge([device.operatingSystem.name]) %}
+                            <option value="{{ device.operatingSystem.name|lower }}">{{ device.operatingSystem.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="devices-panel mt-3">
+    {% if devices is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-server fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Device Templates Found</h4>
+            <p class="text-muted">Get started by creating your first device template.</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{{ path('new_device') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Create Virtual Device
+                </a>
+                <a href="{{ path('new_physical_device') }}" class="btn btn-outline-success">
+                    <i class="fas fa-server me-2"></i>Create Physical Device
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="100">Type</th>
+                        <th>Name</th>
+                        <th width="150">Brand & Model</th>
+                        <th width="120">vCPU</th>
+                        <th width="150">Operating System</th>
+                        <th width="80">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTableBody">
+                    {% for device in devices %}
+                    <tr class="device-item" 
+                        data-type="{{ device.type }}"
+                        data-os="{% if device.operatingSystem %}{{ device.operatingSystem.name|lower }}{% else %}none{% endif %}"
+                        data-name="{{ device.name|lower }}"
+                        data-brand="{{ device.brand|default('')|lower }}"
+                        data-model="{{ device.model|default('')|lower }}">
+                        <td>
+                            {% if device.type == 'vm' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-desktop me-1"></i>VM
+                                </span>
+                            {% elseif device.type == 'container' %}
+                                <span class="badge bg-success">
+                                    <i class="fab fa-docker me-1"></i>Container
+                                </span>
+                            {% elseif device.type == 'physical' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-server me-1"></i>Physical
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-question me-1"></i>{{ device.type|title }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <a href="{{ path('show_device', {'id': device.id}) }}" 
+                                       class="text-decoration-none fw-medium">
+                                        {{ device.name }}
+                                    </a>
+                                    
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if device.brand or device.model %}
+                                <div class="small">
+                                    {% if device.brand %}<strong>{{ device.brand }}</strong>{% endif %}<br/>
+                                    {% if device.model %}{{ device.model }}{% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.virtuality %}
+                                <span class="text-muted">{{ device.nbCpu|default(1) }} vCPU</span>
+                                {% if device.flavor %}
+                                    <div class="small text-muted">{{ device.flavor.memory }} MB RAM</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Physical</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.operatingSystem %}
+                                <span class="badge bg-light text-dark">{{ device.operatingSystem.name }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('show_device', {'id': device.id}) }}" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if is_granted("ROLE_TEACHER_EDITOR") %}
+                                <a href="{{ path('edit_device', {'id': device.id}) }}" 
+                                   class="btn btn-outline-secondary btn-sm" 
+                                   title="Edit Device">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-muted mt-3">
+            Showing {{ devices|length }} device template{% if devices|length > 1 %}s{% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{# Delete Confirmation Modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the device <strong id="deleteItemName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" class="btn btn-danger" id="confirmDeleteBtn">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('device') }} #}
+    <script>
+        // Filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // OS filter
+            const osFilter = document.getElementById('osFilter');
+            const deviceItems = document.querySelectorAll('.device-item');
+            
+            osFilter.addEventListener('change', function() {
+                const selectedOS = this.value.toLowerCase();
+                
+                deviceItems.forEach(item => {
+                    if (!selectedOS || item.dataset.os === selectedOS) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                deviceItems.forEach(item => {
+                    const name = item.dataset.name;
+                    const brand = item.dataset.brand;
+                    const model = item.dataset.model;
+                    const os = item.dataset.os;
+                    
+                    if (name.includes(searchTerm) || 
+                        brand.includes(searchTerm) || 
+                        model.includes(searchTerm) ||
+                        os.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Delete confirmation
+        function confirmDelete(name, deleteUrl) {
+            document.getElementById('deleteItemName').textContent = name;
+            document.getElementById('confirmDeleteBtn').href = deleteUrl;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
 {% endblock %}
