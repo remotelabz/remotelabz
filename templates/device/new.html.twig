@@ -2,34 +2,209 @@
 
 {% block breadcrumbs %}
 {% if virtuality == 1 %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_device') }) %}
-    {% else %}
-    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs : breadcrumbs|merge({ 'New': path('new_physical_device') }) %}
-    {% endif %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs|merge({ 'Edit': null }) : breadcrumbs|merge({ 'New': path('new_device') }) %}
+{% else %}
+    {% set breadcrumbs = app.request.uri ends with 'edit' ? breadcrumbs|merge({ 'Edit': null }) : breadcrumbs|merge({ 'New': path('new_physical_device') }) %}
+{% endif %}
     {{ parent() }}
 {% endblock %}
 
 {% block wrapper %}
-    <div class="content-title">
-        <div class="content-title-infos">
-            <h1>
-                {% if app.request.uri ends with 'edit' %}
-                    {{ 'Edit device'|trans }}: {{ data.name }}
+<div class="content-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                <h1 class="display-6 mb-0 me-3">
+                    {% if app.request.uri ends with 'edit' %}
+                        Edit Device: {{ data.name }}
+                    {% else %}
+                        New Device&nbsp;
+                    {% endif %}
+                </h1>
+                {% if virtuality == 1 %}
+                    <span class="badge bg-info fs-6">Virtual Device</span>
                 {% else %}
-                    {{ 'New device'|trans }}
+                    <span class="badge bg-warning text-dark fs-6">Physical Device</span>
                 {% endif %}
-            </h1>
+            </div>
         </div>
         {% if virtuality == 1 %}
-        <div class="content-title-actions">
-            <a href="{{ path('new_lxc_device') }}" class="btn btn-success">{{ 'New lxc'|trans }}</a>
+        <div class="col-auto">
+            <a href="{{ path('new_lxc_device') }}" class="btn btn-outline-success">
+                <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
+            </a>
         </div>
         {% endif %}
     </div>
-    <div class="content-body">{{ form(form) }}</div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    {% if app.request.uri ends with 'edit' %}
+                        Device Configuration
+                    {% else %}
+                        New Device Configuration
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ form(form) }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i> Device Types
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-desktop text-info me-2"></i>
+                        <strong>&nbsp;Virtual Machine</strong>
+                    </div>
+                    <small class="text-muted">Full virtualization using QEMU/KVM hypervisor</small>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fab fa-docker text-success me-2"></i>
+                        <strong>&nbsp;Container</strong>
+                    </div>
+                    <small class="text-muted">Lightweight virtualization using LXC containers</small>
+                </div>
+                
+                <div class="mb-0">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-server text-warning me-2"></i>
+                        <strong>&nbsp;Physical Device</strong>
+                    </div>
+                    <small class="text-muted">Real hardware devices connected to the network</small>
+                </div>
+            </div>
+        </div>
+
+        {% if virtuality == 1 %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-microchip me-2"></i> Hardware Guidelines
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <small>
+                        <strong>CPU Configuration:</strong><br>
+                        The total vCPU count should be: Cores × Sockets × Threads
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong class="small">Recommended Flavors:</strong>
+                    <ul class="small mb-0">
+                        <li>Small: 1 vCPU, 512MB RAM</li>
+                        <li>Medium: 2 vCPU, 1GB RAM</li>
+                        <li>Large: 4 vCPU, 2GB RAM</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-network-wired me-2"></i> Network Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong class="small">Interface Template:</strong>
+                    <p class="small text-muted mb-0">
+                        Defines the naming pattern for network interfaces (e.g., "eth" will create eth0, eth1, etc.)
+                    </p>
+                </div>
+                
+                <div class="mb-0">
+                    <strong class="small">Control Protocols:</strong>
+                    <ul class="small mb-0">
+                        <li><strong>VNC:</strong> Graphical console access</li>
+                        <li><strong>SSH/Login:</strong> Command line access</li>
+                        <li><strong>RDP:</strong> Windows remote desktop</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {% if app.request.uri ends with 'edit' %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('show_device', {'id': data.id}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eye me-2"></i> View Device
+                    </a>
+                    
+                    <a href="{{ path('devices') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Devices
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# {{ encore_entry_script_tags('device') }} #}
-{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-calculate total vCPU based on cores, sockets, and threads
+            const coreInput = document.querySelector('input[name*="nbCore"]');
+            const socketInput = document.querySelector('input[name*="nbSocket"]');
+            const threadInput = document.querySelector('input[name*="nbThread"]');
+            const cpuInput = document.querySelector('input[name*="nbCpu"]');
+            
+            if (coreInput && socketInput && threadInput && cpuInput) {
+                function updateCpuCount() {
+                    const cores = parseInt(coreInput.value) || 1;
+                    const sockets = parseInt(socketInput.value) || 1;
+                    const threads = parseInt(threadInput.value) || 1;
+                    const calculated = cores * sockets * threads;
+                    
+                    if (parseInt(cpuInput.value) < calculated) {
+                        cpuInput.value = calculated;
+                        cpuInput.style.borderColor = '#28a745';
+                        setTimeout(() => {
+                            cpuInput.style.borderColor = '';
+                        }, 2000);
+                    }
+                }
+                
+                coreInput.addEventListener('input', updateCpuCount);
+                socketInput.addEventListener('input', updateCpuCount);
+                threadInput.addEventListener('input', updateCpuCount);
+            }
+            
+            // Show/hide fields based on device type
+            const osSelect = document.querySelector('select[name*="operatingSystem"]');
+            if (osSelect) {
+                osSelect.addEventListener('change', function() {
+                    // You could add logic here to show/hide hypervisor-specific fields
+                });
+            }
+        });
+    </script>
+    {% endblock %}
