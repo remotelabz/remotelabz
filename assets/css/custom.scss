@@ -905,6 +905,7 @@ img.rounded-circle {
   font-style: normal;
   font-weight: 400;
   display: inline-block;
+  color:$white;
 }
 
 .badge-warning {
@@ -1067,9 +1068,11 @@ $grid-number: 12;
   color: black;
 }
 
+
 /** media specific */
 
 [theme="dark"] {
+
   background-color: var(--dark);
 
   html, body {

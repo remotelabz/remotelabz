@@ -67,19 +67,12 @@ class OperatingSystem
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'text', nullable: true)]
     #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
-    private $description;
+    private $description = Null;
 
-    /**
-     * @var string|null
-     */
-    #[Assert\NotBlank(message: 'Architecture is required')]
-    #[Assert\Choice(
-        choices: ['x86', 'x86_64', 'arm', 'arm64'],
-        message: 'Choose a valid architecture: x86, x86_64, arm, or arm64'
-    )]
-    #[ORM\Column(type: 'string', length: 20)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
-    private ?string $arch = null;
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
+    private $arch = Null;
     
     public function getId(): ?int
     {
@@ -146,12 +139,12 @@ class OperatingSystem
         return $this;
     }
 
-    public function getArch(): ?string
+    public function getArch(): ?Arch
     {
         return $this->arch;
     }
 
-    public function setArch(?string $arch): self
+    public function setArch(?Arch $arch): self
     {
         $this->arch = $arch;
 

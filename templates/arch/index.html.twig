@@ -1,0 +1,48 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}Architectures - {{ parent() }}{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">{{ 'New Architecture'|trans }}</h1>
+        <div class="quick-actions">
+            <a class="btn btn-success" role="button" href="{{ path('arch_new') }}">
+                <i class="fas fa-plus me-2"></i> {{ 'New Architecture'|trans }}
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if archs is empty %}
+            <div class="alert alert-info">No architectures found.</div>
+        {% else %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for arch in archs %}
+                        <tr>
+                            <td>{{ arch.name }}</td>
+                            <td>
+                                <a href="{{ path('arch_edit', {'id': arch.id}) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a><br/><br/>
+                                <a href="{{ path('arch_delete', {'id': arch.id}) }}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-edit"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

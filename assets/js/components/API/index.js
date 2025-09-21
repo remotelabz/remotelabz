@@ -1089,6 +1089,48 @@ export class RemotelabzAPI {
             return axios.post(`/labs/${params.labid}/pictures`, params.fields);
         }
     }
+
+    iso = {
+        /**
+         * Upload an ISO file.
+         * Implements POST `/api/admin/isos/upload`
+         * @param {File} file
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, filename: string, error?: string}>>}
+         */
+        upload(file, onUploadProgress) {
+            const formData = new FormData();
+            formData.append('file', file);
+            return axios.post('/isos/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress
+            });
+        },
+     
+
+        /**
+         * Validate an ISO URL.
+         * Implements POST `/api/admin/isos/validate-url`
+         * @param {string} url
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, valid: boolean, fileSize?: number, fileName?: string, error?: string}>>}
+         */
+        validateUrl(url) {
+            return axios.post('/isos/validate-url', `url=${encodeURIComponent(url)}`, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+        },
+
+        /**
+         * Delete a temporary ISO file.
+         * Implements DELETE `/api/admin/isos/delete-temp-file`
+         * @param {string} filename
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, error?: string}>>}
+         */
+        deleteTempFile(filename) {
+            return axios.delete('/isos/delete-temp-file', `filename=${encodeURIComponent(filename)}`, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+        }
+    }
 }
 
 const Remotelabz = new RemotelabzAPI();

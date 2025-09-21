@@ -104,10 +104,11 @@
                     </div>
                     {% endif %}#}
                 {% else %}
+                    <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}">
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         No image source configured for this operating system.
-                    </div>
+                    </div></a>
                 {% endif %}
                 
                 {% if operatingSystem.image %}
@@ -132,7 +133,14 @@
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Architecture:</strong></div>
                     <div class="col-sm-9">
-                        <span class="badge bg-info fs-6">{{ operatingSystem.arch|upper }}</span>
+                        {% if operatingSystem.arch %}
+                            <span class="badge bg-info fs-6">{{ operatingSystem.arch.name|upper }}</span>
+                        {% else %}
+                        <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}" 
+                       class="text-muted">
+                        Not specified
+                    </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -191,22 +199,7 @@
             </div>
         </div>
 
-        {# Metadata Card #}
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i> Metadata
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-2">
-                    <div class="col-sm-4"><strong>ID:</strong></div>
-                    <div class="col-sm-8"><code>{{ operatingSystem.id }}</code></div>
-                </div>
-                
-                
-            </div>
-        </div>
+
     </div>
 </div>
 {% endblock %}
