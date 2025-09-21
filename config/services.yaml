@@ -70,7 +70,8 @@ parameters:
     app.ssh.worker.passwd : '%env(string:SSH_USER_PASSWD)%'
     app.ssh.worker.privatekey : '%env(string:SSH_USER_PRIVATEKEY_FILE)%'
     app.ssh.worker.publickey : '%env(string:SSH_USER_PUBLICKEY_FILE)%'
-
+    app.ssh.worker.port : '%env(string:SSH_USER_PORT)%'
+    app.ssh.worker.directory : '%env(string:SSH_WORKER_DIRECTORY)%'
 
 services:
     # default configuration for services in *this* file
@@ -241,6 +242,17 @@ services:
     App\Controller\InstanceController:
         arguments:
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
+
+    App\Controller\IsoController:
+        arguments:
+            $sshUser: '%app.ssh.worker.user%'
+            $sshPasswd: '%app.ssh.worker.passwd%'
+            $sshPrivateKey: '%app.ssh.worker.privatekey%'
+            $sshPublicKey: '%app.ssh.worker.publickey%'
+            $sshPort: '%app.ssh.worker.port%'
+            $sshWorkerDirectory: '%app.ssh.worker.directory%'
+            $sshService: '@App\Service\SshService'
+            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
 
     App\MessageHandler\InstanceStateMessageHandler:
         arguments:

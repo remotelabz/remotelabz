@@ -144,6 +144,7 @@
                             </a>
                             <form method="post" action="{{ path('app_iso_delete', {id: iso.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ iso.id) }}">
+                                <input type="hidden" name="_method" value="DELETE">
                                 <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
                                     <i class="fa fa-trash"></i>
                                 </button>

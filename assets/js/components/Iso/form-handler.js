@@ -186,9 +186,6 @@ export class IsoFormHandler {
         
         this.uploadedFile = uploadData;
         
-        
-        
-        
         if (this.uploadedFilenameInput) {
             this.uploadedFilenameInput.value = uploadData.filename;
         

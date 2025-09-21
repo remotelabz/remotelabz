@@ -1121,12 +1121,12 @@ export class RemotelabzAPI {
 
         /**
          * Delete a temporary ISO file.
-         * Implements POST `/api/admin/isos/delete-temp-file`
+         * Implements DELETE `/api/admin/isos/delete-temp-file`
          * @param {string} filename
          * @returns {Promise<import('axios').AxiosResponse<{success: boolean, error?: string}>>}
          */
         deleteTempFile(filename) {
-            return axios.post('/isos/delete-temp-file', `filename=${encodeURIComponent(filename)}`, {
+            return axios.delete('/isos/delete-temp-file', `filename=${encodeURIComponent(filename)}`, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
         }
