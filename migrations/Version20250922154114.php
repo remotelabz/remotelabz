@@ -33,11 +33,11 @@ final class Version20250922154114 extends AbstractMigration
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE iso DROP FOREIGN KEY FK_61587F414F47FAB6');
+        $this->addSql('ALTER TABLE operating_system DROP FOREIGN KEY FK_BCF9A7814F47FAB6');
+        $this->addSql('ALTER TABLE operating_system DROP arch_id');
         $this->addSql('DROP TABLE arch');
         $this->addSql('DROP TABLE iso');
         $this->addSql('ALTER TABLE lab CHANGE version version VARCHAR(10) DEFAULT \'1\' NOT NULL');
-        $this->addSql('ALTER TABLE operating_system DROP FOREIGN KEY FK_BCF9A7814F47FAB6');
-        $this->addSql('DROP INDEX IDX_BCF9A7814F47FAB6 ON operating_system');
-        $this->addSql('ALTER TABLE operating_system DROP arch_id');
+        //$this->addSql('DROP INDEX IDX_BCF9A7814F47FAB6 ON operating_system');
     }
 }
