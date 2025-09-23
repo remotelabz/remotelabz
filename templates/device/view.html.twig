@@ -268,11 +268,10 @@
             </div>
             <div class="card-body text-center">
                 {% if device.icon %}
-                    <img src="/images/icons/{{ device.icon }}" 
-                         alt="{{ device.name }}" 
-                         class="img-fluid mb-2"
-                         style="max-width: 64px; max-height: 64px;">
-                    <div class="small text-muted">{{ device.icon }}</div>
+                    <img src="{{ asset('build/images/icons/' ~ device.icon) }}" 
+                    alt="{{ device.name }}"
+                    class="img-fluid mb-2"
+                    style="max-width: 64px; max-height: 64px;"/>
                 {% else %}
                     <div class="text-muted">
                         <i class="fas fa-image fa-3x mb-2"></i>
