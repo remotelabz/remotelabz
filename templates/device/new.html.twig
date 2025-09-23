@@ -16,7 +16,7 @@
             <div class="d-flex align-items-center">
                 <h1 class="display-6 mb-0 me-3">
                     {% if app.request.uri ends with 'edit' %}
-                        Edit Device: {{ data.name }}
+                        Edit Device: {{ data.name }}&nbsp;
                     {% else %}
                         New Device&nbsp;
                     {% endif %}
@@ -24,7 +24,7 @@
                 {% if virtuality == 1 %}
                     <span class="badge bg-info fs-6">Virtual Device</span>
                 {% else %}
-                    <span class="badge bg-warning text-dark fs-6">Physical Device</span>
+                    <span class="badge bg-warning text-dark fs-6"> Physical Device</span>
                 {% endif %}
             </div>
         </div>
@@ -109,7 +109,8 @@
                 <div class="mb-3">
                     <strong class="small">Recommended Flavors:</strong>
                     <ul class="small mb-0">
-                        <li>Small: 1 vCPU, 512MB RAM</li>
+                        <li>XX-Small: 1 vCPU, 256MB RAM</li>
+                        <li>X-Small: 1 vCPU, 512MB RAM</li>
                         <li>Medium: 2 vCPU, 1GB RAM</li>
                         <li>Large: 4 vCPU, 2GB RAM</li>
                     </ul>
