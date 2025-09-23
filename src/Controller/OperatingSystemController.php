@@ -330,22 +330,32 @@ class OperatingSystemController extends Controller
         // Vérifier le token CSRF
         if ($this->isCsrfTokenValid('delete' . $operatingSystem->getId(), $request->request->get('_token'))) {
             $entityManager = $this->entityManager;
-            // Si c'est un fichier local, vous pourriez vouloir le supprimer du disque
-            if ($operatingSystem->getImageFilename()) {
-                $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/images/' . $operatingSystem->getImageFilename();
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
+
+            $devicesUsingOs = $entityManager
+                ->getRepository(\App\Entity\Device::class)
+                ->findBy(['operatingSystem' => $operatingSystem]);
+
+            if (count($devicesUsingOs) === 0) {
+                // Si c'est un fichier local, vous pourriez vouloir le supprimer du disque
+                if ($operatingSystem->getImageFilename()) {
+                    $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/images/' . $operatingSystem->getImageFilename();
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
                 }
+                
+                $entityManager->remove($operatingSystem);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Operating system "' . $operatingSystem->getName() . '" has been deleted successfully.');
+            } else {
+                $this->addFlash('danger', 'Unable to delete this OS: it is being used by at least one device.');
+                return $this->redirectToRoute('operating_systems');
             }
-            
-            $entityManager->remove($operatingSystem);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Operating system "' . $operatingSystem->getName() . '" has been deleted successfully.');
-        } else {
-            $this->addFlash('error', 'Invalid security token. Please try again.');
         }
-
+        else {
+                $this->addFlash('error', 'Invalid security token. Please try again.');
+            }
         return $this->redirectToRoute('operating_systems');
     }
 
