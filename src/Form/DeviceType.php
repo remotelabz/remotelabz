@@ -20,9 +20,35 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 class DeviceType extends AbstractType
 {
+
+    private string $projectDir;
+
+    public function __construct(KernelInterface $kernel)
+    {
+        $this->projectDir = $kernel->getProjectDir();
+    }
+
+    private function getAvailableIcons(): array
+    {
+
+        $iconDir = $this->projectDir . '/public/build/images/icons/';
+        $icons = [];
+
+        foreach (new \FilesystemIterator($iconDir) as $fileInfo) {
+            if ($fileInfo->isFile()) {
+                $filename = $fileInfo->getFilename();
+                $label = ucwords(str_replace('_', ' ', pathinfo($filename, PATHINFO_FILENAME)));
+                $icons[$label] = $filename;
+            }
+        }
+        ksort($icons);
+        return $icons;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $virtuality = $options['virtuality'];
@@ -40,7 +66,15 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'empty_data' => ''
             ])
-            
+            ->add('icon', ChoiceType::class, [
+                'choices' => $this->getAvailableIcons(),
+                'attr' => [
+                    'class' => 'icon-selector'                
+                ],
+                'help' => 'Select an icon to represent this device',
+                'required' => false,
+                'placeholder' => 'Choose an icon...'
+            ])
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'query_builder' => function(OperatingSystemRepository $operaringSystemRepository) use ($virtuality): QueryBuilder {
@@ -58,7 +92,6 @@ class DeviceType extends AbstractType
                         ->setParameter('name', 'physical')
                         ->orderBy('o.name', 'ASC');
                     }
-                    
                 },
                 'choice_label' => 'name',
                 'help' => 'Image disk used for this device.'
@@ -83,10 +116,7 @@ class DeviceType extends AbstractType
                 'empty_data' => null,
                 'required' => false
             ])
-            ->add('networkInterfaceTemplate', TextType::class, [
-                'help' => 'Scheme of network interfaces name. exemple: eth',
-                'empty_data' => 'eth'
-            ])
+            
            ->add('controlProtocolTypes', EntityType::class, [
                 'class' => ControlProtocolType::class,
                 'choice_label' => 'name',

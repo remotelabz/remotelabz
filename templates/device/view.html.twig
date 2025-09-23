@@ -177,7 +177,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-terminal me-2"></i> Control Protocols
+                    <i class="fas fa-terminal me-2"></i> Control Protocol
                 </h5>
             </div>
             <div class="card-body">
@@ -188,18 +188,15 @@
                                 <span class="badge bg-primary fs-6">
                                     <i class="fas fa-desktop me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
-                            {% elseif controlProtocolType.name == 'ssh' or controlProtocolType.name == 'login' %}
-                                <span class="badge bg-success fs-6">
+                            {% elseif controlProtocolType.name == 'login' %}
+                                &nbsp;<span class="badge bg-success fs-6">
                                     <i class="fas fa-terminal me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
-                            {% elseif controlProtocolType.name == 'rdp' %}
-                                <span class="badge bg-info fs-6">
-                                    <i class="fas fa-desktop me-1"></i> {{ controlProtocolType.name|upper }}
-                                </span>
-                            {% else %}
-                                <span class="badge bg-secondary fs-6">
+                            {% elseif controlProtocolType.name == 'serial' %}
+                                &nbsp;<span class="badge bg-warning fs-6">
                                     <i class="fas fa-plug me-1"></i> {{ controlProtocolType.name|upper }}
                                 </span>
+                            
                             {% endif %}
                         {% endfor %}
                     </div>

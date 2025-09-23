@@ -528,7 +528,6 @@ class DeviceController extends Controller
             }
             //$this->addNetworkInterface($device);
             $this->setDeviceHypervisorToOS($device);
-            $device->setIcon('Server_Linux.png');
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
             $entityManager = $this->entityManager;
@@ -931,7 +930,6 @@ class DeviceController extends Controller
                 $device->setNbCpu($total);
             }
 
-            $device->setIcon("Server_Linux.png");
             $this->setDeviceHypervisorToOS($device);
 
             $controlProtocolTypes= [];
