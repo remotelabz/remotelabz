@@ -9,6 +9,142 @@
     {{ parent() }}
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .icon-selector-container {
+            position: relative;
+        }
+        
+        .icon-preview {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 4px;
+            margin-right: 10px;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+            transition: all 0.3s ease;
+        }
+        
+        .icon-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .icon-preview.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 20px;
+        }
+        
+        .icon-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .icon-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .icon-option:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .icon-option.selected {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .icon-option img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            object-fit: contain;
+        }
+        
+        .form-group.icon-field .form-control {
+            padding-left: 60px;
+        }
+        
+        .icon-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-bottom: 1px solid #eee;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        .icon-search-input:focus {
+            border-bottom-color: #007bff;
+        }
+
+[theme="dark"] {
+         .icon-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #232327;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .icon-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .icon-option:hover {
+            background-color: black;
+        }
+        
+        .icon-option.selected {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .icon-option img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            object-fit: contain;
+        }
+}
+
+
+
+    </style>
+{% endblock %}
+
 {% block wrapper %}
 <div class="content-header mb-4">
     <div class="row align-items-center">
@@ -24,7 +160,7 @@
                 {% if virtuality == 1 %}
                     <span class="badge bg-info fs-6">Virtual Device</span>
                 {% else %}
-                    <span class="badge bg-warning text-dark fs-6"> Physical Device</span>
+                    <span class="badge bg-warning text-dark fs-6">Physical Device</span>
                 {% endif %}
             </div>
         </div>
@@ -52,7 +188,77 @@
                 </h5>
             </div>
             <div class="card-body">
-                {{ form(form) }}
+                {{ form_start(form) }}
+                
+                {{ form_row(form.name) }}
+
+                <div class="form-group row">
+                    {{ form_label(form.icon) }}
+                    <div class="col-sm-10 icon-selector-container">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-preview empty" id="iconPreview">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                {{ form_widget(form.icon, {'attr': {'style': 'display: none'}}) }}
+                                <input type="text" 
+                                    class="form-control" 
+                                    id="iconDisplay" 
+                                    placeholder="Choose an icon..." 
+                                    readonly
+                                    style="cursor: pointer;">
+                            </div>
+                        </div>
+                        <div class="icon-dropdown" id="iconDropdown">
+                            <input type="text" 
+                                    class="icon-search-input" 
+                                    id="iconSearch" 
+                                    placeholder="Search icons...">
+                            <div id="iconOptions"></div>
+                        </div>
+                        {% if form.icon.vars.help %}
+                        <small class="form-text text-muted">{{ form.icon.vars.help }}</small>
+                        {% endif %}
+                    </div>
+                    
+                </div>
+
+                {{ form_row(form.brand) }}
+                {{ form_row(form.model) }}
+                
+                {{ form_row(form.operatingSystem) }}
+                {{ form_row(form.flavor) }}
+                
+                {% if virtuality == 1 %}
+                    {{ form_row(form.nbCpu) }}
+                    {{ form_row(form.nbCore) }}
+                    {{ form_row(form.nbSocket) }}
+                    {{ form_row(form.nbThread) }}                   
+                {% endif %}
+                
+                {{ form_row(form.controlProtocolTypes) }}
+                
+                {% if virtuality == 0 %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form_row(form.ip) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.port) }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {{ form_row(form.isTemplate) }}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('devices') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Cancel
+                    </a>
+                    {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+                </div>
+                
+                {{ form_end(form) }}
             </div>
         </div>
     </div>
@@ -172,7 +378,91 @@
     {{ parent() }}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-calculate total vCPU based on cores, sockets, and threads
+            // Configuration du sélecteur d'icône
+            const iconSelect = document.getElementById('{{ form.icon.vars.id }}');
+            const iconDisplay = document.getElementById('iconDisplay');
+            const iconPreview = document.getElementById('iconPreview');
+            const iconDropdown = document.getElementById('iconDropdown');
+            const iconOptions = document.getElementById('iconOptions');
+            const iconSearch = document.getElementById('iconSearch');
+            
+            const iconBasePath = '{{ asset('build/images/icons/') }}';
+            
+            // Récupérer les options du select
+            const icons = {};
+            Array.from(iconSelect.options).forEach(option => {
+                if (option.value) {
+                    icons[option.value] = option.text;
+                }
+            });
+            
+            // Créer les options visuelles
+            function createIconOptions(filter = '') {
+                iconOptions.innerHTML = '';
+                
+                Object.entries(icons).forEach(([value, label]) => {
+                    if (filter === '' || label.toLowerCase().includes(filter.toLowerCase()) || value.toLowerCase().includes(filter.toLowerCase())) {
+                        const option = document.createElement('div');
+                        option.className = 'icon-option';
+                        option.dataset.value = value;
+                        
+                        option.innerHTML = `
+                            <img src="${iconBasePath}${value}" alt="${label}" onerror="this.style.display='none'">
+                            <span>${label}</span>
+                        `;
+                        
+                        option.addEventListener('click', () => selectIcon(value, label));
+                        iconOptions.appendChild(option);
+                    }
+                });
+            }
+            
+            // Sélectionner une icône
+            function selectIcon(value, label) {
+                iconSelect.value = value;
+                iconDisplay.value = label;
+                
+                if (value) {
+                    iconPreview.innerHTML = `<img src="${iconBasePath}${value}" alt="${label}">`;
+                    iconPreview.classList.remove('empty');
+                } else {
+                    iconPreview.innerHTML = '<i class="fas fa-image"></i>';
+                    iconPreview.classList.add('empty');
+                }
+                
+                // Mettre à jour la sélection visuelle
+                document.querySelectorAll('.icon-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.value === value);
+                });
+                
+                iconDropdown.style.display = 'none';
+            }
+            
+            // Initialiser la valeur actuelle
+            if (iconSelect.value) {
+                const currentLabel = iconSelect.options[iconSelect.selectedIndex].text;
+                selectIcon(iconSelect.value, currentLabel);
+            }
+            
+            // Événements
+            iconDisplay.addEventListener('click', () => {
+                createIconOptions();
+                iconDropdown.style.display = iconDropdown.style.display === 'block' ? 'none' : 'block';
+                iconSearch.focus();
+            });
+            
+            iconSearch.addEventListener('input', (e) => {
+                createIconOptions(e.target.value);
+            });
+            
+            // Fermer le dropdown en cliquant ailleurs
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.icon-selector-container')) {
+                    iconDropdown.style.display = 'none';
+                }
+            });
+            
+            // Auto-calcul du CPU
             const coreInput = document.querySelector('input[name*="nbCore"]');
             const socketInput = document.querySelector('input[name*="nbSocket"]');
             const threadInput = document.querySelector('input[name*="nbThread"]');
@@ -198,14 +488,6 @@
                 socketInput.addEventListener('input', updateCpuCount);
                 threadInput.addEventListener('input', updateCpuCount);
             }
-            
-            // Show/hide fields based on device type
-            const osSelect = document.querySelector('select[name*="operatingSystem"]');
-            if (osSelect) {
-                osSelect.addEventListener('change', function() {
-                    // You could add logic here to show/hide hypervisor-specific fields
-                });
-            }
         });
     </script>
-    {% endblock %}
+{% endblock %}
