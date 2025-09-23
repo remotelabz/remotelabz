@@ -741,4 +741,71 @@ class Device implements InstanciableInterface
 
         return $this;
     }
+
+    public function getCdromIsoFilename(): ?string
+    {
+        return $this->cdrom_iso_filename;
+    }
+
+    public function setCdromIsoFilename(?string $cdrom_iso_filename): self
+    {
+        $this->cdrom_iso_filename = $cdrom_iso_filename;
+
+        return $this;
+    }
+
+    public function getCdromBusType(): ?string
+    {
+        return $this->cdrom_bus_type;
+    }
+
+    public function setCdromBusType(?string $cdrom_bus_type): self
+    {
+        $this->cdrom_bus_type = $cdrom_bus_type;
+
+        return $this;
+    }
+
+    public function getBiosFilename(): ?string
+    {
+        return $this->bios_filename;
+    }
+
+    public function setBiosFilename(?string $bios_filename): self
+    {
+        $this->bios_filename = $bios_filename;
+
+        return $this;
+    }
+
+    public function getBiosType(): ?string
+    {
+        return $this->bios_type;
+    }
+
+    public function setBiosType(?string $bios_type): self
+    {
+        $this->bios_type = $bios_type;
+
+        return $this;
+    }
+
+    public function getOtherOptions(): ?string
+    {
+        return $this->other_options;
+    }
+
+    public function setOtherOptions(?string $other_options): self
+    {
+        $this->other_options = $other_options;
+
+        return $this;
+    }
+
+    public function __toString()
+    {
+        return $this->name;
+    }
+
+    
 }

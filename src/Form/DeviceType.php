@@ -9,6 +9,7 @@ use App\Entity\OperatingSystem;
 use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
 use App\Entity\ControlProtocolType;
+use App\Entity\Iso;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -21,6 +22,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpKernel\KernelInterface;
+
 
 class DeviceType extends AbstractType
 {
@@ -96,6 +98,48 @@ class DeviceType extends AbstractType
                 'choice_label' => 'name',
                 'help' => 'Image disk used for this device.'
             ])
+            
+            ->add('bios_type', ChoiceType::class, [
+                    'choices' => [
+                        'BIOS' => 'BIOS',
+                        'UEFI' => 'UEFI',
+                    ],
+                    'required' => false,
+                    'placeholder' => 'Select a BIOS type',
+                    'help' => 'Firmaware type (BIOS or UEFI)',
+                ])
+                
+                ->add('other_options', TextType::class, [
+                    'required' => false,
+                    'label' => 'Advanced options',
+                    'help' => 'Advanced QEMU options',
+                ])
+                ->add('bios_filename', EntityType::class, [
+                    'class' => Iso::class,
+                    'choice_label' => 'filename',
+                    'required' => false,
+                    'placeholder' => 'Select a BIOS image',
+                    'help' => 'BIOS file to use',
+                ])
+                ->add('cdrom_iso_filename', EntityType::class, [
+                    'class' => Iso::class,
+                    'choice_label' => 'filename',
+                    'required' => false,
+                    'placeholder' => 'Select an ISO image',
+                    'help' => 'ISO file to mount as CD-ROM',
+                ])
+                ->add('cdrom_bus_type', ChoiceType::class, [
+                    'choices' => [
+                        'IDE' => 'IDE',
+                        'SATA' => 'SATA',
+                        'SCSI' => 'SCSI',
+                        'VirtIO' => 'VirtIO',
+                    ],
+                    'required' => false,
+                    'placeholder' => 'Sélectionner le bus du CD-ROM',
+                    'help' => 'Type de bus pour le CD-ROM',
+                ])
+
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
                 'choice_label' => 'name'
