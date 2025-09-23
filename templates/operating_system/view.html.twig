@@ -4,8 +4,9 @@
 
 {% block breadcrumbs %}
     {%- set breadcrumbs = breadcrumbs|merge({ 
-        'Operating systems': path('operating_systems'),
-        (operatingSystem.name): path('show_operating_system', {'id': operatingSystem.id})
+        (operatingSystem.name): path('show_operating_system', {'id': operatingSystem.id}),
+        'Operating systems': path('operating_systems')
+        
     }) -%}
     {{ parent() }}
 {% endblock %}

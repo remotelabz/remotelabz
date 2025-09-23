@@ -112,6 +112,7 @@
                         <th>Name</th>
                         <th width="150">Brand & Model</th>
                         <th width="120">vCPU</th>
+                        <th width="120">Arch.</th>
                         <th width="150">Operating System</th>
                         <th width="80">Actions</th>
                     </tr>
@@ -172,6 +173,13 @@
                                 {% endif %}
                             {% else %}
                                 <span class="text-muted">Physical</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if device.operatingSystem.arch %}
+                                <span class="badge bg-light text-dark">{{ device.operatingSystem.arch.name }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
