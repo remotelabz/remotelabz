@@ -249,9 +249,12 @@ class OperatingSystemController extends Controller
                 return $this->redirectToRoute('operating_systems');
             }
         }
-
+        $maxUploadSize = min(
+                    ini_get('upload_max_filesize'),ini_get('post_max_size')
+                );
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
+            'sizeLimit' => $maxUploadSize
         ]);
     }
 
@@ -313,10 +316,14 @@ class OperatingSystemController extends Controller
             'id' => $id
         ]);
     }
-
+    $maxUploadSize = min(
+                    ini_get('upload_max_filesize'),ini_get('post_max_size')
+                );
     return $this->render('operating_system/new.html.twig', [
         'operatingSystem' => $operatingSystem,
-        'operatingSystemForm' => $operatingSystemForm->createView()
+        'operatingSystemForm' => $operatingSystemForm->createView(),
+        'sizeLimit' => $maxUploadSize
+
     ]);
     }
 
