@@ -354,7 +354,7 @@ class OperatingSystemController extends Controller
             }
         }
         else {
-                $this->addFlash('error', 'Invalid security token. Please try again.');
+                $this->addFlash('danger', 'Invalid security token. Please try again.');
             }
         return $this->redirectToRoute('operating_systems');
     }
