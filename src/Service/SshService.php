@@ -66,9 +66,9 @@ class SshService
         $this->logger->debug("Send file " . $localFile . " -> " . $remoteFile);
         $this->logger->info("Send " . $localFile . " file via scp to " . $workerDestIp . ":" . $remoteFile);
 
-        $success = ssh2_scp_send($connection, $localFile, $remoteFile, 0660);
-
         try {
+            $success = ssh2_scp_send($connection, $localFile, $remoteFile, 0660);
+   
             if (!$success) {
                 throw new ErrorException('Send file impossible');
             }
