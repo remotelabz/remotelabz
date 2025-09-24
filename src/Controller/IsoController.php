@@ -6,6 +6,8 @@ use App\Entity\Iso;
 use App\Entity\Arch;
 use App\Entity\User;
 use App\Entity\ConfigWorker;
+use App\Entity\OperatingSystem;
+
 
 use App\Form\IsoType;
 use App\Repository\IsoRepository;

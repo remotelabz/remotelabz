@@ -109,18 +109,15 @@ class DeviceType extends AbstractType
                     'help' => 'Firmaware type (BIOS or UEFI)',
                 ])
                 
-                ->add('other_options', TextType::class, [
-                    'required' => false,
-                    'label' => 'Advanced options',
-                    'help' => 'Advanced QEMU options',
-                ])
+               
                 ->add('bios_filename', EntityType::class, [
-                    'class' => Iso::class,
-                    'choice_label' => 'filename',
+                    'class' => OperatingSystem::class,
+                    'choice_label' => 'image',
                     'required' => false,
                     'placeholder' => 'Select a BIOS image',
                     'help' => 'BIOS file to use',
                 ])
+
                 ->add('cdrom_iso_filename', EntityType::class, [
                     'class' => Iso::class,
                     'choice_label' => 'filename',
@@ -184,6 +181,11 @@ class DeviceType extends AbstractType
                 'label' => 'Template',
                 'help' => "Check this if this device is a template meant to be re-used in the Lab editor."
             ])
+             ->add('other_options', TextType::class, [
+                    'required' => false,
+                    'label' => 'Advanced options',
+                    'help' => 'Advanced QEMU options',
+                ])
             ->add('submit', SubmitType::class);
     }
 
