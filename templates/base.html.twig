@@ -20,12 +20,11 @@
 <body>
     <div class="container-scroller">
         {% block header %}{% endblock %}
-
         {% block body %}{% endblock %}
     </div>
 
     {% block javascripts %}
-    {{ encore_entry_script_tags('app') }}
+        {{ encore_entry_script_tags('app') }}
     {% endblock %}
 </body>
 
