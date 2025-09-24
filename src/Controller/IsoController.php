@@ -502,7 +502,8 @@ class IsoController extends AbstractController
                     
                     if ($sshConnection) {
                         $error=$this->sshService->copyFile($sshConnection, $localFilePath, $remoteFilePath, $worker->getIPv4());
-                        throw new Exception("Error copy file: ".$error);
+                            if ($error)
+                                throw new Exception("Error copy file: ".$error);
                         $this->sshService->disconnect($sshConnection);
                     }
                 } catch (Exception $e) {
