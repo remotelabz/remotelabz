@@ -8,6 +8,7 @@ use App\Service\Monitor\MessageServiceMonitor;
 use App\Service\Monitor\ProxyServiceMonitor;
 use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
+use App\Service\Monitor\RouterServiceMonitor;
 use App\Service\Worker\WorkerManager;
 use App\Service\Proxy\ProxyManager;
 
@@ -81,6 +82,7 @@ class ServiceController extends Controller
         return [
             MessageServiceMonitor::class => 'local',
             ProxyServiceMonitor::class => 'local',
+            RouterServiceMonitor::class => 'local',
             WorkerServiceMonitor::class => 'distant'
         ];
     }
@@ -100,6 +102,7 @@ class ServiceController extends Controller
                 if ($registeredService::getServiceName() == "remotelabz") {
                     $service = new $registeredService();
                 }
+
                 if ($registeredService::getServiceName() == "remotelabz-proxy") {
                     $service = new $registeredService(
                                     $this->remotelabzProxyServerAPI,
@@ -110,12 +113,19 @@ class ServiceController extends Controller
                                 );
                 }
 
+                if ($registeredService::getServiceName() == "router") {
+                   $service = new $registeredService(
+                                    $this->LabInstanceRepository,
+                                    $this->workerPort,
+                                    $this->logger
+                                );
+                }
+
                 $service_result=$service->isStarted();
                 $serviceStatus[$service::getServiceName()] = $service_result;
                 $this->logger->info("Statut of ".$service::getServiceName()." a ".$type." service is in state : ".$service_result);
-                
-                           
             }
+
             if ($type === 'distant') {
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
                 foreach($workers as $worker) {
@@ -155,6 +165,7 @@ class ServiceController extends Controller
         $ssh_password=$this->getParameter('app.ssh.worker.passwd');
         $remotelabzProxyServerAPI=$this->getParameter('app.services.proxy.server.api');
         $remotelabzProxyApiPort=$this->getParameter('app.services.proxy.port.api');
+        $workerPort=$this->getParameter('app.worker_port');
 
         $this->logger->debug("Requested service: ".$requestedService);
 
@@ -173,10 +184,17 @@ class ServiceController extends Controller
                                 $this->proxyManager,
                                 $this->logger
                             );
+                        } elseif ($registeredService::getServiceName() == "router") {
+                               $service = new $registeredService(
+                                    $this->LabInstanceRepository,
+                                    $this->workerPort,
+                                    $this->logger
+                                );
                         }
                         else {
                             $service = new $registeredService();
                         }
+
                         if ($service->start())
                             $this->addFlash('success', "Service ".$serviceName." successfully started");
                         else 
@@ -228,10 +246,16 @@ class ServiceController extends Controller
                                 $this->proxyManager,
                                 $this->logger
                             );
+                        } elseif ($registeredService::getServiceName() == "router") {
+                               $service = new $registeredService(
+                                    $this->LabInstanceRepository,
+                                    $this->logger
+                                );
                         }
                         else {
                             $service = new $registeredService();
                         }
+                        
                         if ($service->stop() === true)
                             $this->addFlash('success', "Service ".$serviceName." successfully stopped");
                         else

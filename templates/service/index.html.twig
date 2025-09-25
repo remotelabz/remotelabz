@@ -51,6 +51,21 @@
                         {% endif %}
                         </div>
                     </li>
+                    <li class="list-group-item">
+                        <span class="fw600">Router service</span>
+                        {% if serviceStatus['router'] %}
+                            <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                        {% else %}
+                        <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
+                        {% endif %}
+                        <div class="float-right">
+                        {% if serviceStatus['router'] %}
+                            <a href="{{ path('stop_service', {'service': 'router'}) }}" class="btn btn-danger">Stop</a>
+                        {% else %}
+                            <a href="{{ path('start_service', {'service': 'router'}) }}" class="btn btn-success">Start</a>
+                        {% endif %}
+                        </div>
+                    </li>
                 </ul>
               </div>
         </div>
