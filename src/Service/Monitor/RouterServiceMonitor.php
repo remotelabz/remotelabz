@@ -66,6 +66,11 @@ class RouterServiceMonitor extends AbstractServiceMonitor
         return true;
     }
 
+    public function isStarted() {
+        return true;
+    }
+
+
     private function checkWorkerAvailable(string $workerIP, $workerPort) {
         $client = new Client();
         $url = "http://".$workerIP.":".$workerPort."/os";

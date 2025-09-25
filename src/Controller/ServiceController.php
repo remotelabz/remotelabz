@@ -247,10 +247,11 @@ class ServiceController extends Controller
                                 $this->logger
                             );
                         } elseif ($registeredService::getServiceName() == "router") {
-                               $service = new $registeredService(
-                                    $this->LabInstanceRepository,
-                                    $this->logger
-                                );
+                            $service = new $registeredService(
+                                $this->LabInstanceRepository,
+                                $this->workerPort,
+                                $this->logger
+                            );
                         }
                         else {
                             $service = new $registeredService();
