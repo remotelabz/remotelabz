@@ -46,12 +46,12 @@ export class IsoFormHandler {
         this.urlInput = document.querySelector('input[name="iso[Filename_url]"]');
         
         // Debug des éléments trouvés
-        console.log('DEBUG initElements:', {
+        /*console.log('DEBUG initElements:', {
             uploadedFilenameInput: this.uploadedFilenameInput,
             uploadedFilenameInputId: this.uploadedFilenameInput?.id,
             uploadedFilenameInputName: this.uploadedFilenameInput?.name,
             urlInput: this.urlInput
-        });
+        });*/
     }
 
     bindEvents() {

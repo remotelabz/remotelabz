@@ -32,8 +32,10 @@ use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
-use Symfony\Component\HttpFoundation\Response; // ✅ Correct
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
+#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 class OperatingSystemController extends Controller
 {
     /**
@@ -370,7 +372,210 @@ class OperatingSystemController extends Controller
 
     }
 
-     /**
+    #[Route('/api/images/upload', name: 'app_images_upload', methods: ['POST'])]
+    public function upload(Request $request, SluggerInterface $slugger): Response
+    {
+        $this->logger->info('Uploading image file requested by user '.$this->getUser()->getName());
+        
+        $file = $request->files->get('file');
+        
+        if ($file && $file->isValid()) {
+            $this->logger->debug('[OperatingSystemController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
+
+            $maxUploadSize = min(
+                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),$this->convertPHPSizeToBytes(ini_get('post_max_size'))
+            );
+
+            if ($file->getSize() > $maxUploadSize) {
+                return $this->json(['error' => 'File too large'], 413);
+            }
+
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+            try {
+                $uploadDir = $this->getParameter('image_directory');
+                $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);        
+                $file->move($uploadDir, $newFilename);
+        
+                $newFile = $uploadDir . '/' . $newFilename;
+                $fileSize = file_exists($newFile) ? filesize($newFile) : null;
+
+                $this->logger->debug('[OperatingSystemController:upload]::Move '.$file.' file to '.$newFile.' done.');        
+
+            } catch (FileException $e) {
+                return $this->json(['error' => 'Upload failed'], 500);
+            }
+            catch (\Exception $e) {
+                $this->logger->error('[OperatingSystemController:upload]::Error during file upload: ' . $e->getMessage());
+                return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
+            }
+
+            return $this->json([
+                'success' => true, 
+                'filename' => $newFilename,
+                'originalName' => $file->getClientOriginalName(),
+                'size' => $fileSize
+            ]);
+        }
+        else return $this->json(['error' => 'No file uploaded'], 400);
+    }
+
+    #[Route('/api/images/delete-temp-file', name: 'app_images_delete_temp_file', methods: ['POST','DELETE'])]
+    public function deleteTempFile(Request $request): Response
+    {
+        $filename = $request->request->get('filename');
+        $this->logger->info('Deleting temporary images file '.$filename.' by user '.$this->getUser()->getName().' requested');
+
+        if (!$filename) {
+            return $this->json(['error' => 'No filename provided'], 400);
+        }
+
+        $filePath = $this->getParameter('image_directory') . '/' . $filename;
+        if (file_exists($filePath)) {
+            unlink($filePath);
+            $this->logger->info('Deleting temporary images file '.$filename.' by user '.$this->getUser()->getName().' done');
+            return $this->json(['success' => true]);
+        }
+
+        return $this->json(['error' => 'File not found'], 404);
+    }
+
+    #[Route('/api/images/validate-url', name: 'app_images_validate_url', methods: ['POST'])]
+    public function validateUrl(Request $request): Response
+    {
+        $this->logger->debug('[IsoController:validateUrl]::Validating image URL by user :'.$this->getUser()->getName());
+        $url = $request->request->get('url');
+        if (!$url) {
+            return $this->json(['error' => 'No URL provided'], 400);
+        }
+
+        $validation = $this->validateImageUrl($url);
+        
+        if ($validation['valid']) {
+            return $this->json([
+                'success' => true,
+                'valid' => true,
+                'fileSize' => $validation['fileSize'],
+                'contentType' => $validation['contentType'],
+                'fileName' => $validation['fileName']
+            ]);
+        } else {
+            return $this->json([
+                'success' => true,
+                'valid' => false,
+                'error' => $validation['error']
+            ]);
+        }
+    }
+
+    private function validateImageUrl(string $url): array
+    {
+        // Vérification basique de l'URL
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return ['valid' => false, 'error' => 'Invalid URL format'];
+        }
+
+        // Vérifier que l'URL contient .iso
+        if (!preg_match('/\.iso(\?|$|#)/i', $url)) {
+            return ['valid' => false, 'error' => 'URL does not appear to be an ISO file'];
+        }
+
+        try {
+            // Créer un contexte avec timeout et user-agent
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'HEAD', // Utiliser HEAD pour ne pas télécharger le fichier
+                    'timeout' => 30,
+                    'user_agent' => 'Mozilla/5.0 (compatible; ISO-Validator/1.0)',
+                    'follow_location' => true,
+                    'max_redirects' => 5
+                ]
+            ]);
+
+            // Effectuer la requête HEAD
+            $headers = @get_headers($url, true, $context);
+            
+            if ($headers === false) {
+                return ['valid' => false, 'error' => 'Unable to reach the URL'];
+            }
+
+            // Vérifier le code de statut
+            $statusLine = $headers[0];
+            if (!preg_match('/HTTP\/\d\.\d\s+200/', $statusLine)) {
+                return ['valid' => false, 'error' => 'URL is not accessible (HTTP error)'];
+            }
+
+            // Extraire les informations utiles
+            $fileSize = null;
+            $contentType = null;
+            $fileName = null;
+
+            // Gestion des cas où les headers peuvent être des tableaux (redirections)
+            $finalHeaders = [];
+            foreach ($headers as $key => $value) {
+                if (is_array($value)) {
+                    $finalHeaders[$key] = end($value); // Prendre le dernier (après redirections)
+                } else {
+                    $finalHeaders[$key] = $value;
+                }
+            }
+
+            // Taille du fichier
+            if (isset($finalHeaders['Content-Length'])) {
+                $fileSize = (int)$finalHeaders['Content-Length'];
+                
+                // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 10GB)
+                if ($fileSize < 1024 * 1024 || $fileSize > 10 * 1024 * 1024 * 1024) {
+                    return ['valid' => false, 'error' => 'File size seems unusual for an ISO file'];
+                }
+            }
+
+            // Type de contenu
+            if (isset($finalHeaders['Content-Type'])) {
+                $contentType = $finalHeaders['Content-Type'];
+                
+                // Vérifier les types MIME acceptables
+                $validMimeTypes = [
+                        'application/octet-stream',
+                        'application/x-qemu-disk',
+                ];
+                
+                $isValidMime = false;
+                foreach ($validMimeTypes as $validType) {
+                    if (strpos($contentType, $validType) !== false) {
+                        $isValidMime = true;
+                        break;
+                    }
+                }
+                
+                // Si le type MIME n'est pas reconnu, on accepte quand même mais on avertit
+                if (!$isValidMime) {
+                    $this->logger->warning('ISO URL validation: Unexpected content type: ' . $contentType . ' for URL: ' . $url);
+                }
+            }
+
+            // Nom du fichier depuis l'URL
+            $fileName = basename(parse_url($url, PHP_URL_PATH));
+            if (empty($fileName) || !preg_match('/\.iso$/i', $fileName)) {
+                $fileName = 'downloaded.img';
+            }
+
+            return [
+                'valid' => true,
+                'fileSize' => $fileSize,
+                'contentType' => $contentType,
+                'fileName' => $fileName
+            ];
+
+        } catch (\Exception $e) {
+            $this->logger->error('Image URL validation error: ' . $e->getMessage() . ' for URL: ' . $url);
+            return ['valid' => false, 'error' => 'Network error or timeout'];
+        }
+    }
+
+    /**
      * Build search criteria
      */
     private function buildSearchCriteria(
@@ -440,4 +645,23 @@ class OperatingSystemController extends Controller
         return array_map(fn($arch) => $arch->getName(), $archs);
 
     }
+
+    // Fonction utilitaire pour convertir la taille PHP en octets
+    private function convertPHPSizeToBytes($size)
+    {
+        $unit = strtolower(substr($size, -1));
+        $bytes = (int) $size;
+
+        switch($unit) {
+            case 'g':
+                $bytes *= 1024;
+            case 'm':
+                $bytes *= 1024;
+            case 'k':
+                $bytes *= 1024;
+        }
+
+        return $bytes;
+    }
+
 }
