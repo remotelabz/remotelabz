@@ -264,69 +264,95 @@ class OperatingSystemController extends Controller
     public function editAction(Request $request, int $id, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = $this->operatingSystemRepository->find($id);
-    if (null === $operatingSystem) {
-        throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
-    }
+        if (null === $operatingSystem) {
+            throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+        }
 
-    $operatingSystemFilename = $operatingSystem->getImageFilename();
-    $operatingSystemArch = $operatingSystem->getArch(); // objet Arch
-    $operatingSystemEdited = $operatingSystem;
+        $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
+        $operatingSystemForm->handleRequest($request);
 
-    $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystemEdited);
-    $operatingSystemForm->handleRequest($request);
+        if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
+            /** @var OperatingSystem $operatingSystemEdited */
+            $operatingSystemEdited = $operatingSystemForm->getData();
 
-    if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
-        $operatingSystemEdited = $operatingSystemForm->getData();
-        $image_filename_upload = $operatingSystemForm->get('imageFilename')->getData();
-        $image_filename_modified = $operatingSystemForm->get('imageFilename')->getData();
-        $arch_modified = $operatingSystemForm->get('arch')->getData(); // objet Arch
+            $uploadedFilename = $operatingSystemForm->get('uploaded_filename')->getData();
+            $imageFile = $operatingSystemForm->get('imageFilename')->getData();
+            $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
+            $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
+            $arch = $operatingSystemForm->get('arch')->getData();
+            $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
+            $description = $operatingSystemForm->get('description')->getData();
+            $name = $operatingSystemForm->get('name')->getData();
 
-        if ($image_filename_upload) {
-            $new_ImageFileName = $imageFileUploader->upload($image_filename_upload);
+             $this->logger->debug('Form values:', [
+                        'name' => $name,
+                        'description' => $description,
+                        'arch' => $arch,
+                        'hypervisor' => $hypervisor,
+                        'imageFile' => $imageFile,
+                        'uploadedFilename' => $uploadedFilename,
+                        'imageUrl' => $imageUrl,
+                        'filenameOnly' => $filenameOnly,
+                ]);
 
-            if (is_null($image_filename_modified)) {
-                $operatingSystemEdited->setImageFilename($new_ImageFileName);
-            } else {
-                $operatingSystemEdited->setImageFilename($image_filename_modified);
+            $this->logger->debug('OS edited: ' . $this->serializer->serialize($operatingSystemEdited, 'json'));            // Récupérer les champs du formulaire
+            $imageFile = $operatingSystemForm->get('imageFilename')->getData();
+            $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
+            $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
+
+            $this->logger->info("Edit OS - Editing operating system ".$operatingSystemEdited->getName()." with image file :".$imageFile." or URL ".$imageUrl." or filename only ".$filenameOnly);
+            // Gestion du fichier uploadé
+            if ($imageFile) {
+                $newImageFileName = $imageFileUploader->upload($imageFile);
+                $operatingSystemEdited->setImageFilename($newImageFileName);
+                $operatingSystemEdited->setImageUrl(null);
+                
             }
-        } else {
-            $operatingSystemEdited->setImageFilename($image_filename_modified);
+            // Gestion du champ URL
+            elseif ($imageUrl) {
+                $operatingSystemEdited->setImageUrl($imageUrl);
+                $operatingSystemEdited->setImageFilename(null);
+                
+            }
+            // Gestion du filename only
+            elseif ($filenameOnly) {
+                $operatingSystemEdited->setImageFilename($filenameOnly);
+                $operatingSystemEdited->setImageUrl(null);
+            } else {
+                // Aucun champ renseigné
+                $operatingSystemEdited->setImageFilename(null);
+                $operatingSystemEdited->setImageUrl(null);
+            }
+
+            // Architecture
+            $arch_modified = $operatingSystemForm->get('arch')->getData();
+            if ($arch_modified) {
+                $operatingSystemEdited->setArch($arch_modified);
+            }
+
+            // Hyperviseur
+            $hypervisor_modified = $operatingSystemForm->get('hypervisor')->getData();
+            if ($hypervisor_modified) {
+                $operatingSystemEdited->setHypervisor($hypervisor_modified);
+            }
+
+            $this->entityManager->persist($operatingSystemEdited);
+            $this->entityManager->flush();
+
+            $this->addFlash('success', 'Operating system has been edited.');
+            return $this->redirectToRoute('show_operating_system', [
+                'id' => $id
+            ]);
         }
 
-        // Update architecture if changed (compare by id)
-        if ($arch_modified && (!$operatingSystemArch || $arch_modified->getId() !== $operatingSystemArch->getId())) {
-            $operatingSystemEdited->setArch($arch_modified);
-        }
-
-        $entityManager = $this->entityManager;
-        $entityManager->persist($operatingSystemEdited);
-        $entityManager->flush();
-
-        $new_name_os = [
-            "old_name" => $operatingSystemFilename,
-            "new_name" => $operatingSystemEdited->getImageFilename(),
-            "hypervisor" => $operatingSystemEdited->getHypervisor()->getName(),
-            "old_arch" => $operatingSystemArch ? $operatingSystemArch->getName() : null,
-            "new_arch" => $arch_modified ? $arch_modified->getName() : null
-        ];
-
-        $this->bus->dispatch(
-            new InstanceActionMessage(json_encode($new_name_os), $operatingSystemEdited->getId(), InstanceActionMessage::ACTION_RENAMEOS)
+        $maxUploadSize = min(
+            ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
-        $this->addFlash('success', 'Operating system has been edited.');
-        return $this->redirectToRoute('show_operating_system', [
-            'id' => $id
+        return $this->render('operating_system/new.html.twig', [
+            'operatingSystem' => $operatingSystem,
+            'operatingSystemForm' => $operatingSystemForm->createView(),
+            'sizeLimit' => $maxUploadSize
         ]);
-    }
-    $maxUploadSize = min(
-                    ini_get('upload_max_filesize'),ini_get('post_max_size')
-                );
-    return $this->render('operating_system/new.html.twig', [
-        'operatingSystem' => $operatingSystem,
-        'operatingSystemForm' => $operatingSystemForm->createView(),
-        'sizeLimit' => $maxUploadSize
-
-    ]);
     }
 
     /**
@@ -368,10 +394,9 @@ class OperatingSystemController extends Controller
         return $this->redirectToRoute('operating_systems');
     }
 
-    public function cancel_renameos($names) {
-
-    }
-
+    /**
+     * Upload image file via API
+     */
     #[Route('/api/images/upload', name: 'app_images_upload', methods: ['POST'])]
     public function upload(Request $request, SluggerInterface $slugger): Response
     {
@@ -526,9 +551,9 @@ class OperatingSystemController extends Controller
             if (isset($finalHeaders['Content-Length'])) {
                 $fileSize = (int)$finalHeaders['Content-Length'];
                 
-                // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 10GB)
-                if ($fileSize < 1024 * 1024 || $fileSize > 10 * 1024 * 1024 * 1024) {
-                    return ['valid' => false, 'error' => 'File size seems unusual for an ISO file'];
+                // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 40GB)
+                if ($fileSize < 1024 * 1024 || $fileSize > 40 * 1024 * 1024 * 1024) {
+                    return ['valid' => false, 'error' => 'File too big (>40 Go)'];
                 }
             }
 
@@ -552,13 +577,13 @@ class OperatingSystemController extends Controller
                 
                 // Si le type MIME n'est pas reconnu, on accepte quand même mais on avertit
                 if (!$isValidMime) {
-                    $this->logger->warning('ISO URL validation: Unexpected content type: ' . $contentType . ' for URL: ' . $url);
+                    $this->logger->warning('Image URL validation: Unexpected content type: ' . $contentType . ' for URL: ' . $url);
                 }
             }
 
             // Nom du fichier depuis l'URL
             $fileName = basename(parse_url($url, PHP_URL_PATH));
-            if (empty($fileName) || !preg_match('/\.iso$/i', $fileName)) {
+            if (empty($fileName) || !preg_match('/\.(img|qcow2)$/i', $fileName)) {
                 $fileName = 'downloaded.img';
             }
 

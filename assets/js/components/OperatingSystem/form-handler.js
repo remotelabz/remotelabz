@@ -463,6 +463,7 @@ syncFilenameValues() {
     }
 
     handleFormSubmit(e) {
+        this.debugFormState();
         console.log('Form submission attempt');
 
         // Correction : récupérer le type via la carte active
@@ -470,6 +471,8 @@ syncFilenameValues() {
         const fileSourceType = activeSourceCard ? activeSourceCard.dataset.sourceType : null;
         console.log('File source type:', fileSourceType);
 
+        // TODO : vérifier avant le type d'hyperviseur : lxc ou qemu puis valider les champs en conséquence
+        // Valider les champs en fonction du type de source sélectionné
         if (fileSourceType === 'upload') {
             const uploadedFilename = this.uploadedFilenameInput?.value;
             if (!uploadedFilename || uploadedFilename.trim() === '') {
