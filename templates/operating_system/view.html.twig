@@ -135,7 +135,7 @@
                     <div class="col-sm-3"><strong>Architecture:</strong></div>
                     <div class="col-sm-9">
                         {% if operatingSystem.arch %}
-                            <span class="badge bg-info fs-6">{{ operatingSystem.arch.name|upper }}</span>
+                            <span class="badge bg-info fs-6">{{ operatingSystem.arch.name }}</span>
                         {% else %}
                         <a href="{{ path('edit_operating_system', {'id': operatingSystem.id}) }}" 
                        class="text-muted">

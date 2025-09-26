@@ -223,37 +223,78 @@ class OperatingSystemController extends Controller
 
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystem */
-            $operatingSystem = $operatingSystemForm->getData();
+            $operatingSystemEdited = $operatingSystemForm->getData();
 
-            if ($operatingSystem->getImageUrl() !== null && $operatingSystem->getImageFilename() !== null) {
-                $this->addFlash('danger', "You can't provide an image url and an image file. Please provide only one.");
-                $this->logger->error("New OS - You can't provide an image url and an image file. Please provide only one.");
+            // Récupération des différents champs
+            $uploadedFilename = $operatingSystemForm->get('uploaded_filename')->getData();
+            $imageFile = $operatingSystemForm->get('imageFilename')->getData();
+            $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
+            $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
+            $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
+
+            $this->logger->debug('New OS form submission values:', [
+                'hypervisor' => $hypervisor ? $hypervisor->getName() : 'null',
+                'uploadedFilename' => $uploadedFilename,
+                'imageFile' => $imageFile ? $imageFile->getClientOriginalName() : 'null',
+                'imageUrl' => $imageUrl,
+                'filenameOnly' => $filenameOnly,
+            ]);
+
+            // Déterminer le type d'hyperviseur
+            $hypervisorType = $hypervisor ? strtolower($hypervisor->getName()) : '';
+            
+            if (strpos($hypervisorType, 'lxc') !== false) {
+                // Gestion LXC : seulement le nom du template
+                if ($filenameOnly) {
+                    $operatingSystemEdited->setImageFilename($filenameOnly);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - LXC template set: " . $filenameOnly);
+                } else {
+                    $operatingSystemEdited->setImageFilename(null);
+                    $operatingSystemEdited->setImageUrl(null);
+                }
+            } else if (strpos($hypervisorType, 'qemu') !== false) {
+                // Gestion QEMU : selon le type de source
+                
+                // 1. Gestion du fichier uploadé ou sélectionné
+                if ($filenameOnly) {
+                    $operatingSystemEdited->setImageFilename($filenameOnly);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - QEMU new file uploaded: " . $filenameOnly);
+                }
+                // 2. Gestion de l'URL
+                elseif ($imageUrl) {
+                    $operatingSystemEdited->setImageUrl($imageUrl);
+                    $operatingSystemEdited->setImageFilename(null);
+                    $this->logger->info("Edit OS - QEMU URL set: " . $imageUrl);
+                }
+                else {
+                    $operatingSystemEdited->setImageFilename(null);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - QEMU no image source specified");
+                }
             } else {
-                /** @var UploadedFile|null $imageFile */
-                $imageFile = $operatingSystemForm->get('imageFilename')->getData();
-                    if ($imageFile && strtolower($imageFile->getClientOriginalExtension()) != 'img' && strtolower($imageFile->getClientOriginalExtension()) != 'qcow2') {
-                        $this->addFlash('danger', "Only .img or qcow2 files are accepted.");
-                        $this->logger->error("New OS - Only .img or qcow2 files are accepted");
-
-                    } else {
-                        if ($imageFile) {
-                            $imageFileName = $imageFileUploader->upload($imageFile);
-                            $operatingSystem->setImageFilename($imageFileName);
-                        }
-                        $entityManager = $this->entityManager;
-                        $entityManager->persist($operatingSystem);
-                        $entityManager->flush();
-
-                        $this->addFlash('success', 'Operating system has been created.');
-                        $this->logger->info("New OS - Operating system ".$operatingSystem->getName()." has been created with image ".$operatingSystem->getImageFilename());
-
-                    }
-                return $this->redirectToRoute('operating_systems');
+                // Hyperviseur non reconnu - nettoyer les champs image
+                $operatingSystemEdited->setImageFilename(null);
+                $operatingSystemEdited->setImageUrl(null);
+                $this->logger->warning("Edit OS - Unknown hypervisor type: " . $hypervisorType);
             }
+
+            // Sauvegarder
+            $entityManager = $this->entityManager;
+            $entityManager->persist($operatingSystemEdited);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Operating system has been created.');
+            $this->logger->info("New OS - Operating system " . $operatingSystemEdited->getName() . " has been created");
+
+            return $this->redirectToRoute('operating_systems');
         }
+
         $maxUploadSize = min(
-                    ini_get('upload_max_filesize'),ini_get('post_max_size')
-                );
+            ini_get('upload_max_filesize'), ini_get('post_max_size')
+        );
+        
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
             'sizeLimit' => $maxUploadSize
@@ -275,71 +316,68 @@ class OperatingSystemController extends Controller
             /** @var OperatingSystem $operatingSystemEdited */
             $operatingSystemEdited = $operatingSystemForm->getData();
 
+            // Récupération des différents champs
             $uploadedFilename = $operatingSystemForm->get('uploaded_filename')->getData();
             $imageFile = $operatingSystemForm->get('imageFilename')->getData();
             $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
             $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
-            $arch = $operatingSystemForm->get('arch')->getData();
             $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
-            $description = $operatingSystemForm->get('description')->getData();
-            $name = $operatingSystemForm->get('name')->getData();
 
-             $this->logger->debug('Form values:', [
-                        'name' => $name,
-                        'description' => $description,
-                        'arch' => $arch,
-                        'hypervisor' => $hypervisor,
-                        'imageFile' => $imageFile,
-                        'uploadedFilename' => $uploadedFilename,
-                        'imageUrl' => $imageUrl,
-                        'filenameOnly' => $filenameOnly,
-                ]);
+            $this->logger->debug('Form submission values:', [
+                'hypervisor' => $hypervisor ? $hypervisor->getName() : 'null',
+                'uploadedFilename' => $uploadedFilename,
+                'imageFile' => $imageFile ? $imageFile->getClientOriginalName() : 'null',
+                'imageUrl' => $imageUrl,
+                'filenameOnly' => $filenameOnly,
+            ]);
 
-            $this->logger->debug('OS edited: ' . $this->serializer->serialize($operatingSystemEdited, 'json'));            // Récupérer les champs du formulaire
-            $imageFile = $operatingSystemForm->get('imageFilename')->getData();
-            $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
-            $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
-
-            $this->logger->info("Edit OS - Editing operating system ".$operatingSystemEdited->getName()." with image file :".$imageFile." or URL ".$imageUrl." or filename only ".$filenameOnly);
-            // Gestion du fichier uploadé
-            if ($imageFile) {
-                $newImageFileName = $imageFileUploader->upload($imageFile);
-                $operatingSystemEdited->setImageFilename($newImageFileName);
-                $operatingSystemEdited->setImageUrl(null);
+            // Déterminer le type d'hyperviseur
+            $hypervisorType = $hypervisor ? strtolower($hypervisor->getName()) : '';
+            
+            if (strpos($hypervisorType, 'lxc') !== false) {
+                // Gestion LXC : seulement le nom du template
+                if ($filenameOnly) {
+                    $operatingSystemEdited->setImageFilename($filenameOnly);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - LXC template set: " . $filenameOnly);
+                } else {
+                    $operatingSystemEdited->setImageFilename(null);
+                    $operatingSystemEdited->setImageUrl(null);
+                }
+            } else if (strpos($hypervisorType, 'qemu') !== false) {
+                // Gestion QEMU : selon le type de source
                 
-            }
-            // Gestion du champ URL
-            elseif ($imageUrl) {
-                $operatingSystemEdited->setImageUrl($imageUrl);
-                $operatingSystemEdited->setImageFilename(null);
-                
-            }
-            // Gestion du filename only
-            elseif ($filenameOnly) {
-                $operatingSystemEdited->setImageFilename($filenameOnly);
-                $operatingSystemEdited->setImageUrl(null);
+                // 1. Gestion du fichier uploadé ou sélectionné
+                if ($filenameOnly) {
+                    $operatingSystemEdited->setImageFilename($filenameOnly);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - QEMU new file uploaded: " . $filenameOnly);
+                }
+                // 2. Gestion de l'URL
+                elseif ($imageUrl) {
+                    $operatingSystemEdited->setImageUrl($imageUrl);
+                    $operatingSystemEdited->setImageFilename(null);
+                    $this->logger->info("Edit OS - QEMU URL set: " . $imageUrl);
+                }
+                else {
+                    $operatingSystemEdited->setImageFilename(null);
+                    $operatingSystemEdited->setImageUrl(null);
+                    $this->logger->info("Edit OS - QEMU no image source specified");
+                }
             } else {
-                // Aucun champ renseigné
+                // Hyperviseur non reconnu - nettoyer les champs image
                 $operatingSystemEdited->setImageFilename(null);
                 $operatingSystemEdited->setImageUrl(null);
+                $this->logger->warning("Edit OS - Unknown hypervisor type: " . $hypervisorType);
             }
 
-            // Architecture
-            $arch_modified = $operatingSystemForm->get('arch')->getData();
-            if ($arch_modified) {
-                $operatingSystemEdited->setArch($arch_modified);
-            }
-
-            // Hyperviseur
-            $hypervisor_modified = $operatingSystemForm->get('hypervisor')->getData();
-            if ($hypervisor_modified) {
-                $operatingSystemEdited->setHypervisor($hypervisor_modified);
-            }
-
+            // Sauvegarder
             $this->entityManager->persist($operatingSystemEdited);
             $this->entityManager->flush();
 
             $this->addFlash('success', 'Operating system has been edited.');
+            $this->logger->info("Edit OS - Successfully edited: " . $operatingSystemEdited->getName());
+
             return $this->redirectToRoute('show_operating_system', [
                 'id' => $id
             ]);
@@ -348,10 +386,12 @@ class OperatingSystemController extends Controller
         $maxUploadSize = min(
             ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
+        
         return $this->render('operating_system/new.html.twig', [
             'operatingSystem' => $operatingSystem,
             'operatingSystemForm' => $operatingSystemForm->createView(),
-            'sizeLimit' => $maxUploadSize
+            'sizeLimit' => $maxUploadSize,
+            'edit' => true  // Ajouter cette variable pour le template
         ]);
     }
 
@@ -502,98 +542,76 @@ class OperatingSystemController extends Controller
             return ['valid' => false, 'error' => 'Invalid URL format'];
         }
 
-        // Vérifier que l'URL contient .iso
-        if (!preg_match('/\.iso(\?|$|#)/i', $url)) {
-            return ['valid' => false, 'error' => 'URL does not appear to be an ISO file'];
+        // Vérifier que l'URL contient .img ou .qcow2
+        if (!preg_match('/\.(img|qcow2)(\?|$|#)/i', $url)) {
+            return ['valid' => false, 'error' => 'URL does not appear to be an img or qcow2 file'];
         }
 
         try {
-            // Créer un contexte avec timeout et user-agent
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'HEAD', // Utiliser HEAD pour ne pas télécharger le fichier
-                    'timeout' => 30,
-                    'user_agent' => 'Mozilla/5.0 (compatible; ISO-Validator/1.0)',
-                    'follow_location' => true,
-                    'max_redirects' => 5
-                ]
-            ]);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_NOBODY, true); // Requête HEAD
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; ISO-Validator/1.0)');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true); // Récupérer les headers
+            curl_exec($ch);
 
-            // Effectuer la requête HEAD
-            $headers = @get_headers($url, true, $context);
-            
-            if ($headers === false) {
+            if (curl_errno($ch)) {
+                $this->logger->error('Image URL validation error: ' . curl_error($ch) . ' for URL: ' . $url);
                 return ['valid' => false, 'error' => 'Unable to reach the URL'];
             }
 
-            // Vérifier le code de statut
-            $statusLine = $headers[0];
-            if (!preg_match('/HTTP\/\d\.\d\s+200/', $statusLine)) {
-                return ['valid' => false, 'error' => 'URL is not accessible (HTTP error)'];
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            $fileSize = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+            if ($httpCode !== 200) {
+                return ['valid' => false, 'error' => "HTTP error: $httpCode"];
             }
 
-            // Extraire les informations utiles
-            $fileSize = null;
-            $contentType = null;
-            $fileName = null;
-
-            // Gestion des cas où les headers peuvent être des tableaux (redirections)
-            $finalHeaders = [];
-            foreach ($headers as $key => $value) {
-                if (is_array($value)) {
-                    $finalHeaders[$key] = end($value); // Prendre le dernier (après redirections)
-                } else {
-                    $finalHeaders[$key] = $value;
-                }
-            }
-
-            // Taille du fichier
-            if (isset($finalHeaders['Content-Length'])) {
-                $fileSize = (int)$finalHeaders['Content-Length'];
-                
-                // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 40GB)
+            // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 40GB)
+            if ($fileSize !== -1) { // -1 signifie que la taille n'est pas disponible
                 if ($fileSize < 1024 * 1024 || $fileSize > 40 * 1024 * 1024 * 1024) {
-                    return ['valid' => false, 'error' => 'File too big (>40 Go)'];
+                    return ['valid' => false, 'error' => 'File size is not reasonable (must be between 1MB and 40GB)'];
                 }
             }
 
-            // Type de contenu
-            if (isset($finalHeaders['Content-Type'])) {
-                $contentType = $finalHeaders['Content-Type'];
-                
-                // Vérifier les types MIME acceptables
-                $validMimeTypes = [
-                        'application/octet-stream',
-                        'application/x-qemu-disk',
-                ];
-                
-                $isValidMime = false;
+            // Vérifier les types MIME acceptables
+            $validMimeTypes = [
+                'application/octet-stream',
+                'application/x-qemu-disk',
+            ];
+
+            $isValidMime = false;
+            if ($contentType) {
                 foreach ($validMimeTypes as $validType) {
                     if (strpos($contentType, $validType) !== false) {
                         $isValidMime = true;
                         break;
                     }
                 }
-                
-                // Si le type MIME n'est pas reconnu, on accepte quand même mais on avertit
                 if (!$isValidMime) {
                     $this->logger->warning('Image URL validation: Unexpected content type: ' . $contentType . ' for URL: ' . $url);
                 }
             }
 
             // Nom du fichier depuis l'URL
-            $fileName = basename(parse_url($url, PHP_URL_PATH));
+            $fileName = basename(parse_url($finalUrl, PHP_URL_PATH));
             if (empty($fileName) || !preg_match('/\.(img|qcow2)$/i', $fileName)) {
                 $fileName = 'downloaded.img';
             }
 
+            curl_close($ch);
+
             return [
                 'valid' => true,
-                'fileSize' => $fileSize,
+                'fileSize' => $fileSize !== -1 ? $fileSize : null,
                 'contentType' => $contentType,
                 'fileName' => $fileName
             ];
-
         } catch (\Exception $e) {
             $this->logger->error('Image URL validation error: ' . $e->getMessage() . ' for URL: ' . $url);
             return ['valid' => false, 'error' => 'Network error or timeout'];

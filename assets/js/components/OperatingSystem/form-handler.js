@@ -9,94 +9,116 @@ export class OperatingSystemFormHandler {
         this.initialize();
     }
 
-
     initialize() {
-    // Initialisation des options hyperviseur et image source
-    this.toggleHypervisorOptions();
-    this.loadExistingValues();
-    this.toggleImageSourceBlocks();
+        // Initialisation des options hyperviseur et image source
+        this.toggleHypervisorOptions();
+        this.loadExistingValues();
+        this.toggleImageSourceBlocks();
 
-    // Set default selection for QEMU if no selection
-    if (this.qemuOptions && this.qemuOptions.style.display === 'block' && !document.querySelector('.image-source-radio:checked')) {
-        const sourceFilename = document.getElementById('source-filename');
-        if (sourceFilename) {
-            sourceFilename.checked = true;
-            sourceFilename.dispatchEvent(new Event('change'));
+        // Set default selection for QEMU if no selection
+        if (this.qemuOptions && this.qemuOptions.style.display === 'block' && !document.querySelector('.image-source-radio:checked')) {
+            const sourceFilename = document.getElementById('source-filename');
+            if (sourceFilename) {
+                sourceFilename.checked = true;
+                sourceFilename.dispatchEvent(new Event('change'));
+            }
         }
     }
-}
 
-toggleHypervisorOptions() {
-    if (!this.hypervisorSelect) return;
-    const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
-    const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
+    toggleHypervisorOptions() {
+        if (!this.hypervisorSelect) return;
+        const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
+        const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
 
-    if (hypervisorName.includes('qemu')) {
-        this.qemuOptions.style.display = 'block';
-        this.lxcOptions.style.display = 'none';
-    } else if (hypervisorName.includes('lxc')) {
-        this.qemuOptions.style.display = 'none';
-        this.lxcOptions.style.display = 'block';
-    } else {
-        this.qemuOptions.style.display = 'none';
-        this.lxcOptions.style.display = 'none';
-    }
-    this.loadExistingValues();
-}
-
-toggleImageSourceBlocks() {
-    const selectedSource = document.querySelector('.image-source-radio:checked');
-    if (!this.fileUploadBlock || !this.urlBlock || !this.filenameOnlyBlock) return;
-
-    this.fileUploadBlock.style.display = 'none';
-    this.urlBlock.style.display = 'none';
-    this.filenameOnlyBlock.style.display = 'none';
-
-    if (selectedSource) {
-        switch (selectedSource.value) {
-            case 'upload':
-                this.fileUploadBlock.style.display = 'block';
-                break;
-            case 'url':
-                this.urlBlock.style.display = 'block';
-                break;
-            case 'filename':
-                this.filenameOnlyBlock.style.display = 'block';
-                break;
+        if (hypervisorName.includes('qemu')) {
+            this.qemuOptions.style.display = 'block';
+            this.lxcOptions.style.display = 'none';
+        } else if (hypervisorName.includes('lxc')) {
+            this.qemuOptions.style.display = 'none';
+            this.lxcOptions.style.display = 'block';
+        } else {
+            this.qemuOptions.style.display = 'none';
+            this.lxcOptions.style.display = 'none';
         }
+        this.loadExistingValues();
     }
-}
 
-loadExistingValues() {
-    if (!this.originalFilenameField || !this.originalFilenameField.value) return;
-    const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
-    const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
-
-    if (hypervisorName.includes('lxc')) {
-        if (this.lxcFilenameInput) this.lxcFilenameInput.value = this.originalFilenameField.value;
-    } else if (hypervisorName.includes('qemu')) {
-        if (this.qemuFilenameInput) this.qemuFilenameInput.value = this.originalFilenameField.value;
-    }
-}
-
-syncFilenameValues() {
-    if (!this.originalFilenameField) return;
-    const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
-    const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
-
-    if (hypervisorName.includes('lxc')) {
-        if (this.lxcFilenameInput) this.originalFilenameField.value = this.lxcFilenameInput.value;
-    } else if (hypervisorName.includes('qemu')) {
+    toggleImageSourceBlocks() {
         const selectedSource = document.querySelector('.image-source-radio:checked');
-        if (selectedSource && selectedSource.value === 'filename') {
-            if (this.qemuFilenameInput) this.originalFilenameField.value = this.qemuFilenameInput.value;
+        if (!this.fileUploadBlock || !this.urlBlock || !this.filenameOnlyBlock) return;
+
+        this.fileUploadBlock.style.display = 'none';
+        this.urlBlock.style.display = 'none';
+        this.filenameOnlyBlock.style.display = 'none';
+
+        if (selectedSource) {
+            switch (selectedSource.value) {
+                case 'upload':
+                    this.fileUploadBlock.style.display = 'block';
+                    break;
+                case 'url':
+                    this.urlBlock.style.display = 'block';
+                    break;
+                case 'filename':
+                    this.filenameOnlyBlock.style.display = 'block';
+                    break;
+            }
         }
     }
-}
 
+    loadExistingValues() {
+        if (!this.originalFilenameField || !this.originalFilenameField.value) return;
+        const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
+        const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
+
+        if (hypervisorName.includes('lxc')) {
+            if (this.lxcFilenameInput) this.lxcFilenameInput.value = this.originalFilenameField.value;
+        } else if (hypervisorName.includes('qemu')) {
+            if (this.qemuFilenameInput) this.qemuFilenameInput.value = this.originalFilenameField.value;
+            
+            // Lors de l'édition, détecter quel type de source était utilisé
+            if (this.originalFilenameField.value && !document.querySelector('.image-source-radio:checked')) {
+                // Si on a un filename mais pas d'URL, c'est probablement filename-only
+                const urlField = document.querySelector('input[name="operating_system[imageUrl]"]');
+                if (!urlField || !urlField.value) {
+                    const sourceFilename = document.getElementById('source-filename');
+                    if (sourceFilename) {
+                        sourceFilename.checked = true;
+                        sourceFilename.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+        }
+    }
+
+    syncFilenameValues() {
+        if (!this.originalFilenameField) return;
+        const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
+        const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
+
+        if (hypervisorName.includes('lxc')) {
+            if (this.lxcFilenameInput) {
+                this.originalFilenameField.value = this.lxcFilenameInput.value;
+            }
+        } else if (hypervisorName.includes('qemu')) {
+            const selectedSource = document.querySelector('.image-source-radio:checked');
+            if (selectedSource && selectedSource.value === 'filename') {
+                if (this.qemuFilenameInput) {
+                    this.originalFilenameField.value = this.qemuFilenameInput.value;
+                }
+            } else if (selectedSource && selectedSource.value === 'upload') {
+                // Pour l'upload, on utilise le champ uploaded_filename
+                if (this.uploadedFilenameInput && this.uploadedFilenameInput.value) {
+                    this.originalFilenameField.value = this.uploadedFilenameInput.value;
+                }
+            } else if (selectedSource && selectedSource.value === 'url') {
+                // Pour l'URL, on vide le champ filename
+                this.originalFilenameField.value = '';
+            }
+        }
+    }
 
     initElements() {
-
         this.hypervisorSelect = document.getElementById('hypervisor-select');
         this.qemuOptions = document.getElementById('qemu-options');
         this.lxcOptions = document.getElementById('lxc-options');
@@ -110,7 +132,6 @@ syncFilenameValues() {
         this.qemuFilenameInput = document.getElementById('qemu-filename-input');
         this.lxcFilenameInput = document.getElementById('lxc-filename-input');
         this.originalFilenameField = document.querySelector('input[name*="image_Filename"]');
-
 
         // Radio buttons et blocs
         this.radios = document.querySelectorAll('.file-source-radio');
@@ -146,56 +167,48 @@ syncFilenameValues() {
             || document.querySelector('input[id*="uploaded_filename"]');
             
         this.urlInput = document.querySelector('input[name="operating_system[imageUrl]"]');
-        
-        // Debug des éléments trouvés
-        /*console.log('DEBUG initElements:', {
-            uploadedFilenameInput: this.uploadedFilenameInput,
-            uploadedFilenameInputId: this.uploadedFilenameInput?.id,
-            uploadedFilenameInputName: this.uploadedFilenameInput?.name,
-            urlInput: this.urlInput
-        });*/
     }
 
     bindEvents() {
         if (this.hypervisorSelect) {
-        this.hypervisorSelect.addEventListener('change', () => {
-            this.toggleHypervisorOptions();
-            this.toggleImageSourceBlocks();
-        });
-    }
-
-    if (this.qemuFilenameInput) {
-        this.qemuFilenameInput.addEventListener('input', () => this.syncFilenameValues());
-    }
-    if (this.lxcFilenameInput) {
-        this.lxcFilenameInput.addEventListener('input', () => this.syncFilenameValues());
-    }
-
-    this.imageSourceRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            this.imageSourceCards.forEach(card => {
-                card.classList.toggle('active', card.dataset.sourceType === radio.value);
+            this.hypervisorSelect.addEventListener('change', () => {
+                this.toggleHypervisorOptions();
+                this.toggleImageSourceBlocks();
             });
-            this.toggleImageSourceBlocks();
-            this.syncFilenameValues();
-        });
-    });
+        }
 
-    this.imageSourceCards.forEach(card => {
-        card.addEventListener('click', function() {
-            const radio = card.querySelector('.image-source-radio');
-            if (radio) {
-                radio.checked = true;
-                radio.dispatchEvent(new Event('change'));
-            }
-        });
-    });
+        if (this.qemuFilenameInput) {
+            this.qemuFilenameInput.addEventListener('input', () => this.syncFilenameValues());
+        }
+        if (this.lxcFilenameInput) {
+            this.lxcFilenameInput.addEventListener('input', () => this.syncFilenameValues());
+        }
 
-    if (this.form) {
-        this.form.addEventListener('submit', (e) => {
-            this.syncFilenameValues();
+        this.imageSourceRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                this.imageSourceCards.forEach(card => {
+                    card.classList.toggle('active', card.dataset.sourceType === radio.value);
+                });
+                this.toggleImageSourceBlocks();
+                this.syncFilenameValues();
+            });
         });
-    }
+
+        this.imageSourceCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const radio = card.querySelector('.image-source-radio');
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        if (this.form) {
+            this.form.addEventListener('submit', (e) => {
+                this.syncFilenameValues();
+            });
+        }
 
         // Source type selection
         this.radios.forEach(radio => {
@@ -225,10 +238,6 @@ syncFilenameValues() {
         
         // Form submission
         this.form?.addEventListener('submit', (e) => this.handleFormSubmit(e));
-    }
-
-    initialize() {
-        this.updateSourceCards();
     }
 
     handleSourceTypeChange() {
@@ -330,7 +339,6 @@ syncFilenameValues() {
         
         if (this.uploadedFilenameInput) {
             this.uploadedFilenameInput.value = uploadData.filename;
-        
         } else {
             console.error('uploadedFilenameInput not found! Trying fallback...');
             
@@ -339,14 +347,10 @@ syncFilenameValues() {
                 || document.querySelector('input[name*="uploaded_filename"]')
                 || document.querySelector('input[type="hidden"]');
                 
-            console.log('Fallback input found:', fallbackInput);
-            
             if (fallbackInput) {
                 fallbackInput.value = uploadData.filename;
-                this.uploadedFilenameInput = fallbackInput; // Mettre à jour la référence
-                console.log('Fallback value set to:', fallbackInput.value);
+                this.uploadedFilenameInput = fallbackInput;
             } else {
-                console.error('No hidden input found for uploaded_filename!');
                 // En dernier recours, créer le champ
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
@@ -355,9 +359,11 @@ syncFilenameValues() {
                 hiddenInput.value = uploadData.filename;
                 this.form.appendChild(hiddenInput);
                 this.uploadedFilenameInput = hiddenInput;
-                console.log('Created hidden input with value:', hiddenInput.value);
             }
         }
+        
+        // Synchroniser avec le champ filename principal
+        this.syncFilenameValues();
     }
 
     handleUpload() {
@@ -460,57 +466,79 @@ syncFilenameValues() {
         this.fileSelected?.classList.add('d-none');
         this.fileUploaded?.classList.add('d-none');
         this.progressContainer?.classList.add('d-none');
+        
+        // Synchroniser avec le champ filename principal
+        this.syncFilenameValues();
     }
 
     handleFormSubmit(e) {
         this.debugFormState();
+
         console.log('Form submission attempt');
 
-        // Correction : récupérer le type via la carte active
-        const activeSourceCard = document.querySelector('.image-source-card.active[data-source-type]');
-        const fileSourceType = activeSourceCard ? activeSourceCard.dataset.sourceType : null;
-        console.log('File source type:', fileSourceType);
+        // Synchroniser avant validation
+        this.syncFilenameValues();
 
-        // TODO : vérifier avant le type d'hyperviseur : lxc ou qemu puis valider les champs en conséquence
-        // Valider les champs en fonction du type de source sélectionné
-        if (fileSourceType === 'upload') {
-            const uploadedFilename = this.uploadedFilenameInput?.value;
-            if (!uploadedFilename || uploadedFilename.trim() === '') {
-                e.preventDefault();
-                if (this.selectedFile) {
-                    alert('Please upload the selected file before submitting the form.');
-                } else {
-                    alert('Please select and upload a file first, or switch to URL mode.');
-                }
-                return false;
-            }
-        } else if (fileSourceType === 'url') {
-            const urlValue = this.urlInput?.value?.trim();
-            if (!urlValue) {
-                e.preventDefault();
-                alert('Please enter a valid URL or switch to file upload mode.');
-                return false;
-            }
-        } else if (fileSourceType === 'filename') {
-            const filenameValue = this.qemuFilenameInput?.value?.trim();
-            if (!filenameValue) {
-                e.preventDefault();
-                alert('Please enter a filename.');
-                return false;
-            }
+        // Récupérer le type d'hyperviseur
+        const selectedOption = this.hypervisorSelect?.options[this.hypervisorSelect.selectedIndex];
+        const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
+        
+        console.log('Hypervisor type:', hypervisorName);
+
+        if (hypervisorName.includes('lxc')) {
+            // Pour LXC, seulement valider le nom du template
             const lxcFilenameValue = this.lxcFilenameInput?.value?.trim();
-            if (this.lxcOptions?.style.display === 'block' && !lxcFilenameValue) {
+            if (!lxcFilenameValue) {
                 e.preventDefault();
-                alert('Please enter an LXC template name.');
+                alert('Veuillez entrer un nom de template LXC.');
+                return false;
+            }
+        } else if (hypervisorName.includes('qemu')) {
+            // Pour QEMU, valider selon le type de source sélectionné
+            const activeSourceCard = document.querySelector('.image-source-card.active[data-source-type]');
+            const fileSourceType = activeSourceCard ? activeSourceCard.dataset.sourceType : null;
+            
+            console.log('File source type:', fileSourceType);
+
+            if (fileSourceType === 'upload') {
+                const uploadedFilename = this.uploadedFilenameInput?.value;
+                if (!uploadedFilename || uploadedFilename.trim() === '') {
+                    e.preventDefault();
+                    if (this.selectedFile) {
+                        alert('Veuillez uploader le fichier sélectionné avant de soumettre le formulaire.');
+                    } else {
+                        alert('Veuillez sélectionner et uploader un fichier, ou changer de mode.');
+                    }
+                    return false;
+                }
+            } else if (fileSourceType === 'url') {
+                const urlValue = this.urlInput?.value?.trim();
+                if (!urlValue) {
+                    e.preventDefault();
+                    alert('Veuillez entrer une URL valide ou changer de mode.');
+                    return false;
+                }
+            } else if (fileSourceType === 'filename') {
+                const filenameValue = this.qemuFilenameInput?.value?.trim();
+                if (!filenameValue) {
+                    e.preventDefault();
+                    alert('Veuillez entrer un nom de fichier.');
+                    return false;
+                }
+            } else {
+                e.preventDefault();
+                alert('Veuillez sélectionner un type de source (Upload, URL ou Nom de fichier).');
                 return false;
             }
         } else {
             e.preventDefault();
-            alert('Please select a file source type (Upload, URL or Filename).');
+            alert('Veuillez sélectionner un hyperviseur.');
             return false;
         }
 
         console.log('Form validation passed');
+        this.debugFormState();
+
         return true;
     }
 
@@ -520,10 +548,12 @@ syncFilenameValues() {
         console.log('Uploaded file:', this.uploadedFile);
         console.log('Uploaded filename input:', this.uploadedFilenameInput?.value);
         console.log('URL input:', this.urlInput?.value);
+        console.log('Original filename field:', this.originalFilenameField?.value);
+        console.log('QEMU filename input:', this.qemuFilenameInput?.value);
+        console.log('LXC filename input:', this.lxcFilenameInput?.value);
         
-        const checkedRadio = document.querySelector('input[name="operating_system[fileSourceType]"]:checked');
-        console.log('Checked radio:', checkedRadio);
-        console.log('File source type:', checkedRadio?.value);
+        const activeSourceCard = document.querySelector('.image-source-card.active[data-source-type]');
+        console.log('Active source card:', activeSourceCard?.dataset.sourceType);
         
         // Vérifier tous les éléments du formulaire
         console.log('Form elements:');
@@ -608,7 +638,6 @@ syncFilenameValues() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
 }
 
 // Initialize when DOM is loaded

@@ -135,7 +135,7 @@
                             </div>
                         </td>
                         <td>
-                            {% if operatingSystem.arch is not null %}<span class="badge bg-light text-dark">{{ operatingSystem.arch.name|upper }}</span>{% else  %} - {% endif %}
+                            {% if operatingSystem.arch is not null %}<span class="badge bg-light text-dark">{{ operatingSystem.arch.name }}</span>{% else  %} - {% endif %}
                         </td>
                         <td>
                             {% if operatingSystem.hypervisor %}
