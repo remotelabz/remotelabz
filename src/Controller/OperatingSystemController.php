@@ -34,6 +34,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use App\Service\Files2WorkerManager;
+
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 class OperatingSystemController extends Controller
@@ -49,6 +51,8 @@ class OperatingSystemController extends Controller
     private $configWorkerRepository;
     private $entityManager;
     private $paginator;
+    private Files2WorkerManager $Files2WorkerManager;
+
 
     public function __construct(LoggerInterface $logger,
         OperatingSystemRepository $operatingSystemRepository,
@@ -56,7 +60,8 @@ class OperatingSystemController extends Controller
         MessageBusInterface $bus,
         ConfigWorkerRepository $configWorkerRepository,
         EntityManagerInterface $entityManager,
-        PaginatorInterface $paginator
+        PaginatorInterface $paginator,
+        Files2WorkerManager $Files2WorkerManager
         )
     {
         $this->logger = $logger;
@@ -66,6 +71,7 @@ class OperatingSystemController extends Controller
         $this->configWorkerRepository = $configWorkerRepository;
         $this->entityManager = $entityManager;
         $this->paginator = $paginator;
+        $this->Files2WorkerManager = $Files2WorkerManager;
     }
     
 	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -232,7 +238,7 @@ class OperatingSystemController extends Controller
             $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
             $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
 
-            $this->logger->debug('New OS form submission values:', [
+            $this->logger->debug('{OperatingSystemController:newAction]::New OS form submission values:', [
                 'hypervisor' => $hypervisor ? $hypervisor->getName() : 'null',
                 'uploadedFilename' => $uploadedFilename,
                 'imageFile' => $imageFile ? $imageFile->getClientOriginalName() : 'null',
@@ -273,6 +279,12 @@ class OperatingSystemController extends Controller
                     $operatingSystemEdited->setImageUrl(null);
                     $this->logger->info("Edit OS - QEMU no image source specified");
                 }
+             
+                if ($uploadedFilename && trim($uploadedFilename) !== '') {
+                    $localFilePath = $this->getParameter('image_directory') . '/' . $uploadedFilename;
+                    $remoteFilePath = '/images/'.$uploadedFilename;
+                    $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                }
             } else {
                 // Hyperviseur non reconnu - nettoyer les champs image
                 $operatingSystemEdited->setImageFilename(null);
@@ -288,6 +300,8 @@ class OperatingSystemController extends Controller
             $this->addFlash('success', 'Operating system has been created.');
             $this->logger->info("New OS - Operating system " . $operatingSystemEdited->getName() . " has been created");
 
+            
+
             return $this->redirectToRoute('operating_systems');
         }
 
@@ -295,6 +309,9 @@ class OperatingSystemController extends Controller
             ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
         
+
+        
+
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
             'sizeLimit' => $maxUploadSize
@@ -349,6 +366,8 @@ class OperatingSystemController extends Controller
                 
                 // 1. Gestion du fichier uploadé ou sélectionné
                 if ($filenameOnly) {
+                    $old_filename=$operatingSystemEdited->getImageFilename();
+
                     $operatingSystemEdited->setImageFilename($filenameOnly);
                     $operatingSystemEdited->setImageUrl(null);
                     $this->logger->info("Edit OS - QEMU new file uploaded: " . $filenameOnly);
@@ -364,6 +383,24 @@ class OperatingSystemController extends Controller
                     $operatingSystemEdited->setImageUrl(null);
                     $this->logger->info("Edit OS - QEMU no image source specified");
                 }
+
+                if ($uploadedFilename && trim($uploadedFilename) !== '') {
+                    $localFilePath = $this->getParameter('image_directory') . '/' . $uploadedFilename;
+                    $remoteFilePath = '/images/'.$uploadedFilename;
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers($old_filename);
+                    $results=$this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+
+                    $failures = array_filter($results, function($result) {
+                    });
+                    
+                    if (!empty($failures)) {
+                        $this->addFlash('warning', 'Image created but some workers failed to send the file.');
+                    } else {
+                        unlink($this->getParameter('image_directory') . '/' . $old_filename);
+                        $this->addFlash('success', 'Image created and file copied to all workers successfully.');
+                    }
+                }
+
             } else {
                 // Hyperviseur non reconnu - nettoyer les champs image
                 $operatingSystemEdited->setImageFilename(null);
@@ -375,7 +412,7 @@ class OperatingSystemController extends Controller
             $this->entityManager->persist($operatingSystemEdited);
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Operating system has been edited.');
+            $this->addFlash('success', 'Operating system has indeed been edited.');
             $this->logger->info("Edit OS - Successfully edited: " . $operatingSystemEdited->getName());
 
             return $this->redirectToRoute('show_operating_system', [
@@ -386,7 +423,7 @@ class OperatingSystemController extends Controller
         $maxUploadSize = min(
             ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
-        
+
         return $this->render('operating_system/new.html.twig', [
             'operatingSystem' => $operatingSystem,
             'operatingSystemForm' => $operatingSystemForm->createView(),
@@ -403,35 +440,130 @@ class OperatingSystemController extends Controller
     public function delete(Request $request, OperatingSystem $operatingSystem): Response
     {
         // Vérifier le token CSRF
-        if ($this->isCsrfTokenValid('delete' . $operatingSystem->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->entityManager;
+        $id=$operatingSystem->getId();
+        if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
+            $operatingSystem = $this->operatingSystemRepository->find($id);
+            $operatingSystemName=$operatingSystem->getImageFilename();
+            $operatingSystemHypervisor=$operatingSystem->getHypervisor()->getName();
 
-            $devicesUsingOs = $entityManager
-                ->getRepository(\App\Entity\Device::class)
-                ->findBy(['operatingSystem' => $operatingSystem]);
+            if (null === $operatingSystem) {
+                throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
+            }
 
-            if (count($devicesUsingOs) === 0) {
-                // Si c'est un fichier local, vous pourriez vouloir le supprimer du disque
-                if ($operatingSystem->getImageFilename()) {
-                    $imagePath = $this->getParameter('kernel.project_dir') . '/public/uploads/images/' . $operatingSystem->getImageFilename();
-                    if (file_exists($imagePath)) {
-                        unlink($imagePath);
+                $entityManager = $this->entityManager;
+                $entityManager->remove($operatingSystem);
+
+            try {
+                $entityManager->flush();
+
+                $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
+
+                if (null !== $operatingSystemName) {
+                    $workers = $this->configWorkerRepository->findAll();
+        
+                    foreach ($workers as $otherWorker) {
+                        $otherWorkerIP=$otherWorker->getIPv4();
+                        $tmp=array();
+                        $tmp['Worker_Dest_IP'] = $otherWorkerIP;
+                        $tmp['hypervisor'] = $operatingSystemHypervisor;
+                        $tmp['os_imagename'] = $operatingSystemName;
+                        $deviceJsonToCopy = json_encode($tmp, 0, 4096);
+                        // the case of qemu image with link.
+                        $this->logger->debug("OS to delete on worker ".$otherWorkerIP,$tmp);
+                        $this->bus->dispatch(
+                            new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_DELETEOS), [
+                                new AmqpStamp($otherWorkerIP, AMQP_NOPARAM, [])
+                                ]
+                            );            
                     }
                 }
                 
-                $entityManager->remove($operatingSystem);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Operating system "' . $operatingSystem->getName() . '" has been deleted successfully.');
-            } else {
-                $this->addFlash('danger', 'Unable to delete this OS: it is being used by at least one device.');
                 return $this->redirectToRoute('operating_systems');
+            } catch (ForeignKeyConstraintViolationException $e) {
+                $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
+                $this->addFlash('danger', 'This operating system is still used in some device templates or lab. Please delete them first.');
+
+                return $this->redirectToRoute('show_operating_system', [
+                    'id' => $id
+                ]);
+                }
+        }
+    }
+
+    #[Post('/api/operating-systems/lxc_params', name: 'api_new_lxc_device_params')]
+	#[Post('/api/operating-systems/lxc', name: 'api_new_lxc_device')]
+	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    #[Route(path: '/admin/operating-systems/new_lxc', name: 'new_lxc_device')]
+    public function newLxcAction(Request $request, UrlGeneratorInterface $router)
+    {
+        $file=file_get_contents("https://images.linuxcontainers.org/images");
+        $dom = new \DOMDocument();
+        $dom->loadHtml($file);
+        $links = $dom->getElementsByTagName('a');
+        $os = [];
+        foreach($links as $link){
+            if($link->nodeValue !== "../") {
+                array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
             }
         }
-        else {
-                $this->addFlash('error', 'Invalid security token. Please try again.');
+
+        $os_json = json_encode($os);
+
+        if ('json' === $request->getRequestFormat()) {
+            if ($request->get("_route") == "api_new_lxc_device_params") {
+                $data = json_decode($request->getContent(), true);
+                if (!isset($data['version']) && isset($data['os'])) {
+                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os']);
+                    $dom = new \DOMDocument();
+                    $dom->loadHtml($fileVersion);
+                    $links = $dom->getElementsByTagName('a');
+                    $versions = [];
+                    foreach($links as $link){
+                        if($link->nodeValue !== "../") {
+                            array_push($versions, substr($link->nodeValue, 0, -1));
+                        }
+                    }
+                    return $this->json($versions, 200, [], []);
+                }
+                if (!isset($data['date']) && isset($data['version'])) {
+                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os'].$data['version']."amd64/default/");
+                    $dom = new \DOMDocument();
+                    $dom->loadHtml($fileVersion);
+                    $links = $dom->getElementsByTagName('a');
+                    $updates = [];
+                    foreach($links as $link){
+                        if($link->nodeValue !== "../") {
+                            array_push($updates, $link->nodeValue);
+                        }
+                    }
+                    $update = end($updates);
+                    return $this->json($update, 200, [], []);
+                }
             }
-        return $this->redirectToRoute('operating_systems');
+            //return $this->json($deviceForm, 200, [], ['api_get_device']);
+        }
+
+        if ($request->get("_route") == "api_new_lxc_device") {
+            $data = json_decode($request->getContent(), true);
+            $hypervisor = $this->hypervisorRepository->findByName('lxc');
+            $entityManager = $this->entityManager;
+            $osName = ucfirst($data['os'])."-".$data['version'];
+            if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
+                $newOs = new OperatingSystem();
+                $newOs->setName($osName);
+                $newOs->setHypervisor($hypervisor);
+                $newOs->setImageFilename($osName);
+                $entityManager->persist($newOs);
+                $entityManager->flush();
+            }
+            $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version']];
+            return $this->json($values, 200, [], []);
+        }
+
+        return $this->render('operating_system/newLxc.html.twig', [
+            'os' => $os,
+            'props' => $os_json,
+        ]);
     }
 
     /**

@@ -87,6 +87,13 @@
                                 <div class="form-text">
                                     <i class="fa fa-info-circle text-info"></i> {{ 'Select the hypervisor type (affects available image options)'|trans }}
                                 </div>
+        
+                                <div class="col-auto">
+                                    <a href="{{ path('new_lxc_device') }}" class="btn btn-outline-success">
+                                        <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
+                                    </a>
+                                </div>
+        
                             </div>
                             
                             <!-- QEMU Image Options -->

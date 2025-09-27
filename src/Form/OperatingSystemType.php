@@ -17,6 +17,7 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Doctrine\ORM\EntityRepository;
 
 
 class OperatingSystemType extends AbstractType
@@ -39,7 +40,13 @@ class OperatingSystemType extends AbstractType
             ->add('hypervisor', EntityType::class, [
                 'class' => Hypervisor::class,
                 'placeholder' => 'Select an hypervisor...',
-                'choice_label' => 'name'
+                'choice_label' => 'name',
+                'query_builder' => function (EntityRepository $er) {
+                    return $er->createQueryBuilder('h')
+                        ->where('h.name != :excludedName')
+                        ->setParameter('excludedName', 'lxc')
+                        ->orderBy('h.name', 'ASC');
+                }
             ])
             ->add('uploaded_filename', HiddenType::class, [
                 'mapped' => false, // Géré manuellement dans le contrôleur

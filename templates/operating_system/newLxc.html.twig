@@ -1,4 +1,4 @@
-{% extends 'device/index.html.twig' %}
+{% extends 'operating_system/index.html.twig' %}
 
 {% block breadcrumbs %}
     {% set breadcrumbs = breadcrumbs|merge({ 'New LXC Container': path('new_lxc_device') }) %}
@@ -346,12 +346,7 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    // Redirect to new device creation with pre-filled data
-                    const params = new URLSearchParams({
-                        os: result.os,
-                        model: result.model
-                    });
-                    window.location.href = `/admin/devices/new?${params.toString()}`;
+                    window.location.href = `/admin/oprating_system/view?${params.toString()}`;
                 } else {
                     throw new Error(result.message || 'Error creating LXC device');
                 }
