@@ -492,7 +492,7 @@ class DeviceController extends Controller
 
         if(($params = $request->query->all()) && (isset($params['os'])) && (isset($params['model']))) {
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
-            $type = "container"; 
+            $type = "container";
             $device->setType($type);
             $device->setHypervisor($hypervisor);
             $osName = $params['os']."-".$params['model'];
@@ -532,6 +532,7 @@ class DeviceController extends Controller
             $this->setDeviceHypervisorToOS($device);
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
+            $device->setType($virtuality? "vm" : "physical");
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();

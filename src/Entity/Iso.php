@@ -4,6 +4,13 @@ namespace App\Entity;
 
 use App\Repository\IsoRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * Represents an iso image disk 
+ *
+ * @author Florent Nolot
+ */
 
 #[ORM\Entity(repositoryClass: IsoRepository::class)]
 class Iso
@@ -13,8 +20,8 @@ class Iso
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $name = null;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $name;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $filename = null;
@@ -41,11 +48,10 @@ class Iso
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): void
     {
         $this->name = $name;
 
-        return $this;
     }
 
     public function getFilename(): ?string
@@ -53,11 +59,10 @@ class Iso
         return $this->filename;
     }
 
-    public function setFilename(?string $filename): static
+    public function setFilename(?string $filename): void
     {
         $this->filename = $filename;
 
-        return $this;
     }
 
     public function getFilenameUrl(): ?string

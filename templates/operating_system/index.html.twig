@@ -20,6 +20,9 @@
             <a class="btn btn-success" role="button" href="{{ path('new_operating_system') }}">
                 <i class="fas fa-plus me-2"></i> New Operating System
             </a>
+            <a href="{{ path('new_lxc_device') }}" class="btn btn-warning">
+                <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
+            </a>
         </div>
     </div>
     
@@ -98,6 +101,7 @@
                         <th width="120">Architecture</th>
                         <th width="150">Hypervisor</th>
                         <th width="100">Place</th>
+                        <th width="100" class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="osTableBody">
@@ -160,6 +164,18 @@
                                 <span class="text-muted">-</span>
                             {% endif %}
                         </td>
+                   
+                        <td><a href="{{ path('edit_operating_system', {id: operatingSystem.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                            </td>
                     </tr>
                     {% endfor %}
                 </tbody>

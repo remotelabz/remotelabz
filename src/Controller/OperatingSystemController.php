@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\OperatingSystem;
+use App\Repository\HypervisorRepository;
 use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
@@ -10,7 +11,6 @@ use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Filesystem\Filesystem;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
-//use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Attribute\Route;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -35,6 +35,9 @@ use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use App\Service\Files2WorkerManager;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -45,6 +48,7 @@ class OperatingSystemController extends Controller
      */
     private $workerRepository;
     private $operatingSystemRepository;
+    private $hypervisorRepository;
     private $logger;
     private $serializer;
     protected $bus;
@@ -61,7 +65,8 @@ class OperatingSystemController extends Controller
         ConfigWorkerRepository $configWorkerRepository,
         EntityManagerInterface $entityManager,
         PaginatorInterface $paginator,
-        Files2WorkerManager $Files2WorkerManager
+        Files2WorkerManager $Files2WorkerManager,
+        HypervisorRepository $hypervisorRepository
         )
     {
         $this->logger = $logger;
@@ -72,6 +77,7 @@ class OperatingSystemController extends Controller
         $this->entityManager = $entityManager;
         $this->paginator = $paginator;
         $this->Files2WorkerManager = $Files2WorkerManager;
+        $this->hypervisorRepository = $hypervisorRepository;
     }
     
 	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -226,10 +232,24 @@ class OperatingSystemController extends Controller
         $operatingSystem = new OperatingSystem();
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
+        $maxUploadSize = min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
 
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystem */
             $operatingSystemEdited = $operatingSystemForm->getData();
+
+            $name=trim($operatingSystemEdited->getName());
+            if ( $name == null || $name == "" || $this->operatingSystemRepository->findByName($name)) {
+                if ($name == null || $name == "" )
+                    $this->addFlash('danger', 'Operating system name is required.');                
+                if ($this->operatingSystemRepository->findByName($name))
+                    $this->addFlash('danger', 'Operating system name already exists.');
+            
+                return $this->render('operating_system/new.html.twig', [
+                    'operatingSystemForm' => $operatingSystemForm->createView(),
+                    'sizeLimit' => $maxUploadSize
+                ]);
+            }
 
             // Récupération des différents champs
             $uploadedFilename = $operatingSystemForm->get('uploaded_filename')->getData();
@@ -300,17 +320,12 @@ class OperatingSystemController extends Controller
             $this->addFlash('success', 'Operating system has been created.');
             $this->logger->info("New OS - Operating system " . $operatingSystemEdited->getName() . " has been created");
 
-            
-
             return $this->redirectToRoute('operating_systems');
         }
 
         $maxUploadSize = min(
             ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
-        
-
-        
 
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
@@ -340,7 +355,7 @@ class OperatingSystemController extends Controller
             $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
             $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
 
-            $this->logger->debug('Form submission values:', [
+            $this->logger->debug('[OperatingSystemController:editAction]::Form submission values:', [
                 'hypervisor' => $hypervisor ? $hypervisor->getName() : 'null',
                 'uploadedFilename' => $uploadedFilename,
                 'imageFile' => $imageFile ? $imageFile->getClientOriginalName() : 'null',
@@ -400,7 +415,6 @@ class OperatingSystemController extends Controller
                         $this->addFlash('success', 'Image created and file copied to all workers successfully.');
                     }
                 }
-
             } else {
                 // Hyperviseur non reconnu - nettoyer les champs image
                 $operatingSystemEdited->setImageFilename(null);
@@ -419,7 +433,25 @@ class OperatingSystemController extends Controller
                 'id' => $id
             ]);
         }
+        elseif ($operatingSystemForm->isSubmitted()) {
+            $this->logger->error('Form submitted but invalid during edit');
+            $this->logger->debug('[OperatingSystemController:editAction]::Form errors: ' . (string) $form->getErrors(true));
 
+            $uploadedFileName = $operatingSystemForm->get('uploaded_filename')->getData();
+            if ($uploadedFileName && trim($uploadedFileName) !== '') {
+                if ($this->deleteLocalTempFile($uploadedFileName)) {
+                    $this->logger->debug('[OperatingSystemController:editAction]::Deleted temporary file: ' . $uploadedFileName);
+                } else {
+                    $this->logger->debug('[OperatingSystemController:editAction]::No temporary file to delete: ' . $uploadedFileName);
+                }
+            }
+
+            // Afficher les erreurs pour debug
+            foreach ($form->getErrors(true) as $error) {
+                $this->logger->error('Form error: ' . $error->getMessage());
+            }
+        }
+            
         $maxUploadSize = min(
             ini_get('upload_max_filesize'), ini_get('post_max_size')
         );
@@ -432,10 +464,19 @@ class OperatingSystemController extends Controller
         ]);
     }
 
+    private function deleteLocalTempFile(string $filename): bool
+    {
+        $filePath = $this->getParameter('image_directory') . '/' . $filename;
+        if (file_exists($filePath)) {
+            unlink($filePath);
+            return true;
+        }
+        return false;
+    }
     /**
      * Delete operating system
      */
-    #[Route(path: '/admin/operating-systems/{id}/delete', name: 'delete_operating_system', methods: ['POST'])]
+    #[Route(path: '/admin/operating-systems/{id}/delete', name: 'delete_operating_system', methods: ['DELETE'])]
     #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
     public function delete(Request $request, OperatingSystem $operatingSystem): Response
     {
@@ -449,13 +490,10 @@ class OperatingSystemController extends Controller
             if (null === $operatingSystem) {
                 throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
             }
-
                 $entityManager = $this->entityManager;
                 $entityManager->remove($operatingSystem);
-
             try {
                 $entityManager->flush();
-
                 $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
 
                 if (null !== $operatingSystemName) {
@@ -548,6 +586,7 @@ class OperatingSystemController extends Controller
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
             $entityManager = $this->entityManager;
             $osName = ucfirst($data['os'])."-".$data['version'];
+            $newOs_id=null;
             if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
                 $newOs = new OperatingSystem();
                 $newOs->setName($osName);
@@ -555,8 +594,10 @@ class OperatingSystemController extends Controller
                 $newOs->setImageFilename($osName);
                 $entityManager->persist($newOs);
                 $entityManager->flush();
+                $newOs_id=$newOs->getId();
+                $this->logger->info("New LXC OS - Operating system " . $newOs->getName() . " has been created by user ".$this->getUser()->getName());
             }
-            $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version']];
+            $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version'],'os_id'=>$newOs_id];
             return $this->json($values, 200, [], []);
         }
 
@@ -580,7 +621,8 @@ class OperatingSystemController extends Controller
             $this->logger->debug('[OperatingSystemController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
 
             $maxUploadSize = min(
-                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),$this->convertPHPSizeToBytes(ini_get('post_max_size'))
+                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),
+                $this->convertPHPSizeToBytes(ini_get('post_max_size'))
             );
 
             if ($file->getSize() > $maxUploadSize) {
@@ -590,6 +632,17 @@ class OperatingSystemController extends Controller
             $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $safeFilename = $slugger->slug($originalFilename);
             $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+            $file_extension=$file->guessExtension();
+            if ($file->guessExtension()==="ova") {
+                $this->logger->debug('[OperatingSystemController:upload]::Detect the '.$file.' is ova');
+
+                $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);
+                $this->convertOva2qcow2($file, $newFilename);
+                $this->logger->debug('[OperatingSystemController:upload]::Convert '.$file.' file to '.$newFilename.' done.');
+
+                return $this->json(['error' => 'OVA files are not supported for upload. Please use IMG or QCOW2 files.'], 400);
+            } else 
+                $this->logger->debug('[OperatingSystemController:upload]::The upload file is not an ova but a '.$file_extension);
 
             try {
                 $uploadDir = $this->getParameter('image_directory');
@@ -837,6 +890,50 @@ class OperatingSystemController extends Controller
         }
 
         return $bytes;
+    }
+
+    private function convertOva2qcow2($filename){
+
+        $filesystem = new Filesystem();
+        $tempDir = '/tmp/image_convert/';
+        $filesystem->mkdir($tempDir);
+
+        // --- Étape 1 : Extraction de l'OVA (TAR) ---
+        // Utilisation de la commande tar. Assurez-vous que tar est disponible.
+        $tarCommand = ['tar', 'xf', $ovaFile, '-C', $tempDir];
+        $process = new Process($tarCommand);
+        $process->mustRun();
+
+        $qemuCommand = [
+            'qemu-img',
+            'convert',
+            '-f', 'ova',
+            '-O', 'qcow2',
+            $filename,
+            $outputQcow2File
+        ];
+        
+        $process = new Process($qemuCommand);
+        $process->setTimeout(3600); // Temps max. d'exécution, important pour les gros fichiers
+        try{
+            $process->start();
+        
+            $process->mustRun(function ($type, $buffer) {
+                if (Process::ERR === $type) {
+                    echo 'ERR > ' . $buffer;
+                } else {
+                    // Afficher la progression si possible (dépend de qemu-img et du terminal)
+                    echo 'OUT > ' . $buffer;
+                }
+            });
+
+            // --- Étape 3 : Nettoyage ---
+            $filesystem->remove($tempDir);
+        }
+        catch (ProcessFailedException $exception) {
+                $this->logger->error('Error during OVA to QCOW2 conversion: ' . $exception->getMessage());
+                throw new \RuntimeException('Conversion failed: ' . $exception->getMessage());
+        }
     }
 
 }

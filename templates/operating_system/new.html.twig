@@ -88,11 +88,7 @@
                                     <i class="fa fa-info-circle text-info"></i> {{ 'Select the hypervisor type (affects available image options)'|trans }}
                                 </div>
         
-                                <div class="col-auto">
-                                    <a href="{{ path('new_lxc_device') }}" class="btn btn-outline-success">
-                                        <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
-                                    </a>
-                                </div>
+                                
         
                             </div>
                             
@@ -158,7 +154,9 @@
                                             <i class="fa fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
                                             <h5 class="mb-2">{{ 'Upload Image File'|trans }}</h5>
                                             <p class="text-muted mb-3">{{ 'Drag and drop your image file here or click to browse'|trans }}</p>
-                                            <input type="file" id="file-input" class="form-control file-input position-absolute w-100 h-100 opacity-0" style="top: 0; left: 0; cursor: pointer;" accept=".img,.qcow2">
+                                            <input type="file" id="file-input" class="form-control file-input position-absolute w-100 h-100 opacity-0"
+                                                style="top: 0; left: 0; cursor: pointer;"
+                                                accept=".img,.qcow2,.ova,.vmdk">
                                             <button type="button" class="btn btn-outline-primary" id="browse-button">
                                                 <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
                                             </button>
@@ -298,8 +296,8 @@
                         
                         <!-- Boutons d'action -->
                         <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
-                            <a href="{{ path('operating_systems') }}" class="btn btn-outline-secondary">
-                                <i class="fa fa-times me-1"></i>{{ 'Cancel'|trans }}
+                            <a href="{{ path('operating_systems') }}" class="btn btn-danger btn-lg px-3">
+                                <i class="fa fa-times me-1"></i> {{ 'Cancel'|trans }}
                             </a>
                             {{ form_widget(operatingSystemForm.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4', 'id': 'submit-button'}}) }}
                         </div>

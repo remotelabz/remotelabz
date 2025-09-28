@@ -34,6 +34,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <form method="post" action="{{ path('delete_operating_system', {'id': operatingSystem.id}) }}" class="d-inline">
             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
+            <input type="hidden" name="_method" value="DELETE">
             <button type="submit" class="btn btn-danger">
                 <i class="fas fa-trash me-2"></i>Delete Operating System
             </button>

@@ -143,17 +143,18 @@ class IsoController extends AbstractController
     public function edit(Request $request, Iso $iso, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $form = $this->createForm(IsoType::class, $iso);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->logger->info('Editing ISO entry by user: ' . $this->getUser()->getName());
-            
+
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             $this->logger->debug('[IsoController:edit]::File source type: ' . $fileSourceType);
             $this->logger->debug('[IsoController:edit]::Current ISO filename: ' . $iso->getFilename());
             $this->logger->debug('[IsoController:edit]::Current ISO URL: ' . $iso->getFilenameUrl());
-            
+
             if ($fileSourceType === 'upload') {
                 // CORRECTION: Récupérer le nom du fichier depuis le champ du formulaire
                 $uploadedFileName = $form->get('uploaded_filename')->getData();
@@ -219,6 +220,15 @@ class IsoController extends AbstractController
         } elseif ($form->isSubmitted()) {
             $this->logger->error('Form submitted but invalid during edit');
             $this->logger->debug('[IsoController:edit]::Form errors: ' . (string) $form->getErrors(true));
+
+            $uploadedFileName = $form->get('uploaded_filename')->getData();
+            if ($uploadedFileName && trim($uploadedFileName) !== '') {
+                if ($this->deleteLocalTempFile($uploadedFileName)) {
+                    $this->logger->debug('[IsoController:edit]::Deleted temporary file: ' . $uploadedFileName);
+                } else {
+                    $this->logger->debug('[IsoController:edit]::No temporary file to delete: ' . $uploadedFileName);
+                }
+            }
 
             // Afficher les erreurs pour debug
             foreach ($form->getErrors(true) as $error) {
@@ -318,14 +328,25 @@ class IsoController extends AbstractController
             return $this->json(['error' => 'No filename provided'], 400);
         }
 
+
+        $this->deleteLocalTempFile($filename);
+        if ($this->deleteLocalTempFile($filename)) {
+            return $this->json(['success' => true]);
+        } else {
+            $this->logger->warning('Temporary ISO file '.$filename.' not found for deletion');
+            return $this->json(['error' => 'File not found'], 404);
+        }
+        
+    }
+
+    private function deleteLocalTempFile(string $filename): bool
+    {
         $filePath = $this->getParameter('iso_directory') . '/' . $filename;
         if (file_exists($filePath)) {
             unlink($filePath);
-            $this->logger->info('Deleting temporary ISO file '.$filename.' by user '.$this->getUser()->getName().' done');
-            return $this->json(['success' => true]);
+            return true;
         }
-
-        return $this->json(['error' => 'File not found'], 404);
+        return false;
     }
 
     #[Route('/api/isos/validate-url', name: 'app_iso_validate_url', methods: ['POST'])]
