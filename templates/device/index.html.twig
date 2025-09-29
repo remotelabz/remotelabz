@@ -138,6 +138,10 @@
                                 <span class="badge bg-warning text-dark">
                                     <i class="fas fa-server me-1"></i>&nbsp;Physical
                                 </span>
+                            {% elseif device.type == 'switch' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-network-wired me-1"></i>&nbsp;Switch
+                                </span>
                             {% else %}
                                 <span class="badge bg-secondary">
                                     <i class="fas fa-question me-1"></i>&nbsp;{{ device.type|title }}

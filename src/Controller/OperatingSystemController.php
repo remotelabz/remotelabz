@@ -38,6 +38,9 @@ use App\Service\Files2WorkerManager;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\Process\Process;
+use App\Service\OvaManager;
+
 
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -56,6 +59,7 @@ class OperatingSystemController extends Controller
     private $entityManager;
     private $paginator;
     private Files2WorkerManager $Files2WorkerManager;
+    private OvaManager $ovaManager;
 
 
     public function __construct(LoggerInterface $logger,
@@ -66,7 +70,8 @@ class OperatingSystemController extends Controller
         EntityManagerInterface $entityManager,
         PaginatorInterface $paginator,
         Files2WorkerManager $Files2WorkerManager,
-        HypervisorRepository $hypervisorRepository
+        HypervisorRepository $hypervisorRepository,
+        OvaManager $ovaManager
         )
     {
         $this->logger = $logger;
@@ -78,6 +83,7 @@ class OperatingSystemController extends Controller
         $this->paginator = $paginator;
         $this->Files2WorkerManager = $Files2WorkerManager;
         $this->hypervisorRepository = $hypervisorRepository;
+        $this->ovaManager=$ovaManager;
     }
     
 	#[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -495,7 +501,7 @@ class OperatingSystemController extends Controller
             try {
                 $entityManager->flush();
                 $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
-
+                $this->logger->info("Delete OS - Operating system " . $operatingSystem->getName() . " has been deleted by user ".$this->getUser()->getName());
                 if (null !== $operatingSystemName) {
                     $workers = $this->configWorkerRepository->findAll();
         
@@ -620,10 +626,7 @@ class OperatingSystemController extends Controller
         if ($file && $file->isValid()) {
             $this->logger->debug('[OperatingSystemController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
 
-            $maxUploadSize = min(
-                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),
-                $this->convertPHPSizeToBytes(ini_get('post_max_size'))
-            );
+            $maxUploadSize = $this->convertPHPSizeToBytes(min(ini_get('upload_max_filesize'),ini_get('post_max_size')));
 
             if ($file->getSize() > $maxUploadSize) {
                 return $this->json(['error' => 'File too large'], 413);
@@ -633,41 +636,64 @@ class OperatingSystemController extends Controller
             $safeFilename = $slugger->slug($originalFilename);
             $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
             $file_extension=$file->guessExtension();
-            if ($file->guessExtension()==="ova") {
-                $this->logger->debug('[OperatingSystemController:upload]::Detect the '.$file.' is ova');
+            
+            if ($file_extension === "tar" || $file_extension === "img" || $file_extension === "qcow2") {
+                $filesystem = new Filesystem();
+                if ($file->guessExtension()==="tar") {
+                    $this->logger->debug('[OperatingSystemController:upload]::Detect the '.$file.' is ova');
+                    $newFilename = basename($newFilename,".tar").".qcow2";
+                    $temp_path=sys_get_temp_dir()."/Remotelabz-image-convert-".uniqid();
+                    $filesystem->mkdir($temp_path);
+                    
+                    // The file stays in the temp directory
+                    if ($this->convertOva2qcow2($temp_path,$file, $newFilename))
+                        $this->logger->debug('[OperatingSystemController:upload]::Convert '.$temp_path."/".basename($file).' file to '.$temp_path."/".$newFilename.' done.');
+                    else
+                        throw new \Exception('Error during OVA to QCOW2 conversion');
+                }
+                try {
+                    $uploadDir = $this->getParameter('image_directory');
+                    $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);        
+                    $file->move($uploadDir, $newFilename);
+            
+                    $newFile = $uploadDir . '/' . $newFilename;
+                    $fileSize = file_exists($newFile) ? filesize($newFile) : null;
 
-                $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);
-                $this->convertOva2qcow2($file, $newFilename);
-                $this->logger->debug('[OperatingSystemController:upload]::Convert '.$file.' file to '.$newFilename.' done.');
-
-                return $this->json(['error' => 'OVA files are not supported for upload. Please use IMG or QCOW2 files.'], 400);
-            } else 
-                $this->logger->debug('[OperatingSystemController:upload]::The upload file is not an ova but a '.$file_extension);
-
-            try {
-                $uploadDir = $this->getParameter('image_directory');
-                $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);        
-                $file->move($uploadDir, $newFilename);
-        
-                $newFile = $uploadDir . '/' . $newFilename;
-                $fileSize = file_exists($newFile) ? filesize($newFile) : null;
-
-                $this->logger->debug('[OperatingSystemController:upload]::Move '.$file.' file to '.$newFile.' done.');        
-
-            } catch (FileException $e) {
-                return $this->json(['error' => 'Upload failed'], 500);
+                    $this->logger->debug('[OperatingSystemController:upload]::Move '.$file.' file to '.$newFile.' done.');
+                    if ($filesystem->exists($temp_path)) {
+                        $filesystem->remove($temp_path);
+                        $this->logger->debug('[OperatingSystemController:upload]::Temporary directory cleaned');
+                    }
+                    return $this->json([
+                        'success' => true, 
+                        'filename' => $newFilename,
+                        'originalName' => $file->getClientOriginalName(),
+                        'size' => $fileSize
+                    ]);
+                }
+                catch (FileException $e) {
+                    $this->logger->error('[OperatingSystemController:upload]::FileException occurs: ' . $e->getMessage());
+                    
+                    if (str_contains($e->getMessage, "No space left"))
+                        return $this->json(['error' => 'No space left on the device'], 500);        
+                    else
+                        return $this->json(['error' => 'Upload failed'], 500);
+                }
+                catch (\Exception $e) {
+                    $this->logger->error('[OperatingSystemController:upload]::Error during file upload: ' . $e->getMessage());
+                    return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
+                }
+                finally {
+                    // --- Nettoyage (toujours exécuté) ---
+                    if ($filesystem->exists($temp_path)) {
+                        $filesystem->remove($temp_path);
+                        $this->logger->debug('[OperatingSystemController:upload]::Temporary directory cleaned');
+                    }
+                }
+            } else {
+                    $this->logger->debug('[OperatingSystemController:upload]::The upload file is not an ova but a '.$file_extension);
+                    return $this->json(['error' => 'OVA files are not supported for upload. Please use IMG or QCOW2 files.'], 400);
             }
-            catch (\Exception $e) {
-                $this->logger->error('[OperatingSystemController:upload]::Error during file upload: ' . $e->getMessage());
-                return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
-            }
-
-            return $this->json([
-                'success' => true, 
-                'filename' => $newFilename,
-                'originalName' => $file->getClientOriginalName(),
-                'size' => $fileSize
-            ]);
         }
         else return $this->json(['error' => 'No file uploaded'], 400);
     }
@@ -892,47 +918,39 @@ class OperatingSystemController extends Controller
         return $bytes;
     }
 
-    private function convertOva2qcow2($filename){
-
+    private function convertOva2qcow2(string $tempDir,string $filename, string $newfilename): bool
+    {
         $filesystem = new Filesystem();
-        $tempDir = '/tmp/image_convert/';
-        $filesystem->mkdir($tempDir);
-
-        // --- Étape 1 : Extraction de l'OVA (TAR) ---
-        // Utilisation de la commande tar. Assurez-vous que tar est disponible.
-        $tarCommand = ['tar', 'xf', $ovaFile, '-C', $tempDir];
-        $process = new Process($tarCommand);
-        $process->mustRun();
-
-        $qemuCommand = [
-            'qemu-img',
-            'convert',
-            '-f', 'ova',
-            '-O', 'qcow2',
-            $filename,
-            $outputQcow2File
-        ];
         
-        $process = new Process($qemuCommand);
-        $process->setTimeout(3600); // Temps max. d'exécution, important pour les gros fichiers
-        try{
-            $process->start();
-        
-            $process->mustRun(function ($type, $buffer) {
-                if (Process::ERR === $type) {
-                    echo 'ERR > ' . $buffer;
-                } else {
-                    // Afficher la progression si possible (dépend de qemu-img et du terminal)
-                    echo 'OUT > ' . $buffer;
-                }
-            });
+        try {
+            $this->logger->debug('Creation directory ok');
+            
+            try {
+                // --- Étape 1 : Extraction de l'OVA (TAR) ---
+                $this->logger->info("OVA extraction of file ".$filename);
+                $tarCommand = ['tar', 'xf', $filename, '-C', $tempDir];
+                $process = new Process($tarCommand);
+                $process->setTimeout(3600);
+                $process->mustRun();
+                $this->logger->debug('[OperatingSystemController:convertOva2qcow2]::Tar executed');
+                
+                // --- Étape 2 : Traitement des fichiers VMDK et conversion en QCOW2 ---
+                //$this->logger->info("Conversion des fichiers VMDK en QCOW2");
+                
+                $tmp=
+                // Le service trouve les VMDK, détermine le principal et convertit
 
-            // --- Étape 3 : Nettoyage ---
-            $filesystem->remove($tempDir);
-        }
-        catch (ProcessFailedException $exception) {
+                $this->ovaManager->processVmdkFiles($tempDir);
+                $this->logger->debug('[OperatingSystemController:convertOva2qcow2]::VMDK processed');                
+                return true;
+                
+            } catch (ProcessFailedException $exception) {
                 $this->logger->error('Error during OVA to QCOW2 conversion: ' . $exception->getMessage());
                 throw new \RuntimeException('Conversion failed: ' . $exception->getMessage());
+            } 
+        } catch (IOExceptionInterface $exception) {
+            $this->logger->error('Error creating temporary directory at ' . $exception->getPath());
+            throw new \RuntimeException('Could not create temporary directory for conversion.');
         }
     }
 

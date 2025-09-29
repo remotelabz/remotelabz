@@ -528,14 +528,20 @@ class DeviceController extends Controller
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
-            //$this->addNetworkInterface($device);
-            $this->setDeviceHypervisorToOS($device);
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
-            $device->setType($virtuality? "vm" : "physical");
+            $device->setCreatedAt(new DateTime());
+            // The type cannot be null but it is update with the function setDeviceHypervisorToOS
+            // The update can be work only if the device is created so we add a fake value here
+            // to avoid a crash
+            // This value will be replaced by the real value after the flush
+            $device->setType("vm");
+
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
+            $this->setDeviceHypervisorToOS($device);
+
             if ($device->getIsTemplate() == true) {
                 $controlProtocolTypes= [];
                 foreach($device->getControlProtocolTypes() as $controlProtocolType) {

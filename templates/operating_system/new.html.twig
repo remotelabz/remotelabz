@@ -156,7 +156,7 @@
                                             <p class="text-muted mb-3">{{ 'Drag and drop your image file here or click to browse'|trans }}</p>
                                             <input type="file" id="file-input" class="form-control file-input position-absolute w-100 h-100 opacity-0"
                                                 style="top: 0; left: 0; cursor: pointer;"
-                                                accept=".img,.qcow2,.ova,.vmdk">
+                                                accept=".img,.qcow2,.ova,.vmdk,.tar">
                                             <button type="button" class="btn btn-outline-primary" id="browse-button">
                                                 <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
                                             </button>
@@ -203,7 +203,7 @@
                                     
                                     <div class="form-text">
                                         <i class="fa fa-exclamation-triangle text-warning"></i> 
-                                        {{ 'Maximum file size: ' ~ sizeLimit ~ '. Accepted formats: .img, .qcow2'|trans }}
+                                        {{ 'Maximum file size: ' ~ sizeLimit ~ '. Accepted formats: .img, .qcow2, .vmdk, .ova'|trans }}
                                     </div>
                                 </div>
 
