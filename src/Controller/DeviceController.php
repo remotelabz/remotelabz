@@ -539,8 +539,10 @@ class DeviceController extends Controller
 
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
-            $entityManager->flush();
             $this->setDeviceHypervisorToOS($device);
+            $entityManager->persist($device);
+            $entityManager->flush();
+
 
             if ($device->getIsTemplate() == true) {
                 $controlProtocolTypes= [];
