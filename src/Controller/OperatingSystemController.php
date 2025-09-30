@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\OperatingSystem;
+use App\Entity\Device;
 use App\Repository\HypervisorRepository;
 use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
@@ -491,46 +492,59 @@ class OperatingSystemController extends Controller
         if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
             $operatingSystem = $this->operatingSystemRepository->find($id);
             $operatingSystemName=$operatingSystem->getImageFilename();
-            $operatingSystemHypervisor=$operatingSystem->getHypervisor()->getName();
+            $operatingSystemHypervisor=strtolower($operatingSystem->getHypervisor()->getName());
 
             if (null === $operatingSystem) {
                 throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
             }
-                $entityManager = $this->entityManager;
-                $entityManager->remove($operatingSystem);
-            try {
-                $entityManager->flush();
-                $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
-                $this->logger->info("Delete OS - Operating system " . $operatingSystem->getName() . " has been deleted by user ".$this->getUser()->getName());
-                if (null !== $operatingSystemName) {
-                    $workers = $this->configWorkerRepository->findAll();
-        
-                    foreach ($workers as $otherWorker) {
-                        $otherWorkerIP=$otherWorker->getIPv4();
-                        $tmp=array();
-                        $tmp['Worker_Dest_IP'] = $otherWorkerIP;
-                        $tmp['hypervisor'] = $operatingSystemHypervisor;
-                        $tmp['os_imagename'] = $operatingSystemName;
-                        $deviceJsonToCopy = json_encode($tmp, 0, 4096);
-                        // the case of qemu image with link.
-                        $this->logger->debug("OS to delete on worker ".$otherWorkerIP,$tmp);
-                        $this->bus->dispatch(
-                            new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_DELETEOS), [
-                                new AmqpStamp($otherWorkerIP, AMQP_NOPARAM, [])
-                                ]
-                            );            
-                    }
-                }
-                
-                return $this->redirectToRoute('operating_systems');
-            } catch (ForeignKeyConstraintViolationException $e) {
-                $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
-                $this->addFlash('danger', 'This operating system is still used in some device templates or lab. Please delete them first.');
+            $entityManager = $this->entityManager;
+            $device_repository=$entityManager->getRepository(Device::class)->findOneBy(["operatingSystem"=>$id]);
+            if ($device_repository) {
+                $this->logger->debug("[OperatingSystemController:delete]::OS used by at least one device ".$device_repository->getName(). " in a lab");
+                $this->addFlash('danger', 'This operating system is still used by, at least device "'.$device_repository->getName().'" in a lab. Please delete them first.');
 
                 return $this->redirectToRoute('show_operating_system', [
                     'id' => $id
                 ]);
+            }
+            else  {              
+                $this->logger->debug("[OperatingSystemController:delete]::OS not used");
+                $entityManager->remove($operatingSystem);
+            
+                try {
+                    $entityManager->flush();
+                    $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
+                    $this->logger->info("Delete OS - Operating system " . $operatingSystem->getName() . " has been deleted by user ".$this->getUser()->getName());
+                    if (null !== $operatingSystemName) {
+                        $workers = $this->configWorkerRepository->findAll();
+            
+                        foreach ($workers as $otherWorker) {
+                            $otherWorkerIP=$otherWorker->getIPv4();
+                            $tmp=array();
+                            $tmp['Worker_Dest_IP'] = $otherWorkerIP;
+                            $tmp['hypervisor'] = $operatingSystemHypervisor;
+                            $tmp['os_imagename'] = $operatingSystemName;
+                            $deviceJsonToCopy = json_encode($tmp, 0, 4096);
+                            // the case of qemu image with link.
+                            $this->logger->debug("OS to delete on worker ".$otherWorkerIP,$tmp);
+                            $this->bus->dispatch(
+                                new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_DELETEOS), [
+                                    new AmqpStamp($otherWorkerIP, AMQP_NOPARAM, [])
+                                    ]
+                                );            
+                        }
+                    }
+                    
+                    return $this->redirectToRoute('operating_systems');
+                } catch (ForeignKeyConstraintViolationException $e) {
+                    $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
+                    $this->addFlash('danger', 'This operating system is still used in some device templates or lab. Please delete them first.');
+
+                    return $this->redirectToRoute('show_operating_system', [
+                        'id' => $id
+                    ]);
                 }
+            }
         }
     }
 
@@ -653,13 +667,14 @@ class OperatingSystemController extends Controller
                 }
                 try {
                     $uploadDir = $this->getParameter('image_directory');
-                    $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$file.' file to '.$newFilename);        
-                    $file->move($uploadDir, $newFilename);
+                    $this->logger->debug('[OperatingSystemController:upload]::Try to move '.$temp_path."/".$newFilename.' file to '.$uploadDir);        
+                    $file->move($temp_path."/".$newFilename,$uploadDir);
             
                     $newFile = $uploadDir . '/' . $newFilename;
                     $fileSize = file_exists($newFile) ? filesize($newFile) : null;
 
-                    $this->logger->debug('[OperatingSystemController:upload]::Move '.$file.' file to '.$newFile.' done.');
+                    $this->logger->debug('[OperatingSystemController:upload]::Move '.$temp_path."/".$newFilename.' file to '.$uploadDir.' done');        
+                    $this->logger->info('Move '.$temp_path."/".$newFilename.' file to '.$uploadDir.' done');        
                     if ($filesystem->exists($temp_path)) {
                         $filesystem->remove($temp_path);
                         $this->logger->debug('[OperatingSystemController:upload]::Temporary directory cleaned');
@@ -934,12 +949,7 @@ class OperatingSystemController extends Controller
                 $process->mustRun();
                 $this->logger->debug('[OperatingSystemController:convertOva2qcow2]::Tar executed');
                 
-                // --- Étape 2 : Traitement des fichiers VMDK et conversion en QCOW2 ---
-                //$this->logger->info("Conversion des fichiers VMDK en QCOW2");
-                
-                $tmp=
-                // Le service trouve les VMDK, détermine le principal et convertit
-
+                // Convert all vmdk in one qcow2
                 $this->ovaManager->processVmdkFiles($tempDir);
                 $this->logger->debug('[OperatingSystemController:convertOva2qcow2]::VMDK processed');                
                 return true;

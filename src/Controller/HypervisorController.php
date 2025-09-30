@@ -110,6 +110,7 @@ class HypervisorController extends Controller
             /** @var Hypervisor $hypervisor */
 
             $hypervisor = $hypervisorForm->getData();
+            $hypervisor->setName(strtolower($hypervisor->getName()));
             $entityManager = $this->entityManager;
             $entityManager->persist($hypervisor);
             $entityManager->flush();
@@ -142,7 +143,7 @@ class HypervisorController extends Controller
 
         if ($hypervisorForm->isSubmitted() && $hypervisorForm->isValid()) {
             $hypervisor = $hypervisorForm->getData();
-            
+            $hypervisor->setName(strtolower($hypervisor->getName()));
             $entityManager = $this->entityManager;
             $entityManager->persist($hypervisor);
             $entityManager->flush();

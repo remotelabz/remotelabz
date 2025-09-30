@@ -101,14 +101,19 @@
                         <th width="120">Architecture</th>
                         <th width="150">Hypervisor</th>
                         <th width="100">Place</th>
-                        <th width="100" class="text-end">Actions</th>
+                        {% if is_granted("ROLE_TEACHER_EDITOR") %}
+                            <th width="100" class="text-end">Actions</th>
+                        {% endif %}
+
                     </tr>
                 </thead>
                 <tbody id="osTableBody">
                     {% for operatingSystem in operatingSystems %}
                     <tr class="os-item" 
                         data-type="{% if operatingSystem.imageUrl is not null %}url{% elseif operatingSystem.imageFilename is not null %}file{% else %}none{% endif %}"
-                        data-arch="{% if operatingSystem.arch is not null %}operatingSystem.arch.name|lower"{% else %}none{% endif %}"
+                        
+                        data-arch="{% if operatingSystem.arch is not null %} operatingSystem.arch.name |lower {% else %}none{% endif %}"
+
                         data-name="{{ operatingSystem.name|lower }}">
                         <td>
                             {% if operatingSystem.imageUrl is not null %}
@@ -165,7 +170,10 @@
                             {% endif %}
                         </td>
                    
-                        <td><a href="{{ path('edit_operating_system', {id: operatingSystem.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
+                                                        {% if is_granted("ROLE_TEACHER_EDITOR") %}
+                        <td>
+                        
+                        <a href="{{ path('edit_operating_system', {id: operatingSystem.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
                                 <i class="fa fa-edit"></i>
                             </a>
                             <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
@@ -176,6 +184,8 @@
                                 </button>
                             </form>
                             </td>
+                                                            {% endif %}
+
                     </tr>
                     {% endfor %}
                 </tbody>

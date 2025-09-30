@@ -23,9 +23,14 @@
     
     <div class="d-flex justify-content-between mt-3">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <a href="{{ path('delete_device', {'id': device.id}) }}" class="btn btn-danger">
-            <i class="fas fa-trash me-2"></i>Delete Device
-        </a>
+        <form method="post" action="{{ path('delete_device', {'id': device.id}) }}" class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ device.id) }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-2"></i>Delete Device
+            </button>
+        </form>
+
     </div>
 {% endblock %}
 {% endembed %}
@@ -242,7 +247,7 @@
         </div>
 
         {# Device Statistics Card #}
-        <div class="card mb-4">
+        {#<div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-chart-bar me-2"></i> Statistics
@@ -254,7 +259,7 @@
                             <small class="text-muted">Used in Labs</small>
                 
             </div>
-        </div>
+        </div>#}
 
         {# Device Icon Card #}
         <div class="card mb-4">

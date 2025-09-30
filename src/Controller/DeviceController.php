@@ -776,7 +776,9 @@ class DeviceController extends Controller
         $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $lab->addDevice($device);
+        $device->setType("vm");
         $entityManager->flush();
+        $this->setDeviceHypervisorToOS($device);
         $editorData->setDevice($device);
         $entityManager->flush();
 
@@ -1220,7 +1222,7 @@ class DeviceController extends Controller
     
 	#[Delete('/api/devices/{id<\d+>}', name: 'api_delete_device')]
 	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
-    #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'GET')]
+    #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'DELETE')]
     public function deleteAction(Request $request, int $id)
     {
         $user = $this->getUser();
