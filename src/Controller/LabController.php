@@ -1606,7 +1606,7 @@ class LabController extends Controller
     }
 
     
-	#[Put('/api/labs/{id<\d+>}/Lock', name: 'api_lock_lab')]
+	#[Put('$device->getLabs()Lock', name: 'api_lock_lab')]
     public function lockLab(
         Request $request,
         UserInterface $user,

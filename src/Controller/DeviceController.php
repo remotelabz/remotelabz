@@ -599,14 +599,14 @@ class DeviceController extends Controller
         ]);
     }
 
-    
-	
-
-    
-	#[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
-    public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
+    #[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
+    public function newActionTest(Request $request, int $id, 
+        HyperVisorRepository $hypervisorRepository,
+        ControlProtocolTypeRepository $controlProtocolTypeRepository, 
+        OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
+        $this->logger->debug("[DeviceController:newActionTest]::data received:",$data);
         if ($data["virtuality"] == 0) {
             preg_match_all('!\d+!', $data["template"], $templateNumber);
             $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
@@ -620,7 +620,7 @@ class DeviceController extends Controller
                 $response->headers->set('Content-Type', 'application/json');
                 return $response;
             }
-        } 
+        }
         
         $lab = $this->labRepository->findById($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
@@ -635,15 +635,15 @@ class DeviceController extends Controller
                     $data['left'] =  $data['left'] + ( ( $i -1 ) % 5 )   * 60   ;
                     $data['top'] =  $data['top'] + ( intval( ( $i -1 ) / 5 )  * 80 ) ;
                 }
+
+                $this->logger->debug("[DeviceController:newActionTest]::virtuality is true and \$data['count']>1");
                 $ids[] = $this->addDevice($lab, $data);
             };
         }
         else {
+            $this->logger->debug("[DeviceController:newActionTest]::data virtuality is false or count is equal to 0");
             $id = $this->addDevice($lab, $data);
         }
-
-        
-
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 200,
@@ -668,7 +668,7 @@ class DeviceController extends Controller
             $device->addControlProtocolType($controlProtocolType[0]);
         }
         $flavor = $this->flavorRepository->findById($data['flavor']);
-        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
+        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);    
         if($data['core'] === '') {
             $device->setNbCore(null);
         }
@@ -769,7 +769,10 @@ class DeviceController extends Controller
             $this->logger->debug("[DeviceController:addDevice]::Device template: ".$device->getTemplate());
             if ($templateNumber != null) {
                 $this->logger->debug("[DeviceController:addDevice]::Template number: ".$templateNumber[1]);
+                
                 $template = $this->deviceRepository->find($templateNumber[1]);
+                $template->addlab($lab);
+                $this->logger->debug("[DeviceController:addDevice]::count lab for the template device : ".count($template->getLabs()));
                 $device->setIp($template->getIp());
                 $device->setPort($template->getPort());
             }
@@ -783,7 +786,7 @@ class DeviceController extends Controller
         $this->setDeviceHypervisorToOS($device);
         $editorData->setDevice($device);
         $entityManager->flush();
-
+        
         $this->logger->info("Device named '" . $device->getName() . "' created");
 
         return $device->getId();
@@ -1246,10 +1249,12 @@ class DeviceController extends Controller
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
+        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".count($device->getLabs()));
         if($device->getIsTemplate() == true && count($device->getLabs()) == 0) {
             $fileName = u($device->getName())->camel();
-            if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml")) {
-                unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml");
+            $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
+            if (is_file($yaml_file)) {
+                unlink($yaml_file);
             }
         }
 

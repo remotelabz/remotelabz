@@ -84,6 +84,8 @@ class Device implements InstanciableInterface
 
     #[ORM\Column(type: 'integer')]
     #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template', 'api_get_lab_instance', 'sandbox'])]
+    // To identify virtual equipement or physical
+    // For example, only physical (virtuality=0) can be booked
     private int $virtuality;
 
      #[Assert\Ip(version: 4)]

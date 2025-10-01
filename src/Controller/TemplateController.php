@@ -111,7 +111,9 @@ class TemplateController extends Controller
         $node_templates = Array();
         $node_config = Array();
         foreach ( scandir($this->getParameter('kernel.project_dir').'/config/templates/') as $element ) {
-                if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) && preg_match('/^.+\.yaml$/', $element) && $element != 'docker.yaml') {
+                if (is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$element) 
+                    && preg_match('/^.+\.yaml$/', $element) 
+                    && $element != 'docker.yaml') {
                         $cur_name = preg_replace('/.yaml/','',$element ) ;
                         $cur_templ = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$element));
                         $this->logger->debug("[TemplateController:indexAction]::template file :",$cur_templ);
@@ -124,7 +126,6 @@ class TemplateController extends Controller
                             }
                             $this->logger->debug("[TemplateController:indexAction]:: Template in the yaml file :".$cur_templ['description']);
                         }
-                        
                 }
         }
         
@@ -167,8 +168,9 @@ class TemplateController extends Controller
  
         if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml')) {
         //if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$deviceName.'.yaml')) {
+            $this->logger->debug("[TemplateController:showAction]::Template file doesn't exist for device id ".$id."and name ".$deviceName);
             $this->newAction($device);
-         }
+        }
         $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
         //$p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$deviceName.'.yaml'));
         $p['template'] = $id."-".$deviceName;
@@ -184,7 +186,7 @@ class TemplateController extends Controller
             return $response;
         }
        
-        if (!isset($p['virtuality']) || $p['virtuality'] != $data['virtuality']) {
+        if (!isset($p['virtuality']) || ($p['virtuality'] != $data['virtuality'])) {
             $response->setContent(json_encode([
                 'code' => 403,
                 'status' => 'forbidden',
@@ -414,6 +416,7 @@ class TemplateController extends Controller
 
     //Modify this line to delete the id in the beginning of the file name.
     // TODO : try to know if the id is needed in the file name
+    $this->logger->debug("[TemplateController:newAction]::template created");
     file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
     //file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".u($template->getName())->camel() . ".yaml", $yamlContent);
     }
