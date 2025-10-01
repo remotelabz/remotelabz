@@ -74,7 +74,8 @@ class SshService
             }
         } catch (ErrorException $e) {
             $this->logger->debug("[SshService:copyFile]::Send failed for file " . $localFile . " -> " . $remoteFile);
-            $this->logger->error("SCP Failed " . $localFile);
+            $this->logger->error("Failed to scp " . $localFile);
+            $this->logger->error($e->getMessage());
             return $e->getMessage();
         }
 

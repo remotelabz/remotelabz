@@ -350,6 +350,8 @@ class OperatingSystemController extends Controller
 
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
+        $old_filename=$operatingSystem->getImageFilename();
+        $this->logger->debug('[OperatingSystemController:editAction]::Filename before submit is '.$old_filename);
 
         if ($operatingSystemForm->isSubmitted() && $operatingSystemForm->isValid()) {
             /** @var OperatingSystem $operatingSystemEdited */
@@ -388,8 +390,13 @@ class OperatingSystemController extends Controller
                 
                 // 1. Gestion du fichier uploadé ou sélectionné
                 if ($filenameOnly) {
-                    $old_filename=$operatingSystemEdited->getImageFilename();
-
+                    
+                    $this->logger->debug('[OperatingSystemController:editAction]::Filename is modified from '.$old_filename.' to '.$filenameOnly);
+                    if (strcmp($old_filename,$filenameOnly)) {
+                        $this->logger->debug('[OperatingSystemController:editAction]::Filename is modifed to '.$filenameOnly);
+                        $oldfilenamepath=$this->getParameter('image_directory') . '/' . $operatingSystemEdited->getImageFilename();
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers($oldfilenamepath);
+                    }
                     $operatingSystemEdited->setImageFilename($filenameOnly);
                     $operatingSystemEdited->setImageUrl(null);
                     $this->logger->info("Edit OS - QEMU new file uploaded: " . $filenameOnly);

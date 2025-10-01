@@ -96,7 +96,7 @@ class Files2WorkerManager
                         ];
                     }
                 } catch (Exception $e) {
-                    $this->logger->error('Failed to copy ISO to worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
+                    $this->logger->error('Failed to copy file to worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
                     $results[$worker->getIPv4()] = [
                         'success' => false,
                         'message' => $e->getMessage()
