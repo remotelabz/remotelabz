@@ -1271,13 +1271,11 @@ class DeviceController extends Controller
         try {
             $entityManager->remove($device);
             $entityManager->flush();        
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
-
+            $this->addFlash('success', $device->getName() . ' has been deleted.');
         }
         catch (ForeignKeyConstraintViolationException $e) {
             $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
             $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
-
         }
     }
 

@@ -44,13 +44,15 @@ class OvaManager
     /**
      * Convertit un fichier VMDK en QCOW2 avec qemu-img
      */
-    public function convertVmdkToQcow2(string $vmdkPath, string $qcow2Path): void
+    public function convertVmdkToQcow2(string $vmdkPath, string $qcow2file): string
     {
         if (!$this->filesystem->exists($vmdkPath)) {
             throw new \RuntimeException("Le fichier VMDK n'existe pas : $vmdkPath");
         }
 
-        $this->logger->info("Conversion de $vmdkPath vers $qcow2Path");
+        $qcow2file=pathinfo($vmdkPath)["dirname"]."/".$qcow2file.".qcow2";
+        $this->logger->info("Conversion de ".$vmdkPath." vers ".$qcow2file);
+     
 
         $process = new Process([
             'qemu-img',
@@ -58,7 +60,7 @@ class OvaManager
             '-f', 'vmdk',
             '-O', 'qcow2',
             $vmdkPath,
-            $qcow2Path
+            $qcow2file
         ]);
 
         $process->setTimeout(3600);
@@ -68,17 +70,19 @@ class OvaManager
             throw new ProcessFailedException($process);
         }
 
-        $this->logger->info("Conversion réussie : $qcow2Path");
+        $this->logger->info("Conversion réussie : ".$qcow2file);
+        return $qcow2file;
     }
 
     /**
      * Fusionne plusieurs fichiers VMDK en un seul (si nécessaire) puis convertit en QCOW2
      */
-    public function processVmdkFiles(string $extractedDir): void
+    public function processVmdkFiles(string $extractedDir): string
     {
         // 1. Trouver tous les fichiers VMDK
         $vmdkFiles = $this->findVmdkFiles($extractedDir);
-        
+        $this->logger->info("ExtractedDir: $extractedDir");
+
         if (empty($vmdkFiles)) {
             throw new \RuntimeException("No VMDK file found in ".$extractedDir);
         }
@@ -87,11 +91,15 @@ class OvaManager
         // Si plusieurs fichiers, on cherche celui qui n'a pas de suffixe numérique (le descriptor)
         $mainVmdk = $this->findMainVmdk($vmdkFiles);
         
-        $this->logger->info("Fichier VMDK principal : $mainVmdk");
+        $this->logger->info("Fichier VMDK principal : ".basename($mainVmdk));
 
         // 3. Convertir en QCOW2
-        $this->convertVmdkToQcow2($mainVmdk, $mainVmdk.".qcow2");
+        $source=basename($mainVmdk,'.vmdk');
+        $newfile = preg_replace('/([^-]+)-disk\d+/', '$1', $source);
+        $this->logger->debug("[OvaManager:processVmdkFiles]::source:".$source." newfile:".$newfile);
+        return $this->convertVmdkToQcow2($mainVmdk, $newfile);
 
+        
     }
 
     /**

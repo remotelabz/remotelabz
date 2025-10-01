@@ -40,6 +40,23 @@ class Files2WorkerManager
         $this->sshWorkerDirectory = $sshWorkerDirectory;
     }
 
+    
+    /**
+     * Find if an available worker 
+     * Return true if an available worker exist
+     */
+    public function AvailableWorkerExist(): bool
+    {
+        $available=false;
+        $workers = $this->configWorkerRepository->findAll();
+        foreach ($workers as $worker) {
+            if ($worker->getAvailable()) {
+                $available=($available || true);
+            }
+        }
+        return $available;
+    }
+
     /**
      * Copie un fichier ISO sur tous les workers disponibles
      */
