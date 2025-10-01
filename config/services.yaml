@@ -226,6 +226,17 @@ services:
             $remotelabzProxyUseHttps: '%app.services.proxy.https%'
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
 
+    App\Service\Files2WorkerManager:
+        arguments:
+            $sshUser: '%app.ssh.worker.user%'
+            $sshPasswd: '%app.ssh.worker.passwd%'
+            $sshPrivateKey: '%app.ssh.worker.privatekey%'
+            $sshPublicKey: '%app.ssh.worker.publickey%'
+            $sshPort: '%app.ssh.worker.port%'
+            $sshWorkerDirectory: '%app.ssh.worker.directory%'
+            $sshService: '@App\Service\SshService'
+            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
+
     App\Controller\ServiceController:
         arguments:
             $workerServer: '%app.worker_server%'
@@ -242,17 +253,6 @@ services:
     App\Controller\InstanceController:
         arguments:
             $remotelabzProxyUseWss: '%app.services.proxy.wss%'
-
-    App\Controller\IsoController:
-        arguments:
-            $sshUser: '%app.ssh.worker.user%'
-            $sshPasswd: '%app.ssh.worker.passwd%'
-            $sshPrivateKey: '%app.ssh.worker.privatekey%'
-            $sshPublicKey: '%app.ssh.worker.publickey%'
-            $sshPort: '%app.ssh.worker.port%'
-            $sshWorkerDirectory: '%app.ssh.worker.directory%'
-            $sshService: '@App\Service\SshService'
-            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
 
     App\MessageHandler\InstanceStateMessageHandler:
         arguments:
@@ -271,3 +271,4 @@ services:
         arguments:
             $rootDirectory: '%kernel.project_dir%'  
         tags: ['twig.extension']
+

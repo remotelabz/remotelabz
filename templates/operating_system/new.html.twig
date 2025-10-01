@@ -11,19 +11,387 @@
     <div class="content-title">
         <div class="content-title-infos">
             <h1>
-                {% if app.request.uri ends with 'edit' %}
+                {% if edit %}
                     {{ 'Edit operating system'|trans }}: {{ operatingSystem.name }}
                 {% else %}
                     {{ 'New operating system'|trans }}
                 {% endif %}
             </h1>
+            <p class="text-muted">
+                {% if edit %}
+                    {{ 'Modify the operating system configuration'|trans }}
+                {% else %}
+                    {{ 'Create a new operating system by uploading an image or providing a URL'|trans }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('operating_systems') }}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> {{ 'Back'|trans }}
+            </a>
         </div>
     </div>
+
     <div class="content-body">
-        {{ form(operatingSystemForm) }}
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fa fa-server me-2"></i> {{ 'Operating System Configuration'|trans }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(operatingSystemForm, {'attr': {'class': 'needs-validation', 'novalidate': true, 'id': 'os-form'}}) }}
+                        
+                        <!-- Champ caché pour stocker le nom du fichier uploadé -->
+                        {% if operatingSystemForm.uploaded_filename is defined %}
+                            {{ form_widget(operatingSystemForm.uploaded_filename,{'id': 'uploaded-file-name'}) }}
+                        {% endif %}
+                        
+                        <!-- Nom de l'OS -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Name'|trans }}</label>
+                                {{ form_widget(operatingSystemForm.name, {'attr': {'class': 'form-control', 'placeholder': 'Operating system name'|trans}}) }}
+                            </div>
+                            {{ form_errors(operatingSystemForm.name) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Enter a descriptive name for your operating system'|trans }}
+                            </div>
+                        </div>
+                        
+                        <!-- Architecture Selection -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Architecture'|trans }}</label>
+                                {{ form_widget(operatingSystemForm.arch, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            {{ form_errors(operatingSystemForm.arch) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Select the architecture for this operating system'|trans }}
+                            </div>
+                        </div>
+                        
+                        <!-- Image Configuration Section -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">{{ 'Image Configuration'|trans }}</h6>
+
+                            <!-- Hypervisor Selection -->
+                            <div class="mb-4">
+                                <div class="form-floating">
+                                    <label class="form-label fw-bold">{{ 'Hypervisor'|trans }}</label>
+                                    {{ form_widget(operatingSystemForm.hypervisor, {'id': 'hypervisor-select', 'attr': {'class': 'form-control'}}) }}
+                                </div>
+                                {{ form_errors(operatingSystemForm.hypervisor) }}
+                                <div class="form-text">
+                                    <i class="fa fa-info-circle text-info"></i> {{ 'Select the hypervisor type (affects available image options)'|trans }}
+                                </div>
+        
+                                
+        
+                            </div>
+                            
+                            <!-- QEMU Image Options -->
+                            <div class="qemu-options" id="qemu-options" style="display: none;">
+                                <!-- Sélecteur de type de source pour QEMU -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">{{ 'Image Source Type'|trans }}</label>
+                                    <div class="row g-3 mt-1">
+                                        <div class="col-sm-4">
+                                            <div class="card image-source-card" data-source-type="upload">
+                                                <div class="card-body text-center p-3">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-upload fa-2x text-primary"></i>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input type="radio" 
+                                                            class="form-check-input image-source-radio" 
+                                                            name="imageSourceType" 
+                                                            value="upload" 
+                                                            id="source-upload"
+                                                            {% if edit and operatingSystem.imageFilename and operatingSystemForm.uploaded_filename.vars.data %}
+                                                                checked="checked"
+                                                            {% endif %}>
+                                                        <label class="form-check-label fw-semibold" for="source-upload">{{ 'Upload File'|trans }}</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="card image-source-card" data-source-type="url">
+                                                <div class="card-body text-center p-3">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-link fa-2x text-success"></i>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input type="radio" class="form-check-input image-source-radio" name="imageSourceType" value="url" id="source-url">
+                                                        <label class="form-check-label fw-semibold" for="source-url">{{ 'URL'|trans }}</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="card image-source-card" data-source-type="filename">
+                                                <div class="card-body text-center p-3">
+                                                    <div class="mb-2">
+                                                        <i class="fa fa-file-alt fa-2x text-warning"></i>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input type="radio" class="form-check-input image-source-radio" name="imageSourceType" value="filename" id="source-filename">
+                                                        <label class="form-check-label fw-semibold" for="source-filename">{{ 'Filename Only'|trans }}</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Zone d'upload de fichier (QEMU) -->
+                                <div class="mb-4 file-upload-block" style="display:none;">
+                                    <div class="upload-zone border border-dashed border-2 rounded p-4 text-center position-relative">
+                                        <div class="upload-content" id="upload-content">
+                                            <i class="fa fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                            <h5 class="mb-2">{{ 'Upload Image File'|trans }}</h5>
+                                            <p class="text-muted mb-3">{{ 'Drag and drop your image file here or click to browse'|trans }}</p>
+                                            <input type="file" id="file-input" class="form-control file-input position-absolute w-100 h-100 opacity-0"
+                                                style="top: 0; left: 0; cursor: pointer;"
+                                                accept=".img,.qcow2,.ova,.vmdk,.tar">
+                                            <button type="button" class="btn btn-outline-primary" id="browse-button">
+                                                <i class="fa fa-folder-open me-1"></i>{{ 'Browse Files'|trans }}
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Zone d'affichage du fichier sélectionné -->
+                                        <div class="file-selected d-none" id="file-selected">
+                                            <div class="alert alert-info d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-file me-2"></i>
+                                                    <div>
+                                                        <div class="file-name fw-semibold"></div>
+                                                        <small class="file-size text-muted"></small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-primary" id="upload-button">
+                                                        <i class="fa fa-upload me-1"></i>{{ 'Upload'|trans }}
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-file">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Zone d'affichage du fichier uploadé -->
+                                        <div class="file-uploaded d-none" id="file-uploaded">
+                                            <div class="alert alert-success d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fa fa-check-circle me-2"></i>
+                                                    <div>
+                                                        <div class="uploaded-file-name fw-semibold"></div>
+                                                        <small class="uploaded-file-size text-muted"></small>
+                                                        <div><small class="text-success">{{ 'File uploaded successfully'|trans }}</small></div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-uploaded-file">
+                                                    <i class="fa fa-trash me-1"></i>{{ 'Remove'|trans }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-text">
+                                        <i class="fa fa-exclamation-triangle text-warning"></i> 
+                                        {{ 'Maximum file size: ' ~ sizeLimit ~ '. Accepted formats: .img, .qcow2, .vmdk, .ova'|trans }}
+                                    </div>
+                                </div>
+
+                                <!-- Zone URL (QEMU) -->
+                                <div class="mb-4 url-block" style="display:none;">
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fa fa-link text-success"></i>
+                                        </span>
+                                        {{ form_widget(operatingSystemForm.imageUrl, {'attr': {'class': 'form-control', 'placeholder': 'https://example.com/image.img'}}) }}
+                                        <button class="btn btn-outline-secondary" type="button" id="validateUrl">
+                                            <i class="fa fa-check"></i> {{ 'Validate'|trans }}
+                                        </button>
+                                    </div>
+                                    {{ form_errors(operatingSystemForm.imageUrl) }}
+                                    <div class="form-text">
+                                        <i class="fa fa-info-circle text-info"></i> 
+                                        {{ 'Enter the direct URL to download the image file'|trans }}
+                                    </div>
+                                </div>
+
+                                <!-- Zone nom de fichier seulement (QEMU) -->
+                                <div class="mb-4 filename-only-block" style="display:none;">
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fa fa-file-alt text-warning"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="qemu-filename-input" placeholder="{{ 'image-name.img'|trans }}" />
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="fa fa-info-circle text-info"></i> 
+                                        {{ 'Enter only the filename (file should already exist on the server)'|trans }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- LXC Simple Filename -->
+                            <div class="lxc-options" id="lxc-options" style="display: none;">
+                                <div class="mb-4">
+                                    <div class="alert alert-info">
+                                        <i class="fa fa-info-circle me-2"></i>
+                                        {{ 'For LXC containers, only specify the template name.'|trans }}
+                                    </div>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fa fa-cube text-info"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="lxc-filename-input" placeholder="{{ 'ubuntu-20.04-standard'|trans }}" />
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="fa fa-info-circle text-info"></i> 
+                                        {{ 'Enter the LXC template name (e.g., ubuntu-20.04-standard)'|trans }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress bar (cachée par défaut) -->
+                            <div class="mb-4 upload-progress d-none" id="upload-progress">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">{{ 'Upload Progress'|trans }}</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%" aria-valuenow="0" 
+                                         aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden form fields -->
+                        <div class="d-none">
+                           {{ form_widget(operatingSystemForm.image_Filename) }}
+
+                            <div id="archFilter"></div>
+                            <div id="searchInput"></div>
+                        </div>
+
+                        <!-- Champ Description -->
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <label class="form-label fw-bold">{{ 'Description'|trans }}</label>
+                                {{ form_widget(operatingSystemForm.description, {'attr': {'class': 'form-control', 'placeholder': 'Description'|trans}}) }}
+                            </div>
+                            {{ form_errors(operatingSystemForm.description) }}
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> {{ 'Optional description for this operating system'|trans }}
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex gap-3 justify-content-end mt-4 pt-3 border-top">
+                            <a href="{{ path('operating_systems') }}" class="btn btn-danger btn-lg px-3">
+                                <i class="fa fa-times me-1"></i> {{ 'Cancel'|trans }}
+                            </a>
+                            {{ form_widget(operatingSystemForm.submit, {'attr': {'class': 'btn btn-primary btn-lg px-4', 'id': 'submit-button'}}) }}
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
-{% block javascripts %}
+{% block stylesheets %}
     {{ parent() }}
+    <style>
+        .image-source-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+        }
+           
+        .image-source-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .image-source-card.active {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .upload-zone {
+            transition: all 0.3s ease;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9ff;
+        }
+        
+        .upload-zone.drag-over {
+            border-color: #198754;
+            background-color: #f8fff9;
+            transform: scale(1.02);
+        }
+        
+        .file-input:hover + .upload-content,
+        .file-input:focus + .upload-content {
+            color: #0d6efd;
+        }
+        
+        .progress {
+            height: 12px;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+
+        [theme="dark"] .image-source-card {
+            border: 2px solid #252525ff;
+        }
+           
+        [theme="dark"] .image-source-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        [theme="dark"] .image-source-card.active {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        [theme="dark"] .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #1a1d29;
+        }
+        
+        [theme="dark"] .upload-zone.drag-over {
+            border-color: #198754;
+            background-color: #1a2e1f;
+            transform: scale(1.02);
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent()}}
+    {{ encore_entry_script_tags('os-form-handler') }}
 {% endblock %}

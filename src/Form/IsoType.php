@@ -74,7 +74,7 @@ class IsoType extends AbstractType
                 ]
             ])
 
-             ->add('uploaded_filename', HiddenType::class, [
+            ->add('uploaded_filename', HiddenType::class, [
                 'mapped' => false, // Géré manuellement dans le contrôleur
                 'required' => false,
                 'attr' => [
@@ -89,7 +89,6 @@ class IsoType extends AbstractType
                 'required' => false,
                 'constraints' => [
                     new File([
-                        'maxSize' => '5G', // 5 GB pour les fichiers ISO
                         'mimeTypes' => [
                             'application/octet-stream',
                             'application/x-iso9660-image',

@@ -6,6 +6,8 @@ use App\Entity\Iso;
 use App\Entity\Arch;
 use App\Entity\User;
 use App\Entity\ConfigWorker;
+use App\Entity\OperatingSystem;
+
 
 use App\Form\IsoType;
 use App\Repository\IsoRepository;
@@ -20,8 +22,7 @@ use Psr\Log\LoggerInterface;
 use App\Service\SshService;
 use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Exception;
-use ErrorException;
+use App\Service\Files2WorkerManager;
 
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
@@ -29,28 +30,15 @@ class IsoController extends AbstractController
 {
 
     private LoggerInterface $logger;
-    private SshService $sshService;
-    private ConfigWorkerRepository $configWorkerRepository;
-    private string $sshUser;
-    private string $sshPasswd;
-    private string $sshPrivateKey;
-    private string $sshPublicKey;
-    private string $sshPort;
-    private string $sshWorkerDirectory;
-    private string $rootDirectory;
+    private Files2WorkerManager $Files2WorkerManager;
     
-    public function __construct(LoggerInterface $logger, SshService $sshService, ConfigWorkerRepository $configWorkerRepository,
-        string $sshUser, string $sshPasswd, string $sshPrivateKey, string $sshPublicKey, int $sshPort, string $sshWorkerDirectory)
+    public function __construct(LoggerInterface $logger,
+        Files2WorkerManager $Files2WorkerManager
+        )
     {
         $this->logger = $logger;
-        $this->sshService = $sshService;
-        $this->configWorkerRepository = $configWorkerRepository;
-        $this->sshUser = $sshUser;
-        $this->sshPasswd = $sshPasswd;
-        $this->sshPrivateKey = $sshPrivateKey;
-        $this->sshPublicKey = $sshPublicKey;
-        $this->sshPort = $sshPort;
-        $this->sshWorkerDirectory = $sshWorkerDirectory;
+        $this->Files2WorkerManager = $Files2WorkerManager;
+        
     }   
 
     #[Route('/admin/isos', name: 'app_iso_index', methods: ['GET'])]
@@ -82,18 +70,28 @@ class IsoController extends AbstractController
             
             if ($fileSourceType === 'upload') {
                 // Récupérer le nom du fichier depuis le champ du formulaire
-                $uploadedFileName = $form->get('uploaded_filename')->getData();
+                $uploadedFilename = $form->get('uploaded_filename')->getData();
                 
-                $this->logger->debug('[IsoController:new]::Uploaded filename from form: ' . $uploadedFileName);
+                $this->logger->debug('[IsoController:new]::Uploaded filename from form: ' . $uploadedFilename);
                 
-                if ($uploadedFileName && trim($uploadedFileName) !== '') {
-                    $iso->setFilename($uploadedFileName);
+                if ($uploadedFilename && trim($uploadedFilename) !== '') {
+                    $iso->setFilename($uploadedFilename);
                     $iso->setFilenameUrl(null);
                     
-                    $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                    $remoteFilePath = $this->sshWorkerDirectory.'/images/'.$uploadedFileName;
-                    if ($this->CopyIsoToAllWorker($localFilePath, $remoteFilePath)) {
-                        $this->addFlash('danger', 'Failed to copy ISO to one or more workers.');
+                    $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
+                    $remoteFilePath = '/images/'.$uploadedFilename;
+                    $results=$this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+
+                    $failures = array_filter($results, function($result) {
+                        return !$result['success'];
+                    });
+                    
+                    if (!empty($failures)) {
+                        $this->addFlash('warning', 'ISO created but some workers failed to send the file.');
+                    } else 
+                    {
+                        unlink($localFilePath);
+                        $this->addFlash('success', 'ISO created and file copied to all workers successfully.');
                     }
 
                 } else {
@@ -145,17 +143,18 @@ class IsoController extends AbstractController
     public function edit(Request $request, Iso $iso, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $form = $this->createForm(IsoType::class, $iso);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->logger->info('Editing ISO entry by user: ' . $this->getUser()->getName());
-            
+
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             $this->logger->debug('[IsoController:edit]::File source type: ' . $fileSourceType);
             $this->logger->debug('[IsoController:edit]::Current ISO filename: ' . $iso->getFilename());
             $this->logger->debug('[IsoController:edit]::Current ISO URL: ' . $iso->getFilenameUrl());
-            
+
             if ($fileSourceType === 'upload') {
                 // CORRECTION: Récupérer le nom du fichier depuis le champ du formulaire
                 $uploadedFileName = $form->get('uploaded_filename')->getData();
@@ -167,14 +166,14 @@ class IsoController extends AbstractController
                         $oldFile = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
                         if (file_exists($oldFile)) {
                             $this->logger->debug('[IsoController:edit]::Deleting old file: ' . $oldFile);
-                            $oldFilePath = $this->sshWorkerDirectory.'/images/'.$iso->getFilename();
-                            $this->DeleteIsoFromAllWorker($oldFilePath);                            
+                            $oldFilePath = '/images/'.$iso->getFilename();
+                            $this->Files2WorkerManager->deleteFileFromAllWorkers($oldFilePath);                            
                             unlink($oldFile);
                         }
 
                         $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                        $remoteFilePath = $this->sshWorkerDirectory.'/images/'.$uploadedFileName;
-                        $this->CopyIsoToAllWorker($localFilePath, $remoteFilePath);
+                        $remoteFilePath = '/images/'.$uploadedFileName;
+                        $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
                     }
                     
                     // Si on passe d'URL à upload, supprimer l'URL
@@ -222,6 +221,15 @@ class IsoController extends AbstractController
             $this->logger->error('Form submitted but invalid during edit');
             $this->logger->debug('[IsoController:edit]::Form errors: ' . (string) $form->getErrors(true));
 
+            $uploadedFileName = $form->get('uploaded_filename')->getData();
+            if ($uploadedFileName && trim($uploadedFileName) !== '') {
+                if ($this->deleteLocalTempFile($uploadedFileName)) {
+                    $this->logger->debug('[IsoController:edit]::Deleted temporary file: ' . $uploadedFileName);
+                } else {
+                    $this->logger->debug('[IsoController:edit]::No temporary file to delete: ' . $uploadedFileName);
+                }
+            }
+
             // Afficher les erreurs pour debug
             foreach ($form->getErrors(true) as $error) {
                 $this->logger->error('Form error: ' . $error->getMessage());
@@ -246,7 +254,7 @@ class IsoController extends AbstractController
                 $file = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
                 if (file_exists($file)) {
                     unlink($file);
-                    $this->DeleteIsoFromAllWorker($this->sshWorkerDirectory.'/images/'.$iso->getFilename());                            
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/'.$iso->getFilename());                            
                     $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all activ worker');
                 }
             }
@@ -320,14 +328,25 @@ class IsoController extends AbstractController
             return $this->json(['error' => 'No filename provided'], 400);
         }
 
+
+        $this->deleteLocalTempFile($filename);
+        if ($this->deleteLocalTempFile($filename)) {
+            return $this->json(['success' => true]);
+        } else {
+            $this->logger->warning('Temporary ISO file '.$filename.' not found for deletion');
+            return $this->json(['error' => 'File not found'], 404);
+        }
+        
+    }
+
+    private function deleteLocalTempFile(string $filename): bool
+    {
         $filePath = $this->getParameter('iso_directory') . '/' . $filename;
         if (file_exists($filePath)) {
             unlink($filePath);
-            $this->logger->info('Deleting temporary ISO file '.$filename.' by user '.$this->getUser()->getName().' done');
-            return $this->json(['success' => true]);
+            return true;
         }
-
-        return $this->json(['error' => 'File not found'], 404);
+        return false;
     }
 
     #[Route('/api/isos/validate-url', name: 'app_iso_validate_url', methods: ['POST'])]
@@ -483,69 +502,5 @@ class IsoController extends AbstractController
         return $bytes;
     }
 
-    private function CopyIsoToAllWorker($localFilePath, $remoteFilePath):bool {
-        $workers = $this->configWorkerRepository->findAll();
-        $result=false; // Return false if all ok, else return error message
-        foreach ($workers as $worker) {
-            if ($worker->getAvailable()) {
-                $error=false;
-                try {
-                    $this->logger->debug('[IsoController:new]::Copying ISO '.$localFilePath.' to worker: ' . $worker->getIPv4());
-                    $sshConnection = $this->sshService->connect(
-                        $worker->getIPv4(),
-                        $this->sshPort,
-                        $this->sshUser,
-                        $this->sshPasswd,
-                        $this->sshPublicKey,
-                        $this->sshPrivateKey
-                    );
-                    
-                    if ($sshConnection) {
-                        $error=$this->sshService->copyFile($sshConnection, $localFilePath, $remoteFilePath, $worker->getIPv4());
-                            if ($error)
-                                throw new Exception("Error copy file: ".$error);
-                        $this->sshService->disconnect($sshConnection);
-                    }
-                } catch (Exception $e) {
-                    $this->sshService->disconnect($sshConnection);
-                    $this->logger->error('Failed to copy ISO to worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
-                    $this->addFlash('danger', 'Failed to copy ISO to one or more workers.');
-                    $error=true;
-                }
-                if (!$error)
-                    $this->logger->debug('[IsoController:new]::Copying ISO '.$localFilePath.' to worker: ' . $worker->getIPv4().' done.');
-            }
-            $result=($result || $error);
-        }
-        return $result;
-    }
-
-    private function DeleteIsoFromAllWorker($remoteFilePath) {
-        $workers = $this->configWorkerRepository->findAll();
-        foreach ($workers as $worker) {
-            if ($worker->getAvailable()) {
-                try {
-                    $this->logger->debug('[IsoController:edit]::Deleting ISO '.$remoteFilePath.' from worker: ' . $worker->getIPv4());
-                    $command = 'rm -f ' . escapeshellarg($remoteFilePath);
-                    $sshConnection = $this->sshService->connect(
-                        $worker->getIPv4(),
-                        $this->sshPort,
-                        $this->sshUser,
-                        $this->sshPasswd,
-                        $this->sshPublicKey,
-                        $this->sshPrivateKey
-                    );
-                    if ($sshConnection) {
-                        $this->sshService->executeCommand($sshConnection, $command);
-                        $this->sshService->disconnect($sshConnection);
-                    }
-
-                } catch (Exception $e) {
-                    $this->logger->error('Failed to delete ISO from worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
-                    $this->addFlash('danger', 'Failed to delete ISO from one or more workers.');
-                }
-                $this->logger->debug('[IsoController:new]::Deleting ISO '.$remoteFilePath.' to worker: ' . $worker->getIPv4().' done.');
-            }
-        }
-    }
+   
 }

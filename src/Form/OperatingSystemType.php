@@ -16,6 +16,9 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Doctrine\ORM\EntityRepository;
+
 
 class OperatingSystemType extends AbstractType
 {
@@ -36,20 +39,28 @@ class OperatingSystemType extends AbstractType
             ])
             ->add('hypervisor', EntityType::class, [
                 'class' => Hypervisor::class,
-                'choice_label' => 'name'
+                'placeholder' => 'Select an hypervisor...',
+                'choice_label' => 'name',
+                'query_builder' => function (EntityRepository $er) {
+                    return $er->createQueryBuilder('h')
+                        ->where('h.name != :excludedName')
+                        ->setParameter('excludedName', 'lxc')
+                        ->orderBy('h.name', 'ASC');
+                }
+            ])
+            ->add('uploaded_filename', HiddenType::class, [
+                'mapped' => false, // Géré manuellement dans le contrôleur
+                'required' => false
             ])
             ->add('imageFilename', FileType::class, [
                 'label' => 'Upload Image File',
-                'help' => 'Maximum size: 3GB. Supported formats: qcow2 but with suffix .img',
                 'required' => false,
                 'mapped' => false,
                 'attr' => [
-                    'accept' => '.img',
-                    'data-max-size' => '3GB'
+                    'accept' => '.img'
                 ],
                 'constraints' => [
                     new File([
-                        'maxSize' => '3000M',
                         'mimeTypes' => [
                             'application/octet-stream',
                             'application/x-qemu-disk',

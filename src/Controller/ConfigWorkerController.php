@@ -32,6 +32,8 @@ use App\Repository\OperatingSystemRepository;
 use App\Entity\OperatingSystem;
 use App\Service\Worker\WorkerManager;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Files2WorkerManager;
+
 
 class ConfigWorkerController extends Controller
 {
@@ -42,6 +44,8 @@ class ConfigWorkerController extends Controller
     private $bus;
     private $operatingSystemRepository;
     private $workerManager;
+    private Files2WorkerManager $Files2WorkerManager;
+
 
     public function __construct(
         LoggerInterface $logger=null,
@@ -51,7 +55,9 @@ class ConfigWorkerController extends Controller
         MessageBusInterface $bus,
         OperatingSystemRepository $operatingSystemRepository,
         WorkerManager $workerManager,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        Files2WorkerManager $Files2WorkerManager,
+
         
     ) {
         $this->logger = $logger;
@@ -65,6 +71,8 @@ class ConfigWorkerController extends Controller
         $this->operatingSystemRepository = $operatingSystemRepository;
         $this->workerManager = $workerManager;
         $this->entityManager = $entityManager;
+        $this->Files2WorkerManager = $Files2WorkerManager;
+
     }
 
     
@@ -151,46 +159,53 @@ class ConfigWorkerController extends Controller
         
         $workers = $this->configWorkerRepository->findAll();
         $i=0;
-        while ($i<count($workers)-1 && $workers[$i]->getAvailable()==0) {
+        while ($i<count($workers) && $workers[$i]->getAvailable()==0) {
+            $this->logger->debug("[ConfigWorkerController:updateAction]::Value of i ". $i);
             $i++;
         }
-        $first_available_worker=$workers[$i];
+        
+        if ($i>=count($workers)) // No activ worker when I activate this worker $id
+            $first_available_worker=$worker;
+        else // At least one activ worker found
+            $first_available_worker=$workers[$i];
+            
         $first_available_workerIP=$first_available_worker->getIPv4();
         if (isset($data['IPv4'])) {
             $worker->setIPv4($data['IPv4']);
         }
-        else if (isset($data['available'])) {
-            $workerIP=$worker->getIPv4();
-            if ($this->checkWorkerAvailable($workerIP,$workerPort)) {
-                $worker->setAvailable($data['available']);
+        else
+            if (isset($data['available'])) {
                 $workerIP=$worker->getIPv4();
-                $entityManager->persist($worker);
-                $available=($worker->getAvailable()==1)?"Available":"Disable";
-                $this->logger->info("Worker ".$workerIP. " has been updated (".$available.").");    
-                //$this->addFlash('success', 'Worker has been enabled');
+                if ($this->checkWorkerAvailable($workerIP,$workerPort)) {
+                    $worker->setAvailable($data['available']);
+                    $workerIP=$worker->getIPv4();
+                    $entityManager->persist($worker);
+                    $available=($worker->getAvailable()==1)?"Available":"Disable";
+                    $this->logger->info("State of worker ".$workerIP. " has been updated (".$available.").");    
+                    //$this->addFlash('success', 'Worker has been enabled');
 
-                if ($data['available'] === 1) {                   
-                    $this->logger->debug("[ConfigWorkerController:updateAction]::Worker ". $first_available_workerIP. " is the first available worker.");
+                    if ($data['available'] === 1) {                   
+                        $this->logger->debug("[ConfigWorkerController:updateAction]::Worker ". $first_available_workerIP. " is the first available worker.");
 
-                    $operatingSystems=$this->operatingSystemRepository->findAll();
-                    $OS_first_available_worker=$this->getOS_Worker($first_available_workerIP,$workerPort); //Find OS available on the first worker
-                    $OS_available_worker=$this->getOS_Worker($workerIP,$workerPort); //Find OS available on the worker which is enabled
-                    
-                    $this->logger->debug("OS on first enabled worker ". $first_available_workerIP. ":".$workerPort.": ".$OS_first_available_worker);
+                        $operatingSystems=$this->operatingSystemRepository->findAll();
+                        $OS_first_available_worker=$this->getOS_Worker($first_available_workerIP,$workerPort); //Find OS available on the first worker
+                        $OS_available_worker=$this->getOS_Worker($workerIP,$workerPort); //Find OS available on the worker which is enabled
+                        
+                        $this->logger->debug("OS on first enabled worker ". $first_available_workerIP. ":".$workerPort.": ".$OS_first_available_worker);
 
-                    if ($OS_first_available_worker && $OS_available_worker) {
-                        $OS_already_exist_on_first_worker=json_decode($OS_first_available_worker,true);
-                        $OS_already_exist_on_worker=json_decode($OS_available_worker,true);
+                        if ($OS_first_available_worker && $OS_available_worker) {
+                            $OS_already_exist_on_first_worker=json_decode($OS_first_available_worker,true);
+                            $OS_already_exist_on_worker=json_decode($OS_available_worker,true);
 
-                        foreach ($operatingSystems as $operatingSystem) {
-                          $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$operatingSystem->getName()." which is a ".$operatingSystem->getHypervisor()->getName()." image");
+                            foreach ($operatingSystems as $operatingSystem) {
+                            $this->logger->debug("[ConfigWorkerController:updateAction]::Test to sync ".$operatingSystem->getName()." which is a ".$operatingSystem->getHypervisor()->getName()." image");
 
-                            if ($operatingSystem->getHypervisor()->getName() === "lxc") {
+                            if (strtolower($operatingSystem->getHypervisor()->getName()) === "lxc") {
                                 if (!in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["lxc"]) && in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_first_worker["lxc"])) {
                                     $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getName()." doesn't exist on ".$workerIP);
                                     $tmp=array();
                                     $tmp['Worker_Dest_IP'] = $workerIP;
-                                    $tmp['hypervisor'] = $operatingSystem->getHypervisor()->getName();
+                                    $tmp['hypervisor'] = strtolower($operatingSystem->getHypervisor()->getName());
                                     $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                     $deviceJsonToCopy = json_encode($tmp, 0, 4096);
 
@@ -206,11 +221,15 @@ class ConfigWorkerController extends Controller
                                 }
                             }
                             else {
-                                if ($operatingSystem->getHypervisor()->getName() === "qemu") {
-                                    if (!in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["qemu"]) && in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_first_worker["qemu"])) {
+                                if (strtolower($operatingSystem->getHypervisor()->getName()) === "qemu") {
+                                    $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getImageFilename());
+
+                                    if  ( !in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_worker["qemu"]) 
+                                            && in_array($operatingSystem->getImageFilename(),$OS_already_exist_on_first_worker["qemu"])
+                                        ) {
                                         $tmp=array();
                                         $tmp['Worker_Dest_IP'] = $workerIP;
-                                        $tmp['hypervisor'] = $operatingSystem->getHypervisor()->getName();
+                                        $tmp['hypervisor'] = strtolower($operatingSystem->getHypervisor()->getName());
                                         $tmp['os_imagename'] = $operatingSystem->getImageFilename();
                                         $deviceJsonToCopy = json_encode($tmp, 0, 4096);
                                         if (!is_null($operatingSystem->getImageFilename())) { // the case of qemu image with link.
@@ -227,13 +246,25 @@ class ConfigWorkerController extends Controller
                                         }
                                     }
                                     else {
+                                        $localFilename=$operatingSystem->getImageFilename();
+                                        $this->logger->debug("[ConfigWorkerController:updateAction]::ELSE Test if ".$localFilename." exists on worker ".$workerIP);
+                                        // $localFilename is null when it's an URL
+                                        if ( !in_array($localFilename,$OS_already_exist_on_worker["qemu"]) && !is_null($localFilename)) {
+                                            $localFilePath = $this->getParameter('image_directory') . '/' . $localFilename;
+                                            if (file_exists($localFilePath)) {
+                                                $remoteFilePath = '/images/'.$localFilename;
+                                                $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                                                $this->logger->debug("[ConfigWorkerController:updateAction]::".$localFilePath." is deleted");
+                                                unlink($localFilePath);
+                                            }
+                                        }
                                         $this->logger->debug("[ConfigWorkerController:updateAction]::".$operatingSystem->getName()." already exist on ".$workerIP);
                                     }
                                 }
                                 else {
-                                    $this->logger->debug("[ConfigWorkerController:updateAction]::Hypervisor ".$operatingSystem->getHypervisor()->getName()." is included to all workers.");
+                                    $this->logger->debug("[ConfigWorkerController:updateAction]::Hypervisor ".strtolower($operatingSystem->getHypervisor()->getName())." is included to all workers.");
+                                }
                             }
-                        }
                         }
                     }
                     else {
@@ -258,7 +289,7 @@ class ConfigWorkerController extends Controller
         if (!$error)
             return $this->json($worker, 200, [], ['api_get_worker_config']);
         else 
-            return $this->json($worker, 400, [], ['api_get_worker_config']);
+            return $this->json($worker, 400, [], ['api_get_worker_config']);       
     }
 
     

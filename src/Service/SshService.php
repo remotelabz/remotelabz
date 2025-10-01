@@ -68,12 +68,14 @@ class SshService
 
         try {
             $success = ssh2_scp_send($connection, $localFile, $remoteFile, 0660);
+   
             if (!$success) {
                 throw new ErrorException('Send file impossible');
             }
         } catch (ErrorException $e) {
             $this->logger->debug("[SshService:copyFile]::Send failed for file " . $localFile . " -> " . $remoteFile);
-            $this->logger->error("SCP Failed " . $localFile);
+            $this->logger->error("Failed to scp " . $localFile);
+            $this->logger->error($e->getMessage());
             return $e->getMessage();
         }
 

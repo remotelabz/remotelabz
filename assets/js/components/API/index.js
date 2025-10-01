@@ -1131,6 +1131,50 @@ export class RemotelabzAPI {
             });
         }
     }
+
+    os = {
+        /**
+         * Upload an ISO file.
+         * Implements POST `/api/admin/images/upload`
+         * @param {File} file
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, filename: string, error?: string}>>}
+         */
+        upload(file, onUploadProgress) {
+            const formData = new FormData();
+            formData.append('file', file);
+            return axios.post('/images/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress
+            });
+        },
+
+        /**
+         * Validate an ISO URL.
+         * Implements POST `/api/admin/images/validate-url`
+         * @param {string} url
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, valid: boolean, fileSize?: number, fileName?: string, error?: string}>>}
+         */
+        validateUrl(url) {
+            return axios.post('/images/validate-url', `url=${encodeURIComponent(url)}`, {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+        },
+
+        /**
+         * Delete a temporary ISO file.
+         * Implements DELETE `/api/admin/images/delete-temp-file`
+         * @param {string} filename
+         * @returns {Promise<import('axios').AxiosResponse<{success: boolean, error?: string}>>}
+         */
+        deleteTempFile(filename) {
+            // Utilise FormData pour DELETE ou POST
+            const formData = new FormData();
+            formData.append('filename', filename);
+            return axios.post('/images/delete-temp-file', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
+    }
 }
 
 const Remotelabz = new RemotelabzAPI();

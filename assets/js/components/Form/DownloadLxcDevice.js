@@ -28,7 +28,7 @@ export default function DownloadLxcDevice(props) {
         let data = {"os": os};
         $.ajax({
             type: "POST",
-            url: `/api/devices/lxc_params`,
+            url: `/api/lxc_params/lxc_params`,
             dataType: 'json',
             data: JSON.stringify(data)
         }).then((response)=> {
@@ -44,7 +44,7 @@ export default function DownloadLxcDevice(props) {
         let data = {"os": osChoice, "version": version};
         $.ajax({
             type: "POST",
-            url: `/api/devices/lxc_params`,
+            url: `/api/lxc_params/lxc_params`,
             dataType: 'json',
             data: JSON.stringify(data)
         }).then((response)=> {
@@ -62,11 +62,11 @@ export default function DownloadLxcDevice(props) {
         let data = { 'os': os, 'version': version}
         $.ajax({
             type: "POST",
-            url: `/api/devices/lxc`,
+            url: `/api/operating-systems/lxc`,
             dataType: 'json',
             data: JSON.stringify(data)
         }).then((response)=>{
-            window.location.href='/admin/devices/new?os='+ response.os + "&model="+response.model
+            window.location.href='/admin/operating-systems/new?os='+ response.os + "&model="+response.model
         })
     }
     

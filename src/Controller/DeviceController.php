@@ -11,9 +11,11 @@ use App\Entity\EditorData;
 use App\Entity\ControlProtocolType;
 use App\Entity\OperatingSystem;
 use App\Entity\InvitationCode;
+use App\Entity\Iso;
 use App\Form\DeviceType;
 use App\Form\EditorDataType;
 use App\Form\ControlProtocolTypeType;
+use App\Form\IsoType;
 use App\Repository\DeviceRepository;
 use App\Repository\DeviceInstanceRepository;
 use App\Repository\LabRepository;
@@ -490,7 +492,7 @@ class DeviceController extends Controller
 
         if(($params = $request->query->all()) && (isset($params['os'])) && (isset($params['model']))) {
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
-            $type = "container"; 
+            $type = "container";
             $device->setType($type);
             $device->setHypervisor($hypervisor);
             $osName = $params['os']."-".$params['model'];
@@ -526,13 +528,22 @@ class DeviceController extends Controller
                 $proto->addDevice($device);
                 $this->logger->debug($proto->getName());
             }
-            //$this->addNetworkInterface($device);
-            $this->setDeviceHypervisorToOS($device);
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
+            $device->setCreatedAt(new DateTime());
+            // The type cannot be null but it is update with the function setDeviceHypervisorToOS
+            // The update can be work only if the device is created so we add a fake value here
+            // to avoid a crash
+            // This value will be replaced by the real value after the flush
+            $device->setType("vm");
+
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
+            $this->setDeviceHypervisorToOS($device);
+            $entityManager->persist($device);
             $entityManager->flush();
+
+
             if ($device->getIsTemplate() == true) {
                 $controlProtocolTypes= [];
                 foreach($device->getControlProtocolTypes() as $controlProtocolType) {
@@ -588,88 +599,14 @@ class DeviceController extends Controller
         ]);
     }
 
-    
-	#[Post('/api/devices/lxc_params', name: 'api_new_lxc_device_params')]
-	#[Post('/api/devices/lxc', name: 'api_new_lxc_device')]
-	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
-    #[Route(path: '/admin/devices/new_lxc', name: 'new_lxc_device')]
-    public function newLxcAction(Request $request, UrlGeneratorInterface $router)
-    {
-        $file=file_get_contents("https://images.linuxcontainers.org/images");
-        $dom = new \DOMDocument();
-        $dom->loadHtml($file);
-        $links = $dom->getElementsByTagName('a');
-        $os = [];
-        foreach($links as $link){
-            if($link->nodeValue !== "../") {
-                array_push($os, ucfirst(substr($link->nodeValue, 0, -1)));
-            }
-        }
-
-        $os_json = json_encode($os);
-
-        if ('json' === $request->getRequestFormat()) {
-            if ($request->get("_route") == "api_new_lxc_device_params") {
-                $data = json_decode($request->getContent(), true);
-                if (!isset($data['version']) && isset($data['os'])) {
-                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os']);
-                    $dom = new \DOMDocument();
-                    $dom->loadHtml($fileVersion);
-                    $links = $dom->getElementsByTagName('a');
-                    $versions = [];
-                    foreach($links as $link){
-                        if($link->nodeValue !== "../") {
-                            array_push($versions, substr($link->nodeValue, 0, -1));
-                        }
-                    }
-                    return $this->json($versions, 200, [], []);
-                }
-                if (!isset($data['date']) && isset($data['version'])) {
-                    $fileVersion = file_get_contents("https://images.linuxcontainers.org/images/". $data['os'].$data['version']."amd64/default/");
-                    $dom = new \DOMDocument();
-                    $dom->loadHtml($fileVersion);
-                    $links = $dom->getElementsByTagName('a');
-                    $updates = [];
-                    foreach($links as $link){
-                        if($link->nodeValue !== "../") {
-                            array_push($updates, $link->nodeValue);
-                        }
-                    }
-                    $update = end($updates);
-                    return $this->json($update, 200, [], []);
-                }
-            }
-            //return $this->json($deviceForm, 200, [], ['api_get_device']);
-        }
-
-        if ($request->get("_route") == "api_new_lxc_device") {
-            $data = json_decode($request->getContent(), true);
-            $hypervisor = $this->hypervisorRepository->findByName('lxc');
-            $entityManager = $this->entityManager;
-            $osName = ucfirst($data['os'])."-".$data['version'];
-            if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
-                $newOs = new OperatingSystem();
-                $newOs->setName($osName);
-                $newOs->setHypervisor($hypervisor);
-                $newOs->setImageFilename($osName);
-                $entityManager->persist($newOs);
-                $entityManager->flush();
-            }
-            $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version']];
-            return $this->json($values, 200, [], []);
-        }
-
-        return $this->render('device/newLxc.html.twig', [
-            'os' => $os,
-            'props' => $os_json,
-        ]);
-    }
-
-    
-	#[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
-    public function newActionTest(Request $request, int $id, HyperVisorRepository $hypervisorRepository, ControlProtocolTypeRepository $controlProtocolTypeRepository, OperatingSystemRepository $operatingSystemRepository )
+    #[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
+    public function newActionTest(Request $request, int $id, 
+        HyperVisorRepository $hypervisorRepository,
+        ControlProtocolTypeRepository $controlProtocolTypeRepository, 
+        OperatingSystemRepository $operatingSystemRepository )
     {
         $data = json_decode($request->getContent(), true);
+        $this->logger->debug("[DeviceController:newActionTest]::data received:",$data);
         if ($data["virtuality"] == 0) {
             preg_match_all('!\d+!', $data["template"], $templateNumber);
             $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
@@ -683,7 +620,7 @@ class DeviceController extends Controller
                 $response->headers->set('Content-Type', 'application/json');
                 return $response;
             }
-        } 
+        }
         
         $lab = $this->labRepository->findById($id);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
@@ -698,15 +635,15 @@ class DeviceController extends Controller
                     $data['left'] =  $data['left'] + ( ( $i -1 ) % 5 )   * 60   ;
                     $data['top'] =  $data['top'] + ( intval( ( $i -1 ) / 5 )  * 80 ) ;
                 }
+
+                $this->logger->debug("[DeviceController:newActionTest]::virtuality is true and \$data['count']>1");
                 $ids[] = $this->addDevice($lab, $data);
             };
         }
         else {
+            $this->logger->debug("[DeviceController:newActionTest]::data virtuality is false or count is equal to 0");
             $id = $this->addDevice($lab, $data);
         }
-
-        
-
         $response = new Response();
         $response->setContent(json_encode([
             'code' => 200,
@@ -731,7 +668,7 @@ class DeviceController extends Controller
             $device->addControlProtocolType($controlProtocolType[0]);
         }
         $flavor = $this->flavorRepository->findById($data['flavor']);
-        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);
+        $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);    
         if($data['core'] === '') {
             $device->setNbCore(null);
         }
@@ -832,7 +769,10 @@ class DeviceController extends Controller
             $this->logger->debug("[DeviceController:addDevice]::Device template: ".$device->getTemplate());
             if ($templateNumber != null) {
                 $this->logger->debug("[DeviceController:addDevice]::Template number: ".$templateNumber[1]);
+                
                 $template = $this->deviceRepository->find($templateNumber[1]);
+                $template->addlab($lab);
+                $this->logger->debug("[DeviceController:addDevice]::count lab for the template device : ".count($template->getLabs()));
                 $device->setIp($template->getIp());
                 $device->setPort($template->getPort());
             }
@@ -841,10 +781,12 @@ class DeviceController extends Controller
         $entityManager = $this->entityManager;
         $entityManager->persist($device);
         $lab->addDevice($device);
+        $device->setType("vm");
         $entityManager->flush();
+        $this->setDeviceHypervisorToOS($device);
         $editorData->setDevice($device);
         $entityManager->flush();
-
+        
         $this->logger->info("Device named '" . $device->getName() . "' created");
 
         return $device->getId();
@@ -1285,7 +1227,7 @@ class DeviceController extends Controller
     
 	#[Delete('/api/devices/{id<\d+>}', name: 'api_delete_device')]
 	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
-    #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'GET')]
+    #[Route(path: '/admin/devices/{id<\d+>}/delete', name: 'delete_device', methods: 'DELETE')]
     public function deleteAction(Request $request, int $id)
     {
         $user = $this->getUser();
@@ -1307,10 +1249,12 @@ class DeviceController extends Controller
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
+        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".count($device->getLabs()));
         if($device->getIsTemplate() == true && count($device->getLabs()) == 0) {
             $fileName = u($device->getName())->camel();
-            if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml")) {
-                unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml");
+            $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
+            if (is_file($yaml_file)) {
+                unlink($yaml_file);
             }
         }
 
@@ -1332,13 +1276,11 @@ class DeviceController extends Controller
         try {
             $entityManager->remove($device);
             $entityManager->flush();        
-        $this->addFlash('success', $device->getName() . ' has been deleted.');
-
+            $this->addFlash('success', $device->getName() . ' has been deleted.');
         }
         catch (ForeignKeyConstraintViolationException $e) {
             $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
             $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
-
         }
     }
 

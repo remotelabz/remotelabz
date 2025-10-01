@@ -37,13 +37,6 @@
                 {% endif %}
             </div>
         </div>
-        {% if virtuality == 1 %}
-        <div class="col-auto">
-            <a href="{{ path('new_lxc_device') }}" class="btn btn-outline-success">
-                <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
-            </a>
-        </div>
-        {% endif %}
     </div>
 </div>
 
@@ -100,6 +93,10 @@
                 {{ form_row(form.model) }}
                 
                 {{ form_row(form.operatingSystem) }}
+                {{ form_row(form.bios_type) }}
+                {{ form_row(form.bios_filename) }}
+                {{ form_row(form.cdrom_bus_type) }}
+                {{ form_row(form.cdrom_iso_filename) }}
                 {{ form_row(form.flavor) }}
                 
                 {% if virtuality == 1 %}
@@ -121,7 +118,7 @@
                     </div>
                 </div>
                 {% endif %}
-                
+                {{ form_row(form.other_options) }}
                 {{ form_row(form.isTemplate) }}
                 
                 <div class="d-flex justify-content-between">
