@@ -95,7 +95,7 @@ class IsoController extends AbstractController
                     }
 
                 } else {
-                    $this->addFlash('error', 'No file was uploaded. Please upload a file first.');
+                    $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                     return $this->render('iso/new.html.twig', [
                         'iso' => $iso,
                         'sizeLimit' => $maxUploadSize,
@@ -186,7 +186,7 @@ class IsoController extends AbstractController
                 } else {
                     // Pas de nouveau fichier uploadé, conserver l'existant si c'était déjà un fichier
                     if (!$iso->getFilename()) {
-                        $this->addFlash('error', 'No file was uploaded. Please upload a file first.');
+                        $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                         return $this->render('iso/new.html.twig', [
                             'iso' => $iso,
                             'form' => $form,

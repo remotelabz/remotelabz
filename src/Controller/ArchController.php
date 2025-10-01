@@ -53,7 +53,7 @@ class ArchController extends AbstractController
             $entityManager->flush();
             $this->addFlash('success', 'Architecture supprimée !');
         } else {
-            $this->addFlash('error', 'Architecture non trouvée.');
+            $this->addFlash('danger', 'Architecture non trouvée.');
         }
 
         return $this->redirectToRoute('arch_list');
@@ -68,7 +68,7 @@ class ArchController extends AbstractController
         $arch = $entityManager->getRepository(Arch::class)->find($id);
 
         if (!$arch) {
-            $this->addFlash('error', 'Architecture non trouvée.');
+            $this->addFlash('danger', 'Architecture non trouvée.');
             return $this->redirectToRoute('arch_list');
         }
 
