@@ -16,7 +16,7 @@ class Hypervisor
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_hypervisor', 'api_delete_os', 'api_get_device', 'export_lab', 'worker', 'sandbox', 'api_get_device_instance', 'api_get_lab_instance', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_hypervisor', 'api_delete_os', 'api_get_device', 'export_lab', 'sandbox', 'api_get_device_instance', 'api_get_lab_instance', 'api_get_lab_template'])]
     private $id;
 
     #[Assert\NotBlank]
