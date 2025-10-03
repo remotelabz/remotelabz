@@ -605,8 +605,10 @@ class DeviceController extends Controller
         ControlProtocolTypeRepository $controlProtocolTypeRepository, 
         OperatingSystemRepository $operatingSystemRepository )
     {
+        $this->logger->debug("[DeviceController:newActionTest]::add a new devive ".$id);
+
         $data = json_decode($request->getContent(), true);
-        $this->logger->debug("[DeviceController:newActionTest]::data received:",$data);
+        $this->logger->debug("[DeviceController:newActionTest]::data received for this new device:",$data);
         if ($data["virtuality"] == 0) {
             preg_match_all('!\d+!', $data["template"], $templateNumber);
             $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
@@ -962,6 +964,8 @@ class DeviceController extends Controller
 	#[Put('/api/labs/{labId<\d+>}/node/{id<\d+>}', name: 'api_edit_node')]
     public function updateActionTest(Request $request, int $id, int $labId)
     {
+        $this->logger->debug("[DeviceController:updateActionTest]::update the devive ".$id." in lab ".$labId);
+
         if (!$lab = $this->labRepository->find($labId)){
             throw new NotFoundHttpException("Lab ".$labId." does not exist.");
         }
@@ -975,6 +979,7 @@ class DeviceController extends Controller
         }
 
         $data = json_decode($request->getContent(), true);   
+        $this->logger->debug("[DeviceController:updateActionTest]::data received :".$data);
 
         if(isset($data['count'])) {
             $device->setCount($data['count']);

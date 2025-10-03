@@ -22,7 +22,7 @@ use JMS\Serializer\EventDispatcher\EventSubscriberInterface as JMSEventSubscribe
 
 class OperatingSystemSerializationListener implements JMSEventSubscriberInterface
 {
-    # TODO: This class is useless because it should be merged in one listener file
+
     /** @var UrlGeneratorInterface */
     private $router;
 

@@ -64,7 +64,7 @@ if (theme !== undefined) {
     window.addEventListener("onwheel", { passive: false });
 
     // Switch themes
-    //TODO: #665 On login page, this element is empty and generate error
+    
     if (document.getElementById("themeSwitcher")) {
         document.getElementById("themeSwitcher").addEventListener('change', () => {
             if (document.getElementById("themeSwitcher").checked) {
