@@ -31,12 +31,12 @@ class Device implements InstanciableInterface
 
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
     private $brand;
 
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template', 'worker'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
     private $model;
 
     #[Assert\Type(type: 'integer')]
@@ -199,6 +199,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device','worker'])]
     private $cdrom_iso_filename;
 
     /**
@@ -206,6 +207,8 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device','worker'])]
+
     private $cdrom_bus_type;
 
     /**
@@ -213,6 +216,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device','worker'])]
     private $bios_filename;
 
     /**
@@ -220,6 +224,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device','worker'])]
     private $bios_type;
 
     /**
@@ -227,6 +232,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Serializer\Groups(['api_get_device','worker'])]
     private $other_options;
 
     public function __construct()

@@ -355,7 +355,7 @@ class InstanceManager
                 }
 
                 $this->logger->info('Sending device instance '.$uuid.' start message');
-                //$this->logger->debug('Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+                $this->logger->debug('[InstanceManager:start]::Sending device instance '.$uuid.' start message', json_decode($labJson, true));
                 $this->bus->dispatch(
                     new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
                         new AmqpStamp($workerIP, AMQP_NOPARAM, []),

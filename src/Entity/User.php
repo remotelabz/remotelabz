@@ -22,7 +22,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab', 'api_get_group', 'api_groups', 'api_get_lab_instance', 'api_get_device_instance', 'worker', 'sandbox', 'api_get_booking'])]
+    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab', 'api_get_group', 'api_groups', 'api_get_lab_instance', 'api_get_device_instance', 'sandbox', 'api_get_booking'])]
     private $id;
 
     /**
