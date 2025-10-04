@@ -62,6 +62,9 @@ class Lab implements InstanciableInterface
     #[Serializer\Groups(['api_get_lab','api_get_lab_template', 'export_lab'])]
     private $devices;
 
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Device', mappedBy: 'labsUsingThisTemplate')]
+    private $devicesUsingTemplates;
+
     #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]
     #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance'])]
     private $author;

@@ -100,9 +100,12 @@ class TemplateController extends Controller
         $data = json_decode($request->getContent(), true);
         $this->logger->debug("[TemplateController:indexAction]::request data :",$data);
 
+        $this->cleanOrphanedTemplateFiles();
+        
         $templates = $this->deviceRepository->findByTemplate(true);
         foreach ($templates as $template) {
-            if (count($template->getLabs())==0) {
+            //This device is used by any device lab
+            if (count($template->getLabsUsingThisTemplate())==0) {
                 if (!is_file($this->getParameter('kernel.project_dir').'/config/templates/'.$template->getId().'-'.u($template->getName())->camel().'.yaml')) {
                     $this->newAction($template);
                  }
@@ -420,4 +423,70 @@ class TemplateController extends Controller
     file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$template->getId()."-". u($template->getName())->camel() . ".yaml", $yamlContent);
     //file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".u($template->getName())->camel() . ".yaml", $yamlContent);
     }
+
+    /**
+     * Clean orphaned YAML template files
+     * Removes YAML files where the device ID no longer exists in database
+     * 
+     * @return array Statistics about cleaned files
+     */
+    public function cleanOrphanedTemplateFiles(): array
+    {
+        $templateDir = $this->getParameter('kernel.project_dir').'/config/templates/';
+        $stats = [
+            'scanned' => 0,
+            'deleted' => 0,
+            'errors' => [],
+            'kept' => 0
+        ];
+        
+        if (!is_dir($templateDir)) {
+            $this->logger->warning("[TemplateController::cleanOrphanedTemplateFiles] Template directory does not exist: " . $templateDir);
+            return $stats;
+        }
+        
+        foreach (scandir($templateDir) as $filename) {
+            // Skip . and .. and non-yaml files
+            if ($filename === '.' || $filename === '..' || !preg_match('/^(\d+)-.+\.yaml$/', $filename, $matches)) {
+                continue;
+            }
+            
+            $stats['scanned']++;
+            $deviceId = (int)$matches[1];
+            
+            $this->logger->debug("[TemplateController::cleanOrphanedTemplateFiles] Checking file: {$filename} (device ID: {$deviceId})");
+            
+            // Check if device exists in database
+            $device = $this->deviceRepository->find($deviceId);
+            
+            if (!$device) {
+                // Device doesn't exist - delete the file
+                $filepath = $templateDir . $filename;
+                
+                try {
+                    if (unlink($filepath)) {
+                        $this->logger->info("[TemplateController::cleanOrphanedTemplateFiles] Deleted orphaned template file: {$filename}");
+                        $stats['deleted']++;
+                    } else {
+                        $error = "Failed to delete file: {$filename}";
+                        $this->logger->error("[TemplateController::cleanOrphanedTemplateFiles] " . $error);
+                        $stats['errors'][] = $error;
+                    }
+                } catch (\Exception $e) {
+                    $error = "Exception while deleting {$filename}: " . $e->getMessage();
+                    $this->logger->error("[TemplateController::cleanOrphanedTemplateFiles] " . $error);
+                    $stats['errors'][] = $error;
+                }
+            } else {
+                $stats['kept']++;
+                $this->logger->debug("[TemplateController::cleanOrphanedTemplateFiles] Keeping file: {$filename} (device exists)");
+            }
+        }
+        
+        $this->logger->info("[TemplateController::cleanOrphanedTemplateFiles] Cleanup complete", $stats);
+        
+        return $stats;
+    }
+
+
 }

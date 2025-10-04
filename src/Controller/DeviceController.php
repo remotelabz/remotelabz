@@ -599,13 +599,13 @@ class DeviceController extends Controller
         ]);
     }
 
-    #[Post('/api/labs/{id<\d+>}/node', name: 'api_new_devices')]
-    public function newActionTest(Request $request, int $id, 
+    #[Post('/api/labs/{labId<\d+>}/node', name: 'api_new_devices')]
+    public function newActionTest(Request $request, int $labId, 
         HyperVisorRepository $hypervisorRepository,
         ControlProtocolTypeRepository $controlProtocolTypeRepository, 
         OperatingSystemRepository $operatingSystemRepository )
     {
-        $this->logger->debug("[DeviceController:newActionTest]::add a new devive ".$id);
+        $this->logger->debug("[DeviceController:newActionTest]::add a new device ".$labId);
 
         $data = json_decode($request->getContent(), true);
         $this->logger->debug("[DeviceController:newActionTest]::data received for this new device:",$data);
@@ -624,7 +624,7 @@ class DeviceController extends Controller
             }
         }
         
-        $lab = $this->labRepository->findById($id);
+        $lab = $this->labRepository->findById($labId);
         $this->denyAccessUnlessGranted(LabVoter::EDIT_DEVICE, $lab);
 
         $no_array = true;
@@ -661,8 +661,8 @@ class DeviceController extends Controller
     public function addDevice($lab, $data)
     {
         $device = new Device();
-        $editorData = new EditorData();
-        
+        $editorData = $device->getEditorData();
+        $template=null;
         //$hypervisor = $this->hypervisorRepository->findById($data['hypervisor']);
         //$controlProtocolType = $this->controlProtocolTypeRepository->findById($data['controlProtocol']);
         foreach($data['controlProtocol'] as $controlProtocolTypeId) {
@@ -733,7 +733,8 @@ class DeviceController extends Controller
         $device->setCreatedAt(new \DateTime());
         $device->setTemplate($data['template']);
         $device->setModel($data['model']);
-
+        
+        
         if($data['top'] != '') {
             $editorData->setX($data['top']);
         }
@@ -747,7 +748,7 @@ class DeviceController extends Controller
         else {
             $editorData->setY(0);
         }
-        $device->setEditorData($editorData);
+        
 
         //Check validity of cpu number with other parameters
         $total=1;
@@ -764,7 +765,7 @@ class DeviceController extends Controller
         }
         
         //preg_match_all('!\d+!', $device->getTemplate(), $templateNumber);
-        
+        $entityManager = $this->entityManager;
         if ($device->getTemplate() != null) {
             preg_match('/^(\d+)(.*)$/', $device->getTemplate(), $templateNumber);
                         
@@ -773,23 +774,29 @@ class DeviceController extends Controller
                 $this->logger->debug("[DeviceController:addDevice]::Template number: ".$templateNumber[1]);
                 
                 $template = $this->deviceRepository->find($templateNumber[1]);
-                $template->addlab($lab);
-                $this->logger->debug("[DeviceController:addDevice]::count lab for the template device : ".count($template->getLabs()));
+
                 $device->setIp($template->getIp());
                 $device->setPort($template->getPort());
+
+                // To track when this template is used
+                $template->addLabUsingTemplate($lab);
+                
+                $entityManager->persist($template);                
             }
-        } else $this->logger->debug("Device has no template");
+        } else {
+            $this->logger->debug("[DeviceController:addDevice]::Device has no template");
+        }
         
-        $entityManager = $this->entityManager;
-        $entityManager->persist($device);
-        $lab->addDevice($device);
-        $device->setType("vm");
-        $entityManager->flush();
         $this->setDeviceHypervisorToOS($device);
-        $editorData->setDevice($device);
+        $lab->addDevice($device);
+
+        $entityManager->persist($device);
         $entityManager->flush();
-        
+
+        $this->logger->debug("[DeviceController:addDevice]::count lab for the template device : ".count($template->getLabsUsingThisTemplate()));
+
         $this->logger->info("Device named '" . $device->getName() . "' created");
+        $this->logger->debug("Device named '" . $device->getName() . "' with id ".$device->getId()."created");
 
         return $device->getId();
     }
@@ -1254,16 +1261,24 @@ class DeviceController extends Controller
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
         }
-        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".count($device->getLabs()));
-        if($device->getIsTemplate() == true && count($device->getLabs()) == 0) {
+        $entityManager = $this->entityManager;
+        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".count($device->getLabsUsingThisTemplate()));
+                
+        if ($device->getIsTemplate()) {
+            foreach ($device->getLabsUsingThisTemplate() as $lab) {
+                $device->removeLabUsingTemplate($lab);
+            }
+        }
+
+        if ($device->getIsTemplate() == true && count($device->getLabsUsingThisTemplate()) == 0) {
             $fileName = u($device->getName())->camel();
             $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
             if (is_file($yaml_file)) {
                 unlink($yaml_file);
             }
-        }
+        }    
 
-        $entityManager = $this->entityManager;
+        $entity->persist($device);
 
         foreach ($device->getNetworkInterfaces() as $networkInterface) {
             if ($labId != null) {
@@ -1277,8 +1292,20 @@ class DeviceController extends Controller
         if ($device->getHypervisor()->getName() === "lxc") {
             $this->logger->info("Delete the device ".$device->getId());
         }
+
         $entityManager->flush();
         try {
+            $template=$device->getTemplate();
+            if (!is_null($template)) {
+                preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+                $template = $this->deviceRepository->find($templateNumber[1]);
+                if (!is_null($labId)) {
+                    $lab = $this->labRepository->find($labId);
+                    $template->removeLabUsingTemplate($lab);
+                    $entityManager->persist($template);
+                }
+            }
+
             $entityManager->remove($device);
             $entityManager->flush();        
             $this->addFlash('success', $device->getName() . ' has been deleted.');
