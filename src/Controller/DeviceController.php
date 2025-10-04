@@ -1262,58 +1262,61 @@ class DeviceController extends Controller
             throw new NotFoundHttpException();
         }
         $entityManager = $this->entityManager;
-        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".count($device->getLabsUsingThisTemplate()));
-                
-        if ($device->getIsTemplate()) {
-            foreach ($device->getLabsUsingThisTemplate() as $lab) {
-                $device->removeLabUsingTemplate($lab);
-            }
-        }
+        $this->logger->debug("[DeviceController:delete_device]::Number of labs with this device: ".$device->getLabsUsingThisTemplate()->count());
 
-        if ($device->getIsTemplate() == true && count($device->getLabsUsingThisTemplate()) == 0) {
-            $fileName = u($device->getName())->camel();
-            $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
-            if (is_file($yaml_file)) {
-                unlink($yaml_file);
-            }
-        }    
-
-        $entity->persist($device);
-
-        foreach ($device->getNetworkInterfaces() as $networkInterface) {
-            if ($labId != null) {
-                foreach($this->networkInterfaceRepository->findByLabAndConnection($labId, $networkInterface->getConnection()) as $otherInterface) {
-                    $entityManager->remove($otherInterface);
-                }
-            }
-            $entityManager->remove($networkInterface);
-        }
-
-        if ($device->getHypervisor()->getName() === "lxc") {
-            $this->logger->info("Delete the device ".$device->getId());
-        }
-
-        $entityManager->flush();
-        try {
-            $template=$device->getTemplate();
-            if (!is_null($template)) {
-                preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
-                $template = $this->deviceRepository->find($templateNumber[1]);
-                if (!is_null($labId)) {
-                    $lab = $this->labRepository->find($labId);
-                    $template->removeLabUsingTemplate($lab);
-                    $entityManager->persist($template);
+        if ($device->getLabsUsingThisTemplate()->isEmpty()) {
+            if ($device->getIsTemplate()) {
+                foreach ($device->getLabsUsingThisTemplate() as $lab) {
+                    $device->removeLabUsingTemplate($lab);
                 }
             }
 
-            $entityManager->remove($device);
-            $entityManager->flush();        
-            $this->addFlash('success', $device->getName() . ' has been deleted.');
-        }
-        catch (ForeignKeyConstraintViolationException $e) {
-            $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
-            $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
-        }
+            if ($device->getIsTemplate() == true && count($device->getLabsUsingThisTemplate()) == 0) {
+                $fileName = u($device->getName())->camel();
+                $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
+                if (is_file($yaml_file)) {
+                    unlink($yaml_file);
+                }
+            }    
+
+            $entityManager->persist($device);
+
+            foreach ($device->getNetworkInterfaces() as $networkInterface) {
+                if ($labId != null) {
+                    foreach($this->networkInterfaceRepository->findByLabAndConnection($labId, $networkInterface->getConnection()) as $otherInterface) {
+                        $entityManager->remove($otherInterface);
+                    }
+                }
+                $entityManager->remove($networkInterface);
+            }
+
+            if ($device->getHypervisor()->getName() === "lxc") {
+                $this->logger->info("Delete the device ".$device->getId());
+            }
+
+            $entityManager->flush();
+            try {
+                $template=$device->getTemplate();
+                if (!is_null($template)) {
+                    preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+                    $template = $this->deviceRepository->find($templateNumber[1]);
+                    if (!is_null($labId)) {
+                        $lab = $this->labRepository->find($labId);
+                        $template->removeLabUsingTemplate($lab);
+                        $entityManager->persist($template);
+                    }
+                }
+
+                $entityManager->remove($device);
+                $entityManager->flush();        
+                $this->addFlash('success', $device->getName() . ' has been deleted.');
+            }
+            catch (ForeignKeyConstraintViolationException $e) {
+                $this->logger->error("ForeignKeyConstraintViolationException".$e->getMessage());
+                $this->addFlash('danger', 'This device is still used in some lab. Please delete them first.');
+            }
+        } else
+            $this->addFlash('danger', 'This device is still used by other device in some lab. Please delete them first.');
     }
 
     
