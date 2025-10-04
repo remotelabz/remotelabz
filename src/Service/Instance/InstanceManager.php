@@ -216,7 +216,7 @@ class InstanceManager
                 ->setState(InstanceStateMessage::STATE_CREATING)
                 ->setNetwork($network)
                 ->populate();
-        //TODO: test with local env if deploy the front and the worker on the same server
+                
         if (!$this->singleServer) {// One server for the Front and one server for the worker
             if (IPTools::routeExists($network))
                 $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);

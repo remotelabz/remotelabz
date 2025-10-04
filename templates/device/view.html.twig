@@ -246,7 +246,7 @@
         </div>
 
         {# Device Statistics Card #}
-        {#<div class="card mb-4">
+        <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-chart-bar me-2"></i> Statistics
@@ -254,11 +254,12 @@
             </div>
             <div class="card-body text-center">
                 
-                            <h5 class="mb-0">{{ device.labs|length }}</h5>
-                            <small class="text-muted">Used in Labs</small>
+                            <h5 class="mb-0">{{ device.LabsUsingThisTemplate|length }}</h5>
+                            <small class="text-muted">Used as template by other devices<br></small>
+                            <small class="text-muted">Each device here is a template which is duplicated when in new device when you add it in a lab</small>
                 
             </div>
-        </div>#}
+        </div>
 
         {# Device Icon Card #}
         <div class="card mb-4">

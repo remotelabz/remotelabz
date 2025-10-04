@@ -363,8 +363,7 @@ class IPTools extends Bridge
             catch(ErrorException $e) {
                 throw new Exception("Error opening file");
         }
-// TODO : test if the json_decode return NULL
-// The Kea DHCP accept comment with // but it's not json valide
+
         $tab = json_decode($fileContent, true);
 
         if (!static::NetworkIfExistDHCP($host, $port, $filename, $address)) {

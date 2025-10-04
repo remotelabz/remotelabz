@@ -87,39 +87,6 @@ class InstanceControllerTest extends AuthenticatedWebTestCase
         return $labInstance;
     }
 
-    // TODO test start and stop requests
-    // /**
-    //  * @depends testCreateLabInstance
-    //  * @param LabInstance $labInstance
-    //  */
-    // public function testStartDeviceInstance($labInstance)
-    // {
-    //     $this->client->request('GET', '/api/instances/start/by-uuid/' . $labInstance->getDeviceInstances()->first()->getUuid());
-    //     $this->assertResponseIsSuccessful();
-
-    //     $message = new InstanceStateMessage(InstanceStateMessage::TYPE_LAB, $labInstance->getUuid(), InstanceState::STARTED);
-
-    //     $this->handler->__invoke($message);
-
-    //     return $labInstance;
-    // }
-
-    // /**
-    //  * @depends testStartLabInstance
-    //  * @param LabInstance $labInstance
-    //  */
-    // public function testStopDeviceInstance($labInstance)
-    // {
-    //     $this->client->request('GET', '/api/instances/stop/by-uuid/' . $labInstance->getDeviceInstances()->first()->getUuid());
-    //     $this->assertResponseIsSuccessful();
-
-    //     $message = new InstanceStateMessage(InstanceStateMessage::TYPE_LAB, $labInstance->getUuid(), InstanceState::STOPPED);
-
-    //     $this->handler->__invoke($message);
-
-    //     return $labInstance;
-    // }
-
     /**
      * @depends testCreateLabInstance
      *

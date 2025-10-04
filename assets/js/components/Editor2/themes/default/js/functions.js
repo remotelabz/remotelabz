@@ -8,8 +8,10 @@
  * @author Andrea Dainese <andrea.dainese@gmail.com>
  * @copyright 2014-2016 Andrea Dainese
  * @license BSD-3-Clause https://github.com/dainok/unetlab/blob/master/LICENSE
- * @link http://www.unetlab.com/
- * @version 20160719
+ * @copyright 2018-2020 Julien Hubert <https://github.com/Atlanta>
+ * @copyright 2021 Florent Nolot <https://github.com/florent-n>
+ * @author Florent Nolot
+ * @author Julien Hubert
  */
 
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,

@@ -1171,11 +1171,12 @@ $(document).on('keyup', null, 'alt+u', function(){
 
 // Add object in lab_view
 $(document).on('click', '.action-labobjectadd', function (e) {
+    // TODO : vérifier add node
     logger(1, 'DEBUG: action = labobjectadd');
     var body = '';
     body += '<li><a class="action-nodeplace" href="javascript:void(0)"><i class="glyphicon glyphicon-hdd"></i> ' + MESSAGES[81] + '</a></li>';
-  body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
-  body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
+    body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
+    body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
     printContextMenu(MESSAGES[80], body, e.pageX, e.pageY, true,"sidemenu", true);
 });
 
@@ -1355,10 +1356,8 @@ $(document).on('click', '.action-openconsole-all, .action-openconsole-group', fu
              }
              $("#lab-viewport").addClass("freeSelectMode");
         })
-   }
+    }
 });
-
-
 
 // Attach files
 var attachments;
@@ -1835,6 +1834,7 @@ $(document).on('submit', '#form-lab-edit', function (e) {
     var path = form_data['path'].split(/(\d+)/)[1];
     logger(1, 'DEBUG: posting form-lab-edit form.');
     var url = '/api/labs/test/' + path;
+    logger(1, 'DEBUG: PUT ' + url);
     var type = 'PUT';
 
     form_data['count'] = 1;
@@ -1994,11 +1994,13 @@ $(document).on('submit', '#form-node-add, #form-node-edit', function (e) {
     }
 		
     if ($(this).attr('id') == 'form-node-add') {
-        logger(1, 'DEBUG: posting form-node-add form.');
+        logger(1, 'DEBUG: posting form-node-add form. line 1997');
         var url = '/api/labs/' + lab_filename + '/node';
         var type = 'POST';
+        logger(1, 'DEBUG: posting url ' + url);
+
     } else {
-        logger(1, 'DEBUG: posting form-node-edit form.');
+        logger(1, 'DEBUG: posting form-node-edit form. line 2001');
         var url = '/api/labs/' + lab_filename + '/node/' + form_data['id'];
         var type = 'PUT';
     }

@@ -126,8 +126,6 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
 
         $response = new RedirectResponse('/');
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
-//TODO Get Role and maintenance state
-
         $this->logger->info("Authentification : Email: ".$user->getEmail()." Roles :",$user->getRoles());
 
         if ( ($this->maintenance && in_array('ROLE_SUPER_ADMINISTRATOR',$user->getRoles())) || !$this->maintenance ) {

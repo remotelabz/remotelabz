@@ -170,6 +170,10 @@ class Device implements InstanciableInterface
     #[Serializer\Groups(['api_get_device'])]
     private $count;
 
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Lab', inversedBy: 'usedTemplates')]
+    #[ORM\JoinTable(name: 'device_template_usage')]
+    private $labsUsingThisTemplate;
+
     #[ORM\Column(type: 'integer', nullable: true)]
     #[Serializer\Groups(['api_get_device'])]
     private $postfix;
@@ -248,6 +252,7 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
+        $this->labsUsingThisTemplate = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -385,7 +390,29 @@ class Device implements InstanciableInterface
 
         return $this;
     }
+    
+    /**
+     * @return Collection|Lab[]
+     */
+    public function getLabsUsingThisTemplate(): Collection
+    {
+        return $this->labsUsingThisTemplate;
+    }
 
+    public function addLabUsingTemplate(Lab $lab): self
+    {
+        if (!$this->labsUsingThisTemplate->contains($lab)) {
+            $this->labsUsingThisTemplate[] = $lab;
+        }
+        return $this;
+    }
+    
+    public function removeLabUsingTemplate(Lab $lab): self
+    {
+        $this->labsUsingThisTemplate->removeElement($lab);
+        return $this;
+    }
+    
     /**
      * @return Collection|controlProtocolType[]
      */
