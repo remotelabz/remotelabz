@@ -793,10 +793,10 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $entityManager->flush();
 
-        $this->logger->debug("[DeviceController:addDevice]::count lab for the template device : ".count($template->getLabsUsingThisTemplate()));
+        $this->logger->debug("[DeviceController:addDevice]::count lab for the template device ".$template->getName()." is ".$template->getLabsUsingThisTemplate()->count());
 
-        $this->logger->info("Device named '" . $device->getName() . "' created");
-        $this->logger->debug("Device named '" . $device->getName() . "' with id ".$device->getId()."created");
+        $this->logger->info("Device named '" . $device->getName() . "' created and add to lab ");
+        $this->logger->debug("Device named '" . $device->getName() . "' with id ".$device->getId()." created");
 
         return $device->getId();
     }
@@ -1245,18 +1245,18 @@ class DeviceController extends Controller
         $user = $this->getUser();
         $username = $user ? $user->getUserIdentifier() : 'anonymous';
         $device = $this->deviceRepository->find($id);
+        if (!is_null($device)) {
+            $this->delete_device($device);
+            $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
 
-        $this->delete_device($device);
-        $this->logger->info("Device ".$device->getName()." deleted by user ".$username);
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json();
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json();
+            }
         }
-
         return $this->redirectToRoute('devices');
     }
 
-    public function delete_device(Device $device, int $labId = null) {
+    private function delete_device(Device $device, int $labId = null) {
 
         if (!$device = $this->deviceRepository->find($device->getId())) {
             throw new NotFoundHttpException();
@@ -1266,20 +1266,19 @@ class DeviceController extends Controller
 
         if ($device->getLabsUsingThisTemplate()->isEmpty()) {
             if ($device->getIsTemplate()) {
+                $this->logger->debug("[DeviceController:delete_device]::This device template will be remove from all labs");
+
                 foreach ($device->getLabsUsingThisTemplate() as $lab) {
                     $device->removeLabUsingTemplate($lab);
                 }
-            }
-
-            if ($device->getIsTemplate() == true && count($device->getLabsUsingThisTemplate()) == 0) {
+            
                 $fileName = u($device->getName())->camel();
                 $yaml_file=$this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml";
                 if (is_file($yaml_file)) {
                     unlink($yaml_file);
                 }
+                $entityManager->persist($device);
             }    
-
-            $entityManager->persist($device);
 
             foreach ($device->getNetworkInterfaces() as $networkInterface) {
                 if ($labId != null) {
@@ -1302,10 +1301,14 @@ class DeviceController extends Controller
                     $template = $this->deviceRepository->find($templateNumber[1]);
                     if (!is_null($labId)) {
                         $lab = $this->labRepository->find($labId);
-                        $template->removeLabUsingTemplate($lab);
-                        $entityManager->persist($template);
+                        $this->logger->debug("[DeviceController:delete_device]::Delete from the template of device ".$templateNumber[1]." this lab usage");
+                        if (!is_null($template)) {
+                            $template->removeLabUsingTemplate($lab);
+                            $entityManager->persist($template);
+                        }
                     }
                 }
+                $this->logger->debug("[DeviceController:delete_device]::The device will be remove");
 
                 $entityManager->remove($device);
                 $entityManager->flush();        
@@ -1321,6 +1324,7 @@ class DeviceController extends Controller
 
     
 	#[Delete('/api/labs/{labId<\d+>}/nodes/{id<\d+>}', name: 'api_delete_device_test')]
+  	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
     public function deleteActionTest(Request $request, int $id, int $labId)
     {
         if(!$lab = $this->labRepository->find($labId)) {
