@@ -305,8 +305,8 @@ $(document).on('contextmenu', '#lab-viewport', function (e) {
         body += '<li><a class="action-networkplace" href="javascript:void(0)"><i class="glyphicon glyphicon-transfer"></i> ' + MESSAGES[82] + '</a></li>';
         body += '<li><a class="action-customshapeadd" href="javascript:void(0)"><i class="glyphicon glyphicon-unchecked"></i> ' + MESSAGES[145] + '</a></li>';
         body += '<li><a class="action-textadd" href="javascript:void(0)"><i class="glyphicon glyphicon-font"></i> ' + MESSAGES[146] + '</a></li>';
-        body += '<li role="separator" class="divider">';
-        body += '<li><a class="action-autoalign" href="javascript:void(0)"><i class="glyphicon glyphicon-th"></i> ' + MESSAGES[207] + '</a></li>';
+        //body += '<li role="separator" class="divider">';
+        //body += '<li><a class="action-autoalign" href="javascript:void(0)"><i class="glyphicon glyphicon-th"></i> ' + MESSAGES[207] + '</a></li>';
         printContextMenu(MESSAGES[80], body, e.pageX, e.pageY,false,"menu");
     }
 });
@@ -1019,7 +1019,7 @@ $(document).on('click', '.action-nodeedit', function (e) {
 
 // Print lab nodes
 $(document).on('click', '.action-nodesget', function (e) {
-    //logger(1, 'DEBUG: action = nodesget');
+    logger(1, 'DEBUG: action = nodesget');
     $("#lab-viewport").append("<div id='progress-loader'><label style='float:left'>Generating node list...</label><div class='loader'></div></div>")
     $.when(getNodes(null)).done(function (nodes) {
         printListNodes(nodes);

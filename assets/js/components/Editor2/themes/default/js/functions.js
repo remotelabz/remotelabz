@@ -1357,9 +1357,9 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    //logger (2,'action2 = ' + action);
+    logger (1,'action2 = ' + action);
     console.log('functions.js printFormNode values = ',values);
-    //logger (2,'fromNodeList2 = ' + fromNodeList);
+    logger (1,'fromNodeList2 = ' + fromNodeList);
     var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
     var id = (values == null || values['id'] == null) ? null : values['id'];
     var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
@@ -1370,7 +1370,6 @@ export function printFormNode(action, values, fromNodeList) {
     var template_disabled = (values == null || values['template'] == null ) ? '' : 'disabled ';
 
     $.when(getTemplates(null)).done(function (templates) {
-        //TODO : template sauvegardé dans la base ne correspond pas au template sauvegardé dans /config/templates
         var html = '';
         html += '<form id="form-node-' + action + '" >'+
                     '<div class="form-group col-sm-12">'+
@@ -1440,17 +1439,17 @@ export function printFormNode(action, values, fromNodeList) {
                             var widthClass = ' col-sm-12 '
                             if(key == 'image' && action == 'add') widthClass = ' col-sm-7'
                             if(key == 'qemu_version') {
-				widthClass = ' col-sm-4 ';
-				if ( action == 'add' ) value_set = '';
+                                widthClass = ' col-sm-4 ';
+                                if ( action == 'add' ) value_set = '';
                             }
                             if(key == 'qemu_arch') {
-				widthClass = ' col-sm-4 ';
-				if ( action == 'add' ) value_set = '';
-			    }
+                                widthClass = ' col-sm-4 ';
+                                if ( action == 'add' ) value_set = '';
+                            }
                             if(key == 'qemu_nic') {
-				widthClass = ' col-sm-4 ';
-				if ( action == 'add' ) value_set = '';
-			    }
+                                widthClass = ' col-sm-4 ';
+                                if ( action == 'add' ) value_set = '';
+                            }
                             if (key.startsWith('slot')) widthClass = ' col-sm-6 '
                             html_data += '<div class="form-group '+widthClass+'">'+
                                             '<label class=" control-label">' + value['name'] + '</label>'+
@@ -1476,40 +1475,49 @@ export function printFormNode(action, values, fromNodeList) {
                             });
                             html_data += '</select>';
                             html_data += '</div>';
-                        } else if ( value['type'] == 'checkbox') {
-				if(key == 'cpulimit') {
-					widthClass = ' col-sm-2 ';
-					html_data += '<div class="'+widthClass+'" style="padding-right: 0px;">'+
-					'<label class="control-label" style="height: 34px;margin-top: 8px;margin-bottom: 0px;">' + value['name'] + '</label>'+
-					'</div><div class="form-group col-sm-8" style="padding-left: 0px;" >'+
-					'<input type="checkbox"  style="width: 34px;" class="form-control" value='+ values['cpulimit']  +' name="node[' + key + ']" '+ (( values['cpulimit'] == 1) ? 'checked' : '' ) +'/>'+
-					'</div>';
-				}
-			} else {
-                            // Option is standard
-                            var widthClass = ' col-sm-12 '
-                            var ram_value = key == 'ram' ? ' (MB)' : key == 'nvram' ? ' (KB)' : ' ';
-                            var postName = '';
-                            if (!bothRam && template_values['options'].hasOwnProperty('cpu') &&
-                                template_values['options'].hasOwnProperty('ethernet') &&
-                                template_values['options'].hasOwnProperty('ram')) {
-                                if (key == 'ram' || key == 'ethernet' || key == 'cpu') widthClass = ' col-sm-4 '
-                            } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
-                            if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
-                            var tpl = '' ;
-			    if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'] ;
-                            if (key == 'qemu_options')  tpl = " ( reset to template value )"
-			    value_set = (key == 'qemu_options')?value_set.replace(/"/g,'&quot;'):value_set;
-			    template_values['options'][key]['value'] = (key == 'qemu_options')?template_values['options'][key]['value'].replace(/"/g,'&quot;'):template_values['options'][key]['value'];
+                        } else {
+                            if ( value['type'] == 'checkbox') {
+                                if(key == 'cpulimit') {
+                                    widthClass = ' col-sm-2 ';
+                                    html_data += '<div class="'+widthClass+'" style="padding-right: 0px;">'+
+                                    '<label class="control-label" style="height: 34px;margin-top: 8px;margin-bottom: 0px;">' + value['name'] + '</label>'+
+                                    '</div><div class="form-group col-sm-8" style="padding-left: 0px;" >'+
+                                    '<input type="checkbox"  style="width: 34px;" class="form-control" value='+ values['cpulimit']  +' name="node[' + key + ']" '+ (( values['cpulimit'] == 1) ? 'checked' : '' ) +'/>'+
+                                    '</div>';
+                                }
+                            }
+                            if ( value['type'] == 'boolean') {
+                                html_data += '<div class="form-group col-sm-12">'+
+                                                '<label class=" control-label"> ' + value['name'] + '</label>' + 
+                                                '<div class="form-control">' + value['value']+ '</div>'+
+                                            '</div>';
+                            }
+                            else {
+                                // Option is standard
+                                var widthClass = ' col-sm-12 '
+                                var ram_value = key == 'ram' ? ' (MB)' : key == 'nvram' ? ' (KB)' : ' ';
+                                var postName = '';
+                                if (!bothRam && template_values['options'].hasOwnProperty('cpu') &&
+                                    template_values['options'].hasOwnProperty('ethernet') &&
+                                    template_values['options'].hasOwnProperty('ram')) {
+                                    if (key == 'ram' || key == 'ethernet' || key == 'cpu') widthClass = ' col-sm-4 '
+                                } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
+                                if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
+                                var tpl = '' ;
+                                if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'] ;
+                                if (key == 'qemu_options')  tpl = " ( reset to template value )"
+                                value_set = (key == 'qemu_options')?value_set.replace(/"/g,'&quot;'):value_set;
+                                template_values['options'][key]['value'] = (key == 'qemu_options')?template_values['options'][key]['value'].replace(/"/g,'&quot;'):template_values['options'][key]['value'];
 
-                            html_data += '<div class="form-group'+ widthClass+'">'+
-                                            '<label class=" control-label"> ' + value['name'] + '<a id="link_'+key+'" onClick="javascript:document.getElementById(\'input_'+key+'\').value=\''+template_values['options'][key]['value']+'\';document.getElementById(\'link_'+key+'\').style.visibility=\'hidden\'" style="visibility: '+ (( value_set != template_values['options'][key]['value'] ) ? 'visible':'hidden') +';" >' + tpl + '</a>' + ram_value + '</label>'+
-                                            '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_'+ key  +'" onClick="javascript:document.getElementById(\'link_'+key+'\').style.visibility=\'visible\'""/>'+
-                                         '</div>';
-                            if ( key  == 'qemu_options' ) {
-			                html_data += '<div class="form-group'+ widthClass+'">'+
-                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value']  + '" type="text" disabled/>'+
-                                         '</div>';
+                                html_data += '<div class="form-group'+ widthClass+'">'+
+                                                '<label class=" control-label"> ' + value['name'] + '<a id="link_'+key+'" onClick="javascript:document.getElementById(\'input_'+key+'\').value=\''+template_values['options'][key]['value']+'\';document.getElementById(\'link_'+key+'\').style.visibility=\'hidden\'" style="visibility: '+ (( value_set != template_values['options'][key]['value'] ) ? 'visible':'hidden') +';" >' + tpl + '</a>' + ram_value + '</label>'+
+                                                '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_'+ key  +'" onClick="javascript:document.getElementById(\'link_'+key+'\').style.visibility=\'visible\'""/>'+
+                                            '</div>';
+                                if ( key  == 'qemu_options' ) {
+                                    html_data += '<div class="form-group'+ widthClass+'">'+
+                                                '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value']  + '" type="text" disabled/>'+
+                                            '</div>';
+                                }
                             }
                         }
                     }

@@ -986,7 +986,7 @@ class DeviceController extends Controller
         }
 
         $data = json_decode($request->getContent(), true);   
-        $this->logger->debug("[DeviceController:updateActionTest]::data received :".$data);
+        $this->logger->debug("[DeviceController:updateActionTest]::data received :",$data);
 
         if(isset($data['count'])) {
             $device->setCount($data['count']);
@@ -1129,11 +1129,18 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
 
-        preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
-        if (is_array($templateNumber) && isset($templateNumber[0]) && !empty($templateNumber[0])) {
-            $template = $this->deviceRepository->find($templateNumber[0][0]);
-            $device->setIp($template->getIp());
-            $device->setPort($template->getPort());
+
+        
+        
+        $template=$device->getTemplate();
+        preg_match('!(\d+)(.*)!',$template , $templateNumber);
+        if (!is_null($template)) {
+            preg_match('!(\d+)(.*)!', $device->getTemplate(), $templateNumber);
+            $template = $this->deviceRepository->find($templateNumber[1]);
+            $ip=$template->getIp();
+            $port=$template->getPort();
+            $device->setIp($ip);
+            $device->setPort($port);
         }
 
         $entityManager = $this->entityManager;
