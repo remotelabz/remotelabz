@@ -85,7 +85,9 @@ class InstanceStateMessageHandler
             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Error state received from instance uuid ". $message->getUuid());
             
             $options=$message->getOptions();
-            if (!is_null($options)) {
+            $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received', $options);
+
+            if (!is_null($options) && !empty($options)) {
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Show options of error message received : ', $options);
                 if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
                     $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel renameOS');
@@ -135,7 +137,7 @@ class InstanceStateMessageHandler
 
             }
             if (!is_null($instance)) {
-                //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance not null and Error received from : ". $message->getUuid() ." message with state ".$message->getState()." and instance state :".$instance->getState());
                 switch ($instance->getState()) {
                     case InstanceStateMessage::STATE_STARTING:
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after '.$instance->getState());

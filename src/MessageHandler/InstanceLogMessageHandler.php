@@ -28,7 +28,6 @@ class InstanceLogMessageHandler
 
     public function __invoke(InstanceLogMessage $message)
     {
-
         $this->logger->info("Received Instance log message :", [
             'uuid' => $message->getUuid(),
             'type' => $message->getType(),
