@@ -388,14 +388,17 @@
             
             // Récupérer les options du select
             const icons = {};
-            Array.from(iconSelect.options).forEach(option => {
-                if (option.value) {
-                    icons[option.value] = option.text;
-                }
-            });
+            if (iconSelect) {
+                Array.from(iconSelect.options).forEach(option => {
+                    if (option.value) {
+                        icons[option.value] = option.text;
+                    }
+                });
+            }
             
             // Créer les options visuelles
             function createIconOptions(filter = '') {
+                if (!iconOptions) return;
                 iconOptions.innerHTML = '';
                 
                 Object.entries(icons).forEach(([value, label]) => {
@@ -417,15 +420,18 @@
             
             // Sélectionner une icône
             function selectIcon(value, label) {
+                if (!iconSelect) return;
                 iconSelect.value = value;
-                iconDisplay.value = label;
+                if (iconDisplay) iconDisplay.value = label;
                 
-                if (value) {
-                    iconPreview.innerHTML = `<img src="${iconBasePath}${value}" alt="${label}">`;
-                    iconPreview.classList.remove('empty');
-                } else {
-                    iconPreview.innerHTML = '<i class="fas fa-image"></i>';
-                    iconPreview.classList.add('empty');
+                if (iconPreview) {
+                    if (value) {
+                        iconPreview.innerHTML = `<img src="${iconBasePath}${value}" alt="${label}">`;
+                        iconPreview.classList.remove('empty');
+                    } else {
+                        iconPreview.innerHTML = '<i class="fas fa-image"></i>';
+                        iconPreview.classList.add('empty');
+                    }
                 }
                 
                 // Mettre à jour la sélection visuelle
@@ -433,29 +439,35 @@
                     opt.classList.toggle('selected', opt.dataset.value === value);
                 });
                 
-                iconDropdown.style.display = 'none';
+                if (iconDropdown) iconDropdown.style.display = 'none';
             }
             
             // Initialiser la valeur actuelle
-            if (iconSelect.value) {
+            if (iconSelect && iconSelect.value) {
                 const currentLabel = iconSelect.options[iconSelect.selectedIndex].text;
                 selectIcon(iconSelect.value, currentLabel);
             }
             
             // Événements
-            iconDisplay.addEventListener('click', () => {
-                createIconOptions();
-                iconDropdown.style.display = iconDropdown.style.display === 'block' ? 'none' : 'block';
-                iconSearch.focus();
-            });
+            if (iconDisplay) {
+                iconDisplay.addEventListener('click', () => {
+                    createIconOptions();
+                    if (iconDropdown) {
+                        iconDropdown.style.display = iconDropdown.style.display === 'block' ? 'none' : 'block';
+                    }
+                    if (iconSearch) iconSearch.focus();
+                });
+            }
             
-            iconSearch.addEventListener('input', (e) => {
-                createIconOptions(e.target.value);
-            });
+            if (iconSearch) {
+                iconSearch.addEventListener('input', (e) => {
+                    createIconOptions(e.target.value);
+                });
+            }
             
             // Fermer le dropdown en cliquant ailleurs
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.icon-selector-container')) {
+                if (!e.target.closest('.icon-selector-container') && iconDropdown) {
                     iconDropdown.style.display = 'none';
                 }
             });
@@ -485,6 +497,38 @@
                 coreInput.addEventListener('input', updateCpuCount);
                 socketInput.addEventListener('input', updateCpuCount);
                 threadInput.addEventListener('input', updateCpuCount);
+            }
+            
+            // Auto-sélection des protocoles de contrôle selon l'hyperviseur
+            const osSelect = document.getElementById('{{ form.operatingSystem.vars.id }}');
+            const protocolSelect = document.getElementById('{{ form.controlProtocolTypes.vars.id }}');
+
+            if (osSelect && protocolSelect) {
+                osSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const osText = selectedOption.text.toLowerCase();
+                    
+                    // Désélectionner tous les protocoles
+                    Array.from(protocolSelect.options).forEach(option => {
+                        option.selected = false;
+                    });
+                    
+                    // Sélectionner automatiquement selon l'hyperviseur
+                    Array.from(protocolSelect.options).forEach(option => {
+                        const protocolName = option.text.toLowerCase();
+                        
+                        if (osText.includes('lxc') && protocolName === 'login') {
+                            option.selected = true;
+                        } else if (osText.includes('qemu') && protocolName === 'vnc') {
+                            option.selected = true;
+                        }
+                    });
+                });
+                
+                // Déclencher l'événement au chargement si un OS est déjà sélectionné
+                if (osSelect.value) {
+                    osSelect.dispatchEvent(new Event('change'));
+                }
             }
         });
     </script>

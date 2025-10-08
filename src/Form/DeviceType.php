@@ -79,24 +79,24 @@ class DeviceType extends AbstractType
             ])
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
-                'query_builder' => function(OperatingSystemRepository $operaringSystemRepository) use ($virtuality): QueryBuilder {
-                    if ($virtuality == 0) {
-                        return $operaringSystemRepository->createQueryBuilder('o')
+                'query_builder' => function(OperatingSystemRepository $operatingSystemRepository) use ($virtuality): QueryBuilder {
+                    $qb = $operatingSystemRepository->createQueryBuilder('o')
                         ->join('o.hypervisor', 'h')
-                        ->where('h.name = :name')
-                        ->setParameter('name', 'physical')
                         ->orderBy('o.name', 'ASC');
+                    
+                    if ($virtuality === 0) {
+                        $qb->where('h.name = :name');
+                    } else {
+                        $qb->where('h.name != :name');
                     }
-                    else {
-                        return $operaringSystemRepository->createQueryBuilder('o')
-                        ->join('o.hypervisor', 'h')
-                        ->where('h.name != :name')
-                        ->setParameter('name', 'physical')
-                        ->orderBy('o.name', 'ASC');
-                    }
+                    
+                    return $qb->setParameter('name', 'physical');
                 },
-                'choice_label' => 'name',
-                'help' => 'Image disk used for this device.'
+                'choice_label' => function(OperatingSystem $os) {
+                    return $os->getName() . ' (' . $os->getHypervisor()->getName() . ')';
+                },
+                'help' => 'Image disk used for this device.',
+                'placeholder' => 'Select an operating system'
             ])
             
             ->add('bios_type', ChoiceType::class, [
