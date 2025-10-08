@@ -803,9 +803,9 @@ class OperatingSystemController extends Controller
             return ['valid' => false, 'error' => 'Invalid URL format'];
         }
 
-        // Vérifier que l'URL contient .img ou .qcow2
-        if (!preg_match('/\.(img|qcow2)(\?|$|#)/i', $url)) {
-            return ['valid' => false, 'error' => 'URL does not appear to be an img or qcow2 file'];
+        // Vérifier que l'URL contient .qcow2
+        if (!preg_match('/\.(qcow2)(\?|$|#)/i', $url)) {
+            return ['valid' => false, 'error' => 'URL does not appear to be a qcow2 file'];
         }
 
         try {
@@ -861,8 +861,8 @@ class OperatingSystemController extends Controller
 
             // Nom du fichier depuis l'URL
             $fileName = basename(parse_url($finalUrl, PHP_URL_PATH));
-            if (empty($fileName) || !preg_match('/\.(img|qcow2)$/i', $fileName)) {
-                $fileName = 'downloaded.img';
+            if (empty($fileName) || !preg_match('/\.(qcow2)$/i', $fileName)) {
+                $fileName = 'downloaded.qcow2';
             }
 
             curl_close($ch);

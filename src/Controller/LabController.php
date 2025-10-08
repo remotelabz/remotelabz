@@ -1266,11 +1266,10 @@ class LabController extends Controller
                         foreach($workers as $worker) {
                             $this->logger->debug("[LabController:exportAction]worker ".$worker->getIPv4());
                             $workerPort = $this->getParameter('app.worker_port');
-                            $imageName = str_replace(".img", "", $image);
                             $resource = fopen($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/'.$image, 'w');
-                            $this->logger->debug("[LabController:exportAction]curl http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            $this->logger->debug("[LabController:exportAction]curl http://".$worker->getIPv4().":".$workerPort."/images/".$image);
                             $curl = curl_init();
-                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$imageName);
+                            curl_setopt($curl, CURLOPT_URL, "http://".$worker->getIPv4().":".$workerPort."/images/".$image);
                             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
                             curl_setopt($curl, CURLOPT_TIMEOUT, 600);
                             curl_setopt($curl, CURLOPT_FILE, $resource);

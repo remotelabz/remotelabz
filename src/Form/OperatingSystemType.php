@@ -31,7 +31,7 @@ class OperatingSystemType extends AbstractType
                 'help' => 'Provide either an image URL or upload a file, but not both.',
                 'required' => false,
                 'attr' => [
-                    'placeholder' => 'https://example.com/path/to/image.img'
+                    'placeholder' => 'https://example.com/path/to/image.qcow2'
                 ]
             ])
             ->add('image_Filename', TextType::class, [
@@ -57,7 +57,7 @@ class OperatingSystemType extends AbstractType
                 'required' => false,
                 'mapped' => false,
                 'attr' => [
-                    'accept' => '.img'
+                    'accept' => '.qcow2'
                 ],
                 'constraints' => [
                     new File([
