@@ -520,7 +520,7 @@ class InstanceManager
 
         switch ($hypervisor->getName()) {
             case "qemu":
-                $imageName=$imageName.'.img';
+                $imageName=$imageName.'.qcow2';
                 break;
             default:
                 $imageName=$imageName;

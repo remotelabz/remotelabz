@@ -21,7 +21,7 @@ class OperatingSystemControllerTest extends AuthenticatedWebTestCase
         $form = $crawler->selectButton('operating_system[submit]')->form();
 
         $form['operating_system[name]'] = 'OS - Test';
-        $form['operating_system[imageUrl]'] = 'http://urlto.img';
+        $form['operating_system[imageUrl]'] = 'http://urlto.qcow2';
 
         $crawler = $this->client->submit($form);
         $this->assertResponseIsSuccessful();
@@ -51,7 +51,7 @@ class OperatingSystemControllerTest extends AuthenticatedWebTestCase
         $form = $crawler->selectButton('operating_system[submit]')->form();
 
         $form['operating_system[name]'] = 'OS - Test Edited';
-        $form['operating_system[imageUrl]'] = 'http://new-urlto.img';
+        $form['operating_system[imageUrl]'] = 'http://new-urlto.qcow2';
 
         $crawler = $this->client->submit($form);
         $this->assertResponseIsSuccessful();
