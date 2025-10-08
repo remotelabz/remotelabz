@@ -256,48 +256,57 @@
             const osFilter = document.getElementById('osFilter');
             const deviceItems = document.querySelectorAll('.device-item');
             
-            osFilter.addEventListener('change', function() {
-                const selectedOS = this.value.toLowerCase();
-                
-                deviceItems.forEach(item => {
-                    if (!selectedOS || item.dataset.os === selectedOS) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+            if (osFilter && deviceItems.length > 0) {
+                osFilter.addEventListener('change', function() {
+                    const selectedOS = this.value.toLowerCase();
+                    
+                    deviceItems.forEach(item => {
+                        if (!selectedOS || item.dataset.os === selectedOS) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
-            });
-            
+            }
             // Search functionality
             const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                
-                deviceItems.forEach(item => {
-                    const name = item.dataset.name;
-                    const brand = item.dataset.brand;
-                    const model = item.dataset.model;
-                    const os = item.dataset.os;
+            if (searchInput && deviceItems.length > 0) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
                     
-                    if (name.includes(searchTerm) || 
-                        brand.includes(searchTerm) || 
-                        model.includes(searchTerm) ||
-                        os.includes(searchTerm)) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    deviceItems.forEach(item => {
+                        const name = item.dataset.name;
+                        const brand = item.dataset.brand;
+                        const model = item.dataset.model;
+                        const os = item.dataset.os;
+                        
+                        if (name.includes(searchTerm) || 
+                            brand.includes(searchTerm) || 
+                            model.includes(searchTerm) ||
+                            os.includes(searchTerm)) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
-            });
+            }
         });
         
         // Delete confirmation
         function confirmDelete(name, deleteUrl) {
-            document.getElementById('deleteItemName').textContent = name;
-            document.getElementById('confirmDeleteBtn').href = deleteUrl;
+            const deleteItemName = document.getElementById('deleteItemName');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const deleteModalElement = document.getElementById('deleteModal');
             
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            modal.show();
+            if (deleteItemName && confirmDeleteBtn && deleteModalElement) {
+                deleteItemName.textContent = name;
+                confirmDeleteBtn.href = deleteUrl;
+                
+                const modal = new bootstrap.Modal(deleteModalElement);
+                modal.show();
+            }
         }
     </script>
 {% endblock %}
