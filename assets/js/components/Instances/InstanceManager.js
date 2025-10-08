@@ -128,7 +128,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     }
 
     function hasInstancesStillRunning() {
-        return labInstance.deviceInstances.some(i => (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error'));
+        return labInstance.deviceInstances.some(i => (i.state !== 'stopped' && i.state !== 'exported' && i.state !== 'error' && i.state !== 'reset'));
     }
 
     async function onInstanceStateUpdate() {
