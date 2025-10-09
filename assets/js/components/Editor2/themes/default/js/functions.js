@@ -136,89 +136,6 @@ export function addModalWide(title, body, footer, property) {
     $('body > .modal').modal('show');
 }
 
-// Export node(s) config
-/*export function cfg_export(node_id) {
-    var deferred = $.Deferred();
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    var url = '/api/labs' + lab_filename + '/nodes/' + node_id + '/export';
-    var type = 'PUT';
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT * 10,  // Takes a lot of time
-        type: type,
-        url: encodeURI(url),
-        dataType: 'json',
-        success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: config exported.');
-                deferred.resolve(data['data']);
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                deferred.reject(data['message']);
-            }
-        },
-        error: function (data) {
-            // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
-            deferred.reject(message);
-        }
-    });
-    return deferred.promise();
-}*/
-
-// // Export node(s) config recursive
-/*export function recursive_cfg_export(nodes, i) {
-    i = i - 1
-    addMessage('info', nodes[Object.keys(nodes)[i]]['name'] + ': ' + MESSAGES[138])
-    var deferred = $.Deferred();
-    var lab_filename = $('#lab-viewport').attr('data-path');
-    if (typeof nodes[Object.keys(nodes)[i]]['path'] === 'undefined') {
-        var url = '/api/labs' + lab_filename + '/nodes/' + Object.keys(nodes)[i] + '/export';
-    } else {
-        var url = '/api/labs' + lab_filename + '/nodes/' + nodes[Object.keys(nodes)[i]]['path'] + '/export';
-    }
-    logger(1, 'DEBUG: ' + url);
-    var type = 'PUT';
-    $.ajax({
-        cache: false,
-        timeout: TIMEOUT * 10 * i,  // Takes a lot of time
-        type: type,
-        url: encodeURI(url),
-        dataType: 'json',
-        success: function (data) {
-            if (data['status'] == 'success') {
-                logger(1, 'DEBUG: config exported.');
-                addMessage('success', nodes[Object.keys(nodes)[i]]['name'] + ': ' + MESSAGES[79])
-            } else {
-                // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
-                addMessage('danger', nodes[Object.keys(nodes)[i]]['name'] + ': ' + data['message']);
-            }
-            if (i > 0) {
-                recursive_cfg_export(nodes, i);
-            } else {
-                addMessage('info', 'Export All: done');
-            }
-        },
-        error: function (data) {
-            // Server error
-            var message = getJsonMessage(data['responseText']);
-            logger(1, 'DEBUG: server error (' + data['status'] + ') on ' + type + ' ' + url + '.');
-            logger(1, 'DEBUG: ' + message);
-            addMessage('danger', nodes[Object.keys(nodes)[i]]['name'] + ': ' + message);
-            if (i > 0) {
-                recursive_cfg_export(nodes, i);
-            } else {
-                addMessage('info', 'Export All: done');
-            }
-        }
-    });
-    return deferred.promise();
-}*/
-
 // Close lab
 export function closeLab() {
     var deferred = $.Deferred();
@@ -321,6 +238,101 @@ export function deleteNode(id) {
         }
     })
     return deferred.promise();
+}
+
+export function handleNodeFormSubmit(action) {
+    $('body').on('submit', '#form-node-' + action, function(e) {
+        e.preventDefault();
+        
+        var form_data = form2Array('node');
+        var lab_filename = $('#lab-viewport').attr('data-path');
+        
+        logger(1, 'DEBUG: Submitting node form for ' + action);
+        
+        if (action === 'add') {
+            // Création d'un nouveau node
+            var url = '/api/labs/' + lab_filename + '/node';
+            var type = 'POST';
+            
+            $.ajax({
+                cache: false,
+                timeout: TIMEOUT,
+                type: type,
+                url: encodeURI(url),
+                dataType: 'json',
+                data: JSON.stringify(form_data),
+                success: function(data) {
+                    if (data['status'] === 'success') {
+                        logger(1, 'DEBUG: Node created successfully');
+                        
+                        // Fermer la modal
+                        $('.modal').modal('hide');
+                        
+                        // Afficher un message de succès
+                        addMessage('success', 'Node created successfully');
+                        
+                        // IMPORTANT: Recharger la topologie du lab
+                        $.when(printLabTopology()).done(function() {
+                            logger(1, 'DEBUG: Lab topology reloaded after node creation');
+                        }).fail(function(error) {
+                            logger(1, 'ERROR: Failed to reload lab topology - ' + error);
+                            addMessage('danger', 'Failed to refresh topology');
+                        });
+                    } else {
+                        addMessage('danger', data['message'] || 'Failed to create node');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    var message = getJsonMessage(xhr.responseText);
+                    logger(1, 'ERROR: Failed to create node - ' + message);
+                    addMessage('danger', 'Error: ' + message);
+                }
+            });
+            
+        } else if (action === 'edit') {
+            // Modification d'un node existant
+            var node_id = form_data['id'];
+            var url = '/api/labs/' + lab_filename + '/node/' + node_id;
+            var type = 'PUT';
+            
+            $.ajax({
+                cache: false,
+                timeout: TIMEOUT,
+                type: type,
+                url: encodeURI(url),
+                dataType: 'json',
+                data: JSON.stringify(form_data),
+                success: function(data) {
+                    if (data['status'] === 'success') {
+                        logger(1, 'DEBUG: Node updated successfully');
+                        
+                        // Fermer la modal
+                        $('.modal').modal('hide');
+                        
+                        // Afficher un message de succès
+                        addMessage('success', 'Node updated successfully');
+                        
+                        // IMPORTANT: Recharger la topologie du lab
+                        $.when(printLabTopology()).done(function() {
+                            logger(1, 'DEBUG: Lab topology reloaded after node update');
+                        }).fail(function(error) {
+                            logger(1, 'ERROR: Failed to reload lab topology - ' + error);
+                            addMessage('danger', 'Failed to refresh topology');
+                        });
+                    } else {
+                        addMessage('danger', data['message'] || 'Failed to update node');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    var message = getJsonMessage(xhr.responseText);
+                    logger(1, 'ERROR: Failed to update node - ' + message);
+                    addMessage('danger', 'Error: ' + message);
+                }
+            });
+        }
+        
+        return false; // Empêcher le submit par défaut
+    });
 }
 
 // HTML Form to array
@@ -1372,23 +1384,30 @@ export function printFormNode(action, values, fromNodeList) {
     var title = (action == 'add') ? MESSAGES[85] : MESSAGES[86];
     var template_disabled = (values == null || values['template'] == null) ? '' : 'disabled ';
 
-    // Régénérer les templates manquants avant de charger la liste
+    // Afficher un loader pendant la régénération
+    var loadingHtml = '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p>Checking templates...</p></div>';
+    addModal(title, loadingHtml, '', 'second-win');
+
+    // Régénérer les templates manquants AVANT de charger la liste (SYNCHRONE)
     Remotelabz.devices.regenerate_missing_templates_yaml()
         .then(response => {
             logger(1, 'DEBUG: Templates YAML régénérés avec succès');
             if (response.data && response.data.regenerated_count) {
-                logger(1, 'DEBUG: ' + response.data.regenerated_count + ' template(s) régéné ré(s)');
+                logger(1, 'DEBUG: ' + response.data.regenerated_count + ' template(s) régénéré(s)');
+                addMessage('success', response.data.regenerated_count + ' template(s) regenerated');
             }
+            // IMPORTANT: Retourner la promesse pour chaîner correctement
+            return getTemplates(null);
         })
         .catch(error => {
             logger(1, 'WARNING: Impossible de régénérer les templates, continuation quand même');
             console.warn(error);
-        })
-        .finally(() => {
-            // Charger les templates après la tentative de régénération
+            addMessage('warning', 'Could not regenerate templates, using existing ones');
+            // En cas d'erreur, charger quand même les templates existants
             return getTemplates(null);
         })
         .then(function (templates) {
+            // Fermer le loader et afficher le vrai formulaire
             var html = '';
             html += '<form id="form-node-' + action + '">' +
                 '<div class="form-group col-sm-12">' +
@@ -1397,7 +1416,7 @@ export function printFormNode(action, values, fromNodeList) {
                 '<option value="">' + MESSAGES[102] + '</option>';
             
             $.each(templates, function (key, value) {
-                console.log("ID:", key, "Nom:", value);
+                //console.log("ID:", key, "Nom:", value);
                 var valdisabled = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
                 if (!/hided/i.test(value)) {
                     html += '<option value="' + key + '" ' + valdisabled + ' >' + value.replace('.missing', '') + '</option>';
@@ -1426,8 +1445,8 @@ export function printFormNode(action, values, fromNodeList) {
                 if (template != '') {
                     // Getting template only if a valid option is selected (to avoid requests during typewriting)
                     $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
-                        console.log("templates_values:", template_values);
-                        console.log("node_values", node_values);
+                        //console.log("templates_values:", template_values);
+                        //console.log("node_values", node_values);
                         
                         id = (id == null) ? '' : id;
                         var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
@@ -1595,8 +1614,11 @@ export function printFormNode(action, values, fromNodeList) {
             if (action == 'edit') {
                 // If editing a node, disable the select and trigger
                 $('#form-node-template').val(template).change();
-                console.log("template: " + template);
+                //console.log("template: " + template);
             }
+            
+            handleNodeFormSubmit(action);
+
         })
         .catch(function (message) {
             // Cannot get data

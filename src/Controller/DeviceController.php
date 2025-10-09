@@ -605,13 +605,20 @@ class DeviceController extends Controller
         ControlProtocolTypeRepository $controlProtocolTypeRepository, 
         OperatingSystemRepository $operatingSystemRepository )
     {
-        $this->logger->debug("[DeviceController:newActionTest]::add a new device ".$labId);
+        $this->logger->debug("[DeviceController:newActionTest]::add a new device in lab id ".$labId);
 
         $data = json_decode($request->getContent(), true);
         $this->logger->debug("[DeviceController:newActionTest]::data received for this new device:",$data);
-        if ($data["virtuality"] == 0) {
-            preg_match_all('!\d+!', $data["template"], $templateNumber);
-            $sameDevice = $this->deviceRepository->findByTemplateBeginning($templateNumber[0][0]."-");
+
+        preg_match('!(\d+)(.*)!', $data["template"], $templateNumber);
+        $this->logger->debug("[DeviceController:newActionTest]::templateNumber find in the edit of the device ".$templateNumber[1]);
+        $device = $this->deviceRepository->find($templateNumber[1]);
+        if (!array_key_exists("virtuality",$data)) {
+            $data["virtuality"]=$device->getVirtuality();
+        }
+
+        if ($data["virtuality"] === 0) {            
+            $sameDevice = $this->deviceRepository->find($templateNumber[1]);
             if ($sameDevice != null) {
                 $response = new Response();
                 $response->setContent(json_encode([
@@ -721,7 +728,7 @@ class DeviceController extends Controller
         else {
             $device->setDelay(0);
         }
-        $device->setPostFix($data['postfix']);
+        
         $device->setLaunchOrder(0);
         $device->setVirtuality($data['virtuality']);
         if($data['cpu'] != '') {
@@ -894,7 +901,7 @@ class DeviceController extends Controller
             $entityManager->persist($device);
             $entityManager->flush();
             
-            $this->update_yaml($device);
+            $this->update_yaml($device,$oldName);
 
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 200, [], ['api_get_device']);
@@ -1043,6 +1050,9 @@ class DeviceController extends Controller
     #[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
     public function regenerateMissingTemplates(Request $request): JsonResponse
     {
+
+        $this->logger->debug("[DeviceController:regenerateMissingTemplates]::Check template YAML regenerated");
+
         $templatesDir = $this->getParameter('kernel.project_dir') . "/config/templates/";
         $regenerated = [];
         $errors = [];
@@ -1067,13 +1077,14 @@ class DeviceController extends Controller
                     $this->logger->info("Template YAML regenerated for device " . $device->getName());
                     $this->logger->debug("[DeviceController:regenerateMissingTemplates]::Template YAML regenerated for device " . $device->getName()." with id ".$device->getId());
                 } catch (\Exception $e) {
+                    $deviceName = $device->getName();
                     $errors[] = [
                         'device_id' => $device->getId(),
-                        'device_name' => $device->getName(),
+                        'device_name' => $deviceName,
                         'error' => $e->getMessage()
                     ];
-                    
-                    $this->logger->error("Failed to regenerate template YAML for device " . $device->getId(), [
+
+                    $this->logger->error("Failed to regenerate template YAML for device " . $deviceName, [
                         'error' => $e->getMessage()
                     ]);
                 }
@@ -1090,10 +1101,21 @@ class DeviceController extends Controller
     }
    
     #[GET('/api/device/yaml/{id<\d+>}', name: 'api_yaml_device')]
-   	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
-    private function update_yaml($device){
+    #[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    private function update_yaml($device,$oldName=null){
+        $device_name=$device->getName();
+        $this->logger->debug("[DeviceController:update_yaml]::Update_yaml for device ".$device_name);
+
+        $controlProtocolTypes= [];
+        foreach($device->getControlProtocolTypes() as $controlProtocolType) {
+            array_push($controlProtocolTypes, $controlProtocolType->getId());
+        }
+        if ($controlProtocolTypes == []) {
+            $controlProtocolTypes = '';
+        }
+
         $deviceData = [
-                "name" => $device->getName(),
+                "name" => $device_name,
                 //"type" => $device->getType(),
                 "icon" => $device->getIcon(),
                 "operatingSystem" => $device->getOperatingSystem()->getId(),
@@ -1111,15 +1133,16 @@ class DeviceController extends Controller
                 "context" => "remotelabz",
                 "config_script" => "embedded",
                 "ethernet" => 1,
-                "virtuality"=> $virtuality
+                "virtuality"=> $device->getVirtuality()
         ];
-			
+            
         $yamlContent = Yaml::dump($deviceData);
         $fileName = u($device->getName())->camel();
         $oldFileName = u($oldName)->camel();
 
-        $isTemplate == $device->getIsTemplate();
-        if ($isTemplate == true) {
+        $isTemplate = $device->getIsTemplate();
+        $this->logger->debug("[DeviceController:update_yaml]::Variable isTemplate ".$isTemplate);
+        if ($isTemplate == 1) {
             if ($oldName == $device->getName()) {
                 file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
             }
