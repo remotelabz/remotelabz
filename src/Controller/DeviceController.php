@@ -461,11 +461,13 @@ class DeviceController extends Controller
             "brand"=>$device->getBrand(),
             "model"=>$device->getModel(),
             "controlProtocol" => $controlProtocolTypes,
-            //"hypervisor" => $device->getHypervisor()->getId(),
             "operatingSystem" => $device->getOperatingSystem()->getId(),
             "console" => $controlProtocolTypesName,
-            "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate()
+            "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
+            "qemu_options"=>$device->getOtherOptions()
         ];
+        if (!is_null($device->getOperatingSystem()->getArch()))
+            $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
 
         if (isset($uuid)) {
             $data['uuid'] = $uuid;
@@ -571,7 +573,10 @@ class DeviceController extends Controller
                     "context" => "remotelabz",
                     "config_script" => "embedded",
                     "ethernet" => 1,
-                    "virtuality" => $virtuality
+                    "virtuality" => $virtuality,              
+                    "console" => $controlProtocolTypesName,
+                    "qemu_options"=>$device->getOtherOptions(),
+                    "qemu_arch" => $device->getOperatingSystem()->getArch()->getId()
                 ];
 
                 $yamlContent = Yaml::dump($deviceData,2);
@@ -1164,6 +1169,7 @@ class DeviceController extends Controller
     public function updateActionTest(Request $request, int $id, int $labId)
     {
         $this->logger->debug("[DeviceController:updateActionTest]::update the devive ".$id." in lab ".$labId);
+        $entityManager = $this->entityManager;
 
         if (!$lab = $this->labRepository->find($labId)){
             throw new NotFoundHttpException("Lab ".$labId." does not exist.");
@@ -1212,18 +1218,24 @@ class DeviceController extends Controller
         if(isset($data['controlProtocol'])) {
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->removeDevice($device);
-                //$this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
+                $this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
             }
-            $entityManager = $this->entityManager;
+            $device->getControlProtocolTypes()->clear();
+            
             $entityManager->persist($device);
             $entityManager->flush();
 
+            //TODO Check here the violation
+            // Try to add many times the same controlProtocol !
             if(sizeof($data['controlProtocol']) > 0) {
                 foreach($data['controlProtocol'] as $controlProtocolTypeId) {
                     $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
                     $device->addControlProtocolType($controlProtocolType[0]);
                 }
             }
+            
+            $entityManager->persist($device);
+            $entityManager->flush();
         }
             
         if(isset($data['core'])) {
