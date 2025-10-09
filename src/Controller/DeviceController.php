@@ -810,7 +810,6 @@ class DeviceController extends Controller
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
         }
 
-        $isTemplate = $device->getIsTemplate();
         $oldName = $device->getName();
         $virtuality = $device->getVirtuality();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
@@ -891,54 +890,11 @@ class DeviceController extends Controller
                 $controlProtocolTypes = '';
             }
             
-            $deviceData = [
-                "name" => $device->getName(),
-                //"type" => $device->getType(),
-                "icon" => $device->getIcon(),
-                "operatingSystem" => $device->getOperatingSystem()->getId(),
-                "flavor" => $device->getFlavor()->getId(),
-                "controlProtocol" => $controlProtocolTypes,
-                //"hypervisor" => $device->getHypervisor()->getId(),
-                "brand" => $device->getBrand(),
-                "model" => $device->getModel(),
-                "description" => $device->getName(),
-                "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
-                "cpu" => $device->getNbCpu(),
-                "core" => $device->getNbCore(),
-                "socket" => $device->getNbSocket(),
-                "thread" => $device->getNbSocket(),
-                "context" => "remotelabz",
-                "config_script" => "embedded",
-                "ethernet" => 1,
-                "virtuality"=> $virtuality
-            ];
-
-            $yamlContent = Yaml::dump($deviceData);
-            $fileName = u($device->getName())->camel();
-            $oldFileName = u($oldName)->camel();
-            if ($isTemplate == true && $device->getIsTemplate() == true) {
-                if ($oldName == $device->getName()) {
-                    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
-                }
-                else {
-                    if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml")) {
-                        unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml");
-                    }
-                    file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
-                }
-            }
-            else if($isTemplate == true && $device->getIsTemplate() == false) {
-                if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml")) {
-                    unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml");
-                }
-            }
-            else if($isTemplate == false && $device->getIsTemplate() == true) {
-                file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
-            }
-
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
+            
+            $this->update_yaml($device);
 
             if ('json' === $request->getRequestFormat()) {
                 return $this->json($device, 200, [], ['api_get_device']);
@@ -967,6 +923,219 @@ class DeviceController extends Controller
         ]);
     }
 
+    /**
+     * Vérifie la cohérence entre les devices templates en base de données 
+     * et les fichiers YAML dans le répertoire config/templates/
+     * 
+     * @return array Rapport détaillé avec les anomalies détectées
+     */
+    #[Get('/api/devices/check-templates', name: 'api_check_device_templates')]
+    #[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    public function checkTemplatesConsistency(Request $request): JsonResponse
+    {
+        $templatesDir = $this->getParameter('kernel.project_dir') . "/config/templates/";
+        $report = [
+            'status' => 'success',
+            'total_templates_in_db' => 0,
+            'total_yaml_files' => 0,
+            'missing_yaml_files' => [],
+            'orphaned_yaml_files' => [],
+            'valid_templates' => []
+        ];
+
+        // Récupérer tous les devices qui sont des templates
+        $templateDevices = $this->deviceRepository->findBy(['isTemplate' => true]);
+        $report['total_templates_in_db'] = count($templateDevices);
+
+        // Vérifier l'existence des fichiers YAML pour chaque template
+        $expectedFiles = [];
+        foreach ($templateDevices as $device) {
+            $fileName = u($device->getName())->camel();
+            $expectedFile = $device->getId() . "-" . $fileName . ".yaml";
+            $fullPath = $templatesDir . $expectedFile;
+            
+            $expectedFiles[] = $expectedFile;
+            
+            if (!file_exists($fullPath)) {
+                $report['missing_yaml_files'][] = [
+                    'device_id' => $device->getId(),
+                    'device_name' => $device->getName(),
+                    'expected_file' => $expectedFile,
+                    'expected_path' => $fullPath
+                ];
+                $report['status'] = 'warning';
+            } else {
+                $report['valid_templates'][] = [
+                    'device_id' => $device->getId(),
+                    'device_name' => $device->getName(),
+                    'yaml_file' => $expectedFile
+                ];
+            }
+        }
+
+        // Vérifier les fichiers YAML orphelins (qui n'ont pas de device correspondant)
+        if (is_dir($templatesDir)) {
+            $yamlFiles = glob($templatesDir . "*.yaml");
+            $report['total_yaml_files'] = count($yamlFiles);
+            
+            foreach ($yamlFiles as $yamlFile) {
+                $fileName = basename($yamlFile);
+                
+                if (!in_array($fileName, $expectedFiles)) {
+                    // Extraire l'ID du device depuis le nom du fichier
+                    preg_match('/^(\d+)-/', $fileName, $matches);
+                    $deviceId = $matches[1] ?? null;
+                    
+                    $report['orphaned_yaml_files'][] = [
+                        'file_name' => $fileName,
+                        'full_path' => $yamlFile,
+                        'extracted_device_id' => $deviceId,
+                        'device_exists' => $deviceId ? ($this->deviceRepository->find($deviceId) !== null) : false
+                    ];
+                    $report['status'] = 'warning';
+                }
+            }
+        } else {
+            $report['status'] = 'error';
+            $report['error'] = "Le répertoire templates n'existe pas: " . $templatesDir;
+        }
+
+        // Résumé
+        $report['summary'] = [
+            'templates_ok' => count($report['valid_templates']),
+            'missing_files' => count($report['missing_yaml_files']),
+            'orphaned_files' => count($report['orphaned_yaml_files'])
+        ];
+
+        // Déterminer le statut final
+        if (count($report['missing_yaml_files']) > 0 || count($report['orphaned_yaml_files']) > 0) {
+            $report['status'] = 'warning';
+        }
+        if (!empty($report['error'])) {
+            $report['status'] = 'error';
+        }
+
+        $this->logger->info("Template consistency check completed", [
+            'status' => $report['status'],
+            'templates_in_db' => $report['total_templates_in_db'],
+            'yaml_files' => $report['total_yaml_files'],
+            'missing' => count($report['missing_yaml_files']),
+            'orphaned' => count($report['orphaned_yaml_files'])
+        ]);
+
+        if ('json' === $request->getRequestFormat()) {
+            return $this->json($report);
+        }
+
+        /*
+        return $this->render('device/template_check.html.twig', [
+            'report' => $report
+        ]);
+        */
+    }
+
+    /**
+     * Régénère les fichiers YAML manquants pour les devices templates
+     * 
+     * @return JsonResponse
+     */
+    #[Post('/api/devices/regenerate-missing-templates', name: 'api_regenerate_missing_templates')]
+    #[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    public function regenerateMissingTemplates(Request $request): JsonResponse
+    {
+        $templatesDir = $this->getParameter('kernel.project_dir') . "/config/templates/";
+        $regenerated = [];
+        $errors = [];
+
+        // Récupérer tous les devices qui sont des templates
+        $templateDevices = $this->deviceRepository->findBy(['isTemplate' => true]);
+
+        foreach ($templateDevices as $device) {
+            $fileName = u($device->getName())->camel();
+            $fullPath = $templatesDir . $device->getId() . "-" . $fileName . ".yaml";
+            
+            if (!file_exists($fullPath)) {
+                try {
+                    $this->update_yaml($device);
+                    
+                    $regenerated[] = [
+                        'device_id' => $device->getId(),
+                        'device_name' => $device->getName(),
+                        'file_path' => $fullPath
+                    ];
+                    
+                    $this->logger->info("Template YAML regenerated for device " . $device->getName());
+                    $this->logger->debug("[DeviceController:regenerateMissingTemplates]::Template YAML regenerated for device " . $device->getName()." with id ".$device->getId());
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'device_id' => $device->getId(),
+                        'device_name' => $device->getName(),
+                        'error' => $e->getMessage()
+                    ];
+                    
+                    $this->logger->error("Failed to regenerate template YAML for device " . $device->getId(), [
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
+        return $this->json([
+            'status' => empty($errors) ? 'success' : 'partial',
+            'regenerated_count' => count($regenerated),
+            'error_count' => count($errors),
+            'regenerated' => $regenerated,
+            'errors' => $errors
+        ]);
+    }
+   
+    #[GET('/api/device/yaml/{id<\d+>}', name: 'api_yaml_device')]
+   	#[Security("is_granted('ROLE_TEACHER_EDITOR')", message: "Access denied.")]
+    private function update_yaml($device){
+        $deviceData = [
+                "name" => $device->getName(),
+                //"type" => $device->getType(),
+                "icon" => $device->getIcon(),
+                "operatingSystem" => $device->getOperatingSystem()->getId(),
+                "flavor" => $device->getFlavor()->getId(),
+                "controlProtocol" => $controlProtocolTypes,
+                //"hypervisor" => $device->getHypervisor()->getId(),
+                "brand" => $device->getBrand(),
+                "model" => $device->getModel(),
+                "description" => $device->getName(),
+                "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
+                "cpu" => $device->getNbCpu(),
+                "core" => $device->getNbCore(),
+                "socket" => $device->getNbSocket(),
+                "thread" => $device->getNbSocket(),
+                "context" => "remotelabz",
+                "config_script" => "embedded",
+                "ethernet" => 1,
+                "virtuality"=> $virtuality
+        ];
+			
+        $yamlContent = Yaml::dump($deviceData);
+        $fileName = u($device->getName())->camel();
+        $oldFileName = u($oldName)->camel();
+
+        $isTemplate == $device->getIsTemplate();
+        if ($isTemplate == true) {
+            if ($oldName == $device->getName()) {
+                file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+            }
+            else {
+                if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml")) {
+                    unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldFileName . ".yaml");
+                }
+                file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);
+            }
+        }
+        else {
+            if (is_file($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml")) {
+                unlink($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $oldName . ".yaml");
+            }
+        }
+    }
     
 	#[Put('/api/labs/{labId<\d+>}/node/{id<\d+>}', name: 'api_edit_node')]
     public function updateActionTest(Request $request, int $id, int $labId)

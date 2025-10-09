@@ -40,6 +40,8 @@ import { node } from 'prop-types';
 import EasyMDE from 'easymde';
 import 'easymde/dist/easymde.min.css';
 import Dropzone from 'dropzone';
+import Remotelabz from '../../../../API';
+
 
 
 // Basename: given /a/b/c return c
@@ -1357,216 +1359,249 @@ export function printFormSubjectLab(action, values) {
 
 // Node form
 export function printFormNode(action, values, fromNodeList) {
-    logger (1,'action2 = ' + action);
-    console.log('functions.js printFormNode values = ',values);
-    logger (1,'fromNodeList2 = ' + fromNodeList);
-    var zoom = (action == "add") ? $('#zoomslide').slider("value")/100 : 1 ;
+    logger(1, 'action2 = ' + action);
+    console.log('functions.js printFormNode values = ', values);
+    logger(1, 'fromNodeList2 = ' + fromNodeList);
+    
+    var zoom = (action == "add") ? $('#zoomslide').slider("value") / 100 : 1;
     var id = (values == null || values['id'] == null) ? null : values['id'];
-    var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left']/zoom);
-    var top = (values == null || values['top'] == null) ? null : Math.trunc(values['top']/zoom);
+    var left = (values == null || values['left'] == null) ? null : Math.trunc(values['left'] / zoom);
+    var top = (values == null || values['top'] == null) ? null : Math.trunc(values['top'] / zoom);
     var template = (values == null || values['template'] == null) ? null : values['template'];
 
     var title = (action == 'add') ? MESSAGES[85] : MESSAGES[86];
-    var template_disabled = (values == null || values['template'] == null ) ? '' : 'disabled ';
+    var template_disabled = (values == null || values['template'] == null) ? '' : 'disabled ';
 
-    $.when(getTemplates(null)).done(function (templates) {
-        var html = '';
-        html += '<form id="form-node-' + action + '" >'+
-                    '<div class="form-group col-sm-12">'+
-                        '<label class="control-label">' + MESSAGES[84] + '</label>' +
-                            '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">'+
-                                '<option value="">' + MESSAGES[102] + '</option>';
-        $.each(templates, function (key, value) {
-            console.log("ID:", key, "Nom:", value);
-            var valdisabled  = (/missing/i.test(value)) ? 'disabled="disabled"' : '';        
-            if (! /hided/i.test(value) ) html += '<option value="' + key + '" '+ valdisabled +' >' + value.replace('.missing','') + '</option>';
-        });
-        html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
-        
-        // Show the form
-        addModal(title, html, '', 'second-win');
-        $('.selectpicker').selectpicker();
-        if(!fromNodeList){
-            $('.selectpicker-button').trigger('click');
-            $('.selectpicker').selectpicker();
-            setTimeout(function(){
-                $('.bs-searchbox input').focus()
-            }, 500);
-        }
-
-        $('#form-node-template').change(function (e2) {
-            id = (id == '') ? null : id;    // Ugly fix for change template after selection
-            template = $(this).find("option:selected").val();
-            var idTemplate = template.split(/(\d+)/)[1];
-            if (template != '') {
-                // Getting template only if a valid option is selected (to avoid requests during typewriting)
-                $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
-                    // TODO: this event is called twice
-                    console.log("templates_values:",template_values);
-                    console.log("node_values",node_values);
-                    id = (id == null) ? '' : id;
-                    var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
-                    if (action == 'add') {
-                        if (VIRTUALITY == 1) {
-                            // If action == add -> print the nework count input
-                            html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>'+
-                            '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>'+
-                            '</div>';
-                        }
-                    } else {
-                        // If action == edit -> print the network ID
-                        html_data += '<div class="form-group col-sm-12">'+
-                                        '<label class="control-label">' + MESSAGES[92] + '</label>'+
-                                        '<input class="form-control" disabled name="node[id]" value="' + id + '" type="text"/>'+
-                                     '</div>';
-                    }
-
-                    var bothRam = template_values['options'].hasOwnProperty('ram') && template_values['options'].hasOwnProperty('nvram')
-                    var bothConnTypes = template_values['options'].hasOwnProperty('ethernet') && template_values['options'].hasOwnProperty('serial')
-
-                    $.each(template_values['options'], function (key, value) {
-
-                        if(key == 'ram') postName = '(MB)';
-                        if(key == 'nvram') postName = '(KB)';
-                        // Print all options from template
-                        var value_set = (node_values != null && node_values[key] != null) ? node_values[key] : value['value'];
-                        if (value['type'] == 'list') {
-                            var select = '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
-                            if (value['multiple'] != false) {
-                                select = '<select class="selectpicker form-control" name="node[' + key + ']" multiple data-size="5" data-style="selectpicker-button">';
-                            }
-                            // Option is a list
-                            var widthClass = ' col-sm-12 '
-                            if(key == 'image' && action == 'add') widthClass = ' col-sm-7'
-                            if(key == 'qemu_version') {
-                                widthClass = ' col-sm-4 ';
-                                if ( action == 'add' ) value_set = '';
-                            }
-                            if(key == 'qemu_arch') {
-                                widthClass = ' col-sm-4 ';
-                                if ( action == 'add' ) value_set = '';
-                            }
-                            if(key == 'qemu_nic') {
-                                widthClass = ' col-sm-4 ';
-                                if ( action == 'add' ) value_set = '';
-                            }
-                            if (key.startsWith('slot')) widthClass = ' col-sm-6 '
-                            html_data += '<div class="form-group '+widthClass+'">'+
-                                            '<label class=" control-label">' + value['name'] + '</label>'+
-                                            select;
-                            $.each(value['list'], function (list_key, list_value) {
-                                var selected = (list_key == value_set) ? 'selected ' : '';
-                                if(typeof(value_set) == "object") {
-                                    var contain = false;
-                                    value_set.forEach(value => {
-                                        if(list_key == value) {
-                                            contain = true;
-                                            return;
-                                        }
-                                    });
-                                    selected = (contain) ? 'selected ' : '';
-                                    html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
-                                }
-                                else{
-                                    var iconselect = '' ;
-                                    if ( key == "icon" ) { iconselect = 'data-content="<img src=\'/build/editor/images/icons/'+list_value+'\' height=15 width=15>&nbsp;&nbsp;&nbsp;'+list_value+'"' };
-                                    html_data += '<option ' + selected + 'value="' + list_key + '" '+ iconselect +'>' + list_value + '</option>';
-                                }
-                            });
-                            html_data += '</select>';
-                            html_data += '</div>';
-                        } else {
-                            if ( value['type'] == 'checkbox') {
-                                if(key == 'cpulimit') {
-                                    widthClass = ' col-sm-2 ';
-                                    html_data += '<div class="'+widthClass+'" style="padding-right: 0px;">'+
-                                    '<label class="control-label" style="height: 34px;margin-top: 8px;margin-bottom: 0px;">' + value['name'] + '</label>'+
-                                    '</div><div class="form-group col-sm-8" style="padding-left: 0px;" >'+
-                                    '<input type="checkbox"  style="width: 34px;" class="form-control" value='+ values['cpulimit']  +' name="node[' + key + ']" '+ (( values['cpulimit'] == 1) ? 'checked' : '' ) +'/>'+
-                                    '</div>';
-                                }
-                            }
-                            if ( value['type'] == 'boolean') {
-                                html_data += '<div class="form-group col-sm-12">'+
-                                                '<label class=" control-label"> ' + value['name'] + '</label>' + 
-                                                '<div class="form-control">' + value['value']+ '</div>'+
-                                            '</div>';
-                            }
-                            else {
-                                // Option is standard
-                                var widthClass = ' col-sm-12 '
-                                var ram_value = key == 'ram' ? ' (MB)' : key == 'nvram' ? ' (KB)' : ' ';
-                                var postName = '';
-                                if (!bothRam && template_values['options'].hasOwnProperty('cpu') &&
-                                    template_values['options'].hasOwnProperty('ethernet') &&
-                                    template_values['options'].hasOwnProperty('ram')) {
-                                    if (key == 'ram' || key == 'ethernet' || key == 'cpu') widthClass = ' col-sm-4 '
-                                } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
-                                if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
-                                var tpl = '' ;
-                                if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'] ;
-                                if (key == 'qemu_options')  tpl = " ( reset to template value )"
-                                value_set = (key == 'qemu_options')?value_set.replace(/"/g,'&quot;'):value_set;
-                                template_values['options'][key]['value'] = (key == 'qemu_options')?template_values['options'][key]['value'].replace(/"/g,'&quot;'):template_values['options'][key]['value'];
-
-                                html_data += '<div class="form-group'+ widthClass+'">'+
-                                                '<label class=" control-label"> ' + value['name'] + '<a id="link_'+key+'" onClick="javascript:document.getElementById(\'input_'+key+'\').value=\''+template_values['options'][key]['value']+'\';document.getElementById(\'link_'+key+'\').style.visibility=\'hidden\'" style="visibility: '+ (( value_set != template_values['options'][key]['value'] ) ? 'visible':'hidden') +';" >' + tpl + '</a>' + ram_value + '</label>'+
-                                                '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_'+ key  +'" onClick="javascript:document.getElementById(\'link_'+key+'\').style.visibility=\'visible\'""/>'+
-                                            '</div>';
-                                if ( key  == 'qemu_options' ) {
-                                    html_data += '<div class="form-group'+ widthClass+'">'+
-                                                '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value']  + '" type="text" disabled/>'+
-                                            '</div>';
-                                }
-                            }
-                        }
-                    }
-                );
-                    html_data += '<div class="form-group col-sm-6">'+
-                                    '<label class=" control-label">' + MESSAGES[93] + '</label>'+
-                                    '<input class="form-control" name="node[left]" value="' + left + '" type="text"/>'+
-                                 '</div>'+
-                                 '<div class="form-group col-sm-6">'+
-                                    '<label class=" control-label">' + MESSAGES[94] + '</label>'+
-                                    '<input class="form-control" name="node[top]" value="' + top + '" type="text"/>'+
-                                 '</div>';
-
-                    // Show the buttons
-                    $('#form-node-buttons').html('<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + MESSAGES[47] + '</button> <button type="button" class="btn" data-dismiss="modal">' + MESSAGES[18] + '</button></div>');
-
-                    // Show the form
-                    $('#form-node-data').html(html_data);
-                    $('.selectpicker').selectpicker();
-                    if(!fromNodeList){
-                        setTimeout(function(){
-                            $('.selectpicker').selectpicker().data("selectpicker").$button.focus();
-                        }, 500);
-                    }
-                    validateNode();
-                }).fail(function (message1, message2) {
-                    // Cannot get data
-                    if (message1 != null) {
-                        addModalError(message1);
-                    } else {
-                        addModalError(message2)
-                    }
-                    ;
-                });
+    // Régénérer les templates manquants avant de charger la liste
+    Remotelabz.devices.regenerate_missing_templates_yaml()
+        .then(response => {
+            logger(1, 'DEBUG: Templates YAML régénérés avec succès');
+            if (response.data && response.data.regenerated_count) {
+                logger(1, 'DEBUG: ' + response.data.regenerated_count + ' template(s) régéné ré(s)');
             }
+        })
+        .catch(error => {
+            logger(1, 'WARNING: Impossible de régénérer les templates, continuation quand même');
+            console.warn(error);
+        })
+        .finally(() => {
+            // Charger les templates après la tentative de régénération
+            return getTemplates(null);
+        })
+        .then(function (templates) {
+            var html = '';
+            html += '<form id="form-node-' + action + '">' +
+                '<div class="form-group col-sm-12">' +
+                '<label class="control-label">' + MESSAGES[84] + '</label>' +
+                '<select id="form-node-template" class="selectpicker form-control" name="node[template]" data-live-search="true" data-size="auto" data-style="selectpicker-button">' +
+                '<option value="">' + MESSAGES[102] + '</option>';
+            
+            $.each(templates, function (key, value) {
+                console.log("ID:", key, "Nom:", value);
+                var valdisabled = (/missing/i.test(value)) ? 'disabled="disabled"' : '';
+                if (!/hided/i.test(value)) {
+                    html += '<option value="' + key + '" ' + valdisabled + ' >' + value.replace('.missing', '') + '</option>';
+                }
+            });
+            
+            html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
+
+            // Show the form
+            addModal(title, html, '', 'second-win');
+            $('.selectpicker').selectpicker();
+            
+            if (!fromNodeList) {
+                $('.selectpicker-button').trigger('click');
+                $('.selectpicker').selectpicker();
+                setTimeout(function () {
+                    $('.bs-searchbox input').focus()
+                }, 500);
+            }
+
+            $('#form-node-template').change(function (e2) {
+                id = (id == '') ? null : id;    // Ugly fix for change template after selection
+                template = $(this).find("option:selected").val();
+                var idTemplate = template.split(/(\d+)/)[1];
+                
+                if (template != '') {
+                    // Getting template only if a valid option is selected (to avoid requests during typewriting)
+                    $.when(getTemplates(idTemplate), getNodes(id)).done(function (template_values, node_values) {
+                        console.log("templates_values:", template_values);
+                        console.log("node_values", node_values);
+                        
+                        id = (id == null) ? '' : id;
+                        var html_data = '<input name="node[type]" value="' + template_values['type'] + '" type="hidden"/>';
+                        
+                        if (action == 'add') {
+                            if (VIRTUALITY == 1) {
+                                // If action == add -> print the network count input
+                                html_data += '<div class="form-group col-sm-5"><label class=" control-label">' + MESSAGES[113] + '</label>' +
+                                    '<input class="form-control" name="node[count]" max=50 value="1" type="text"/>' +
+                                    '</div>';
+                            }
+                        } else {
+                            // If action == edit -> print the network ID
+                            html_data += '<div class="form-group col-sm-12">' +
+                                '<label class="control-label">' + MESSAGES[92] + '</label>' +
+                                '<input class="form-control" disabled name="node[id]" value="' + id + '" type="text"/>' +
+                                '</div>';
+                        }
+
+                        var bothRam = template_values['options'].hasOwnProperty('ram') && template_values['options'].hasOwnProperty('nvram')
+                        var bothConnTypes = template_values['options'].hasOwnProperty('ethernet') && template_values['options'].hasOwnProperty('serial')
+
+                        $.each(template_values['options'], function (key, value) {
+                            if (key == 'ram') postName = '(MB)';
+                            if (key == 'nvram') postName = '(KB)';
+                            
+                            // Print all options from template
+                            var value_set = (node_values != null && node_values[key] != null) ? node_values[key] : value['value'];
+                            
+                            if (value['type'] == 'list') {
+                                var select = '<select class="selectpicker form-control" name="node[' + key + ']" data-size="5" data-style="selectpicker-button">';
+                                if (value['multiple'] != false) {
+                                    select = '<select class="selectpicker form-control" name="node[' + key + ']" multiple data-size="5" data-style="selectpicker-button">';
+                                }
+                                
+                                // Option is a list
+                                var widthClass = ' col-sm-12 '
+                                if (key == 'image' && action == 'add') widthClass = ' col-sm-7'
+                                if (key == 'qemu_version') {
+                                    widthClass = ' col-sm-4 ';
+                                    if (action == 'add') value_set = '';
+                                }
+                                if (key == 'qemu_arch') {
+                                    widthClass = ' col-sm-4 ';
+                                    if (action == 'add') value_set = '';
+                                }
+                                if (key == 'qemu_nic') {
+                                    widthClass = ' col-sm-4 ';
+                                    if (action == 'add') value_set = '';
+                                }
+                                if (key.startsWith('slot')) widthClass = ' col-sm-6 '
+                                
+                                html_data += '<div class="form-group ' + widthClass + '">' +
+                                    '<label class=" control-label">' + value['name'] + '</label>' +
+                                    select;
+                                
+                                $.each(value['list'], function (list_key, list_value) {
+                                    var selected = (list_key == value_set) ? 'selected ' : '';
+                                    if (typeof (value_set) == "object") {
+                                        var contain = false;
+                                        value_set.forEach(value => {
+                                            if (list_key == value) {
+                                                contain = true;
+                                                return;
+                                            }
+                                        });
+                                        selected = (contain) ? 'selected ' : '';
+                                        html_data += '<option ' + selected + 'value="' + list_key + '">' + list_value + '</option>';
+                                    }
+                                    else {
+                                        var iconselect = '';
+                                        if (key == "icon") {
+                                            iconselect = 'data-content="<img src=\'/build/editor/images/icons/' + list_value + '\' height=15 width=15>&nbsp;&nbsp;&nbsp;' + list_value + '"'
+                                        };
+                                        html_data += '<option ' + selected + 'value="' + list_key + '" ' + iconselect + '>' + list_value + '</option>';
+                                    }
+                                });
+                                html_data += '</select>';
+                                html_data += '</div>';
+                            } else {
+                                if (value['type'] == 'checkbox') {
+                                    if (key == 'cpulimit') {
+                                        widthClass = ' col-sm-2 ';
+                                        html_data += '<div class="' + widthClass + '" style="padding-right: 0px;">' +
+                                            '<label class="control-label" style="height: 34px;margin-top: 8px;margin-bottom: 0px;">' + value['name'] + '</label>' +
+                                            '</div><div class="form-group col-sm-8" style="padding-left: 0px;" >' +
+                                            '<input type="checkbox"  style="width: 34px;" class="form-control" value=' + values['cpulimit'] + ' name="node[' + key + ']" ' + ((values['cpulimit'] == 1) ? 'checked' : '') + '/>' +
+                                            '</div>';
+                                    }
+                                }
+                                if (value['type'] == 'boolean') {
+                                    html_data += '<div class="form-group col-sm-12">' +
+                                        '<label class=" control-label"> ' + value['name'] + '</label>' +
+                                        '<div class="form-control">' + value['value'] + '</div>' +
+                                        '</div>';
+                                }
+                                else {
+                                    // Option is standard
+                                    var widthClass = ' col-sm-12 '
+                                    var ram_value = key == 'ram' ? ' (MB)' : key == 'nvram' ? ' (KB)' : ' ';
+                                    var postName = '';
+                                    
+                                    if (!bothRam && template_values['options'].hasOwnProperty('cpu') &&
+                                        template_values['options'].hasOwnProperty('ethernet') &&
+                                        template_values['options'].hasOwnProperty('ram')) {
+                                        if (key == 'ram' || key == 'ethernet' || key == 'cpu') widthClass = ' col-sm-4 '
+                                    } else if (key == 'ram' || key == 'nvram') widthClass = ' col-sm-6 '
+                                    
+                                    if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
+                                    
+                                    var tpl = '';
+                                    if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'];
+                                    if (key == 'qemu_options') tpl = " ( reset to template value )"
+                                    
+                                    value_set = (key == 'qemu_options') ? value_set.replace(/"/g, '&quot;') : value_set;
+                                    template_values['options'][key]['value'] = (key == 'qemu_options') ? template_values['options'][key]['value'].replace(/"/g, '&quot;') : template_values['options'][key]['value'];
+
+                                    html_data += '<div class="form-group' + widthClass + '">' +
+                                        '<label class=" control-label"> ' + value['name'] + '<a id="link_' + key + '" onClick="javascript:document.getElementById(\'input_' + key + '\').value=\'' + template_values['options'][key]['value'] + '\';document.getElementById(\'link_' + key + '\').style.visibility=\'hidden\'" style="visibility: ' + ((value_set != template_values['options'][key]['value']) ? 'visible' : 'hidden') + ';" >' + tpl + '</a>' + ram_value + '</label>' +
+                                        '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_' + key + '" onClick="javascript:document.getElementById(\'link_' + key + '\').style.visibility=\'visible\'"/>' +
+                                        '</div>';
+                                    
+                                    if (key == 'qemu_options') {
+                                        html_data += '<div class="form-group' + widthClass + '">' +
+                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value'] + '" type="text" disabled/>' +
+                                            '</div>';
+                                    }
+                                }
+                            }
+                        });
+                        
+                        html_data += '<div class="form-group col-sm-6">' +
+                            '<label class=" control-label">' + MESSAGES[93] + '</label>' +
+                            '<input class="form-control" name="node[left]" value="' + left + '" type="text"/>' +
+                            '</div>' +
+                            '<div class="form-group col-sm-6">' +
+                            '<label class=" control-label">' + MESSAGES[94] + '</label>' +
+                            '<input class="form-control" name="node[top]" value="' + top + '" type="text"/>' +
+                            '</div>';
+
+                        // Show the buttons
+                        $('#form-node-buttons').html('<div class="form-group"><div class="col-md-5 col-md-offset-3"><button type="submit" class="btn btn-success">' + MESSAGES[47] + '</button> <button type="button" class="btn" data-dismiss="modal">' + MESSAGES[18] + '</button></div>');
+
+                        // Show the form
+                        $('#form-node-data').html(html_data);
+                        $('.selectpicker').selectpicker();
+                        
+                        if (!fromNodeList) {
+                            setTimeout(function () {
+                                $('.selectpicker').selectpicker().data("selectpicker").$button.focus();
+                            }, 500);
+                        }
+                        validateNode();
+                    }).fail(function (message1, message2) {
+                        // Cannot get data
+                        if (message1 != null) {
+                            addModalError(message1);
+                        } else {
+                            addModalError(message2)
+                        }
+                    });
+                }
+            });
+
+            if (action == 'edit') {
+                // If editing a node, disable the select and trigger
+                $('#form-node-template').val(template).change();
+                console.log("template: " + template);
+            }
+        })
+        .catch(function (message) {
+            // Cannot get data
+            addModalError(message);
         });
-
-        if (action == 'edit') {
-            // If editing a node, disable the select and trigger
-            $('#form-node-template').val(template).change();
-            console.log("template: " + template);
-            //$('#form-node-template').prop('disabled', 'disabled');
-            //$('#form-node-template').val(template).change();
-        }
-
-    }).fail(function (message) {
-        // Cannot get data
-        addModalError(message);
-    });
 }
 
 export function printFormNodeConfigs(values, cb) {

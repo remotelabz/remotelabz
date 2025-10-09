@@ -371,7 +371,16 @@ export class RemotelabzAPI {
          */
         getNbNetworkInterface(id) {
             return axios.get(`/device/${id}/networkinterface`);
+        },
+
+        update_yaml(id) {
+            return axios.get(`/devices/yaml/${id}`);
+        },
+
+        regenerate_missing_templates_yaml() {
+            return axios.post(`/devices/regenerate-missing-templates`);
         }
+
     }
 
     /**
