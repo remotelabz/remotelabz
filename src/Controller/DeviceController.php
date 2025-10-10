@@ -1168,6 +1168,7 @@ class DeviceController extends Controller
 	#[Put('/api/labs/{labId<\d+>}/node/{id<\d+>}', name: 'api_edit_node')]
     public function updateActionTest(Request $request, int $id, int $labId)
     {
+        $user = $this->getUser();
         $this->logger->debug("[DeviceController:updateActionTest]::update the devive ".$id." in lab ".$labId);
         $entityManager = $this->entityManager;
 
@@ -1216,24 +1217,44 @@ class DeviceController extends Controller
             
         }
         if(isset($data['controlProtocol'])) {
+            // Récupérer les IDs des protocoles actuellement associés au device
+            $currentProtocolIds = [];
             foreach ($device->getControlProtocolTypes() as $proto) {
-                $proto->removeDevice($device);
-                $this->logger->debug("Before submit: ".$device->getName()." has control protocol ".$proto->getName());
+                $currentProtocolIds[] = $proto->getId();
             }
-            $device->getControlProtocolTypes()->clear();
             
-            $entityManager->persist($device);
-            $entityManager->flush();
-
-            //TODO Check here the violation
-            // Try to add many times the same controlProtocol !
-            if(sizeof($data['controlProtocol']) > 0) {
-                foreach($data['controlProtocol'] as $controlProtocolTypeId) {
-                    $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
-                    $device->addControlProtocolType($controlProtocolType[0]);
+            // Récupérer les IDs des protocoles demandés
+            $requestedProtocolIds = array_map('intval', $data['controlProtocol']);
+            
+            // Déterminer les protocoles à supprimer (présents actuellement mais pas dans la requête)
+            $protocolsToRemove = array_diff($currentProtocolIds, $requestedProtocolIds);
+            
+            // Déterminer les protocoles à ajouter (présents dans la requête mais pas actuellement)
+            $protocolsToAdd = array_diff($requestedProtocolIds, $currentProtocolIds);
+            
+            // Supprimer les protocoles qui ne sont plus nécessaires
+            if (!empty($protocolsToRemove)) {
+                foreach ($device->getControlProtocolTypes() as $proto) {
+                    if (in_array($proto->getId(), $protocolsToRemove)) {
+                        $proto->removeDevice($device);
+                        $device->removeControlProtocolType($proto);
+                        $this->logger->debug("[DeviceController:updateActionTest]::Removed control protocol: " . $proto->getName() . " from device " . $device->getName());
+                    }
                 }
             }
             
+            // Ajouter les nouveaux protocoles
+            if (!empty($protocolsToAdd)) {
+                foreach ($protocolsToAdd as $protocolId) {
+                    $controlProtocolType = $this->controlProtocolTypeRepository->findById($protocolId);
+                    if ($controlProtocolType && isset($controlProtocolType[0])) {
+                        $device->addControlProtocolType($controlProtocolType[0]);
+                        $this->logger->debug("Added control protocol: " . $controlProtocolType[0]->getName() . " to device " . $device->getName());
+                    }
+                }
+            }
+            
+            // Un seul persist et flush à la fin
             $entityManager->persist($device);
             $entityManager->flush();
         }
@@ -1333,8 +1354,6 @@ class DeviceController extends Controller
             $device->setNbCpu($total);
         }
 
-
-        
         
         $template=$device->getTemplate();
         preg_match('!(\d+)(.*)!',$template , $templateNumber);
@@ -1351,7 +1370,7 @@ class DeviceController extends Controller
         $entityManager->persist($device);
         $entityManager->flush();
 
-        $this->logger->info("Device named" . $device->getName() . " modified");
+        $this->logger->info("Device named " . $device->getName() . " modified by ".$user->getName());
 
         $response = new Response();
         $response->setContent(json_encode([
