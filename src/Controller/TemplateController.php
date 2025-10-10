@@ -362,11 +362,12 @@ class TemplateController extends Controller
     public function listOperatingSystems($virtuality) {
 
         $operatingSystemList= [];
-        $operatingSystems = $this->operatingSystemRepository->findByVirtuality($virtuality);
-        foreach($operatingSystems as $operatingSystem){
-            $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName();
-        }
-        return $operatingSystemList;
+    $operatingSystems = $this->operatingSystemRepository->findByVirtuality($virtuality);
+    foreach($operatingSystems as $operatingSystem){
+        // Ajouter le nom de l'hyperviseur entre parenthèses
+        $operatingSystemList[$operatingSystem->getId()] = $operatingSystem->getName() . ' (' . $operatingSystem->getHypervisor()->getName() . ')';
+    }
+    return $operatingSystemList;
     }
     
 

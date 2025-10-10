@@ -1385,7 +1385,7 @@ export function printFormNode(action, values, fromNodeList) {
     var template_disabled = (values == null || values['template'] == null) ? '' : 'disabled ';
 
     // Afficher un loader pendant la régénération
-    var loadingHtml = '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p>Checking templates...</p></div>';
+    var loadingHtml = '<div id="loading-modal-content" class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p>Checking templates...</p></div>';
     addModal(title, loadingHtml, '', 'second-win');
 
     // Régénérer les templates manquants AVANT de charger la liste (SYNCHRONE)
@@ -1408,6 +1408,7 @@ export function printFormNode(action, values, fromNodeList) {
         })
         .then(function (templates) {
             // Fermer le loader et afficher le vrai formulaire
+            
             var html = '';
             html += '<form id="form-node-' + action + '">' +
                 '<div class="form-group col-sm-12">' +
@@ -1426,7 +1427,10 @@ export function printFormNode(action, values, fromNodeList) {
             html += '</select></div><div id="form-node-data"></div><div id="form-node-buttons"></div></form>';
 
             // Show the form
-            addModal(title, html, '', 'second-win');
+            //addModal(title, html, '', 'second-win');
+            $('.modal.second-win .modal-body').html(html);
+            $('.modal.second-win .modal-title').text(title); // Optionnel: mettre à jour le titre si nécessaire
+    
             $('.selectpicker').selectpicker();
             
             if (!fromNodeList) {
@@ -1548,7 +1552,7 @@ export function printFormNode(action, values, fromNodeList) {
                                     var widthClass = ' col-sm-12 '
                                     var ram_value = key == 'ram' ? ' (MB)' : key == 'nvram' ? ' (KB)' : ' ';
                                     var postName = '';
-                                    
+                                   
                                     if (!bothRam && template_values['options'].hasOwnProperty('cpu') &&
                                         template_values['options'].hasOwnProperty('ethernet') &&
                                         template_values['options'].hasOwnProperty('ram')) {
