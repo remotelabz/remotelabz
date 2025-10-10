@@ -286,7 +286,9 @@ class ServiceController extends Controller
 
         return $this->redirectToRoute('services');
     }
-         #[Route(path: '/admin/resources', name: 'resources', methods: 'GET')]
+
+
+    #[Route(path: '/admin/resources', name: 'resources', methods: 'GET')]
     public function ResourceAction(Request $request,ManagerRegistry $doctrine)
     {
         $workers = $this->configWorkerRepository->findBy(['available' => true]);
