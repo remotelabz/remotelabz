@@ -76,6 +76,8 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         return resettingInstances.has(uuid);
     };
 
+    
+
     //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         fetchLogs()
@@ -346,7 +348,6 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             </Button>);
             break;
 
-
         case 'started':
             controls = (
                 <Button 
@@ -451,7 +452,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                             </Button>
                         }
                         {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login()) && !is_real() && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) && user.id === lab.author.id))
+                         && is_login()) && !is_real() && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
+                         //&& user.id === lab.author.id
+                        ))
                          )
                          &&
                             <a

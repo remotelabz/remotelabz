@@ -1062,6 +1062,7 @@ class InstanceController extends Controller
         $isAdmin = false;
         $isAuthor = false;
         $isTeacher = false;
+        $isGroupAdmin = false;
         $adminConnection = false;
         if ($deviceInstance->getOwnedBy() == 'group'){
             $isOwner = $user->isMemberOf($deviceInstance->getOwner());
@@ -1071,60 +1072,72 @@ class InstanceController extends Controller
         }
 
         $isAuthor = ($deviceInstance->getLabInstance()->getLab()->getAuthor() == $user);
+    
         if ($user instanceof InvitationCode) {
             $isAdmin = false;
         }
         else {
-            $isAdmin =  $user->isAdministrator();
+            $isAdmin = $user->isAdministrator();
         }
 
-        if(!$isAdmin && !$isAuthor && !$isOwner) {
+        $lab = $deviceInstance->getLab();
+        $device = $deviceInstance->getDevice();
+
+        if (!$isAdmin && !$user instanceof InvitationCode) {
+            $isGroupAdmin=$this->isGroupAdmin($deviceInstance);
+        }
+
+        if(!$isAdmin && !$isAuthor && !$isOwner && !$isGroupAdmin) {
             return $this->redirectToRoute("index");
         }
 
         $isTeacherAuthor = (($user->hasRole('ROLE_TEACHER') || $user->hasRole('ROLE_TEACHER_EDITOR')) && $isAuthor); 
-        $lab = $deviceInstance->getLab();
-        $device = $deviceInstance->getDevice();
+        
         if ($device->getHypervisor()->getName() != "physical") {
-            if ($type == "admin") {
+            if ($type === "admin") {
+                // Vérifier que l'utilisateur a les droits admin AVANT de changer le type
+                if (!($isAdmin || $isAuthor || $isGroupAdmin)) {
+                    return $this->redirectToRoute("index");
+                }
                 $adminConnection = true;
                 $type = "login";
             }
         }
-        
-        $port_number=$this->isRemoteAccess($deviceInstance,$type);
+
+        $port_number = $this->isRemoteAccess($deviceInstance, $type);
         if ($port_number) {
-            $this->logger->debug("Creation proxy rule to port ".$port_number);
+            $this->logger->debug("Creation proxy rule to port " . $port_number);
             try {
-                if ($type=="vnc")
-                $this->proxyManager->createDeviceInstanceProxyRoute(
-                    $deviceInstance->getUuid(),
-                    $port_number,
-                    $deviceInstance->getLabInstance()->getWorkerIp()
-                );
-                elseif ($type =="login" && $adminConnection && ($isAdmin || $isAuthor))
-                $this->proxyManager->createContainerInstanceProxyRoute(
-                    $deviceInstance->getUuid(),
-                    $port_number+1,
-                    $deviceInstance->getLabInstance()->getWorkerIp()
-                );
-                else $this->proxyManager->createContainerInstanceProxyRoute(
-                    $deviceInstance->getUuid(),
-                    $port_number,
-                    $deviceInstance->getLabInstance()->getWorkerIp()
-                );
+                if ($type == "vnc") {
+                    $this->proxyManager->createDeviceInstanceProxyRoute(
+                        $deviceInstance->getUuid(),
+                        $port_number,
+                        $deviceInstance->getLabInstance()->getWorkerIp()
+                    );
+                } elseif ($type == "login" && $adminConnection && ($isAdmin || $isAuthor || $isGroupAdmin)) {
+                    // Connexion admin : utiliser port+1
+                    $this->proxyManager->createContainerInstanceProxyRoute(
+                        $deviceInstance->getUuid(),
+                        $port_number + 1,
+                        $deviceInstance->getLabInstance()->getWorkerIp()
+                    );
+                } else {
+                    // Connexion utilisateur standard
+                    $this->proxyManager->createContainerInstanceProxyRoute(
+                        $deviceInstance->getUuid(),
+                        $port_number,
+                        $deviceInstance->getLabInstance()->getWorkerIp()
+                    );
+                }
             } catch (ServerException $exception) {
                 $this->logger->error($exception->getResponse()->getBody()->getContents());
-
-                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
             } catch (RequestException $exception) {
                 $this->logger->error($exception);
-
-                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
             } catch (ConnectException $exception) {
                 $this->logger->error($exception);
-
-                $this->addFlash('danger', 'Cannot forward '.$type.' connection to client. Please try again later or contact an administrator.');
+                $this->addFlash('danger', 'Cannot forward ' . $type . ' connection to client. Please try again later or contact an administrator.');
             }
         }
 
@@ -1151,6 +1164,20 @@ class InstanceController extends Controller
         ]);
     }
 
+
+    private function isGroupAdmin($deviceInstance):bool {
+        $isGroupAdmin=false;
+        $lab = $deviceInstance->getLabInstance()->getLab();
+        $labGroups = $lab->getGroups();
+        
+        foreach ($labGroups as $group) {
+            if ($group->isElevatedUser($this->getUser())) {
+                $isGroupAdmin = true;
+                break;
+            }
+        }
+        return $isGroupAdmin;
+    }
     
 	#[Get('/api/instances/{uuid}/logs', name: 'api_get_instance_logs', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function getLogsAction(Request $request, string $uuid, DeviceInstanceLogRepository $deviceInstanceLogRepository)
