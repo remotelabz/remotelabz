@@ -131,10 +131,14 @@ class InstanceController extends Controller
         $limit = 10;
 
         if ($user->getHighestRole() != "ROLE_USER") {
-            $addFilterForm = $this->createForm(InstanceType::class, ["action"=> "/instances", "method"=>"GET", "filter"=>$filter, "subFilter" => $subFilter]);
+            $addFilterForm = $this->createForm(InstanceType::class, null, [
+                "action" => $this->generateUrl('instances'),
+                "method" => "GET",
+                "filter" => $filter,
+                "subFilter" => $subFilter
+            ]);
             $addFilterForm->handleRequest($request);
-        }
-        else {
+        } else {
             $addFilterForm = null;
         }
 

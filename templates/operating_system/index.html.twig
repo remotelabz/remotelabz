@@ -272,34 +272,38 @@
             
             // Architecture filter
             const archFilter = document.getElementById('archFilter');
-            archFilter.addEventListener('change', function() {
-                const selectedArch = this.value.toLowerCase();
-                
-                osItems.forEach(item => {
-                    if (!selectedArch || item.dataset.arch === selectedArch) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+            if (archFilter) {
+                archFilter.addEventListener('change', function() {
+                    const selectedArch = this.value.toLowerCase();
+                    
+                    osItems.forEach(item => {
+                        if (!selectedArch || item.dataset.arch === selectedArch) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
-            });
+            }
             
             // Search functionality
             const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                
-                osItems.forEach(item => {
-                    const name = item.dataset.name;
-                    const arch = item.dataset.arch;
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
                     
-                    if (name.includes(searchTerm) || arch.includes(searchTerm)) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    osItems.forEach(item => {
+                        const name = item.dataset.name;
+                        const arch = item.dataset.arch;
+                        
+                        if (name.includes(searchTerm) || arch.includes(searchTerm)) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
                 });
-            });
+            }
         });
         
         // Delete confirmation

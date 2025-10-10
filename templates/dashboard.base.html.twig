@@ -114,6 +114,7 @@
     </div>
   </div>
 {% endblock %}
+
 {% block javascripts %}
 {{parent()}}
 <script>
@@ -126,6 +127,5 @@ function resizebar() {
 }
 resizebar();
 window.addEventListener("resize", ()=> resizebar());
-
 </script>
 {% endblock %}
