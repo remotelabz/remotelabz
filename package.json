@@ -2,7 +2,7 @@
   "name": "remotelabz",
   "version": "1.0.0",
   "private": true,
-  "license": "GNU",
+  "license": "GPL-3.0",
   "typings": "assets/js/components/Groups/index.d.ts",
   "scripts": {
     "start": "symfony server:start",

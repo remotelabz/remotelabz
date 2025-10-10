@@ -91,44 +91,65 @@
 {% endblock %}
 
 {% block javascripts %}
+    {{ encore_entry_script_tags('app') }}
+
     {{ parent() }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
-        const filterSelector = document.getElementById('instance_filter');
-        
-    console.log(filterSelector.type);
-        if (filterSelector.type != "hidden") {
-            $('#instance_subFilter').select2({
-            theme: "bootstrap-5",
-        });
-            filterSelector.addEventListener('change', ()=> {
-                $.ajax({
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const filterSelector = document.getElementById('instance_filter');
+
+    if (filterSelector && filterSelector.type !== "hidden") {
+        // Vérifier que jQuery et Select2 sont disponibles
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+            // Initialiser Select2 sur le subFilter
+            jQuery('#instance_subFilter').select2({
+                theme: "bootstrap-5",
+            });
+
+            // Écouter les changements du filtre principal
+            filterSelector.addEventListener('change', function() {
+                const filterValue = this.value;
+                
+                jQuery.ajax({
                     url: "{{ path('api_list_instances_filter') }}",
                     type: "GET",
                     dataType: "JSON",
                     data: {
-                        filter: filterSelector.value
+                        filter: filterValue
                     },
                     success: function (choices) {
                         const subFilterSelect = document.getElementById('instance_subFilter');
-
+                        
+                        // Vider les options existantes
                         subFilterSelect.innerHTML = '';
-
-                        for(let choice of choices){
-                            subFilterSelect.innerHTML += '<option value="' + choice.uuid + '">' + choice.name + '</option>';
-                        }
-
-                        $('#instance_subFilter').select2({
+                        
+                        // Ajouter les nouvelles options
+                        choices.forEach(function(choice) {
+                            const option = document.createElement('option');
+                            option.value = choice.uuid;
+                            option.textContent = choice.name;
+                            subFilterSelect.appendChild(option);
+                        });
+                        
+                        // Réinitialiser Select2
+                        jQuery('#instance_subFilter').select2('destroy');
+                        jQuery('#instance_subFilter').select2({
                             theme: "bootstrap-5",
                         });
                     },
-                    error: function (err) {
-                        console.log(err.response);
+                    error: function (xhr, status, error) {
+                        console.error('Erreur lors du chargement des filtres:', error);
+                        console.error('Réponse:', xhr.responseText);
                     }
                 });
-            })
+            });
+        } else {
+            console.error('jQuery ou Select2 non disponible');
         }
+    }
+});
         
     </script>
 {% endblock %}
