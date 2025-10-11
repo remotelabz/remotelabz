@@ -10,11 +10,11 @@
                 <div class="auto-form-wrapper">
                     <div class="my-3">
                         {% set theme = app.request.cookies.get('theme') %}
-                        {% if theme == 'light' %}
+                        <a href="http://www.remotelabz.com" target="_blank">{% if theme == 'light' %}
                             <img src="{{ asset('build/images/RemoteLabz_logo_black.png') }}" alt="RemoteLabz logo" style="filter: invert(14%) sepia(26%) saturate(4773%) hue-rotate(236deg) brightness(96%) contrast(91%);" />
                         {% else %}
                             <img src="{{ asset('build/images/RemoteLabz_logo_white.png') }}" alt="RemoteLabz logo" />
-                        {% endif %}
+                        {% endif %}</a>
                     </div>
                     {% if error %}
                         <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
@@ -77,15 +77,6 @@
                                 {% endif %}
 
                             </div>
-                            {# Add remember_me and forgot_password #}
-                            {# <div class="form-group d-flex justify-content-between">
-                                <div class="form-check form-check-flat mt-0">
-                                    <label class="form-check-label">
-                                        <input type="checkbox" class="form-check-input" checked> Keep me signed in
-                                    </label>
-                                </div>
-                                <a href="#" class="text-small forgot-password text-black">Forgot Password</a>
-                            </div> #}
                         </form>
                 
                         {% if enable_shibboleth and maintenance == 0%}
@@ -94,7 +85,15 @@
                         {% endif %}
                 </div>
                 <hr>
-                <p class="footer-text text-left">Version {{ version }}</p>
+                <p class="footer-text text-left">
+                Version {{ version }} 
+                {% if commit and commit != 'unknown' %}
+                    ( <a href="{{ commit_url }}" target="_blank" class="text-muted">commit: {{ commit }}</a>, 
+                    <a href="{{ github_url}}/tree/{{branch }}" target="_blank" class="text-muted">branch: {{ branch }}</a> )
+                {% else %}
+                    ( <a href="{{ github_url }}" target="_blank" class="text-muted">RemoteLabz on Github </a> )
+                {% endif %}
+                </p>
             </div>
         </div>
     </div>
