@@ -1,253 +1,95 @@
 import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
-import InstanceList from './InstanceList';
-import { GroupRoles } from '../Groups/Groups';
-import React, { useState, useEffect } from 'react';
-import InstanceOwnerSelect from './InstanceOwnerSelect';
-import { ListGroup, ListGroupItem, Button, Modal, Spinner } from 'react-bootstrap';
-import moment from 'moment/moment';
-import AllInstancesManager from './AllInstancesManager';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import OptimizedInstanceList from './OptimizedInstanceList';
+import { Button } from 'react-bootstrap';
 
 function AllInstancesList(props = {labInstances: [], user:{}}) { 
-    const [labInstances, setLabInstances] = useState(props)
-    const [instancesList, setInstancesList] = useState(null)
-    const [showLeaveLabModal, setShowLeaveLabModal] = useState(false)
-    const [showForceLeaveLabModal, setShowForceLeaveLabModal] = useState(false)
-    const [showForceStopModal, setShowForceStopModal] = useState(false)
-    const [isLoadingInstanceState, setLoadingInstanceState] = useState(false)
+    const [instances, setInstances] = useState([]);
+    const [isLoading, setLoadingInstanceState] = useState(false);
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [filter, setFilter] = useState('all');
+    const [subFilter, setSubFilter] = useState('allInstances');
 
-    let deviceInstancesToStop = [];
+    const limit = 10; // Instances par page (côté serveur)
 
     useEffect(() => {
-        setLoadingInstanceState(true)
-        refreshInstance()
-        const interval = setInterval(refreshInstance, 30000)
+        setLoadingInstanceState(true);
+        refreshInstances();
+        
+        // Polling toutes les 60 secondes (au lieu de 30)
+        const interval = setInterval(refreshInstances, 60000);
+        
         return () => {
-            clearInterval(interval)
-            setLabInstances(null)
-            setLoadingInstanceState(true)
+            clearInterval(interval);
+            setInstances([]);
+            setLoadingInstanceState(false);
         }
-    }, [])
+    }, [filter, subFilter, page]);
 
-    
-    function refreshInstance() {
+    function refreshInstances() {
+        let request;
         
-        let request
-        let filter = document.getElementById("instance_filter").value;
-        let subFilter = document.getElementById("instance_subFilter").value;
-        let page = document.getElementById("instance_page").value;
+        // Récupérer les filtres depuis le DOM s'ils existent
+        const filterElement = document.getElementById("instance_filter");
+        const subFilterElement = document.getElementById("instance_subFilter");
+        const pageElement = document.getElementById("instance_page");
 
-        request = Remotelabz.instances.lab.getAll(filter, subFilter, page);
+        const currentFilter = filterElement?.value || filter || 'all';
+        const currentSubFilter = subFilterElement?.value || subFilter || 'allInstances';
+        const currentPage = parseInt(pageElement?.value || page || 1);
+
+        // API call
+        request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage);
     
-        
         request.then(response => {
-            setLabInstances(
-                response.data
-            )
-
-            if (response.data === "") {
-                const list = <div class="wrapper align-items-center p-3 border-bottom lab-item">
-                                <span class="lab-item-name">
-                                    None
-                                </span>
-                            </div>
-                setInstancesList(list)
-            }
-            else {
-                const list = response.data.map((labInstance) => {
-                    return (
-                    <div className="wrapper align-items-center p-3 border-bottom lab-item" key={labInstance.id} >
-                        <div>
-                            <div>
-                                <a href={`/labs/${labInstance.id}`} className="lab-item-name" title={labInstance.lab.name} data-toggle="tooltip" data-placement="top">
-                                </a>
-                                Lab&nbsp; {labInstance.lab.name}&nbsp;started by
-                                {labInstance !=  null && (labInstance.ownedBy == "user" ? ` user ${labInstance.owner.name}` : 
-                                labInstance.ownedBy == "guest" ? ` guest ${labInstance.owner.mail}` : ` group ${labInstance.owner.name}` )}<br/>
-                            </div>
-                            
-                            <div className="col"><AllInstancesManager props={labInstance} user={props.user}></AllInstancesManager></div>
-                        </div>
-                    </div>)
-                });
-                setInstancesList(list)
-            }
+            setInstances(response.data || []);
+            setLoadingInstanceState(false);
         }).catch(error => {
             if (error.response) {
                 if (error.response.status <= 500) {
-                    setLabInstances(null)
-                    setLoadingInstanceState(false)
+                    setInstances([]);
+                    setLoadingInstanceState(false);
                 } else {
-                    toast.error('An error happened while fetching instance state. If this error persist, please contact an administrator.', {
+                    toast.error('Une erreur est survenue lors de la récupération des instances. Si cette erreur persiste, veuillez contacter un administrateur.', {
                         autoClose: 10000,
                     });
                 }
             }
-        })
+        });
     }
 
-    function checkAll() {
-        const boxes = document.querySelectorAll(".checkLab");
-        let checkAll = document.getElementById("checkAll");
-
-        if (checkAll.checked == true) {
-            for(let box of boxes) {
-                box.checked = true
-            }
-        }
-        else {
-            for(let box of boxes) {
-                box.checked = false
-            }
-        }
-    }
-
-    function hasInstancesStillRunning(labInstance) {
-        return labInstance.deviceInstances.some(i => (i.state != 'stopped') && (i.state != 'exported') && (i.state != 'error') && (i.state != 'reset'));    }
-
-
-    async function onLeaveLab(force) {
-        setShowLeaveLabModal(false)
-        setShowForceLeaveLabModal(false)
-        //setLoadingInstanceState(true)
-        const boxes = document.querySelectorAll(".checkLab");
-        let instancesToDelete = [];
-        let running = false;
-        deviceInstancesToStop = [];
-        let promises = []
-
-        for (var i=0; i<boxes.length; i++) {
-            if (boxes[i].checked) {
-                instancesToDelete.push(boxes[i].value);
-            }
-        }
-
-        if (force == false) {
-            for(let instanceToDelete of instancesToDelete) {
-                promises.push(()=> {return Remotelabz.instances.lab.get(instanceToDelete)
-                    .then((response) => {
-                        if (hasInstancesStillRunning(response.data)) {
-                            running = true;
-                            for(let deviceInstance of response.data.deviceInstances) {
-                                if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
-                                    deviceInstancesToStop.push(deviceInstance);
-                                }
-                            }  
-                            
-                        }                    
-                    })
+    // Fonction de rafraîchissement pour OptimizedInstanceList
+    const handleStateUpdate = useCallback((action, uuid) => {
+        // Appeler l'API appropriée selon l'action
+        if (action === 'start') {
+            Remotelabz.instances.device.start(uuid)
+                .then(() => {
+                    toast.success('Démarrage de l\'instance demandé.');
+                    refreshInstances();
                 })
-            }
-            promises.push(()=>{
-                if (running == true) {
-                    setShowForceLeaveLabModal(true);
-                }
-                else {
-                    onLeaveLab(true);
-                }
-            })
-            promises.reduce((prev, promise) => {
-                return prev
-                  .then(promise)
-                  .catch(err => {
-                    console.warn('err', err.message);
-                    toast.error(err.message, {
-                        autoClose: 10000,
-                    });
-                  });
-              }, Promise.resolve());         
-            
-        }
-
-        else {
-
-            for(let instanceToDelete of instancesToDelete) {
-                try {
-                    Remotelabz.instances.lab.delete(instanceToDelete)
-                    setLabInstances(labInstances.map((instance)=> {
-                        if (instance.uuid == instanceToDelete) {
-                            instance.state = "deleting"
-                        }
-                        return instance
-                    }))
-                } catch (error) {
-                    console.error(error)
-                    
-                    toast.error('An error happened while leaving the lab. Please try again later.', {
-                        autoClose: 10000,
-                    });
-                    //setLoadingInstanceState(false)
-                }
-            }
-        }
-    
-    }
-
-    function stopDevices(leave) {
-        for(let deviceInstanceToStop of deviceInstancesToStop) {
-            try {
-                Remotelabz.instances.device.stop(deviceInstanceToStop.uuid)
-                //setLabInstance({ ...labInstance, state: "deleting" })
-            } catch (error) {
-                console.error(error)
-                
-                toast.error('An error happened while stopping a device. Please try again later.', {
-                    autoClose: 10000,
+                .catch((error) => {
+                    toast.error('Erreur lors du démarrage de l\'instance. Veuillez réessayer plus tard.');
+                    console.error(error);
                 });
-                //setLoadingInstanceState(false)
-            }
-        }
-        if (leave == true) {
-            onLeaveLab(true);
-        }
-    }
-
-    function stopAllDevices() {
-        setShowForceStopModal(false)
-        const boxes = document.querySelectorAll(".checkLab");
-        let labInstancesToStop = [];
-        let running = false;
-        deviceInstancesToStop = [];
-        let promises = []
-
-        for (var i=0; i<boxes.length; i++) {
-            if (boxes[i].checked) {
-                labInstancesToStop.push(boxes[i].value);
-            }
-        }
-
-        for(let labInstanceToStop of labInstancesToStop) {
-            promises.push(()=> {return Remotelabz.instances.lab.get(labInstanceToStop)
-                .then((response) => {
-                    if (hasInstancesStillRunning(response.data)) {
-                        running = true;
-                        for(let deviceInstance of response.data.deviceInstances) {
-                            //console.log(deviceInstance)
-                            if ((deviceInstance.state != 'stopped') && (deviceInstance.state != 'exported') && (deviceInstance.state != 'error') && (deviceInstance.state != 'reset')) {
-                                deviceInstancesToStop.push(deviceInstance);
-                            }
-                        }  
-                        
-                    }                    
+        } else if (action === 'stop') {
+            Remotelabz.instances.device.stop(uuid)
+                .then(() => {
+                    toast.success('Arrêt de l\'instance demandé.');
+                    refreshInstances();
                 })
-            })
+                .catch((error) => {
+                    toast.error('Erreur lors de l\'arrêt de l\'instance. Veuillez réessayer plus tard.');
+                    console.error(error);
+                });
         }
-        promises.push(()=>{
-            if (running == true) {
-                stopDevices(false);
-            }
-        })
-        promises.reduce((prev, promise) => {
-            return prev
-              .then(promise)
-              .catch(err => {
-                console.warn('err', err.message);
-              });
-          }, Promise.resolve());         
-        
-    }
+    }, []);
 
-    return (<>
+    const memoizedInstances = useMemo(() => instances, [instances]);
+
+    return (
+        <>
             <ToastContainer
                 position="top-right"
                 autoClose={5000}
@@ -257,51 +99,47 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 draggable
                 pauseOnFocusLoss={false}
             />
-        {instancesList && labInstances !== "" && (props.user.roles.includes('ROLE_TEACHER') || props.user.roles.includes('ROLE_ADMINISTRATOR') || props.user.roles.includes('ROLE_SUPER_ADMINISTRATOR')) &&
-        <div className="d-flex justify-content-end mb-2">
-            <Button variant="danger" className="ml-2" onClick={() => setShowForceStopModal(true)}>Stop labs</Button>
-            <Button variant="danger" className="ml-2" onClick={() => setShowLeaveLabModal(true)}>Leave labs</Button>
-            <input type="checkbox" value="leaveAll" name="checkAll" id="checkAll" class="ml-4" onClick={checkAll}></input>
-        </div>}
-        {instancesList}  
-        <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Leave labs</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    If you leave these labs, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave these labs ?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={() => onLeaveLab(false)}>Leave</Button>
-                </Modal.Footer>
-            </Modal>
 
-            <Modal show={showForceLeaveLabModal} onHide={() => setShowForceLeaveLabModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Force to Leave labs</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Some instances still have running devices. These devices will be stopped. Do you still want to continue ?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="default" onClick={() => setShowForceLeaveLabModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={() => stopDevices(true)}>Continue</Button>
-                </Modal.Footer>
-            </Modal>
-            <Modal show={showForceStopModal} onHide={() => setShowForceStopModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Force to stop labs</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are you sure you want to stop the devices of the selected labs?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="default" onClick={() => setShowForceStopModal(false)}>Close</Button>
-                    <Button variant="danger" onClick={stopAllDevices}>Continue</Button>
-                </Modal.Footer>
-            </Modal>
-    </>)
+            {/* Filtres (optionnel - garder l'ancien code si nécessaire) */}
+            {/* Les filtres peuvent rester ici pour la compatibilité */}
+
+            {/* Liste virtualisée optimisée */}
+            {memoizedInstances.length > 0 ? (
+                <OptimizedInstanceList
+                    instances={Array.isArray(memoizedInstances) ? memoizedInstances : []}
+                    user={props.user}
+                    onStateUpdate={handleStateUpdate}
+                />
+            ) : (
+                !isLoading && (
+                    <div style={{
+                        padding: '24px',
+                        textAlign: 'center',
+                        color: '#666',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '4px',
+                        margin: '16px'
+                    }}>
+                        <p>Aucune instance disponible</p>
+                    </div>
+                )
+            )}
+
+            {isLoading && (
+                <div style={{
+                    padding: '24px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
+                }}>
+                    <div className="dot-bricks"></div>
+                    <span>Chargement des instances...</span>
+                </div>
+            )}
+        </>
+    );
 }
 
 export default AllInstancesList;

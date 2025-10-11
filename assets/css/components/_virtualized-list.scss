@@ -1,0 +1,417 @@
+// assets/css/components/_virtualized-list.scss
+
+/**
+ * Styles pour react-window (liste virtualisée)
+ * Optimisé pour le rendu haute performance
+ */
+
+.virtualized-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: $content-bg;
+  
+  // En-tête
+  .virtualized-list-header {
+    padding: 16px;
+    border-bottom: $border-property;
+    background-color: $white;
+    flex-shrink: 0;
+    z-index: 2;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2e2e2e;
+    }
+
+    .loading-indicator {
+      font-size: 0.875rem;
+      color: #707070;
+      margin-top: 4px;
+    }
+  }
+
+  // Contenu de la liste virtualisée
+  .virtualized-list-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  // Rangée d'instance
+  .virtualized-instance-row {
+    border-bottom: $border-property;
+    background-color: $white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    transition: background-color $action-transition-duration $action-transition-timing-function;
+
+    &:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    &:hover {
+      background-color: #f0f0f0;
+    }
+
+    // Informations de l'instance (gauche)
+    .instance-info {
+      flex: 1;
+
+      .instance-name {
+        font-weight: 600;
+        color: #2e2e2e;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .instance-uuid {
+        font-size: 0.85rem;
+        color: #999;
+        font-family: monospace;
+        word-break: break-all;
+      }
+
+      .instance-state-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: $white;
+        background-color: #9E9E9E;
+
+        &.state-creating {
+          background-color: #FFA500;
+        }
+
+        &.state-created {
+          background-color: #4CAF50;
+        }
+
+        &.state-deleting {
+          background-color: #FF6B6B;
+        }
+
+        &.state-error {
+          background-color: #F44336;
+        }
+
+        &.state-starting {
+          background-color: #2196F3;
+        }
+
+        &.state-stopping {
+          background-color: #FF9800;
+        }
+
+        &.state-started {
+          background-color: #4CAF50;
+        }
+      }
+    }
+
+    // Actions (droite)
+    .instance-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-shrink: 0;
+
+      button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all $action-transition-duration $action-transition-timing-function;
+        white-space: nowrap;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        &.btn-start {
+          background-color: theme-color(success);
+          color: $white;
+
+          &:hover:not(:disabled) {
+            background-color: theme-color(success-alt);
+          }
+        }
+
+        &.btn-stop {
+          background-color: theme-color(danger);
+          color: $white;
+
+          &:hover:not(:disabled) {
+            background-color: theme-color(danger-alt);
+          }
+        }
+
+        &.btn-details {
+          background-color: theme-color(info);
+          color: $white;
+
+          &:hover:not(:disabled) {
+            background-color: darken(theme-color(info), 10%);
+          }
+        }
+
+        .loading-spinner {
+          display: inline-block;
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: $white;
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+  }
+
+  // Message vide
+  .virtualized-list-empty {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    margin: 16px;
+  }
+}
+
+// Modal pour les détails
+.virtualized-details-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  .modal-content {
+    background-color: $white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: auto;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2e2e2e;
+    }
+
+    .modal-section {
+      margin-bottom: 16px;
+
+      strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #2e2e2e;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        word-break: break-all;
+        font-family: monospace;
+        font-size: 0.9rem;
+      }
+    }
+
+    .logs-container {
+      margin-top: 16px;
+
+      h4 {
+        margin: 0 0 8px 0;
+        font-weight: 600;
+        color: #2e2e2e;
+      }
+
+      pre {
+        background-color: #f5f5f5;
+        padding: 12px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        max-height: 300px;
+        overflow: auto;
+        margin: 0;
+        border: 1px solid #e0e0e0;
+      }
+
+      code {
+        color: #333;
+        display: block;
+        padding: 2px 0;
+
+        &:hover {
+          background-color: #eeeeee;
+        }
+      }
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: $border-property;
+
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all $action-transition-duration $action-transition-timing-function;
+
+        &.btn-close {
+          background-color: #6c757d;
+          color: $white;
+
+          &:hover {
+            background-color: #5a6268;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animation de chargement
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Thème sombre
+[theme="dark"] {
+  .virtualized-list-container {
+    background-color: theme-color("dark");
+
+    .virtualized-list-header {
+      background-color: theme-color("dark");
+      border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%);
+
+      h2 {
+        color: theme-color("light");
+      }
+
+      .loading-indicator {
+        color: #9b9b9b;
+      }
+    }
+
+    .virtualized-instance-row {
+      background-color: theme-color("dark");
+      border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%);
+      color: theme-color("light");
+
+      &:nth-child(even) {
+        background-color: theme-color("dark-lighter");
+      }
+
+      &:hover {
+        background-color: lighten(theme-color("dark-lighter"), 5%);
+      }
+
+      .instance-info {
+        .instance-name {
+          color: theme-color("light");
+        }
+
+        .instance-uuid {
+          color: #9b9b9b;
+        }
+      }
+
+      .instance-actions {
+        button {
+          &.btn-details {
+            background-color: darken(theme-color(info), 10%);
+
+            &:hover:not(:disabled) {
+              background-color: darken(theme-color(info), 15%);
+            }
+          }
+        }
+      }
+    }
+
+    .virtualized-list-empty {
+      background-color: theme-color("dark-lighter");
+      color: #9b9b9b;
+      border-radius: 4px;
+    }
+
+    .virtualized-details-modal {
+      .modal-content {
+        background-color: theme-color("dark");
+        color: theme-color("light");
+
+        h2 {
+          color: theme-color("light");
+        }
+
+        .modal-section {
+          strong {
+            color: theme-color("light");
+          }
+
+          p {
+            color: #9b9b9b;
+          }
+        }
+
+        .logs-container {
+          h4 {
+            color: theme-color("light");
+          }
+
+          pre {
+            background-color: theme-color("dark-lighter");
+            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+          }
+
+          code {
+            color: #52ceab;
+
+            &:hover {
+              background-color: lighten(theme-color("dark-lighter"), 5%);
+            }
+          }
+        }
+
+        .modal-actions {
+          border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+
+          button.btn-close {
+            background-color: darken(#6c757d, 10%);
+
+            &:hover {
+              background-color: darken(#6c757d, 15%);
+            }
+          }
+        }
+      }
+    }
+  }
+}
