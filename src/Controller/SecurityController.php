@@ -105,7 +105,7 @@ class SecurityController extends AbstractController
         if ($lastUsername === null) $lastUsername = "";
                
         $versionData = $this->gitVersionService->getFullVersion();
-        $this->logger->debug('[SecurityController:login]::getFullVersion git version');
+        $this->logger->debug('[SecurityController:login]::getFullVersion git version',$versionData);
 
         return $this->render('security/login.html.twig', 
         [

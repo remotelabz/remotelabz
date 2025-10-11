@@ -48,12 +48,6 @@ class GitVersionService
                 'commit_url' => $this->getCommitUrl($commit),
                 'github_url' => $this->githubRepository,
             ];
-            $this->logger->debug('[GitVersionService:getFullVersion] Git version retrieved', [
-                'version_file' => $result['version_file'],
-                'commit_short' => $result['commit_short'],
-                'branch' => $result['branch'],
-                'commit_url' => $result['commit_url'],
-            ]);
             return $result;
         });
     }
