@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use DateTime;
 use App\Form\NewPasswordType;
+use App\Service\GitVersionService;
 
 use App\Repository\UserRepository;
 use App\Entity\PasswordResetRequest;
@@ -31,6 +32,8 @@ use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+
 
 class SecurityController extends AbstractController
 {
@@ -54,10 +57,17 @@ class SecurityController extends AbstractController
      */
     public $passwordHasher;
 
+    /**
+     * @var GitVersionService
+     */
+    private $gitVersionService;
+
     protected $maintenance;
     protected $general_message;
     protected $contact_mail;
     protected $entityManager;
+     /** @var LoggerInterface $logger */
+    private $logger;
     
 
     public function __construct(UrlGeneratorInterface $urlGenerator,
@@ -67,7 +77,9 @@ class SecurityController extends AbstractController
         bool $maintenance,
         string $general_message = null,
         string $contact_mail,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        GitVersionService $gitVersionService,
+        LoggerInterface $logger
     )
     {
         $this->urlGenerator = $urlGenerator;
@@ -78,6 +90,9 @@ class SecurityController extends AbstractController
         $this->general_message=$general_message;
         $this->contact_mail = $contact_mail;
         $this->entityManager = $entityManager;
+        $this->gitVersionService = $gitVersionService;
+        $this->logger = $logger;
+
     }
 
     #[Route(path: '/login', name: 'login', methods: ['GET', 'POST'])]
@@ -88,16 +103,19 @@ class SecurityController extends AbstractController
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
         if ($lastUsername === null) $lastUsername = "";
-        
-        $version = file_get_contents($kernel->getProjectDir() . '/version');
-        
-        
-        
+               
+        $versionData = $this->gitVersionService->getFullVersion();
+        $this->logger->debug('[SecurityController:login]::getFullVersion git version');
+
         return $this->render('security/login.html.twig', 
         [
             'last_username' => $lastUsername,
             'error' => $error,
-            'version' => $version,
+            'version' => $versionData['version_file'],
+            'commit' => $versionData['commit_short'],
+            'commit_url' => $versionData['commit_url'],
+            'branch' => $versionData['branch'],
+            'github_url' => $versionData['github_url'],
             'maintenance' => $this->maintenance,
             'general_message' => $this->general_message
         ]);

@@ -94,7 +94,13 @@
                         {% endif %}
                 </div>
                 <hr>
-                <p class="footer-text text-left">Version {{ version }}</p>
+                <p class="footer-text text-left">
+                Version {{ version }} 
+                {% if commit %}
+                    (<a href="{{ commit_url }}" target="_blank" class="text-muted">commit: {{ commit }}</a>, 
+                    <a href="{{ github_url }}" target="_blank" class="text-muted">branch: {{ branch }}</a>)
+                {% endif %}
+                </p>
             </div>
         </div>
     </div>

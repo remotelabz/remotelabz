@@ -20,6 +20,8 @@ parameters:
     shibboleth_idp_url: '/Shibboleth.sso'
     shibboleth_remote_user_var: 'eppn'
     api_key_cookie_name: 'bearer'
+    github_repository: 'https://github.com/remotelabz/remotelabz'
+    git_version_cache_expiry: 1 # 20h de cache
 
     app.worker_server: '%env(resolve:WORKER_SERVER)%'
     app.worker_port: '%env(resolve:WORKER_PORT)%'
@@ -139,6 +141,13 @@ services:
         arguments:
            - '%profile_picture_directory%'
            - '@security.token_storage'
+
+    App\Service\GitVersionService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $githubRepository: '%github_repository%'
+            $cacheExpiry: '%git_version_cache_expiry%'
+            $cache: '@cache.app'  # Utilise le cache d'application
 
     App\Security\LoginFormAuthenticator:
         arguments:
