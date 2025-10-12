@@ -12,13 +12,12 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [filter, setFilter] = useState('all');
     const [subFilter, setSubFilter] = useState('allInstances');
 
-    const limit = 10; // Instances par page (côté serveur)
+    const limit = 10;
 
     useEffect(() => {
         setLoadingInstanceState(true);
         refreshInstances();
         
-        // Polling toutes les 60 secondes (au lieu de 30)
         const interval = setInterval(refreshInstances, 60000);
         
         return () => {
@@ -29,9 +28,6 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }, [filter, subFilter, page]);
 
     function refreshInstances() {
-        let request;
-        
-        // Récupérer les filtres depuis le DOM s'ils existent
         const filterElement = document.getElementById("instance_filter");
         const subFilterElement = document.getElementById("instance_subFilter");
         const pageElement = document.getElementById("instance_page");
@@ -40,13 +36,16 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         const currentSubFilter = subFilterElement?.value || subFilter || 'allInstances';
         const currentPage = parseInt(pageElement?.value || page || 1);
 
-        // API call
-        request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage);
+        const request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage);
     
         request.then(response => {
-            setInstances(response.data || []);
+            console.log('[AllInstancesList] Données reçues:', response.data);
+            // S'assurer que les données sont au bon format
+            const formattedInstances = Array.isArray(response.data) ? response.data : [];
+            setInstances(formattedInstances);
             setLoadingInstanceState(false);
         }).catch(error => {
+            console.error('[AllInstancesList] Erreur lors du refresh:', error);
             if (error.response) {
                 if (error.response.status <= 500) {
                     setInstances([]);
@@ -60,9 +59,9 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         });
     }
 
-    // Fonction de rafraîchissement pour OptimizedInstanceList
     const handleStateUpdate = useCallback((action, uuid) => {
-        // Appeler l'API appropriée selon l'action
+        console.log(`[AllInstancesList] Action ${action} sur ${uuid}`);
+        
         if (action === 'start') {
             Remotelabz.instances.device.start(uuid)
                 .then(() => {
@@ -70,7 +69,8 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     refreshInstances();
                 })
                 .catch((error) => {
-                    toast.error('Erreur lors du démarrage de l\'instance. Veuillez réessayer plus tard.');
+                    const errorMsg = error?.response?.data?.message || 'Erreur lors du démarrage de l\'instance.';
+                    toast.error(errorMsg);
                     console.error(error);
                 });
         } else if (action === 'stop') {
@@ -80,14 +80,26 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     refreshInstances();
                 })
                 .catch((error) => {
-                    toast.error('Erreur lors de l\'arrêt de l\'instance. Veuillez réessayer plus tard.');
+                    const errorMsg = error?.response?.data?.message || 'Erreur lors de l\'arrêt de l\'instance.';
+                    toast.error(errorMsg);
+                    console.error(error);
+                });
+        } else if (action === 'reset') {
+            Remotelabz.instances.device.reset(uuid)
+                .then(() => {
+                    toast.success('Réinitialisation de l\'instance demandée.');
+                    refreshInstances();
+                })
+                .catch((error) => {
+                    const errorMsg = error?.response?.data?.message || 'Erreur lors de la réinitialisation de l\'instance.';
+                    toast.error(errorMsg);
                     console.error(error);
                 });
         }
     }, []);
 
     const memoizedInstances = useMemo(() => instances, [instances]);
-    
+    console.log("[AllInstancesList]:memoizedInstances avant le return",memoizedInstances);
     return (
         <>
             <ToastContainer
@@ -100,13 +112,9 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 pauseOnFocusLoss={false}
             />
 
-            {/* Filtres (optionnel - garder l'ancien code si nécessaire) */}
-            {/* Les filtres peuvent rester ici pour la compatibilité */}
-
-            {/* Liste virtualisée optimisée */}
             {memoizedInstances.length > 0 ? (
                 <OptimizedInstanceList
-                    instances={Array.isArray(memoizedInstances) ? memoizedInstances : []}
+                    instances={memoizedInstances}
                     user={props.user}
                     onStateUpdate={handleStateUpdate}
                 />
