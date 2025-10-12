@@ -87,7 +87,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }, []);
 
     const memoizedInstances = useMemo(() => instances, [instances]);
-
+    
     return (
         <>
             <ToastContainer

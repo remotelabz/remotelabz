@@ -2,27 +2,27 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { List } from 'react-window';
 import Remotelabz from '../API';
 
-function VirtualizedInstanceRow({ 
-  index, 
-  style, 
-  data,
-  onLoadDetails,
-  onStateUpdate,
-  openDetailsModal,
-  sharedStates 
-}) {
-  const instance = data?.[index];
-
-  // Guard: if instance is missing, render nothing (react-window may render more slots)
-  useEffect(() => {
-    if (instance && instance.uuid) {
-      onLoadDetails(instance.uuid);
-    }
-  }, [instance?.uuid, onLoadDetails]);
-
+function VirtualizedInstanceRow(props) {
+  const { 
+    index, 
+    style, 
+    instances,
+    onLoadDetails,
+    onStateUpdate,
+    openDetailsModal,
+    sharedStates 
+  } = props;
+  
+  const instance = instances?.[index];
+  
   if (!instance) {
-    return null;
+    return <div style={style}>Chargement...</div>;
   }
+  
+  console.log("instance ligne 22",instance);
+  useEffect(() => {
+    onLoadDetails(instance.uuid);
+  }, [instance.uuid, onLoadDetails]);
 
   const deviceName = sharedStates.deviceCache[instance.uuid]?.name || 'Chargement...';
   const isStarting = sharedStates.startingInstances.has(instance.uuid);
@@ -146,31 +146,24 @@ export default function OptimizedInstanceList({
   const cacheRef = useRef(new Map());
 
   const handleLoadDetails = useCallback((uuid) => {
-    if (!uuid || cacheRef.current.has(uuid)) return;
-
-    const instance = instances.find(i => i && i.uuid === uuid);
-    if (!instance) return;
+    if (cacheRef.current.has(uuid)) return;
 
     cacheRef.current.set(uuid, 'loading');
 
-    const devicePromise = (instance.device && instance.device.id)
-      ? Remotelabz.devices.get(instance.device.id).catch(() => ({ data: { name: instance.device?.name || 'Inconnu' } }))
-      : Promise.resolve({ data: { name: instance.device?.name || 'Inconnu' } });
+    const instance = instances.find(i => i.uuid === uuid);
+    console.log("instance line 154", instance.deviceInstances[0]?.device);
+    if (!instance) return;
 
-    const logsPromise = Remotelabz.instances.device.logs
-      ? Remotelabz.instances.device.logs(uuid).catch(() => ({ data: [] }))
-      : Promise.resolve({ data: [] });
-
-    Promise.all([devicePromise, logsPromise]).then(([deviceRes, logsRes]) => {
+    Promise.all([
+      Remotelabz.devices.get(instance.deviceInstances[0]?.device?.id).catch(() => ({ data: { name: instance.deviceInstances[0]?.device?.name } })),
+      Remotelabz.instances.device.logs(uuid).catch(() => ({ data: [] }))
+    ]).then(([deviceRes, logsRes]) => {
       cacheRef.current.set(uuid, true);
       setSharedStates(prev => ({
         ...prev,
-        deviceCache: { ...(prev?.deviceCache || {}), [uuid]: deviceRes.data || { name: instance.device?.name || 'Inconnu' } },
-        logs: { ...(prev?.logs || {}), [uuid]: logsRes.data || [] }
+        deviceCache: { ...prev.deviceCache, [uuid]: deviceRes.data || { name: instance.deviceInstances[0]?.device?.name  } },
+        logs: { ...prev.logs, [uuid]: logsRes.data || [] }
       }));
-    }).catch(() => {
-      // On any unexpected error make sure cache is not left in 'loading' state
-      cacheRef.current.delete(uuid);
     });
   }, [instances]);
 
@@ -208,7 +201,7 @@ export default function OptimizedInstanceList({
 
   const memoizedInstances = useMemo(() => instances, [instances]);
 
-
+  console.log("memoizedInstances line 203 ",memoizedInstances)
   if (memoizedInstances.length === 0) {
     return <div className="virtualized-list-empty"><p>Aucune instance disponible</p></div>;
   }
@@ -221,25 +214,19 @@ export default function OptimizedInstanceList({
 
       <div className="virtualized-list-content">
         <List
-          height={Math.max(200, (typeof window !== 'undefined' ? window.innerHeight - 200 : 600))}
-          itemCount={memoizedInstances.length}
-          itemSize={90}
-          width={"100%"}
-          itemData={memoizedInstances}
-          itemKey={(index, data) => (data?.[index]?.uuid || index)}
-        >
-          {({ index, style, data }) => (
-            <VirtualizedInstanceRow
-              index={index}
-              style={style}
-              data={data}
-              onLoadDetails={handleLoadDetails}
-              onStateUpdate={handleStateUpdate}
-              openDetailsModal={openDetailsModal}
-              sharedStates={sharedStates}
-            />
-          )}
-        </List>
+          rowComponent={VirtualizedInstanceRow}
+          rowCount={memoizedInstances.length}
+          rowHeight={90}
+          width="100%"
+          height={window.innerHeight - 200}
+          rowProps={{
+            instances: memoizedInstances,
+            onLoadDetails: handleLoadDetails,
+            onStateUpdate: handleStateUpdate,
+            openDetailsModal: openDetailsModal,
+            sharedStates: sharedStates
+          }}
+        />
       </div>
 
       <DetailsModal

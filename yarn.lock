@@ -4664,7 +4664,7 @@ react-transition-group@^4.3.0, react-transition-group@^4.4.1:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-react-window@^2.0:
+react-window@^2:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/react-window/-/react-window-2.2.0.tgz#6473ac28b94aaee35ccc3548c7321f5a418ca99b"
   integrity sha512-Y2L7yonHq6K1pQA2P98wT5QdIsEcjBTB7T8o6Mub12hH9eYppXoYu6vgClmcjlh3zfNcW2UrXiJJJqDxUY7GVw==
