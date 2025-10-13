@@ -356,7 +356,9 @@ export default function OptimizedInstanceList({
               newDeviceCache[uuid] = prev.deviceInstancesCache[uuid];
             }
           });
-          
+          console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newDeviceCache ",newDeviceCache);
+          console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newLabCache ",newLabCache);
+
           return {
             ...prev,
             labCache: newLabCache,
