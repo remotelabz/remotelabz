@@ -440,7 +440,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                         }        
                         {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
                             <Button 
-                                variant="danger" 
+                                variant="warning" 
                                 title="Reset device" 
                                 data-toggle="tooltip" 
                                 data-placement="top" 

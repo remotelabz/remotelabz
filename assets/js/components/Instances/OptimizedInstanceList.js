@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { List } from 'react-window';
 import Remotelabz from '../API';
+import SVG from '../Display/SVG';
+import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
+
 
 function VirtualizedInstanceRow(props) {
   const { 
@@ -120,135 +123,104 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
   return (
     <div className="virtualized-details-modal">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2>{labInfo.name || 'Lab'} - {selectedInstance.state}</h2>
-        </div>
-
-        <div className="modal-section">
-          <strong>UUID Lab:</strong>
-          <p>{selectedInstance.uuid}</p>
-        </div>
-
-        <div className="modal-section">
-          <strong>Propriétaire:</strong>
-          <p>{labInfo.ownerName || 'N/A'}</p>
-        </div>
-
-        <div className="modal-section">
-          <strong>Worker IP:</strong>
-          <p>{labInfo.workerIp || 'N/A'}</p>
-        </div>
-
-        {selectedInstance.createdAt && (
-          <div className="modal-section">
-            <strong>Créé le:</strong>
-            <p>{new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}</p>
-          </div>
-        )}
-
-        {labInfo.network && (
-          <div className="modal-section">
-            <strong>Réseau:</strong>
-            <p>{labInfo.network}</p>
-          </div>
-        )}
-
-        {/* Section Device Instances */}
-        {deviceInstances.length > 0 && (
-          <div className="device-instances-container">
-            <h4>Instances de périphériques ({deviceInstances.length})</h4>
-            <div className="devices-list">
-              {deviceInstances.map((deviceInstance) => (
-                <div key={deviceInstance.uuid} className="device-item">
-                  <div className="device-header">
-                    <div className="device-info">
-                      <span className="device-name">
-                        {deviceInstance.device?.name || 'Appareil inconnu'}
-                      </span>
-                      <span className={`device-state-badge state-${deviceInstance.state}`}>
-                        {deviceInstance.state}
-                      </span>
+              <div className="modal-header">
+                <div class="row">
+                    <div className="w-75">
+                        <h2 className="mb-0">{labInfo.name || 'Lab'}</h2>
+                        <small className="text-muted">Instance: {selectedInstance.uuid}</small>
                     </div>
-                    <button 
-                      className="expand-btn"
-                      onClick={() => setExpandedDevice(expandedDevice === deviceInstance.uuid ? null : deviceInstance.uuid)}
-                    >
-                      {expandedDevice === deviceInstance.uuid ? '▼' : '▶'}
-                    </button>
-                  </div>
-
-                  {expandedDevice === deviceInstance.uuid && (
-                    <div className="device-details">
-                      <div className="detail-row">
-                        <strong>UUID:</strong>
-                        <span>{deviceInstance.uuid}</span>
-                      </div>
-                      <div className="detail-row">
-                        <strong>Processeurs:</strong>
-                        <span>{deviceInstance.nbCpu || 'N/A'}</span>
-                      </div>
-                      {deviceInstance.nbCore && (
-                        <div className="detail-row">
-                          <strong>Cores:</strong>
-                          <span>{deviceInstance.nbCore}</span>
-                        </div>
-                      )}
-                      {deviceInstance.nbSocket && (
-                        <div className="detail-row">
-                          <strong>Sockets:</strong>
-                          <span>{deviceInstance.nbSocket}</span>
-                        </div>
-                      )}
-
-                      {/* Actions pour deviceInstance */}
-                      <div className="device-actions">
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                          <button
-                            className="btn-start-device"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'start'}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'start' ? '...' : 'Démarrer'}
+                    <div className="w-25">
+                          <span className="mr-2">Lab stated:</span>
+                          <span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
+                            {selectedInstance.state}
+                          </span>
+                          <button type="button" className="close" onClick={onClose}>
+                            <span>&times;</span>
                           </button>
-                        )}
-                        {deviceInstance.state === 'started' && (
-                          <button
-                            className="btn-stop-device"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'stop'}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'stop' ? '...' : 'Arrêter'}
-                          </button>
-                        )}
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                          <button
-                            className="btn-reset-device"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'reset'}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'reset' ? '...' : 'Réinitialiser'}
-                          </button>
-                        )}
-                      </div>
                     </div>
-                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div class="row">
+                    <Button 
+                      className="ml-3" 
+                      variant="warning" 
+                      title="Reset device" 
+                      onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
+                      disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
+                    >
+                      {<SVG name="redo" />}
+                    </Button>
 
-        {deviceInstances.length === 0 && (
-          <div className="modal-section">
-            <p>Aucun périphérique dans cette instance</p>
-          </div>
-        )}
+                    <Button 
+                      className="ml-3" 
+                      variant="success" 
+                      title="Start device" 
+                      onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
+                      disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
+                    >
+                      {<SVG name="play" />}
+                    </Button>
+                    <Button 
+                      className="ml-3" 
+                      variant="danger" 
+                      title="Stop device" 
+                      onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
+                      disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
+                    >
+                      {<SVG name="stop" />}
+                    </Button>
+                </div>  
+              </div>
+              <div className="modal-body">            
+              
+                <div className="content-body">
+                  <div className="row">
+                        <div className="col-md-6">
+                          <div className="card">
+                            <div className="card-header">
+                              <h5 className="mb-0">Lab informations</h5>
+                            </div>
+                            <div className="card-body">
+                              <div className="mb-3">
+                                <strong>Propriétaire:</strong>
+                                <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
+                              </div>
+                              <div className="mb-3">
+                                <strong>Worker:</strong>
+                                <p className="text-muted mb-0">{labInfo.workerIp || 'N/A'}</p>
+                              </div>
+                              {selectedInstance.createdAt && (
+                                <div className="mb-3">
+                                  <strong>Créé le:</strong>
+                                  <p className="text-muted mb-0">
+                                    {new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}
+                                  </p>
+                                </div>
+                              )}
+                              {labInfo.network && (
+                                <div className="mb-3">
+                                  <strong>Réseau:</strong>
+                                  <p className="text-muted mb-0">{labInfo.network}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                  </div>
+                </div>
+                  
 
-        <div className="modal-actions">
-          <button className="btn-close" onClick={onClose}>
-            Fermer
-          </button>
-        </div>
+                {deviceInstances.length === 0 && (
+                  <div className="modal-section">
+                    <p>Aucun périphérique dans cette instance</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button className="btn-close" onClick={onClose}>
+                  Fermer
+                </button>
+              </div>
       </div>
     </div>
   );
