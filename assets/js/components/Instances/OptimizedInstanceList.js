@@ -31,7 +31,7 @@ function VirtualizedInstanceRow(props) {
   const isStopping = sharedStates.stoppingInstances.has(`lab-${instance.uuid}`);
   const isResetting = sharedStates.resettingInstances.has(`lab-${instance.uuid}`);
 
-  console.log("[OptimizedInstanceList]instance à afficher",instance);
+  //console.log("[OptimizedInstanceList]instance à afficher",instance);
   return (
     <div style={style} className="virtualized-instance-row">
       <div className="instance-info">
@@ -103,7 +103,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
   const [deviceStates, setDeviceStates] = useState({});
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
-    console.log(`[DetailsModal] Action ${action} sur device ${deviceUuid}`);
+    //console.log(`[DetailsModal] Action ${action} sur device ${deviceUuid}`);
     
     setDeviceStates(prev => ({
       ...prev,
@@ -120,110 +120,196 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
     }, 1500);
   }, [onStateUpdate]);
 
-  return (
-    <div className="virtualized-details-modal">
+return (
+  <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+    <div className="modal-dialog modal-lg" role="document">
       <div className="modal-content">
-              <div className="modal-header">
-                <div class="row">
-                    <div className="w-75">
-                        <h2 className="mb-0">{labInfo.name || 'Lab'}</h2>
-                        <small className="text-muted">Instance: {selectedInstance.uuid}</small>
-                    </div>
-                    <div className="w-25">
-                          <span className="mr-2">Lab stated:</span>
-                          <span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
-                            {selectedInstance.state}
-                          </span>
-                          <button type="button" className="close" onClick={onClose}>
-                            <span>&times;</span>
-                          </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <Button 
-                      className="ml-3" 
-                      variant="warning" 
-                      title="Reset device" 
-                      onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
-                      disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
-                    >
-                      {<SVG name="redo" />}
-                    </Button>
-
-                    <Button 
-                      className="ml-3" 
-                      variant="success" 
-                      title="Start device" 
-                      onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
-                      disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
-                    >
-                      {<SVG name="play" />}
-                    </Button>
-                    <Button 
-                      className="ml-3" 
-                      variant="danger" 
-                      title="Stop device" 
-                      onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
-                      disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
-                    >
-                      {<SVG name="stop" />}
-                    </Button>
-                </div>  
+        {/* Header */}
+        <div className="modal-header border-bottom">
+          <div className="w-100">
+            {/* First row: Instance info and close button */}
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h4 className="mb-0">{labInfo.name || 'Lab'}
+                  &nbsp;<span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
+                {selectedInstance.state}
+                  </span>
+                </h4>
+                <small className="text-muted">Instance: {selectedInstance.uuid}</small>
+                
               </div>
-              <div className="modal-body">            
               
-                <div className="content-body">
-                  <div className="row">
-                        <div className="col-md-6">
-                          <div className="card">
-                            <div className="card-header">
-                              <h5 className="mb-0">Lab informations</h5>
-                            </div>
-                            <div className="card-body">
-                              <div className="mb-3">
-                                <strong>Propriétaire:</strong>
-                                <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
-                              </div>
-                              <div className="mb-3">
-                                <strong>Worker:</strong>
-                                <p className="text-muted mb-0">{labInfo.workerIp || 'N/A'}</p>
-                              </div>
-                              {selectedInstance.createdAt && (
-                                <div className="mb-3">
-                                  <strong>Créé le:</strong>
-                                  <p className="text-muted mb-0">
-                                    {new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}
-                                  </p>
-                                </div>
-                              )}
-                              {labInfo.network && (
-                                <div className="mb-3">
-                                  <strong>Réseau:</strong>
-                                  <p className="text-muted mb-0">{labInfo.network}</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+              <button type="button" className="close" onClick={onClose}>
+                <span>&times;</span>
+              </button>
+            </div>
+            
+            {/* Second row: Action buttons centered */}
+            <div className="d-flex justify-content-center gap-2">
+              {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
+                <button
+                  className="btn btn-sm btn-success"
+                  onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
+                  disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
+                >
+                  {sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                  Start
+                </button>
+              )}
+              
+              {selectedInstance.state === 'started' && (
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
+                  disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
+                >
+                  {sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
+                  Stop
+                </button>
+              )}
+
+              {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
+                <button
+                  className="btn btn-sm btn-warning"
+                  onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
+                  disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
+                >
+                  {sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="modal-body">
+          <div className="content-body">
+            {/* Lab Information Section - 2 columns */}
+            <div className="row mb-4">
+              <div className="col-md-6">
+                <div className="card">
+                  <div className="card-header">
+                    <h5 className="mb-0">Owner</h5>
+                  </div>
+                  <div className="card-body">
+                    <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
                   </div>
                 </div>
-                  
+              </div>
 
-                {deviceInstances.length === 0 && (
-                  <div className="modal-section">
-                    <p>Aucun périphérique dans cette instance</p>
+              <div className="col-md-6">
+                <div className="card">
+                  <div className="card-header">
+                    <h5 className="mb-0">Informations</h5>
                   </div>
-                )}
+                  <div className="card-body">
+                    <div className="mb-2">
+                      <strong>Worker:</strong>
+                      <p className="text-muted mb-0 small">{labInfo.workerIp || 'N/A'}</p>
+                    </div>
+                    {labInfo.network && (
+                      <div>
+                        <strong>Network:</strong>
+                        <p className="text-muted mb-0 small">{labInfo.network}</p>
+                      </div>
+                    )}
+                    {selectedInstance.createdAt && (
+                      <div className="mt-2">
+                        <strong>Created at:</strong>
+                        <p className="text-muted mb-0 small">
+                          {new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div className="modal-actions">
-                <button className="btn-close" onClick={onClose}>
-                  Fermer
-                </button>
+            {/* Device Instances Section */}
+            {deviceInstances.length > 0 && (
+              <div>
+                <h5 className="mb-3">Devices ({deviceInstances.length})</h5>
+                <div className="list-group">
+                  {deviceInstances.map((deviceInstance) => (
+                    <div key={deviceInstance.uuid} className="list-group-item">
+                      <div className="d-flex justify-content-between align-items-start">
+                        {/* Left side: Device name and state on first line, UUID on second */}
+                        <div className="flex-grow-1">
+                          <div className="d-flex align-items-center mb-1">
+                            <h6 className="mb-0 mr-2">
+                              {deviceInstance.device?.name || 'Appareil inconnu'}
+                            </h6>
+                            <span className={`badge badge-${deviceInstance.state === 'started' ? 'success' : deviceInstance.state === 'stopped' ? 'secondary' : 'warning'} badge-sm`}>
+                              {deviceInstance.state}
+                            </span>
+                          </div>
+                          <small className="text-muted d-block">
+                            {deviceInstance.uuid}
+                          </small>
+                        </div>
+
+                        {/* Right side: Action buttons */}
+                        <div className="d-flex gap-1 ml-3">
+                          {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
+                              disabled={deviceStates[deviceInstance.uuid] === 'start'}
+                              title="Démarrer"
+                            >
+                              {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                            </button>
+                          )}
+                          
+                          {deviceInstance.state === 'started' && (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
+                              disabled={deviceStates[deviceInstance.uuid] === 'stop'}
+                              title="Arrêter"
+                            >
+                              {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
+                            </button>
+                          )}
+                          
+                          {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                            <button
+                              className="btn btn-sm btn-warning"
+                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
+                              disabled={deviceStates[deviceInstance.uuid] === 'reset'}
+                              title="Réinitialiser"
+                            >
+                              {deviceStates[deviceInstance.uuid] === 'reset' ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {deviceInstances.length === 0 && (
+              <div className="alert alert-info">
+                <p className="mb-0">Aucun périphérique dans cette instance</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 export default function OptimizedInstanceList({ 
@@ -242,23 +328,60 @@ export default function OptimizedInstanceList({
 
   const cacheRef = useRef(new Map());
 
+  useEffect(() => {
+        console.log('[OptimizedInstanceList] Instances changées, nettoyage du cache');
+        
+        // Créer un Set des UUIDs actuels
+        const currentUuids = new Set(instances.map(i => i.uuid));
+        
+        // Nettoyer les entrées du cache qui ne sont plus dans la liste
+        const newCache = new Map();
+        currentUuids.forEach(uuid => {
+          if (cacheRef.current.has(uuid)) {
+            newCache.set(uuid, true);
+          }
+        });
+        cacheRef.current = newCache;
+        
+        // Nettoyer aussi le state cache
+        setSharedStates(prev => {
+          const newLabCache = {};
+          const newDeviceCache = {};
+          
+          currentUuids.forEach(uuid => {
+            if (prev.labCache[uuid]) {
+              newLabCache[uuid] = prev.labCache[uuid];
+            }
+            if (prev.deviceInstancesCache[uuid]) {
+              newDeviceCache[uuid] = prev.deviceInstancesCache[uuid];
+            }
+          });
+          
+          return {
+            ...prev,
+            labCache: newLabCache,
+            deviceInstancesCache: newDeviceCache
+          };
+        });
+  }, [instances]);
+
   const handleLoadDetails = useCallback((uuid) => {
     if (cacheRef.current.has(uuid)) {
-      console.log(`[OptimizedInstanceList] Cache hit pour ${uuid}`);
+      //console.log(`[OptimizedInstanceList] Cache hit pour ${uuid}`);
       return;
     }
 
-    console.log(`[OptimizedInstanceList] Chargement des détails pour ${uuid}`);
+    //console.log(`[OptimizedInstanceList] Chargement des détails pour ${uuid}`);
 
     const instance = instances.find(i => i.uuid === uuid);
     if (!instance) {
-      console.warn(`[OptimizedInstanceList] Instance ${uuid} non trouvée`);
+      //console.warn(`[OptimizedInstanceList] Instance ${uuid} non trouvée`);
       return;
     }
 
     // Les données sont DÉJÀ dans l'instance reçue de AllInstancesList
     // Pas besoin d'un appel API supplémentaire !
-    console.log(`[OptimizedInstanceList] Données extraites pour ${uuid}:`, instance);
+    //console.log(`[OptimizedInstanceList] Données extraites pour ${uuid}:`, instance);
     
     const labInfo = instance.lab || {};
     const ownerInfo = instance.owner || {};
@@ -285,7 +408,7 @@ export default function OptimizedInstanceList({
   }, [instances]);
 
   const handleStateUpdate = useCallback((action, uuid, type = 'device') => {
-    console.log(`[OptimizedInstanceList] handleStateUpdate - action: ${action}, uuid: ${uuid}, type: ${type}`);
+    //console.log(`[OptimizedInstanceList] handleStateUpdate - action: ${action}, uuid: ${uuid}, type: ${type}`);
     
     if (type === 'lab') {
       if (action === 'start') {
@@ -320,7 +443,7 @@ export default function OptimizedInstanceList({
   }, [onStateUpdateProp]);
 
   const openDetailsModal = useCallback((instance) => {
-    console.log('[OptimizedInstanceList] Ouverture modal pour:', instance);
+    //console.log('[OptimizedInstanceList] Ouverture modal pour:', instance);
     setSelectedInstance(instance);
   }, []);
 
@@ -329,7 +452,7 @@ export default function OptimizedInstanceList({
   if (!Array.isArray(memoizedInstances) || memoizedInstances.length === 0) {
     return <div className="virtualized-list-empty"><p>Aucune instance disponible</p></div>;
   }
-console.log("[OptimizedInstanceList]:memoizedInstances avant le return ",memoizedInstances)
+  //console.log("[OptimizedInstanceList]:memoizedInstances avant le return ",memoizedInstances)
   return (
     <div className="virtualized-list-container">
       <div className="virtualized-list-header">
@@ -340,7 +463,7 @@ console.log("[OptimizedInstanceList]:memoizedInstances avant le return ",memoize
         <List
           rowComponent={VirtualizedInstanceRow}
           rowCount={memoizedInstances.length}
-          rowHeight={90}
+          rowHeight={100}
           width="100%"
           height={window.innerHeight - 200}
           rowProps={{

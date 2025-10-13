@@ -207,6 +207,9 @@ class InstanceController extends Controller
             'json',
             SerializationContext::create()->setGroups(['api_get_lab_instance'])
         );
+
+        $this->logger->debug("[InstanceController:indexAction]::#labInstances return ".count($labInstances));
+        
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
             'props'=> $props,
@@ -220,6 +223,8 @@ class InstanceController extends Controller
     }
 
     private function getLabInstances($filter, $subFilter) {
+        $this->logger->debug("[InstanceController:getLabInstances]::filter ".$filter." and subfiler ".$subFilter);
+        $instances = [];
         if ($subFilter == "allGroups") {
             $instances = $this->fetchLabInstancesByGroup();   
         }
@@ -247,14 +252,29 @@ class InstanceController extends Controller
                 $userType = "admins";
             }
 
+            if ($userType !== "") {
+               $instances = $this->fetchLabInstancesOwnedByUserType($userType);
+            }
+
             $instances = $this->fetchLabInstancesOwnedByUserType($userType);
         }
-        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins") || ($filter == "editor" && $subFilter != "allEditors")) {
-            $instances = $this->fetchLabInstancesByUserUuid($subFilter);
+        else if (($filter == "teacher" && $subFilter != "allTeachers") || 
+             ($filter == "student" && $subFilter != "allStudents") || 
+             ($filter == "admin" && $subFilter != "allAdmins") || 
+             ($filter == "editor" && $subFilter != "allEditors")) {
+        $instances = $this->fetchLabInstancesByUserUuid($subFilter);
         }
-        else if ($filter == "worker" && $subFilter != "allWorkers")
+        else if ($filter == "worker" && $subFilter != "allWorkers") {
             $instances = $this->fetchLabInstancesByWorker($subFilter);
+        }
+        else {
+            // Cas par défaut si aucun filtre ne correspond
+            $this->logger->warning("[InstanceController:getLabInstances]::No matching filter/subfilter - filter: $filter, subFilter: $subFilter");
+        }
+        $instanceCount = is_array($instances) ? count($instances) : 0;
 
+        $this->logger->debug("[InstanceController:getLabInstances]::instances return - count: $instanceCount, data: ",$instances);
+        
         return $instances;
     }
 
@@ -394,6 +414,7 @@ class InstanceController extends Controller
                 "name" => "All instances"
             ]);
         }
+        //$this->logger->debug("[InstanceController:listInstancesFilterAction]::Return json after filter in AllInstancesList",$subFilter);
         return new JsonResponse($subFilter);
     }
 
