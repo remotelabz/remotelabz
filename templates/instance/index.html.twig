@@ -40,6 +40,7 @@
                 {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
                  
                 <div class="d-flex align-items-center mb-2">
+
                     <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
 
                     {% for label, value in field_choices(addFilterForm.filter) %}
@@ -54,6 +55,7 @@
                     </select>
 
                     <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
+                    
                 </div>
                 {{ form_end(addFilterForm) }}
             </div>

@@ -11,7 +11,8 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [totalCount, setTotalCount] = useState(0);
     const [filter, setFilter] = useState('all');
     const [subFilter, setSubFilter] = useState('allInstances');
-
+    const initialLoadRef = useRef(true);
+    
     const limit = 10;
 
     useEffect(() => {
