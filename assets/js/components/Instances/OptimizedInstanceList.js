@@ -43,7 +43,7 @@ function VirtualizedInstanceRow(props) {
         </div>
         <div className="instance-uuid">{instance.uuid}</div>
         <div className="instance-meta">
-          <span>Propriétaire: {labInfo.ownerName || 'N/A'}</span>
+          <span>Owner: {labInfo.ownerName || 'N/A'}</span>
           <span className="ml-2">Worker: {labInfo.workerIp || 'N/A'}</span>
         </div>
       </div>
@@ -54,7 +54,7 @@ function VirtualizedInstanceRow(props) {
             className="btn-start"
             onClick={() => onStateUpdate('start', instance.uuid, 'lab')}
             disabled={isStarting}
-            title="Démarrer lab"
+            title="Start lab"
           >
             {isStarting ? <span className="loading-spinner"></span> : '▶'}
           </button>
@@ -65,7 +65,7 @@ function VirtualizedInstanceRow(props) {
             className="btn-stop"
             onClick={() => onStateUpdate('stop', instance.uuid, 'lab')}
             disabled={isStopping}
-            title="Arrêter lab"
+            title="Stop lab"
           >
             {isStopping ? <span className="loading-spinner"></span> : '⏹'}
           </button>
@@ -76,7 +76,7 @@ function VirtualizedInstanceRow(props) {
             className="btn-reset"
             onClick={() => onStateUpdate('reset', instance.uuid, 'lab')}
             disabled={isResetting}
-            title="Réinitialiser lab"
+            title="Reset lab"
           >
             {isResetting ? <span className="loading-spinner"></span> : '↻'}
           </button>
@@ -86,7 +86,7 @@ function VirtualizedInstanceRow(props) {
           className="btn-details"
           onClick={() => openDetailsModal(instance)}
         >
-          Détails
+          Details
         </button>
       </div>
     </div>
@@ -103,8 +103,6 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
   const [deviceStates, setDeviceStates] = useState({});
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
-    //console.log(`[DetailsModal] Action ${action} sur device ${deviceUuid}`);
-    
     setDeviceStates(prev => ({
       ...prev,
       [deviceUuid]: action
@@ -120,196 +118,264 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
     }, 1500);
   }, [onStateUpdate]);
 
-return (
-  <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-    <div className="modal-dialog modal-lg" role="document">
-      <div className="modal-content">
-        {/* Header */}
-        <div className="modal-header border-bottom">
-          <div className="w-100">
-            {/* First row: Instance info and close button */}
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <div>
-                <h4 className="mb-0">{labInfo.name || 'Lab'}
-                  &nbsp;<span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
-                {selectedInstance.state}
-                  </span>
-                </h4>
-                <small className="text-muted">Instance: {selectedInstance.uuid}</small>
+  return (
+    <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog modal-lg" role="document">
+        <div className="modal-content">
+          {/* Header */}
+          <div className="modal-header border-bottom">
+            <div style={{ width: '100%' }}>
+              {/* First row: Instance info and close button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <h4 style={{ marginBottom: 0 }}>
+                    {labInfo.name || 'Lab'}
+                    &nbsp;
+                    <span className={`badge badge-${selectedInstance.state === 'created' ? 'success' : selectedInstance.state === 'creating' ? 'warning' : 'secondary'}`}>
+                      {selectedInstance.state}
+                    </span>
+                  </h4>
+                  <small style={{ color: '#6c757d' }}>Instance: {selectedInstance.uuid}</small>
+                </div>
                 
+                <button 
+                  type="button" 
+                  className="close" 
+                  onClick={onClose}
+                  style={{ position: 'absolute', right: '1rem', top: '1rem' }}
+                >
+                  <span>&times;</span>
+                </button>
               </div>
               
-              <button type="button" className="close" onClick={onClose}>
-                <span>&times;</span>
-              </button>
-            </div>
-            
-            {/* Second row: Action buttons centered */}
-            <div className="d-flex justify-content-center gap-2">
-              {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
-                <button
-                  className="btn btn-sm btn-success"
-                  onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
-                  disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
-                >
-                  {sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
-                  Start
-                </button>
-              )}
-              
-              {selectedInstance.state === 'started' && (
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
-                  disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
-                >
-                  {sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
-                  Stop
-                </button>
-              )}
+              {/* Second row: Lab action buttons centered */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+                {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
+                  <button
+                    className="btn btn-sm btn-success"
+                    onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
+                    disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
+                  >
+                    {sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '▶'}
+                    Start Lab
+                  </button>
+                )}
+                
+                {selectedInstance.state === 'started' && (
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
+                    disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
+                  >
+                    {sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '⏹'}
+                    Stop Lab
+                  </button>
+                )}
 
-              {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
-                <button
-                  className="btn btn-sm btn-warning"
-                  onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
-                  disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
-                >
-                  {sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
-                  Reset
-                </button>
+                {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
+                  <button
+                    className="btn btn-sm btn-warning"
+                    onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
+                    disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
+                  >
+                    {sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '↻'}
+                    Reset Lab
+                  </button>
+                )}
+              </div>
+
+              {/* Third row: Device action buttons - Always visible */}
+              {deviceInstances.length > 0 && (
+                <div style={{ borderTop: '1px solid #dee2e6', paddingTop: '12px' }}>
+                  <small style={{ color: '#6c757d', display: 'block', marginBottom: '8px' }}>
+                    Actions sur les appareils:
+                  </small>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {deviceInstances.map((deviceInstance) => (
+                      <div key={deviceInstance.uuid} style={{ display: 'flex', gap: '4px' }}>
+                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                          <button
+                            className="btn btn-sm btn-success"
+                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
+                            disabled={deviceStates[deviceInstance.uuid] === 'start'}
+                            title={`Start: ${deviceInstance.device?.name || 'Device'}`}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            {deviceStates[deviceInstance.uuid] === 'start' ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              '▶'
+                            )}
+                          </button>
+                        )}
+                        
+                        {deviceInstance.state === 'started' && (
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
+                            disabled={deviceStates[deviceInstance.uuid] === 'stop'}
+                            title={`Stop: ${deviceInstance.device?.name || 'Device'}`}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            {deviceStates[deviceInstance.uuid] === 'stop' ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              '⏹'
+                            )}
+                          </button>
+                        )}
+                        
+                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                          <button
+                            className="btn btn-sm btn-warning"
+                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
+                            disabled={deviceStates[deviceInstance.uuid] === 'reset'}
+                            title={`Reset: ${deviceInstance.device?.name || 'Device'}`}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            {deviceStates[deviceInstance.uuid] === 'reset' ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              '↻'
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* Body */}
-        <div className="modal-body">
-          <div className="content-body">
-            {/* Lab Information Section - 2 columns */}
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-header">
-                    <h5 className="mb-0">Owner</h5>
-                  </div>
-                  <div className="card-body">
-                    <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-header">
-                    <h5 className="mb-0">Informations</h5>
-                  </div>
-                  <div className="card-body">
-                    <div className="mb-2">
-                      <strong>Worker:</strong>
-                      <p className="text-muted mb-0 small">{labInfo.workerIp || 'N/A'}</p>
+          {/* Body */}
+          <div className="modal-body">
+            <div className="content-body">
+              {/* Lab Information Section - 2 columns */}
+              <div className="row mb-4">
+                <div className="col-md-6">
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Owner</h5>
                     </div>
-                    {labInfo.network && (
-                      <div>
-                        <strong>Network:</strong>
-                        <p className="text-muted mb-0 small">{labInfo.network}</p>
+                    <div className="card-body">
+                      <p className="text-muted mb-0">{labInfo.ownerName || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Informations</h5>
+                    </div>
+                    <div className="card-body">
+                      <div className="mb-2">
+                        <strong>Worker:</strong>
+                        <p className="text-muted mb-0 small">{labInfo.workerIp || 'N/A'}</p>
                       </div>
-                    )}
-                    {selectedInstance.createdAt && (
-                      <div className="mt-2">
-                        <strong>Created at:</strong>
-                        <p className="text-muted mb-0 small">
-                          {new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}
-                        </p>
-                      </div>
-                    )}
+                      {labInfo.network && (
+                        <div>
+                          <strong>Network:</strong>
+                          <p className="text-muted mb-0 small">{labInfo.network}</p>
+                        </div>
+                      )}
+                      {selectedInstance.createdAt && (
+                        <div className="mt-2">
+                          <strong>Created at:</strong>
+                          <p className="text-muted mb-0 small">
+                            {new Date(selectedInstance.createdAt).toLocaleString('fr-FR')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Device Instances Section */}
-            {deviceInstances.length > 0 && (
-              <div>
-                <h5 className="mb-3">Devices ({deviceInstances.length})</h5>
-                <div className="list-group">
-                  {deviceInstances.map((deviceInstance) => (
-                    <div key={deviceInstance.uuid} className="list-group-item">
-                      <div className="d-flex justify-content-between align-items-start">
-                        {/* Left side: Device name and state on first line, UUID on second */}
-                        <div className="flex-grow-1">
-                          <div className="d-flex align-items-center mb-1">
-                            <h6 className="mb-0 mr-2">
-                              {deviceInstance.device?.name || 'Appareil inconnu'}
-                            </h6>
-                            <span className={`badge badge-${deviceInstance.state === 'started' ? 'success' : deviceInstance.state === 'stopped' ? 'secondary' : 'warning'} badge-sm`}>
-                              {deviceInstance.state}
-                            </span>
+              {/* Device Instances Section */}
+              {deviceInstances.length > 0 && (
+                <div>
+                  <h5 className="mb-3">Devices ({deviceInstances.length})</h5>
+                  <div className="list-group">
+                    {deviceInstances.map((deviceInstance) => (
+                      <div key={deviceInstance.uuid} className="list-group-item">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          {/* Left side: Device name and state on first line, UUID on second */}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                              <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
+                                {deviceInstance.device?.name || 'Appareil inconnu'}
+                              </h6>
+                              <span className={`badge badge-${deviceInstance.state === 'started' ? 'success' : deviceInstance.state === 'stopped' ? 'secondary' : 'warning'}`}>
+                                {deviceInstance.state}
+                              </span>
+                            </div>
+                            <small style={{ color: '#6c757d', display: 'block' }}>
+                              {deviceInstance.uuid}
+                            </small>
                           </div>
-                          <small className="text-muted d-block">
-                            {deviceInstance.uuid}
-                          </small>
-                        </div>
 
-                        {/* Right side: Action buttons */}
-                        <div className="d-flex gap-1 ml-3">
-                          {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
-                              disabled={deviceStates[deviceInstance.uuid] === 'start'}
-                              title="Démarrer"
-                            >
-                              {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
-                            </button>
-                          )}
-                          
-                          {deviceInstance.state === 'started' && (
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
-                              disabled={deviceStates[deviceInstance.uuid] === 'stop'}
-                              title="Arrêter"
-                            >
-                              {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
-                            </button>
-                          )}
-                          
-                          {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                            <button
-                              className="btn btn-sm btn-warning"
-                              onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
-                              disabled={deviceStates[deviceInstance.uuid] === 'reset'}
-                              title="Réinitialiser"
-                            >
-                              {deviceStates[deviceInstance.uuid] === 'reset' ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
-                            </button>
-                          )}
+                          {/* Right side: Action buttons */}
+                          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
+                                disabled={deviceStates[deviceInstance.uuid] === 'start'}
+                                title="Démarrer"
+                              >
+                                {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                              </button>
+                            )}
+                            
+                            {deviceInstance.state === 'started' && (
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
+                                disabled={deviceStates[deviceInstance.uuid] === 'stop'}
+                                title="Arrêter"
+                              >
+                                {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
+                              </button>
+                            )}
+                            
+                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                              <button
+                                className="btn btn-sm btn-warning"
+                                onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
+                                disabled={deviceStates[deviceInstance.uuid] === 'reset'}
+                                title="Réinitialiser"
+                              >
+                                {deviceStates[deviceInstance.uuid] === 'reset' ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {deviceInstances.length === 0 && (
-              <div className="alert alert-info">
-                <p className="mb-0">Aucun périphérique dans cette instance</p>
-              </div>
-            )}
+              {deviceInstances.length === 0 && (
+                <div className="alert alert-info">
+                  <p className="mb-0">Aucun périphérique dans cette instance</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            Close
-          </button>
+          {/* Footer */}
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
 
 export default function OptimizedInstanceList({ 
