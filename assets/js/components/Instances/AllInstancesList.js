@@ -9,9 +9,8 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [isLoading, setLoadingInstanceState] = useState(false);
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-    const [filter, setFilter] = useState('all');
-    const [subFilter, setSubFilter] = useState('allInstances');
-    const initialLoadRef = useRef(true);
+    const [filter, setFilter] = useState(props.filter || 'all');
+    const [subFilter, setSubFilter] = useState(props.subFilter || 'allInstances');
     
     const limit = 10;
 

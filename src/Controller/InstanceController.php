@@ -201,8 +201,10 @@ class InstanceController extends Controller
         }
         
         $instanceManagerProps = [
-            'labInstances' =>$AllLabInstances,
-            'user'=> $this->getUser()
+            'labInstances' => $AllLabInstances,
+            'user' => $this->getUser(),
+            'filter' => $filter,
+            'subFilter' => $subFilter
         ];
         $props=$serializer->serialize(
             $instanceManagerProps,

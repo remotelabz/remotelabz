@@ -92,18 +92,21 @@ class InstanceType extends AbstractType
             ]);
 
         // Utiliser un FormEvent pour remplir les choix du subFilter en fonction du filter
-        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($user) {
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($user, $options) {
             $form = $event->getForm();
             $data = $event->getData();
             
-            $filter = $data['filter'] ?? 'none';
+            // Utiliser les options passées au formulaire si aucune donnée n'est disponible
+            $filter = $data['filter'] ?? $options['filter'] ?? 'none';
+            $currentSubFilter = $data['subFilter'] ?? $options['subFilter'] ?? 'allInstances';
+            
             $subFilterChoices = $this->getSubFilterChoices($filter, $user);
             
             $form->add('subFilter', ChoiceType::class, [
                 "expanded" => false,
                 "multiple" => false,
                 "label" => false,
-                "data" => $data['subFilter'] ?? 'allInstances',
+                "data" => $currentSubFilter, // Garder la valeur reçue
                 "attr" => [
                     "class" => "subFilter form-control"
                 ],
