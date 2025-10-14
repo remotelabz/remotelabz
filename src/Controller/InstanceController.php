@@ -108,7 +108,6 @@ class InstanceController extends Controller
     }
 
     
-	#[Get('/api/instances', name: 'api_get_instances')]
 	#[Security("is_granted('ROLE_USER')", message: "Access denied.")]
     #[Route(path: '/instances', name: 'instances')]
     public function indexAction(
@@ -175,10 +174,6 @@ class InstanceController extends Controller
             throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
         }
 
-        if ('json' === $request->getRequestFormat()) {            
-            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
-        }
-
         $labInstances=[];
         
         foreach ( $AllLabInstances as $instance){
@@ -208,8 +203,8 @@ class InstanceController extends Controller
             SerializationContext::create()->setGroups(['api_get_lab_instance'])
         );
 
-        $this->logger->debug("[InstanceController:indexAction]::#labInstances return ".count($labInstances));
-        
+        $this->logger->debug("[InstanceController:indexAction]::#labInstances return outside json ".count($labInstances));
+
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
             'props'=> $props,
@@ -220,6 +215,47 @@ class InstanceController extends Controller
             'filter' => $filter,
             'subFilter' => $subFilter,
         ]);
+    }
+
+    #[Get('/api/instances', name: 'api_get_instances')]
+    #[Security("is_granted('ROLE_USER')", message: "Access denied.",  methods: 'GET')]
+    public function apiIndexAction(Request $request, SerializerInterface $serializer)
+    {
+        $user = $this->getUser();
+        $instance = $request->query->all('instance');
+        
+        $filter = $instance ? $instance['filter'] : "none";
+        $subFilter = $instance ? $instance['subFilter'] : "allInstances";
+        $page = (int)$request->query->get('page', 1);
+        $limit = 10;
+
+        $this->logger->debug("[InstanceController:apiIndexAction]::subfilter parameter passed ".$subFilter);
+
+        if($subFilter == "allInstances") {
+            if ($user->isAdministrator()) {
+                $instances = $this->labInstanceRepository->findAll();
+            } else {
+                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            }
+        } else {
+            if ($user->getHighestRole() == "ROLE_USER") {
+                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            } else {
+                $instances = $this->getLabInstances($filter, $subFilter);
+            }
+        }
+
+        $AllLabInstances = [];
+        foreach ($instances as $instance) {
+            array_push($AllLabInstances, $instance);
+        }
+
+        $count = count($AllLabInstances);
+        $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
+
+        $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with ".count($AllLabInstances)." instances");
+        
+        return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
     }
 
     private function getLabInstances($filter, $subFilter) {
@@ -280,7 +316,7 @@ class InstanceController extends Controller
 
     
 	#[Get('/api/filter', name: 'api_list_instances_filter')]
-	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'GET')]
     public function listInstancesFilterAction(
         Request $request)
     {
@@ -420,6 +456,8 @@ class InstanceController extends Controller
 
     
 	#[Post('/api/instances/create', name: 'api_create_instance')]
+  	#[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
+
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
         #$labUuid = $request->request->get('lab');
