@@ -76,7 +76,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         } else if (action === 'stop') {
             Remotelabz.instances.device.stop(uuid)
                 .then(() => {
-                    toast.success('Arrêt de l\'instance demandé.');
+                    toast.success('Stopping device');
                     refreshInstances();
                 })
                 .catch((error) => {

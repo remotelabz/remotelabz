@@ -8,7 +8,8 @@ import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
-
+import { fetchDeviceLogs,   startLogsPolling,   stopLogsPolling,  formatLogEntry,  getLastLogs } from './deviceLogsHelpers';
+import DeviceLogs from './DeviceLogs';
 
 const api = API.getInstance();
 
@@ -82,17 +83,29 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
 
     //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
-        fetchLogs()
-        //Collect log every 30 seconds
-        const interval = setInterval(fetchLogs, 30000)
-        Remotelabz.devices.get(instance.device.id).then(response => {
-            setDevice(response.data)
-            setLoading(false) // Use to load all devices in lab
-        })
+        // Charger le device
+        Remotelabz.devices.get(instance.device.id)
+            .then(response => {
+            setDevice(response.data);
+            setLoading(false);
+            })
+            .catch(error => {
+            console.error('Error loading device:', error);
+            setLoading(false);
+            });
+
+        // Lancer le polling des logs
+        const logsIntervalId = startLogsPolling(
+            instance.uuid,
+            (logs) => setLogs(logs),
+            30000 // 30 secondes
+        );
+
+        // Cleanup
         return () => {
-            clearInterval(interval)
-        }
-    }, [instance])
+            stopLogsPolling(logsIntervalId);
+        };
+    }, [instance]);
 
     useEffect(() => {
         // Nettoyer les états de loading quand l'instance change d'état
@@ -109,6 +122,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
     }, [instance.state]);
 
+    /*
     function fetchLogs() {
         return Remotelabz.instances.device.logs(instance.uuid).then(response => {
             setLogs(response.data);
@@ -122,7 +136,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             }
         });
     }
-
+*/
     function startDevice(deviceInstance) {
         setInstanceStarting(deviceInstance.uuid, true);
         Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
@@ -542,13 +556,12 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                         }
                     </div>
                 </div>
-                {(instance.state !== 'stopped' && showLogs) && 
-                    <pre className="d-flex flex-column mt-2">
-                        {(instance.state != 'stopped' && logs) && logs.map((log, index) => {
-                            return <code className="p-1" key={log.id}>[{log.createdAt}] {log.content}</code>;
-                        })}
-                    </pre>
-                }
+                <DeviceLogs 
+                    logs={logs} 
+                    showLogs={showLogs} 
+                    maxLogs={50}
+                    searchable={true}
+                />
 
                 {(instance.state == 'stopped' && showExport) &&
                     <InstanceExport instance={instance} exportTemplate={exportDeviceTemplate} type="device"></InstanceExport>

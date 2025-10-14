@@ -5,6 +5,8 @@ import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
 import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
 import InstanceStateBadge from './InstanceStateBadge';
+import { fetchDeviceLogs,   startLogsPolling,   stopLogsPolling,  formatLogEntry,  getLastLogs } from './deviceLogsHelpers';
+import DeviceLogs from './DeviceLogs';
 
 function VirtualizedInstanceRow(props) {
   const { 
@@ -102,6 +104,9 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
   
   const [expandedDevice, setExpandedDevice] = useState(null);
   const [deviceStates, setDeviceStates] = useState({});
+  const [deviceLogs, setDeviceLogs] = useState({}); // Logs par device UUID
+  const [expandedLogs, setExpandedLogs] = useState({}); // Logs visibles par device UUID
+  const logsIntervalsRef = useRef({}); // Références aux intervals de polling
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
     setDeviceStates(prev => ({
@@ -118,6 +123,38 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
       }));
     }, 1500);
   }, [onStateUpdate]);
+
+  // Gérer les logs pour chaque device
+  useEffect(() => {
+    deviceInstances.forEach(device => {
+      // Arrêter le polling précédent s'il existe
+      if (logsIntervalsRef.current[device.uuid]) {
+        stopLogsPolling(logsIntervalsRef.current[device.uuid]);
+      }
+
+      // Démarrer un nouveau polling si l'appareil n'est pas arrêté
+      if (device.state !== 'stopped') {
+        logsIntervalsRef.current[device.uuid] = startLogsPolling(
+          device.uuid,
+          (logs) => {
+            setDeviceLogs(prev => ({
+              ...prev,
+              [device.uuid]: logs
+            }));
+          },
+          30000 // 30 secondes
+        );
+      }
+    });
+
+    // Cleanup
+    return () => {
+      Object.values(logsIntervalsRef.current).forEach(intervalId => {
+        stopLogsPolling(intervalId);
+      });
+      logsIntervalsRef.current = {};
+    };
+  }, [deviceInstances]);
 
   const refreshTimerRef = useRef(null);
 
@@ -137,6 +174,12 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
     };
   }, [selectedInstance, onRefreshDetails]);
 
+  const toggleLogs = (deviceUuid) => {
+    setExpandedLogs(prev => ({
+      ...prev,
+      [deviceUuid]: !prev[deviceUuid]
+    }));
+  };
 
   return (
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -289,7 +332,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                               <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
-                                {deviceInstance.device?.name || 'Unknow device'}
+                                {deviceInstance.device?.name || 'Unknown device'}
                               </h6>
                               <InstanceStateBadge state={deviceInstance.state}/>
                             </div>
@@ -299,7 +342,16 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                           </div>
 
                           {/* Right side: Action buttons */}
-                          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+                          <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            {deviceInstance.state !== 'stopped' && (
+                              <button
+                                className="btn btn-sm btn-info"
+                                onClick={() => toggleLogs(deviceInstance.uuid)}
+                                title={expandedLogs[deviceInstance.uuid] ? 'Hide logs' : 'Show logs'}
+                              >
+                                <SVG name={expandedLogs[deviceInstance.uuid] ? 'chevron-down' : 'chevron-right'} />
+                              </button>
+                            )}
                             {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && (
                               <button
                                 className="btn btn-sm btn-success"
@@ -307,60 +359,64 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 disabled={deviceStates[deviceInstance.uuid] === 'start'}
                                 title="Start"
                               >
-                                { deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                                {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
-                            {(deviceInstance.state == 'started' && is_login(deviceInstance))
-                                &&
-                                    <a
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        href={"/instances/" + deviceInstance.uuid + "/view/login"}
-                                        className="btn btn-primary ml-3"
-                                        title="Open Login console"
-                                        data-toggle="tooltip"
-                                        data-placement="top"
-                                    >
-                                        <SVG name="terminal" />
-                                    </a>
+                            {(deviceInstance.state === 'started' && is_login(deviceInstance)) &&
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + deviceInstance.uuid + "/view/login"}
+                                className="btn btn-sm btn-primary"
+                                title="Open Login console"
+                              >
+                                <SVG name="terminal" />
+                              </a>
                             }
-                            {(deviceInstance.state == 'started' && is_vnc(deviceInstance))
-                              &&
-                                <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    href={"/instances/" + instance.uuid + "/view/vnc"}
-                                    className="btn btn-primary ml-3"
-                                    title="Open VNC console"
-                                    data-toggle="tooltip"
-                                    data-placement="top"
-                                >
-                                    <SVG name="external-link" />
-                                </a>
+                            {(deviceInstance.state === 'started' && is_vnc(deviceInstance)) &&
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + deviceInstance.uuid + "/view/vnc"}
+                                className="btn btn-sm btn-primary"
+                                title="Open VNC console"
+                              >
+                                <SVG name="external-link" />
+                              </a>
                             }
                             {deviceInstance.state === 'started' && (
                               <button
                                 className="btn btn-sm btn-danger"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
                                 disabled={deviceStates[deviceInstance.uuid] === 'stop'}
-                                title="Arrêter"
+                                title="Stop"
                               >
                                 {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                               </button>
-                            )}                      
-                            
+                            )}
                             {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
                               <button
                                 className="btn btn-sm btn-warning"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
                                 disabled={deviceStates[deviceInstance.uuid] === 'reset'}
-                                title="Réinitialiser"
+                                title="Reset"
                               >
                                 {deviceStates[deviceInstance.uuid] === 'reset' ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                               </button>
                             )}
+                            
                           </div>
                         </div>
+
+                        {/* Logs section for this device */}
+                        {deviceInstance.state !== 'stopped' && (
+                          <DeviceLogs 
+                            logs={deviceLogs[deviceInstance.uuid] || []} 
+                            showLogs={expandedLogs[deviceInstance.uuid] || false} 
+                            maxLogs={50}
+                            searchable={true}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -369,7 +425,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
 
               {deviceInstances.length === 0 && (
                 <div className="alert alert-info">
-                  <p className="mb-0">No device in this intance</p>
+                  <p className="mb-0">No device in this instance</p>
                 </div>
               )}
             </div>
@@ -385,7 +441,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
       </div>
     </div>
   );
-}   
+}  
 
 export default function OptimizedInstanceList({ 
   instances = [], 
