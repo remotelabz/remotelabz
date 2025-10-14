@@ -188,7 +188,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
               {deviceInstances.length > 0 && (
                 <div style={{ borderTop: '1px solid #dee2e6', paddingTop: '12px' }}>
                   <small style={{ color: '#6c757d', display: 'block', marginBottom: '8px' }}>
-                    Actions sur les appareils:
+                    Apply to all devices:
                   </small>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                     {deviceInstances.map((deviceInstance) => (
@@ -204,7 +204,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                             {deviceStates[deviceInstance.uuid] === 'start' ? (
                               <Spinner animation="border" size="sm" />
                             ) : (
-                              '▶'
+                              <SVG name="play" />
                             )}
                           </button>
                         )}
@@ -220,7 +220,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                             {deviceStates[deviceInstance.uuid] === 'stop' ? (
                               <Spinner animation="border" size="sm" />
                             ) : (
-                              '⏹'
+                              <SVG name="stop" />
                             )}
                           </button>
                         )}
@@ -236,7 +236,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                             {deviceStates[deviceInstance.uuid] === 'reset' ? (
                               <Spinner animation="border" size="sm" />
                             ) : (
-                              '↻'
+                              <SVG name="redo" />
                             )}
                           </button>
                         )}
