@@ -3,7 +3,8 @@ import { List } from 'react-window';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
-
+import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
+import InstanceStateBadge from './InstanceStateBadge';
 
 function VirtualizedInstanceRow(props) {
   const { 
@@ -93,7 +94,7 @@ function VirtualizedInstanceRow(props) {
   );
 }
 
-function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }) {
+function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails }) {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -117,6 +118,25 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
       }));
     }, 1500);
   }, [onStateUpdate]);
+
+  const refreshTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!selectedInstance) return;
+
+    const refreshDetails = () => {
+      onRefreshDetails(selectedInstance.uuid);
+    };
+
+    refreshTimerRef.current = setInterval(refreshDetails, 5000);
+
+    return () => {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+      }
+    };
+  }, [selectedInstance, onRefreshDetails]);
+
 
   return (
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -147,42 +167,6 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                   <span>&times;</span>
                 </button>
               </div>
-              
-              {/* Second row: Lab action buttons centered */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
-                {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => onStateUpdate('start', selectedInstance.uuid, 'lab')}
-                    disabled={sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`)}
-                  >
-                    {sharedStates.startingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '▶'}
-                    Start Lab
-                  </button>
-                )}
-                
-                {selectedInstance.state === 'started' && (
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => onStateUpdate('stop', selectedInstance.uuid, 'lab')}
-                    disabled={sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`)}
-                  >
-                    {sharedStates.stoppingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '⏹'}
-                    Stop Lab
-                  </button>
-                )}
-
-                {(selectedInstance.state === 'stopped' || selectedInstance.state === 'error') && (
-                  <button
-                    className="btn btn-sm btn-warning"
-                    onClick={() => onStateUpdate('reset', selectedInstance.uuid, 'lab')}
-                    disabled={sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`)}
-                  >
-                    {sharedStates.resettingInstances.has(`lab-${selectedInstance.uuid}`) ? <Spinner animation="border" size="sm" /> : '↻'}
-                    Reset Lab
-                  </button>
-                )}
-              </div>
 
               {/* Third row: Device action buttons - Always visible */}
               {deviceInstances.length > 0 && (
@@ -193,7 +177,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                     {deviceInstances.map((deviceInstance) => (
                       <div key={deviceInstance.uuid} style={{ display: 'flex', gap: '4px' }}>
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && (
                           <button
                             className="btn btn-sm btn-success"
                             onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
@@ -305,11 +289,9 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                               <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
-                                {deviceInstance.device?.name || 'Appareil inconnu'}
+                                {deviceInstance.device?.name || 'Unknow device'}
                               </h6>
-                              <span className={`badge badge-${deviceInstance.state === 'started' ? 'success' : deviceInstance.state === 'stopped' ? 'secondary' : 'warning'}`}>
-                                {deviceInstance.state}
-                              </span>
+                              <InstanceStateBadge state={deviceInstance.state}/>
                             </div>
                             <small style={{ color: '#6c757d', display: 'block' }}>
                               {deviceInstance.uuid}
@@ -318,17 +300,44 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
 
                           {/* Right side: Action buttons */}
                           <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
-                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
+                            {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && (
                               <button
                                 className="btn btn-sm btn-success"
                                 onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
                                 disabled={deviceStates[deviceInstance.uuid] === 'start'}
-                                title="Démarrer"
+                                title="Start"
                               >
-                                {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
+                                { deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
-                            
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance))
+                                &&
+                                    <a
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        href={"/instances/" + deviceInstance.uuid + "/view/login"}
+                                        className="btn btn-primary ml-3"
+                                        title="Open Login console"
+                                        data-toggle="tooltip"
+                                        data-placement="top"
+                                    >
+                                        <SVG name="terminal" />
+                                    </a>
+                            }
+                            {(deviceInstance.state == 'started' && is_vnc(deviceInstance))
+                              &&
+                                <a
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    href={"/instances/" + instance.uuid + "/view/vnc"}
+                                    className="btn btn-primary ml-3"
+                                    title="Open VNC console"
+                                    data-toggle="tooltip"
+                                    data-placement="top"
+                                >
+                                    <SVG name="external-link" />
+                                </a>
+                            }
                             {deviceInstance.state === 'started' && (
                               <button
                                 className="btn btn-sm btn-danger"
@@ -338,7 +347,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
                               >
                                 {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                               </button>
-                            )}
+                            )}                      
                             
                             {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
                               <button
@@ -360,7 +369,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
 
               {deviceInstances.length === 0 && (
                 <div className="alert alert-info">
-                  <p className="mb-0">Aucun périphérique dans cette instance</p>
+                  <p className="mb-0">No device in this intance</p>
                 </div>
               )}
             </div>
@@ -376,7 +385,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate }
       </div>
     </div>
   );
-}
+}   
 
 export default function OptimizedInstanceList({ 
   instances = [], 
@@ -395,7 +404,7 @@ export default function OptimizedInstanceList({
   const cacheRef = useRef(new Map());
 
   useEffect(() => {
-        console.log('[OptimizedInstanceList] Instances changées, nettoyage du cache');
+        //console.log('[OptimizedInstanceList] Instances changées, nettoyage du cache');
         
         // Créer un Set des UUIDs actuels
         const currentUuids = new Set(instances.map(i => i.uuid));
@@ -422,8 +431,8 @@ export default function OptimizedInstanceList({
               newDeviceCache[uuid] = prev.deviceInstancesCache[uuid];
             }
           });
-          console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newDeviceCache ",newDeviceCache);
-          console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newLabCache ",newLabCache);
+          //console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newDeviceCache ",newDeviceCache);
+          //console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newLabCache ",newLabCache);
 
           return {
             ...prev,
@@ -517,10 +526,45 @@ export default function OptimizedInstanceList({
 
   const memoizedInstances = useMemo(() => instances, [instances]);
 
+  const handleRefreshDetails = useCallback((uuid) => {
+    Remotelabz.instances.lab.get(uuid).then((updatedInstance) => {
+      // La structure est directement dans updatedInstance, pas dans updatedInstance.lab
+      const labInfo = updatedInstance.data.lab || {};
+      const ownerInfo = updatedInstance.data.owner || {};
+      
+      //console.log("[handleRefreshDetails] updatedInstance:", updatedInstance.data);
+      //console.log("[handleRefreshDetails] labInfo:", labInfo);
+      //console.log("[handleRefreshDetails] ownerInfo:", ownerInfo);
+      
+      setSharedStates(prev => ({
+        ...prev,
+        labCache: { 
+          ...prev.labCache, 
+          [uuid]: {
+            name: labInfo.name || 'Lab inconnu',
+            ownerName: ownerInfo.name || 'N/A',
+            workerIp: updatedInstance.data.workerIp || 'N/A',
+            network: updatedInstance.data.network?.ip?.addr || 'N/A',
+            state: updatedInstance.data.state
+          }
+        },
+        deviceInstancesCache: {
+          ...prev.deviceInstancesCache,
+          [uuid]: Array.isArray(updatedInstance.data.deviceInstances) ? updatedInstance.data.deviceInstances : []
+        }
+      }));
+    }).catch(err => {
+      console.error(`Erreur lors du rafraîchissement de ${uuid}:`, err);
+    });
+  }, []);
+
+
   if (!Array.isArray(memoizedInstances) || memoizedInstances.length === 0) {
     return <div className="virtualized-list-empty"><p>Aucune instance disponible</p></div>;
   }
   //console.log("[OptimizedInstanceList]:memoizedInstances avant le return ",memoizedInstances)
+
+
   return (
     <div className="virtualized-list-container">
       <div className="virtualized-list-header">
@@ -549,6 +593,7 @@ export default function OptimizedInstanceList({
         onClose={() => setSelectedInstance(null)}
         sharedStates={sharedStates}
         onStateUpdate={handleStateUpdate}
+        onRefreshDetails={handleRefreshDetails}
       />
     </div>
   );

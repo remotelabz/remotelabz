@@ -7,6 +7,8 @@ import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
+import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
+
 
 const api = API.getInstance();
 
@@ -224,6 +226,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         })
     }
     
+    /*
     function is_vnc() {
         let result=false;
         if (instance.controlProtocolTypeInstances.length > 0 ) {
@@ -269,6 +272,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
         return result;
     }
+    */
     
     let controls;
     
@@ -451,8 +455,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login()) && !is_real() && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
+                        {(instance.state == 'started' && is_login(instance) && !is_real(instance) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
                          //&& user.id === lab.author.id
                         ))
                          )
@@ -470,9 +473,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                             </a>
                         }
 
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_vnc())
-                         )
+                        {(instance.state == 'started' && is_vnc(instance))
                          &&
                             <a
                                 target="_blank"
@@ -486,9 +487,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 <SVG name="external-link" />
                             </a>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login())
-                         )
+                        {(instance.state == 'started' && is_login(instance))
                          &&
                             <a
                                 target="_blank"
@@ -502,9 +501,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 <SVG name="terminal" />
                             </a>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_serial())
-                         )
+                        {(instance.state == 'started' && is_serial(instance))
                          &&
                             <a
                                 target="_blank"

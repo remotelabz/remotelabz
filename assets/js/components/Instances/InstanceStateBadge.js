@@ -31,7 +31,7 @@ class InstanceStateBadge extends Component {
                 break;
 
             case 'reset':
-                badge = <Badge variant="success" {...this.props}>Reset</Badge>
+                badge = <Badge variant="info" {...this.props}>Reset</Badge>
                 break;
 
             case 'started':

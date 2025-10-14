@@ -60,16 +60,16 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     const handleStateUpdate = useCallback((action, uuid) => {
-        console.log(`[AllInstancesList] Action ${action} sur ${uuid}`);
+        //console.log(`[AllInstancesList] Action ${action} sur ${uuid}`);
         
         if (action === 'start') {
             Remotelabz.instances.device.start(uuid)
                 .then(() => {
-                    toast.success('Démarrage de l\'instance demandé.');
+                    toast.success('Starting device');
                     refreshInstances();
                 })
                 .catch((error) => {
-                    const errorMsg = error?.response?.data?.message || 'Erreur lors du démarrage de l\'instance.';
+                    const errorMsg = error?.response?.data?.message || 'Error when starting device';
                     toast.error(errorMsg);
                     console.error(error);
                 });
@@ -80,18 +80,18 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     refreshInstances();
                 })
                 .catch((error) => {
-                    const errorMsg = error?.response?.data?.message || 'Erreur lors de l\'arrêt de l\'instance.';
+                    const errorMsg = error?.response?.data?.message || 'Error when stopping device';
                     toast.error(errorMsg);
                     console.error(error);
                 });
         } else if (action === 'reset') {
             Remotelabz.instances.device.reset(uuid)
                 .then(() => {
-                    toast.success('Réinitialisation de l\'instance demandée.');
+                    toast.success('Resetting device');
                     refreshInstances();
                 })
                 .catch((error) => {
-                    const errorMsg = error?.response?.data?.message || 'Erreur lors de la réinitialisation de l\'instance.';
+                    const errorMsg = error?.response?.data?.message || 'Error when instance reseting';
                     toast.error(errorMsg);
                     console.error(error);
                 });
@@ -99,7 +99,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }, []);
 
     const memoizedInstances = useMemo(() => instances, [instances]);
-    console.log("[AllInstancesList]:memoizedInstances avant le return",memoizedInstances);
+    //console.log("[AllInstancesList]:memoizedInstances avant le return",memoizedInstances);
     return (
         <>
             <ToastContainer
@@ -128,7 +128,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                         borderRadius: '4px',
                         margin: '16px'
                     }}>
-                        <p>Aucune instance disponible</p>
+                        <p>No available instance</p>
                     </div>
                 )
             )}
@@ -143,7 +143,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     gap: '16px'
                 }}>
                     <div className="dot-bricks"></div>
-                    <span>Chargement des instances...</span>
+                    <span>Ins</span>
                 </div>
             )}
         </>
