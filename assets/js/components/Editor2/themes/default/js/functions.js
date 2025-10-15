@@ -241,6 +241,8 @@ export function deleteNode(id) {
 }
 
 export function handleNodeFormSubmit(action) {
+    $('body').off('submit', '#form-node-' + action);
+
     $('body').on('submit', '#form-node-' + action, function(e) {
         e.preventDefault();
         

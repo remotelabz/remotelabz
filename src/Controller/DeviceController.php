@@ -574,7 +574,6 @@ class DeviceController extends Controller
                     "config_script" => "embedded",
                     "ethernet" => 1,
                     "virtuality" => $virtuality,              
-                    "console" => $controlProtocolTypesName,
                     "qemu_options"=>$device->getOtherOptions(),
                     "qemu_arch" => $device->getOperatingSystem()->getArch()->getId()
                 ];
@@ -808,7 +807,7 @@ class DeviceController extends Controller
         $this->logger->debug("[DeviceController:addDevice]::count lab for the template device ".$template->getName()." is ".$template->getLabsUsingThisTemplate()->count());
 
         $this->logger->info("Device named '" . $device->getName() . "' created and add to lab ");
-        $this->logger->debug("Device named '" . $device->getName() . "' with id ".$device->getId()." created");
+        $this->logger->debug("[DeviceController:addDevice]::Device named '" . $device->getName() . "' with id ".$device->getId()." created");
 
         return $device->getId();
     }
