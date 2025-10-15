@@ -1417,6 +1417,7 @@ class InstanceController extends Controller
 
         foreach ($deviceInstances as $deviceInstance) {
             try {
+                // TODO if ($deviceInstance is switch )
                 // Vérifier l'état avant de démarrer
                 if ($deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED || 
                     $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR) {

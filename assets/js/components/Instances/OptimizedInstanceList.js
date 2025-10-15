@@ -281,8 +281,8 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
 
   return (<>
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-lg" role="document">
-        <div className="modal-content">
+      <div className="modal-dialog modal-lg" role="document" style={{ maxHeight: '90vh', margin: '1.75rem auto' }}>
+        <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
           {/* Header */}
           <div className="modal-header border-bottom">
             <div style={{ width: '100%' }}>
@@ -373,7 +373,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
           </div>
 
           {/* Body */}
-          <div className="modal-body">
+          <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto' }}>
             <div className="content-body">
               {/* Lab Information Section - 2 columns */}
               <div className="row mb-4">
@@ -528,7 +528,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
           </div>
 
           {/* Footer */}
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ flexShrink: 0 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
