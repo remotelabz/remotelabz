@@ -200,6 +200,7 @@ class InstanceController extends Controller
             ]);
         }
         
+
         $instanceManagerProps = [
             'labInstances' => $AllLabInstances,
             'user' => $this->getUser(),
@@ -261,8 +262,8 @@ class InstanceController extends Controller
             array_push($AllLabInstances, $instance);
         }
 
+
         $count = count($AllLabInstances);
-        $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
 
         $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with ".count($AllLabInstances)." instances");
         
@@ -1389,4 +1390,6 @@ class InstanceController extends Controller
         }
         return $result;
     }
+
+
 }

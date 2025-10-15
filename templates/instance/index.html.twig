@@ -76,7 +76,7 @@
         {% endif %}
         
     </div>
-    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    {# {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
     <nav aria-label="Page navigation example">
         <ul class="pagination mt-3 justify-content-center">
             <li class="page-item {% if page <= 1 %}disabled{%endif%}">
@@ -89,7 +89,7 @@
                 <a class="page-link" href="{{ path('instances', app.request.query|merge({page: page+1})) }}">Next</a>
             </li>
         </ul>
-    </nav>
+    </nav>#}
 {% endblock %}
 
 {% block javascripts %}

@@ -111,6 +111,12 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                 draggable
                 pauseOnFocusLoss={false}
             />
+            <div style={{ 
+                height: 'calc(100vh - 300px)', 
+                minHeight: '400px',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
 
             {memoizedInstances.length > 0 ? (
                 <OptimizedInstanceList
@@ -146,6 +152,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     <span>Ins</span>
                 </div>
             )}
+            </div>
         </>
     );
 }

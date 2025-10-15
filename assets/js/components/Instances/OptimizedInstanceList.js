@@ -631,9 +631,7 @@ export default function OptimizedInstanceList({
         <List
           rowComponent={VirtualizedInstanceRow}
           rowCount={memoizedInstances.length}
-          rowHeight={100}
-          width="100%"
-          height={window.innerHeight - 200}
+          rowHeight={75}
           rowProps={{
             instances: memoizedInstances,
             onLoadDetails: handleLoadDetails,
