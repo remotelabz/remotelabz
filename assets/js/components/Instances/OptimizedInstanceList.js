@@ -3,9 +3,10 @@ import { List } from 'react-window';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
 import InstanceStateBadge from './InstanceStateBadge';
-import { fetchDeviceLogs,   startLogsPolling,   stopLogsPolling,  formatLogEntry,  getLastLogs } from './deviceLogsHelpers';
+import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 
 function VirtualizedInstanceRow(props) {
@@ -18,7 +19,7 @@ function VirtualizedInstanceRow(props) {
     openDetailsModal,
     sharedStates
   } = props;
-  
+
   const instance = instances?.[index];
   
   if (!instance) {
@@ -34,7 +35,6 @@ function VirtualizedInstanceRow(props) {
   const isStopping = sharedStates.stoppingInstances.has(`lab-${instance.uuid}`);
   const isResetting = sharedStates.resettingInstances.has(`lab-${instance.uuid}`);
 
-  //console.log("[OptimizedInstanceList]instance à afficher",instance);
   return (
     <div style={style} className="virtualized-instance-row">
       <div className="instance-info">
@@ -70,7 +70,7 @@ function VirtualizedInstanceRow(props) {
             disabled={isStopping}
             title="Stop lab"
           >
-            {isStopping ? <span className="loading-spinner"></span> : '⏹'}
+            {isStopping ? <span className="loading-spinner"></span> : '■'}
           </button>
         )}
 
@@ -96,7 +96,7 @@ function VirtualizedInstanceRow(props) {
   );
 }
 
-function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails }) {
+function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted }) {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -104,9 +104,11 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
   
   const [expandedDevice, setExpandedDevice] = useState(null);
   const [deviceStates, setDeviceStates] = useState({});
-  const [deviceLogs, setDeviceLogs] = useState({}); // Logs par device UUID
-  const [expandedLogs, setExpandedLogs] = useState({}); // Logs visibles par device UUID
-  const logsIntervalsRef = useRef({}); // Références aux intervals de polling
+  const [deviceLogs, setDeviceLogs] = useState({});
+  const [expandedLogs, setExpandedLogs] = useState({});
+  const logsIntervalsRef = useRef({});
+  const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
     setDeviceStates(prev => ({
@@ -124,15 +126,47 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
     }, 1500);
   }, [onStateUpdate]);
 
+  const handleLeaveLab = useCallback(async () => {
+    setShowLeaveLabModal(false);
+    setIsDeleting(true);
+    
+    try {
+      await Remotelabz.instances.lab.delete(selectedInstance.uuid);
+      
+      toast.success('Lab instance deleted successfully', {
+        autoClose: 5000
+      });
+      
+      // Fermer la modal
+      onClose();
+      
+      // Notifier le parent pour rafraîchir la liste
+      if (onLabDeleted) {
+        onLabDeleted(selectedInstance.uuid);
+      }
+      
+    } catch (error) {
+      console.error('Error deleting lab instance:', error);
+      
+      const errorMessage = error.response?.data?.message?.includes("Worker") 
+        ? error.response.data.message 
+        : 'An error happened while leaving the lab. Please try again later.';
+      
+      toast.error(errorMessage, {
+        autoClose: 10000
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [selectedInstance, onClose, onLabDeleted]);
+
   // Gérer les logs pour chaque device
   useEffect(() => {
     deviceInstances.forEach(device => {
-      // Arrêter le polling précédent s'il existe
       if (logsIntervalsRef.current[device.uuid]) {
         stopLogsPolling(logsIntervalsRef.current[device.uuid]);
       }
 
-      // Démarrer un nouveau polling si l'appareil n'est pas arrêté
       if (device.state !== 'stopped') {
         logsIntervalsRef.current[device.uuid] = startLogsPolling(
           device.uuid,
@@ -142,12 +176,11 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
               [device.uuid]: logs
             }));
           },
-          30000 // 30 secondes
+          30000
         );
       }
     });
 
-    // Cleanup
     return () => {
       Object.values(logsIntervalsRef.current).forEach(intervalId => {
         stopLogsPolling(intervalId);
@@ -181,7 +214,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
     }));
   };
 
-  return (
+  return (<>
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog modal-lg" role="document">
         <div className="modal-content">
@@ -269,6 +302,13 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                         )}
                       </div>
                     ))}
+                    <button 
+                      className="btn btn-sm btn-danger" 
+                      onClick={() => setShowLeaveLabModal(true)}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? <Spinner animation="border" size="sm" /> : 'Leave lab'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -404,7 +444,6 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'reset' ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                               </button>
                             )}
-                            
                           </div>
                         </div>
 
@@ -440,13 +479,30 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
         </div>
       </div>
     </div>
-  );
-}  
+    
+    {/* Leave Lab Confirmation Modal */}
+    <Modal show={showLeaveLabModal} onHide={() => setShowLeaveLabModal(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>Leave lab</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        If you leave the lab, <strong>all your instances will be deleted and all virtual machines associated will be destroyed.</strong> Are you sure you want to leave this lab?
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="default" onClick={() => setShowLeaveLabModal(false)}>Close</Button>
+        <Button variant="danger" onClick={handleLeaveLab} disabled={isDeleting}>
+          {isDeleting ? <><Spinner animation="border" size="sm" /> Leaving...</> : 'Leave'}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  </>);
+}
 
 export default function OptimizedInstanceList({ 
   instances = [], 
   user = {},
-  onStateUpdate: onStateUpdateProp = () => {}
+  onStateUpdate: onStateUpdateProp = () => {},
+  onLabDeleted = () => {}
 }) {
   const [selectedInstance, setSelectedInstance] = useState(null);
   const [sharedStates, setSharedStates] = useState({
@@ -460,62 +516,47 @@ export default function OptimizedInstanceList({
   const cacheRef = useRef(new Map());
 
   useEffect(() => {
-        //console.log('[OptimizedInstanceList] Instances changées, nettoyage du cache');
-        
-        // Créer un Set des UUIDs actuels
-        const currentUuids = new Set(instances.map(i => i.uuid));
-        
-        // Nettoyer les entrées du cache qui ne sont plus dans la liste
-        const newCache = new Map();
-        currentUuids.forEach(uuid => {
-          if (cacheRef.current.has(uuid)) {
-            newCache.set(uuid, true);
-          }
-        });
-        cacheRef.current = newCache;
-        
-        // Nettoyer aussi le state cache
-        setSharedStates(prev => {
-          const newLabCache = {};
-          const newDeviceCache = {};
-          
-          currentUuids.forEach(uuid => {
-            if (prev.labCache[uuid]) {
-              newLabCache[uuid] = prev.labCache[uuid];
-            }
-            if (prev.deviceInstancesCache[uuid]) {
-              newDeviceCache[uuid] = prev.deviceInstancesCache[uuid];
-            }
-          });
-          //console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newDeviceCache ",newDeviceCache);
-          //console.log("[OptimizedInstance:OptimizedInstanceList:useEffect]::newLabCache ",newLabCache);
+    const currentUuids = new Set(instances.map(i => i.uuid));
+    
+    const newCache = new Map();
+    currentUuids.forEach(uuid => {
+      if (cacheRef.current.has(uuid)) {
+        newCache.set(uuid, true);
+      }
+    });
+    cacheRef.current = newCache;
+    
+    setSharedStates(prev => {
+      const newLabCache = {};
+      const newDeviceCache = {};
+      
+      currentUuids.forEach(uuid => {
+        if (prev.labCache[uuid]) {
+          newLabCache[uuid] = prev.labCache[uuid];
+        }
+        if (prev.deviceInstancesCache[uuid]) {
+          newDeviceCache[uuid] = prev.deviceInstancesCache[uuid];
+        }
+      });
 
-          return {
-            ...prev,
-            labCache: newLabCache,
-            deviceInstancesCache: newDeviceCache
-          };
-        });
+      return {
+        ...prev,
+        labCache: newLabCache,
+        deviceInstancesCache: newDeviceCache
+      };
+    });
   }, [instances]);
 
   const handleLoadDetails = useCallback((uuid) => {
     if (cacheRef.current.has(uuid)) {
-      //console.log(`[OptimizedInstanceList] Cache hit pour ${uuid}`);
       return;
     }
-
-    //console.log(`[OptimizedInstanceList] Chargement des détails pour ${uuid}`);
 
     const instance = instances.find(i => i.uuid === uuid);
     if (!instance) {
-      //console.warn(`[OptimizedInstanceList] Instance ${uuid} non trouvée`);
       return;
     }
 
-    // Les données sont DÉJÀ dans l'instance reçue de AllInstancesList
-    // Pas besoin d'un appel API supplémentaire !
-    //console.log(`[OptimizedInstanceList] Données extraites pour ${uuid}:`, instance);
-    
     const labInfo = instance.lab || {};
     const ownerInfo = instance.owner || {};
     
@@ -541,8 +582,6 @@ export default function OptimizedInstanceList({
   }, [instances]);
 
   const handleStateUpdate = useCallback((action, uuid, type = 'device') => {
-    //console.log(`[OptimizedInstanceList] handleStateUpdate - action: ${action}, uuid: ${uuid}, type: ${type}`);
-    
     if (type === 'lab') {
       if (action === 'start') {
         setSharedStates(prev => ({
@@ -576,7 +615,6 @@ export default function OptimizedInstanceList({
   }, [onStateUpdateProp]);
 
   const openDetailsModal = useCallback((instance) => {
-    //console.log('[OptimizedInstanceList] Ouverture modal pour:', instance);
     setSelectedInstance(instance);
   }, []);
 
@@ -584,13 +622,8 @@ export default function OptimizedInstanceList({
 
   const handleRefreshDetails = useCallback((uuid) => {
     Remotelabz.instances.lab.get(uuid).then((updatedInstance) => {
-      // La structure est directement dans updatedInstance, pas dans updatedInstance.lab
       const labInfo = updatedInstance.data.lab || {};
       const ownerInfo = updatedInstance.data.owner || {};
-      
-      //console.log("[handleRefreshDetails] updatedInstance:", updatedInstance.data);
-      //console.log("[handleRefreshDetails] labInfo:", labInfo);
-      //console.log("[handleRefreshDetails] ownerInfo:", ownerInfo);
       
       setSharedStates(prev => ({
         ...prev,
@@ -614,14 +647,11 @@ export default function OptimizedInstanceList({
     });
   }, []);
 
-
   if (!Array.isArray(memoizedInstances) || memoizedInstances.length === 0) {
     return <div className="virtualized-list-empty"><p>Aucune instance disponible</p></div>;
   }
-  //console.log("[OptimizedInstanceList]:memoizedInstances avant le return ",memoizedInstances)
 
-
-  return (
+  return (<>
     <div className="virtualized-list-container">
       <div className="virtualized-list-header">
         <h2>Instances ({memoizedInstances.length})</h2>
@@ -648,7 +678,8 @@ export default function OptimizedInstanceList({
         sharedStates={sharedStates}
         onStateUpdate={handleStateUpdate}
         onRefreshDetails={handleRefreshDetails}
+        onLabDeleted={onLabDeleted}
       />
     </div>
-  );
+  </>);
 }

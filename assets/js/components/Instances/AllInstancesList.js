@@ -11,6 +11,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [totalCount, setTotalCount] = useState(0);
     const [filter, setFilter] = useState(props.filter || 'all');
     const [subFilter, setSubFilter] = useState(props.subFilter || 'allInstances');
+
     
     const limit = 10;
 
@@ -98,6 +99,16 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         }
     }, []);
 
+    const handleLabDeleted = useCallback((deletedUuid) => {
+        // Retirer immédiatement l'instance de la liste
+        setInstances(prev => prev.filter(instance => instance.uuid !== deletedUuid));
+        
+        // Rafraîchir complètement la liste après un court délai
+        setTimeout(() => {
+            refreshInstances();
+        }, 2000);
+    }, []);
+
     const memoizedInstances = useMemo(() => instances, [instances]);
     //console.log("[AllInstancesList]:memoizedInstances avant le return",memoizedInstances);
     return (
@@ -123,6 +134,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     instances={memoizedInstances}
                     user={props.user}
                     onStateUpdate={handleStateUpdate}
+                    onLabDeleted={handleLabDeleted}
                 />
             ) : (
                 !isLoading && (
@@ -149,7 +161,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
                     gap: '16px'
                 }}>
                     <div className="dot-bricks"></div>
-                    <span>Ins</span>
+                    <span>Loading instances...</span>
                 </div>
             )}
             </div>
