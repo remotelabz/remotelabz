@@ -9,7 +9,7 @@ import InstanceStateBadge from './InstanceStateBadge';
 import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 
-function VirtualizedInstanceRow(props) {
+const VirtualizedInstanceRow = React.memo((props) => {
   const { 
     index, 
     style, 
@@ -94,9 +94,9 @@ function VirtualizedInstanceRow(props) {
       </div>
     </div>
   );
-}
+});
 
-function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted }) {
+const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted }) => {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -496,7 +496,7 @@ function DetailsModal({ selectedInstance, onClose, sharedStates, onStateUpdate, 
       </Modal.Footer>
     </Modal>
   </>);
-}
+});
 
 export default function OptimizedInstanceList({ 
   instances = [], 
