@@ -971,8 +971,46 @@ export class RemotelabzAPI {
 
             logs(uuid) {
                 return axios.get(`/instances/${uuid}/logs`);
+            },
+            /**
+             * Start all devices in a lab instance
+             * 
+             * Implements POST `/api/instances/{uuid}/devices/start-all`
+             * 
+             * @param {string} uuid Lab instance UUID
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            startAll(uuid) {
+                return axios.post(`/instances/${uuid}/devices/start-all`);
+            },
+
+            /**
+             * Stop all devices in a lab instance
+             * 
+             * Implements POST `/api/instances/{uuid}/devices/stop-all`
+             * 
+             * @param {string} uuid Lab instance UUID
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            stopAll(uuid) {
+                return axios.post(`/instances/${uuid}/devices/stop-all`);
+            },
+
+            /**
+             * Reset all devices in a lab instance
+             * 
+             * Implements POST `/api/instances/{uuid}/devices/reset-all`
+             * 
+             * @param {string} uuid Lab instance UUID
+             * 
+             * @returns {Promise<import('axios').AxiosResponse<void>>}
+             */
+            resetAll(uuid) {
+                return axios.post(`/instances/${uuid}/devices/reset-all`);
             }
-        },
+        }
     }
 
     /**

@@ -109,6 +109,13 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
   const logsIntervalsRef = useRef({});
   const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  
+  // États pour les actions bulk
+  const [isBulkStarting, setIsBulkStarting] = useState(false);
+  const [isBulkStopping, setIsBulkStopping] = useState(false);
+  const [isBulkResetting, setIsBulkResetting] = useState(false);
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
     setDeviceStates(prev => ({
@@ -126,6 +133,66 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
     }, 1500);
   }, [onStateUpdate]);
 
+  // Gestion des actions bulk
+  const handleBulkAction = useCallback(async (action) => {
+    const setLoading = action === 'start' ? setIsBulkStarting : 
+                       action === 'stop' ? setIsBulkStopping : 
+                       setIsBulkResetting;
+    
+    setLoading(true);
+    
+    try {
+      let response;
+      switch(action) {
+        case 'start':
+          response = await Remotelabz.instances.device.startAll(selectedInstance.uuid);
+          break;
+        case 'stop':
+          response = await Remotelabz.instances.device.stopAll(selectedInstance.uuid);
+          break;
+        case 'reset':
+          response = await Remotelabz.instances.device.resetAll(selectedInstance.uuid);
+          break;
+      }
+
+      const data = response.data;
+      
+      if (data.success) {
+        toast.success(`Successfully ${action}ed ${data[action === 'start' ? 'started' : action === 'stop' ? 'stopped' : 'reset']} out of ${data.total} devices`, {
+          autoClose: 5000
+        });
+      } else {
+        toast.warning(`${action} completed with some errors. ${data.errors.length} device(s) failed.`, {
+          autoClose: 7000
+        });
+        
+        // Afficher les erreurs individuelles
+        data.errors.forEach(error => {
+          toast.error(`${error.name}: ${error.error}`, {
+            autoClose: 5000
+          });
+        });
+      }
+      
+      // Rafraîchir les détails
+      setTimeout(() => {
+        onRefreshDetails(selectedInstance.uuid);
+      }, 2000);
+      
+    } catch (error) {
+      console.error(`Error during bulk ${action}:`, error);
+      
+      const errorMessage = error.response?.data?.message || 
+        `An error occurred while trying to ${action} all devices. Please try again.`;
+      
+      toast.error(errorMessage, {
+        autoClose: 10000
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedInstance, onRefreshDetails]);
+
   const handleLeaveLab = useCallback(async () => {
     setShowLeaveLabModal(false);
     setIsDeleting(true);
@@ -137,10 +204,8 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
         autoClose: 5000
       });
       
-      // Fermer la modal
       onClose();
       
-      // Notifier le parent pour rafraîchir la liste
       if (onLabDeleted) {
         onLabDeleted(selectedInstance.uuid);
       }
@@ -160,7 +225,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
     }
   }, [selectedInstance, onClose, onLabDeleted]);
 
-  // Gérer les logs pour chaque device
+  // Gestion des logs
   useEffect(() => {
     deviceInstances.forEach(device => {
       if (logsIntervalsRef.current[device.uuid]) {
@@ -244,68 +309,60 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                 </button>
               </div>
 
-              {/* Third row: Device action buttons - Always visible */}
+              {/* Bulk device action buttons */}
               {deviceInstances.length > 0 && (
                 <div style={{ borderTop: '1px solid #dee2e6', paddingTop: '12px' }}>
                   <small style={{ color: '#6c757d', display: 'block', marginBottom: '8px' }}>
                     Apply to all devices:
                   </small>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    {deviceInstances.map((deviceInstance) => (
-                      <div key={deviceInstance.uuid} style={{ display: 'flex', gap: '4px' }}>
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && (
-                          <button
-                            className="btn btn-sm btn-success"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'start'}
-                            title={`Start: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'start' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="play" />
-                            )}
-                          </button>
-                        )}
-                        
-                        {deviceInstance.state === 'started' && (
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'stop'}
-                            title={`Stop: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'stop' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="stop" />
-                            )}
-                          </button>
-                        )}
-                        
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'reset'}
-                            title={`Reset: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'reset' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="redo" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => handleBulkAction('start')}
+                      disabled={isBulkStarting}
+                      title="Start all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkStarting ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="play" /> Start All</>
+                      )}
+                    </button>
+                    
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleBulkAction('stop')}
+                      disabled={isBulkStopping}
+                      title="Stop all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkStopping ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="stop" /> Stop All</>
+                      )}
+                    </button>
+                    
+                    <button
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleBulkAction('reset')}
+                      disabled={isBulkResetting}
+                      title="Reset all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkResetting ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="redo" /> Reset All</>
+                      )}
+                    </button>
+                    
                     <button 
                       className="btn btn-sm btn-danger" 
                       onClick={() => setShowLeaveLabModal(true)}
                       disabled={isDeleting}
+                      style={{ marginLeft: 'auto' }}
                     >
                       {isDeleting ? <Spinner animation="border" size="sm" /> : 'Leave lab'}
                     </button>
@@ -368,7 +425,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                     {deviceInstances.map((deviceInstance) => (
                       <div key={deviceInstance.uuid} className="list-group-item">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          {/* Left side: Device name and state on first line, UUID on second */}
+                          {/* Left side: Device name and state */}
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                               <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
@@ -447,7 +504,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                           </div>
                         </div>
 
-                        {/* Logs section for this device */}
+                        {/* Logs section */}
                         {deviceInstance.state !== 'stopped' && (
                           <DeviceLogs 
                             logs={deviceLogs[deviceInstance.uuid] || []} 

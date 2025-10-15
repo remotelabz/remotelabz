@@ -59,6 +59,8 @@ use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Doctrine\ORM\EntityManagerInterface;
+use Remotelabz\Message\Message\InstanceStateMessage;
+
 
 class InstanceController extends Controller
 {
@@ -1391,5 +1393,180 @@ class InstanceController extends Controller
         return $result;
     }
 
+    /**
+     * Start all devices in a lab instance
+     * 
+     * @Route("/api/instances/{uuid}/devices/start-all", name="api_start_all_devices", methods={"POST"})
+     */
+    #[Post('/api/instances/{uuid}/devices/start-all', name: 'api_start_all_devices')]
+    #[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
+    public function startAllDevicesAction(
+        Request $request, 
+        string $uuid, 
+        InstanceManager $instanceManager
+    ): JsonResponse {
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No lab instance with UUID ' . $uuid . '.');
+        }
+
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
+
+        $deviceInstances = $labInstance->getDeviceInstances();
+        $results = [];
+        $errors = [];
+
+        foreach ($deviceInstances as $deviceInstance) {
+            try {
+                // Vérifier l'état avant de démarrer
+                if ($deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED || 
+                    $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR) {
+                    
+                    $this->logger->info('Starting device instance ' . $deviceInstance->getUuid() . ' as part of bulk start.');
+                    $instanceManager->start($deviceInstance);
+                    $results[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'status' => 'started'
+                    ];
+                } else {
+                    $results[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'status' => 'skipped',
+                        'reason' => 'Device already running or in invalid state'
+                    ];
+                }
+            } catch (Exception $e) {
+                $this->logger->error('Error starting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                $errors[] = [
+                    'uuid' => $deviceInstance->getUuid(),
+                    'name' => $deviceInstance->getDevice()->getName(),
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $this->json([
+            'success' => count($errors) === 0,
+            'results' => $results,
+            'errors' => $errors,
+            'total' => count($deviceInstances),
+            'started' => count(array_filter($results, fn($r) => $r['status'] === 'started'))
+        ]);
+    }
+
+    /**
+     * Stop all devices in a lab instance
+     * 
+     * @Route("/api/instances/{uuid}/devices/stop-all", name="api_stop_all_devices", methods={"POST"})
+     */
+    #[Post('/api/instances/{uuid}/devices/stop-all', name: 'api_stop_all_devices')]
+    #[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
+    public function stopAllDevicesAction(
+        Request $request, 
+        string $uuid, 
+        InstanceManager $instanceManager
+    ): JsonResponse {
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No lab instance with UUID ' . $uuid . '.');
+        }
+
+        if ($_SERVER['REMOTE_ADDR'] != "127.0.0.1") {
+            $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
+        }
+
+        $deviceInstances = $labInstance->getDeviceInstances();
+        $results = [];
+        $errors = [];
+
+        foreach ($deviceInstances as $deviceInstance) {
+            try {
+                // Vérifier l'état avant d'arrêter
+                if ($deviceInstance->getState() === InstanceStateMessage::STATE_STARTED || 
+                    $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING) {
+                    
+                    $this->logger->info('Stopping device instance ' . $deviceInstance->getUuid() . ' as part of bulk stop.');
+                    $instanceManager->stop($deviceInstance);
+                    $results[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'status' => 'stopped'
+                    ];
+                } else {
+                    $results[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'status' => 'skipped',
+                        'reason' => 'Device already stopped or in invalid state'
+                    ];
+                }
+            } catch (Exception $e) {
+                $this->logger->error('Error stopping device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                $errors[] = [
+                    'uuid' => $deviceInstance->getUuid(),
+                    'name' => $deviceInstance->getDevice()->getName(),
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $this->json([
+            'success' => count($errors) === 0,
+            'results' => $results,
+            'errors' => $errors,
+            'total' => count($deviceInstances),
+            'stopped' => count(array_filter($results, fn($r) => $r['status'] === 'stopped'))
+        ]);
+    }
+
+    /**
+     * Reset all devices in a lab instance
+     * 
+     * @Route("/api/instances/{uuid}/devices/reset-all", name="api_reset_all_devices", methods={"POST"})
+     */
+    #[Post('/api/instances/{uuid}/devices/reset-all', name: 'api_reset_all_devices')]
+    #[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
+    public function resetAllDevicesAction(
+        Request $request, 
+        string $uuid, 
+        InstanceManager $instanceManager
+    ): JsonResponse {
+        if (!$labInstance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid])) {
+            throw new NotFoundHttpException('No lab instance with UUID ' . $uuid . '.');
+        }
+
+        $this->denyAccessUnlessGranted(InstanceVoter::VIEW, $labInstance);
+
+        $deviceInstances = $labInstance->getDeviceInstances();
+        $results = [];
+        $errors = [];
+
+        foreach ($deviceInstances as $deviceInstance) {
+            try {
+                $this->logger->info('Resetting device instance ' . $deviceInstance->getUuid() . ' as part of bulk reset.');
+                $instanceManager->reset($deviceInstance);
+                $results[] = [
+                    'uuid' => $deviceInstance->getUuid(),
+                    'name' => $deviceInstance->getDevice()->getName(),
+                    'status' => 'reset'
+                ];
+            } catch (Exception $e) {
+                $this->logger->error('Error resetting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                $errors[] = [
+                    'uuid' => $deviceInstance->getUuid(),
+                    'name' => $deviceInstance->getDevice()->getName(),
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return $this->json([
+            'success' => count($errors) === 0,
+            'results' => $results,
+            'errors' => $errors,
+            'total' => count($deviceInstances),
+            'reset' => count(array_filter($results, fn($r) => $r['status'] === 'reset'))
+        ]);
+    }
 
 }
