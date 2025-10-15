@@ -84,6 +84,14 @@ services:
     cancel_renameos_function:
         class:      App\Controller\OperatingSystemController
         arguments:  []
+
+    #Add IP source of each log and the request url
+    #monolog.processor.web:
+    #    class: Monolog\Processor\WebProcessor
+        # Le tag monolog.processor l'attache au logger principal
+    #    tags:
+    #        - { name: monolog.processor }
+
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
@@ -280,4 +288,11 @@ services:
         arguments:
             $rootDirectory: '%kernel.project_dir%'  
         tags: ['twig.extension']
+    
+    App\Form\InstanceType:
+        arguments:
+            $groupRepository: '@App\Repository\GroupRepository'
+            $labRepository: '@App\Repository\LabRepository'
+            $userRepository: '@App\Repository\UserRepository'
+            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
 

@@ -7,6 +7,9 @@ import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
 import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
+import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
+import { fetchDeviceLogs,   startLogsPolling,   stopLogsPolling,  formatLogEntry,  getLastLogs } from './deviceLogsHelpers';
+import DeviceLogs from './DeviceLogs';
 
 const api = API.getInstance();
 
@@ -80,17 +83,29 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
 
     //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
-        fetchLogs()
-        //Collect log every 30 seconds
-        const interval = setInterval(fetchLogs, 30000)
-        Remotelabz.devices.get(instance.device.id).then(response => {
-            setDevice(response.data)
-            setLoading(false) // Use to load all devices in lab
-        })
+        // Charger le device
+        Remotelabz.devices.get(instance.device.id)
+            .then(response => {
+            setDevice(response.data);
+            setLoading(false);
+            })
+            .catch(error => {
+            console.error('Error loading device:', error);
+            setLoading(false);
+            });
+
+        // Lancer le polling des logs
+        const logsIntervalId = startLogsPolling(
+            instance.uuid,
+            (logs) => setLogs(logs),
+            30000 // 30 secondes
+        );
+
+        // Cleanup
         return () => {
-            clearInterval(interval)
-        }
-    }, [instance])
+            stopLogsPolling(logsIntervalId);
+        };
+    }, [instance]);
 
     useEffect(() => {
         // Nettoyer les états de loading quand l'instance change d'état
@@ -107,6 +122,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
     }, [instance.state]);
 
+    /*
     function fetchLogs() {
         return Remotelabz.instances.device.logs(instance.uuid).then(response => {
             setLogs(response.data);
@@ -120,7 +136,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             }
         });
     }
-
+*/
     function startDevice(deviceInstance) {
         setInstanceStarting(deviceInstance.uuid, true);
         Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
@@ -224,6 +240,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         })
     }
     
+    /*
     function is_vnc() {
         let result=false;
         if (instance.controlProtocolTypeInstances.length > 0 ) {
@@ -269,6 +286,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
         return result;
     }
+    */
     
     let controls;
     
@@ -440,7 +458,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                         }        
                         {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
                             <Button 
-                                variant="danger" 
+                                variant="warning" 
                                 title="Reset device" 
                                 data-toggle="tooltip" 
                                 data-placement="top" 
@@ -451,8 +469,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login()) && !is_real() && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
+                        {(instance.state == 'started' && is_login(instance) && !is_real(instance) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
                          //&& user.id === lab.author.id
                         ))
                          )
@@ -470,9 +487,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                             </a>
                         }
 
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_vnc())
-                         )
+                        {(instance.state == 'started' && is_vnc(instance))
                          &&
                             <a
                                 target="_blank"
@@ -486,9 +501,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 <SVG name="external-link" />
                             </a>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_login())
-                         )
+                        {(instance.state == 'started' && is_login(instance))
                          &&
                             <a
                                 target="_blank"
@@ -502,9 +515,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 <SVG name="terminal" />
                             </a>
                         }
-                        {(instance.state == 'started' && (instance.controlProtocolTypeInstances.length>0
-                         && is_serial())
-                         )
+                        {(instance.state == 'started' && is_serial(instance))
                          &&
                             <a
                                 target="_blank"
@@ -545,13 +556,12 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                         }
                     </div>
                 </div>
-                {(instance.state !== 'stopped' && showLogs) && 
-                    <pre className="d-flex flex-column mt-2">
-                        {(instance.state != 'stopped' && logs) && logs.map((log, index) => {
-                            return <code className="p-1" key={log.id}>[{log.createdAt}] {log.content}</code>;
-                        })}
-                    </pre>
-                }
+                <DeviceLogs 
+                    logs={logs} 
+                    showLogs={showLogs} 
+                    maxLogs={50}
+                    searchable={true}
+                />
 
                 {(instance.state == 'stopped' && showExport) &&
                     <InstanceExport instance={instance} exportTemplate={exportDeviceTemplate} type="device"></InstanceExport>

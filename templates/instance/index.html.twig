@@ -40,6 +40,7 @@
                 {{ form_start(addFilterForm, {"action": path('instances'), "method":"GET"}) }}
                  
                 <div class="d-flex align-items-center mb-2">
+
                     <select name="{{ field_name(addFilterForm.filter) }}" id="instance_filter" class="mr-3 instancesFilter form-control"> 
 
                     {% for label, value in field_choices(addFilterForm.filter) %}
@@ -54,6 +55,7 @@
                     </select>
 
                     <button id="instance_submit" class="btn-success btn" type="submit" name="{{ field_name(addFilterForm.submit) }}">{{ field_label(addFilterForm.submit) }}</button>
+                    
                 </div>
                 {{ form_end(addFilterForm) }}
             </div>
@@ -70,11 +72,11 @@
             </span>
         </div>
         {% else %}
-        <div class="col">{{ react_component('AllInstancesList', {"props": props})}}</div>
+         <div class="col">{{ react_component('AllInstancesList', {"props": props})}}</div>
         {% endif %}
         
     </div>
-    {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
+    {# {% set pagesNumber = count > limit ? count // limit + 1 : 1 %}
     <nav aria-label="Page navigation example">
         <ul class="pagination mt-3 justify-content-center">
             <li class="page-item {% if page <= 1 %}disabled{%endif%}">
@@ -87,7 +89,7 @@
                 <a class="page-link" href="{{ path('instances', app.request.query|merge({page: page+1})) }}">Next</a>
             </li>
         </ul>
-    </nav>
+    </nav>#}
 {% endblock %}
 
 {% block javascripts %}

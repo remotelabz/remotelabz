@@ -107,8 +107,6 @@ class InstanceController extends Controller
         $this->entityManager = $entityManager;
     }
 
-    
-	#[Get('/api/instances', name: 'api_get_instances')]
 	#[Security("is_granted('ROLE_USER')", message: "Access denied.")]
     #[Route(path: '/instances', name: 'instances')]
     public function indexAction(
@@ -122,7 +120,6 @@ class InstanceController extends Controller
         $user=$this->getUser();
 
         $search = $request->query->get('search', '');
-        #$instance = $request->query->get('instance');
         $instance = $request->query->all('instance');
 
         $filter = $instance ? $instance['filter'] : "none";
@@ -130,7 +127,14 @@ class InstanceController extends Controller
         $page = (int)$request->query->get('page', 1);
         $limit = 10;
 
+        if (!$this->isValidSubFilter($filter, $subFilter, $user)) {
+            $subFilter = $this->getDefaultSubFilter($filter);
+            $this->logger->warning("[InstanceController:indexAction]::SubFilter invalide pour le filter $filter. Réinitialisation à $subFilter");
+        }
+
         if ($user->getHighestRole() != "ROLE_USER") {
+            $this->logger->debug("[InstanceController:indexAction]::getHighestRole() is different of ROLE_USER; Filter parameters :".$filter." ".$subFilter);
+
             $addFilterForm = $this->createForm(InstanceType::class, null, [
                 "action" => $this->generateUrl('instances'),
                 "method" => "GET",
@@ -144,15 +148,18 @@ class InstanceController extends Controller
 
         if($subFilter == "allInstances") {
             if ($user->isAdministrator()) {
+                $this->logger->debug("[InstanceController:indexAction]::allInstances and Administrator");
                 $instances=$this->labInstanceRepository->findAll();
             }
             else {
+                $this->logger->debug("[InstanceController:indexAction]::not admin and allInstances");
                 //$AllLabInstances=$this->labInstanceRepository->findByUserAndGroups($user);
                 $instances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
             }
         }
         else {
-            if ($user->getHighestRole() == "ROLE_USER") {
+            if ($user->getHighestRole() === "ROLE_USER") {
+                $this->logger->debug("[InstanceController:indexAction]::getHighestRole is USER");
                 $filter = "none";
                 $subFilter = "allInstances";
                 $instances=$this->labInstanceRepository->findByUserAndAllMembersGroups($user);
@@ -164,7 +171,6 @@ class InstanceController extends Controller
 
         $AllLabInstances = [];
         foreach ($instances as $instance) {
-            
             array_push($AllLabInstances, $instance);
         }
 
@@ -173,10 +179,6 @@ class InstanceController extends Controller
             $AllLabInstances = array_slice($AllLabInstances, $page * $limit - $limit, $limit);
         } catch (ORMException $e) {
             throw new NotFoundHttpException('Incorrect order field or sort direction', $e, $e->getCode());
-        }
-
-        if ('json' === $request->getRequestFormat()) {            
-            return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
         }
 
         $labInstances=[];
@@ -198,15 +200,23 @@ class InstanceController extends Controller
             ]);
         }
         
+
         $instanceManagerProps = [
-            'labInstances' =>$AllLabInstances,
-            'user'=> $this->getUser()
+            'labInstances' => $AllLabInstances,
+            'user' => $this->getUser(),
+            'filter' => $filter,
+            'subFilter' => $subFilter
         ];
         $props=$serializer->serialize(
             $instanceManagerProps,
             'json',
             SerializationContext::create()->setGroups(['api_get_lab_instance'])
         );
+
+        $this->logger->debug("[InstanceController:indexAction]::#labInstances : ".count($labInstances));
+        $this->logger->debug("[InstanceController:indexAction]::Filter parameters before render the page:".$filter." ".$subFilter);
+        
+
         return $this->render('instance/index.html.twig', [
             'labInstances' => $labInstances,
             'props'=> $props,
@@ -219,7 +229,50 @@ class InstanceController extends Controller
         ]);
     }
 
+    #[Get('/api/instances', name: 'api_get_instances')]
+    #[Security("is_granted('ROLE_USER')", message: "Access denied.",  methods: 'GET')]
+    public function apiIndexAction(Request $request, SerializerInterface $serializer)
+    {
+        $user = $this->getUser();
+        $instance = $request->query->all('instance');
+        
+        $filter = $instance ? $instance['filter'] : "none";
+        $subFilter = $instance ? $instance['subFilter'] : "allInstances";
+        $page = (int)$request->query->get('page', 1);
+        $limit = 10;
+
+        $this->logger->debug("[InstanceController:apiIndexAction]::subfilter parameter passed ".$subFilter);
+
+        if($subFilter == "allInstances") {
+            if ($user->isAdministrator()) {
+                $instances = $this->labInstanceRepository->findAll();
+            } else {
+                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            }
+        } else {
+            if ($user->getHighestRole() == "ROLE_USER") {
+                $instances = $this->labInstanceRepository->findByUserAndAllMembersGroups($user);
+            } else {
+                $instances = $this->getLabInstances($filter, $subFilter);
+            }
+        }
+
+        $AllLabInstances = [];
+        foreach ($instances as $instance) {
+            array_push($AllLabInstances, $instance);
+        }
+
+
+        $count = count($AllLabInstances);
+
+        $this->logger->debug("[InstanceController:apiIndexAction]::Returning JSON with ".count($AllLabInstances)." instances");
+        
+        return $this->json($AllLabInstances, 200, [], ['api_get_lab_instance']);
+    }
+
     private function getLabInstances($filter, $subFilter) {
+        $this->logger->debug("[InstanceController:getLabInstances]::filter ".$filter." and subfiler ".$subFilter);
+        $instances = [];
         if ($subFilter == "allGroups") {
             $instances = $this->fetchLabInstancesByGroup();   
         }
@@ -247,20 +300,35 @@ class InstanceController extends Controller
                 $userType = "admins";
             }
 
+            if ($userType !== "") {
+               $instances = $this->fetchLabInstancesOwnedByUserType($userType);
+            }
+
             $instances = $this->fetchLabInstancesOwnedByUserType($userType);
         }
-        else if (($filter == "teacher" && $subFilter != "allTeachers") || ($filter == "student" && $subFilter != "allStudents") || ($filter == "admin" && $subFilter != "allAdmins") || ($filter == "editor" && $subFilter != "allEditors")) {
-            $instances = $this->fetchLabInstancesByUserUuid($subFilter);
+        else if (($filter == "teacher" && $subFilter != "allTeachers") || 
+             ($filter == "student" && $subFilter != "allStudents") || 
+             ($filter == "admin" && $subFilter != "allAdmins") || 
+             ($filter == "editor" && $subFilter != "allEditors")) {
+        $instances = $this->fetchLabInstancesByUserUuid($subFilter);
         }
-        else if ($filter == "worker" && $subFilter != "allWorkers")
+        else if ($filter == "worker" && $subFilter != "allWorkers") {
             $instances = $this->fetchLabInstancesByWorker($subFilter);
+        }
+        else {
+            // Cas par défaut si aucun filtre ne correspond
+            $this->logger->warning("[InstanceController:getLabInstances]::No matching filter/subfilter - filter: $filter, subFilter: $subFilter");
+        }
+        $instanceCount = is_array($instances) ? count($instances) : 0;
 
+        $this->logger->debug("[InstanceController:getLabInstances]::instances return - count: $instanceCount, data: ",$instances);
+        
         return $instances;
     }
 
     
 	#[Get('/api/filter', name: 'api_list_instances_filter')]
-	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
+	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.", methods: 'GET')]
     public function listInstancesFilterAction(
         Request $request)
     {
@@ -394,11 +462,94 @@ class InstanceController extends Controller
                 "name" => "All instances"
             ]);
         }
+        //$this->logger->debug("[InstanceController:listInstancesFilterAction]::Return json after filter in AllInstancesList",$subFilter);
         return new JsonResponse($subFilter);
     }
 
-    
+    private function isValidSubFilter($filter, $subFilter, $user): bool
+    {
+        if ($filter === "none") {
+            return $subFilter === "allInstances";
+        }
+
+        if ($filter === "group") {
+            if ($subFilter === "allGroups") return true;
+            if ($user->isAdministrator()) {
+                $groups = $this->groupRepository->findAll();
+            } else {
+                $groups = $user->getGroupsInfo();
+            }
+            foreach ($groups as $group) {
+                if ($group->getUuid() === $subFilter) return true;
+            }
+            return false;
+        }
+
+        if ($filter === "lab") {
+            if ($subFilter === "allLabs") return true;
+            if ($user->isAdministrator()) {
+                $labs = $this->labRepository->findBy(["isTemplate" => false]);
+            } else if ($user->hasRole("ROLE_TEACHER") || $user->hasRole("ROLE_TEACHER_EDITOR")) {
+                $labs = $this->labRepository->findByAuthorAndGroups($user);
+            } else {
+                return false;
+            }
+            foreach ($labs as $lab) {
+                if ($lab->getUuid() === $subFilter) return true;
+            }
+            return false;
+        }
+
+        if (in_array($filter, ["student", "teacher", "editor", "admin"])) {
+            if (in_array($subFilter, ["allTeachers", "allEditors", "allStudents", "allAdmins"])) {
+                return true;
+            }
+            // Vérifier si c'est un UUID utilisateur valide
+            $userObj = $this->userRepository->findOneBy(['uuid' => $subFilter]);
+            return $userObj !== null;
+        }
+
+        if ($filter === "worker") {
+            if ($subFilter === "allworkers") return true;
+            $worker = $this->configworkerRepository->findOneBy(['IPv4' => $subFilter]);
+            return $worker !== null;
+        }
+
+        return false;
+    }
+
+    /**
+     * Retourne le subFilter par défaut pour un filter donné
+     */
+    private function getDefaultSubFilter($filter): string
+    {
+        switch ($filter) {
+            case "none":
+                return "allInstances";
+            case "group":
+                return "allGroups";
+            case "lab":
+                return "allLabs";
+            case "student":
+            case "teacher":
+            case "editor":
+            case "admin":
+                return match($filter) {
+                    "teacher" => "allTeachers",
+                    "editor" => "allEditors",
+                    "admin" => "allAdmins",
+                    default => "allStudents"
+                };
+            case "worker":
+                return "allworkers";
+            default:
+                return "allInstances";
+        }
+    }
+
+
 	#[Post('/api/instances/create', name: 'api_create_instance')]
+  	#[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
     public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository, GroupRepository $groupRepository, LabRepository $labRepository)
     {
         #$labUuid = $request->request->get('lab');
@@ -1239,4 +1390,6 @@ class InstanceController extends Controller
         }
         return $result;
     }
+
+
 }

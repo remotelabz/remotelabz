@@ -9,6 +9,7 @@ import GroupRoleSelect from './Form/GroupRoleSelect';
 import GroupExplorer from './Groups/GroupExplorer';
 import InstanceManager from './Instances/InstanceManager';
 import AllInstancesManager from './Instances/AllInstancesManager';
+import OptimizedInstanceList from './Instances/AllInstancesManager';
 import LabImporter from './Lab/LabImporter';
 import InstanceList from './Instances/InstanceList';
 import Editor from './Editor/Editor';
