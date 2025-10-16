@@ -67,9 +67,6 @@ class InstanceVoter extends Voter
     private function canStopDevice($instance, $user)
     {
         if ($instance instanceof DeviceInstance) {
-            if ($instance->getDevice()->getType() == "switch") {
-                return false;
-            }
             if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
                 return false;
             }
@@ -80,9 +77,9 @@ class InstanceVoter extends Voter
     private function canStartDevice($instance, $user)
     {
         if ($instance instanceof DeviceInstance) {
-            if ($instance->getDevice()->getType() == "switch") {
+            /*if ($instance->getDevice()->getType() == "switch") {
                 return false;
-            }
+            }*/
             if ($instance->getOwnedBy() == "group" && !$instance->getOwner()->isElevatedUser($user)) {
                 return false;
             }

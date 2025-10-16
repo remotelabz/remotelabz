@@ -594,7 +594,7 @@ class InstanceController extends Controller
                 $this->logger->info($this->getUser()->getFirstname()." ".$username." ".$this->getUser()->getUuid()." enter in lab ".$lab->getName()." ".$lab->getUuid());
             }
 
-            $instance = $instanceManager->create($lab, $instancier);                        
+            $instance = $instanceManager->create($lab, $instancier);
             if (!is_null($instance)) {
                 switch($instancierType) {
                     case "guest":
@@ -625,9 +625,30 @@ class InstanceController extends Controller
 	#[Get('/api/instances/start/by-uuid/{uuid}', name: 'api_start_instance_by_uuid', requirements: ["uuid"=>"[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function startByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
+        $this->logger->debug("[InstanceController:startByUuidAction]::start the device ".$uuid);
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
+        $this->logger->debug("[InstanceController:startByUuidAction]::deviceInstance ".$deviceInstance->getUuid());
+
+         // LOGS AJOUTÉS
+        $user = $this->getUser();
+        $labInstance = $deviceInstance->getLabInstance();
+        /*
+        $this->logger->debug("[InstanceController:startByUuidAction]::User: " . $user->getUuid());
+        $this->logger->debug("[InstanceController:startByUuidAction]::Owner: " . $deviceInstance->getOwner()->getUuid());
+        $this->logger->debug("[InstanceController:startByUuidAction]::OwnedBy: " . $deviceInstance->getOwnedBy());
+        $this->logger->debug("[InstanceController:startByUuidAction]::Lab Author: " . $labInstance->getLab()->getAuthor()->getUuid());
+        $this->logger->debug("[InstanceController:startByUuidAction]::User roles: " . implode(', ', $user->getRoles()));
+    
+         // LOGS SUPPLÉMENTAIRES
+        $this->logger->debug("[InstanceController:startByUuidAction]::DeviceInstance State: " . $deviceInstance->getState());
+        $this->logger->debug("[InstanceController:startByUuidAction]::LabInstance State: " . $labInstance->getState());
+        $this->logger->debug("[InstanceController:startByUuidAction]::LabInstance UUID: " . $labInstance->getUuid());
+        $this->logger->debug("[InstanceController:startByUuidAction]::Device Name: " . $deviceInstance->getDevice()->getName());
+        $this->logger->debug("[InstanceController:startByUuidAction]::Device Hypervisor: " . $deviceInstance->getDevice()->getHypervisor()->getName());
+        */
+        
         $this->denyAccessUnlessGranted(InstanceVoter::START_DEVICE, $deviceInstance);
         
         $json = $instanceManager->start($deviceInstance);
@@ -756,7 +777,7 @@ class InstanceController extends Controller
         $response->setContent(json_encode([
             'code'=> $status,
             'status'=>'success',
-            'message' => 'Node stoped (80051).']));
+            'message' => 'Node stopped (80051).']));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
     }
@@ -1417,25 +1438,26 @@ class InstanceController extends Controller
 
         foreach ($deviceInstances as $deviceInstance) {
             try {
-                // TODO if ($deviceInstance is switch )
-                // Vérifier l'état avant de démarrer
-                if ($deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED || 
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR) {
-                    
-                    $this->logger->info('Starting device instance ' . $deviceInstance->getUuid() . ' as part of bulk start.');
-                    $instanceManager->start($deviceInstance);
-                    $results[] = [
-                        'uuid' => $deviceInstance->getUuid(),
-                        'name' => $deviceInstance->getDevice()->getName(),
-                        'status' => 'started'
-                    ];
-                } else {
-                    $results[] = [
-                        'uuid' => $deviceInstance->getUuid(),
-                        'name' => $deviceInstance->getDevice()->getName(),
-                        'status' => 'skipped',
-                        'reason' => 'Device already running or in invalid state'
-                    ];
+                if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) !== "natif") {
+                    // Vérifier l'état avant de démarrer
+                    if ($deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED || 
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR) {
+                        
+                        $this->logger->info('Starting device instance ' . $deviceInstance->getUuid() . ' as part of bulk start.');
+                        $instanceManager->start($deviceInstance);
+                        $results[] = [
+                            'uuid' => $deviceInstance->getUuid(),
+                            'name' => $deviceInstance->getDevice()->getName(),
+                            'status' => 'started'
+                        ];
+                    } else {
+                        $results[] = [
+                            'uuid' => $deviceInstance->getUuid(),
+                            'name' => $deviceInstance->getDevice()->getName(),
+                            'status' => 'skipped',
+                            'reason' => 'Device already running or in invalid state'
+                        ];
+                    }
                 }
             } catch (Exception $e) {
                 $this->logger->error('Error starting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
@@ -1481,33 +1503,36 @@ class InstanceController extends Controller
         $errors = [];
 
         foreach ($deviceInstances as $deviceInstance) {
-            try {
-                // Vérifier l'état avant d'arrêter
-                if ($deviceInstance->getState() === InstanceStateMessage::STATE_STARTED || 
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING) {
-                    
-                    $this->logger->info('Stopping device instance ' . $deviceInstance->getUuid() . ' as part of bulk stop.');
-                    $instanceManager->stop($deviceInstance);
-                    $results[] = [
+            if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) !== "natif") {
+
+                try {
+                    // Vérifier l'état avant d'arrêter
+                    if ($deviceInstance->getState() === InstanceStateMessage::STATE_STARTED || 
+                        $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING) {
+                        
+                        $this->logger->info('Stopping device instance ' . $deviceInstance->getUuid() . ' as part of bulk stop.');
+                        $instanceManager->stop($deviceInstance);
+                        $results[] = [
+                            'uuid' => $deviceInstance->getUuid(),
+                            'name' => $deviceInstance->getDevice()->getName(),
+                            'status' => 'stopped'
+                        ];
+                    } else {
+                        $results[] = [
+                            'uuid' => $deviceInstance->getUuid(),
+                            'name' => $deviceInstance->getDevice()->getName(),
+                            'status' => 'skipped',
+                            'reason' => 'Device already stopped or in invalid state'
+                        ];
+                    }
+                } catch (Exception $e) {
+                    $this->logger->error('Error stopping device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                    $errors[] = [
                         'uuid' => $deviceInstance->getUuid(),
                         'name' => $deviceInstance->getDevice()->getName(),
-                        'status' => 'stopped'
-                    ];
-                } else {
-                    $results[] = [
-                        'uuid' => $deviceInstance->getUuid(),
-                        'name' => $deviceInstance->getDevice()->getName(),
-                        'status' => 'skipped',
-                        'reason' => 'Device already stopped or in invalid state'
+                        'error' => $e->getMessage()
                     ];
                 }
-            } catch (Exception $e) {
-                $this->logger->error('Error stopping device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
-                $errors[] = [
-                    'uuid' => $deviceInstance->getUuid(),
-                    'name' => $deviceInstance->getDevice()->getName(),
-                    'error' => $e->getMessage()
-                ];
             }
         }
 
@@ -1543,21 +1568,24 @@ class InstanceController extends Controller
         $errors = [];
 
         foreach ($deviceInstances as $deviceInstance) {
-            try {
-                $this->logger->info('Resetting device instance ' . $deviceInstance->getUuid() . ' as part of bulk reset.');
-                $instanceManager->reset($deviceInstance);
-                $results[] = [
-                    'uuid' => $deviceInstance->getUuid(),
-                    'name' => $deviceInstance->getDevice()->getName(),
-                    'status' => 'reset'
-                ];
-            } catch (Exception $e) {
-                $this->logger->error('Error resetting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
-                $errors[] = [
-                    'uuid' => $deviceInstance->getUuid(),
-                    'name' => $deviceInstance->getDevice()->getName(),
-                    'error' => $e->getMessage()
-                ];
+            if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) !== "natif") {
+
+                try {
+                    $this->logger->info('Resetting device instance ' . $deviceInstance->getUuid() . ' as part of bulk reset.');
+                    $instanceManager->reset($deviceInstance);
+                    $results[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'status' => 'reset'
+                    ];
+                } catch (Exception $e) {
+                    $this->logger->error('Error resetting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
+                    $errors[] = [
+                        'uuid' => $deviceInstance->getUuid(),
+                        'name' => $deviceInstance->getDevice()->getName(),
+                        'error' => $e->getMessage()
+                    ];
+                }
             }
         }
 

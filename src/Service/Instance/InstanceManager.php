@@ -299,10 +299,8 @@ class InstanceManager
      *
      * @return string The lab instance JSON string
      */
-    public function start(DeviceInstance $deviceInstance)
-    {
-
-        $this->logger->info('Device instance state '.$deviceInstance->getState());
+    public function start(DeviceInstance $deviceInstance) {
+        //$this->logger->info('Device instance state '.$deviceInstance->getState());
         
         if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||
@@ -355,7 +353,7 @@ class InstanceManager
                 }
 
                 $this->logger->info('Sending device instance '.$uuid.' start message');
-                $this->logger->debug('[InstanceManager:start]::Sending device instance '.$uuid.' start message', json_decode($labJson, true));
+                //$this->logger->debug('[InstanceManager:start]::Sending device instance '.$uuid.' start message', json_decode($labJson, true));
                 $this->bus->dispatch(
                     new InstanceActionMessage($labJson, $uuid, InstanceActionMessage::ACTION_START), [
                         new AmqpStamp($workerIP, AMQP_NOPARAM, []),
