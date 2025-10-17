@@ -513,7 +513,7 @@ class OperatingSystemController extends Controller
             $device_repository=$entityManager->getRepository(Device::class)->findOneBy(["operatingSystem"=>$id]);
             if ($device_repository) {
                 $this->logger->debug("[OperatingSystemController:delete]::OS used by at least one device ".$device_repository->getName(). " in a lab");
-                $this->addFlash('danger', 'This operating system is still used by, at least device "'.$device_repository->getName().'" in a lab. Please delete them first.');
+                $this->addFlash('danger', 'This operating system is still used by, at least device "'.$device_repository->getName().'". Please delete them first.');
 
                 return $this->redirectToRoute('show_operating_system', [
                     'id' => $id
