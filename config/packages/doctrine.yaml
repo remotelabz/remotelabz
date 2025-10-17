@@ -11,6 +11,8 @@ doctrine:
         driver: 'pdo_mysql'
         server_version: '%env(resolve:MYSQL_VERSION)%'
         charset: utf8mb4
+        options:
+            1013: 3
         default_table_options:
             charset: utf8mb4
             collate: utf8mb4_unicode_ci
@@ -26,6 +28,8 @@ doctrine:
         enable_lazy_ghost_objects: true
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
+        quote_strategy: doctrine.orm.quote_strategy.ansi
+
         controller_resolver:
             auto_mapping: false
         mappings:

@@ -5,14 +5,26 @@ namespace App\Controller;
 use App\Entity\OperatingSystem;
 use App\Entity\Device;
 use App\Repository\HypervisorRepository;
+use App\Repository\OperatingSystemRepository;
+use App\Repository\ArchRepository;
+use App\Repository\ConfigWorkerRepository;
 use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
 use App\Service\ImageFileUploader;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Filesystem\Filesystem;
-use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Process\Process;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Put;
@@ -20,26 +32,15 @@ use FOS\RestBundle\Controller\Annotations\Patch;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Remotelabz\Message\Message\InstanceActionMessage;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\ConfigWorkerRepository;
-use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\String\Slugger\SluggerInterface;
 use App\Service\Files2WorkerManager;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
-use Symfony\Component\Process\Process;
 use App\Service\OvaManager;
 
 
@@ -61,6 +62,7 @@ class OperatingSystemController extends Controller
     private $paginator;
     private Files2WorkerManager $Files2WorkerManager;
     private OvaManager $ovaManager;
+    private $archRepository;
 
 
     public function __construct(LoggerInterface $logger,
@@ -72,11 +74,13 @@ class OperatingSystemController extends Controller
         PaginatorInterface $paginator,
         Files2WorkerManager $Files2WorkerManager,
         HypervisorRepository $hypervisorRepository,
-        OvaManager $ovaManager
+        OvaManager $ovaManager,
+        ArchRepository $archRepository
         )
     {
         $this->logger = $logger;
         $this->operatingSystemRepository = $operatingSystemRepository;
+        $this->archRepository = $archRepository;
         $this->serializer = $serializerInterface;
         $this->bus = $bus;
         $this->configWorkerRepository = $configWorkerRepository;
@@ -611,15 +615,20 @@ class OperatingSystemController extends Controller
 
         if ($request->get("_route") == "api_new_lxc_device") {
             $data = json_decode($request->getContent(), true);
+            $this->logger->debug("[OperatingSystemController:newLxcAction]::data in request ",$data);
             $hypervisor = $this->hypervisorRepository->findByName('lxc');
             $entityManager = $this->entityManager;
             $osName = ucfirst($data['os'])."-".$data['version'];
             $newOs_id=null;
-            if(!$operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
+            $operatingSystem = $this->operatingSystemRepository->findByName($osName);
+            if(!$operatingSystem) {
                 $newOs = new OperatingSystem();
                 $newOs->setName($osName);
                 $newOs->setHypervisor($hypervisor);
                 $newOs->setImageFilename($osName);
+                $newOs->setArch($this->archRepository->findByName("x86_64"));
+                $newOs->setRelease($data['os']);
+                $newOs->setVersion($data['version']);
                 $entityManager->persist($newOs);
                 $entityManager->flush();
                 $newOs_id=$newOs->getId();

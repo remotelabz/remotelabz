@@ -16,28 +16,18 @@ class ArchRepository extends ServiceEntityRepository
         parent::__construct($registry, Arch::class);
     }
 
-    //    /**
-    //     * @return Arch[] Returns an array of Arch objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('a.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findByName($name)
+    {
+       $arch = $this->createQueryBuilder('o')
+            ->andWhere('o.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getResult()
+        ;
 
-    //    public function findOneBySomeField($value): ?Arch
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        if ($arch == NULL) {
+            return null;
+        }
+        return $arch[0];
+    }
 }
