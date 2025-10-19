@@ -11,12 +11,22 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [totalCount, setTotalCount] = useState(0);
     const [filter, setFilter] = useState(props.filter || 'all');
     const [subFilter, setSubFilter] = useState(props.subFilter || 'allInstances');
-
-    
+   
     const limit = 10;
 
     useEffect(() => {
         setLoadingInstanceState(true);
+        const filterElement = document.getElementById("instance_filter");
+        const subFilterElement = document.getElementById("instance_subFilter");
+        const searchUuidElement = document.getElementById("instance_searchUuid");
+        
+        const currentFilter = filterElement?.value || 'none';
+        const currentSubFilter = subFilterElement?.value || 'allInstances';
+        const currentSearchUuid = searchUuidElement?.value || '';
+        
+        setFilter(currentFilter);
+        setSubFilter(currentSubFilter);
+
         refreshInstances();
         
         const interval = setInterval(refreshInstances, 60000);
@@ -26,7 +36,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
             setInstances([]);
             setLoadingInstanceState(false);
         }
-    }, [filter, subFilter, page]);
+    }, []);
 
     function refreshInstances() {
         const filterElement = document.getElementById("instance_filter");
@@ -40,7 +50,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         const request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage);
     
         request.then(response => {
-            console.log('[AllInstancesList] Données reçues:', response.data);
+            //console.log('[AllInstancesList] Données reçues:', response.data);
             // S'assurer que les données sont au bon format
             const formattedInstances = Array.isArray(response.data) ? response.data : [];
             setInstances(formattedInstances);
