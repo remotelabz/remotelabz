@@ -1438,7 +1438,7 @@ class InstanceController extends Controller
 
         foreach ($deviceInstances as $deviceInstance) {
             try {
-                if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) !== "natif") {
+                
                     // Vérifier l'état avant de démarrer
                     if ($deviceInstance->getState() === InstanceStateMessage::STATE_STOPPED || 
                         $deviceInstance->getState() === InstanceStateMessage::STATE_ERROR) {
@@ -1458,7 +1458,7 @@ class InstanceController extends Controller
                             'reason' => 'Device already running or in invalid state'
                         ];
                     }
-                }
+                
             } catch (Exception $e) {
                 $this->logger->error('Error starting device ' . $deviceInstance->getUuid() . ': ' . $e->getMessage());
                 $errors[] = [
@@ -1503,8 +1503,6 @@ class InstanceController extends Controller
         $errors = [];
 
         foreach ($deviceInstances as $deviceInstance) {
-            if (strtolower($deviceInstance->getDevice()->getHypervisor()->getName()) !== "natif") {
-
                 try {
                     // Vérifier l'état avant d'arrêter
                     if ($deviceInstance->getState() === InstanceStateMessage::STATE_STARTED || 
@@ -1533,7 +1531,6 @@ class InstanceController extends Controller
                         'error' => $e->getMessage()
                     ];
                 }
-            }
         }
 
         return $this->json([

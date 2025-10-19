@@ -96,7 +96,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
   );
 });
 
-const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted }) => {
+const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted, user }) => {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -459,16 +459,34 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                                 {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && user.roles 
+                              && ( user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")
+                                ) 
+                              ))
+                              )
+                              &&
+                                  <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      href={"/instances/" + instance.uuid + "/view/admin"}
+                                      className="btn btn-primary ml-3"
+                                      title="Open VNC console"
+                                      data-toggle="tooltip"
+                                      data-placement="top"
+                                  >
+                                      <SVG name="incognito" />
+                                  </a>
+                            }
                             {(deviceInstance.state === 'started' && is_login(deviceInstance)) &&
-                              <a
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                href={"/instances/" + deviceInstance.uuid + "/view/login"}
-                                className="btn btn-sm btn-primary"
-                                title="Open Login console"
-                              >
-                                <SVG name="terminal" />
-                              </a>
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  href={"/instances/" + deviceInstance.uuid + "/view/login"}
+                                  className="btn btn-sm btn-primary"
+                                  title="Open Login console"
+                                >
+                                  <SVG name="terminal" />
+                                </a>
                             }
                             {(deviceInstance.state === 'started' && is_vnc(deviceInstance)) &&
                               <a
@@ -736,6 +754,7 @@ export default function OptimizedInstanceList({
         onStateUpdate={handleStateUpdate}
         onRefreshDetails={handleRefreshDetails}
         onLabDeleted={onLabDeleted}
+        user={user}
       />
     </div>
   </>);
