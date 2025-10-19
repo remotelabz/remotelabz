@@ -742,16 +742,26 @@ export class RemotelabzAPI {
              * 
              * Implements GET `/api/instances`
              * 
+             * @param {string} filter
+             * @param {string} subFilter
+             * @param {number} page
+             * @param {string} searchUuid - UUID to search for (lab, device, or lab instance)
+             * 
              * @returns {Promise<import('axios').AxiosResponse<Array<LabInstance>>>}
              */
-            getAll(filter="none", subFilter="allInstances", page=1) {
-                return axios.get(`/instances`, {
-                    params: {
-                        "instance[filter]": filter, 
-                        "instance[subFilter]": subFilter, 
-                        page
-                    }
-                });
+            getAll(filter="none", subFilter="allInstances", page=1, searchUuid="") {
+                const params = {
+                    "instance[filter]": filter, 
+                    "instance[subFilter]": subFilter, 
+                    page
+                };
+                
+                // Ajouter le searchUuid seulement s'il est fourni
+                if (searchUuid && searchUuid.trim() !== '') {
+                    params["instance[searchUuid]"] = searchUuid.trim();
+                }
+                
+                return axios.get(`/instances`, { params });
             },
 
             /**

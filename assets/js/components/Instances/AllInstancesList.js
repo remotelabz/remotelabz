@@ -2,7 +2,6 @@ import { ToastContainer, toast } from 'react-toastify';
 import Remotelabz from '../API';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import OptimizedInstanceList from './OptimizedInstanceList';
-import { Button } from 'react-bootstrap';
 
 function AllInstancesList(props = {labInstances: [], user:{}}) { 
     const [instances, setInstances] = useState([]);
@@ -11,6 +10,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     const [totalCount, setTotalCount] = useState(0);
     const [filter, setFilter] = useState(props.filter || 'all');
     const [subFilter, setSubFilter] = useState(props.subFilter || 'allInstances');
+    const [searchUuid, setSearchUuid] = useState('');
    
     const limit = 10;
 
@@ -26,6 +26,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         
         setFilter(currentFilter);
         setSubFilter(currentSubFilter);
+        setSearchUuid(currentSearchUuid);
 
         refreshInstances();
         
@@ -41,28 +42,47 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     function refreshInstances() {
         const filterElement = document.getElementById("instance_filter");
         const subFilterElement = document.getElementById("instance_subFilter");
+        const searchUuidElement = document.getElementById("instance_searchUuid");
         const pageElement = document.getElementById("instance_page");
 
         const currentFilter = filterElement?.value || filter || 'all';
         const currentSubFilter = subFilterElement?.value || subFilter || 'allInstances';
+        const currentSearchUuid = searchUuidElement?.value || searchUuid || '';
         const currentPage = parseInt(pageElement?.value || page || 1);
 
-        const request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage);
+        // Appel API avec UUID
+        const request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage, currentSearchUuid);
     
         request.then(response => {
-            //console.log('[AllInstancesList] Données reçues:', response.data);
-            // S'assurer que les données sont au bon format
+            console.log('[AllInstancesList] Données reçues:', response.data);
             const formattedInstances = Array.isArray(response.data) ? response.data : [];
             setInstances(formattedInstances);
             setLoadingInstanceState(false);
+            
+            // Si c'est une recherche UUID et qu'on a des résultats
+            if (currentSearchUuid && formattedInstances.length > 0) {
+                toast.success(`Found ${formattedInstances.length} instance(s) for UUID`, {
+                    autoClose: 3000,
+                });
+            } else if (currentSearchUuid && formattedInstances.length === 0) {
+                toast.warning('No instance found for this UUID', {
+                    autoClose: 5000,
+                });
+            }
         }).catch(error => {
             console.error('[AllInstancesList] Erreur lors du refresh:', error);
             if (error.response) {
                 if (error.response.status <= 500) {
                     setInstances([]);
                     setLoadingInstanceState(false);
+                    
+                    if (error.response.status === 404 && currentSearchUuid) {
+                        toast.error('No instance found for this UUID', {
+                            autoClose: 5000,
+                        });
+                    }
                 } else {
-                    toast.error('Une erreur est survenue lors de la récupération des instances. Si cette erreur persiste, veuillez contacter un administrateur.', {
+                    toast.error('An error occurred while retrieving instances. If this error persists, please contact an administrator.', {
                         autoClose: 10000,
                     });
                 }
@@ -71,7 +91,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }
 
     const handleStateUpdate = useCallback((action, uuid) => {
-        //console.log(`[AllInstancesList] Action ${action} sur ${uuid}`);
+        console.log(`[AllInstancesList] Action ${action} sur ${uuid}`);
         
         if (action === 'start') {
             Remotelabz.instances.device.start(uuid)
@@ -120,7 +140,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
     }, []);
 
     const memoizedInstances = useMemo(() => instances, [instances]);
-    //console.log("[AllInstancesList]:memoizedInstances avant le return",memoizedInstances);
+
     return (
         <>
             <ToastContainer
