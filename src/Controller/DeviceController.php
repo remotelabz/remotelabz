@@ -500,11 +500,10 @@ class DeviceController extends Controller
             $osName = $params['os']."-".$params['model'];
             if ($operatingSystem = $this->operatingSystemRepository->findByName($osName)) {
                 $device->setName($osName);
-                $device->setModel($params['model']);
-                $device->setBrand($params['os']);
+                $device->setModel($operatingSystem->getRelease());
+                $device->setBrand($operatingSystem->getVersion());
                 $device->setOperatingSystem($operatingSystem);
             }
-            
         }
 
         if ("new_physical_device" === $request->get('_route')) {
@@ -554,6 +553,7 @@ class DeviceController extends Controller
                 if ($controlProtocolTypes == []) {
                     $controlProtocolTypes = '';
                 }
+                
                 $deviceData = [
                     "name" => $device->getName(),
                     //"type" => $device->getType(),

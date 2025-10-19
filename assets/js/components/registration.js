@@ -15,7 +15,6 @@ import InstanceList from './Instances/InstanceList';
 import Editor from './Editor/Editor';
 import SandboxManager from './Sandbox/SandboxManager';
 import AllInstancesList from './Instances/AllInstancesList';
-import InstanceFilterSelect from './Instances/InstanceFilterSelect';
 import FilterInstancesList from './Instances/FilterInstancesList';
 import CodeManager from './Lab/CodeManager';
 import GroupInstancesList from './Instances/GroupInstancesList';
@@ -38,7 +37,6 @@ ReactOnRails.register({
     AllInstancesManager,
     AllInstancesList,
     FilterInstancesList,
-    InstanceFilterSelect,
     GroupInstancesList,
     LabSelect,
     DownloadLxcDevice,

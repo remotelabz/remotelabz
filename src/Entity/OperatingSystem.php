@@ -73,6 +73,24 @@ class OperatingSystem
     #[ORM\JoinColumn(nullable: true)]
     #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
     private $arch = Null;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(name: 'os_release', type: 'string', length: 100, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab','worker'])]
+    private $release;
+
+    /**
+     * @var string
+     */
+    #[Assert\Type(type: 'string')]
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    #[Serializer\XmlAttribute]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab','worker'])]
+    private $version;
     
     public function getId(): ?int
     {
@@ -149,7 +167,8 @@ class OperatingSystem
 
         return $this;
     }
-     public function getDescription(): ?string
+
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -157,6 +176,30 @@ class OperatingSystem
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+        return $this;
+    }
+
+    public function getRelease(): ?string
+    {
+        return $this->release;
+    }
+
+    public function setRelease(?string $release): self
+    {
+        $this->release = $release;
+
+        return $this;
+    }
+
+    public function getVersion(): ?string
+    {
+        return $this->version;
+    }
+
+    public function setVersion(?string $version): self
+    {
+        $this->version = $version;
+
         return $this;
     }
 }

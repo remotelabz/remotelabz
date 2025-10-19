@@ -96,7 +96,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
   );
 });
 
-const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted }) => {
+const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted, user }) => {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -109,6 +109,13 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
   const logsIntervalsRef = useRef({});
   const [showLeaveLabModal, setShowLeaveLabModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  
+  // États pour les actions bulk
+  const [isBulkStarting, setIsBulkStarting] = useState(false);
+  const [isBulkStopping, setIsBulkStopping] = useState(false);
+  const [isBulkResetting, setIsBulkResetting] = useState(false);
 
   const handleDeviceAction = useCallback((deviceUuid, action) => {
     setDeviceStates(prev => ({
@@ -126,6 +133,66 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
     }, 1500);
   }, [onStateUpdate]);
 
+  // Gestion des actions bulk
+  const handleBulkAction = useCallback(async (action) => {
+    const setLoading = action === 'start' ? setIsBulkStarting : 
+                       action === 'stop' ? setIsBulkStopping : 
+                       setIsBulkResetting;
+    
+    setLoading(true);
+    
+    try {
+      let response;
+      switch(action) {
+        case 'start':
+          response = await Remotelabz.instances.device.startAll(selectedInstance.uuid);
+          break;
+        case 'stop':
+          response = await Remotelabz.instances.device.stopAll(selectedInstance.uuid);
+          break;
+        case 'reset':
+          response = await Remotelabz.instances.device.resetAll(selectedInstance.uuid);
+          break;
+      }
+
+      const data = response.data;
+      
+      if (data.success) {
+        toast.success(`Successfully ${action}ed ${data[action === 'start' ? 'started' : action === 'stop' ? 'stopped' : 'reset']} out of ${data.total} devices`, {
+          autoClose: 5000
+        });
+      } else {
+        toast.warning(`${action} completed with some errors. ${data.errors.length} device(s) failed.`, {
+          autoClose: 7000
+        });
+        
+        // Afficher les erreurs individuelles
+        data.errors.forEach(error => {
+          toast.error(`${error.name}: ${error.error}`, {
+            autoClose: 5000
+          });
+        });
+      }
+      
+      // Rafraîchir les détails
+      setTimeout(() => {
+        onRefreshDetails(selectedInstance.uuid);
+      }, 2000);
+      
+    } catch (error) {
+      console.error(`Error during bulk ${action}:`, error);
+      
+      const errorMessage = error.response?.data?.message || 
+        `An error occurred while trying to ${action} all devices. Please try again.`;
+      
+      toast.error(errorMessage, {
+        autoClose: 10000
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedInstance, onRefreshDetails]);
+
   const handleLeaveLab = useCallback(async () => {
     setShowLeaveLabModal(false);
     setIsDeleting(true);
@@ -137,10 +204,8 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
         autoClose: 5000
       });
       
-      // Fermer la modal
       onClose();
       
-      // Notifier le parent pour rafraîchir la liste
       if (onLabDeleted) {
         onLabDeleted(selectedInstance.uuid);
       }
@@ -160,7 +225,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
     }
   }, [selectedInstance, onClose, onLabDeleted]);
 
-  // Gérer les logs pour chaque device
+  // Gestion des logs
   useEffect(() => {
     deviceInstances.forEach(device => {
       if (logsIntervalsRef.current[device.uuid]) {
@@ -216,8 +281,8 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
 
   return (<>
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-lg" role="document">
-        <div className="modal-content">
+      <div className="modal-dialog modal-lg" role="document" style={{ maxHeight: '90vh', margin: '1.75rem auto' }}>
+        <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
           {/* Header */}
           <div className="modal-header border-bottom">
             <div style={{ width: '100%' }}>
@@ -244,68 +309,60 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                 </button>
               </div>
 
-              {/* Third row: Device action buttons - Always visible */}
+              {/* Bulk device action buttons */}
               {deviceInstances.length > 0 && (
                 <div style={{ borderTop: '1px solid #dee2e6', paddingTop: '12px' }}>
                   <small style={{ color: '#6c757d', display: 'block', marginBottom: '8px' }}>
                     Apply to all devices:
                   </small>
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    {deviceInstances.map((deviceInstance) => (
-                      <div key={deviceInstance.uuid} style={{ display: 'flex', gap: '4px' }}>
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error' || deviceInstance.state === 'reset') && (
-                          <button
-                            className="btn btn-sm btn-success"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'start')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'start'}
-                            title={`Start: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'start' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="play" />
-                            )}
-                          </button>
-                        )}
-                        
-                        {deviceInstance.state === 'started' && (
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'stop')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'stop'}
-                            title={`Stop: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'stop' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="stop" />
-                            )}
-                          </button>
-                        )}
-                        
-                        {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && (
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() => handleDeviceAction(deviceInstance.uuid, 'reset')}
-                            disabled={deviceStates[deviceInstance.uuid] === 'reset'}
-                            title={`Reset: ${deviceInstance.device?.name || 'Device'}`}
-                            style={{ fontSize: '11px', padding: '4px 8px' }}
-                          >
-                            {deviceStates[deviceInstance.uuid] === 'reset' ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              <SVG name="redo" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => handleBulkAction('start')}
+                      disabled={isBulkStarting}
+                      title="Start all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkStarting ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="play" /> Start All</>
+                      )}
+                    </button>
+                    
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleBulkAction('stop')}
+                      disabled={isBulkStopping}
+                      title="Stop all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkStopping ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="stop" /> Stop All</>
+                      )}
+                    </button>
+                    
+                    <button
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleBulkAction('reset')}
+                      disabled={isBulkResetting}
+                      title="Reset all devices"
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      {isBulkResetting ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        <><SVG name="redo" /> Reset All</>
+                      )}
+                    </button>
+                    
                     <button 
                       className="btn btn-sm btn-danger" 
                       onClick={() => setShowLeaveLabModal(true)}
                       disabled={isDeleting}
+                      style={{ marginLeft: 'auto' }}
                     >
                       {isDeleting ? <Spinner animation="border" size="sm" /> : 'Leave lab'}
                     </button>
@@ -316,7 +373,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
           </div>
 
           {/* Body */}
-          <div className="modal-body">
+          <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto' }}>
             <div className="content-body">
               {/* Lab Information Section - 2 columns */}
               <div className="row mb-4">
@@ -368,7 +425,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                     {deviceInstances.map((deviceInstance) => (
                       <div key={deviceInstance.uuid} className="list-group-item">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          {/* Left side: Device name and state on first line, UUID on second */}
+                          {/* Left side: Device name and state */}
                           <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                               <h6 style={{ marginBottom: 0, marginRight: '8px' }}>
@@ -402,16 +459,34 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                                 {deviceStates[deviceInstance.uuid] === 'start' ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                               </button>
                             )}
+                            {(deviceInstance.state == 'started' && is_login(deviceInstance) && !is_real(deviceInstance) && user.roles 
+                              && ( user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")
+                                ) 
+                              ))
+                              )
+                              &&
+                                  <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      href={"/instances/" + instance.uuid + "/view/admin"}
+                                      className="btn btn-primary ml-3"
+                                      title="Open VNC console"
+                                      data-toggle="tooltip"
+                                      data-placement="top"
+                                  >
+                                      <SVG name="incognito" />
+                                  </a>
+                            }
                             {(deviceInstance.state === 'started' && is_login(deviceInstance)) &&
-                              <a
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                href={"/instances/" + deviceInstance.uuid + "/view/login"}
-                                className="btn btn-sm btn-primary"
-                                title="Open Login console"
-                              >
-                                <SVG name="terminal" />
-                              </a>
+                                <a
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  href={"/instances/" + deviceInstance.uuid + "/view/login"}
+                                  className="btn btn-sm btn-primary"
+                                  title="Open Login console"
+                                >
+                                  <SVG name="terminal" />
+                                </a>
                             }
                             {(deviceInstance.state === 'started' && is_vnc(deviceInstance)) &&
                               <a
@@ -447,7 +522,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                           </div>
                         </div>
 
-                        {/* Logs section for this device */}
+                        {/* Logs section */}
                         {deviceInstance.state !== 'stopped' && (
                           <DeviceLogs 
                             logs={deviceLogs[deviceInstance.uuid] || []} 
@@ -471,7 +546,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
           </div>
 
           {/* Footer */}
-          <div className="modal-footer">
+          <div className="modal-footer" style={{ flexShrink: 0 }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
@@ -679,6 +754,7 @@ export default function OptimizedInstanceList({
         onStateUpdate={handleStateUpdate}
         onRefreshDetails={handleRefreshDetails}
         onLabDeleted={onLabDeleted}
+        user={user}
       />
     </div>
   </>);

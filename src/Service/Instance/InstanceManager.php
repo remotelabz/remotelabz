@@ -299,10 +299,8 @@ class InstanceManager
      *
      * @return string The lab instance JSON string
      */
-    public function start(DeviceInstance $deviceInstance)
-    {
-
-        $this->logger->info('Device instance state '.$deviceInstance->getState());
+    public function start(DeviceInstance $deviceInstance) {
+        //$this->logger->info('Device instance state '.$deviceInstance->getState());
         
         if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
                 $deviceInstance->getState() == InstanceStateMessage::STATE_STARTING ||

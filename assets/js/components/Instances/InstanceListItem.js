@@ -398,15 +398,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             <div>
                 <div className="d-flex justify-content-between">
                     <div className="d-flex flex-column">
-                        {instance.device.type != "switch" ?
                         <div>
                             {device.name} <InstanceStateBadge state={instance.state} className="ml-1" />
-                        </div> :
-                        <div>
-                            {device.name} <InstanceStateBadge state={"started"} className="ml-1" />
                         </div>
-                        }
-                        
                         <div className="text-muted small">
                             {instance.uuid}
                         </div>
@@ -434,8 +428,8 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                         { 
                         (instance.ownedBy != 'group' 
                         && (instance.state === 'stopped' || instance.state === 'error') 
-                        && instance.device.type != 'switch' 
-                        && !isSandbox 
+                        && !isSandbox
+                        && instance.device.hypervisor.name != 'natif'
                         && user.roles 
                         && (user.roles.includes("ROLE_ADMINISTRATOR") || 
                             user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || 
@@ -456,7 +450,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }        
-                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.type != 'switch' &&
+                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.hypervisor.name != 'natif' &&
                             <Button 
                                 variant="warning" 
                                 title="Reset device" 
@@ -530,10 +524,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                             </a>
                         }
 
-                        {instance.device.type != "switch" && showControls && 
+                        { showControls && 
                             controls
                         }
-                        {instance.ownedBy != 'group' && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' && !isSandbox && user.roles &&
+                        {instance.ownedBy != 'group' && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && !isSandbox && user.roles &&
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR"))) &&
                             <Button 
                                 variant="danger" 
@@ -544,7 +538,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 {isStopping(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                             </Button>
                         }
-                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && instance.device.type != 'switch' &&
+                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') &&
                             <Button 
                                 variant="danger" 
                                 className="ml-3" 
