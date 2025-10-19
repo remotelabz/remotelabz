@@ -5,6 +5,7 @@ namespace App\Form;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -64,6 +65,18 @@ class InstanceType extends AbstractType
             ];
         }
 
+        // Ajouter le champ UUID
+        $builder->add('searchUuid', TextType::class, [
+            'required' => false,
+            'label' => false,
+            'attr' => [
+                'class' => 'form-control',
+                'placeholder' => 'Search by UUID (lab, device or instance)',
+                'style' => 'font-family: monospace; font-size: 12px;'
+            ],
+            'data' => $options['searchUuid'] ?? ''
+        ]);
+
         $builder
             ->add('filter', ChoiceType::class, [
                 "expanded" => false,
@@ -106,7 +119,7 @@ class InstanceType extends AbstractType
                 "expanded" => false,
                 "multiple" => false,
                 "label" => false,
-                "data" => $currentSubFilter, // Garder la valeur reçue
+                "data" => $currentSubFilter,
                 "attr" => [
                     "class" => "subFilter form-control"
                 ],
@@ -228,6 +241,7 @@ class InstanceType extends AbstractType
         $resolver->setDefaults([
             'filter' => 'none',
             'subFilter' => 'allInstances',
+            'searchUuid' => ''
         ]);
     }
 }
