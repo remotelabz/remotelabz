@@ -63,7 +63,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem = new OperatingSystem();
         $operatingSystem
             ->setName('Alpine-stable')
-            ->setImageFilename('Alpine-stable')
+            ->setImageFilename('Alpine-Stable')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)            
         ;
