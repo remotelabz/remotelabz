@@ -6,17 +6,13 @@ import InstanceExport from './InstanceExport';
 import Remotelabz from '../API';
 import { ToastContainer, toast } from 'react-toastify';
 
-
 const InstanceList = (props) => {
-    //console.log("props", props);
     const [showExport, setShowExport] = useState(false);
     let deviceLengthMax = 1;
 
-    //console.log("Sandbox", props.isSandbox);
     if (props.isSandbox) {
         for (const instance of props.instances) {
             const device = instance.device;
-            //console.log("device:", device);
             if (device.name === "DHCP_service") {
                 deviceLengthMax = 2;
             }
@@ -29,7 +25,8 @@ const InstanceList = (props) => {
                 instance={deviceInstance}
                 labDeviceLength={deviceLengthMax}
                 key={index}
-		        allInstance={props.instances}
+                allInstance={props.instances}
+                deviceIsos={props.deviceIsos} // Passer les ISOs
                 {...props}
             />
         )
@@ -46,14 +43,10 @@ const InstanceList = (props) => {
     function exportLabTemplate(labInstance, name) {
         Remotelabz.instances.export(labInstance.uuid, name, "lab")
             .then(() => {
-               
-                toast.success('Instance export requested.', {
-                });
-
+                toast.success('Instance export requested.');
                 props.onStateUpdate();
             })
             .catch(() => {
-               
                 toast.error('Error while requesting instance export. Please try again later.', {
                     autoClose: 10000,
                 });
@@ -61,8 +54,6 @@ const InstanceList = (props) => {
     }
 
     const deviceInstances = props.labInstance?.deviceInstances || [];
-    /*console.log('[InstanceList]::instance',instancesList);
-    console.log('[InstanceList]::props',props);*/
 
     return (
         <>
@@ -86,5 +77,4 @@ const InstanceList = (props) => {
     );
 };
 
-//console.log("test de InstanceList");
 export default InstanceList;
