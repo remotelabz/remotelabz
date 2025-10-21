@@ -8,7 +8,6 @@ use App\Entity\User;
 use App\Entity\ConfigWorker;
 use App\Entity\OperatingSystem;
 
-
 use App\Form\IsoType;
 use App\Repository\IsoRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,21 +23,16 @@ use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\Files2WorkerManager;
 
-
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 class IsoController extends AbstractController
 {
-
     private LoggerInterface $logger;
     private Files2WorkerManager $Files2WorkerManager;
     
-    public function __construct(LoggerInterface $logger,
-        Files2WorkerManager $Files2WorkerManager
-        )
+    public function __construct(LoggerInterface $logger, Files2WorkerManager $Files2WorkerManager)
     {
         $this->logger = $logger;
         $this->Files2WorkerManager = $Files2WorkerManager;
-        
     }   
 
     #[Route('/admin/isos', name: 'app_iso_index', methods: ['GET'])]
@@ -65,11 +59,9 @@ class IsoController extends AbstractController
             $this->logger->debug('[IsoController:new]::Form data: ' . json_encode($form->getData()));
             $this->logger->debug('[IsoController:new]::Request data: ' . json_encode($request->request->all()));
    
-
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             if ($fileSourceType === 'upload') {
-                // Récupérer le nom du fichier depuis le champ du formulaire
                 $uploadedFilename = $form->get('uploaded_filename')->getData();
                 
                 $this->logger->debug('[IsoController:new]::Uploaded filename from form: ' . $uploadedFilename);
@@ -80,7 +72,7 @@ class IsoController extends AbstractController
                     
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
                     $remoteFilePath = '/images/'.$uploadedFilename;
-                    $results=$this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
 
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
@@ -88,12 +80,10 @@ class IsoController extends AbstractController
                     
                     if (!empty($failures)) {
                         $this->addFlash('warning', 'ISO created but some workers failed to send the file.');
-                    } else 
-                    {
+                    } else {
                         unlink($localFilePath);
                         $this->addFlash('success', 'ISO created and file copied to all workers successfully.');
                     }
-
                 } else {
                     $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                     return $this->render('iso/new.html.twig', [
@@ -102,23 +92,26 @@ class IsoController extends AbstractController
                         'form' => $form,
                     ]);
                 }
+            } elseif ($fileSourceType === 'url') {
+                // Mode URL : nettoyer le filename si présent
+                $iso->setFilename(null);
+                // L'URL est déjà définie par le formulaire via setFilenameUrl
+            } elseif ($fileSourceType === 'filename') {
+                // Mode filename only : nettoyer l'URL si présente
+                $iso->setFilenameUrl(null);
+                // Le filename est déjà défini par le formulaire
             }
 
             $entityManager->persist($iso);
             $entityManager->flush();
 
-            
-        
-
             $this->addFlash('success', 'ISO created successfully');
 
-
             return $this->redirectToRoute('app_iso_index');
-        }   elseif ($form->isSubmitted()){
+        } elseif ($form->isSubmitted()) {
             $this->logger->error('Form submitted but invalid');
             $this->logger->debug('[IsoController:new]::Form errors: ' . (string) $form->getErrors(true));
 
-            // Afficher les erreurs pour debug
             foreach ($form->getErrors(true) as $error) {
                 $this->logger->error('Form error: ' . $error->getMessage());
             }
@@ -142,6 +135,10 @@ class IsoController extends AbstractController
     #[Route('/admin/isos/{id}/edit', name: 'app_iso_edit', methods: ['GET','POST'])]
     public function edit(Request $request, Iso $iso, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
+        // Sauvegarder l'ancien filename pour comparaison
+        $oldFilename = $iso->getFilename();
+        $oldFilenameUrl = $iso->getFilenameUrl();
+        
         $form = $this->createForm(IsoType::class, $iso);
         $form->handleRequest($request);
 
@@ -151,40 +148,53 @@ class IsoController extends AbstractController
             $fileSourceType = $form->get('fileSourceType')->getData();
             
             $this->logger->debug('[IsoController:edit]::File source type: ' . $fileSourceType);
-            $this->logger->debug('[IsoController:edit]::Current ISO filename: ' . $iso->getFilename());
-            $this->logger->debug('[IsoController:edit]::Current ISO URL: ' . $iso->getFilenameUrl());
+            $this->logger->debug('[IsoController:edit]::Old filename: ' . $oldFilename);
+            $this->logger->debug('[IsoController:edit]::Old URL: ' . $oldFilenameUrl);
+            $this->logger->debug('[IsoController:edit]::New filename from form: ' . $iso->getFilename());
+            $this->logger->debug('[IsoController:edit]::New URL from form: ' . $iso->getFilenameUrl());
 
             if ($fileSourceType === 'upload') {
-                // CORRECTION: Récupérer le nom du fichier depuis le champ du formulaire
                 $uploadedFileName = $form->get('uploaded_filename')->getData();
                 $this->logger->debug('[IsoController:edit]::Uploaded filename from form: ' . $uploadedFileName);
                 
                 if ($uploadedFileName && trim($uploadedFileName) !== '') {
-                    // Supprimer l'ancien fichier physique si il existe et qu'il est différent
-                    if ($iso->getFilename() && $iso->getFilename() !== $uploadedFileName) {
-                        $oldFile = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
+                    // Nouveau fichier uploadé
+                    
+                    // Supprimer l'ancien fichier physique s'il existe et qu'il est différent
+                    if ($oldFilename && $oldFilename !== $uploadedFileName) {
+                        $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
                         if (file_exists($oldFile)) {
                             $this->logger->debug('[IsoController:edit]::Deleting old file: ' . $oldFile);
-                            $oldFilePath = '/images/'.$iso->getFilename();
-                            $this->Files2WorkerManager->deleteFileFromAllWorkers($oldFilePath);                            
                             unlink($oldFile);
+                            $oldFilePath = '/images/' . $oldFilename;
+                            $this->Files2WorkerManager->deleteFileFromAllWorkers($oldFilePath);
                         }
+                    }
 
-                        $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                        $remoteFilePath = '/images/'.$uploadedFileName;
-                        $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    // Copier le nouveau fichier vers les workers
+                    $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
+                    $remoteFilePath = '/images/' . $uploadedFileName;
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    
+                    $failures = array_filter($results, function($result) {
+                        return !$result['success'];
+                    });
+                    
+                    if (empty($failures)) {
+                        unlink($localFilePath);
                     }
                     
-                    // Si on passe d'URL à upload, supprimer l'URL
-                    if ($iso->getFilenameUrl()) {
-                        $this->logger->debug('[IsoController:edit]::Switching from URL to file upload');
-                        $iso->setFilenameUrl(null);
-                    }
-                    
+                    // Mettre à jour l'entité
                     $iso->setFilename($uploadedFileName);
+                    $iso->setFilenameUrl(null);
+                    
                 } else {
-                    // Pas de nouveau fichier uploadé, conserver l'existant si c'était déjà un fichier
-                    if (!$iso->getFilename()) {
+                    // Pas de nouveau fichier uploadé
+                    if ($oldFilename) {
+                        // Conserver l'ancien filename
+                        $iso->setFilename($oldFilename);
+                        $iso->setFilenameUrl(null);
+                    } else {
                         $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                         return $this->render('iso/new.html.twig', [
                             'iso' => $iso,
@@ -192,30 +202,53 @@ class IsoController extends AbstractController
                             'sizeLimit' => min(ini_get('upload_max_filesize'), ini_get('post_max_size'))
                         ]);
                     }
-                    // Si on avait déjà un fichier, on le garde
                 }
-            } else {
-                // Mode URL sélectionné
-                $this->logger->debug('[IsoController:edit]::Switching to URL or filename mode');
                 
-                // Si on passe de fichier à URL, supprimer l'ancien fichier
-                if ($iso->getFilename()) {
-                    $oldFile = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
+            } elseif ($fileSourceType === 'url') {
+                // Mode URL
+                $this->logger->debug('[IsoController:edit]::Switching to URL mode');
+                
+                // Supprimer l'ancien fichier physique s'il existe
+                if ($oldFilename) {
+                    $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
                     if (file_exists($oldFile)) {
                         $this->logger->debug('[IsoController:edit]::Deleting old file when switching to URL: ' . $oldFile);
                         unlink($oldFile);
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
                     }
-                    $iso->setFilename(null);
                 }
                 
-                // L'URL est déjà mise à jour par le formulaire automatiquement
+                // Mettre à jour l'entité
+                $iso->setFilename(null);
+                // L'URL est déjà mise à jour par le formulaire
+                
+            } elseif ($fileSourceType === 'filename') {
+                // Mode filename only
+                $this->logger->debug('[IsoController:edit]::Switching to filename only mode');
+                $this->logger->debug('[IsoController:edit]::Filename from form: ' . $iso->getFilename());
+                
+                // Si on avait un fichier uploadé avant, le supprimer
+                if ($oldFilename && file_exists($this->getParameter('iso_directory') . '/' . $oldFilename)) {
+                    $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
+                    $this->logger->debug('[IsoController:edit]::Deleting old uploaded file when switching to filename only: ' . $oldFile);
+                    unlink($oldFile);
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
+                }
+                
+                // Nettoyer l'URL
+                $iso->setFilenameUrl(null);
+                
+                // Le filename est déjà défini par le formulaire via le mapping
+                $this->logger->debug('[IsoController:edit]::Final filename: ' . $iso->getFilename());
             }
+
             $entityManager->persist($iso);
             $entityManager->flush();
             
             $this->logger->info('[IsoController:edit]::ISO updated successfully');
             $this->addFlash('success', 'ISO modifiée avec succès');
             return $this->redirectToRoute('app_iso_index');
+            
         } elseif ($form->isSubmitted()) {
             $this->logger->error('Form submitted but invalid during edit');
             $this->logger->debug('[IsoController:edit]::Form errors: ' . (string) $form->getErrors(true));
@@ -224,18 +257,15 @@ class IsoController extends AbstractController
             if ($uploadedFileName && trim($uploadedFileName) !== '') {
                 if ($this->deleteLocalTempFile($uploadedFileName)) {
                     $this->logger->debug('[IsoController:edit]::Deleted temporary file: ' . $uploadedFileName);
-                } else {
-                    $this->logger->debug('[IsoController:edit]::No temporary file to delete: ' . $uploadedFileName);
                 }
             }
 
-            // Afficher les erreurs pour debug
             foreach ($form->getErrors(true) as $error) {
                 $this->logger->error('Form error: ' . $error->getMessage());
             }
         }
 
-        $maxUploadSize = min(ini_get('upload_max_filesize'),ini_get('post_max_size'));
+        $maxUploadSize = min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
 
         return $this->render('iso/new.html.twig', [
             'iso' => $iso,
@@ -248,13 +278,12 @@ class IsoController extends AbstractController
     public function delete(Request $request, Iso $iso, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$iso->getId(), $request->request->get('_token'))) {
-            // Supprimer le fichier physique si il existe
             if ($iso->getFilename()) {
                 $file = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
                 if (file_exists($file)) {
                     unlink($file);
-                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/'.$iso->getFilename());                            
-                    $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all activ worker');
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/'.$iso->getFilename());
+                    $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all active workers');
                 }
             }
             
@@ -278,7 +307,8 @@ class IsoController extends AbstractController
             $this->logger->debug('[IsoController:upload]::The file to upload will be '.$file.' of size '.$file->getSize());
 
             $maxUploadSize = min(
-                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),$this->convertPHPSizeToBytes(ini_get('post_max_size'))
+                $this->convertPHPSizeToBytes(ini_get('upload_max_filesize')),
+                $this->convertPHPSizeToBytes(ini_get('post_max_size'))
             );
 
             if ($file->getSize() > $maxUploadSize) {
@@ -291,18 +321,17 @@ class IsoController extends AbstractController
 
             try {
                 $uploadDir = $this->getParameter('iso_directory');
-                $this->logger->debug('[IsoController:upload]::Try to move '.$file.' file to '.$newFilename);        
+                $this->logger->debug('[IsoController:upload]::Try to move '.$file.' file to '.$newFilename);
                 $file->move($uploadDir, $newFilename);
         
                 $newFile = $uploadDir . '/' . $newFilename;
                 $fileSize = file_exists($newFile) ? filesize($newFile) : null;
 
-                $this->logger->debug('[IsoController:upload]::Move '.$file.' file to '.$newFile.' done.');        
+                $this->logger->debug('[IsoController:upload]::Move '.$file.' file to '.$newFile.' done.');
 
             } catch (FileException $e) {
                 return $this->json(['error' => 'Upload failed'], 500);
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $this->logger->error('[IsoController:upload]::Error during file upload: ' . $e->getMessage());
                 return $this->json(['error' => 'Upload failed due to an unexpected error'], 500);
             }
@@ -314,7 +343,8 @@ class IsoController extends AbstractController
                 'size' => $fileSize
             ]);
         }
-        else return $this->json(['error' => 'No file uploaded'], 400);
+        
+        return $this->json(['error' => 'No file uploaded'], 400);
     }
 
     #[Route('/api/isos/delete-temp-file', name: 'app_iso_delete_temp_file', methods: ['POST','DELETE'])]
@@ -327,15 +357,12 @@ class IsoController extends AbstractController
             return $this->json(['error' => 'No filename provided'], 400);
         }
 
-
-        $this->deleteLocalTempFile($filename);
         if ($this->deleteLocalTempFile($filename)) {
             return $this->json(['success' => true]);
         } else {
             $this->logger->warning('Temporary ISO file '.$filename.' not found for deletion');
             return $this->json(['error' => 'File not found'], 404);
         }
-        
     }
 
     private function deleteLocalTempFile(string $filename): bool
@@ -378,21 +405,18 @@ class IsoController extends AbstractController
 
     private function validateIsoUrl(string $url): array
     {
-        // Vérification basique de l'URL
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             return ['valid' => false, 'error' => 'Invalid URL format'];
         }
 
-        // Vérifier que l'URL contient .iso
         if (!preg_match('/\.iso(\?|$|#)/i', $url)) {
             return ['valid' => false, 'error' => 'URL does not appear to be an ISO file'];
         }
 
         try {
-            // Créer un contexte avec timeout et user-agent
             $context = stream_context_create([
                 'http' => [
-                    'method' => 'HEAD', // Utiliser HEAD pour ne pas télécharger le fichier
+                    'method' => 'HEAD',
                     'timeout' => 30,
                     'user_agent' => 'Mozilla/5.0 (compatible; ISO-Validator/1.0)',
                     'follow_location' => true,
@@ -400,49 +424,41 @@ class IsoController extends AbstractController
                 ]
             ]);
 
-            // Effectuer la requête HEAD
             $headers = @get_headers($url, true, $context);
             
             if ($headers === false) {
                 return ['valid' => false, 'error' => 'Unable to reach the URL'];
             }
 
-            // Vérifier le code de statut
             $statusLine = $headers[0];
             if (!preg_match('/HTTP\/\d\.\d\s+200/', $statusLine)) {
                 return ['valid' => false, 'error' => 'URL is not accessible (HTTP error)'];
             }
 
-            // Extraire les informations utiles
             $fileSize = null;
             $contentType = null;
             $fileName = null;
 
-            // Gestion des cas où les headers peuvent être des tableaux (redirections)
             $finalHeaders = [];
             foreach ($headers as $key => $value) {
                 if (is_array($value)) {
-                    $finalHeaders[$key] = end($value); // Prendre le dernier (après redirections)
+                    $finalHeaders[$key] = end($value);
                 } else {
                     $finalHeaders[$key] = $value;
                 }
             }
 
-            // Taille du fichier
             if (isset($finalHeaders['Content-Length'])) {
                 $fileSize = (int)$finalHeaders['Content-Length'];
                 
-                // Vérifier que la taille est raisonnable pour un ISO (entre 1MB et 10GB)
                 if ($fileSize < 1024 * 1024 || $fileSize > 10 * 1024 * 1024 * 1024) {
                     return ['valid' => false, 'error' => 'File size seems unusual for an ISO file'];
                 }
             }
 
-            // Type de contenu
             if (isset($finalHeaders['Content-Type'])) {
                 $contentType = $finalHeaders['Content-Type'];
                 
-                // Vérifier les types MIME acceptables
                 $validMimeTypes = [
                     'application/x-iso9660-image',
                     'application/octet-stream',
@@ -458,13 +474,11 @@ class IsoController extends AbstractController
                     }
                 }
                 
-                // Si le type MIME n'est pas reconnu, on accepte quand même mais on avertit
                 if (!$isValidMime) {
                     $this->logger->warning('ISO URL validation: Unexpected content type: ' . $contentType . ' for URL: ' . $url);
                 }
             }
 
-            // Nom du fichier depuis l'URL
             $fileName = basename(parse_url($url, PHP_URL_PATH));
             if (empty($fileName) || !preg_match('/\.iso$/i', $fileName)) {
                 $fileName = 'downloaded.iso';
@@ -483,7 +497,6 @@ class IsoController extends AbstractController
         }
     }
 
-    // Fonction utilitaire pour convertir la taille PHP en octets
     private function convertPHPSizeToBytes($size)
     {
         $unit = strtolower(substr($size, -1));
@@ -500,6 +513,4 @@ class IsoController extends AbstractController
 
         return $bytes;
     }
-
-   
 }

@@ -121,9 +121,9 @@
                         </td>
                         <td>
                             {% if iso.FilenameUrl %}
-                                <span class="text-muted"><i class="fas fa-cloud me-1"></i>Remote</span>
+                                <span class="text-muted"><i class="fas fa-cloud me-1"></i> Remote</span>
                             {% elseif iso.Filename %}
-                                <span class="text-muted"><i class="fas fa-hdd me-1"></i>Local</span>
+                                <span class="text-muted"><i class="fas fa-hdd me-1"></i> Local</span>
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}
@@ -136,9 +136,6 @@
                             {% endif %}
                         </td>
                         <td>
-                           <a href="{{ path('app_iso_show', {id: iso.id}) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'View'|trans }}">
-                                <i class="fa fa-eye"></i>
-                            </a>
                             <a href="{{ path('app_iso_edit', {id: iso.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
                                 <i class="fa fa-edit"></i>
                             </a>
