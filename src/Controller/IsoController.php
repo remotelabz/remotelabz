@@ -143,7 +143,6 @@ class IsoController extends AbstractController
     public function edit(Request $request, Iso $iso, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $form = $this->createForm(IsoType::class, $iso);
-
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -197,7 +196,7 @@ class IsoController extends AbstractController
                 }
             } else {
                 // Mode URL sélectionné
-                $this->logger->debug('[IsoController:edit]::Switching to URL mode');
+                $this->logger->debug('[IsoController:edit]::Switching to URL or filename mode');
                 
                 // Si on passe de fichier à URL, supprimer l'ancien fichier
                 if ($iso->getFilename()) {
@@ -211,7 +210,7 @@ class IsoController extends AbstractController
                 
                 // L'URL est déjà mise à jour par le formulaire automatiquement
             }
-
+            $entityManager->persist($iso);
             $entityManager->flush();
             
             $this->logger->info('[IsoController:edit]::ISO updated successfully');
