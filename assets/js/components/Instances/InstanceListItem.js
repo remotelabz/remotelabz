@@ -414,6 +414,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                         Export device
                                 </Button>
                             </div>
+                          
                         }
                         {instance.state !== 'stopped' && 
                             <div onClick={() => setShowLogs(!showLogs)}>
