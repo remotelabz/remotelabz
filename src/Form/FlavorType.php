@@ -21,10 +21,6 @@ class FlavorType extends AbstractType
                 'help' => 'Memory is exprimed in MB (megabytes).',
                 'block_name' => 'memory'
             ])
-            ->add('disk', IntegerType::class, [
-                'help' => 'NOT YET USED, Disk capacity is exprimed in GB (gigabytes).',
-                
-            ])
             ->add('submit', SubmitType::class)
         ;
     }

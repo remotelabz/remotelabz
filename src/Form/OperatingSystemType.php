@@ -52,6 +52,7 @@ class OperatingSystemType extends AbstractType
                 'mapped' => false, // Géré manuellement dans le contrôleur
                 'required' => false
             ])
+            
             ->add('imageFilename', FileType::class, [
                 'label' => 'Upload Image File',
                 'required' => false,

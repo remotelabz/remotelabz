@@ -1,0 +1,64 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}Edit Disk Flavor - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 
+        'Disk Flavors': path('flavor_disk_index'),
+        'Edit': path('flavor_disk_edit', {id: flavorDisk.id})
+    }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'flavor_disk' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-edit me-2"></i>Edit Disk Flavor: {{ flavorDisk.name }}
+        </h1>
+        <a href="{{ path('flavor_disk_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to List
+        </a>
+    </div>
+</div>
+
+<div class="labs-panel mt-4">
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Update Disk Flavor</h5>
+            <small class="text-muted">
+                Modify the disk flavor configuration.
+            </small>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.name) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.disk) }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{{ path('flavor_disk_index') }}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                    {{ form_widget(form.submit, {'label': 'Update Flavor'}) }}
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="alert alert-warning mt-3">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Warning:</strong> Modifying this disk flavor will affect all operating systems that use it.
+    </div>
+</div>
+{% endblock %}

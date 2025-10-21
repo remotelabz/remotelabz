@@ -60,22 +60,22 @@ class IsoType extends AbstractType
             // Sélecteur de type de fichier
             ->add('fileSourceType', ChoiceType::class, [
                 'label' => 'ISO file',
-                'mapped' => false, // Ce champ n'est pas lié à l'entité
+                'mapped' => false,
                 'choices' => [
                     'Upload un fichier' => 'upload',
                     'Utiliser une URL' => 'url',
+                    'Nom de fichier uniquement' => 'filename',
                 ],
-                'expanded' => true, // Boutons radio
+                'expanded' => true,
                 'multiple' => false,
-                'data' => 'upload', // Valeur par défaut
+                'data' => 'upload',
                 'required' => true,
                 'attr' => [
                     'class' => 'file-source-selector'
                 ]
             ])
-
             ->add('uploaded_filename', HiddenType::class, [
-                'mapped' => false, // Géré manuellement dans le contrôleur
+                'mapped' => false,
                 'required' => false,
                 'attr' => [
                     'id' => 'uploaded_filename'
@@ -85,7 +85,7 @@ class IsoType extends AbstractType
             // Champ pour l'upload de fichier ISO
             ->add('uploadedFile', FileType::class, [
                 'label' => 'ISO file',
-                'mapped' => false, // Géré manuellement dans le contrôleur
+                'mapped' => false,
                 'required' => false,
                 'constraints' => [
                     new File([
@@ -118,7 +118,17 @@ class IsoType extends AbstractType
                 ]
             ])
 
-            
+            // Champ pour le nom de fichier uniquement (fichier déjà sur le serveur)
+            ->add('Filename', TextType::class, [
+                'label' => 'Filename',
+                'required' => false,
+                'mapped' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'file.iso'
+                ]
+            ])
+
             ->add('description', TextareaType::class, [
                 'label' => 'ISO Description (optional)',
                 'required' => false,
@@ -140,12 +150,21 @@ class IsoType extends AbstractType
             $iso = $event->getData();
             $form = $event->getForm();
             
-            if ($iso && $iso->getFilenameUrl()) {
-                // Si une URL existe déjà, présélectionner le type URL
-                $form->get('fileSourceType')->setData('url');
-            } elseif ($iso && $iso->getFilename()) {
-                // Si un fichier existe déjà, présélectionner le type upload
-                $form->get('fileSourceType')->setData('upload');
+            if ($iso && $iso->getId()) {
+                // En mode édition
+                if ($iso->getFilenameUrl()) {
+                    // Si une URL existe, présélectionner le type URL
+                    $form->get('fileSourceType')->setData('url');
+                } elseif ($iso->getFilename()) {
+                    // Si un filename existe, déterminer si c'est un upload ou un filename only
+                    // On suppose que si le fichier existe physiquement, c'était un upload
+                    // Sinon, c'est un filename only
+                    
+                    // CORRECTION: On ne peut pas vraiment distinguer les deux cas ici
+                    // La meilleure approche est de présélectionner 'filename' par défaut
+                    // si aucun uploaded_filename n'est présent
+                    $form->get('fileSourceType')->setData('filename');
+                }
             }
         });
 
@@ -155,16 +174,33 @@ class IsoType extends AbstractType
             $iso = $event->getData();
             
             $fileSourceType = $form->get('fileSourceType')->getData();
-            $uploadedFilename = $form->get('uploaded_filename')->getData(); // MODIFIÉ : utiliser le champ caché
+            $uploadedFilename = $form->get('uploaded_filename')->getData();
             $filenameUrl = $iso->getFilenameUrl();
+            $filename = $iso->getFilename();
             
             // Validation conditionnelle
-            if ($fileSourceType === 'upload' && !$uploadedFilename && !$iso->getFilename()) {
-                $form->get('uploaded_filename')->addError(new \Symfony\Component\Form\FormError('Please upload an ISO file first'));
+            if ($fileSourceType === 'upload') {
+                if (!$uploadedFilename && !$filename) {
+                    $form->get('uploaded_filename')->addError(
+                        new FormError('Please upload an ISO file first')
+                    );
+                }
             }
             
-            if ($fileSourceType === 'url' && !$filenameUrl) {
-                $form->get('Filename_url')->addError(new \Symfony\Component\Form\FormError('Please type an URL'));
+            if ($fileSourceType === 'url') {
+                if (!$filenameUrl) {
+                    $form->get('Filename_url')->addError(
+                        new FormError('Please type an URL')
+                    );
+                }
+            }
+
+            if ($fileSourceType === 'filename') {
+                if (!$filename) {
+                    $form->get('Filename')->addError(
+                        new FormError('Please enter a filename')
+                    );
+                }
             }
         });
     }

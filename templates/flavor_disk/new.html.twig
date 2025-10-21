@@ -1,0 +1,86 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}New Disk Flavor - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 
+        'Disk Flavors': path('flavor_disk_index'),
+        'New': path('flavor_disk_new')
+    }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'flavor_disk' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <a href="{{ path('flavor_disk_index') }}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left me-1"></i>
+                        {{ 'Back'|trans }}
+                    </a>
+                </div>
+                <h4 class="page-title">{{ 'New Disk Flavor'|trans }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">{{ 'Disk Flavor Information'|trans }}</h5>
+                    
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+                        
+                        <div class="mb-3">
+                            {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.name) }}
+                            {% if form.name.vars.help %}
+                                <small class="form-text text-muted">{{ form.name.vars.help }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.disk, null, {'label_attr': {'class': 'form-label'}}) }}
+                            <div class="input-group">
+                                {{ form_widget(form.disk, {'attr': {'class': 'form-control'}}) }}
+                                <span class="input-group-text">GB</span>
+                            </div>
+                            {{ form_errors(form.disk) }}
+                            {% if form.disk.vars.help %}
+                                <small class="form-text text-muted">{{ form.disk.vars.help }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-4 mb-0">
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <a href="{{ path('flavor_disk_index') }}" class="btn btn-secondary">
+                                    {{ 'Cancel'|trans }}
+                                </a>
+                                {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}, 'label': 'Create Disk Flavor'|trans}) }}
+                            </div>
+
+
+
+                        </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="fa fa-info-circle me-2"></i>
+                <strong>{{ 'Information'|trans }}:</strong> {{ 'Disk flavors define the storage capacity for blank operating systems. Common sizes might be 4GB, 10GB, 20GB, etc.'|trans }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

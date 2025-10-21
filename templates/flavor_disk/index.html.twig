@@ -1,0 +1,88 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block title %}Disk Flavors - {{ parent() }}{% endblock %}
+
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Disk Flavors': path('flavor_disk_index') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'flavor_disk' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+<div class="top-panel">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-hdd me-2"></i> Disk Flavors
+        </h1>
+        <div class="quick-actions">
+            <a class="btn btn-success" role="button" href="{{ path('flavor_disk_new') }}">
+                <i class="fas fa-plus me-2"></i> New Disk Flavor
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="labs-panel mt-3">
+    {% if flavorDisks is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-hdd fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Disk Flavors Found</h4>
+            <p class="text-muted">Get started by creating your first disk flavor.</p>
+            <a href="{{ path('flavor_disk_new') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create Disk Flavor
+            </a>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th width="150">Disk Size</th>
+                        <th width="150" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flavorDisk in flavorDisks %}
+                    <tr>
+                        <td>
+                            <div class="fw-medium">{{ flavorDisk.name }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                <i class="fas fa-hdd me-1"></i> {{ flavorDisk.disk }} GB
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('flavor_disk_edit', {id: flavorDisk.id}) }}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="{{ 'Edit'|trans }}">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <form method="post" 
+                                  action="{{ path('flavor_disk_delete', {id: flavorDisk.id}) }}" 
+                                  style="display:inline-block;" 
+                                  onsubmit="return confirm('{{ 'Are you sure you want to delete this disk flavor?'|trans }}');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ flavorDisk.id) }}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-muted mt-3">
+            Total: <strong>{{ flavorDisks|length }}</strong> disk flavor(s)
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

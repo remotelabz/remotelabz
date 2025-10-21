@@ -22,7 +22,6 @@ class SandboxListItem extends Component {
         this.fetchLabInstance();
     }
     
-
     fetchLabInstance = () => {
         if(this.props.itemType == "device") {
             var labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;

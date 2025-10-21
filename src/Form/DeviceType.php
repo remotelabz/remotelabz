@@ -100,47 +100,58 @@ class DeviceType extends AbstractType
             ])
             
             ->add('bios_type', ChoiceType::class, [
-                    'choices' => [
-                        'BIOS' => 'BIOS',
-                        'UEFI' => 'UEFI',
-                    ],
-                    'required' => false,
-                    'placeholder' => 'Select a BIOS type',
-                    'help' => 'Firmaware type (BIOS or UEFI)',
-                ])
-                
-               
-                ->add('bios_filename', EntityType::class, [
-                    'class' => OperatingSystem::class,
-                    'choice_label' => 'image',
-                    'required' => false,
-                    'placeholder' => 'Select a BIOS image',
-                    'help' => 'BIOS file to use',
-                ])
+                'choices' => [
+                    'BIOS' => 'BIOS',
+                    'UEFI' => 'UEFI',
+                ],
+                'required' => false,
+                'placeholder' => 'Select a BIOS type',
+                'help' => 'Firmaware type (BIOS or UEFI)',
+            ])
+            
+            
+            ->add('bios_filename', EntityType::class, [
+                'class' => OperatingSystem::class,
+                'choice_label' => 'image',
+                'required' => false,
+                'placeholder' => 'Select a BIOS image',
+                'help' => 'BIOS file to use',
+            ])
 
-                ->add('cdrom_iso_filename', EntityType::class, [
-                    'class' => Iso::class,
-                    'choice_label' => 'filename',
-                    'required' => false,
-                    'placeholder' => 'Select an ISO image',
-                    'help' => 'ISO file to mount as CD-ROM',
-                ])
-                ->add('cdrom_bus_type', ChoiceType::class, [
-                    'choices' => [
-                        'IDE' => 'IDE',
-                        'SATA' => 'SATA',
-                        'SCSI' => 'SCSI',
-                        'VirtIO' => 'VirtIO',
-                    ],
-                    'required' => false,
-                    'placeholder' => 'Sélectionner le bus du CD-ROM',
-                    'help' => 'Type de bus pour le CD-ROM',
-                ])
+            ->add('isos', EntityType::class, [  // Changé de 'cdrom_iso_filename' à 'isos'
+                'class' => Iso::class,
+                'choice_label' => 'filename',
+                'multiple' => true,
+                'required' => false,
+                'placeholder' => 'Select ISO images',
+                'help' => 'ISO files to mount as CD-ROM',
+            ])
+            /*
+            ->add('cdrom_iso_filename', EntityType::class, [
+                'class' => Iso::class,
+                'choice_label' => 'filename',
+                'multiple' => true,
+                'required' => false,
+                'placeholder' => 'Select an ISO image',
+                'help' => 'ISO file to mount as CD-ROM',
+            ]) */ 
+            ->add('cdrom_bus_type', ChoiceType::class, [
+                'choices' => [
+                    'IDE' => 'IDE',
+                    'SATA' => 'SATA',
+                    'SCSI' => 'SCSI',
+                    'VirtIO' => 'VirtIO',
+                ],
+                'required' => false,
+                'placeholder' => 'Sélectionner le bus du CD-ROM',
+                'help' => 'Type de bus pour le CD-ROM',
+            ])
 
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
                 'choice_label' => 'name'
             ])
+            
             ->add('nbCpu', NumberType::class, [
                 'empty_data' => '1',
                 'required' => false,

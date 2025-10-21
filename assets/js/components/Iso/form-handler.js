@@ -21,6 +21,7 @@ export class IsoFormHandler {
         this.uploadContent = document.getElementById('upload-content');
         this.fileSelected = document.getElementById('file-selected');
         this.fileUploaded = document.getElementById('file-uploaded');
+        this.filenameOnlyBlock = document.querySelector('.filename-only-block');
         this.browseButton = document.getElementById('browse-button');
         
         // Buttons
@@ -38,20 +39,16 @@ export class IsoFormHandler {
         this.form = document.querySelector('form');
         this.submitButton = document.getElementById('submit-button');
         
-        // CORRECTION: Essayer différentes façons de trouver le champ caché
+        // CORRECTION: Recherche du champ caché
         this.uploadedFilenameInput = document.getElementById('uploaded_filename') 
             || document.querySelector('input[name="iso[uploaded_filename]"]')
             || document.querySelector('input[id*="uploaded_filename"]');
             
         this.urlInput = document.querySelector('input[name="iso[Filename_url]"]');
         
-        // Debug des éléments trouvés
-        /*console.log('DEBUG initElements:', {
-            uploadedFilenameInput: this.uploadedFilenameInput,
-            uploadedFilenameInputId: this.uploadedFilenameInput?.id,
-            uploadedFilenameInputName: this.uploadedFilenameInput?.name,
-            urlInput: this.urlInput
-        });*/
+        // CORRECTION: Utilisation du bon sélecteur pour le champ filename
+        this.filenameInput = document.getElementById('iso-filename-input')
+            || document.querySelector('input[name="iso[Filename]"]');
     }
 
     bindEvents() {
@@ -87,18 +84,60 @@ export class IsoFormHandler {
 
     initialize() {
         this.updateSourceCards();
+        this.detectInitialMode();
+    }
+
+    // AJOUT: Détection du mode initial lors de l'édition
+    detectInitialMode() {
+        // Vérifier si on est en mode édition
+        const uploadedFilename = this.uploadedFilenameInput?.value;
+        const urlValue = this.urlInput?.value;
+        const filenameValue = this.filenameInput?.value;
+
+        if (uploadedFilename) {
+            // Mode upload avec fichier déjà uploadé
+            this.showFileUploaded({
+                filename: uploadedFilename,
+                originalName: uploadedFilename,
+                size: 0
+            });
+        } else if (urlValue) {
+            // Mode URL déjà présélectionné par le formulaire
+            // Rien à faire, le template gère déjà ça
+        } else if (filenameValue && !uploadedFilename) {
+            // Mode filename only - sélectionner automatiquement ce mode
+            const filenameRadio = document.getElementById('source-filename');
+            if (filenameRadio) {
+                filenameRadio.checked = true;
+                this.handleSourceTypeChange();
+            }
+        }
     }
 
     handleSourceTypeChange() {
-        const checkedRadio = document.querySelector('input[name="iso[fileSourceType]"]:checked');
-        if (checkedRadio?.value === 'upload') {
-            this.uploadBlock.style.display = '';
-            this.urlBlock.style.display = 'none';
-        } else {
-            this.uploadBlock.style.display = 'none';
-            this.urlBlock.style.display = '';
-            this.resetUploadState();
+        const checkedRadio = document.querySelector('.file-source-radio:checked');
+        
+        // Masquer tous les blocs
+        if (this.uploadBlock) this.uploadBlock.style.display = 'none';
+        if (this.urlBlock) this.urlBlock.style.display = 'none';
+        if (this.filenameOnlyBlock) this.filenameOnlyBlock.style.display = 'none';
+        
+        // Afficher le bloc approprié
+        if (checkedRadio) {
+            switch (checkedRadio.value) {
+                case 'upload':
+                    if (this.uploadBlock) this.uploadBlock.style.display = '';
+                    this.resetUploadState();
+                    break;
+                case 'url':
+                    if (this.urlBlock) this.urlBlock.style.display = '';
+                    break;
+                case 'filename':
+                    if (this.filenameOnlyBlock) this.filenameOnlyBlock.style.display = '';
+                    break;
+            }
         }
+        
         this.updateSourceCards();
     }
 
@@ -188,24 +227,17 @@ export class IsoFormHandler {
         
         if (this.uploadedFilenameInput) {
             this.uploadedFilenameInput.value = uploadData.filename;
-        
         } else {
             console.error('uploadedFilenameInput not found! Trying fallback...');
             
-            // Fallback: essayer de trouver le champ par différents moyens
             const fallbackInput = document.getElementById('iso_uploaded_filename') 
                 || document.querySelector('input[name*="uploaded_filename"]')
                 || document.querySelector('input[type="hidden"]');
                 
-            console.log('Fallback input found:', fallbackInput);
-            
             if (fallbackInput) {
                 fallbackInput.value = uploadData.filename;
-                this.uploadedFilenameInput = fallbackInput; // Mettre à jour la référence
-                console.log('Fallback value set to:', fallbackInput.value);
+                this.uploadedFilenameInput = fallbackInput;
             } else {
-                console.error('No hidden input found for uploaded_filename!');
-                // En dernier recours, créer le champ
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = 'iso[uploaded_filename]';
@@ -213,7 +245,6 @@ export class IsoFormHandler {
                 hiddenInput.value = uploadData.filename;
                 this.form.appendChild(hiddenInput);
                 this.uploadedFilenameInput = hiddenInput;
-                console.log('Created hidden input with value:', hiddenInput.value);
             }
         }
     }
@@ -321,24 +352,14 @@ export class IsoFormHandler {
     }
 
     handleFormSubmit(e) {
-        console.log('Form submission attempt');
-    
-        // Récupérer la valeur du type de source sélectionné
         const fileSourceType = document.querySelector('input[name="iso[fileSourceType]"]:checked')?.value;
-        console.log('File source type:', fileSourceType);
         
-        // Si le mode upload est sélectionné
         if (fileSourceType === 'upload') {
-            // CORRECTION: utiliser le bon nom de variable
             const uploadedFilename = this.uploadedFilenameInput?.value;
-            console.log('Uploaded filename:', uploadedFilename);
-            console.log('Uploaded file object:', this.uploadedFile);
             
-            // Si aucun fichier n'a été uploadé
             if (!uploadedFilename || uploadedFilename.trim() === '') {
                 e.preventDefault();
                 
-                // Vérifier si un fichier est sélectionné mais pas encore uploadé
                 if (this.selectedFile) {
                     alert('Please upload the selected file before submitting the form.');
                 } else {
@@ -347,44 +368,29 @@ export class IsoFormHandler {
                 return false;
             }
         } else if (fileSourceType === 'url') {
-            // Vérifier que l'URL n'est pas vide
             const urlValue = this.urlInput?.value?.trim();
-            console.log('URL value:', urlValue);
             
             if (!urlValue) {
                 e.preventDefault();
                 alert('Please enter a valid URL or switch to file upload mode.');
                 return false;
             }
+        } else if (fileSourceType === 'filename') {
+            // CORRECTION: Récupération correcte de la valeur
+            const filenameValue = this.filenameInput?.value?.trim();
+            
+            if (!filenameValue) {
+                e.preventDefault();
+                alert('Please enter a filename or switch to another mode.');
+                return false;
+            }
         } else {
-            // Aucun type de source sélectionné
             e.preventDefault();
-            alert('Please select a file source type (Upload or URL).');
+            alert('Please select a file source type (Upload, URL or Filename).');
             return false;
         }
         
-        console.log('Form validation passed');
         return true;
-    }
-
-    debugFormState() {
-        console.log('=== Form Debug State ===');
-        console.log('Selected file:', this.selectedFile);
-        console.log('Uploaded file:', this.uploadedFile);
-        console.log('Uploaded filename input:', this.uploadedFilenameInput?.value);
-        console.log('URL input:', this.urlInput?.value);
-        
-        const checkedRadio = document.querySelector('input[name="iso[fileSourceType]"]:checked');
-        console.log('Checked radio:', checkedRadio);
-        console.log('File source type:', checkedRadio?.value);
-        
-        // Vérifier tous les éléments du formulaire
-        console.log('Form elements:');
-        const formData = new FormData(this.form);
-        for (let [key, value] of formData.entries()) {
-            console.log(`  ${key}: ${value}`);
-        }
-        console.log('========================');
     }
 
     // Utility methods

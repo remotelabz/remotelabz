@@ -574,9 +574,15 @@ class DeviceController extends Controller
                     "config_script" => "embedded",
                     "ethernet" => 1,
                     "virtuality" => $virtuality,              
-                    "qemu_options"=>$device->getOtherOptions(),
-                    "qemu_arch" => $device->getOperatingSystem()->getArch()->getId()
+                    "qemu_options"=>$device->getOtherOptions()
                 ];
+                
+                if (!is_null($device->getOperatingSystem()->getArch())){
+                    $deviceData["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
+                }
+                else {
+                    $deviceData["qemu_arch"]=$device->getIsoArch();
+                }
 
                 $yamlContent = Yaml::dump($deviceData,2);
                 $fileName = u($device->getName())->camel();

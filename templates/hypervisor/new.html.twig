@@ -5,6 +5,11 @@
     {{ parent() }}
 {% endblock %}
 
+{% block sidebar %}
+    {% set category = 'hypervisor' %}
+    {{ parent() }}
+{% endblock %}
+
 {%- set edit = app.request.uri ends with 'edit' -%}
 
 {% block wrapper %}

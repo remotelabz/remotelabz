@@ -94,6 +94,12 @@
                             <code>{{ operatingSystem.imageFilename }}</code>
                         </div>
                     </div>
+                    {% if operatingSystem.flavorDisk %}
+                    <div class="row mb-0">
+                        <div class="col-sm-3"><strong>Flavor disk:</strong></div>
+                        <div class="col-sm-9">{{ operatingSystem.flavorDisk.name }} ({{ operatingSystem.flavorDisk.disk }}GB)</div>
+                    </div>
+                    {% endif %}
                    {# {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name == "qemu" %}
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Download:</strong></div>
@@ -193,9 +199,11 @@
                         <i class="fas fa-download me-2"></i>Download Image
                     </a>
                     {% endif %} #}
-                    <button class="btn btn-danger" data-toggle="modal" data-target={{'.delete-modal'}}>
-                        <i class="fas fa-trash me-2"></i> Delete Operating System
-                    </button>
+                        {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
+                            <button class="btn btn-danger" data-toggle="modal" data-target={{'.delete-modal'}}>
+                                <i class="fas fa-trash me-2"></i> Delete Operating System
+                            </button>
+                        {% endif %}
              </button>
                 </div>
             </div>

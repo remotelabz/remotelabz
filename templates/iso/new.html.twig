@@ -36,7 +36,7 @@
                         {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
                         
                         <!-- Champ caché pour stocker le nom du fichier uploadé -->
-                        {{ form_widget(form.uploaded_filename) }}                        
+                        {{ form_widget(form.uploaded_filename, {'attr': {'id': 'uploaded_filename'}}) }}
                         <!-- Nom de l'ISO -->
                         <div class="mb-4">
                             <div class="form-floating">
@@ -64,28 +64,64 @@
                         <div class="mb-4">
                             <label class="form-label fw-bold">{{ 'File Source Type'|trans }}</label>
                             <div class="row g-3 mt-1">
-                                {% for choice in form.fileSourceType %}
-                                    <div class="col-sm-6">
-                                        <div class="card file-source-card" 
-                                             data-source-type="{{ choice.vars.value }}">
-                                            <div class="card-body text-center p-3">
-                                                <div class="mb-2">
-                                                    {% if choice.vars.value == 'upload' %}
-                                                        <i class="fa fa-upload fa-2x text-primary"></i>
-                                                    {% else %}
-                                                        <i class="fa fa-link fa-2x text-success"></i>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="form-check">
-                                                    {{ form_widget(choice, {'attr': {'class': 'form-check-input file-source-radio'}}) }}
-                                                    {{ form_label(choice, null, {'label_attr': {'class': 'form-check-label fw-semibold'}}) }}
-                                                </div>
+                                <div class="col-sm-4">
+                                    <div class="card file-source-card" data-source-type="upload">
+                                        <div class="card-body text-center p-3">
+                                            <div class="mb-2">
+                                                <i class="fa fa-upload fa-2x text-primary"></i>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" 
+                                                    class="form-check-input file-source-radio" 
+                                                    name="iso[fileSourceType]" 
+                                                    value="upload" 
+                                                    id="source-upload"
+                                                    {% if form.fileSourceType.vars.value == 'upload' %}checked="checked"{% endif %}
+                                                >
+                                                <label class="form-check-label fw-semibold" for="source-upload">{{ 'Upload File'|trans }}</label>
                                             </div>
                                         </div>
                                     </div>
-                                {% endfor %}
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="card file-source-card" data-source-type="url">
+                                        <div class="card-body text-center p-3">
+                                            <div class="mb-2">
+                                                <i class="fa fa-link fa-2x text-success"></i>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" 
+                                                    class="form-check-input file-source-radio" 
+                                                    name="iso[fileSourceType]" 
+                                                    value="url" 
+                                                    id="source-url"
+                                                    {% if form.fileSourceType.vars.value == 'url' %}checked="checked"{% endif %}
+                                                >
+                                                <label class="form-check-label fw-semibold" for="source-url">{{ 'URL'|trans }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="card file-source-card" data-source-type="filename">
+                                        <div class="card-body text-center p-3">
+                                            <div class="mb-2">
+                                                <i class="fa fa-file-alt fa-2x text-warning"></i>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" 
+                                                    class="form-check-input file-source-radio" 
+                                                    name="iso[fileSourceType]" 
+                                                    value="filename" 
+                                                    id="source-filename"
+                                                    {% if form.fileSourceType.vars.value == 'filename' %}checked="checked"{% endif %}
+                                                >
+                                                <label class="form-check-label fw-semibold" for="source-filename">{{ 'Filename Only'|trans }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            {{ form_errors(form.fileSourceType) }}
                         </div>
 
                         <!-- Zone d'upload de fichier -->
@@ -162,6 +198,20 @@
                             <div class="form-text">
                                 <i class="fa fa-info-circle text-info"></i> 
                                 {{ 'Enter the direct URL to download the ISO file'|trans }}
+                            </div>
+                        </div>
+
+                        <!-- Zone nom de fichier seulement -->
+                        <div class="mb-4 filename-only-block" {% if form.fileSourceType.vars.value != 'filename' %}style="display:none;"{% endif %}>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light">
+                                    <i class="fa fa-file-alt text-warning"></i>
+                                </span>
+                                {{ form_widget(form.Filename, {'attr': {'class': 'form-control', 'id': 'iso-filename-input', 'placeholder': 'file.iso'|trans}}) }}
+                            </div>
+                            <div class="form-text">
+                                <i class="fa fa-info-circle text-info"></i> 
+                                {{ 'Enter only the filename (file should already exist on the server)'|trans }}
                             </div>
                         </div>
 
