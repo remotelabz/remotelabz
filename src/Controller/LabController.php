@@ -712,6 +712,9 @@ class LabController extends Controller
             unset($device_array['controlProtocolTypes']);
             $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
             $this->logger->debug("[LabController:addDeviceAction]::Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            $this->logger->debug("[LabController:addDeviceAction]::device_array[isos]:",$device_array["isos"]);
+            if (is_empty($device_array["isos"]))
+                $device_array["isos"]=null;
             $deviceForm->submit($device_array);
         }
 
@@ -782,6 +785,7 @@ class LabController extends Controller
                 $this->logger->debug("[LabController:addDeviceAction]::Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors(true) as $error) {
+                    $this->logger->debug("[LabController:addDeviceAction]::Error validating on data :".$error->getOrigin()->getName());
                     $this->logger->debug("[LabController:addDeviceAction]::Error validating :".$error->getMessage());
                 }
             }
