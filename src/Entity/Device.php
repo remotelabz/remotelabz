@@ -199,14 +199,14 @@ class Device implements InstanciableInterface
     private $author;
 
     /**
-     * @var string
+     * @var Collection<int, Iso>
      */
-    #[Assert\Type(type: 'string')]
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device','worker'])]
-    private $cdrom_iso_filename;
+    #[ORM\ManyToMany(targetEntity: Iso::class, inversedBy: 'devices')]
+    #[ORM\JoinTable(name: 'device_iso')]
+    #[Serializer\Groups(['api_get_device', 'worker', 'export_lab', 'api_get_lab_template'])]
+    private Collection $isos;
 
-    /**
+     /**
      * @var string
      */
     #[Assert\Type(type: 'string')]
@@ -253,6 +253,7 @@ class Device implements InstanciableInterface
         $this->launchOrder = 0;
         $this->virtuality = 1;
         $this->labsUsingThisTemplate = new ArrayCollection();
+        $this->isos = new ArrayCollection(); // Ajout de l'initialisation
     }
 
     public function getId(): ?int
@@ -778,16 +779,41 @@ class Device implements InstanciableInterface
         return $this;
     }
 
-    public function getCdromIsoFilename(): ?string
+    /**
+     * @return Collection<int, Iso>
+     */
+    public function getIsos(): Collection
     {
-        return $this->cdrom_iso_filename;
+        return $this->isos;
     }
 
-    public function setCdromIsoFilename(?string $cdrom_iso_filename): self
+    public function addIso(Iso $iso): self
     {
-        $this->cdrom_iso_filename = $cdrom_iso_filename;
+        if (!$this->isos->contains($iso)) {
+            $this->isos->add($iso);
+        }
 
         return $this;
+    }
+
+    public function removeIso(Iso $iso): self
+    {
+        $this->isos->removeElement($iso);
+
+        return $this;
+    }
+
+    /**
+     * Récupère l'architecture du premier ISO associé
+     * (tous les ISOs doivent avoir la même architecture)
+     */
+    public function getIsoArch(): ?Arch
+    {
+        if ($this->isos->isEmpty()) {
+            return null;
+        }
+
+        return $this->isos->first()->getArch();
     }
 
     public function getCdromBusType(): ?string

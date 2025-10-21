@@ -10,6 +10,7 @@ use App\Repository\ArchRepository;
 use App\Repository\ConfigWorkerRepository;
 use Psr\Log\LoggerInterface;
 use App\Form\OperatingSystemType;
+use App\Form\BlankOperatingSystemType;
 use App\Service\ImageFileUploader;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Filesystem\Filesystem;
@@ -341,6 +342,89 @@ class OperatingSystemController extends Controller
         return $this->render('operating_system/new.html.twig', [
             'operatingSystemForm' => $operatingSystemForm->createView(),
             'sizeLimit' => $maxUploadSize
+        ]);
+    }
+
+    #[Route('/operating-system/new-blank', name: 'new_blank_operating_system')]
+    public function newBlank(Request $request, HypervisorRepository $hypervisorRepository): Response
+    {
+        $operatingSystem = new OperatingSystem();
+        
+        $qemuHypervisor = $hypervisorRepository->findByName('qemu');
+            if (!$qemuHypervisor) {
+                $this->addFlash('danger', 'QEMU hypervisor not found in database.');
+                return $this->redirectToRoute('operating_systems');
+            }
+        $operatingSystem->setHypervisor($qemuHypervisor);
+        
+        $form = $this->createForm(BlankOperatingSystemType::class, $operatingSystem);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->logger->debug('[OperatingSystemController:newBlank]::Form submit and valid');
+            
+            // Vérifier le nom
+            $name = trim($operatingSystem->getName());
+            if (empty($name) || $this->operatingSystemRepository->findByName($name)) {
+                if (empty($name)) {
+                    $this->addFlash('danger', 'Operating system name is required.');
+                }
+                if ($this->operatingSystemRepository->findByName($name)) {
+                    $this->addFlash('danger', 'Operating system name already exists.');
+                }
+                
+                return $this->render('operating_system/new_blank.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+            
+            $currentDescription = $operatingSystem->getDescription();
+            if (empty($currentDescription)) {
+                $operatingSystem->setDescription('This is a blank OS image');
+            } else {
+                $operatingSystem->setDescription($currentDescription . ' - This is a blank OS image');
+            }
+            
+
+            // Vérifier que le FlavorDisk est obligatoire pour un Blank OS
+            if (!$operatingSystem->getFlavorDisk()) {
+                $this->addFlash('danger', 'A disk flavor is required for a blank operating system.');
+                return $this->render('operating_system/new_blank.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+            
+            // Pas d'image URL ou fichier pour un Blank OS
+            $operatingSystem->setImageUrl(null);
+            
+            
+            // Construire le nom de l'image au format "osname_flavor"
+            $flavorName = $operatingSystem->getFlavorDisk()->getName();
+            $imageName = $name . '_' . $flavorName;
+            //$operatingSystem->setImage($imageName);
+            $operatingSystem->setImageFilename($imageName);
+            
+            $this->logger->debug('[OperatingSystemController:newBlank]::Image name set to: ' . $imageName);
+            
+            $entityManager = $this->entityManager;
+            $entityManager->persist($operatingSystem);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Blank Operating System created successfully!');
+            $this->logger->info('New Blank OS - ' . $operatingSystem->getName() . ' created by user ' . $this->getUser()->getName());
+
+            return $this->redirectToRoute('operating_systems');
+        } elseif ($form->isSubmitted()) {
+            $this->logger->debug('[OperatingSystemController:newBlank]::Form submit and not valid');
+            
+            // Logger les erreurs de validation
+            foreach ($form->getErrors(true) as $error) {
+                $this->logger->error('Blank OS Form error: ' . $error->getMessage());
+            }
+        }
+
+        return $this->render('operating_system/new_blank.html.twig', [
+            'form' => $form->createView(),
         ]);
     }
 
@@ -1009,5 +1093,7 @@ class OperatingSystemController extends Controller
             throw new \RuntimeException('Could not create temporary directory for conversion.');
         }
     }
+
+
 
 }

@@ -6,8 +6,8 @@ use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: 'App\Repository\FlavorRepository')]
-class Flavor
+#[ORM\Entity(repositoryClass: 'App\Repository\FlavorDiskRepository')]
+class FlavorDisk
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -27,8 +27,7 @@ class Flavor
     #[ORM\Column(type: 'bigint')]
     #[Serializer\XmlAttribute]
     #[Serializer\Groups(['api_get_flavor', 'export_lab', 'worker', 'api_get_lab_template'])]
-    private $memory;
-
+    private $disk;
 
     public function getId(): ?int
     {
@@ -47,16 +46,15 @@ class Flavor
         return $this;
     }
 
-    public function getMemory(): ?int
+    public function getDisk(): ?int
     {
-        return $this->memory;
+        return $this->disk;
     }
 
-    public function setMemory(int $memory): self
+    public function setDisk(int $disk): self
     {
-        $this->memory = $memory;
+        $this->disk = $disk;
 
         return $this;
     }
-
 }

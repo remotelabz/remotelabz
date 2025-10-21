@@ -20,6 +20,9 @@
             <a class="btn btn-success" role="button" href="{{ path('new_operating_system') }}">
                 <i class="fas fa-plus me-2"></i> New Operating System
             </a>
+            <a class="btn btn-info" role="button" href="{{ path('new_blank_operating_system') }}">
+                <i class="fas fa-square me-2"></i> Blank OS
+            </a>
             <a href="{{ path('new_lxc_device') }}" class="btn btn-warning">
                 <i class="fab fa-docker me-2"></i> {{ 'New LXC Container'|trans }}
             </a>
@@ -170,12 +173,13 @@
                             {% endif %}
                         </td>
                    
-                                                        {% if is_granted("ROLE_TEACHER_EDITOR") %}
+                    {% if is_granted("ROLE_TEACHER_EDITOR") %}
                         <td>
                         
                         <a href="{{ path('edit_operating_system', {id: operatingSystem.id}) }}" class="btn btn-sm btn-outline-primary" title="{{ 'Edit'|trans }}">
-                                <i class="fa fa-edit"></i>
-                            </a>
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        {% if operatingSystem.hypervisor and operatingSystem.hypervisor.name != "natif" %}
                             <form method="post" action="{{ path('delete_operating_system', {id: operatingSystem.id}) }}" style="display:inline-block;" onsubmit="return confirm('{{ 'Are you sure?'|trans }}');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ operatingSystem.id) }}">
                                 <input type="hidden" name="_method" value="DELETE">
@@ -183,8 +187,10 @@
                                     <i class="fa fa-trash"></i>
                                 </button>
                             </form>
-                            </td>
-                                                            {% endif %}
+                        {% endif %}
+                        
+                        </td>
+                    {% endif %}
 
                     </tr>
                     {% endfor %}

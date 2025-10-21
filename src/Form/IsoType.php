@@ -60,20 +60,20 @@ class IsoType extends AbstractType
             // Sélecteur de type de fichier
             ->add('fileSourceType', ChoiceType::class, [
                 'label' => 'ISO file',
-                'mapped' => false, // Ce champ n'est pas lié à l'entité
+                'mapped' => false,
                 'choices' => [
                     'Upload un fichier' => 'upload',
                     'Utiliser une URL' => 'url',
+                    'Nom de fichier uniquement' => 'filename', // AJOUTÉ
                 ],
-                'expanded' => true, // Boutons radio
+                'expanded' => true,
                 'multiple' => false,
-                'data' => 'upload', // Valeur par défaut
+                'data' => 'upload',
                 'required' => true,
                 'attr' => [
                     'class' => 'file-source-selector'
                 ]
             ])
-
             ->add('uploaded_filename', HiddenType::class, [
                 'mapped' => false, // Géré manuellement dans le contrôleur
                 'required' => false,
@@ -118,7 +118,17 @@ class IsoType extends AbstractType
                 ]
             ])
 
-            
+            // Champ pour le nom de fichier uniquement (fichier déjà sur le serveur)
+            ->add('Filename', TextType::class, [
+                'label' => 'Filename',
+                'required' => false,
+                'mapped' => true, // Mappé sur l'entité Iso
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'file.iso'
+                ]
+            ])
+
             ->add('description', TextareaType::class, [
                 'label' => 'ISO Description (optional)',
                 'required' => false,
@@ -144,8 +154,13 @@ class IsoType extends AbstractType
                 // Si une URL existe déjà, présélectionner le type URL
                 $form->get('fileSourceType')->setData('url');
             } elseif ($iso && $iso->getFilename()) {
-                // Si un fichier existe déjà, présélectionner le type upload
-                $form->get('fileSourceType')->setData('upload');
+                // Vérifier si c'est un fichier uploadé ou juste un filename
+                $uploadedFilename = $form->has('uploaded_filename') ? $form->get('uploaded_filename')->getData() : null;
+                if ($uploadedFilename) {
+                    $form->get('fileSourceType')->setData('upload');
+                } else {
+                    $form->get('fileSourceType')->setData('filename');
+                }
             }
         });
 
@@ -165,6 +180,10 @@ class IsoType extends AbstractType
             
             if ($fileSourceType === 'url' && !$filenameUrl) {
                 $form->get('Filename_url')->addError(new \Symfony\Component\Form\FormError('Please type an URL'));
+            }
+
+            if ($fileSourceType === 'filename' && !$iso->getFilename()) {
+                $form->get('Filename')->addError(new \Symfony\Component\Form\FormError('Please enter a filename'));
             }
         });
     }

@@ -91,6 +91,24 @@ class OperatingSystem
     #[Serializer\XmlAttribute]
     #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab','worker'])]
     private $version;
+
+    #[Assert\Valid]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\FlavorDisk')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker'])]
+    private $flavorDisk = null;
+
+    public function getFlavorDisk(): ?FlavorDisk
+    {
+        return $this->flavorDisk;
+    }
+
+    public function setFlavorDisk(?FlavorDisk $flavorDisk): self
+    {
+        $this->flavorDisk = $flavorDisk;
+
+        return $this;
+    }
     
     public function getId(): ?int
     {
