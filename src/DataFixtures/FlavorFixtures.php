@@ -18,7 +18,6 @@ class FlavorFixtures extends Fixture
         $flavor
             ->setName("xx-small-256")
             ->setMemory(256)
-            ->setDisk(4)
         ;
         $manager->persist($flavor);
         $this->addReference('flavor-xx-small', $flavor);
@@ -27,7 +26,6 @@ class FlavorFixtures extends Fixture
         $flavor
             ->setName("x-small-512")
             ->setMemory(512)
-            ->setDisk(8)
         ;
         $manager->persist($flavor);
         $this->addReference('flavor-x-small', $flavor);
@@ -36,7 +34,6 @@ class FlavorFixtures extends Fixture
         $flavor
             ->setName("small-1024")
             ->setMemory(1024)
-            ->setDisk(8)
         ;
         $manager->persist($flavor);
         $this->addReference('flavor-small', $flavor);
@@ -45,7 +42,6 @@ class FlavorFixtures extends Fixture
         $flavor
             ->setName("large-2048")
             ->setMemory(2048)
-            ->setDisk(8)
         ;
         $manager->persist($flavor);
         $this->addReference('flavor-large', $flavor);
@@ -55,7 +51,6 @@ class FlavorFixtures extends Fixture
         $flavor
             ->setName("x-large-4096")
             ->setMemory(4096)
-            ->setDisk(30)
         ;
         $manager->persist($flavor);
         $this->addReference('flavor-x-large', $flavor);
