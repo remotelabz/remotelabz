@@ -28,7 +28,7 @@ final class Version20201118100750 extends AbstractMigration
         $this->addSql('ALTER TABLE lab ADD CONSTRAINT FK_61D6B1C4D0949C27 FOREIGN KEY (_group_id) REFERENCES _group (id)');
         $this->addSql('CREATE INDEX IDX_61D6B1C4D0949C27 ON lab (_group_id)');
         $this->addSql('INSERT IGNORE INTO _group SET id = 1, parent_id = NULL, name = \'Default group\', created_at = NOW(), updated_at = NOW(), visibility = 2, picture_filename = NULL, slug = \'default-group\', description = \'The default group.\', uuid = \''.new Uuid().'\'');
-        $this->addSql('INSERT IGNORE INTO user_group SET id = 1, group_id = 1, user_id = (SELECT id FROM user WHERE email = \'root@localhost\'), permissions = \'\', created_at = NOW(), role = \'owner\'');
+        $this->addSql('INSERT IGNORE INTO user_group SET id = 1, group_id = 1, user_id = (SELECT id FROM user WHERE email = \'root@localhost\'), permissions = \'{}\', created_at = NOW(), role = \'owner\'');
         $this->addSql(
             'UPDATE lab
             SET _group_id = 1
