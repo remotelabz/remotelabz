@@ -113,11 +113,12 @@ class OperatingSystemController extends Controller
 
         // Apply search filters
         if ($search) {
-            $queryBuilder->andWhere($queryBuilder->expr()->orX(
+            $queryBuilder
+		->leftJoin('os.arch','a')
+		->andWhere($queryBuilder->expr()->orX(
                 $queryBuilder->expr()->like('LOWER(os.name)', ':search'),
                 $queryBuilder->expr()->like('LOWER(os.description)', ':search'),
-                $queryBuilder->expr()->like('LOWER(a.Name)', ':search'),
-                $queryBuilder->leftJoin('os.arch', 'a')
+                $queryBuilder->expr()->like('LOWER(a.name)', ':search')
             ))->setParameter('search', '%' . strtolower($search) . '%');
         }
 
