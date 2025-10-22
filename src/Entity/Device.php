@@ -203,7 +203,7 @@ class Device implements InstanciableInterface
      */
     #[ORM\ManyToMany(targetEntity: Iso::class, inversedBy: 'devices')]
     #[ORM\JoinTable(name: 'device_iso')]
-    #[Serializer\Groups(['api_get_user', 'api_get_device', 'api_get_lab','sandbox'])]
+    #[Serializer\Groups(['api_get_user', 'api_get_lab_instance','api_get_device', 'api_get_lab','sandbox'])]
     #[Assert\Count(
         min: 0
     )]

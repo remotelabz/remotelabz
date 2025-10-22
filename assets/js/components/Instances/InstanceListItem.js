@@ -29,8 +29,15 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
     
     // Récupérer les ISOs pour ce device
     const currentDeviceIsos = deviceIsos?.[instance.device.id] || [];
-    
-    //console.log("currentDeviceIsos:",currentDeviceIsos);
+        
+    console.log("instance",instance.device.name);
+    console.log("currentiso",deviceIsos);
+
+    console.log("Device ID:", instance.device.id);
+    console.log("Device Name:", instance.device.name);
+    console.log("All deviceIsos:", deviceIsos);
+    console.log("Current device ISOs:", currentDeviceIsos);
+
     // États séparés pour chaque action
     const [startingInstances, setStartingInstances] = useState(new Set());
     const [stoppingInstances, setStoppingInstances] = useState(new Set());

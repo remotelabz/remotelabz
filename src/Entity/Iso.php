@@ -19,19 +19,19 @@ class Iso
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Serializer\Groups(['sandbox'])]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Serializer\Groups(['sandbox'])]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $name;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Serializer\Groups(['sandbox'])]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $filename = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Serializer\Groups(['sandbox'])]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $filename_url = null;
 
     #[Assert\Type(type: 'string')]

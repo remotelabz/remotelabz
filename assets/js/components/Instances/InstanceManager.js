@@ -18,6 +18,9 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     const isSandbox = props.isSandbox;
     const timerRef = useRef(null);
 
+    //console.log("InstanceManager props.labInstance.deviceInstances",props.labInstance.deviceInstances);
+    //console.log("InstanceManager labInstance",labInstance);
+
     useEffect(() => {
         setLoadingInstanceState(false);
         refreshInstance();

@@ -97,17 +97,10 @@ class DeviceSandboxController extends Controller
         $deviceStarted = [];
 
         // Récupérer les ISOs pour chaque device
-        $deviceIsos = [];
         foreach ($lab->getDevices()->getValues() as $device) {
             $deviceStarted[$device->getId()] = false;
-
             if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
                 $deviceStarted[$device->getId()] = true;
-            }
-
-            // Ajouter les ISOs associés au device
-            if ($device->getIsos()->count() > 0) {
-                $deviceIsos[$device->getId()] = $device->getIsos()->toArray();
             }
         }
 
@@ -117,7 +110,6 @@ class DeviceSandboxController extends Controller
             'lab' => $lab,
             'isSandbox' => true,
             'hasBooking' => false,
-            'deviceIsos' => $deviceIsos // Ajouter les ISOs dans les props
         ];
 
         preg_match("/^Sandbox_(Lab).*$/", $lab->getName(), $result);
@@ -129,7 +121,6 @@ class DeviceSandboxController extends Controller
             'deviceStarted' => $deviceStarted,
             'user' => $user,
             'sandboxlab' => $sandboxlab,
-            'deviceIsos' => $deviceIsos, // Passer les ISOs à la vue
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',

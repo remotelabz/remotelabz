@@ -9,7 +9,7 @@ import { ToastContainer, toast } from 'react-toastify';
 const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false);
     let deviceLengthMax = 1;
-
+    //console.log("InstanceList props",props.instances);
     if (props.isSandbox) {
         for (const instance of props.instances) {
             const device = instance.device;
@@ -26,7 +26,7 @@ const InstanceList = (props) => {
                 labDeviceLength={deviceLengthMax}
                 key={index}
                 allInstance={props.instances}
-                deviceIsos={props.deviceIsos} // Passer les ISOs
+                deviceIsos={deviceInstance.device.isos} // Passer les ISOs
                 {...props}
             />
         )
