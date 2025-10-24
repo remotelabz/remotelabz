@@ -299,7 +299,7 @@ class InstanceManager
      *
      * @return string The lab instance JSON string
      */
-    public function start(DeviceInstance $deviceInstance) {
+    public function start(DeviceInstance $deviceInstance, ?array $startData = null) {
         //$this->logger->info('Device instance state '.$deviceInstance->getState());
         
         if ($deviceInstance->getState() == InstanceStateMessage::STATE_CREATING || 
@@ -349,6 +349,36 @@ class InstanceManager
                             }
                         }
                     }
+                    $labJson = json_encode($tmp, 0, 4096);
+                }
+
+                if ($startData && isset($startData['bootWithIso']) && $startData['bootWithIso'] === true) {
+                    $tmp = json_decode($labJson, true, 4096, JSON_OBJECT_AS_ARRAY);
+                    
+                    // Récupérer l'ISO depuis la base de données
+                    if (isset($startData['isoId']) && $startData['isoId'] !== null) {
+                        $isoRepository = $this->entityManager->getRepository(\App\Entity\Iso::class);
+                        $iso = $isoRepository->find($startData['isoId']);
+                        
+                        if ($iso) {
+                            // Ajouter les informations ISO au device correspondant
+                            foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
+                                if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
+                                    $tmp['deviceInstances'][$key]['bootWithIso'] = true;
+                                    $tmp['deviceInstances'][$key]['isoFilename'] = $iso->getFilename();
+                                    $tmp['deviceInstances'][$key]['isoId'] = $iso->getId();
+                                    
+                                    $this->logger->info('[InstanceManager:start]::Device will boot with ISO: ' . $iso->getFilename() . ' (ID: ' . $iso->getId() . ')');
+                                    break;
+                                }
+                            }
+                        } else {
+                            $this->logger->warning('[InstanceManager:start]::ISO with ID ' . $startData['isoId'] . ' not found. Starting without ISO.');
+                        }
+                    } else {
+                        $this->logger->warning('[InstanceManager:start]::Boot with ISO requested but no ISO ID provided.');
+                    }
+                    
                     $labJson = json_encode($tmp, 0, 4096);
                 }
 

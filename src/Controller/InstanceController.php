@@ -545,14 +545,17 @@ class InstanceController extends Controller
 
 
     #[Get('/api/instances/start/by-uuid/{uuid}', name: 'api_start_instance_by_uuid', requirements: ["uuid" => "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
+    #[Post('/api/instances/start/by-uuid/{uuid}', name: 'api_start_instance_by_uuid_post', requirements: ["uuid" => "[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}"])]
     public function startByUuidAction(Request $request, string $uuid, InstanceManager $instanceManager)
     {
         $this->logger->debug("[InstanceController:startByUuidAction]::start the device " . $uuid);
+        
         if (!$deviceInstance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid])) {
             throw new NotFoundHttpException('No instance with UUID ' . $uuid . ".");
         }
-        $this->logger->debug("[InstanceController:startByUuidAction]::deviceInstance " . $deviceInstance->getUuid());
 
+        $this->logger->debug("[InstanceController:startByUuidAction]::deviceInstance " . $deviceInstance->getUuid());
+        
         // LOGS AJOUTÉS
         $user = $this->getUser();
         $labInstance = $deviceInstance->getLabInstance();
@@ -573,7 +576,19 @@ class InstanceController extends Controller
 
         $this->denyAccessUnlessGranted(InstanceVoter::START_DEVICE, $deviceInstance);
 
-        $json = $instanceManager->start($deviceInstance);
+        $startData = null;
+        if ($request->getMethod() === 'POST') {
+            $content = json_decode($request->getContent(), true);
+            if ($content && isset($content['bootWithIso']) && $content['bootWithIso'] === true) {
+                $startData = [
+                    'bootWithIso' => true,
+                    'isoId' => $content['isoId'] ?? null
+                ];
+                $this->logger->info("[InstanceController:startByUuidAction]::Starting with ISO - ID: " . ($startData['isoId'] ?? 'null'));
+            }
+        }
+
+        $json = $instanceManager->start($deviceInstance, $startData);
         $status = empty($json) ? 204 : 200;
 
         return $this->json($json, $status, [], [], true);

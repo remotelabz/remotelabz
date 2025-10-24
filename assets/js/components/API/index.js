@@ -949,7 +949,10 @@ export class RemotelabzAPI {
              * 
              * @returns {Promise<import('axios').AxiosResponse<void>>}
              */
-            start(uuid) {
+            start(uuid, startData = null) {
+                if (startData) {
+                    return axios.post(`/instances/start/by-uuid/${uuid}`, startData);
+                }
                 return axios.get(`/instances/start/by-uuid/${uuid}`);
             },
 

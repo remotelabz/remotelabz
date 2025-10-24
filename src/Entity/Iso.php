@@ -28,10 +28,12 @@ class Iso
 
     #[ORM\Column(length: 255, nullable: true)]
     //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    #[Serializer\Groups(['worker'])]
     private ?string $filename = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    #[Serializer\Groups(['worker'])]
     private ?string $filename_url = null;
 
     #[Assert\Type(type: 'string')]
@@ -40,7 +42,7 @@ class Iso
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Serializer\Groups(['sandbox'])]
+    #[Serializer\Groups(['sandbox','worker'])]
     private $arch = Null;
     
     public function getId(): ?int

@@ -33,13 +33,13 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
 
     const currentDeviceIsos = deviceIsos;
 
-    console.log("Device ID:", instance.device.id);
+    /*console.log("Device ID:", instance.device.id);
     console.log("Device Name:", instance.device.name);
     console.log("All deviceIsos:", deviceIsos);
     console.log("Current device ISOs:", currentDeviceIsos);
     console.log("Instance stage:", instance.state);
     console.log("Current device ISOs length:", deviceIsos.length);
-
+*/
     // Fonctions pour gérer l'état "starting"
     const setInstanceStarting = (uuid, starting) => {
         setStartingInstances(prev => {
@@ -132,10 +132,23 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
     }, [instance.state]);
 
     function startDevice(deviceInstance) {
+        // Validation : empêcher le démarrage si Boot ISO coché sans ISO sélectionné
+        if (bootWithIso && !selectedIsoId) {
+            toast.error('Please select an ISO before starting the device.');
+            return;
+        }
+
         setInstanceStarting(deviceInstance.uuid, true);
-        Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
+        const startData = {
+            bootWithIso: bootWithIso,
+            isoId: bootWithIso ? selectedIsoId : null
+        };
+
+        Remotelabz.instances.device.start(deviceInstance.uuid,startData).then(() => {
             toast.success('Instance start requested.');
             onStateUpdate();
+            setBootWithIso(false);
+            setSelectedIsoId(null);
         }).catch((error) => {
             setInstanceStarting(deviceInstance.uuid, false);
             const errorMessage = error?.response?.data?.message || '';
@@ -349,7 +362,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {((instance.state == 'stopped' || instance.state == 'exported') && 
+                        {((instance.state == 'stopped' || instance.state == 'exported' || instance.state == 'error') && 
                             (allInstance?.length == labDeviceLength) && 
                             isSandbox && 
                             instance.device.name !== "DHCP_service") && (
@@ -397,16 +410,23 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                             )}
                                         </div>
                                     )}
-                                    
-                                    {/* Bouton Export device - toujours affiché dans ce contexte */}
+                                </>
+                            )}
+                            
+                            {( (instance.state == 'stopped' || instance.state == 'exported') && 
+                               (allInstance?.length == labDeviceLength) && 
+                                isSandbox && 
+                                (instance.device.name !== "DHCP_service") && 
+
                                     <div onClick={() => setShowExport(!showExport)}>
                                         <Button variant="default">
                                             <SVG name={showExport ? "chevron-down" : "chevron-right"} />
                                             Export device
                                         </Button>
                                     </div>
-                                </>
                             )}
+
+
                         {instance.state !== 'stopped' && 
                             <div onClick={() => setShowLogs(!showLogs)}>
                                 {showLogs ?
