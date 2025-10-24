@@ -22,26 +22,23 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
-    
     // États pour la gestion des ISOs
     const [bootWithIso, setBootWithIso] = useState(false);
-    const [selectedIsoId, setSelectedIsoId] = useState(null);
-    
-    // Récupérer les ISOs pour ce device
-    const currentDeviceIsos = deviceIsos?.[instance.device.id] || [];
-        
-    console.log("instance",instance.device.name);
-    console.log("currentiso",deviceIsos);
+    const [selectedIsoId, setSelectedIsoId] = useState(null);    
+    // Récupérer les ISOs pour ce device - CORRECTION : utiliser l'ID du device
+    // États séparés pour chaque action
+    const [startingInstances, setStartingInstances] = useState(new Set());
+    const [stoppingInstances, setStoppingInstances] = useState(new Set());
+    const [resettingInstances, setResettingInstances] = useState(new Set());
+
+    const currentDeviceIsos = deviceIsos;
 
     console.log("Device ID:", instance.device.id);
     console.log("Device Name:", instance.device.name);
     console.log("All deviceIsos:", deviceIsos);
     console.log("Current device ISOs:", currentDeviceIsos);
-
-    // États séparés pour chaque action
-    const [startingInstances, setStartingInstances] = useState(new Set());
-    const [stoppingInstances, setStoppingInstances] = useState(new Set());
-    const [resettingInstances, setResettingInstances] = useState(new Set());
+    console.log("Instance stage:", instance.state);
+    console.log("Current device ISOs length:", deviceIsos.length);
 
     // Fonctions pour gérer l'état "starting"
     const setInstanceStarting = (uuid, starting) => {
@@ -352,14 +349,64 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox && instance.device.name !== "DHCP_service") &&
-                            <div onClick={() => setShowExport(!showExport)}>
-                                <Button variant="default">
-                                    <SVG name={showExport ? "chevron-down" : "chevron-right"} />
-                                        Export device
-                                </Button>
-                            </div>
-                        }
+                        {((instance.state == 'stopped' || instance.state == 'exported') && 
+                            (allInstance?.length == labDeviceLength) && 
+                            isSandbox && 
+                            instance.device.name !== "DHCP_service") && (
+                                <>
+                                    {/* Afficher la section ISO uniquement si des ISOs existent */}
+                                    {currentDeviceIsos.length > 0 && (
+                                        <div className="mb-3">
+                                            <Form.Check
+                                                type="checkbox"
+                                                id={`boot-iso-${instance.uuid}`}
+                                                label="Boot ISO"
+                                                checked={bootWithIso}
+                                                onChange={(e) => {
+                                                    setBootWithIso(e.target.checked);
+                                                    if (!e.target.checked) {
+                                                        setSelectedIsoId(null);
+                                                    } else if (currentDeviceIsos.length > 0 && !selectedIsoId) {
+                                                        // Sélectionner le premier ISO par défaut
+                                                        setSelectedIsoId(currentDeviceIsos[0].id);
+                                                    }
+                                                }}
+                                            />
+                                            
+                                            {bootWithIso && (
+                                                <Form.Group className="mt-2">
+                                                    <Form.Label>Select ISO</Form.Label>
+                                                    <Form.Control
+                                                        as="select"
+                                                        value={selectedIsoId || ''}
+                                                        onChange={(e) => setSelectedIsoId(e.target.value ? parseInt(e.target.value) : null)}
+                                                    >
+                                                        <option value="">-- Select an ISO --</option>
+                                                        {currentDeviceIsos.map((iso) => (
+                                                            <option key={iso.id} value={iso.id}>
+                                                                {iso.name || iso.filename || `ISO ${iso.id}`}
+                                                            </option>
+                                                        ))}
+                                                    </Form.Control>
+                                                    {bootWithIso && !selectedIsoId && (
+                                                        <Form.Text className="text-danger">
+                                                            Please select an ISO to continue
+                                                        </Form.Text>
+                                                    )}
+                                                </Form.Group>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Bouton Export device - toujours affiché dans ce contexte */}
+                                    <div onClick={() => setShowExport(!showExport)}>
+                                        <Button variant="default">
+                                            <SVG name={showExport ? "chevron-down" : "chevron-right"} />
+                                            Export device
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         {instance.state !== 'stopped' && 
                             <div onClick={() => setShowLogs(!showLogs)}>
                                 {showLogs ?
@@ -498,50 +545,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                 />
 
                 {(instance.state == 'stopped' && showExport) && (
-                    <div className="mt-3 p-3 border rounded">
-                        {currentDeviceIsos.length > 0 && (
-                            <div className="mb-3">
-                                <Form.Check
-                                    type="checkbox"
-                                    id={`boot-iso-${instance.uuid}`}
-                                    label="Boot ISO"
-                                    checked={bootWithIso}
-                                    onChange={(e) => {
-                                        setBootWithIso(e.target.checked);
-                                        if (!e.target.checked) {
-                                            setSelectedIsoId(null);
-                                        } else if (currentDeviceIsos.length > 0 && !selectedIsoId) {
-                                            // Sélectionner le premier ISO par défaut
-                                            setSelectedIsoId(currentDeviceIsos[0].id);
-                                        }
-                                    }}
-                                />
-                                
-                                {bootWithIso && (
-                                    <Form.Group className="mt-2">
-                                        <Form.Label>Select ISO</Form.Label>
-                                        <Form.Control
-                                            as="select"
-                                            value={selectedIsoId || ''}
-                                            onChange={(e) => setSelectedIsoId(e.target.value ? parseInt(e.target.value) : null)}
-                                        >
-                                            <option value="">-- Select an ISO --</option>
-                                            {currentDeviceIsos.map((iso) => (
-                                                <option key={iso.id} value={iso.id}>
-                                                    {iso.name || iso.filename || `ISO ${iso.id}`}
-                                                </option>
-                                            ))}
-                                        </Form.Control>
-                                        {bootWithIso && !selectedIsoId && (
-                                            <Form.Text className="text-danger">
-                                                Please select an ISO to continue
-                                            </Form.Text>
-                                        )}
-                                    </Form.Group>
-                                )}
-                            </div>
-                        )}
-                        
+                    <div className="mt-3 p-3 border rounded">                      
                         <InstanceExport 
                             instance={instance} 
                             exportTemplate={exportDeviceTemplate} 

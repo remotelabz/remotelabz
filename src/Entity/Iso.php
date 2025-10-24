@@ -27,11 +27,11 @@ class Iso
     private ?string $name;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $filename = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $filename_url = null;
 
     #[Assert\Type(type: 'string')]
