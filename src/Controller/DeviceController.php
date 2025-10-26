@@ -715,12 +715,16 @@ class DeviceController extends Controller
             $device->setName('Unamed device');
         }
 
+        /*
+        // This is a bug. When we create a lab in sandbox, the device become template only at the export process
         if($lab->getIsTemplate() == true) {
             $device->setIsTemplate(true);
         }
         else {
             $device->setIsTemplate(false);
         }
+        */
+
         //$device->setType($data['type']);
         $device->setNetworkInterfaceTemplate($data['networkInterfaceTemplate']);
         $device->setIcon($data['icon']);
