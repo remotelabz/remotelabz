@@ -255,6 +255,7 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
+        $this->isTemplate=0;
         $this->labsUsingThisTemplate = new ArrayCollection();
         $this->isos = new ArrayCollection(); // Ajout de l'initialisation
     }
