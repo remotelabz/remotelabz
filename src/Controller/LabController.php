@@ -681,7 +681,6 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_array = json_decode($request->getContent(), true);
-            $this->logger->debug("[LabController:addDeviceAction]::json:",$device_array);
             /*$json_example='{
                 "id": 121,
                 "name": "FortiGate-v7.2.0",
