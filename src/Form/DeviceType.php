@@ -20,6 +20,8 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormEvent;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -95,6 +97,11 @@ class DeviceType extends AbstractType
                 'choice_label' => function(OperatingSystem $os) {
                     return $os->getName() . ' (' . $os->getHypervisor()->getName() . ')';
                 },
+                'choice_attr' => function(OperatingSystem $os) {
+                    return [
+                        'data-has-flavor-disk' => $os->getFlavorDisk() !== null ? '1' : '0'
+                    ];
+                },
                 'help' => 'Image disk used for this device.',
                 'placeholder' => 'Select an operating system'
             ])
@@ -118,23 +125,6 @@ class DeviceType extends AbstractType
                 'help' => 'BIOS file to use',
             ])
 
-            ->add('isos', EntityType::class, [  // Changé de 'cdrom_iso_filename' à 'isos'
-                'class' => Iso::class,
-                'choice_label' => 'filename',
-                'multiple' => true,
-                'required' => false,
-                'placeholder' => 'Select ISO images',
-                'help' => 'ISO files to mount as CD-ROM',
-            ])
-            /*
-            ->add('cdrom_iso_filename', EntityType::class, [
-                'class' => Iso::class,
-                'choice_label' => 'filename',
-                'multiple' => true,
-                'required' => false,
-                'placeholder' => 'Select an ISO image',
-                'help' => 'ISO file to mount as CD-ROM',
-            ]) */ 
             ->add('cdrom_bus_type', ChoiceType::class, [
                 'choices' => [
                     'IDE' => 'IDE',
@@ -176,6 +166,7 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'help' => 'Press on CTRL when you click to delete a type',
            ]);
+           
            if ($virtuality == 0) {
             $builder
                 ->add('ip', TextType::class, [
@@ -184,8 +175,8 @@ class DeviceType extends AbstractType
                 ->add('port', NumberType::class, [
                     'required' => true
                 ]);
-
            }
+           
             $builder->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
@@ -198,6 +189,56 @@ class DeviceType extends AbstractType
                     'help' => 'Advanced QEMU options',
                 ])
             ->add('submit', SubmitType::class);
+
+        // Ajout dynamique du champ isos selon l'operating system sélectionné
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+            $device = $event->getData();
+            $form = $event->getForm();
+
+            // Si le device a un operating system avec flavorDisk non null, ajouter le champ isos
+            if ($device && $device->getOperatingSystem() && $device->getOperatingSystem()->getFlavorDisk() !== null) {
+                $form->add('isos', EntityType::class, [
+                    'class' => Iso::class,
+                    'choice_label' => 'filename',
+                    'multiple' => true,
+                    'required' => false,
+                    'placeholder' => 'Select ISO images',
+                    'help' => 'ISO files to mount as CD-ROM',
+                ]);
+            }
+        });
+
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            $form = $event->getForm();
+
+            // Vérifier si un operating system est sélectionné dans les données soumises
+            if (isset($data['operatingSystem'])) {
+                // Récupérer l'entity manager via le form config
+                $entityManager = $form->getConfig()->getOption('em');
+                $osRepository = $entityManager->getRepository(OperatingSystem::class);
+                $operatingSystem = $osRepository->find($data['operatingSystem']);
+
+                // Si l'OS a un flavorDisk, ajouter le champ isos
+                if ($operatingSystem && $operatingSystem->getFlavorDisk() !== null) {
+                    if (!$form->has('isos')) {
+                        $form->add('isos', EntityType::class, [
+                            'class' => Iso::class,
+                            'choice_label' => 'filename',
+                            'multiple' => true,
+                            'required' => false,
+                            'placeholder' => 'Select ISO images',
+                            'help' => 'ISO files to mount as CD-ROM',
+                        ]);
+                    }
+                } else {
+                    // Supprimer le champ isos s'il existe et que l'OS n'est pas de type blank
+                    if ($form->has('isos')) {
+                        $form->remove('isos');
+                    }
+                }
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -206,7 +247,8 @@ class DeviceType extends AbstractType
             'data_class' => Device::class,
             "allow_extra_fields" => true,
             'nb_network_interface' => null,
-            "virtuality" => 1
+            "virtuality" => 1,
+            'em' => null,
         ]);
     }
 }

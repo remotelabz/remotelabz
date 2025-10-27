@@ -513,8 +513,11 @@ class DeviceController extends Controller
             $virtuality = true;
         }
 
-        $deviceForm = $this->createForm(DeviceType::class, $device, ["virtuality" => $virtuality]);
-        
+        $deviceForm = $this->createForm(DeviceType::class, $device, [
+            "virtuality" => $virtuality,
+            "em" => $this->entityManager
+        ]);
+                
         $deviceForm->handleRequest($request);
 
         if ($request->getContentType() === 'json') {
@@ -834,10 +837,13 @@ class DeviceController extends Controller
         $oldName = $device->getName();
         $virtuality = $device->getVirtuality();
         $this->logger->info("Device ".$device->getName()." modification asked by user ".$this->getUser()->getFirstname()." ".$this->getUser()->getName());
+    
         $deviceForm = $this->createForm(DeviceType::class, $device, [
             'nb_network_interface' => count($device->getNetworkInterfaces()),
-            'virtuality' => $virtuality]
-        );
+            'virtuality' => $virtuality,
+            'em' => $this->entityManager
+        ]);
+        
         $deviceForm->handleRequest($request);
 
         //$this->logger->debug("Nb network interface:".$request->query->get('nb_network_interface'));
