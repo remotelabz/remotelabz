@@ -208,7 +208,7 @@ class LabImporter
             $flavorJson = $deviceJson['flavor'];
             $results = $this->flavorRepository->findBy([
                 'memory' => $flavorJson['memory'],
-                'disk' => $flavorJson['disk']
+                //'disk' => $flavorJson['disk']
             ]);
 
             if (count($results) > 0) {
