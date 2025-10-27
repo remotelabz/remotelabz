@@ -19,7 +19,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $operatingSystem = new OperatingSystem();
 
         $operatingSystem->setName('Alpine3.10');
-	$operatingSystem
+		$operatingSystem
             ->setImageUrl('http://194.57.105.124/~fnolot/alpinelab1.qcow2')
             ->setHypervisor($this->getReference('qemu', Hypervisor::class))
             ->setArch($arch)
@@ -30,8 +30,8 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $this->setReference('operating-system-Alpine', $operatingSystem);
 
         $operatingSystem = new OperatingSystem();
-	$operatingSystem->setName('Migration');
-	$operatingSystem
+		$operatingSystem->setName('Migration');
+		$operatingSystem
             ->setImageFilename('Migration')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)
@@ -40,8 +40,8 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
         $this->setReference('MigrationOS', $operatingSystem);
 
         $operatingSystem = new OperatingSystem();
-   	$operatingSystem->setName('Ubuntu24.04SrvLTS');
-	$operatingSystem
+   		$operatingSystem->setName('Ubuntu24.04SrvLTS');
+		$operatingSystem
             ->setImageFilename('Ubuntu24LTS')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)
@@ -51,7 +51,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem->setName('Debian11.4');
-	$operatingSystem
+		$operatingSystem
             ->setImageFilename('Debian')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)            
@@ -62,7 +62,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem->setName('Alpine-stable');
-	$operatingSystem
+		$operatingSystem
             ->setImageFilename('Alpine-Stable')
             ->setHypervisor($this->getReference('lxc', Hypervisor::class))
             ->setArch($arch)            
@@ -72,7 +72,7 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
         $operatingSystem->setName('Natif');
-	$operatingSystem
+		$operatingSystem
             ->setImageFilename('Natif')
             ->setHypervisor($this->getReference('natif', Hypervisor::class))
             ->setArch($arch)            
