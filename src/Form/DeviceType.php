@@ -195,8 +195,18 @@ class DeviceType extends AbstractType
             $device = $event->getData();
             $form = $event->getForm();
 
-            // Si le device a un operating system avec flavorDisk non null, ajouter le champ isos
-            if ($device && $device->getOperatingSystem() && $device->getOperatingSystem()->getFlavorDisk() !== null) {
+            // Toujours ajouter le champ isos (il sera masqué par JS si nécessaire)
+            // Pour un nouveau device, on l'ajoute par défaut
+            // Pour un device existant, on vérifie l'OS
+            $shouldAddIsos = true;
+            
+            if ($device && $device->getOperatingSystem()) {
+                // Si le device a déjà un OS, vérifier le flavorDisk
+                $shouldAddIsos = $device->getOperatingSystem()->getFlavorDisk() !== null;
+            }
+            
+            // Pour les nouveaux devices ou ceux avec un OS blank, ajouter le champ
+            if ($shouldAddIsos || !$device || !$device->getId()) {
                 $form->add('isos', EntityType::class, [
                     'class' => Iso::class,
                     'choice_label' => 'filename',
