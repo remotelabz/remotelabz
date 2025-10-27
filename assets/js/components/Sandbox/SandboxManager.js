@@ -4,9 +4,11 @@ import SandboxList from './SandboxList';
 
 class SandboxManager extends Component {
     constructor(props) {
+        console.log("props in Sandbox manager",props);
+
         super(props);
     }
-
+    
     render() {
         return (
             <SandboxList devices={this.props.devices} user={this.props.user} labs={this.props.labs}></SandboxList>

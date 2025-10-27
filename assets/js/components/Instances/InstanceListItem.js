@@ -6,14 +6,14 @@ import Routing from 'fos-jsrouting';
 import React, { useState, useEffect, Component } from 'react';
 import InstanceStateBadge from './InstanceStateBadge';
 import InstanceExport from './InstanceExport';
-import { ListGroupItem, Button, Spinner, Modal } from 'react-bootstrap';
+import { ListGroupItem, Button, Spinner, Modal, Form } from 'react-bootstrap';
 import { is_vnc, is_login, is_serial, is_real } from './deviceProtocolHelpers';
-import { fetchDeviceLogs,   startLogsPolling,   stopLogsPolling,  formatLogEntry,  getLastLogs } from './deviceLogsHelpers';
+import { fetchDeviceLogs, startLogsPolling, stopLogsPolling, formatLogEntry, getLastLogs } from './deviceLogsHelpers';
 import DeviceLogs from './DeviceLogs';
 
 const api = API.getInstance();
 
-function InstanceListItem({ instance, labDeviceLength, allInstance,  showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
+function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, showControls, onStateUpdate, isSandbox, lab, user, allInstancesPage }) {
     const [isLoading, setLoading] = useState(true)
     const [isExporting, setExporting] = useState(false)
     const [logs, setLogs] = useState([])
@@ -22,12 +22,24 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
     const [device, setDevice] = useState({ name: '' });
     const [showResetDeviceModel, setShowResetDeviceModel] = useState(false)
     const [showStopDeviceModel, setShowStopDeviceModel] = useState(false)
-    
+    // États pour la gestion des ISOs
+    const [bootWithIso, setBootWithIso] = useState(false);
+    const [selectedIsoId, setSelectedIsoId] = useState(null);    
+    // Récupérer les ISOs pour ce device - CORRECTION : utiliser l'ID du device
     // États séparés pour chaque action
     const [startingInstances, setStartingInstances] = useState(new Set());
     const [stoppingInstances, setStoppingInstances] = useState(new Set());
     const [resettingInstances, setResettingInstances] = useState(new Set());
 
+    const currentDeviceIsos = deviceIsos;
+
+    /*console.log("Device ID:", instance.device.id);
+    console.log("Device Name:", instance.device.name);
+    console.log("All deviceIsos:", deviceIsos);
+    console.log("Current device ISOs:", currentDeviceIsos);
+    console.log("Instance stage:", instance.state);
+    console.log("Current device ISOs length:", deviceIsos.length);
+*/
     // Fonctions pour gérer l'état "starting"
     const setInstanceStarting = (uuid, starting) => {
         setStartingInstances(prev => {
@@ -79,26 +91,23 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         return resettingInstances.has(uuid);
     };
 
-    
-
-    //console.log("Nombre total d'instances :", allInstance?.length);
     useEffect(() => {
         // Charger le device
         Remotelabz.devices.get(instance.device.id)
             .then(response => {
-            setDevice(response.data);
-            setLoading(false);
+                setDevice(response.data);
+                setLoading(false);
             })
             .catch(error => {
-            console.error('Error loading device:', error);
-            setLoading(false);
+                console.error('Error loading device:', error);
+                setLoading(false);
             });
 
         // Lancer le polling des logs
         const logsIntervalId = startLogsPolling(
             instance.uuid,
             (logs) => setLogs(logs),
-            30000 // 30 secondes
+            30000
         );
 
         // Cleanup
@@ -122,26 +131,24 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         }
     }, [instance.state]);
 
-    /*
-    function fetchLogs() {
-        return Remotelabz.instances.device.logs(instance.uuid).then(response => {
-            setLogs(response.data);
-        }).catch(error => {
-            if (error.response.status === 404) {
-                setLogs([]);
-            } else {
-                toast.error('An error happened while fetching instance logs. If this error persist, please contact an administrator.', {
-                });
-                setDevice(null)
-            }
-        });
-    }
-*/
     function startDevice(deviceInstance) {
+        // Validation : empêcher le démarrage si Boot ISO coché sans ISO sélectionné
+        if (bootWithIso && !selectedIsoId) {
+            toast.error('Please select an ISO before starting the device.');
+            return;
+        }
+
         setInstanceStarting(deviceInstance.uuid, true);
-        Remotelabz.instances.device.start(deviceInstance.uuid).then(() => {
+        const startData = {
+            bootWithIso: bootWithIso,
+            isoId: bootWithIso ? selectedIsoId : null
+        };
+
+        Remotelabz.instances.device.start(deviceInstance.uuid,startData).then(() => {
             toast.success('Instance start requested.');
             onStateUpdate();
+            setBootWithIso(false);
+            setSelectedIsoId(null);
         }).catch((error) => {
             setInstanceStarting(deviceInstance.uuid, false);
             const errorMessage = error?.response?.data?.message || '';
@@ -196,7 +203,6 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         });
     }
 
-    // Fonctions pour vérifier si une action spécifique est en cours
     function isStarting(deviceInstance) {
         return deviceInstance.state === 'starting' || isInstanceStarting(deviceInstance.uuid);
     }
@@ -209,84 +215,41 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
         return deviceInstance.state === 'resetting' || isInstanceResetting(deviceInstance.uuid);
     }
 
-    // Fonction générale pour vérifier si l'instance est dans un état de calcul
     function isComputingState(deviceInstance) {
         return isStarting(deviceInstance) || isStopping(deviceInstance) || isResetting(deviceInstance);
     }
 
     function exportDeviceTemplate(deviceInstance, name) {
-        setExporting(true)
+        setExporting(true);
         
-        Remotelabz.instances.export(deviceInstance.uuid, name, "device").then((response) => {
-            //console.log("response export device:", response);
-            toast.success('Instance export requested.', {
-                });
-
-            onStateUpdate();
-        }).catch((error) => {
-            if (error.response.data.message.includes("No worker available")) {
-                
-                toast.error(error.response.data.message, {
-                    autoClose: 10000
-                });
-            }
-            else {
-                 toast.error('Error while requesting instance export. Please try again later.', {
-                    autoClose: 10000
-                });
-            }
-
-            setExporting(false)
-        })
-    }
-    
-    /*
-    function is_vnc() {
-        let result=false;
-        if (instance.controlProtocolTypeInstances.length > 0 ) {
-            instance.controlProtocolTypeInstances.forEach((element,index) => {
-              if (element.controlProtocolType.name === 'vnc') {
-                result=(result || true);
-              }
-            });
-        }
-        return result;
-    }
-
-    function is_login() {
-        let result=false;
-        if (instance.controlProtocolTypeInstances.length > 0 ) {
-            instance.controlProtocolTypeInstances.forEach((element,index) => {
-              if (element.controlProtocolType.name === 'login') {
-                result=(result || true);
-              }
-            });
-        }
-        return result;
-    }
-
-    function is_serial() {
-        let result=false;
-        if (instance.controlProtocolTypeInstances.length > 0 ) {
-            instance.controlProtocolTypeInstances.forEach((element,index) => {
-              if (element.controlProtocolType.name === 'serial') {
-                result=(result || true);
-              }
-            });
-        }
-        return result;
-    }
-
-    function is_real() {
-        let result=false;
-        if (instance.device.hypervisor.name == "physical" ) {
-            instance.controlProtocolTypeInstances.forEach((element,index) => {
-              result = true;
+        const exportData = {
+            name: name,
+            bootWithIso: bootWithIso,
+            isoId: bootWithIso ? selectedIsoId : null
+        };
+        
+        Remotelabz.instances.export(deviceInstance.uuid, exportData.name, "device", exportData)
+            .then((response) => {
+                toast.success('Instance export requested.');
+                onStateUpdate();
+                // Réinitialiser les valeurs
+                setBootWithIso(false);
+                setSelectedIsoId(null);
+                setExporting(false);
             })
-        }
-        return result;
+            .catch((error) => {
+                if (error.response?.data?.message?.includes("No worker available")) {
+                    toast.error(error.response.data.message, {
+                        autoClose: 10000
+                    });
+                } else {
+                    toast.error('Error while requesting instance export. Please try again later.', {
+                        autoClose: 10000
+                    });
+                }
+                setExporting(false);
+            });
     }
-    */
     
     let controls;
     
@@ -313,16 +276,12 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     className="ml-3" 
                     variant="success" 
                     title="Start device" 
-                    onClick={() => {
-                        //console.log('Button clicked, isComputing before:', isComputing || isInstanceComputing(instance.uuid));
-                        startDevice(instance);
-                    }}
+                    onClick={() => startDevice(instance)}
                     disabled={isComputingState(instance)}
                 >
                     {isStarting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                 </Button>
             );
-
             break;
 
         case 'reset':
@@ -331,10 +290,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     className="ml-3" 
                     variant="success" 
                     title="Start device" 
-                    onClick={() => {
-                        //console.log('Button clicked, isComputing before:', isComputing || isInstanceComputing(instance.uuid));
-                        startDevice(instance);
-                    }}
+                    onClick={() => startDevice(instance)}
                     disabled={isComputingState(instance)}
                 >
                     {isStarting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
@@ -372,9 +328,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     className="ml-3" 
                     variant="danger" 
                     title="Stop device" 
-                    onClick={() => {
-                        stopDevice(instance);
-                    }}
+                    onClick={() => stopDevice(instance)}
                     disabled={isComputingState(instance)}
                 >
                     {isStopping(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
@@ -382,6 +336,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
             );
             break;
     }
+
     return (
         <>
          <ListGroupItem>
@@ -407,14 +362,71 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     </div>
 
                     <div className="d-flex align-items-center">
-                        {( (instance.state == 'stopped' || instance.state == 'exported') && (allInstance?.length == labDeviceLength) && isSandbox && instance.device.name !== "DHCP_service") &&
-                            <div onClick={() => setShowExport(!showExport)}>
-                                <Button variant="default">
-                                    <SVG name={showExport ? "chevron-down" : "chevron-right"} />
-                                        Export device
-                                </Button>
-                            </div>
-                        }
+                        {((instance.state == 'stopped' || instance.state == 'exported' || instance.state == 'error') && 
+                            (allInstance?.length == labDeviceLength) && 
+                            isSandbox && 
+                            instance.device.name !== "DHCP_service") && (
+                                <>
+                                    {/* Afficher la section ISO uniquement si des ISOs existent */}
+                                    {currentDeviceIsos.length > 0 && (
+                                        <div className="mb-3">
+                                            <Form.Check
+                                                type="checkbox"
+                                                id={`boot-iso-${instance.uuid}`}
+                                                label="Boot ISO"
+                                                checked={bootWithIso}
+                                                onChange={(e) => {
+                                                    setBootWithIso(e.target.checked);
+                                                    if (!e.target.checked) {
+                                                        setSelectedIsoId(null);
+                                                    } else if (currentDeviceIsos.length > 0 && !selectedIsoId) {
+                                                        // Sélectionner le premier ISO par défaut
+                                                        setSelectedIsoId(currentDeviceIsos[0].id);
+                                                    }
+                                                }}
+                                            />
+                                            
+                                            {bootWithIso && (
+                                                <Form.Group className="mt-2">
+                                                    <Form.Label>Select ISO</Form.Label>
+                                                    <Form.Control
+                                                        as="select"
+                                                        value={selectedIsoId || ''}
+                                                        onChange={(e) => setSelectedIsoId(e.target.value ? parseInt(e.target.value) : null)}
+                                                    >
+                                                        <option value="">-- Select an ISO --</option>
+                                                        {currentDeviceIsos.map((iso) => (
+                                                            <option key={iso.id} value={iso.id}>
+                                                                {iso.name || iso.filename || `ISO ${iso.id}`}
+                                                            </option>
+                                                        ))}
+                                                    </Form.Control>
+                                                    {bootWithIso && !selectedIsoId && (
+                                                        <Form.Text className="text-danger">
+                                                            Please select an ISO to continue
+                                                        </Form.Text>
+                                                    )}
+                                                </Form.Group>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            
+                            {( (instance.state == 'stopped' || instance.state == 'exported') && 
+                               (allInstance?.length == labDeviceLength) && 
+                                isSandbox && 
+                                (instance.device.name !== "DHCP_service") && 
+
+                                    <div onClick={() => setShowExport(!showExport)}>
+                                        <Button variant="default">
+                                            <SVG name={showExport ? "chevron-down" : "chevron-right"} />
+                                            Export device
+                                        </Button>
+                                    </div>
+                            )}
+
+
                         {instance.state !== 'stopped' && 
                             <div onClick={() => setShowLogs(!showLogs)}>
                                 {showLogs ?
@@ -442,9 +454,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 className="ml-3" 
                                 variant="danger" 
                                 title="Reset device" 
-                                onClick={() => {
-                                    setShowResetDeviceModel(true);
-                                }}
+                                onClick={() => setShowResetDeviceModel(true)}
                                 disabled={isComputingState(instance)}
                             >
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
@@ -463,10 +473,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }
-                        {(instance.state == 'started' && is_login(instance) && !is_real(instance) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")) 
-                         //&& user.id === lab.author.id
-                        ))
-                         )
+                        {(instance.state == 'started' && is_login(instance) && !is_real(instance) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")))))
                          &&
                             <a
                                 target="_blank"
@@ -557,9 +564,15 @@ function InstanceListItem({ instance, labDeviceLength, allInstance,  showControl
                     searchable={true}
                 />
 
-                {(instance.state == 'stopped' && showExport) &&
-                    <InstanceExport instance={instance} exportTemplate={exportDeviceTemplate} type="device"></InstanceExport>
-                }
+                {(instance.state == 'stopped' && showExport) && (
+                    <div className="mt-3 p-3 border rounded">                      
+                        <InstanceExport 
+                            instance={instance} 
+                            exportTemplate={exportDeviceTemplate} 
+                            type="device"
+                        />
+                    </div>
+                )}
 
             </div>
             }

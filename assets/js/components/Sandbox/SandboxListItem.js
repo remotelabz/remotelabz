@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Spinner, Modal } from 'react-bootstrap';
+import { ListGroupItem, Button, Spinner, Modal, Form } from 'react-bootstrap';
 import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
@@ -82,6 +82,8 @@ class SandboxListItem extends Component {
                     item.controlProtocolTypes = controlProtocolTypes;
                     //Add Service device if Service OS was configured on the FemoteLabz
                     await this.api.post('/api/labs/' + lab.id + '/devices', item);
+                    console.log("Item",item);
+                    
                     await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
                     window.location.href = "/admin/sandbox/" + lab.id;
                     } else {

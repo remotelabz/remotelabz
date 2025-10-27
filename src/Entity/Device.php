@@ -203,7 +203,10 @@ class Device implements InstanciableInterface
      */
     #[ORM\ManyToMany(targetEntity: Iso::class, inversedBy: 'devices')]
     #[ORM\JoinTable(name: 'device_iso')]
-    #[Serializer\Groups(['api_get_device', 'worker', 'export_lab', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_user', 'api_get_lab_instance','api_get_device', 'api_get_lab','sandbox'])]
+    #[Assert\Count(
+        min: 0
+    )]
     private Collection $isos;
 
      /**
@@ -252,7 +255,7 @@ class Device implements InstanciableInterface
         $this->hypervisor = 'qemu';*/
         $this->launchOrder = 0;
         $this->virtuality = 1;
-        $this->isTemplate= false;
+        $this->isTemplate=false;
         $this->labsUsingThisTemplate = new ArrayCollection();
         $this->isos = new ArrayCollection(); // Ajout de l'initialisation
     }

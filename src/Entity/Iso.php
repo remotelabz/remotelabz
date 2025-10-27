@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\IsoRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Represents an iso image disk 
@@ -18,15 +19,21 @@ class Iso
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Serializer\Groups(['sandbox','api_get_lab_instance'])]
     private ?string $name;
 
     #[ORM\Column(length: 255, nullable: true)]
+    //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    #[Serializer\Groups(['worker'])]
     private ?string $filename = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    //#[Serializer\Groups(['sandbox','api_get_lab_instance'])]
+    #[Serializer\Groups(['worker'])]
     private ?string $filename_url = null;
 
     #[Assert\Type(type: 'string')]
@@ -35,7 +42,7 @@ class Iso
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
+    #[Serializer\Groups(['sandbox','worker'])]
     private $arch = Null;
     
     public function getId(): ?int

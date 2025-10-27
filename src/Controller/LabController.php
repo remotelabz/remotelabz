@@ -672,7 +672,7 @@ class LabController extends Controller
 
         if ( ($lab->getAuthor()->getId() == $this->getUser()->getId() ) or $this->getUser()->isAdministrator() )
         {
-            $this->logger->debug("[LabController:addDeviceAction]::Add device to a lab from API by : ".$this->getUser()->getUserIdentifier());
+            $this->logger->debug("[LabController:addDeviceAction]::Add device to a lab ".$lab->getName()." from API by : ".$this->getUser()->getUserIdentifier());
         
         $device = new Device();
         
@@ -681,7 +681,6 @@ class LabController extends Controller
 
         if ($request->getContentType() === 'json') {
             $device_array = json_decode($request->getContent(), true);
-            //$this->logger->debug("[LabController:addDeviceAction]::json:",$device_array);
             /*$json_example='{
                 "id": 121,
                 "name": "FortiGate-v7.2.0",
@@ -712,6 +711,29 @@ class LabController extends Controller
             unset($device_array['controlProtocolTypes']);
             $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
             $this->logger->debug("[LabController:addDeviceAction]::Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
+            
+            if (!empty($device_array["isos"])) {
+                // Extraire uniquement les IDs des ISOs
+                $isoIds = array_map(function($iso) {
+                    // Si c'est un tableau avec un 'id', on le récupère
+                    if (is_array($iso) && isset($iso['id'])) {
+                        return $iso['id'];
+                    }
+                    // Si c'est déjà un ID, on le garde
+                    if (is_numeric($iso)) {
+                        return $iso;
+                    }
+                    return null;
+                }, $device_array["isos"]);
+                
+                // Filtrer les valeurs null
+                $device_array["isos"] = array_filter($isoIds);
+                
+                $this->logger->debug("[LabController:addDeviceAction]::ISO IDs:", $device_array["isos"]);
+            } else {
+                $device_array["isos"] = [];
+            }
+          
             $deviceForm->submit($device_array);
         }
 
@@ -782,6 +804,7 @@ class LabController extends Controller
                 $this->logger->debug("[LabController:addDeviceAction]::Add device in lab form submitted is not valid");
                 $this->logger->debug($deviceForm->getErrors());
                 foreach ($deviceForm->getErrors(true) as $error) {
+                    $this->logger->debug("[LabController:addDeviceAction]::Error validating on data :".$error->getOrigin()->getName());
                     $this->logger->debug("[LabController:addDeviceAction]::Error validating :".$error->getMessage());
                 }
             }

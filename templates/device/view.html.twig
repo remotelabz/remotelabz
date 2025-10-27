@@ -113,9 +113,13 @@
                     <div class="col-sm-9">
                         {% if device.operatingSystem %}
                             <span class="badge bg-light text-dark">{{ device.operatingSystem.name }}</span>
+                            {% if device.operatingSystem.flavordisk %}
+                                <span class="text-muted small">{{ device.operatingSystem.flavordisk.disk }}GB</span>
+                            {% endif %}    
                         {% else %}
                             <span class="text-muted">Not specified</span>
                         {% endif %}
+
                     </div>
                 </div>
             </div>
@@ -141,10 +145,8 @@
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Flavor:</strong></div>
                     <div class="col-sm-9">
-                        <strong>{{ device.flavor.name }}</strong>
                         <div class="text-muted small mt-1">
                             <i class="fas fa-memory me-1"></i> {{ device.flavor.memory }} MB RAM
-                            <i class="fas fa-hdd ms-3 me-1"></i> {{ device.flavor.disk }} GB Storage
                         </div>
                     </div>
                 </div>
@@ -170,6 +172,24 @@
                             <span class="text-muted">Not specified</span>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-microchip me-2"></i> Associated ISO
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>ISO:</strong></div>
+                    {% for iso in device.isos %}
+                    <div class="col-sm-9">
+                        {{iso.name}} ({{iso.description}})
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

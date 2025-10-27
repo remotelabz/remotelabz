@@ -79,7 +79,7 @@ class DeviceSandboxController extends Controller
             'props' => $serializer->serialize(
                 $deviceProps,
                 'json',
-                SerializationContext::create()->setGroups(['api_get_user', 'api_get_device', 'api_get_lab'])
+                SerializationContext::create()->setGroups(['api_get_user', 'api_get_device', 'api_get_lab','sandbox'])
             )
         ]);
     }
@@ -87,8 +87,6 @@ class DeviceSandboxController extends Controller
     #[Route(path: '/admin/sandbox/{id<\d+>}', name: 'sandbox_view')]
     public function viewAction(Request $request, int $id, UserInterface $user, LabInstanceRepository $labInstanceRepository, LabRepository $labRepository, SerializerInterface $serializer)
     {
-        //$this->logger->debug("Request in DeviceSandboxCtrl viewAction: ".$request);
-
         $lab = $labRepository->find($id);
 
         if (!$lab) {
@@ -98,9 +96,9 @@ class DeviceSandboxController extends Controller
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         $deviceStarted = [];
 
+        // Récupérer les ISOs pour chaque device
         foreach ($lab->getDevices()->getValues() as $device) {
-            $deviceStarted[$device->getId()] =  false;
-
+            $deviceStarted[$device->getId()] = false;
             if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
                 $deviceStarted[$device->getId()] = true;
             }
@@ -111,16 +109,11 @@ class DeviceSandboxController extends Controller
             'labInstance' => $userLabInstance,
             'lab' => $lab,
             'isSandbox' => true,
-            "hasBooking" => false
+            'hasBooking' => false,
         ];
-        $this->logger->debug("[DeviceSandboxController:viewAction]::instanceManagerProps from DeviceSandboxCtrl: ", $instanceManagerProps);
 
-        preg_match("/^Sandbox_(Lab).*$/",$lab->getName(),$result);
-        //$this->logger->debug("Sandbox lab: ",$result);
-        if ($result != null)
-            $sandboxlab=true;
-        else
-            $sandboxlab=false;
+        preg_match("/^Sandbox_(Lab).*$/", $lab->getName(), $result);
+        $sandboxlab = ($result != null);
 
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
@@ -131,8 +124,6 @@ class DeviceSandboxController extends Controller
             'props' => $serializer->serialize(
                 $instanceManagerProps,
                 'json',
-                //SerializationContext::create()->setGroups(['api_get_device_instance','api_get_lab_instance', 'api_get_user', 'group_details', 'instances'])
-                //SerializationContext::create()->setGroups(['api_get_lab', 'api_get_user', 'api_get_group', 'api_get_lab_instance', 'api_get_device_instance','sandbox'])
                 SerializationContext::create()->setGroups(['sandbox'])
             )
         ]);

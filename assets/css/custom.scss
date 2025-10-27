@@ -1068,6 +1068,10 @@ $grid-number: 12;
   color: black;
 }
 
+.device-logs {
+  max-height: 20em;
+  overflow-y: auto;
+}
 
 /** media specific */
 

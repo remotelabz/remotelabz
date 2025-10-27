@@ -186,7 +186,7 @@ class InstanceStateMessageHandler
             } else {
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance null and Error received from : ". $message->getUuid() ." ".$message->getState());
             }
-            $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Test message : ". $message->getUuid() ." ".$message->getState());
+            //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::Test message : ". $message->getUuid() ." ".$message->getState());
         }
         else {
             $this->logger->debug("[InstanceStateMessageHandler:__invoke]::No error received from :". $message->getUuid() .", instance message state:".$message->getState());
