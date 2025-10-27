@@ -26,6 +26,7 @@ export default function LabImporter()
         })
     }, []);
 
+    
     const onDrop = useCallback(acceptedFiles => {
         acceptedFiles.forEach((file) => {
             const reader = new FileReader()
@@ -34,15 +35,17 @@ export default function LabImporter()
             reader.onload = (e) => {
                 // Do whatever you want with the file contents
                 const json = reader.result
-                console.log(json)
                 setFileContent(json);
-                if (formRef.current) {
-                    formRef.current.handleSubmit()
-                }
-            }
+	    }
             reader.readAsText(file)
           })
     }, []);
+
+   useEffect(() => {
+	if (fileContent) {
+	   formRef.current?.handleSubmit();
+	}
+   }, [fileContent]);
 
     const formRef = useRef();
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: 1, accept: 'application/json' })
