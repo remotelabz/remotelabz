@@ -224,28 +224,20 @@ class DeviceType extends AbstractType
 
             // Vérifier si un operating system est sélectionné dans les données soumises
             if (isset($data['operatingSystem'])) {
-                // Récupérer l'entity manager via le form config
-                $entityManager = $form->getConfig()->getOption('em');
-                $osRepository = $entityManager->getRepository(OperatingSystem::class);
-                $operatingSystem = $osRepository->find($data['operatingSystem']);
-
-                // Si l'OS a un flavorDisk, ajouter le champ isos
-                if ($operatingSystem && $operatingSystem->getFlavorDisk() !== null) {
-                    if (!$form->has('isos')) {
-                        $form->add('isos', EntityType::class, [
-                            'class' => Iso::class,
-                            'choice_label' => 'filename',
-                            'multiple' => true,
-                            'required' => false,
-                            'placeholder' => 'Select ISO images',
-                            'help' => 'ISO files to mount as CD-ROM',
-                        ]);
-                    }
-                } else {
-                    // Supprimer le champ isos s'il existe et que l'OS n'est pas de type blank
-                    if ($form->has('isos')) {
-                        $form->remove('isos');
-                    }
+                // Utiliser le formulaire parent pour accéder aux options
+                $options = $form->getConfig()->getOptions();
+                
+                // Pas besoin de l'EntityManager ici, on utilise juste la présence du champ
+                // Le champ sera validé côté serveur de toute façon
+                if (!$form->has('isos')) {
+                    $form->add('isos', EntityType::class, [
+                        'class' => Iso::class,
+                        'choice_label' => 'filename',
+                        'multiple' => true,
+                        'required' => false,
+                        'placeholder' => 'Select ISO images',
+                        'help' => 'ISO files to mount as CD-ROM',
+                    ]);
                 }
             }
         });
@@ -257,8 +249,7 @@ class DeviceType extends AbstractType
             'data_class' => Device::class,
             "allow_extra_fields" => true,
             'nb_network_interface' => null,
-            "virtuality" => 1,
-            'em' => null,
+            "virtuality" => 1
         ]);
     }
 }

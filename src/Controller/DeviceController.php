@@ -64,6 +64,8 @@ class DeviceController extends Controller
     private FlavorRepository $flavorRepository;
     private OperatingSystemRepository $operatingSystemRepository;
     private NetworkInterfaceRepository $networkInterfaceRepository;
+    private EntityManagerInterface $entityManager;
+
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -514,8 +516,7 @@ class DeviceController extends Controller
         }
 
         $deviceForm = $this->createForm(DeviceType::class, $device, [
-            "virtuality" => $virtuality,
-            "em" => $this->entityManager
+            "virtuality" => $virtuality
         ]);
                 
         $deviceForm->handleRequest($request);
@@ -840,8 +841,7 @@ class DeviceController extends Controller
     
         $deviceForm = $this->createForm(DeviceType::class, $device, [
             'nb_network_interface' => count($device->getNetworkInterfaces()),
-            'virtuality' => $virtuality,
-            'em' => $this->entityManager
+            'virtuality' => $virtuality
         ]);
         
         $deviceForm->handleRequest($request);
