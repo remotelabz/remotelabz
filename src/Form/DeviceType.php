@@ -209,7 +209,7 @@ class DeviceType extends AbstractType
             if ($shouldAddIsos || !$device || !$device->getId()) {
                 $form->add('isos', EntityType::class, [
                     'class' => Iso::class,
-                    'choice_label' => 'filename',
+                    'choice_label' => 'name',
                     'multiple' => true,
                     'required' => false,
                     'placeholder' => 'Select ISO images',
@@ -232,7 +232,7 @@ class DeviceType extends AbstractType
                 if (!$form->has('isos')) {
                     $form->add('isos', EntityType::class, [
                         'class' => Iso::class,
-                        'choice_label' => 'filename',
+                        'choice_label' => 'name',
                         'multiple' => true,
                         'required' => false,
                         'placeholder' => 'Select ISO images',

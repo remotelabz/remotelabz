@@ -187,7 +187,7 @@
                     <div class="col-sm-3"><strong>ISO:</strong></div>
                     {% for iso in device.isos %}
                     <div class="col-sm-9">
-                        {{iso.name}} ({{iso.description}})
+                        {{iso.name}} {% if iso.description %} ({{iso.description}}) {% endif %}
                     </div>
                     {% endfor %}
                 </div>
