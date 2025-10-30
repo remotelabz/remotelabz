@@ -365,7 +365,10 @@ class InstanceManager
                             foreach ($tmp['deviceInstances'] as $key => $tmpDeviceInstance) {
                                 if ($tmpDeviceInstance['uuid'] == $deviceInstance->getUuid()) {
                                     $tmp['deviceInstances'][$key]['bootWithIso'] = true;
-                                    $tmp['deviceInstances'][$key]['isoFilename'] = $iso->getFilename();
+                                    if (!is_null($iso->getFilename()))
+                                        $tmp['deviceInstances'][$key]['isoFilename'] = $iso->getFilename();
+                                    else
+                                        $tmp['deviceInstances'][$key]['isoFilename'] = $iso->getFilenameUrl();
                                     $tmp['deviceInstances'][$key]['isoId'] = $iso->getId();
                                     
                                     $this->logger->info('[InstanceManager:start]::Device will boot with ISO: ' . $iso->getFilename() . ' (ID: ' . $iso->getId() . ')');
