@@ -709,7 +709,7 @@ class LabController extends Controller
             $device_array = json_decode($json_example, true);*/
             //Delete this key otherwise the validation doesn't work.
             unset($device_array['controlProtocolTypes']);
-            $device_array['networkInterfaces']=1;//count($device_array['networkInterfaces']);
+            $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
             $this->logger->debug("[LabController:addDeviceAction]::Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             
             if (!empty($device_array["isos"])) {
