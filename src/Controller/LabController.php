@@ -709,7 +709,7 @@ class LabController extends Controller
             $device_array = json_decode($json_example, true);*/
             //Delete this key otherwise the validation doesn't work.
             unset($device_array['controlProtocolTypes']);
-            $device_array['networkInterfaces']=count($device_array['networkInterfaces']);
+            $device_array['networkInterfaces']=1;//count($device_array['networkInterfaces']);
             $this->logger->debug("[LabController:addDeviceAction]::Add a device to lab via API from addDeviceAction: the request and json:",$device_array);
             
             if (!empty($device_array["isos"])) {
@@ -771,6 +771,15 @@ class LabController extends Controller
                 $device = $this->deviceRepository->find($device_array['id']);
                 //$this->logger->debug("[LabController:addDeviceAction]::Source device id adds is :".$device_array['id']);
                 //$i=0;
+                
+                // TODO Create an networkinterface for sanbox_device 
+
+                if ( str_starts_with(strtolower($lab->getName()),"sandbox_device") ) {
+                    $new_network_inter=new NetworkInterface();
+                    $new_network_inter->setName("eth_sandbox");
+                    $new_device->addNetworkInterface($new_network_inter);
+                }
+                
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
                         $new_network_inter=new NetworkInterface();

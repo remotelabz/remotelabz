@@ -739,7 +739,7 @@ class InstanceManager
     public function getRemoteAvailablePort($worker): int
     {
         $url = 'http://'.$worker.':'.$this->workerPort.'/worker/port/free';
-        $this->logger->debug('Request the remote available port at '.$url);
+        $this->logger->debug('[InstanceManager:getRemoteAvailablePort]::Request the remote available port at '.$url);
         try {
             $response = $this->client->get($url);
         } catch (RequestException $exception) {
