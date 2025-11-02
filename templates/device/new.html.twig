@@ -95,8 +95,15 @@
                 {{ form_row(form.operatingSystem) }}
                 {{ form_row(form.bios_type) }}
                 {{ form_row(form.bios_filename) }}
-                {{ form_row(form.cdrom_bus_type) }}
-                {{ form_row(form.isos) }}
+                
+                {# Champs ISO et CDROM bus - affichés conditionnellement #}
+                <div id="iso-fields-container">
+                    {{ form_row(form.cdrom_bus_type) }}
+                    {% if form.isos is defined %}
+                        {{ form_row(form.isos) }}
+                    {% endif %}
+                </div>
+                
                 {{ form_row(form.flavor) }}
                 
                 {% if virtuality == 1 %}
@@ -326,6 +333,17 @@
             border-bottom-color: #007bff;
         }
 
+        /* Animation pour masquer/afficher les champs ISO */
+        #iso-fields-container {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+        }
+        
+        #iso-fields-container.hidden {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+        }
+
 [theme="dark"] {
          .icon-dropdown {
             position: absolute;
@@ -524,6 +542,55 @@
                         }
                     });
                 });
+            }
+
+            // ===== NOUVELLE FONCTIONNALITÉ: Gestion dynamique des champs ISO =====
+            const isoFieldsContainer = document.getElementById('iso-fields-container');
+            
+            function toggleIsoFields() {
+                if (!osSelect) return;
+                
+                const selectedOption = osSelect.options[osSelect.selectedIndex];
+                const hasFlavorDisk = selectedOption.getAttribute('data-has-flavor-disk') === '1';
+                
+                if (isoFieldsContainer) {
+                    const cdromBusRow = isoFieldsContainer.querySelector('[id*="cdrom_bus_type"]')?.closest('.mb-3, .form-group');
+                    const isosRow = isoFieldsContainer.querySelector('[id*="isos"]')?.closest('.mb-3, .form-group');
+                    
+                    if (hasFlavorDisk) {
+                        // Afficher les champs
+                        if (cdromBusRow) cdromBusRow.style.display = '';
+                        if (isosRow) isosRow.style.display = '';
+                        isoFieldsContainer.classList.remove('hidden');
+                    } else {
+                        // Masquer les champs
+                        if (cdromBusRow) cdromBusRow.style.display = 'none';
+                        if (isosRow) isosRow.style.display = 'none';
+                        
+                        // Réinitialiser les sélections
+                        const cdromBusSelect = document.getElementById('{{ form.cdrom_bus_type.vars.id }}');
+                        if (cdromBusSelect) {
+                            cdromBusSelect.value = '';
+                        }
+                        
+                        {% if form.isos is defined %}
+                        const isosSelect = document.getElementById('{{ form.isos.vars.id }}');
+                        if (isosSelect) {
+                            Array.from(isosSelect.options).forEach(option => {
+                                option.selected = false;
+                            });
+                        }
+                        {% endif %}
+                    }
+                }
+            }
+            
+            // Appliquer au chargement de la page
+            if (osSelect) {
+                toggleIsoFields();
+                
+                // Appliquer quand l'OS change
+                osSelect.addEventListener('change', toggleIsoFields);
             }
         });
     </script>

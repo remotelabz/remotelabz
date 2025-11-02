@@ -771,6 +771,18 @@ class LabController extends Controller
                 $device = $this->deviceRepository->find($device_array['id']);
                 //$this->logger->debug("[LabController:addDeviceAction]::Source device id adds is :".$device_array['id']);
                 //$i=0;
+                
+                // TODO Create an networkinterface for sanbox_device 
+
+                if ( str_starts_with(strtolower($lab->getName()),"sandbox_device") ) {
+                    $new_network_inter=new NetworkInterface();
+                    $new_network_inter->setName("eth_sandbox");
+                    $new_network_setting=new NetworkSettings();
+                    $new_network_setting->setName("eth_sandbox");
+                    $new_network_inter->setSettings($new_network_setting);
+                    $new_device->addNetworkInterface($new_network_inter);
+                }
+                
                 if ($device_array['networkInterfaces'] > 0) {
                     foreach ($device->getNetworkInterfaces() as $network_int) {
                         $new_network_inter=new NetworkInterface();

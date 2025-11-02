@@ -1440,7 +1440,8 @@ class InstanceController extends Controller
                 // Vérifier l'état avant d'arrêter
                 if (
                     $deviceInstance->getState() === InstanceStateMessage::STATE_STARTED ||
-                    $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING
+                    $deviceInstance->getState() === InstanceStateMessage::STATE_STARTING ||
+                    $deviceInstance->getState() === InstanceStateMessage::STATE_EXPORTING
                 ) {
 
                     $this->logger->info('Stopping device instance ' . $deviceInstance->getUuid() . ' as part of bulk stop.');

@@ -180,7 +180,6 @@ class NetworkInterfaceController extends Controller
             'data' => $data]));
         $response->headers->set('Content-Type', 'application/json');
         return $response;
-
     }
 
     

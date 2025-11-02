@@ -10,6 +10,7 @@ use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
 use App\Entity\ControlProtocolType;
 use App\Entity\Iso;
+use App\Entity\Arch;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -20,6 +21,8 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormEvent;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -95,6 +98,11 @@ class DeviceType extends AbstractType
                 'choice_label' => function(OperatingSystem $os) {
                     return $os->getName() . ' (' . $os->getHypervisor()->getName() . ')';
                 },
+                'choice_attr' => function(OperatingSystem $os) {
+                    return [
+                        'data-has-flavor-disk' => $os->getFlavorDisk() !== null ? '1' : '0'
+                    ];
+                },
                 'help' => 'Image disk used for this device.',
                 'placeholder' => 'Select an operating system'
             ])
@@ -118,23 +126,6 @@ class DeviceType extends AbstractType
                 'help' => 'BIOS file to use',
             ])
 
-            ->add('isos', EntityType::class, [  // Changé de 'cdrom_iso_filename' à 'isos'
-                'class' => Iso::class,
-                'choice_label' => 'filename',
-                'multiple' => true,
-                'required' => false,
-                'placeholder' => 'Select ISO images',
-                'help' => 'ISO files to mount as CD-ROM',
-            ])
-            /*
-            ->add('cdrom_iso_filename', EntityType::class, [
-                'class' => Iso::class,
-                'choice_label' => 'filename',
-                'multiple' => true,
-                'required' => false,
-                'placeholder' => 'Select an ISO image',
-                'help' => 'ISO file to mount as CD-ROM',
-            ]) */ 
             ->add('cdrom_bus_type', ChoiceType::class, [
                 'choices' => [
                     'IDE' => 'IDE',
@@ -176,6 +167,7 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'help' => 'Press on CTRL when you click to delete a type',
            ]);
+           
            if ($virtuality == 0) {
             $builder
                 ->add('ip', TextType::class, [
@@ -184,8 +176,8 @@ class DeviceType extends AbstractType
                 ->add('port', NumberType::class, [
                     'required' => true
                 ]);
-
            }
+           
             $builder->add('isTemplate', CheckboxType::class, [
                 'required' => false,
                 'data' => true,
@@ -198,6 +190,66 @@ class DeviceType extends AbstractType
                     'help' => 'Advanced QEMU options',
                 ])
             ->add('submit', SubmitType::class);
+
+        // Ajout dynamique du champ isos selon l'operating system sélectionné
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+            $device = $event->getData();
+            $form = $event->getForm();
+
+            // Toujours ajouter le champ isos (il sera masqué par JS si nécessaire)
+            // Pour un nouveau device, on l'ajoute par défaut
+            // Pour un device existant, on vérifie l'OS
+            $shouldAddIsos = true;
+            
+            if ($device && $device->getOperatingSystem()) {
+                // Si le device a déjà un OS, vérifier le flavorDisk
+                $shouldAddIsos = $device->getOperatingSystem()->getFlavorDisk() !== null;
+            }
+            
+            // Pour les nouveaux devices ou ceux avec un OS blank, ajouter le champ
+            if ($shouldAddIsos || !$device || !$device->getId()) {
+                $form->add('isos', EntityType::class, [
+                    'class' => Iso::class,
+                    'choice_label' => function(Iso $iso) {
+                        $arch = $iso->getArch();
+                        $architecture = $arch ? $arch->getName() : null;
+                        return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
+                    },
+                    'multiple' => true,
+                    'required' => false,
+                    'placeholder' => 'Select ISO images',
+                    'help' => 'ISO files to mount as CD-ROM',
+                ]);
+            }
+        });
+
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            $form = $event->getForm();
+
+            // Vérifier si un operating system est sélectionné dans les données soumises
+            if (isset($data['operatingSystem'])) {
+                // Utiliser le formulaire parent pour accéder aux options
+                $options = $form->getConfig()->getOptions();
+                
+                // Pas besoin de l'EntityManager ici, on utilise juste la présence du champ
+                // Le champ sera validé côté serveur de toute façon
+                if (!$form->has('isos')) {
+                    $form->add('isos', EntityType::class, [
+                        'class' => Iso::class,
+                        'choice_label' => function(Iso $iso) {
+                            $arch = $iso->getArch();
+                            $architecture = $arch ? $arch->getName() : null;
+                            return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
+                        },
+                        'multiple' => true,
+                        'required' => false,
+                        'placeholder' => 'Select ISO images',
+                        'help' => 'ISO files to mount as CD-ROM',
+                    ]);
+                }
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -159,6 +159,7 @@
                             {% if device.nbCore %}<strong>Cores:</strong> {{ device.nbCore }}{% endif %}
                             {% if device.nbSocket %}{% if device.nbCore %} • {% endif %}<strong>Sockets:</strong> {{ device.nbSocket }}{% endif %}
                             {% if device.nbThread %}{% if device.nbCore or device.nbSocket %} • {% endif %}<strong>Threads:</strong> {{ device.nbThread }}{% endif %}
+                            {% if arch %}Arch: {{arch}}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -173,6 +174,8 @@
                         {% endif %}
                     </div>
                 </div>
+
+
             </div>
         </div>
 
@@ -185,11 +188,16 @@
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>ISO:</strong></div>
-                    {% for iso in device.isos %}
                     <div class="col-sm-9">
-                        {{iso.name}} ({{iso.description}})
-                    </div>
+                    <ul>
+                    {% for iso in device.isos %}
+                        <li>{{iso.name}} 
+                        {% if iso.arch %} ({{iso.arch.name}}){% endif %}
+                        {% if iso.description %} ({{iso.description}}){% endif %}</li>
                     {% endfor %}
+                    </ul>
+                    </div>
+                    
                 </div>
             </div>
         </div>
