@@ -182,10 +182,17 @@
                             {% endif %}
                         </td>
                         <td>
+                            
+                               
                             {% if device.operatingSystem.arch %}
                                 <span class="badge bg-light text-dark">{{ device.operatingSystem.arch.name }}</span>
+                            {% elseif device.isos is not empty%}
+                                {% set first_iso = device.isos|first %}
+                                {% if first_iso and first_iso.arch %}
+                                    <span class="badge bg-light text-dark">{{ first_iso.arch.name }}</span>
+                                {% endif %}
                             {% else %}
-                                <span class="text-muted">-</span>
+                                <span class="badge bg-light text-dark">x86_64</span>
                             {% endif %}
                         </td>
                         <td>

@@ -164,7 +164,7 @@ class DeviceController extends Controller
                 'vms' => $vmCount,
                 'containers' => $containerCount,
                 'physical' => $physicalCount
-            ],
+            ],        
             'search' => $search
         ]);
     }
@@ -354,8 +354,17 @@ class DeviceController extends Controller
         if ('json' === $request->getRequestFormat()) {
             return $this->json($device, 200, [], ['api_get_device']);
         }
+    
+       $arch=null;
+       if (!is_null($device->getOperatingSystem()->getArch())){
+            $arch=$device->getOperatingSystem()->getArch()->getName();
+        }
+        else if (!is_null($device->getIsoArch()))
+                $arch=$device->getIsoArch()->getName();
+        else $arch="x86_64";
         
-        return $this->render('device/view.html.twig', ['device' => $device]);
+
+        return $this->render('device/view.html.twig', ['device' => $device, 'arch' => $arch]);
     }
 
     
@@ -557,7 +566,7 @@ class DeviceController extends Controller
                 if ($controlProtocolTypes == []) {
                     $controlProtocolTypes = '';
                 }
-                
+                $this->logger->debug("[DeviceContronller:newAction]::getIso of the device ".$device->getName()." is ".$device->getIsoArch());
                 $deviceData = [
                     "name" => $device->getName(),
                     //"type" => $device->getType(),
@@ -916,7 +925,9 @@ class DeviceController extends Controller
             if ($controlProtocolTypes == []) {
                 $controlProtocolTypes = '';
             }
-            
+
+            //$this->logger->debug("[DeviceContronller:updateAction]::getIso of the device ".$device->getName()." is ".$device->getIsoArch()->getName());
+
             $entityManager = $this->entityManager;
             $entityManager->persist($device);
             $entityManager->flush();
@@ -1155,7 +1166,16 @@ class DeviceController extends Controller
                 "ethernet" => 1,
                 "virtuality"=> $device->getVirtuality()
         ];
-            
+        
+        if (!is_null($device->getOperatingSystem()->getArch())){
+            $deviceData["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
+        }
+        else {
+            if (!is_null($device->getIsoArch()))
+                $deviceData["qemu_arch"]=$device->getIsoArch()->getName();
+            else $deviceData["qemu_arch"]="x86_64";
+        }
+
         $yamlContent = Yaml::dump($deviceData);
         $fileName = u($device->getName())->camel();
         $oldFileName = u($oldName)->camel();

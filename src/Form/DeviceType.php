@@ -10,6 +10,7 @@ use App\Entity\Hypervisor;
 use App\Entity\NetworkInterface;
 use App\Entity\ControlProtocolType;
 use App\Entity\Iso;
+use App\Entity\Arch;
 use App\Repository\OperatingSystemRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -209,7 +210,11 @@ class DeviceType extends AbstractType
             if ($shouldAddIsos || !$device || !$device->getId()) {
                 $form->add('isos', EntityType::class, [
                     'class' => Iso::class,
-                    'choice_label' => 'name',
+                    'choice_label' => function(Iso $iso) {
+                        $arch = $iso->getArch();
+                        $architecture = $arch ? $arch->getName() : null;
+                        return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
+                    },
                     'multiple' => true,
                     'required' => false,
                     'placeholder' => 'Select ISO images',
@@ -232,7 +237,11 @@ class DeviceType extends AbstractType
                 if (!$form->has('isos')) {
                     $form->add('isos', EntityType::class, [
                         'class' => Iso::class,
-                        'choice_label' => 'name',
+                        'choice_label' => function(Iso $iso) {
+                            $arch = $iso->getArch();
+                            $architecture = $arch ? $arch->getName() : null;
+                            return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
+                        },
                         'multiple' => true,
                         'required' => false,
                         'placeholder' => 'Select ISO images',
