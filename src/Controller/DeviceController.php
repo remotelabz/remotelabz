@@ -566,7 +566,7 @@ class DeviceController extends Controller
                 if ($controlProtocolTypes == []) {
                     $controlProtocolTypes = '';
                 }
-                $this->logger->debug("[DeviceContronller:newAction]::getIso of the device ".$device->getName()." is ".$device->getIsoArch());
+                $this->logger->debug("[DeviceContronller:newAction]::getIso of the device ".$device->getName()." is ".$device->getIsoArch()->getName());
                 $deviceData = [
                     "name" => $device->getName(),
                     //"type" => $device->getType(),
