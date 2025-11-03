@@ -777,6 +777,7 @@ class LabController extends Controller
                 if ( str_starts_with(strtolower($lab->getName()),"sandbox_device") ) {
                     $new_network_inter=new NetworkInterface();
                     $new_network_inter->setName("eth_sandbox");
+                    $new_network_inter->setVlan("1");
                     $new_network_setting=new NetworkSettings();
                     $new_network_setting->setName("eth_sandbox");
                     $new_network_inter->setSettings($new_network_setting);
