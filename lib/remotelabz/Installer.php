@@ -157,6 +157,20 @@ class Installer
             throw new Exception("There was an error downloading Yarn packages.");
         }
 
+        $this->logger->debug("Configure the right on git");
+        echo "Configure the right on git... \n";
+        try {
+            exec("git config --system --add safe.directory /opt/remotelabz",$output,$returnCode);
+            $this->logger->debug($output);
+            if ($returnCode) {
+                throw new Exception("Could not change right of /opt/remotelabz for .git.");
+            }
+            $this->logger->debug("Finished Configure the right on git");
+            echo "Configure the right on git OK ✔️\n";
+        } catch (Exception $e) {
+            throw new Exception("There was an error Configure the right on git.");
+        }
+
         $this->logger->debug("Warming cache");
         echo "🔥 Warming cache... ";
         if ($this->configureCache($this->options['environment'])) {
