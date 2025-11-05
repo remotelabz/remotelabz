@@ -20,7 +20,7 @@ chmod a+x /usr/local/bin/composer
 curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - # PPRI0603 : Passage de nodejs 14 vers nodejs 16
 apt-get install -y nodejs
 npm install -g yarn
-npm install -g configurable-http-proxy
+npm install -g configurable-http-proxy@5.0.1
 apt-get install -y mysql-server
 systemctl restart mysql
 cat > mysql_secure_sql.sql << EOF
