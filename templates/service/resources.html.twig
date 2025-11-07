@@ -16,304 +16,65 @@
         <h1>Resources usages</h1>
     </div>
 </div>
-<div class="content-body">
-<div class="row">
-</div>
-
-  {#   {% if nbworkers == 1 %}  
-    <div class="row">
-        <div class="col-xl-8 col-lg-12">
-        <ul>
-            <li>Number of opened files : {{value['openedfiles']}}</br></li>
-            <li>Number of LXC containers : {{value['lxclsrun']}}</br></li>
-            <li>Number of VM QEMU : {{value['qemurun']}}</br></li>
-        </ul>
-            <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
-                <div class="card m-3">
-                    <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        CPU
-                        </h4>
-                        <div class="stats-circle cpu-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="cpu" name="cpu" style="display: none;">
-                            {% if value is null %} NA {% else %} {{ value['cpu'] }}% {% endif %}
-                        </p>
-                    </div>
-                </div>
-                <div class="card m-3">
-                    <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        Memory
-                        </h4>
-                        <div class="stats-circle memory-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="memory" name="memory" style="display: none;">
-                        {% if value is null %} NA {% else %} {{ value['memory'] }}% {% endif %}
-
-                        </p>
-                    </div>
-                </div>
-                <div class="card m-3">
-                    <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        Disk
-                        </h4>
-                        <div class="stats-circle disk-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="disk" name="disk" style="display: none;">
-                        {% if value is null %} NA {% else %} {{ value['disk'] }}% {% endif %}
-
-                        </p>
-                    </div>
-                </div>
-                 <div class="card m-3">
-                    <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        LXCFS
-                        </h4>
-                        <div class="stats-circle cpu-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="lxcfs" name="lxcfs" style="display: none;">
-                            {% if value is null %} NA {% else %} {{ value['lxcfs'] }}% {% endif %}
-                        </p>
-                    </div>
-                </div>
-            </div>
+<div class="content-body" data-page="resources">
+    {% for worker in value %}
+    <div class="row worker-gauges">
+        <div class="col-12">
+            <h2 class="worker-title">{{ worker['worker'] }}</h2>
         </div>
     </div>
-    {% else %} #}
-    {% for worker in value %}
-    <div class="row">
-    <h2>{{worker['worker']}}</h2>
-    </div>
     <div class="row">
         <div class="col-xl-8 col-lg-12">
-        <ul>
-            <li>Number of opened files : {{ worker['openedfiles'] }}</br></li>
-            <li>Number of LXC containers : {{ worker['lxclsrun'] }}</br></li>
-            <li>Number of VM QEMU : {{ worker['qemurun'] }}</br></li>
-        </ul>
+            <ul>
+                <li>Number of opened files : {{ worker['openedfiles'] }}</li>
+                <li>Number of LXC containers : {{ worker['lxclsrun'] }}</li>
+                <li>Number of VM QEMU : {{ worker['qemurun'] }}</li>
+            </ul>
             <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
-                <div class="card m-3">
+                
                     <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        CPU
-                        </h4>
-                        <div class="stats-circle cpu-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="cpu" name="cpu" style="display: none;">
-                            {% if worker is null %} NA {% else %} {{ worker['cpu'] }}% {% endif %}
+                        <div class="stats-circle cpu-circle"></div>
+                        <p class="card-text flex-grow-1 text-center" id="cpu" name="cpu" style="display: none;">
+                            {% if worker['cpu'] is null %} NA {% else %} {{ worker['cpu'] }}% {% endif %}
                         </p>
                     </div>
-                </div>
-                <div class="card m-3">
+                
+                
                     <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        Memory
-                        </h4>
-                        <div class="stats-circle memory-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="memory" name="memory" style="display: none;">
-                        {% if worker is null %} NA {% else %} {{ worker['memory'] }}% {% endif %}
-
+                        <div class="stats-circle memory-circle"></div>
+                        <p class="card-text flex-grow-1 text-center" id="memory" name="memory" style="display: none;">
+                            {% if worker['memory'] is null %} NA {% else %} {{ worker['memory'] }}% {% endif %}
                         </p>
                     </div>
-                </div>
-                <div class="card m-3">
+                
+                
                     <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        Disk
-                        </h4>
-                        <div class="stats-circle disk-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="disk" name="disk" style="display: none;">
-                        {% if worker is null %} NA {% else %} {{ worker['disk'] }}% {% endif %}
+                        <div class="stats-circle disk-circle"></div>
+                        <p class="card-text flex-grow-1 text-center" id="disk" name="disk" style="display: none;">
+                            {% if worker['disk'] is null %} NA {% else %} {{ worker['disk'] }}% {% endif %}
                         </p>
                     </div>
-                </div>
-                <div class="card m-3">
+                
+                
                     <div class="card-body d-flex flex-column">
-                        <h4 class="card-title">
-                        LXCFS
-                        </h4>
-                        <div class="stats-circle cpu-circle">
-                        </div>
-                        <p class="card-text flex-grow-1 text-center" id ="lxcfs" name="lxcfs" style="display: none;">
-                            {% if worker is null %} NA {% else %} {{ worker['lxcfs'] }} % {% endif %}
+                        <div class="stats-circle lxcfs-circle"></div>
+                        <p class="card-text flex-grow-1 text-center" id="lxcfs" name="lxcfs" style="display: none;">
+                            {% if worker['lxcfs'] is null %} NA {% else %} {{ worker['lxcfs'] }}% {% endif %}
                         </p>
                     </div>
-                </div>
+                
             </div>
         </div>
     </div>
     {% endfor %}
-    {# {% endif %}#}
 </div>
 
 {% endblock %}
+
 {% block javascripts %}
 {{ parent() }}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="{{asset('build/js/jquery.circle-progress.min.js')}}"></script>
-<script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script>
-<script type="text/javascript">
-
-drawStats();
-document.getElementById("themeSwitcher").addEventListener('change', () => {
-    setTimeout(function() {drawStats()}, 100);
-});
-function drawStats() {
-
-    var cpus = $('p[name="cpu"]');
-    for (cpu of cpus) {
-        cpuText = cpu.textContent.split(/(\d+)/)[1];
-        circle = $(cpu).prev();
-
-        if (cpuText != undefined) {
-            $(circle).circleProgress({
-                value: cpuText,
-                min: 0,
-                max:100,
-                textFormat: 'percent'
-            })
-        }
-        else {
-            $(cpu).css({display: "block", marginTop: "20%"});
-        }
-        index = [...cpus].indexOf(cpu);
-        $(circle).addClass('worker-'+ index);
-    }
-
-    var memories = $('p[name="memory"]');
-    for (memory of memories) {
-        memoryText = memory.textContent.split(/(\d+)/)[1];
-        circle = $(memory).prev();
-
-        if (memoryText != undefined) {
-            $(circle).circleProgress({
-                value: memoryText,
-                min: 0,
-                max:100,
-                textFormat: 'percent'
-            })
-        }
-        else {
-            $(memory).css({display: "block", marginTop: "20%"});
-        }
-        index = [...memories].indexOf(memory);
-        $(circle).addClass('worker-'+ index);
-    }
-
-    var disks = $('p[name="disk"]');
-    for (disk of disks) {
-        diskText = disk.textContent.split(/(\d+)/)[1];
-        circle = $(disk).prev();
-
-        if (diskText != undefined) {
-            $(circle).circleProgress({
-                value: diskText,
-                min: 0,
-                max:100,
-                textFormat: 'percent'
-            })
-        }
-        else {
-            $(disk).css({display: "block", marginTop: "20%"});
-        }
-        index = [...disks].indexOf(disk);
-        $(circle).addClass('worker-'+ index);
-    }
-
-    var disks = $('p[name="lxcfs"]');
-    for (disk of disks) {
-        diskText = disk.textContent.split(/(\d+)/)[1];
-        circle = $(disk).prev();
-
-        if (diskText != undefined) {
-            $(circle).circleProgress({
-                value: diskText,
-                min: 0,
-                max:100,
-                textFormat: 'percent'
-            })
-        }
-        else {
-            $(disk).css({display: "block", marginTop: "20%"});
-        }
-        index = [...disks].indexOf(disk);
-        $(circle).addClass('worker-'+ index);
-    }
-
-    setTimeout(function() {
-        let cpus = $('p[name="cpu"]');
-        for (cpu of cpus) {
-            index = [...cpus].indexOf(cpu);
-            cpuText = cpu.textContent.split(/(\d+)/)[1];
-            changeColorProgress(cpuText, '.cpu-circle.worker-' +index);
-        }
-
-        let memories = $('p[name="memory"]');
-        for (memory of memories) {
-            index = [...memories].indexOf(memory);
-            memoryText = memory.textContent.split(/(\d+)/)[1];
-            changeColorProgress(memoryText, '.memory-circle.worker-' +index);
-        }
-        
-        let disks = $('p[name="disk"]');
-        for (disk of disks) {
-            index = [...disks].indexOf(disk);
-            diskText = disk.textContent.split(/(\d+)/)[1];
-            changeColorProgress(diskText, '.disk-circle.worker-' +index);
-        }
-
-        let lxclses = $('p[name="lxcfs"]');
-        for (disk of disks) {
-            index = [...lxcfses].indexOf(lxcfs);
-            lxcfsText = lxcfs.textContent.split(/(\d+)/)[1];
-            changeColorProgress(diskText, '.lxcfs-circle.worker-' +index);
-        }
-
-    }, 100);
-}
-
-function changeColorProgress(value, css) {
-    if ($.cookie("theme") == "dark") {
-        if (value > 80) {
-            color = "#2c0a0d";
-            $(css + " .circle-progress-value").css({stroke: "#dc3545"});
-            $(css + " .circle-progress-circle").css("stroke", "#2c0a0d");
-        }
-        if (value <= 80) {
-            color = "#332601";
-            $(css + " .circle-progress-value").css("stroke", "#ffc107");
-            $(css + " .circle-progress-circle").css("stroke", "#332601");
-        }
-        if (value <= 40) {
-            color = "#08210d";
-            $(css + " .circle-progress-value").css("stroke", "#28a745");
-            $(css + " .circle-progress-circle").css("stroke", "#08210d");
-        }
-            $(css + " .circle-progress-text").css("fill", "#ffffff");
-    }
-    if ($.cookie("theme") == "light") {
-        if (value > 80) {
-            color = "#f8d6d9";
-            $(css + " .circle-progress-value").css("stroke", "#dc3545");
-            $(css + " .circle-progress-circle").css("stroke", "#f8d6d9");
-        }
-        if (value <= 80) {
-            color = "#fff2cd";
-            $(css + " .circle-progress-value").css("stroke", "#ffc107");
-            $(css + " .circle-progress-circle").css("stroke", "#fff2cd");
-        }
-        if (value <= 40) {
-            color = "#d4edd9";
-            $(css + " .circle-progress-value").css("stroke", "#28a745");
-            $(css + " .circle-progress-circle").css("stroke", "#d4edd9");
-        }
-            $(css + " .circle-progress-text").css("fill", "#000000");
-    }
-}
-</script>
+{# Les anciennes dépendances jQuery circle-progress ne sont plus nécessaires #}
+{# <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script> #}
+{# <script src="{{asset('build/js/jquery.circle-progress.min.js')}}"></script> #}
+{# <script src="{{asset('build/editor/bootstrap/js/jquery-cookie-1.4.1.js')}}"></script> #}
 {% endblock %}

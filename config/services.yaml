@@ -256,10 +256,14 @@ services:
 
     App\Controller\ServiceController:
         arguments:
-            $workerServer: '%app.worker_server%'
-            $workerPort: '%app.worker_port%'
             $remotelabzProxyApiPort: '%app.services.proxy.port.api%'
             $remotelabzProxyServerAPI: '%app.services.proxy.server.api%'
+            $workerServer: '%app.worker_server%'
+            $workerPort: '%app.worker_port%'
+            $sshPublicKey: '%app.ssh.worker.publickey%'
+            $sshPrivateKey: '%app.ssh.worker.privatekey%'
+            $sshUser: '%app.ssh.worker.user%'
+            $sshPasswd: '%app.ssh.worker.passwd%'
 
     App\Controller\UserController:
         arguments:
@@ -295,4 +299,5 @@ services:
             $labRepository: '@App\Repository\LabRepository'
             $userRepository: '@App\Repository\UserRepository'
             $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
+
 

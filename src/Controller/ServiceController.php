@@ -47,10 +47,18 @@ class ServiceController extends Controller
     private $remotelabzProxyApiPort;
     protected $deviceInstanceRepository;
     protected $proxyManager;
+    private $sshUser;
+    private $sshPasswd;
+    private $sshPublicKey;
+    private $sshPrivateKey;
 
     public function __construct(
         string $workerPort,
         string $workerServer,
+        string $sshPublicKey,
+        string $sshPrivateKey,
+        string $sshUser,
+        string $sshPasswd,
         string $remotelabzProxyServerAPI,
         string $remotelabzProxyApiPort,
         LoggerInterface $logger=null,
@@ -63,6 +71,10 @@ class ServiceController extends Controller
     ) {
         $this->workerPort = $workerPort;
         $this->workerServer = $workerServer;
+        $this->sshPublicKey = $sshPublicKey;
+        $this->sshPrivateKey = $sshPrivateKey;
+        $this->sshUser = $sshUser;
+        $this->sshPasswd = $sshPasswd;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->LabInstanceRepository = $labInstanceRepository;
@@ -130,7 +142,15 @@ class ServiceController extends Controller
                 $workers = $this->configWorkerRepository->findBy(['available' => true]);
                 foreach($workers as $worker) {
                     /** @var ServiceMonitorInterface */
-                    $service = new $registeredService($this->workerPort, $worker->getIPv4(), $this->LabInstanceRepository, $this->logger);
+                    $service = new $registeredService(
+                        $this->workerPort,
+                        $worker->getIPv4(),
+                        $this->sshPublicKey,
+                        $this->sshPrivateKey,
+                        $this->sshUser,
+                        $this->sshPasswd,
+                        $this->LabInstanceRepository,
+                        $this->logger);
                     $service_result=$service->isStarted();
                     $this->logger->info("Health of worker: ".$worker->getIPv4()." Result: ",$service_result);
                     if ($service_result["power"] === true) {// The worker is power on so, the service (value) can be up or down
@@ -159,15 +179,11 @@ class ServiceController extends Controller
     public function startServiceAction(Request $request)
     {
         $requestedService = $request->query->get('service');     
-        $publicKeyFile=$this->getParameter('app.ssh.worker.publickey');
-        $privateKeyFile=$this->getParameter('app.ssh.worker.privatekey');
-        $ssh_user=$this->getParameter('app.ssh.worker.user');
-        $ssh_password=$this->getParameter('app.ssh.worker.passwd');
         $remotelabzProxyServerAPI=$this->getParameter('app.services.proxy.server.api');
         $remotelabzProxyApiPort=$this->getParameter('app.services.proxy.port.api');
         $workerPort=$this->getParameter('app.worker_port');
 
-        $this->logger->debug("Requested service: ".$requestedService);
+        $this->logger->debug("[ServiceController:startServiceAction]::Requested service: ".$requestedService);
 
         //try {
             foreach ($this->getRegistredServices() as $registeredService => $type) {
@@ -202,7 +218,15 @@ class ServiceController extends Controller
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Start action for worker: ".$request->query->get('ip'));
-                        $service = new $registeredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
+                        $service = new $registeredService(
+                            $this->workerPort,
+                            $request->query->get('ip'),
+                            $this->sshPublicKey,
+                            $this->sshPrivateKey,
+                            $this->sshUser,
+                            $this->sshPasswd,
+                            $this->LabInstanceRepository,
+                            $this->logger);
                         if ($service->start() === true)
                             $this->addFlash('success', "Service ".$serviceName." successfully started");
                         else $this->addFlash('danger', "Service ".$serviceName." doesn't start successfully");
@@ -265,7 +289,15 @@ class ServiceController extends Controller
                     }
                     if ($type === 'distant') {
                         $this->logger->info("Stop action for worker: ".$request->query->get('ip'));
-                        $service = new $registeredService($this->workerPort, $request->query->get('ip'),$this->LabInstanceRepository,$this->logger);
+                        $service = new $registeredService(
+                            $this->workerPort,
+                            $request->query->get('ip'),
+                            $this->sshPublicKey,
+                            $this->sshPrivateKey,
+                            $this->sshUser,
+                            $this->sshPasswd,
+                            $this->LabInstanceRepository,
+                            $this->logger);
                         if ($service->stop() === true )
                             $this->addFlash('success', "Service ".$serviceName." successfully stopped");
                         else $this->addFlash('danger', "Service ".$serviceName." doesn't stopped successfully");
@@ -274,12 +306,12 @@ class ServiceController extends Controller
             }
         } catch (ProcessFailedException $e) {
             $this->addFlash('danger', 'Service failed to stop.');
-            $this->logger->error("Error stop service ".$service::getServiceName(). "Exception ".$e); 
+            $this->logger->error("Error stop service ".$service::getServiceName(). " Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         } catch (Exception $e) {
             $this->addFlash('danger', 'Service failed to stop.');
-            $this->logger->error("Error stop service ".$service::getServiceName(). "Exception ".$e); 
+            $this->logger->error("Error stop service ".$service::getServiceName(). " Exception ".$e); 
 
             return $this->redirectToRoute('services', ['error' => true]);
         }

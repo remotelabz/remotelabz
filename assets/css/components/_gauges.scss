@@ -1,0 +1,176 @@
+// Modern Circular Gauges Styles
+
+.gauge-container {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    background: #2a2a2a;
+    border-radius: 15px;
+    padding: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.gauge-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.gauge-bg {
+    fill: none;
+    stroke: #3a3a3a;
+    stroke-width: 8;
+}
+
+.gauge-progress {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-in-out;
+
+    &.cpu { 
+        stroke: #a8ff00; 
+    }
+    
+    &.memory { 
+        stroke: #00d4ff; 
+    }
+    
+    &.disk { 
+        stroke: #ff6b00; 
+    }
+    
+    &.lxcfs { 
+        stroke: #ff00ff; 
+    }
+}
+
+.gauge-dots {
+    fill: none;
+    stroke: #4a4a4a;
+    stroke-width: 2;
+    stroke-dasharray: 0.5, 9.5;
+}
+
+.gauge-dot-active {
+    fill: currentColor;
+    opacity: 0;
+    animation: pulse 0.5s ease-in-out forwards;
+
+    &.cpu { color: #a8ff00; }
+    &.memory { color: #00d4ff; }
+    &.disk { color: #ff6b00; }
+    &.lxcfs { color: #ff00ff; }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.gauge-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    pointer-events: none;
+}
+
+.gauge-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.gauge-value {
+    
+    color: #888;
+}
+
+.worker-gauges {
+    margin: 20px 0;
+}
+
+.worker-title {
+    color: #2e2e2e;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+// Light theme overrides
+[theme="light"] {
+    .gauge-container {
+        background: #f5f5f5;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .gauge-bg {
+        stroke: #e0e0e0;
+    }
+
+    .gauge-label {
+        color: #2e2e2e;
+    }
+
+    .gauge-value {
+        color: #707070;
+    }
+
+    .worker-title {
+        color: #2e2e2e;
+    }
+}
+
+// Dark theme
+[theme="dark"] {
+    .gauge-container {
+        background: #2a2a2a;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .gauge-bg {
+        stroke: #3a3a3a;
+    }
+
+    .gauge-label {
+        color: #fff;
+    }
+
+    .gauge-value {
+        color: #888;
+    }
+
+    .worker-title {
+        color: #fff;
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+    .gauge-container {
+        width: 160px;
+        height: 160px;
+        padding: 15px;
+    }
+
+    .gauge-title {
+        font-size: 20px;
+    }
+
+    .gauge-value {
+        font-size: 16px;
+    }
+}

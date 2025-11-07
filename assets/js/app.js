@@ -35,6 +35,7 @@ import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
 
 import './components/registration';
 import 'react-toastify';
+import './components/gauges';
 
 const Cookies = require('js-cookie');
 
@@ -228,5 +229,23 @@ if (theme !== undefined) {
             $(this).next('.custom-file-label').html(e.target.files[0].name);
         }
     });
+
+    /**
+     * Initialize modern gauges if on resources page
+     */
+    if (document.querySelector('[data-page="resources"]')) {
+        document.addEventListener('DOMContentLoaded', function() {
+            drawWorkerGauges();
+            
+            // Redraw gauges on theme change
+            if (document.getElementById("themeSwitcher")) {
+                document.getElementById("themeSwitcher").addEventListener('change', () => {
+                    setTimeout(function() {
+                        drawWorkerGauges();
+                    }, 100);
+                });
+            }
+        });
+    }
     
 })(jQuery);
