@@ -33,13 +33,16 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
 
     const currentDeviceIsos = deviceIsos;
 
+    const displayState = instance.device?.hypervisor?.name === 'natif' ? 'started' : instance.state;
+
     /*console.log("Device ID:", instance.device.id);
     console.log("Device Name:", instance.device.name);
     console.log("All deviceIsos:", deviceIsos);
     console.log("Current device ISOs:", currentDeviceIsos);
     console.log("Instance stage:", instance.state);
     console.log("Current device ISOs length:", deviceIsos.length);
-*/
+    */
+   //console.log(instance.device.name+" "+showControls);
     // Fonctions pour gérer l'état "starting"
     const setInstanceStarting = (uuid, starting) => {
         setStartingInstances(prev => {
@@ -252,7 +255,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
     }
     
     let controls;
-    
+
     switch (instance.state) {
         case 'error':
             controls = (
@@ -354,8 +357,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                 <div className="d-flex justify-content-between">
                     <div className="d-flex flex-column">
                         <div>
-                            {device.name} <InstanceStateBadge state={instance.state} className="ml-1" />
-                        </div>
+{device.name} <InstanceStateBadge state={displayState} className="ml-1" />                        </div>
                         <div className="text-muted small">
                             {instance.uuid}
                         </div>
@@ -442,6 +444,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         && (instance.state === 'stopped' || instance.state === 'error') 
                         && !isSandbox
                         && instance.device.hypervisor.name != 'natif'
+                        && showControls
                         && user.roles 
                         && (user.roles.includes("ROLE_ADMINISTRATOR") || 
                             user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || 
@@ -473,7 +476,13 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }
-                        {(instance.state == 'started' && is_login(instance) && !is_real(instance) && !isSandbox && user.roles &&(user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")))))
+                        {(instance.state == 'started'
+                        && showControls
+                        && is_login(instance)
+                        && !is_real(instance)
+                        && !isSandbox
+                        && user.roles
+                        && (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")))))
                          &&
                             <a
                                 target="_blank"
@@ -489,6 +498,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         }
 
                         {(instance.state == 'started' && is_vnc(instance))
+                        && showControls
                          &&
                             <a
                                 target="_blank"
@@ -503,6 +513,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             </a>
                         }
                         {(instance.state == 'started' && is_login(instance))
+                        && showControls
                          &&
                             <a
                                 target="_blank"
@@ -517,6 +528,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             </a>
                         }
                         {(instance.state == 'started' && is_serial(instance))
+                        && showControls
                          &&
                             <a
                                 target="_blank"
@@ -534,7 +546,10 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         { showControls && 
                             controls
                         }
-                        {instance.ownedBy != 'group' && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && !isSandbox && user.roles &&
+                        {instance.ownedBy != 'group' 
+                        && allInstancesPage 
+                        && showControls
+                        && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') && !isSandbox && user.roles &&
                             (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || (user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR"))) &&
                             <Button 
                                 variant="danger" 

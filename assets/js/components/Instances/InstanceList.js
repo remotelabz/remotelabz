@@ -10,6 +10,7 @@ const InstanceList = (props) => {
     const [showExport, setShowExport] = useState(false);
     let deviceLengthMax = 1;
     //console.log("InstanceList props",props.instances);
+    
     if (props.isSandbox) {
         for (const instance of props.instances) {
             const device = instance.device;
@@ -20,16 +21,22 @@ const InstanceList = (props) => {
     }
 
     const instancesList = props.instances.map(
-        (deviceInstance, index) => (
-            <InstanceListItem
-                instance={deviceInstance}
-                labDeviceLength={deviceLengthMax}
-                key={index}
-                allInstance={props.instances}
-                deviceIsos={deviceInstance.device.isos} // Passer les ISOs
-                {...props}
-            />
-        )
+        (deviceInstance, index) => {
+            const shouldShowControls = deviceInstance.device?.hypervisor?.name !== 'natif';
+            
+            return (
+                <InstanceListItem
+                    instance={deviceInstance}
+                    labDeviceLength={deviceLengthMax}
+                    key={index}
+                    allInstance={props.instances}
+                    deviceIsos={deviceInstance.device.isos}
+                    {...props}
+                    showControls={shouldShowControls}
+                    
+                />
+            );
+        }
     );
 
     let allDevicesStopped = true;
