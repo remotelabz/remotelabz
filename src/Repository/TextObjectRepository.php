@@ -42,10 +42,11 @@ class TextObjectRepository extends ServiceEntityRepository
 
     public function findByIdAndLab($id, $labId)
     {
-       $textobject =  $this->createQueryBuilder('o')
+        $textobject = $this->createQueryBuilder('o')
             ->andWhere('o.id = :id')
             ->andWhere('o.lab = :labId')
-            ->setParameters(['id'=> $id, 'labId' => $labId])
+            ->setParameter('id', $id)
+            ->setParameter('labId', $labId)
             ->getQuery()
             ->getResult()
         ;
