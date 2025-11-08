@@ -1,11 +1,13 @@
 #!/bin/bash
-if  [ -f package-lock.json ]; then
-    rm package-lock.json
-fi;
+#if  [ -f package-lock.json ]; then
+#    rm package-lock.json
+#fi;
+git fetch
+git pull
 composer update
 yarn
 yarn encore prod
-php bin/console doctrine:migrations:migrate
+php bin/console doctrine:migrations:migrate -n
 #npx browserslist@latest --update-db
 php bin/console cache:clear
 chown remotelabz:www-data * -R
