@@ -238,7 +238,6 @@ class OperatingSystemController extends Controller
         ]);
     }
 
-
     #[Route(path: '/admin/operating-systems/new', name: 'new_operating_system')]
     public function newAction(Request $request, ImageFileUploader $imageFileUploader)
     {
@@ -901,8 +900,8 @@ class OperatingSystemController extends Controller
             return ['valid' => false, 'error' => 'Invalid URL format'];
         }
 
-        // Vérifier que l'URL contient .qcow2
-        if (!preg_match('/\.(qcow2)(\?|$|#)/i', $url)) {
+        // Vérifier que l'URL contient img ou .qcow2
+        if (!preg_match('/\.(img|qcow2)(\?|$|#)/i', $url)) {
             return ['valid' => false, 'error' => 'URL does not appear to be a qcow2 file'];
         }
 

@@ -53,13 +53,11 @@
                         <div class="mb-4">
                             <div class="form-floating">
                                 <label class="form-label fw-bold">{{ 'Name'|trans }}</label>
-                                {% if operatingSystem.name == "Service" %}
-                                   <div class="form-control"> {{ operatingSystem.name }}</div>
-                                {% else %}
-                                    {{ form_widget(operatingSystemForm.name, {'attr': {'class': 'form-control', 'placeholder': 'Operating system name'|trans}}) }}
-                                {% endif %}
-                                
-                                
+                                    {% if (operatingSystem.name|default('')) == 'Service' %}      
+                                        <div class="form-control"> {{ operatingSystem.name }}</div>
+                                    {% else %}
+                                        {{ form_widget(operatingSystemForm.name, {'attr': {'class': 'form-control', 'placeholder': 'Operating system name'|trans}}) }}%}
+                                    {% endif %}
                             </div>
                             {{ form_errors(operatingSystemForm.name) }}
                             <div class="form-text">
