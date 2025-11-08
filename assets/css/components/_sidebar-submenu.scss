@@ -1,0 +1,94 @@
+/* Sidebar Submenu Styles */
+.sidebar {
+    .nav {
+        // Style pour les éléments de sous-menu
+        .submenu {
+            .nav-item {
+                position: relative;
+                padding-left: 1.5rem;
+                margin-left: 1rem;
+                border-left: 2px solid rgba(0, 0, 0, 0.08);
+                
+                .nav-link {
+                    font-size: 0.875rem;
+                    padding: 8px 16px;
+                    
+                    svg, i {
+                        width: 18px;
+                        height: 18px;
+                        font-size: 18px;
+                    }
+                }
+                
+                // État actif pour les sous-items
+                &.active {
+                    border-left-color: theme-color(primary);
+                    background-color: rgba(0, 0, 0, 0.03);
+                    
+                    > .nav-link {
+                        font-weight: 600;
+                    }
+                }
+                
+                &:hover {
+                    background-color: rgba(0, 0, 0, 0.02);
+                }
+            }
+        }
+        
+        // Style pour le lien parent quand un sous-menu est actif
+        .nav-item {
+            > .nav-link.parent-active {
+                background-color: rgba(0, 0, 0, 0.04);
+                font-weight: 500;
+                
+                &:hover {
+                    background-color: $sidebar-dark-menu-hover-bg;
+                }
+            }
+        }
+    }
+    
+    // Styles pour la sidebar en mode collapsed
+    &.sidebar-collapsed {
+        .submenu {
+            .nav-item {
+                padding-left: 0;
+                margin-left: 0;
+                border-left: 0;
+            }
+        }
+    }
+}
+
+// Styles pour le thème sombre
+[theme="dark"] {
+    .sidebar {
+        .nav {
+            .submenu {
+                .nav-item {
+                    border-left-color: rgba(255, 255, 255, 0.1);
+                    
+                    &.active {
+                        border-left-color: lighten(map-get($theme-colors, primary), 30%);
+                        background-color: rgba(255, 255, 255, 0.05);
+                    }
+                    
+                    &:hover {
+                        background-color: rgba(255, 255, 255, 0.03);
+                    }
+                }
+            }
+            
+            .nav-item {
+                > .nav-link.parent-active {
+                    background-color: rgba(255, 255, 255, 0.08);
+                    
+                    &:hover {
+                        background-color: rgba(255, 255, 255, 0.06);
+                    }
+                }
+            }
+        }
+    }
+}

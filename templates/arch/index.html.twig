@@ -2,6 +2,16 @@
 
 {% block title %}Architectures - {{ parent() }}{% endblock %}
 
+{% block breadcrumbs %}
+    {%- set breadcrumbs = breadcrumbs|merge({ 'Architectures': path('arch_list') }) -%}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'architectures' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="top-panel">
     <div class="d-flex justify-content-between align-items-center">
