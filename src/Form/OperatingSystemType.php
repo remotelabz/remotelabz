@@ -43,8 +43,6 @@ class OperatingSystemType extends AbstractType
                 'choice_label' => 'name',
                 'query_builder' => function (EntityRepository $er) {
                     return $er->createQueryBuilder('h')
-                        ->where('h.name != :excludedName')
-                        ->setParameter('excludedName', 'lxc')
                         ->orderBy('h.name', 'ASC');
                 }
             ])
@@ -78,7 +76,14 @@ class OperatingSystemType extends AbstractType
                 'placeholder' => 'Select architecture...',
                 'attr' => [
                     'class' => 'form-select'
-                ]
+                ],
+                'query_builder' => function (EntityRepository $er) {
+                    return $er->createQueryBuilder('a')
+                        ->orderBy('a.name', 'ASC');
+                },
+                'preferred_choices' => function ($arch) {
+                    return $arch->getName() === 'x86_64';
+                }
             ])
             ->add('description', TextareaType::class, [
                 'required' => false,
