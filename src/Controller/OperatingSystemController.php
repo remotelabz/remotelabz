@@ -243,6 +243,7 @@ class OperatingSystemController extends Controller
     public function newAction(Request $request, ImageFileUploader $imageFileUploader)
     {
         $operatingSystem = new OperatingSystem();
+        $this->ensureDefaultArchitecture($operatingSystem);
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
         $maxUploadSize = min(ini_get('upload_max_filesize'), ini_get('post_max_size'));
@@ -350,6 +351,7 @@ class OperatingSystemController extends Controller
     public function newBlank(Request $request, HypervisorRepository $hypervisorRepository): Response
     {
         $operatingSystem = new OperatingSystem();
+        $this->ensureDefaultArchitecture($operatingSystem);
         
         $qemuHypervisor = $hypervisorRepository->findByName('qemu');
             if (!$qemuHypervisor) {
@@ -709,6 +711,7 @@ class OperatingSystemController extends Controller
             $operatingSystem = $this->operatingSystemRepository->findByName($osName);
             if(!$operatingSystem) {
                 $newOs = new OperatingSystem();
+                $this->ensureDefaultArchitecture($newOs);
                 $newOs->setName($osName);
                 $newOs->setHypervisor($hypervisor);
                 $newOs->setImageFilename($osName);
@@ -1096,6 +1099,15 @@ class OperatingSystemController extends Controller
         }
     }
 
+    private function ensureDefaultArchitecture(OperatingSystem $operatingSystem): void
+    {
+        if (!$operatingSystem->getArch()) {
+            $defaultArch = $this->archRepository->findOneBy(['name' => 'x86_64']);
+            if ($defaultArch) {
+                $operatingSystem->setArch($defaultArch);
+            }
+        }
+    }
 
 
 }

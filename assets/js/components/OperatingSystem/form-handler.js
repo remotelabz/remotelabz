@@ -11,8 +11,8 @@ export class OperatingSystemFormHandler {
 
     initialize() {
         // Initialisation des options hyperviseur et image source
-        this.toggleHypervisorOptions();
         this.loadExistingValues();
+        this.toggleHypervisorOptions();
         this.toggleImageSourceBlocks();
 
         // Set default selection for QEMU if no selection
@@ -67,20 +67,53 @@ export class OperatingSystemFormHandler {
     }
 
     loadExistingValues() {
-        if (!this.originalFilenameField || !this.originalFilenameField.value) return;
-        const selectedOption = this.hypervisorSelect.options[this.hypervisorSelect.selectedIndex];
+        // Récupérer le nom de l'hyperviseur sélectionné
+        const selectedOption = this.hypervisorSelect?.options[this.hypervisorSelect.selectedIndex];
         const hypervisorName = selectedOption ? selectedOption.text.toLowerCase() : '';
 
+        console.log('Loading existing values for hypervisor:', hypervisorName);
+
+        // Charger les valeurs pour LXC
         if (hypervisorName.includes('lxc')) {
-            if (this.lxcFilenameInput) this.lxcFilenameInput.value = this.originalFilenameField.value;
-        } else if (hypervisorName.includes('qemu')) {
-            if (this.qemuFilenameInput) this.qemuFilenameInput.value = this.originalFilenameField.value;
+            // Pour LXC, charger depuis originalFilenameField OU depuis l'attribut data
+            const existingFilename = this.originalFilenameField?.value || 
+                                    this.lxcFilenameInput?.getAttribute('data-initial-value') ||
+                                    this.lxcFilenameInput?.value;
             
-            // Lors de l'édition, détecter quel type de source était utilisé
-            if (this.originalFilenameField.value && !document.querySelector('.image-source-radio:checked')) {
-                // Si on a un filename mais pas d'URL, c'est probablement filename-only
-                const urlField = document.querySelector('input[name="operating_system[imageUrl]"]');
-                if (!urlField || !urlField.value) {
+            if (existingFilename && this.lxcFilenameInput) {
+                console.log('Setting LXC filename:', existingFilename);
+                this.lxcFilenameInput.value = existingFilename;
+                
+                // Synchroniser avec le champ hidden
+                if (this.originalFilenameField) {
+                    this.originalFilenameField.value = existingFilename;
+                }
+            }
+        } 
+        // Charger les valeurs pour QEMU
+        else if (hypervisorName.includes('qemu')) {
+            const existingFilename = this.originalFilenameField?.value;
+            const existingUrl = this.urlInput?.value;
+            
+            console.log('Existing QEMU filename:', existingFilename);
+            console.log('Existing QEMU URL:', existingUrl);
+            
+            // Si on a un filename, remplir le champ QEMU
+            if (existingFilename && this.qemuFilenameInput) {
+                this.qemuFilenameInput.value = existingFilename;
+            }
+            
+            // Déterminer quel type de source était utilisé lors de l'édition
+            if (!document.querySelector('.image-source-radio:checked')) {
+                if (existingUrl && existingUrl.trim() !== '') {
+                    // Si on a une URL, sélectionner le mode URL
+                    const sourceUrl = document.getElementById('source-url');
+                    if (sourceUrl) {
+                        sourceUrl.checked = true;
+                        sourceUrl.dispatchEvent(new Event('change'));
+                    }
+                } else if (existingFilename && existingFilename.trim() !== '') {
+                    // Si on a un filename mais pas d'URL, c'est filename-only
                     const sourceFilename = document.getElementById('source-filename');
                     if (sourceFilename) {
                         sourceFilename.checked = true;
@@ -174,6 +207,7 @@ export class OperatingSystemFormHandler {
             this.hypervisorSelect.addEventListener('change', () => {
                 this.toggleHypervisorOptions();
                 this.toggleImageSourceBlocks();
+                this.loadExistingValues();
             });
         }
 

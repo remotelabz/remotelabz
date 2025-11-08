@@ -251,7 +251,11 @@
                                         <span class="input-group-text bg-light">
                                             <i class="fa fa-cube text-info"></i>
                                         </span>
-                                        <input type="text" class="form-control" id="lxc-filename-input" placeholder="{{ 'ubuntu-20.04-standard'|trans }}" />
+                                        <input type="text" class="form-control" id="lxc-filename-input" placeholder="{{ 'ubuntu-20.04-standard'|trans }}"
+                                        {% if edit and operatingSystem.imageFilename %}
+                                            value="{{ operatingSystem.imageFilename }}"
+                                            data-initial-value="{{ operatingSystem.imageFilename }}"
+                                        {% endif %} />
                                     </div>
                                     <div class="form-text">
                                         <i class="fa fa-info-circle text-info"></i> 
