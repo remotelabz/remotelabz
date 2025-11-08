@@ -39,7 +39,7 @@ mysql -sfu root < mysql_secure_sql.sql
 rm ./mysql_secure_sql.sql
 
 echo "The MySQL is configured with user \"user\" and the password \"Mysql-Pa33wrd$\""
-apt-get install -y rabbitmq-server php8.1-amqp # PPRI0603 : Modification du module pour l'adapter à PHP 8.1
+apt-get install -y rabbitmq-server php8.4-amqp
 systemctl restart rabbitmq-server
 if ! rabbitmqctl list_users | grep -q 'remotelabz-amqp'; then
     rabbitmqctl add_user 'remotelabz-amqp' 'password-amqp'
