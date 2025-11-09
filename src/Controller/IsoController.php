@@ -414,51 +414,61 @@ class IsoController extends AbstractController
         }
 
         try {
-            $context = stream_context_create([
-                'http' => [
-                    'method' => 'HEAD',
-                    'timeout' => 30,
-                    'user_agent' => 'Mozilla/5.0 (compatible; ISO-Validator/1.0)',
-                    'follow_location' => true,
-                    'max_redirects' => 5
-                ]
+            // Initialiser cURL
+            $ch = curl_init();
+            
+            // Configuration de cURL pour une requête HEAD
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_NOBODY => true,              // Requête HEAD uniquement
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HEADER => true,
+                CURLOPT_FOLLOWLOCATION => true,      // Suivre les redirections
+                CURLOPT_MAXREDIRS => 5,              // Maximum 5 redirections
+                CURLOPT_TIMEOUT => 30,               // Timeout de 30 secondes
+                CURLOPT_SSL_VERIFYPEER => true,      // Vérifier les certificats SSL
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; ISO-Validator/1.0)',
             ]);
 
-            $headers = @get_headers($url, true, $context);
+            // Exécuter la requête
+            $response = curl_exec($ch);
             
-            if ($headers === false) {
-                return ['valid' => false, 'error' => 'Unable to reach the URL'];
+            // Vérifier les erreurs cURL
+            if ($response === false) {
+                $error = curl_error($ch);
+                curl_close($ch);
+                $this->logger->error('ISO URL validation cURL error: ' . $error . ' for URL: ' . $url);
+                return ['valid' => false, 'error' => 'Unable to reach the URL: ' . $error];
             }
 
-            $statusLine = $headers[0];
-            if (!preg_match('/HTTP\/\d\.\d\s+200/', $statusLine)) {
-                return ['valid' => false, 'error' => 'URL is not accessible (HTTP error)'];
+            // Récupérer le code HTTP
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            
+            if ($httpCode !== 200) {
+                curl_close($ch);
+                return ['valid' => false, 'error' => 'URL is not accessible (HTTP ' . $httpCode . ')'];
             }
 
+            // Récupérer les informations
+            $contentLength = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            
+            curl_close($ch);
+
+            // Valider la taille du fichier
             $fileSize = null;
-            $contentType = null;
-            $fileName = null;
-
-            $finalHeaders = [];
-            foreach ($headers as $key => $value) {
-                if (is_array($value)) {
-                    $finalHeaders[$key] = end($value);
-                } else {
-                    $finalHeaders[$key] = $value;
-                }
-            }
-
-            if (isset($finalHeaders['Content-Length'])) {
-                $fileSize = (int)$finalHeaders['Content-Length'];
+            if ($contentLength > 0) {
+                $fileSize = (int)$contentLength;
                 
+                // Vérifier si la taille est raisonnable pour un ISO (entre 1 MB et 10 GB)
                 if ($fileSize < 1024 * 1024 || $fileSize > 10 * 1024 * 1024 * 1024) {
                     return ['valid' => false, 'error' => 'File size seems unusual for an ISO file'];
                 }
             }
 
-            if (isset($finalHeaders['Content-Type'])) {
-                $contentType = $finalHeaders['Content-Type'];
-                
+            // Valider le type de contenu
+            if ($contentType) {
                 $validMimeTypes = [
                     'application/x-iso9660-image',
                     'application/octet-stream',
@@ -479,6 +489,7 @@ class IsoController extends AbstractController
                 }
             }
 
+            // Extraire le nom du fichier depuis l'URL
             $fileName = basename(parse_url($url, PHP_URL_PATH));
             if (empty($fileName) || !preg_match('/\.iso$/i', $fileName)) {
                 $fileName = 'downloaded.iso';
