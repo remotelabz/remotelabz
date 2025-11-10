@@ -368,7 +368,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     <div className="d-flex align-items-center">
                         {((instance.state == 'stopped' || instance.state == 'exported' || instance.state == 'error') && 
                             //(allInstance?.length == labDeviceLength) && 
-                            isSandbox && 
+                            //isSandbox && 
                             instance.device.name !== "DHCP_service") && (
                                 <IsoSelector
                                     deviceIsos={currentDeviceIsos}

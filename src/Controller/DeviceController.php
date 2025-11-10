@@ -705,9 +705,11 @@ class DeviceController extends Controller
         }
 
             $this->logger->debug("data ",$data);
-        foreach($data['ISO'] as $iso) {
-            $iso = $this->isoRepository->findOneById($iso);
-            $device->addIso($iso);
+        if (array_key_exists('ISO',$data)) {
+            foreach($data['ISO'] as $iso) {
+                $iso = $this->isoRepository->findOneById($iso);
+                $device->addIso($iso);
+           }
         }
 
         $flavor = $this->flavorRepository->findById($data['flavor']);
