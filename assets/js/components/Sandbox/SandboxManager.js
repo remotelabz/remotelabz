@@ -5,7 +5,7 @@ import SandboxList from './SandboxList';
 
 class SandboxManager extends Component {
     constructor(props) {
-        console.log("props in Sandbox manager",props);
+        //console.log("props in Sandbox manager",props);
 
         super(props);
     }

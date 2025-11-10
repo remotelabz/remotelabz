@@ -3,7 +3,7 @@ import SandboxListItem from './SandboxListItem';
 
 const SandboxList = (props) => 
 {
-    console.log("SanboxList props :",props);
+    //console.log("SanboxList props :",props);
     
     let devices = props.devices.map(
         (device, index) => <SandboxListItem item={device} itemType={'device'} key={index} index={index} itemsLength={props.devices.length} user={props.user} />
