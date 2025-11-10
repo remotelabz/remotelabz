@@ -13,7 +13,13 @@
 {% block wrapper %}
 <div class="content-title">
     <div class="content-title-infos">
-        <h1>{{ 'Sandbox'|trans }}</h1>
+        {% if not(sandboxlab) %}
+            <h1>{{ 'Sandbox'|trans }}</h1>
+        {% else %}
+            <h1>{{ 'Sandbox Lab'|trans }}</h1>
+        {% endif %}
+
+        
     </div>
 </div>
 <div class="content-body">

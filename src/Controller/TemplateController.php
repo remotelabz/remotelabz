@@ -21,23 +21,24 @@ use Psr\Log\LoggerInterface;
 use App\Repository\TextObjectRepository;
 use App\Repository\LabRepository;
 use App\Repository\UserRepository;
-use FOS\RestBundle\Context\Context;
 use App\Repository\DeviceRepository;
-use Remotelabz\Message\Message\InstanceActionMessage;
 use App\Repository\ActivityRepository;
-use JMS\Serializer\SerializerInterface;
-use App\Exception\NotInstancedException;
-use JMS\Serializer\SerializationContext;
 use App\Repository\LabInstanceRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\ControlProtocolTypeRepository;
 use App\Repository\FlavorRepository;
+use App\Repository\IsoRepository;
+use App\Repository\OperatingSystemRepository;
+use FOS\RestBundle\Context\Context;
+use Remotelabz\Message\Message\InstanceActionMessage;
+use JMS\Serializer\SerializerInterface;
+use App\Exception\NotInstancedException;
+use JMS\Serializer\SerializationContext;
 use Doctrine\Common\Collections\Criteria;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use App\Exception\AlreadyInstancedException;
-use App\Repository\OperatingSystemRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\Lab\LabImporter;
 use App\Service\LabBannerFileUploader;
@@ -80,7 +81,8 @@ class TemplateController extends Controller
         HypervisorRepository $hypervisorRepository,
         ControlProtocolTypeRepository $controlProtocolTypeRepository,
         FlavorRepository $flavorRepository,
-        DeviceRepository $deviceRepository
+        DeviceRepository $deviceRepository,
+        IsoRepository $isoRepository
         )
     {
         $this->logger = $logger;
@@ -89,8 +91,8 @@ class TemplateController extends Controller
         $this->controlProtocolTypeRepository = $controlProtocolTypeRepository;
         $this->flavorRepository = $flavorRepository;
         $this->deviceRepository = $deviceRepository;
+        $this->isoRepository = $isoRepository;
     }
-
     
 	#[Post('/api/list/templates', name: 'api_get_templates')]
 	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
@@ -177,6 +179,8 @@ class TemplateController extends Controller
         $p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$id.'-'.$deviceName.'.yaml'));
         //$p = Yaml::parse(file_get_contents($this->getParameter('kernel.project_dir').'/config/templates/'.$deviceName.'.yaml'));
         $p['template'] = $id."-".$deviceName;
+        
+        $this->logger->debug("[TemplateController:showAction]::File contents",$p);
 
         if (!isset($p['context']) || !isset($p['template'])) {
 
@@ -301,6 +305,16 @@ class TemplateController extends Controller
                 'type' => 'boolean',
                 'value' => $p['template'] ?? ''
             );
+
+            if (!empty($p['isos'])) {
+                $data['options']['ISO'] = Array(
+                    'name' => 'ISO',
+                    'type' => 'list',
+                    'multiple'=> true,
+                    'value' => $p['isos'],
+                    'list' => $this->listIsos($p['isos'])
+                );
+            }
         
         //}
         
@@ -337,6 +351,16 @@ class TemplateController extends Controller
             }
         }
         return $results;
+    }
+
+
+    public function listIsos($Isos) {
+        $IsosList= [];
+            foreach($Isos as $iso){
+                $iso_image=$this->isoRepository->find($iso);
+                $IsosList[$iso_image->getId()] = $iso_image->getName();
+            }
+        return $IsosList;
     }
 
     public function listControlProtocolTypes() {
@@ -393,6 +417,17 @@ class TemplateController extends Controller
         if($template->getIcon() != null) {
             $icon = $template->getIcon();
         }
+        
+        $isos=[];
+        foreach($template->getIsos() as $iso) {
+            $id=$iso->getId();
+            $this->logger->debug("[TemplateController:newAction]::Add iso id ".$id);
+            array_push($isos, $id);
+        }
+        if ($isos == []) {
+            $isos = '';
+        }
+
 
     $templateData = [
         "name" => $template->getName(),
@@ -413,7 +448,8 @@ class TemplateController extends Controller
         "context" => "remotelabz",
         "config_script" => "embedded",
         "ethernet" => 1,
-        "virtuality" => $template->getVirtuality()
+        "virtuality" => $template->getVirtuality(),
+        "isos" => $isos
     ];
 
     $yamlContent = Yaml::dump($templateData,2);
