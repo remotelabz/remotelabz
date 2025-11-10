@@ -991,7 +991,7 @@ class LabController extends Controller
     public function copyDevice(Device $device,string $name): Device
     {
         $entityManager = $this->entityManager;
-        $this->logger->debug("[LabController:copyDevice]::Copy of device ".$device->getName()." with new name ".$name);
+        $this->logger->debug("[LabController:copyDevice]::Copy of device ".$device->getId()." ".$device->getName()." with new name ".$name);
         $newDevice = new Device();
         $newDevice->setName($name);
         $newDevice->setBrand($device->getBrand());
@@ -1029,6 +1029,11 @@ class LabController extends Controller
         foreach ($device->getControlProtocolTypes() as $control_protocol) {
             $newDevice->addControlProtocolType($control_protocol);
         }
+
+        foreach ($device->getIsos() as $iso) {
+            $newDevice->addIso($iso);
+        }
+
         $entityManager->persist($newDevice);
         $entityManager->flush();
         return $newDevice;

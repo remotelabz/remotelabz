@@ -26,10 +26,17 @@ use App\Repository\FlavorRepository;
 use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\NetworkInterfaceRepository;
+use App\Repository\IsoRepository;
 use App\Security\ACL\LabVoter;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\Security;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Put;
@@ -37,10 +44,6 @@ use FOS\RestBundle\Controller\Annotations\Patch;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Psr\Log\LoggerInterface;
 use JMS\Serializer\SerializerInterface;
@@ -48,8 +51,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 use function Symfony\Component\String\u;
 use JMS\Serializer\SerializationContext;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Http\Attribute\Security;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -65,6 +66,7 @@ class DeviceController extends Controller
     private OperatingSystemRepository $operatingSystemRepository;
     private NetworkInterfaceRepository $networkInterfaceRepository;
     private EntityManagerInterface $entityManager;
+    private IsoRepository $isoRepository;
 
 
     /** @var LoggerInterface $logger */
@@ -83,7 +85,8 @@ class DeviceController extends Controller
         FlavorRepository $flavorRepository,
         NetworkInterfaceRepository $networkInterfaceRepository,
         ManagerRegistry $managerRegistry,
-        EntityManagerInterface $entityManager)
+        EntityManagerInterface $entityManager,
+        IsoRepository $isoRepository)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -98,6 +101,7 @@ class DeviceController extends Controller
         $this->networkInterfaceRepository = $networkInterfaceRepository;
         $this->managerRegistry = $managerRegistry;
         $this->entityManager = $entityManager;
+        $this->isoRepository = $isoRepository;
     }
 
     
@@ -699,6 +703,13 @@ class DeviceController extends Controller
             $controlProtocolType = $this->controlProtocolTypeRepository->findById($controlProtocolTypeId);
             $device->addControlProtocolType($controlProtocolType[0]);
         }
+
+            $this->logger->debug("data ",$data);
+        foreach($data['ISO'] as $iso) {
+            $iso = $this->isoRepository->findOneById($iso);
+            $device->addIso($iso);
+        }
+
         $flavor = $this->flavorRepository->findById($data['flavor']);
         $operatingSystem = $this->operatingSystemRepository->findById($data['operatingSystem']);    
         if($data['core'] === '') {
@@ -1145,6 +1156,16 @@ class DeviceController extends Controller
             $controlProtocolTypes = '';
         }
 
+        $isos=[];
+        foreach($device->getIsos() as $iso) {
+            $id=$iso->getId();
+            $this->logger->debug("[DeviceController:update_yaml]::Add iso id ".$id);
+            array_push($isos, $id);
+        }
+        if ($isos == []) {
+            $isos = '';
+        }
+
         $deviceData = [
                 "name" => $device_name,
                 //"type" => $device->getType(),
@@ -1164,7 +1185,8 @@ class DeviceController extends Controller
                 "context" => "remotelabz",
                 "config_script" => "embedded",
                 "ethernet" => 1,
-                "virtuality"=> $device->getVirtuality()
+                "virtuality"=> $device->getVirtuality(),
+                "isos" => $isos
         ];
         
         if (!is_null($device->getOperatingSystem()->getArch())){
@@ -1181,7 +1203,7 @@ class DeviceController extends Controller
         $oldFileName = u($oldName)->camel();
 
         $isTemplate = $device->getIsTemplate();
-        $this->logger->debug("[DeviceController:update_yaml]::Variable isTemplate ".$isTemplate);
+        //$this->logger->debug("[DeviceController:update_yaml]::Variable isTemplate ".$isTemplate);
         if ($isTemplate == 1) {
             if ($oldName == $device->getName()) {
                 file_put_contents($this->getParameter('kernel.project_dir')."/config/templates/".$device->getId()."-". $fileName . ".yaml", $yamlContent);

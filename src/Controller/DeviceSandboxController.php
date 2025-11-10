@@ -101,6 +101,10 @@ class DeviceSandboxController extends Controller
             $deviceStarted[$device->getId()] = false;
             if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
                 $deviceStarted[$device->getId()] = true;
+                //$this->logger->debug("[DeviceSandboxController:viewAction]:: device started true for ".$device->getName());
+            }
+            else {
+                //$this->logger->debug("[DeviceSandboxController:viewAction]:: device started false for ".$device->getName());
             }
         }
 
@@ -112,8 +116,25 @@ class DeviceSandboxController extends Controller
             'hasBooking' => false,
         ];
 
-        preg_match("/^Sandbox_(Lab).*$/", $lab->getName(), $result);
+        preg_match("/^Sandbox_Lab.*$/", $lab->getName(), $result);
+        // Use to add or not a message to start first the DHCP Service
         $sandboxlab = ($result != null);
+        $props = $serializer->serialize(
+                    $instanceManagerProps,
+                    'json',
+                    SerializationContext::create()->setGroups(['sandbox'])
+                );
+        
+        $propsArray = json_decode($props, true);
+        $prettyProps = json_encode($propsArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $this->logger->debug("[DeviceSandboxController:viewAction]::Serialized props:\n" . $prettyProps);
+
+        foreach ($userLabInstance->getDeviceInstances() as $dev) {
+            $this->logger->debug("[DeviceSandboxController:viewAction]::Device of this lab:" . $dev->getDevice()->getId()." ".$dev->getDevice()->getName());
+            foreach ($dev->getDevice()->getIsos() as $iso) {
+                $this->logger->debug("[DeviceSandboxController:viewAction]::Iso for this device :" . $iso->getName());
+            }
+        }
 
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
@@ -121,11 +142,7 @@ class DeviceSandboxController extends Controller
             'deviceStarted' => $deviceStarted,
             'user' => $user,
             'sandboxlab' => $sandboxlab,
-            'props' => $serializer->serialize(
-                $instanceManagerProps,
-                'json',
-                SerializationContext::create()->setGroups(['sandbox'])
-            )
+            'props' => $props
         ]);
     }
 }
