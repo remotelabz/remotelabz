@@ -112,7 +112,7 @@
                     <div class="col-sm-3"><strong>Operating System:</strong></div>
                     <div class="col-sm-9">
                         {% if device.operatingSystem %}
-                            <span class="badge bg-light text-dark">{{ device.operatingSystem.name }}</span>
+                            <a href="{{path('show_operating_system', {'id': device.operatingSystem.id})}}"><span class="badge bg-light text-dark">{{ device.operatingSystem.name }}</span></a>
                             {% if device.operatingSystem.flavordisk %}
                                 <span class="text-muted small">{{ device.operatingSystem.flavordisk.disk }}GB</span>
                             {% endif %}    
