@@ -739,6 +739,7 @@ export function newUIreturn(param) {
         // Stop updating node_status
         clearInterval(UPDATEID);
     }
+    logger(1, 'DEBUG: TEMPLATE='+TEMPLATE+"param:"+param);
     if (TEMPLATE == 1) {
         $('body').removeClass('login');
         window.location.href = "/admin/sandbox";
