@@ -10,6 +10,12 @@
 
 {% block sidebar %}{% endblock %}
 
+{%- set user = app.user %}
+{% set started_instances =  [] %}
+{% for instances in user.labinstances %}
+    {% set started_instances = started_instances|merge([instances.lab.id]) %}
+{% endfor %}
+
 {% block wrapper_xl %}
     <div class="py-3 border-bottom">
         <h1>Labs</h1>
@@ -66,77 +72,43 @@
             <div class="mr-3">
                 labs per page
             </div>
-         {#  <div class="dropdown mr-3">
-                <button class="dropdown-menu-toggle btn btn-default" id="sort-projects-dropdown" type="button" data-toggle="dropdown" data-display="static" aria-expanded="true"><span class="dropdown-toggle-text ">Last updated</span>{{ svg('chevron-down') }}</button>
-                <ul class="dropdown-menu">
-                    <h6 class="dropdown-header">
-                    Sort by
-                    </h6>
-                    <li>
-                    <a class="dropdown-item {{ orderBy == 'lastUpdated' ? 'is-active' }}" href="{{ path('labs', app.request.query|merge({'sort_by': 'lastUpdated'})) }}">Last updated
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=created_desc">Last created
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=name_asc">Name
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=name_desc">Name, descending
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=stars_desc">Most stars
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=latest_activity_asc">Oldest updated
-                    </a></li>
-                    <li>
-                    <a class="dropdown-item" href="/dashboard/projects?sort=created_asc">Oldest created
-                    </a></li>
-                </ul>
-            </div> #}
             <button class="btn btn-primary" type="submit">{{ svg('search') }}</button>
         </form>
     </div>
 
-    <div class="labs-panel">
-    {% for lab in labs %}
-        <div class="wrapper d-flex align-items-center {% if not loop.last %}border-bottom{% endif %} lab-item">
-            <div class="lab-item-left d-flex flex-column">
-                <div>
-                    <a href="{{ path('show_lab', {'id': lab.id}) }}" class="lab-item-name">
-                        {{- lab.name -}}
-                    </a>
-                </div>
-                <div class="lab-item-infos text-muted">
-                    {# !{{ lab.id }} · created
-                    <span class="timeago" datetime="{{ lab.createdAt|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.createdAt|date('M d, Y h:ia') }}"></span>
-                    by
-                    <a href="{{ path('labs', app.request.query|merge({author: lab.author.id})) }}" data-toggle="tooltip" data-placement="top" title="See all labs by {{lab.author.name}}">
-                        <img src="/users/{{lab.author.id}}/picture?size=17" alt="{{lab.author.name}}" class="rounded-circle v-bottom" />
-                        <span class="lab-item-author" >{{ lab.author.name }}</span>
-                    </a> #}
-                </div>
-            </div>
-            <div class="separator flex-grow-1"></div>
-            <div class="lab-item-right d-flex flex-column text-right">
-                <div>
-                    {# <div class="d-inline" data-toggle="tooltip" data-placement="top" title="Related activities">
-                        <span {% if lab.activities|length == 0 %}class="lab-item-counter-empty"{% endif -%}>
-                            <span>{{ svg('review-list', 'image-sm v-sub') }}</span> {{ lab.activities|length }}
-                        </span>
-                    </div> #}
-
-                    <div class="d-inline ml-2" data-toggle="tooltip" data-placement="top" title="Devices">
-                        <span {% if lab.devices|length == 0 %}class="lab-item-counter-empty"{% endif -%}>
-                            <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ lab.devices|length }}
-                        </span>
+    <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
+        {% for lab in labs %}
+        {% if not (lab.name|lower matches '/sandbox/i') %}
+            <div class="card m-4">
+                {% if lab.banner is not null %}
+                <img src="{{ path('get_lab_banner', {'id': lab.id}) }}" class="card-img-top" alt="Banner">
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h4 class="card-title">
+                        <a href="{{ path('show_lab', {'id': lab.id}) }}">{{ lab.name }}</a>
+                    </h4>
+                    <p class="card-text flex-grow-1">
+                        {%- if lab.shortDescription is not null -%}
+                        {{- lab.shortDescription -}}
+                        {%- else -%}
+                            No description
+                        {%- endif -%}
+                    </p>
+                    <div class="mt-2">
+                        <div class="d-inline" data-toggle="tooltip" data-placement="top" title="Devices">
+                            <span {% if lab.devices|length == 0 %}class="text-muted"{% endif -%}>
+                                <span>{{ svg('monitor-o', 'image-sm v-sub') }}</span> {{ lab.devices|length }} device{{ lab.devices|length > 1 ? 's' : '' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <div class="lab-item-infos text-muted">updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></div>
+                <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+                    <span>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></span>
+                    <span>{% if lab.id in started_instances %}&#128994;{% else %}&#128308;{% endif %}</span>
+                </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endif %}
+        {% endfor %}
     </div>
     
     {% set pagesNumber = count.current > limit ? count.current // limit + 1 : 1 %}

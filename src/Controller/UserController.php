@@ -69,8 +69,6 @@ class UserController extends Controller
     protected $vpnConfiguratorGenerator;
     protected $profilePictureFileUploader;
     
-
-
     public function __construct(
         UserPasswordHasherInterface $passwordHasher,
         UserRepository $userRepository,
