@@ -1031,8 +1031,15 @@ $(document).on('click', '.action-nodesget', function (e) {
 // Lab close
 $(document).on('click', '.action-labclose', function (e) {
     logger(1, 'DEBUG: action = labclose');
-    $.when(closeLab()).done(function () {
-    newUIreturn();
+    var labId=$('#lab-viewport').attr('data-path');
+    
+    //$.when(closeLab()).done(function () {
+    $.when(closeLab(), getLabInfo($('#lab-viewport').attr('data-path'))).done(function (closeResult, labInfo) {
+        if (labInfo && labInfo.name && labInfo.name.toLowerCase().indexOf('sandbox') !== -1) {
+            window.location.href = '/admin/sandbox/'+labId;
+        } else {
+        newUIreturn();
+        }
     }).fail(function (message) {
         addModalError(message);
     });

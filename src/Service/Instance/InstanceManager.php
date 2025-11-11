@@ -674,6 +674,10 @@ class InstanceManager
 
                     $newDevice->getEditorData()->setX($device->getEditorData()->getX());
                     $newDevice->getEditorData()->setY($device->getEditorData()->getY());
+                    
+                    if($device->getIcon() != NULL) {
+                        $newDevice->setIcon($device->getIcon()); 
+                    }
 
                     if ($device->getTemplate() !== null) {
                         $newDevice->setTemplate($device->getTemplate());
