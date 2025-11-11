@@ -1192,8 +1192,9 @@ export class RemotelabzAPI {
          * @returns {Promise<import('axios').AxiosResponse<{success: boolean, error?: string}>>}
          */
         deleteTempFile(filename) {
-            return axios.delete('/isos/delete-temp-file', `filename=${encodeURIComponent(filename)}`, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            //console.log("Delete file "+filename);
+            return axios.delete('/isos/delete-temp-file', {
+                data: { filename: filename }
             });
         }
     }
