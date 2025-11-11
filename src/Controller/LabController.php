@@ -175,8 +175,7 @@ class LabController extends Controller
         }
         else {$criteria = Criteria::create()
             ->where(Criteria::expr()->eq('name', $search));
-            //$this->logger->debug("[LabController:]Sandbox search detected");
-            
+            $this->logger->debug("[LabController:indexAction]::Sandbox search detected"); 
         }
 
         if ($author > 1) {
@@ -187,8 +186,7 @@ class LabController extends Controller
             ->andWhere(Criteria::expr()->eq('isTemplate', false))
             ->orderBy([
                 $orderBy => $sortDirection
-            ])
-        ;
+            ]);
 
         $labs = $this->labRepository->matching($criteria);
         $count = $labs->count();
@@ -239,6 +237,9 @@ class LabController extends Controller
         ]);
     }
 
+    
+    /*
+     
     #[Route(path: '/dashboard/labs', name: 'dashboard_labs')]
     public function dashboardIndexAction(Request $request, UserRepository $userRepository)
     {
@@ -272,7 +273,7 @@ class LabController extends Controller
             'author' => $author,
         ]);
     }
-
+        */
     
 	#[Get('/api/labs/template', name: 'api_get_labs_template')]
 	#[Security("is_granted('ROLE_TEACHER') or is_granted('ROLE_ADMINISTRATOR')", message: "Access denied.")]
