@@ -3,6 +3,11 @@
 
 {% block title %}Edit Architecture - {{ parent() }}{% endblock %}
 
+{% block sidebar %}
+    {% set category = 'architectures' %}
+    {{ parent() }}
+{% endblock %}
+
 {% block wrapper %}
 <div class="content-title mb-4">
     <h1>Edit Architecture: {{ arch.name }}</h1>
