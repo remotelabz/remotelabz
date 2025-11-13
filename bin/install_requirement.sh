@@ -111,11 +111,14 @@ cat > /etc/openvpn/server/server.conf << EOF
 port 1194
 proto udp
 dev tun
+tun-mtu 1400
+mssfix 1360
 ca ca.crt
 cert RemoteLabz-VPNServer.crt
 key RemoteLabz-VPNServer.key
 dh dh2048.pem
 cipher AES-256-GCM
+ncp-disable
 tls-auth ta.key 0
 server 10.8.0.0 255.255.255.0
 keepalive 10 120
