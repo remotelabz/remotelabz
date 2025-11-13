@@ -49,7 +49,7 @@ nobind
 persist-key
 persist-tun
 verb 1
-keepalive 10 120
+keepalive 5 30
 port 1194
 proto udp
 comp-lzo

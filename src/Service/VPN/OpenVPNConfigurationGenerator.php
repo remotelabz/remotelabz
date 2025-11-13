@@ -82,7 +82,8 @@ nobind
 persist-key
 persist-tun
 verb 1
-keepalive 10 120
+ncp-disable
+keepalive 5 30
 port 1194
 proto udp
 remote-cert-tls server
