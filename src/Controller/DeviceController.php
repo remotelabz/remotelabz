@@ -704,7 +704,7 @@ class DeviceController extends Controller
             $device->addControlProtocolType($controlProtocolType[0]);
         }
 
-            $this->logger->debug("data ",$data);
+        $this->logger->debug("[DeviceController:addDevice]::data ",$data);
         if (array_key_exists('ISO',$data)) {
             foreach($data['ISO'] as $iso) {
                 $iso = $this->isoRepository->findOneById($iso);

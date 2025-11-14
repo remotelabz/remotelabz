@@ -96,7 +96,6 @@ class DeviceSandboxController extends Controller
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
         $deviceStarted = [];
 
-        // Récupérer les ISOs pour chaque device
         foreach ($lab->getDevices()->getValues() as $device) {
             $deviceStarted[$device->getId()] = false;
             if ($userLabInstance && $userLabInstance->getUserDeviceInstance($device)) {
