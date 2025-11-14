@@ -210,6 +210,11 @@ class LabController extends Controller
             }
         }
 
+        $criteria_Sandbox = Criteria::create()
+            ->where(Criteria::expr()->startsWith('name', 'Sandbox_'));
+
+        $nb_sandbox = $this->labRepository->matching($criteria_Sandbox)->count();
+
         $currentCount = $labs->count();
         // paging results
         try {
@@ -225,9 +230,9 @@ class LabController extends Controller
         return $this->render('lab/index.html.twig', [
             'labs' => $labs,
             'count' => [
-                'total' => $count,
+                'total' => $count-$nb_sandbox,
                 'current' => $currentCount,
-                'virtual' => $virtualCount,
+                'virtual' => $virtualCount-$nb_sandbox,
                 'physical' => $physicalCount
             ],
             'search' => $search,
