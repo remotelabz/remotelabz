@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Flavor;
+use App\Entity\OperatingSystem;
+use App\Entity\Device;
 use App\Form\FlavorType;
 use App\Repository\FlavorRepository;
 use Doctrine\Common\Collections\Criteria;
@@ -161,6 +163,20 @@ class FlavorController extends Controller
     {
         if (!$flavor = $this->flavorRepository->find($id)) {
             throw new NotFoundHttpException("Flavor " . $id . " does not exist.");
+        }
+    
+        $device = $this->entityManager->getRepository(Device::class)
+            ->findBy(['flavor' => $flavor]);
+
+        if (count($device) > 0) {
+            if ('json' === $request->getRequestFormat()) {
+                return $this->json([
+                    'error' => 'Cannot delete flavor because it is used by ' . count($device) . ' device(s).'
+                ], 409); // 409 Conflict
+            }
+
+            $this->addFlash('danger', 'Cannot delete flavor because it is used by ' . count($device) . ' device(s).');
+            return $this->redirectToRoute('flavors');
         }
 
         $entityManager = $this->entityManager;

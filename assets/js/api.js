@@ -40,14 +40,13 @@ export default class API {
     }
 
     delete(url) {
-        API.getInstance().delete(url)
+        return API.getInstance().delete(url)
         .then(() => {
             $('table.dataTable').DataTable().ajax.reload();
 
             toast.success("Item has been deleted.", {
             });
-        })
-        
+        });
     }
 }
 

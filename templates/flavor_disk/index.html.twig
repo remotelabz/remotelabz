@@ -13,18 +13,16 @@
 {% endblock %}
 
 {% block wrapper %}
-<div class="top-panel">
-    <div class="d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-hdd me-2"></i> Disk Flavors
-        </h1>
-        <div class="quick-actions">
-            <a class="btn btn-success" role="button" href="{{ path('flavor_disk_new') }}">
-                <i class="fas fa-plus me-2"></i> New Disk Flavor
-            </a>
+<div class="content-title">
+        <div class="content-title-infos">
+            <h1 class="fas fa-hdd"> {{ 'Disk Flavors'|trans }}</h1>
+        </div>
+        <div class="content-title-actions">
+            <a href="{{ path('flavor_disk_new') }}" class="btn btn-success">{{ 'New Disk Flavor'|trans }}</a>
         </div>
     </div>
-</div>
+
+
 
 <div class="labs-panel mt-3">
     {% if flavorDisks is empty %}
