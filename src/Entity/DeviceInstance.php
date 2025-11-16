@@ -384,6 +384,5 @@ class DeviceInstance extends Instance
                 }
             $this->addControlProtocolTypeInstance($controlProtocolTypeInstance);
         }
-
     }
 }

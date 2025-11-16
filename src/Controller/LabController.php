@@ -175,7 +175,7 @@ class LabController extends Controller
         }
         else {$criteria = Criteria::create()
             ->where(Criteria::expr()->eq('name', $search));
-            $this->logger->debug("[LabController:indexAction]::Sandbox search detected"); 
+            //$this->logger->debug("[LabController:indexAction]::Sandbox search detected"); 
         }
 
         if ($author > 1) {

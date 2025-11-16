@@ -1209,7 +1209,7 @@ class InstanceController extends Controller
 
         $port_number = $this->isRemoteAccess($deviceInstance, $type);
         if ($port_number) {
-            $this->logger->debug("Creation proxy rule to port " . $port_number);
+            $this->logger->debug("[InstanceController:viewInstanceAction]::Creation proxy rule to port " . $port_number);
             try {
                 if ($type == "vnc") {
                     $this->proxyManager->createDeviceInstanceProxyRoute(

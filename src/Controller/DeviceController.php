@@ -570,6 +570,17 @@ class DeviceController extends Controller
                 if ($controlProtocolTypes == []) {
                     $controlProtocolTypes = '';
                 }
+                
+                $isos=[];
+
+                foreach($device->getIsos() as $iso) {
+                    $id=$iso->getId();
+                    $this->logger->debug("[DeviceController:update_yaml]::Add iso id ".$id);
+                    array_push($isos, $id);
+                }
+                if ($isos == []) {
+                    $isos = '';
+                }
 
                 $deviceData = [
                     "name" => $device->getName(),
@@ -591,7 +602,8 @@ class DeviceController extends Controller
                     "config_script" => "embedded",
                     "ethernet" => 1,
                     "virtuality" => $virtuality,              
-                    "qemu_options"=>$device->getOtherOptions()
+                    "qemu_options"=>$device->getOtherOptions(),
+                    "isos" => $isos
                 ];
                 
                 if (!is_null($device->getOperatingSystem()->getArch())){
@@ -887,10 +899,10 @@ class DeviceController extends Controller
 
             if ( !empty($controlProtocolType_json) ) {
                 foreach ($controlProtocolType_json as $controlProtoType){
-                    $this->logger->debug("ControlProtoType : ",$controlProtoType);
+                    $this->logger->debug("[DeviceController:updateAction]::ControlProtocolType : ",$controlProtoType);
                     //array_push($device_json['controlProtocolTypes'],$this->controlProtocolTypeRepository->find($controlProtoType['id']));
                     array_push($device_json['controlProtocolTypes'],(string)$controlProtoType['id']);
-                    $this->logger->debug("controlProtocolTypes  : ",$device_json['controlProtocolTypes']);
+                    $this->logger->debug("[DeviceController:updateAction]::controlProtocolTypes  : ",$device_json['controlProtocolTypes']);
                 }
             }
             
@@ -1188,6 +1200,7 @@ class DeviceController extends Controller
                 "config_script" => "embedded",
                 "ethernet" => 1,
                 "virtuality"=> $device->getVirtuality(),
+                "qemu_options"=>$device->getOtherOptions(),
                 "isos" => $isos
         ];
         

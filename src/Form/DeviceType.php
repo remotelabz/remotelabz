@@ -71,6 +71,7 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'empty_data' => ''
             ])
+
             ->add('icon', ChoiceType::class, [
                 'choices' => $this->getAvailableIcons(),
                 'attr' => [
@@ -80,6 +81,9 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Choose an icon...'
             ])
+
+            
+
             ->add('operatingSystem', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'query_builder' => function(OperatingSystemRepository $operatingSystemRepository) use ($virtuality): QueryBuilder {

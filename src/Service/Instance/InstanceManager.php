@@ -206,8 +206,7 @@ class InstanceManager
             }
 
             $network = $this->networkManager->getAvailableSubnet();
-
-            
+           
             if (!$network) {
                 throw new NoNetworkAvailableException();
             }
@@ -217,14 +216,14 @@ class InstanceManager
                 ->setNetwork($network)
                 ->populate();
                 
-        if (!$this->singleServer) {// One server for the Front and one server for the worker
-            if (IPTools::routeExists($network))
-                $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
-            else {
-                $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
-                IPTools::routeAdd($network,$worker);
+            if (!$this->singleServer) {// One server for the Front and one server for the worker
+                if (IPTools::routeExists($network))
+                    $this->logger->debug("[InstanceManager:create]::Route to ".$network." exists, via ".$worker);
+                else {
+                    $this->logger->debug("[InstanceManager:create]::Route to ".$network." doesn't exist, via ".$worker);
+                    IPTools::routeAdd($network,$worker);
+                }
             }
-        }
 
             if ($lab->getHasTimer() == true) {
                 $timer = explode(":",$lab->getTimer());
@@ -239,6 +238,8 @@ class InstanceManager
             $context = SerializationContext::create()->setGroups($this->workerSerializationGroups);
             $labJson = $this->serializer->serialize($labInstance, 'json', $context);
     
+            //$this->logger->debug("[InstanceManager:create]::Send labJson ".$labJson);
+
             $this->bus->dispatch(
                 new InstanceActionMessage($labJson, $labInstance->getUuid(), InstanceActionMessage::ACTION_CREATE), [
                     new AmqpStamp($worker, AMQP_NOPARAM, []),

@@ -399,13 +399,12 @@ class OperatingSystemController extends Controller
             // Pas d'image URL ou fichier pour un Blank OS
             $operatingSystem->setImageUrl(null);
             
-            
             // Construire le nom de l'image au format "osname_flavor"
             $flavorName = $operatingSystem->getFlavorDisk()->getName();
             
             $imageName = preg_replace('/[ .]/','_',trim($name)). '_' . $flavorName;
             //$operatingSystem->setImage($imageName);
-            $operatingSystem->setImageFilename($imageName);
+            $operatingSystem->setImageFilename($imageName.".qcow2");
             
             $this->logger->debug('[OperatingSystemController:newBlank]::Image name set from '.$name.' to '.$imageName);
             
