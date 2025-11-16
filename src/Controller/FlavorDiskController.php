@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\FlavorDisk;
+use App\Entity\OperatingSystem;
 use App\Form\FlavorDiskType;
 use App\Repository\FlavorDiskRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -69,6 +70,22 @@ class FlavorDiskController extends AbstractController
     public function delete(Request $request, FlavorDisk $flavorDisk, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$flavorDisk->getId(), $request->request->get('_token'))) {
+
+            $operatingSystems = $entityManager->getRepository(OperatingSystem::class)
+                ->findBy(['flavorDisk' => $flavorDisk]);
+
+            if (count($operatingSystems) > 0) {
+                if ('json' === $request->getRequestFormat()) {
+                    return $this->json([
+                        'error' => 'Cannot delete flavor because it is used by at least ' . count($operatingSystems) . ' operating system(s).'
+                    ], 409); // 409 Conflict
+                }
+
+                $this->addFlash('danger', 'Cannot delete flavor because it is used by at least ' . count($operatingSystems) . ' operating system(s) (OS Name:'.$operatingSystems[0]->getName().').');
+                return $this->redirectToRoute('flavor_disk_index');
+            }
+
+
             $entityManager->remove($flavorDisk);
             $entityManager->flush();
 

@@ -1,5 +1,8 @@
 {% extends 'dashboard.base.html.twig' %}
 
+{% block title %}Flavors - {{ parent() }}{% endblock %}
+
+
 {% block breadcrumbs %}
     {% set breadcrumbs = breadcrumbs|merge({ 'Flavors': path('flavors') }) %}
     {{ parent() }}
