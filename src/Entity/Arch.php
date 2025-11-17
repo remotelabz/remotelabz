@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ArchRepository;
 use Doctrine\ORM\Mapping as ORM;
-
+use JMS\Serializer\Annotation as Serializer;
 
 #[ORM\Entity(repositoryClass: ArchRepository::class)]
 class Arch
