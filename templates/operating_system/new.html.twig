@@ -56,7 +56,7 @@
                                     {% if (operatingSystem.name|default('')) == 'Service' %}      
                                         <div class="form-control"> {{ operatingSystem.name }}</div>
                                     {% else %}
-                                        {{ form_widget(operatingSystemForm.name, {'attr': {'class': 'form-control', 'placeholder': 'Operating system name'|trans}}) }}%}
+                                        {{ form_widget(operatingSystemForm.name, {'attr': {'class': 'form-control', 'placeholder': 'Operating system name'|trans}}) }}
                                     {% endif %}
                             </div>
                             {{ form_errors(operatingSystemForm.name) }}
