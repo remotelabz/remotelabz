@@ -141,6 +141,21 @@ class DeviceType extends AbstractType
                 'placeholder' => 'Sélectionner le bus du CD-ROM',
                 'help' => 'Type de bus pour le CD-ROM',
             ])
+            
+            // TOUJOURS ajouter le champ isos
+            // Le JavaScript se chargera de le masquer/afficher selon l'OS
+            ->add('isos', EntityType::class, [
+                'class' => Iso::class,
+                'choice_label' => function(Iso $iso) {
+                    $arch = $iso->getArch();
+                    $architecture = $arch ? $arch->getName() : null;
+                    return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
+                },
+                'multiple' => true,
+                'required' => false,
+                'placeholder' => 'Select ISO images',
+                'help' => 'ISO files to mount as CD-ROM',
+            ])
 
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
@@ -195,65 +210,8 @@ class DeviceType extends AbstractType
                 ])
             ->add('submit', SubmitType::class);
 
-        // Ajout dynamique du champ isos selon l'operating system sélectionné
-        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
-            $device = $event->getData();
-            $form = $event->getForm();
-
-            // Toujours ajouter le champ isos (il sera masqué par JS si nécessaire)
-            // Pour un nouveau device, on l'ajoute par défaut
-            // Pour un device existant, on vérifie l'OS
-            $shouldAddIsos = true;
-            
-            if ($device && $device->getOperatingSystem()) {
-                // Si le device a déjà un OS, vérifier le flavorDisk
-                $shouldAddIsos = $device->getOperatingSystem()->getFlavorDisk() !== null;
-            }
-            
-            // Pour les nouveaux devices ou ceux avec un OS blank, ajouter le champ
-            if ($shouldAddIsos || !$device || !$device->getId()) {
-                $form->add('isos', EntityType::class, [
-                    'class' => Iso::class,
-                    'choice_label' => function(Iso $iso) {
-                        $arch = $iso->getArch();
-                        $architecture = $arch ? $arch->getName() : null;
-                        return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
-                    },
-                    'multiple' => true,
-                    'required' => false,
-                    'placeholder' => 'Select ISO images',
-                    'help' => 'ISO files to mount as CD-ROM',
-                ]);
-            }
-        });
-
-        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
-            $data = $event->getData();
-            $form = $event->getForm();
-
-            // Vérifier si un operating system est sélectionné dans les données soumises
-            if (isset($data['operatingSystem'])) {
-                // Utiliser le formulaire parent pour accéder aux options
-                $options = $form->getConfig()->getOptions();
-                
-                // Pas besoin de l'EntityManager ici, on utilise juste la présence du champ
-                // Le champ sera validé côté serveur de toute façon
-                if (!$form->has('isos')) {
-                    $form->add('isos', EntityType::class, [
-                        'class' => Iso::class,
-                        'choice_label' => function(Iso $iso) {
-                            $arch = $iso->getArch();
-                            $architecture = $arch ? $arch->getName() : null;
-                            return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
-                        },
-                        'multiple' => true,
-                        'required' => false,
-                        'placeholder' => 'Select ISO images',
-                        'help' => 'ISO files to mount as CD-ROM',
-                    ]);
-                }
-            }
-        });
+        // SUPPRIMÉ: Plus besoin des événements PRE_SET_DATA et PRE_SUBMIT
+        // puisque le champ isos est maintenant toujours présent
     }
 
     public function configureOptions(OptionsResolver $resolver): void
