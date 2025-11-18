@@ -132,6 +132,7 @@ $(function () {
     const osSelect = document.querySelector('select[name*="[operatingSystem]"]');
     const protocolSelect = document.querySelector('select[name*="[controlProtocolTypes]"]');
     const isoFieldsContainer = document.getElementById('iso-fields-container');
+    const isosSelect = document.querySelector('select[name*="[isos]"]');
     
     // Fonction pour mettre à jour les protocoles de contrôle
     function updateProtocols() {
@@ -157,6 +158,56 @@ $(function () {
         });
     }
     
+    // Fonction pour filtrer les ISO selon l'architecture de l'OS sélectionné
+    function filterIsosByArchitecture() {
+        if (!osSelect || !isosSelect) return;
+        
+        const selectedOption = osSelect.options[osSelect.selectedIndex];
+        const osArchId = selectedOption.getAttribute('data-arch-id');
+        
+        // Sauvegarder les ISO actuellement sélectionnés
+        const currentlySelected = Array.from(isosSelect.options)
+            .filter(option => option.selected)
+            .map(option => option.value);
+        
+        // Parcourir toutes les options ISO
+        Array.from(isosSelect.options).forEach(option => {
+            const isoArchId = option.getAttribute('data-arch-id');
+            
+            if (osArchId === '' || isoArchId === '') {
+                // Si l'OS ou l'ISO n'ont pas d'architecture, afficher l'option
+                option.style.display = '';
+                option.disabled = false;
+            } else if (isoArchId === osArchId) {
+                // Même architecture : afficher l'option
+                option.style.display = '';
+                option.disabled = false;
+            } else {
+                // Architecture différente : masquer et désactiver l'option
+                option.style.display = 'none';
+                option.disabled = true;
+                option.selected = false; // Désélectionner si l'architecture ne correspond plus
+            }
+        });
+        
+        // Restaurer les sélections qui sont toujours valides
+        currentlySelected.forEach(value => {
+            const option = isosSelect.querySelector(`option[value="${value}"]`);
+            if (option && !option.disabled) {
+                option.selected = true;
+            }
+        });
+        
+        // Afficher un message si aucun ISO n'est disponible pour cette architecture
+        const visibleOptions = Array.from(isosSelect.options).filter(
+            option => option.style.display !== 'none' && !option.disabled
+        );
+        
+        if (visibleOptions.length === 0 && osArchId !== '') {
+            console.warn('No ISO available for the selected OS architecture');
+        }
+    }
+    
     // Fonction pour gérer l'affichage des champs ISO
     function toggleIsoFields() {
         if (!osSelect || !isoFieldsContainer) return;
@@ -164,26 +215,15 @@ $(function () {
         const selectedOption = osSelect.options[osSelect.selectedIndex];
         const hasFlavorDisk = selectedOption.getAttribute('data-has-flavor-disk') === '1';
         
-        // Rechercher les éléments
-        const cdromBusRow = isoFieldsContainer.querySelector('[id*="cdrom_bus_type"]')?.closest('.mb-3, .form-group, .row');
-        const isosRow = isoFieldsContainer.querySelector('[id*="isos"]')?.closest('.mb-3, .form-group, .row');
-        
         if (hasFlavorDisk) {
-            // Afficher les champs
-            if (cdromBusRow) {
-                cdromBusRow.style.display = '';
-            }
-            if (isosRow) {
-                isosRow.style.display = '';
-            }
+            // Afficher le conteneur
+            isoFieldsContainer.style.display = '';
+            
+            // Filtrer les ISO par architecture
+            filterIsosByArchitecture();
         } else {
-            // Masquer les champs
-            if (cdromBusRow) {
-                cdromBusRow.style.display = 'none';
-            }
-            if (isosRow) {
-                isosRow.style.display = 'none';
-            }
+            // Masquer le conteneur
+            isoFieldsContainer.style.display = 'none';
             
             // Réinitialiser les sélections
             const cdromBusSelect = document.querySelector('select[name*="[cdrom_bus_type]"]');
@@ -191,7 +231,6 @@ $(function () {
                 cdromBusSelect.value = '';
             }
             
-            const isosSelect = document.querySelector('select[name*="[isos]"]');
             if (isosSelect) {
                 Array.from(isosSelect.options).forEach(option => {
                     option.selected = false;

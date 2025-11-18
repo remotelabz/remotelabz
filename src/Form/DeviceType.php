@@ -12,6 +12,7 @@ use App\Entity\ControlProtocolType;
 use App\Entity\Iso;
 use App\Entity\Arch;
 use App\Repository\OperatingSystemRepository;
+use App\Repository\IsoRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -23,6 +24,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormInterface;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -103,8 +105,10 @@ class DeviceType extends AbstractType
                     return $os->getName() . ' (' . $os->getHypervisor()->getName() . ')';
                 },
                 'choice_attr' => function(OperatingSystem $os) {
+                    $arch = $os->getArch();
                     return [
-                        'data-has-flavor-disk' => $os->getFlavorDisk() !== null ? '1' : '0'
+                        'data-has-flavor-disk' => $os->getFlavorDisk() !== null ? '1' : '0',
+                        'data-arch-id' => $arch ? $arch->getId() : ''
                     ];
                 },
                 'help' => 'Image disk used for this device.',
@@ -140,23 +144,35 @@ class DeviceType extends AbstractType
                 'required' => false,
                 'placeholder' => 'Sélectionner le bus du CD-ROM',
                 'help' => 'Type de bus pour le CD-ROM',
-            ])
+            ]);
             
-            // TOUJOURS ajouter le champ isos
-            // Le JavaScript se chargera de le masquer/afficher selon l'OS
-            ->add('isos', EntityType::class, [
+            // Ajout du champ isos avec toutes les options
+            // Le filtrage sera géré côté JavaScript
+            $builder->add('isos', EntityType::class, [
                 'class' => Iso::class,
+                'query_builder' => function(IsoRepository $isoRepository): QueryBuilder {
+                    return $isoRepository->createQueryBuilder('i')
+                        ->leftJoin('i.arch', 'a')
+                        ->orderBy('i.name', 'ASC');
+                },
                 'choice_label' => function(Iso $iso) {
                     $arch = $iso->getArch();
                     $architecture = $arch ? $arch->getName() : null;
                     return $iso->getName() . ($architecture ? ' (' . $architecture . ')' : '');
                 },
+                'choice_attr' => function(Iso $iso) {
+                    $arch = $iso->getArch();
+                    return [
+                        'data-arch-id' => $arch ? $arch->getId() : ''
+                    ];
+                },
                 'multiple' => true,
                 'required' => false,
                 'placeholder' => 'Select ISO images',
-                'help' => 'ISO files to mount as CD-ROM',
-            ])
+                'help' => 'ISO files to mount as CD-ROM (filtered by OS architecture)',
+            ]);
 
+            $builder
             ->add('flavor', EntityType::class, [
                 'class' => Flavor::class,
                 'choice_label' => 'name'
@@ -209,9 +225,6 @@ class DeviceType extends AbstractType
                     'help' => 'Advanced QEMU options',
                 ])
             ->add('submit', SubmitType::class);
-
-        // SUPPRIMÉ: Plus besoin des événements PRE_SET_DATA et PRE_SUBMIT
-        // puisque le champ isos est maintenant toujours présent
     }
 
     public function configureOptions(OptionsResolver $resolver): void
