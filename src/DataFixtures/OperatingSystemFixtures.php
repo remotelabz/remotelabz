@@ -18,8 +18,8 @@ class OperatingSystemFixtures extends Fixture implements DependentFixtureInterfa
 
         $operatingSystem = new OperatingSystem();
 
-        $operatingSystem
-            ->setName('Alpine3.10')
+        $operatingSystem->setName('Alpine3.10');
+		$operatingSystem
             ->setImageUrl('https://docs.remotelabz.com/rlz-img/alpinelab1.qcow2')
             ->setHypervisor($this->getReference('qemu', Hypervisor::class))
             ->setArch($arch)
