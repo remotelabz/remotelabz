@@ -760,6 +760,7 @@ class InstanceManager
         $newOS->setName($name);
         $newOS->setImageFilename($imageName);
         $newOS->setHypervisor($operatingSystem->getHypervisor());
+        $newOS->setArch($operatingSystem->getArch());
         $this->entityManager->persist($newOS);
         return $newOS;
     }
