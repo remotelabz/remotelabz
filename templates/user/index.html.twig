@@ -193,6 +193,8 @@
                                             <label class="badge badge-secondary">Editor</label>
                                         {% elseif 'ROLE_TEACHER' in user.roles %}
                                             <label class="badge badge-info">Teacher</label>
+                                        {% elseif 'ROLE_USER' in user.roles %}
+                                            <label class="badge badge-light">Student</label>
                                         {% endif %}
                                         {% if not user.enabled %}
                                             <label class="badge badge-warning">Blocked</label>

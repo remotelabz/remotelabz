@@ -1,6 +1,10 @@
 .badge {
     &.badge-default {
-        background-color: rgba(0,0,0,0.07);
+        background-color: rgba(0, 0, 0, 0.07);
+    }
+    &.badge-light {
+        background-color: rgb(0, 229, 255);
+        color: black;
     }
 }
 
@@ -9,5 +13,6 @@
         &.badge-default {
             background-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
+
     }
 }
