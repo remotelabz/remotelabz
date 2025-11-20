@@ -28,6 +28,10 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
 
     protected $vpn_address;
 
+    protected $protocol;
+
+    protected $port;
+
     protected $validity;
 
     public function __construct(
@@ -43,7 +47,9 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         string $TLSKey,
         string $exportPath,
         int $validity,
-        string $vpn_address
+        string $vpn_address,
+        string $protocol,
+        int $port
     ) {
         $this->country = $country;
         $this->province = $province;
@@ -58,6 +64,8 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
         $this->TLSKey = $TLSKey;
         $this->vpn_address = $vpn_address;
         $this->validity = $validity;
+        $this->protocol = $protocol;
+        $this->port = $port;
     }
 
     abstract public function generate(&$privateKey, &$certificate);
@@ -234,6 +242,42 @@ abstract class AbstractVPNConfigurationGenerator implements VPNConfiguratorGener
     public function setVpnAddress(string $remote): VPNConfiguratorGeneratorInterface
     {
         $this->vpn_address = $vpn_address;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getVpnProtocol(): string
+    {
+        return $this->protocol;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setVpnProtocol(string $protocol): VPNConfiguratorGeneratorInterface
+    {
+        $this->protocol = $protocol;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getVpnPort(): string
+    {
+        return $this->port;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setVpnPort(string $port): VPNConfiguratorGeneratorInterface
+    {
+        $this->port = $port;
 
         return $this;
     }
