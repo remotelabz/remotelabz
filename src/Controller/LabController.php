@@ -180,7 +180,13 @@ class LabController extends Controller
 
         if ($author > 1) {
             $criteria->andWhere(Criteria::expr()->eq('author', $userRepository->find($author)));
-        }
+            $criteria_Sandbox = Criteria::create()
+            	->where(Criteria::expr()->startsWith('name', 'Sandbox_'))
+				->andWhere(Criteria::expr()->eq('author', $userRepository->find($author)));
+		} else {
+			 $criteria_Sandbox = Criteria::create()
+            	->where(Criteria::expr()->startsWith('name', 'Sandbox_'));
+		}
 
         $criteria
             ->andWhere(Criteria::expr()->eq('isTemplate', false))
@@ -209,9 +215,6 @@ class LabController extends Controller
                 });
             }
         }
-
-        $criteria_Sandbox = Criteria::create()
-            ->where(Criteria::expr()->startsWith('name', 'Sandbox_'));
 
         $nb_sandbox = $this->labRepository->matching($criteria_Sandbox)->count();
 
