@@ -3,9 +3,11 @@
 #    rm package-lock.json
 #fi;
 cd /opt/remotelabz
-mv /opt/remotelabz/config/packages/messenger.yaml ~/
-mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
 git fetch
+mv /opt/remotelabz/config/packages/messenger.yaml ~/
+git restore /opt/remotelabz/config/packages/messenger.yaml
+mv /opt/remotelabz/config/packages/dev/web_profiler.yaml ~/
+git restore /opt/remotelabz/config/packages/dev/web_profiler.yaml
 git pull
 mv ~/messenger.yaml /opt/remotelabz/config/packages/messenger.yaml
 mv ~/web_profiler.yaml /opt/remotelabz/config/packages/dev/web_profiler.yaml
