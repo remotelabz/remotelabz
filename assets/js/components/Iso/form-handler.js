@@ -102,8 +102,12 @@ export class IsoFormHandler {
                 size: 0
             });
         } else if (urlValue) {
-            // Mode URL déjà présélectionné par le formulaire
-            // Rien à faire, le template gère déjà ça
+            // Mode URL présélectionné par le formulaire
+			const filenameRadio = document.getElementById('source-url');
+            if (filenameRadio) {
+               	filenameRadio.checked = true;
+               	this.handleSourceTypeChange();
+          }
         } else if (filenameValue && !uploadedFilename) {
             // Mode filename only - sélectionner automatiquement ce mode
             const filenameRadio = document.getElementById('source-filename');
