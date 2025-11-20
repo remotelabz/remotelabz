@@ -12,6 +12,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -33,7 +34,6 @@ use App\Entity\OperatingSystem;
 use App\Service\Worker\WorkerManager;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Files2WorkerManager;
-
 
 class ConfigWorkerController extends Controller
 {
@@ -77,7 +77,7 @@ class ConfigWorkerController extends Controller
 
     
 	#[Get('/api/config/workers', name: 'api_get_workers')]
-	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+	#[IsGranted(new Expression('is_granted("ROLE_ADMINISTRATOR") or is_granted("ROLE_TEACHER_EDITOR")'), message: "Access denied.")]
     #[Route(path: '/admin/config', name: 'admin_config')]
     public function indexAction(Request $request)
     {
