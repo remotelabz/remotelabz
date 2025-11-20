@@ -67,6 +67,8 @@ class OpenVPNConfigurationGenerator extends AbstractVPNConfigurationGenerator im
     public function generateConfig(string $privateKey, string $certificate): string
     {
         $vpn_address = $this->getVpnAddress();
+        $port = $this->getVpnPort();
+        $protocol = $this->getVpnProtocol();
         $CACert = file_get_contents($this->getCACert());
         $TLSKeyContent = file_get_contents($this->getTLSKey());
         $config = <<<END
@@ -84,8 +86,8 @@ persist-tun
 verb 1
 ncp-disable
 keepalive 5 30
-port 1194
-proto udp
+port $port
+proto $protocol
 remote-cert-tls server
 auth-nocache
 <ca>

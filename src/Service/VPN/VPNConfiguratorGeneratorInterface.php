@@ -95,6 +95,26 @@ interface VPNConfiguratorGeneratorInterface
     public function setVpnAddress(string $remote): self;
 
     /**
+     * Get the remote addr to use in OVPN files.
+     */
+    public function getVpnProtocol(): string;
+
+    /**
+     * Set the remote addr to use in OVPN files.
+     */
+    public function setVpnProtocol(string $remote): self;
+
+    /**
+     * Get the remote addr to use in OVPN files.
+     */
+    public function getVpnPort(): string;
+
+    /**
+     * Set the remote addr to use in OVPN files.
+     */
+    public function setVpnPort(string $remote): self;
+
+    /**
      * Get the certificate validity (in days).
      */
     public function getValidity(): int;

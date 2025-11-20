@@ -35,6 +35,8 @@ parameters:
     app.services.proxy.https: '%env(bool:REMOTELABZ_PROXY_USE_HTTPS)%'
     app.services.proxy.wss: '%env(bool:REMOTELABZ_PROXY_USE_WSS)%'
     app.services.vpn: '%env(resolve:VPN_ADDRESS)%'
+    app.services.vpn_protocol: '%env(resolve:VPN_PROTOCOL)%'
+    app.services.vpn_port: '%env(resolve:VPN_PORT)%'
 
     app.enable_jitsi_call: '%env(resolve:ENABLE_JITSI_CALL)%'
     app.jitsi_call_url: '%env(resolve:JITSI_CALL_URL)%'
@@ -201,6 +203,8 @@ services:
             $exportPath: '%app.ssl.certs.dir%'
             $validity: '%app.ssl.certs.validity%'
             $vpn_address: '%app.services.vpn%'
+            $protocol: '%app.services.vpn_protocol%'
+            $port: '%app.services.vpn_port%'
     
     App\Service\VPN\VPNConfiguratorGeneratorInterface: '@openvpn_configuration_generator'
 
