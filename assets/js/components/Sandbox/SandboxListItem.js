@@ -190,6 +190,18 @@ class SandboxListItem extends Component {
         window.location.href = "/admin/sandbox"
     }
 
+	deleteLabSandbox() {
+		if(this.state.lab.id){
+			if(!this.deleteLab(this.state.lab.id)) {
+				this.deleteLab(this.props.item.id);
+			} else {
+				toast.error("This lab is used by an instance !", {});
+			}
+		} else {
+			this.deleteLab(this.props.item.id);
+		}
+	}
+
     render() {
         let divBorder;
         let button;
@@ -197,7 +209,7 @@ class SandboxListItem extends Component {
         //console.log("Rendering state is", this.state);
         //console.log("Rendering props ", this.props);
 
-        if(this.state.isLoading) {
+		if(this.state.isLoading) {
             button = (<Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
                 <Spinner animation="border" size="sm" />
             </Button>)
@@ -209,7 +221,6 @@ class SandboxListItem extends Component {
 
         if(this.props.itemsLength != (this.props.index +1)) {
             divBorder = (
-            
             <div className="wrapper d-flex align-items-center lab-item border-bottom">
                 <div className="lab-item-left d-flex flex-column">
                     <div>
@@ -320,7 +331,7 @@ class SandboxListItem extends Component {
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="default" onClick={()=>this.setState({showDeleteLabModal: false})}>Close</Button>
-                <Button variant="danger" onClick={()=>this.deleteLab(this.props.item.id)}>Delete</Button>
+                <Button variant="danger" onClick={()=>this.deleteLabSandbox()}>Delete</Button>
             </Modal.Footer>
         </Modal>
         <Modal show={this.state.showDeleteDeviceModal} onHide={()=>this.setState({showDeleteDeviceModal: false})}>
