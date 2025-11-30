@@ -349,9 +349,16 @@
                     console.log('LXC device created:', result);
                     window.location.href = `/admin/operating-systems/${result.os_id}`;
                 } else {
-                    throw new Error(result.message || 'Error creating LXC device');
+                    if (result.error && result.message) {
+                        toast.error(result.message, {
+                            autoClose: 10000,
+                        });
+                        window.location.href = `/admin/operating-systems`;
+
+                    } else {
+                        throw new Error(result.message || 'Error creating LXC device');
+                    }
                 }
-                
             } catch (error) {
                 console.error('Error creating LXC device:', error);
                 loadingDiv.style.display = 'none';
