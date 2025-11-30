@@ -83,10 +83,14 @@ export class OperatingSystemFormHandler {
             if (existingFilename && this.lxcFilenameInput) {
                 console.log('Setting LXC filename:', existingFilename);
                 this.lxcFilenameInput.value = existingFilename;
+                this.lxcFilenameInput.readOnly = true;  // Ajoutez cette ligne
                 
                 // Synchroniser avec le champ hidden
                 if (this.originalFilenameField) {
                     this.originalFilenameField.value = existingFilename;
+                }
+                if (this.originalFilenameHidden) {
+                    this.originalFilenameHidden.value = existingFilename;
                 }
             }
         } 
@@ -101,6 +105,11 @@ export class OperatingSystemFormHandler {
             // Si on a un filename, remplir le champ QEMU
             if (existingFilename && this.qemuFilenameInput) {
                 this.qemuFilenameInput.value = existingFilename;
+                this.qemuFilenameInput.readOnly = true;
+
+                if (this.originalFilenameHidden) {
+                   this.originalFilenameHidden.value = existingFilename;
+                }
             }
             
             // Déterminer quel type de source était utilisé lors de l'édition
@@ -165,6 +174,7 @@ export class OperatingSystemFormHandler {
         this.qemuFilenameInput = document.getElementById('qemu-filename-input');
         this.lxcFilenameInput = document.getElementById('lxc-filename-input');
         this.originalFilenameField = document.querySelector('input[name*="image_Filename"]');
+        this.originalFilenameHidden = document.querySelector('input[name*="original_filename"]');
 
         // Radio buttons et blocs
         this.radios = document.querySelectorAll('.file-source-radio');

@@ -437,6 +437,7 @@ class OperatingSystemController extends Controller
         if (null === $operatingSystem) {
             throw new NotFoundHttpException("Operating system " . $id . " does not exist.");
         }
+        $originalFilename = $operatingSystem->getImageFilename();
 
         $operatingSystemForm = $this->createForm(OperatingSystemType::class, $operatingSystem);
         $operatingSystemForm->handleRequest($request);
@@ -453,6 +454,25 @@ class OperatingSystemController extends Controller
             $imageUrl = $operatingSystemForm->get('imageUrl')->getData();
             $filenameOnly = $operatingSystemForm->get('image_Filename')->getData();
             $hypervisor = $operatingSystemForm->get('hypervisor')->getData();
+            $submittedOriginalFilename = $operatingSystemForm->get('original_filename')->getData();
+
+            if ($originalFilename && $filenameOnly && $filenameOnly !== $originalFilename) {
+                if ($submittedOriginalFilename !== $originalFilename) {
+                    $this->addFlash('danger', 'Security error: Cannot modify existing filename.');
+                    $this->logger->warning('[OperatingSystemController:editAction]::Attempt to modify existing filename blocked', [
+                        'original' => $originalFilename,
+                        'submitted' => $filenameOnly,
+                        'user' => $this->getUser()->getName()
+                    ]);
+                    
+                    return $this->render('operating_system/new.html.twig', [
+                        'operatingSystem' => $operatingSystem,
+                        'operatingSystemForm' => $operatingSystemForm->createView(),
+                        'sizeLimit' => $maxUploadSize,
+                        'edit' => true
+                    ]);
+                }
+            }
 
             $this->logger->debug('[OperatingSystemController:editAction]::Form submission values:', [
                 'hypervisor' => $hypervisor ? $hypervisor->getName() : 'null',
