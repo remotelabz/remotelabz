@@ -740,8 +740,18 @@ class OperatingSystemController extends Controller
                 $entityManager->flush();
                 $newOs_id=$newOs->getId();
                 $this->logger->info("New LXC OS - Operating system " . $newOs->getName() . " has been created by user ".$this->getUser()->getName());
+            } else {
+                $this->logger->info("[OperatingSystemController:newLxcAction]::This LXC OS ".$osName." already exist");
+                
+                // Retourner une réponse JSON avec un statut d'erreur
+                return $this->json([
+                    'error' => true,
+                    'message' => 'LXC OS already exists'
+                ], 409, [], []); // 409 = Conflict
             }
             $values = ['os'=> ucfirst($data['os']), 'model'=> $data['version'],'os_id'=>$newOs_id];
+            $this->logger->debug("[OperatingSystemController:newLxcAction]::The values of json is ",$values);
+
             return $this->json($values, 200, [], []);
         }
 
