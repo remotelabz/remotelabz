@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Arch;
+use App\Entity\OperatingSystem;
 use App\Form\ArchType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -49,6 +50,20 @@ class ArchController extends AbstractController
         $arch = $entityManager->getRepository(Arch::class)->find($id);
 
         if ($arch) {
+
+	    $operatingSystems = $entityManager->getRepository(OperatingSystem::class)->findBy(["arch"=>$arch]);
+
+	    if (count($operatingSystems) > 0) {
+                if ('json' === $request->getRequestFormat()) {
+                    return $this->json([
+                        'error' => 'Cannot delete arch because it is used by at least ' . count($operatingSystems) . ' operating system(s).'
+                    ], 409); // 409 Conflict
+                }
+
+                $this->addFlash('danger', 'Cannot delete arch because it is used by at least ' . count($operatingSystems) . ' operating system(s) (OS Name:'.$operatingSystems[0]->getName().').');
+                return $this->redirectToRoute('arch_list');
+            }
+
             $entityManager->remove($arch);
             $entityManager->flush();
             $this->addFlash('success', 'Architecture supprimée !');
