@@ -583,6 +583,11 @@ class InstanceManager
                 new AmqpStamp($worker, AMQP_NOPARAM, []),
             ]
         );
+
+        $this->logger->info('[InstanceManager:exportDevice]::Starting synchronization of exported device to all workers');
+        $this->Sync2OS($worker, $hypervisor->getName(), $imageName);
+        $this->logger->info('[InstanceManager:exportDevice]::Synchronization completed for image '.$imageName);
+            
         return $newDevice;
     }
 
