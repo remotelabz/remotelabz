@@ -46,7 +46,15 @@ class SandboxListItem extends Component {
 
     async onModifyClick(item) {
         //console.log("SandboxListItem onModifyClick item:", item);
+
+        if (this.props.isAnyLoading) {
+            toast.warning("Please wait for the current operation to complete.", {});
+            return;
+        }
+
         this.setState({ isLoading: true});
+        this.props.setIsAnyLoading(true); // Bloquer tous les autres boutons
+
         let lab;
         let labName;
         let networkInterfaces = [];
@@ -112,6 +120,7 @@ class SandboxListItem extends Component {
                 catch (error) {
                             console.error("Catch error : Error creating device sandbox");
                             this.setState({ isLoading: false, exist: false, lab: lab});
+                            this.props.setIsAnyLoading(false); // Débloquer
                             window.location.href = "/admin/sandbox/";
                 }      
             }
@@ -209,13 +218,23 @@ class SandboxListItem extends Component {
         //console.log("Rendering state is", this.state);
         //console.log("Rendering props ", this.props);
 
-		if(this.state.isLoading) {
-            button = (<Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
-                <Spinner animation="border" size="sm" />
-            </Button>)
+        if(this.state.isLoading || this.props.isAnyLoading) {
+            button = (
+                <Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
+                    <Spinner animation="border" size="sm" />
+                </Button>
+                )
         }
         else {
-            button = (<Button variant="primary" className="mr-2 mt-2" onClick={() => this.onModifyClick(this.props.item)}> Modify </Button>
+            button = (
+                <Button
+                    variant="primary"
+                    className="mr-2 mt-2"
+                    onClick={() => this.onModifyClick(this.props.item)}
+                    disabled={this.props.isAnyLoading}
+                >
+                    Modify
+                </Button>
             )
         }
 

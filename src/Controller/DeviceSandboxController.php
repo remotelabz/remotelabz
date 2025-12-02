@@ -94,6 +94,15 @@ class DeviceSandboxController extends Controller
         }
 
         $userLabInstance = $labInstanceRepository->findByUserAndLab($user, $lab);
+
+        if (!$userLabInstance) {
+            $this->logger->warning("[DeviceSandboxController:viewAction]:: Lab instance not found for lab " . $id . " and user " . $user->getId());
+            
+            // Rediriger vers la liste avec un message
+            $this->addFlash('warning', 'Lab instance is being created. Please wait a moment and try again.');
+            return $this->redirectToRoute('sandbox');
+        }
+
         $deviceStarted = [];
 
         foreach ($lab->getDevices()->getValues() as $device) {
@@ -135,6 +144,15 @@ class DeviceSandboxController extends Controller
             }
         }
 
+        if ($userLabInstance) {
+            foreach ($userLabInstance->getDeviceInstances() as $dev) {
+                $this->logger->debug("[DeviceSandboxController:viewAction]::Device of this lab:" . $dev->getDevice()->getId()." ".$dev->getDevice()->getName());
+                foreach ($dev->getDevice()->getIsos() as $iso) {
+                    $this->logger->debug("[DeviceSandboxController:viewAction]::Iso for this device :" . $iso->getName());
+                }
+            }
+        }
+        
         return $this->render('device_sandbox/view.html.twig', [
             'lab' => $lab,
             'labInstance' => $userLabInstance,
