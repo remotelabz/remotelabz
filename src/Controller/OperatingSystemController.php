@@ -402,7 +402,7 @@ class OperatingSystemController extends Controller
             // Construire le nom de l'image au format "osname_flavor"
             $flavorName = $operatingSystem->getFlavorDisk()->getName();
             
-            $imageName = preg_replace('/[ .]/','_',trim($name)). '_' . $flavorName;
+            $imageName = preg_replace('/[ .]/','_',trim($name)). '_' . preg_replace('/[ .]/','_',trim($flavorName));
             //$operatingSystem->setImage($imageName);
             $operatingSystem->setImageFilename($imageName.".qcow2");
             
