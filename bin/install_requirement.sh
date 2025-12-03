@@ -2,7 +2,7 @@
 
 apt-get update
 apt-get -y upgrade
-#add-apt-repository -y ppa:ondrej/php # PPRI0603 : Ajout pour l'installation de PHP8.1
+
 apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php
 apt install -y php php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip libapache2-mod-shib
 # Install php8.4 on Ubuntu 24.04
@@ -10,14 +10,15 @@ add-apt-repository ppa:ondrej/php -y
 apt update
 apt install php8.4 -y
 apt install php8.4-common php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath php8.4-ssh2 -y
+apt install haproxy
 apt autoremove -y
 a2dismod php7.4 php8.1 php8.2 php8.3
 a2enmod php8.4
 systemctl restart apache2
-php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');" # PPRI0603 : passage de la version de composer 2.2.6 à 2.8.6
+php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');"
 cp composer.phar /usr/local/bin/composer
 chmod a+x /usr/local/bin/composer
-curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - # PPRI0603 : Passage de nodejs 14 vers nodejs 16
+curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - 
 apt-get install -y nodejs
 npm install -g yarn
 npm install -g configurable-http-proxy@5.0.1
@@ -154,6 +155,15 @@ echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
 echo "net.ipv6.conf.lo.disable_ipv6=1" >> /etc/sysctl.conf
 echo "net.ipv6.conf.default.disable_ipv6=1" >> /etc/sysctl.conf
 sysctl -p
+
+# To HAProxy configuration
+rm /etc/haproxy/haproxy.cfg
+ln -s /opt/remotelabz/config/haproxy/haproxy.cfg /etc/haproxy/
+systemctl restart haproxy
+
+rm /etc/apache2/ports.conf
+ln -s /opt/remotelabz/config/apache/ports.conf /etc/apache2/
+systemctl restart apache2
 
 echo "🔥 The root password for your MySQL database is set to RemoteLabz-2022$"
 echo "🔥 The user password for the remotelabz MySQL database is set to Mysql-Pa33wrd$"

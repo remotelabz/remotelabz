@@ -31,8 +31,8 @@ function openFullscreen() {
 }
 
 function connectToVNC(protocol, host, port, path, options = {}) {
-    const url = protocol + '://' + host + ':' + port + '/' + path;
-    //const url = protocol + '://' + host + '/' + path;
+    //const url = protocol + '://' + host + ':' + port + '/' + path;
+    const url = protocol + '://' + host + '/' + path;
     //console.log('Connecting to ' + url);
     rfb = new RFB(document.getElementById('noVNCScreen'), url, options);
     rfb.scaleViewport = true;
