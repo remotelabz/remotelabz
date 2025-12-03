@@ -32,6 +32,7 @@ function openFullscreen() {
 
 function connectToVNC(protocol, host, port, path, options = {}) {
     const url = protocol + '://' + host + ':' + port + '/' + path;
+    //const url = protocol + '://' + host + '/' + path;
     //console.log('Connecting to ' + url);
     rfb = new RFB(document.getElementById('noVNCScreen'), url, options);
     rfb.scaleViewport = true;
@@ -58,14 +59,14 @@ var ctrlAltDelButton = document.getElementById('CtrlAltDelButton');
 if (ctrlAltDelButton) {
     ctrlAltDelButton.onclick = () => {
         rfb.sendCtrlAltDel();
-        //console.log("User action: sent Ctrl+Alt+Del");
+        console.log("User action: sent Ctrl+Alt+Del");
     }
 }
 
 var reconnectButton = document.getElementById('ReconnectButton');
 if (reconnectButton) {
     reconnectButton.onclick = () => {
-        //console.log("User action: reconnect to VNC");
+        console.log("User action: reconnect to VNC");
         reconnectButton.setAttribute("disabled", "disabled");
         let userRating = document.querySelector('.js-user-rating');
         let protocol = userRating.dataset.protocol;
