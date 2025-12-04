@@ -14,6 +14,8 @@ apt install haproxy
 apt autoremove -y
 a2dismod php7.4 php8.1 php8.2 php8.3
 a2enmod php8.4
+a2enmod headers 
+a2enmod remoteip
 systemctl restart apache2
 php -r "copy('https://getcomposer.org/download/2.8.6/composer.phar', 'composer.phar');"
 cp composer.phar /usr/local/bin/composer

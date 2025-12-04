@@ -1262,7 +1262,7 @@ class InstanceController extends Controller
             'type_control_access' => $type,
             'protocol' => $request->get('protocol') ?: ($this->proxyManager->getRemotelabzProxyUseWss() ? 'wss' : 'ws'),
             'host' => $request->get('host') ?: $this->proxyManager->getRemotelabzProxyServer(),
-            'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
+            //'port' => $request->get('port') ?: $this->proxyManager->getRemotelabzProxyPort(),
             'path' => $request->get('path') ?: 'device/' . $deviceInstance->getUuid()
         ]);
     }
