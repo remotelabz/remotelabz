@@ -41,8 +41,9 @@
             {# {{ _self.link("Activities", 'activities', null, 'review-list', 'activities', _context) }} #}
             {# {{ _self.link("Labs", 'labs', null, 'applications', 'labs', _context) }} #}
             {% if is_granted('ROLE_TEACHER_EDITOR') %}
+            {{ _self.link("ISO", 'app_iso_index', null, 'dvd', 'isos', _context) }}
+            {{ _self.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}
             {{ _self.link("Device Template", 'devices', null, 'document', 'devices', _context) }} 
-            {{ _self.link("Operating System", 'operating_systems', null, 'os', 'operating_systems', _context) }}    
             {{ _self.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
             {{ _self.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
             {{ _self.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}

@@ -124,7 +124,7 @@ class IsoController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/iso/{id}', name: 'app_iso_show', methods: ['GET'])]
+    #[Route('/admin/isos/{id}', name: 'app_iso_show', methods: ['GET'])]
     public function show(Iso $iso): Response
     {
         return $this->render('iso/view.html.twig', [
