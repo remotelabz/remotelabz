@@ -52,6 +52,9 @@
             <!-- SAML and local-only logout. -->
             <Logout>SAML2 Local</Logout>
 
+             <!-- Administrative logout. -->
+            <LogoutInitiator type="Admin" Location="/Logout/Admin" acl="127.0.0.1 ::1" />
+
             <!-- Extension service that generates "approximate" metadata based on SP configuration. -->
             <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
 
@@ -59,7 +62,7 @@
             <Handler type="Status" Location="/Status" acl="127.0.0.1 ::1"/>
 
             <!-- Session diagnostic service. -->
-            <Handler type="Session" Location="/Session" showAttributeValues="true"/>
+            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
 
             <!-- JSON feed of discovery information. -->
             <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
@@ -73,7 +76,7 @@
 	      metadata="metadataError_fr.html"
 	      access="accessError_fr.html"
 	      ssl="sslError_fr.html"
-	      localLogout="localLogout_fr.html"
+	      localLogout="localLogout_en.html"
 	      globalLogout="globalLogout_fr.html"
 	      helpLocation="/about.html"
 	      styleSheet="/shibboleth-sp/main.css"/>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout - RemoteLabz</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #5568d3;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+    </style>
+    <script>
+        // Automatic redirection after 5 seconds
+        let countdown = 5;
+        function updateCountdown() {
+            const elem = document.getElementById('countdown');
+            if (elem) {
+                elem.textContent = countdown;
+                if (countdown <= 0) {
+                    window.location.href = '/login';
+                } else {
+                    countdown--;
+                    setTimeout(updateCountdown, 1000);
+                }
+            }
+        }
+        window.onload = updateCountdown;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✅</div>
+        <h1>Successfully Logged Out from RemoteLabz</h1>
+        
+        <p>You have been successfully logged out from the RemoteLabz application.</p>
+        
+        <div class="info-box">
+            <strong>ℹ️ Important Information:</strong><br>
+            You remain logged in to your institution (Renater). 
+            If you are using a shared computer, please close your browser completely 
+            to ensure a full logout.
+        </div>
+        
+        <p style="text-align: center; color: #999; font-size: 0.9rem;">
+            Automatic redirection in <span id="countdown">5</span> seconds...
+        </p>
+        
+        <div class="button-container">
+            <a href="/login" class="button">Return to Login Page</a>
+        </div>
+    </div>
+</body>
+</html>
