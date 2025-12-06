@@ -69,9 +69,10 @@ class SandboxListItem extends Component {
 						return;
 					}
 				}
-			} else {
-				console.log("Error when fetching data for worker availability");
-			}
+			} 
+            //else {
+			//	console.log("Error when fetching data for worker availability");
+			//}
         })
 		.catch(error => {
 			console.error("Error when searching for an available worker", error);
@@ -88,7 +89,7 @@ class SandboxListItem extends Component {
                 labName = "Sandbox_Device_" + this.props.user.uuid + "_" + this.props.item.id;
                 var fields = {name: labName};
                 var labObj = {id: lab.id, fields: fields};
-                console.log("SandboxListItem onModifyClick labObj:", labObj);
+                //console.log("SandboxListItem onModifyClick labObj:", labObj);
 
                 // Add the fields to the lab and a service device if configured on the Remotelabz
                 //console.log("labobj", labObj);
@@ -113,94 +114,91 @@ class SandboxListItem extends Component {
                         
                         // Ajout du device avec gestion d'erreur spécifique
                         try {
-                                    await this.api.post('/api/labs/' + lab.id + '/devices', item);
-                                    console.log("Item", item);
-                                } catch (deviceError) {
-                                    console.error("Error adding device:", deviceError);
-                                    throw deviceError; // Re-lancer pour être capturé par le catch principal
-                                }
-                                
-                                // Création de l'instance avec gestion d'erreur spécifique
-                                try {
-                                    await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-                                } catch (instanceError) {
-                                    console.error("Error creating lab instance:", instanceError);
-                                    throw instanceError;
-                                }
-                                
-                                window.location.href = "/admin/sandbox/" + lab.id;
-                            } else {
-                                this.setState({ isLoading: false, exist: false, lab: lab});
-                            }
-                        } catch (error) {
-                            console.error("Catch error : Error creating device sandbox", error);
-                            this.setState({ isLoading: false, exist: false, lab: lab});
-                            this.props.setIsAnyLoading(false);
-                            window.location.href = "/admin/sandbox/";
+                            await this.api.post('/api/labs/' + lab.id + '/devices', item);
+                            console.log("Item", item);
+                        } catch (deviceError) {
+                            console.error("Error adding device:", deviceError);
+                            throw deviceError; // Re-lancer pour être capturé par le catch principal
                         }
-                                
-
-                    }
-                    // If we want to modify a lab       
-                    else if (this.props.itemType === "lab") {
-                        this.setState({ isLoading: true, exist: true, lab: this.props.item});
-                        //console.log("SandboxListItem onModifyClick lab:", this.props.item);
-                        labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
-                        var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
-                        if (this.props.item.hasTimer) {
-                            let timerArray = this.props.item.timer.split(":");
-                            fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}
-                            };
-                        }
-
-                        for(var textobject of item.textobjects){
-                            var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
-                            if (typeof textobject.newdata !== 'undefined') {
-                                textObj = {...textObj, newdata: textobject.newdata};
-                            }
-                            await Remotelabz.textObjects.new(textObj);
-                        }
-                        for(var picture of item.pictures){
-                            var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
-                            await Remotelabz.pictures.new(pictureObj);
-                        }
-
+                            // Création de l'instance avec gestion d'erreur spécifique
                         try {
-                            const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
-                            //console.log("response:", response);
-                            
-
-                            if(response.status === 200) {
-                                this.setState({ isLoading: true, exist: true, lab: lab});
-                                //console.log("Rendering state.lab in modify function is", this.state.lab);
-
-                                const { id: id_lab, uuid } = response.data;
-                                //lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
-                                lab = { ...this.state.lab, id: id_lab, uuid }; // don't solve the problem
-                                //console.log("Rendering lab in modify function is", lab);
-
-                                Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
-
-                                await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-                                //console.log("Rendering lab in modify function after lab create ", lab);
-
-                                window.location.href = "/admin/sandbox/" + lab.id;
-                            } else {
-                                console.log("status not 200 Lab:", lab);
-                                this.setState({ isLoading: false, exist: false, lab: lab});
-                            }
+                            await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                        } catch (instanceError) {
+                            console.error("Error creating lab instance:", instanceError);
+                            throw instanceError;
                         }
-                        catch (error) {
-                                console.error("Catch error : Error creating lab copy", error);
-                                this.setState({ isLoading: false, exist: false, lab: lab});
-                                window.location.href = "/admin/sandbox/";
-                            
-                            }
-                    }    
-                } else {
+
+                        window.location.href = "/admin/sandbox/" + lab.id;
+                    } else {
+                        this.setState({ isLoading: false, exist: false, lab: lab});
+                    }
+                } catch (error) {
+                    console.error("Catch error : Error creating device sandbox", error);
                     this.setState({ isLoading: false, exist: false, lab: lab});
-                    toast.error("No workers available !", {});		
-	            }
+                    this.props.setIsAnyLoading(false);
+                    window.location.href = "/admin/sandbox/";
+                }
+            }
+            // If we want to modify a lab       
+            else if (this.props.itemType === "lab") {
+                this.setState({ isLoading: true, exist: true, lab: this.props.item});
+                //console.log("SandboxListItem onModifyClick lab:", this.props.item);
+                labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
+                var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
+                if (this.props.item.hasTimer) {
+                    let timerArray = this.props.item.timer.split(":");
+                    fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}
+                    };
+                }
+
+                for(var textobject of item.textobjects){
+                    var textObj = {labid: lab.id, fields:{name: textobject.name, type: textobject.type, data: textobject.data}};
+                    if (typeof textobject.newdata !== 'undefined') {
+                        textObj = {...textObj, newdata: textobject.newdata};
+                    }
+                    await Remotelabz.textObjects.new(textObj);
+                }
+                for(var picture of item.pictures){
+                    var pictureObj = {labid: lab.id, fields:{name: picture.name, type: picture.type, labid: item.id,  height: picture.height, width: picture.width, map: picture.map}};
+                    await Remotelabz.pictures.new(pictureObj);
+                }
+
+                try {
+                    const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
+                    //console.log("response:", response);
+                    
+
+                    if(response.status === 200) {
+                        this.setState({ isLoading: true, exist: true, lab: lab});
+                        //console.log("Rendering state.lab in modify function is", this.state.lab);
+
+                        const { id: id_lab, uuid } = response.data;
+                        //lab = { ...lab, id: id_lab, uuid }; // Met à jour lab avec les nouvelles valeurs
+                        lab = { ...this.state.lab, id: id_lab, uuid }; // don't solve the problem
+                        //console.log("Rendering lab in modify function is", lab);
+
+                        Remotelabz.labs.copyBanner(this.props.item.id, lab.id);
+
+                        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                        //console.log("Rendering lab in modify function after lab create ", lab);
+
+                        window.location.href = "/admin/sandbox/" + lab.id;
+                    } else {
+                        console.log("status not 200 Lab:", lab);
+                        this.setState({ isLoading: false, exist: false, lab: lab});
+                    }
+                }
+                catch (error) {
+                        console.error("Catch error : Error creating lab copy", error);
+                        this.setState({ isLoading: false, exist: false, lab: lab});
+                        window.location.href = "/admin/sandbox/";
+                    
+                    }
+            }    
+        } else {
+            this.setState({ isLoading: false, exist: false, lab: lab});
+            toast.error("No workers available !", {});		
+        }
     }
     
     async deleteLab(id) {
@@ -231,7 +229,7 @@ class SandboxListItem extends Component {
     render() {
         let divBorder;
         let button;
-        console.log("Rendering SandboxListItem for", this.props.item);
+        //console.log("Rendering SandboxListItem for", this.props.item);
         //console.log("Rendering state is", this.state);
         //console.log("Rendering props ", this.props);
 

@@ -13,7 +13,7 @@ class Flavor
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Serializer\XmlAttribute]
-    #[Serializer\Groups(['api_get_flavor', 'api_get_device', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_flavor', 'api_get_device', 'api_get_lab_template','sandbox'])]
     private $id;
 
     #[Assert\NotBlank]

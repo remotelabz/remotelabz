@@ -24,7 +24,7 @@ class OperatingSystem
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Serializer\XmlAttribute]
-    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'api_delete_os'])]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'api_delete_os','sandbox'])]
     private $id;
 
     /**

@@ -62,7 +62,7 @@ class Device implements InstanciableInterface
     private $labs;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_instance', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_instance', 'api_get_lab_template','sandbox'])]
     // vm, container, physical, switch, ...
     private $type = "vm";
 
@@ -143,7 +143,7 @@ class Device implements InstanciableInterface
 
     #[ORM\OneToOne(targetEntity: 'App\Entity\EditorData', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'editor_data_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template','sandbox'])]
     private $editorData;
 
     #[Assert\NotNull]
