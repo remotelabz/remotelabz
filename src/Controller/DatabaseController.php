@@ -26,6 +26,7 @@ use RecursiveDirectoryIterator;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Mailer\MailerInterface;
 
 class DatabaseController extends Controller
 {
@@ -34,10 +35,12 @@ class DatabaseController extends Controller
 
     public function __construct(
         ValidatorInterface $validator,
-        LoggerInterface $logger)
+        LoggerInterface $logger,
+        MailerInterface $mailer)
     {
         $this->validator = $validator;
         $this->logger = $logger;
+        $this->mailer = $mailer;
     }
 
     #[Route(path: '/admin/database', name: 'admin_database')]
@@ -51,7 +54,6 @@ class DatabaseController extends Controller
             }
         }
 
-        
         $importBackupForm = $this->createFormBuilder([])
         ->add('file', FileType::class, [
             "help" => "Accepted formats: zip",
@@ -102,79 +104,25 @@ class DatabaseController extends Controller
 
     
 	#[Get('/api/database/backup', name: 'api_database_backup')]
-	#[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
+    #[IsGranted("ROLE_ADMINISTRATOR", message: "Access denied.")]
     #[Route(path: '/admin/database/backup', name: 'admin_database_backup', methods: 'GET')]
     public function databaseBackup(Request $request)
     {
-
-        $result=exec('php '.$this->getParameter('kernel.project_dir').'/scripts/backupDatabase.php', $output);
+        // Récupérer l'email de l'utilisateur connecté
+        $userEmail = $this->getUser()->getEmail();
         
-        if ($result !== false) {
-
-            $fileSystem = new FileSystem();
-
-            //copy banner folder
-            if ( file_exists( $this->getParameter('directory.public.upload.lab.banner') ) && is_dir( $this->getParameter('directory.public.upload.lab.banner') ) ) {
-                $bannerSrc=$this->getParameter('directory.public.upload.lab.banner');
-                $bannerDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/banner';
-                $fileSystem->mirror($bannerSrc,$bannerDst); 
-            } 
-            
-            //copy picture folder
-            $pictureSrc=$this->getParameter('kernel.project_dir').'/assets/js/components/Editor2/images/pictures';
-            $pictureDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/pictures';
-            $fileSystem->mirror($pictureSrc,$pictureDst);
-
-            //copy vm images
-            if ( file_exists( $this->getParameter('image_directory') ) && is_dir( $this->getParameter('image_directory') ) ) {
-                $imageSrc=$this->getParameter('image_directory');
-                $imageDst=$this->getParameter('kernel.project_dir').'/backups/'.$result.'/images';
-                $fileSystem->mirror($imageSrc,$imageDst);      
-            } 
-
-            $zip = new ZipArchive();
-            $rootPath = realpath($this->getParameter('kernel.project_dir').'/backups/'.$result);
-            $zip->open($this->getParameter('kernel.project_dir').'/backups/' .$result.'.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE);
-            $files = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($rootPath),
-                RecursiveIteratorIterator::LEAVES_ONLY
-            );
-            
-
-            foreach ($files as $name => $file)
-            {
-                // Skip directories (they would be added automatically)
-                if (!$file->isDir())
-                {
-                    // Get real and relative path for current file
-                    $filePath = $file->getRealPath();
-                    $relativePath = substr($filePath, strlen($rootPath) + 1);
-
-                    // Add current file to archive
-                    $zip->addFile($filePath, $relativePath);
-                }
-            }
-
-            // Zip archive will be created only after closing object
-            $zip->close();
-            $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/database_'.$result.'.sql');
-            $fileSystem->remove($this->getParameter('kernel.project_dir').'/backups/'.$result);
-
-            $response = new Response(file_get_contents($this->getParameter('kernel.project_dir').'/backups/' .$result.'.zip'));
-
-            $disposition = HeaderUtils::makeDisposition(
-                HeaderUtils::DISPOSITION_ATTACHMENT,
-                $result.'.zip'
-            );
-
-            //$response->headers->set('Content-Type', 'application/json');
-            $response->headers->set('Content-Disposition', $disposition);
-
-            return $response;
-        }
-        $this->addFlash('danger',"The backup failed. Please try again later");
+        // Lancer le script en arrière-plan
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $command = sprintf(
+            'nohup php %s/scripts/backupDatabase.php %s > /dev/null 2>&1 &',
+            escapeshellarg($projectDir),
+            escapeshellarg($userEmail)
+        );
         
-
+        exec($command);
+        
+        $this->addFlash('success', 'Le backup est en cours de création. Vous recevrez un email lorsqu\'il sera terminé.');
+        
         return $this->redirectToRoute('admin_database');
     }
 
