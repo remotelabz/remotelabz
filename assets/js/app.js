@@ -37,6 +37,7 @@ import './components/registration';
 import 'react-toastify';
 import './components/gauges';
 
+
 const Cookies = require('js-cookie');
 
 let theme = Cookies.get('theme');

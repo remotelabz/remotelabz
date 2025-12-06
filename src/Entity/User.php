@@ -39,7 +39,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Instanc
      */
     #[ORM\Column(type: 'json')]
     #[Serializer\Accessor(getter: 'getRoles')]
-    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab_instance'])]
+    #[Serializer\Groups(['api_users', 'api_get_user', 'api_get_lab_instance','sandbox'])]
     private $roles = [];
 
     /**

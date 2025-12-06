@@ -78,7 +78,10 @@
 
     <div class="grid-xs-1 grid-sm-2 grid-md-3 grid-lg-3 grid-xl-3 grid-xxl-4">
         {% for lab in labs %}
-        {% if not (lab.name|lower matches '/sandbox/i') %}
+
+        {% set shouldDisplay = is_granted('ROLE_ADMINISTRATOR') or not (lab.name|lower matches '/sandbox/i') %}
+
+        {% if shouldDisplay %}
             <div class="card m-4">
                 {% if lab.banner is not null %}
                 <img src="{{ path('get_lab_banner', {'id': lab.id}) }}" class="card-img-top" alt="Banner">

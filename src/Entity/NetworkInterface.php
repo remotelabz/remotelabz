@@ -23,7 +23,7 @@ class NetworkInterface implements InstanciableInterface
     private $type = 'tap';
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_network_interface', 'api_get_device', 'export_lab', 'worker', 'api_get_lab_template','sandbox'])]
     private $name;
 
     #[ORM\OneToOne(targetEntity: 'App\Entity\NetworkSettings', cascade: ['persist', 'remove'])]

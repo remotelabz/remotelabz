@@ -2,6 +2,7 @@ import { ToastContainer } from 'react-toastify';
 import React, { Component } from 'react';
 import { Button} from 'react-bootstrap';
 import SandboxList from './SandboxList';
+import { createRoot } from 'react-dom/client';
 
 class SandboxManager extends Component {
     constructor(props) {
