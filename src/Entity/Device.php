@@ -170,7 +170,7 @@ class Device implements InstanciableInterface
     #[Serializer\Groups(['api_get_device'])]
     private $count;
 
-    #[ORM\ManyToMany(targetEntity: 'App\Entity\Lab', inversedBy: 'usedTemplates')]
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Lab', inversedBy: 'devicesUsingTemplates')]
     #[ORM\JoinTable(name: 'device_template_usage')]
     private $labsUsingThisTemplate;
 

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\IsoRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
@@ -38,13 +40,24 @@ class Iso
 
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'text', nullable: true)]
-    private $description = Null;
+    private $description = null;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
     #[Serializer\Groups(['sandbox','worker'])]
-    private $arch = Null;
+    private $arch = null;
     
+    /**
+     * @var Collection<int, Device>
+     */
+    #[ORM\ManyToMany(targetEntity: Device::class, mappedBy: 'isos')]
+    private Collection $devices;
+
+    public function __construct()
+    {
+        $this->devices = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -85,26 +98,51 @@ class Iso
     }
 
     public function getArch(): ?Arch
-{
-    return $this->arch;
-}
+    {
+        return $this->arch;
+    }
 
-public function setArch(?Arch $arch): static
-{
-    $this->arch = $arch;
+    public function setArch(?Arch $arch): static
+    {
+        $this->arch = $arch;
 
-    return $this;
-}
+        return $this;
+    }
 
-public function getDescription(): ?string
-{
-    return $this->description;
-}
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
 
-public function setDescription(?string $description): self
-{
-    $this->description = $description;
-    return $this;
-}
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
 
+    /**
+     * @return Collection<int, Device>
+     */
+    public function getDevices(): Collection
+    {
+        return $this->devices;
+    }
+
+    public function addDevice(Device $device): self
+    {
+        if (!$this->devices->contains($device)) {
+            $this->devices->add($device);
+            $device->addIso($this);
+        }
+        return $this;
+    }
+
+    public function removeDevice(Device $device): self
+    {
+        if ($this->devices->contains($device)) {
+            $this->devices->removeElement($device);
+            $device->removeIso($this);
+        }
+        return $this;
+    }
 }
