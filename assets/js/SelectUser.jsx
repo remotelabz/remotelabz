@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { components } from 'react-select';
 import AsyncSelect from 'react-select/async';
 
