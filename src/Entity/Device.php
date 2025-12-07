@@ -49,7 +49,7 @@ class Device implements InstanciableInterface
     private $launchScript;
 
     #[ORM\OneToMany(targetEntity: 'App\Entity\NetworkInterface', mappedBy: 'device', cascade: ['persist', 'remove'])]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template','sandbox'])]
     private $networkInterfaces;
 
     #[Assert\NotNull]
@@ -62,7 +62,7 @@ class Device implements InstanciableInterface
     private $labs;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_instance', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_instance', 'api_get_lab_template','sandbox'])]
     // vm, container, physical, switch, ...
     private $type = "vm";
 
@@ -110,7 +110,7 @@ class Device implements InstanciableInterface
     #[Assert\NotNull]
     #[Assert\Valid]
     #[ORM\ManyToOne(targetEntity: 'App\Entity\OperatingSystem')]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_instance', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_instance', 'worker', 'api_get_lab_template','sandbox'])]
     private $operatingSystem;
 
     #[ORM\OneToOne(targetEntity: 'App\Entity\NetworkInterface', cascade: ['persist', 'remove'])]
@@ -119,7 +119,7 @@ class Device implements InstanciableInterface
     #[Assert\NotNull]
     #[Assert\Valid]
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Flavor')]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'worker', 'api_get_lab_template','sandbox'])]
     private $flavor;
 
     #[ORM\Column(type: 'string', length: 255)]
@@ -143,7 +143,7 @@ class Device implements InstanciableInterface
 
     #[ORM\OneToOne(targetEntity: 'App\Entity\EditorData', cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'editor_data_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_device', 'export_lab', 'api_get_lab_template','sandbox'])]
     private $editorData;
 
     #[Assert\NotNull]
@@ -158,7 +158,7 @@ class Device implements InstanciableInterface
 
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
-    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $icon = "Server_Linux.png";
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]

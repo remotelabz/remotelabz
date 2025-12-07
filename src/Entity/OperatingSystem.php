@@ -24,7 +24,7 @@ class OperatingSystem
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     #[Serializer\XmlAttribute]
-    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'api_delete_os'])]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'api_delete_os','sandbox'])]
     private $id;
 
     /**
@@ -71,7 +71,7 @@ class OperatingSystem
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Arch')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker', 'sandbox'])]
+    #[Serializer\Groups(['api_get_operating_system', 'api_get_lab_template', 'api_get_device', 'export_lab', 'worker','sandbox'])]
     private $arch = Null;
 
     /**

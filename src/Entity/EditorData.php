@@ -12,19 +12,19 @@ class EditorData
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups([])]
+    #[Serializer\Groups(['sandbox'])]
     private $id;
 
     #[Assert\Type(type: 'int')]
     #[Assert\GreaterThanOrEqual(0)]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab','sandbox'])]
     private int $x;
 
     #[Assert\Type(type: 'int')]
     #[Assert\GreaterThanOrEqual(0)]
     #[ORM\Column(type: 'integer')]
-    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_device', 'api_get_lab_template', 'export_lab','sandbox'])]
     private int $y;
 
     #[ORM\OneToOne(targetEntity: 'App\Entity\Device', cascade: ['persist'])]

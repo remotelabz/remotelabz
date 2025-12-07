@@ -5,6 +5,7 @@ import API from '../../api';
 import Remotelabz from '../API';
 import SVG from '../Display/SVG';
 
+
 class SandboxListItem extends Component {
 
     api = API.getInstance();
@@ -45,8 +46,7 @@ class SandboxListItem extends Component {
     }
 
     async onModifyClick(item) {
-        //console.log("SandboxListItem onModifyClick item:", item);
-
+        console.log("SandboxListItem onModifyClick item:", item);
         if (this.props.isAnyLoading) {
             toast.warning("Please wait for the current operation to complete.", {});
             return;
@@ -69,9 +69,10 @@ class SandboxListItem extends Component {
 						return;
 					}
 				}
-			} else {
-				console.log("Error when fetching data for worker availability");
-			}
+			} 
+            //else {
+			//	console.log("Error when fetching data for worker availability");
+			//}
         })
 		.catch(error => {
 			console.error("Error when searching for an available worker", error);
@@ -92,37 +93,51 @@ class SandboxListItem extends Component {
 
                 // Add the fields to the lab and a service device if configured on the Remotelabz
                 //console.log("labobj", labObj);
-            try {
-                const response = await Remotelabz.labs.update(labObj);
-                //console.log("SandboxListItem onModifyClick response:", response);
-                if(response.status === 200) {
+            
+                try {
+                    const response = await Remotelabz.labs.update(labObj);
+                    //console.log("SandboxListItem onModifyClick response:", response);
+                    //console.log("SandboxListItem onModifyClick response status:", response.status);
+                    //console.log("SandboxListItem onModifyClick response data:", response.data);
+                
+                    if(response.status === 200) {
+
                         this.setState({ isLoading: true, exist: true, lab: lab});
                         item.flavor = item.flavor.id;
                         item.operatingSystem = item.operatingSystem.id;
                         item.hypervisor = item.hypervisor.id;
                         item.isTemplate = false;
                         item.networkInterfaces.forEach(element => networkInterfaces.push(element.id));
-                        //item.networkInterfaces.forEach(element => console.log(element.id));
                         item.networkInterfaces = networkInterfaces;
-                        item.controlProtocolTypes.forEach(element => controlProtocolTypes.push(element.id));
-                        //item.controlProtocolTypes.forEach(element => console.log(element.id));
+                        item.controlProtocolTypes.forEach(element => console.log(element.id));
                         item.controlProtocolTypes = controlProtocolTypes;
-                        //Add Service device if Service OS was configured on the FemoteLabz
-                        await this.api.post('/api/labs/' + lab.id + '/devices', item);
-                        console.log("Item",item);
                         
-                        await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
-                        window.location.href = "/admin/sandbox/" + lab.id;
-                        } else {
-                        this.setState({ isLoading: false, exist: false, lab: lab});
+                        // Ajout du device avec gestion d'erreur spécifique
+                        try {
+                            await this.api.post('/api/labs/' + lab.id + '/devices', item);
+                            console.log("Item", item);
+                        } catch (deviceError) {
+                            console.error("Error adding device:", deviceError);
+                            throw deviceError; // Re-lancer pour être capturé par le catch principal
                         }
+                            // Création de l'instance avec gestion d'erreur spécifique
+                        try {
+                            await Remotelabz.instances.lab.create(lab.uuid, this.props.user.uuid, 'user');
+                        } catch (instanceError) {
+                            console.error("Error creating lab instance:", instanceError);
+                            throw instanceError;
+                        }
+
+                        window.location.href = "/admin/sandbox/" + lab.id;
+                    } else {
+                        this.setState({ isLoading: false, exist: false, lab: lab});
+                    }
+                } catch (error) {
+                    console.error("Catch error : Error creating device sandbox", error);
+                    this.setState({ isLoading: false, exist: false, lab: lab});
+                    this.props.setIsAnyLoading(false);
+                    window.location.href = "/admin/sandbox/";
                 }
-                catch (error) {
-                            console.error("Catch error : Error creating device sandbox");
-                            this.setState({ isLoading: false, exist: false, lab: lab});
-                            this.props.setIsAnyLoading(false); // Débloquer
-                            window.location.href = "/admin/sandbox/";
-                }      
             }
             // If we want to modify a lab       
             else if (this.props.itemType === "lab") {
@@ -181,9 +196,9 @@ class SandboxListItem extends Component {
                     }
             }    
         } else {
-		    this.setState({ isLoading: false, exist: false, lab: lab});
-		    toast.error("No workers available !", {});		
-	    }
+            this.setState({ isLoading: false, exist: false, lab: lab});
+            toast.error("No workers available !", {});		
+        }
     }
     
     async deleteLab(id) {
@@ -214,7 +229,7 @@ class SandboxListItem extends Component {
     render() {
         let divBorder;
         let button;
-        //console.log("Rendering SandboxListItem for", this.props.item.name);
+        //console.log("Rendering SandboxListItem for", this.props.item);
         //console.log("Rendering state is", this.state);
         //console.log("Rendering props ", this.props);
 

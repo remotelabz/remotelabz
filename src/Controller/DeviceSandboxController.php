@@ -72,15 +72,20 @@ class DeviceSandboxController extends Controller
             'labs' => $labArray
         ];
         
+        $props=$serializer->serialize(
+                $deviceProps,
+                'json',
+                SerializationContext::create()->setGroups(['sandbox']));
+
+        $propsArray = json_decode($props, true);
+        $prettyProps = json_encode($propsArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $this->logger->debug("[DeviceSandboxController:indexAction]::Serialized props:\n" . $prettyProps);
+
         return $this->render('device_sandbox/index.html.twig', [
             'devices' => $devices,
             'labs' => $labs,
             'search' => $search,
-            'props' => $serializer->serialize(
-                $deviceProps,
-                'json',
-                SerializationContext::create()->setGroups(['api_get_user', 'api_get_device', 'api_get_lab','sandbox'])
-            )
+            'props' => $props
         ]);
     }
 
