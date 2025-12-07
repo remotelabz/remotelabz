@@ -66,7 +66,7 @@ class Lab implements InstanciableInterface
     private $devicesUsingTemplates;
 
     #[ORM\ManyToOne(targetEntity: 'App\Entity\User', inversedBy: 'createdLabs')]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'sandbox'])]
     private $author;
 
     #[ORM\Column(type: 'string', length: 255)]
