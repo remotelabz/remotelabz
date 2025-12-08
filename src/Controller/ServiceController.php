@@ -118,7 +118,7 @@ class ServiceController extends Controller
             $sshPublicKey,
             $sshPrivateKey,
             $sshPort,
-            $labInstanceRepository,
+            $configWorkerRepository,
             $logger
         );
         
@@ -234,6 +234,7 @@ class ServiceController extends Controller
                     
                     $serviceStatus['ssh-connection-check'] = $ssh_result;
                     $this->logger->info("SSH Connection check - Overall status: " . ($allSshOk ? 'OK' : 'ISSUES'));
+                    $this->logger->debug("[ServiceController:index]::SSH Connection check - Overall status: ", $ssh_result);
                 }
                 
                 if ($registeredService::getServiceName() == "certificate-check") {
@@ -419,10 +420,11 @@ class ServiceController extends Controller
         try {
             if ($requestedService === 'ssh-connection-check') {
                 $result = $this->sshMonitor->isStarted();
-                
+                $this->logger->debug("[ServiceController:checkServiceAction]::ssh-connection-check service check: ",$result);
                 $allOk = true;
                 $details = [];
                 foreach ($result as $ip => $status) {
+
                     if (is_array($status)) {
                         if ($status['status']) {
                             $details[] = "{$ip}: Connected via {$status['method']}";
@@ -430,6 +432,7 @@ class ServiceController extends Controller
                             $details[] = "{$ip}: Failed - {$status['error']}";
                             $allOk = false;
                         }
+                        $this->logger->debug("[ServiceController:checkServiceAction]::ssh-connection-check service check: ",$details);
                     }
                 }
                 

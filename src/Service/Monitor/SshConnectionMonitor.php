@@ -5,12 +5,12 @@ namespace App\Service\Monitor;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use App\Repository\LabInstanceRepository;
+use App\Repository\ConfigWorkerRepository;
 
 class SshConnectionMonitor implements ServiceMonitorInterface
 {
     private $logger;
-    private $labInstanceRepository;
+    private $configWorkerRepository;
     private $sshUser;
     private $sshPassword;
     private $publicKeyFile;
@@ -23,7 +23,7 @@ class SshConnectionMonitor implements ServiceMonitorInterface
         string $publicKeyFile,
         string $privateKeyFile,
         string $sshPort,
-        LabInstanceRepository $labInstanceRepository,
+        ConfigWorkerRepository $configWorkerRepository,
         LoggerInterface $logger = null
     ) {
         $this->sshUser = $sshUser;
@@ -31,7 +31,7 @@ class SshConnectionMonitor implements ServiceMonitorInterface
         $this->publicKeyFile = $publicKeyFile;
         $this->privateKeyFile = $privateKeyFile;
         $this->sshPort = $sshPort;
-        $this->labInstanceRepository = $labInstanceRepository;
+        $this->configWorkerRepository = $configWorkerRepository;
         $this->logger = $logger ?: new NullLogger();
     }
 
@@ -49,11 +49,11 @@ class SshConnectionMonitor implements ServiceMonitorInterface
         $results = [];
         
         // Get all unique worker IPs from lab instances
-        $labInstances = $this->labInstanceRepository->findAll();
+        $configWorkers = $this->configWorkerRepository->findAll();
         $workerIps = [];
         
-        foreach ($labInstances as $labInstance) {
-            $workerIp = $labInstance->getWorkerIp();
+        foreach ($configWorkers as $configWorker) {
+            $workerIp = $configWorker->getIPv4();
             if ($workerIp && !in_array($workerIp, $workerIps)) {
                 $workerIps[] = $workerIp;
             }

@@ -324,7 +324,7 @@ services:
             $publicKeyFile: '%app.ssh.worker.publickey%'
             $privateKeyFile: '%app.ssh.worker.privatekey%'
             $sshPort: '%app.ssh.worker.port%'
-            $labInstanceRepository: '@App\Repository\LabInstanceRepository'
+            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
             $logger: '@logger'
         tags:
             - { name: monolog.logger, channel: ssh_monitor }
