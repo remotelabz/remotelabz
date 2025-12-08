@@ -9,6 +9,8 @@ use App\Service\Monitor\ProxyServiceMonitor;
 use App\Service\Monitor\WorkerMessageServiceMonitor;
 use App\Service\Monitor\WorkerServiceMonitor;
 use App\Service\Monitor\RouterServiceMonitor;
+use App\Service\Monitor\SshConnectionMonitor;
+use App\Service\Monitor\CertificateMonitor;
 use App\Service\Worker\WorkerManager;
 use App\Service\Proxy\ProxyManager;
 
@@ -51,6 +53,16 @@ class ServiceController extends Controller
     private $sshPasswd;
     private $sshPublicKey;
     private $sshPrivateKey;
+    private $sshPort;
+
+    // New monitoring services
+    private $sshMonitor;
+    private $certMonitor;
+    private $sslCaKey;
+    private $sslCaCert;
+    private $sslTlsKey;
+    private $remotelabzProxySslKey;
+    private $remotelabzProxySslCert;
 
     public function __construct(
         string $workerPort,
@@ -61,6 +73,12 @@ class ServiceController extends Controller
         string $sshPasswd,
         string $remotelabzProxyServerAPI,
         string $remotelabzProxyApiPort,
+        string $sslCaKey,
+        string $sslCaCert,
+        string $sslTlsKey,
+        string $remotelabzProxySslKey,
+        string $remotelabzProxySslCert,
+        string $sshPort,
         LoggerInterface $logger=null,
         WorkerManager $workerManager,
         ProxyManager $proxyManager,
@@ -75,6 +93,7 @@ class ServiceController extends Controller
         $this->sshPrivateKey = $sshPrivateKey;
         $this->sshUser = $sshUser;
         $this->sshPasswd = $sshPasswd;
+        $this->sshPort = $sshPort;
         $this->workerManager = $workerManager;
         $this->configWorkerRepository = $configWorkerRepository;
         $this->LabInstanceRepository = $labInstanceRepository;
@@ -84,6 +103,34 @@ class ServiceController extends Controller
         $this->proxyManager = $proxyManager;
         $this->logger = $logger ?: new NullLogger();       
         $this->entityManager = $entityManager;
+
+        // SSL/Certificate paths
+        $this->sslCaKey = $sslCaKey;
+        $this->sslCaCert = $sslCaCert;
+        $this->sslTlsKey = $sslTlsKey;
+        $this->remotelabzProxySslKey = $remotelabzProxySslKey;
+        $this->remotelabzProxySslCert = $remotelabzProxySslCert;
+
+        // Initialize monitoring services
+        $this->sshMonitor = new SshConnectionMonitor(
+            $sshUser,
+            $sshPasswd,
+            $sshPublicKey,
+            $sshPrivateKey,
+            $sshPort,
+            $labInstanceRepository,
+            $logger
+        );
+        
+        $this->certMonitor = new CertificateMonitor(
+            $sslCaKey,
+            $sslCaCert,
+            $sslTlsKey,
+            $remotelabzProxySslKey,
+            $remotelabzProxySslCert,
+            30, // Warning threshold: 30 days
+            $logger
+        );
     }
 
     /**
@@ -95,7 +142,9 @@ class ServiceController extends Controller
             MessageServiceMonitor::class => 'local',
             ProxyServiceMonitor::class => 'local',
             RouterServiceMonitor::class => 'local',
-            WorkerServiceMonitor::class => 'distant'
+            WorkerServiceMonitor::class => 'distant',
+            SshConnectionMonitor::class => 'check',
+            CertificateMonitor::class => 'check'
         ];
     }
 
@@ -165,6 +214,32 @@ class ServiceController extends Controller
                         $entityManager->persist($worker[0]);
                         $entityManager->flush();
                     }
+                }
+            }
+
+            // New: Check type services (SSH and Certificate monitoring)
+            if ($type === 'check') {
+                if ($registeredService::getServiceName() == "ssh-connection-check") {
+                    $ssh_result = $this->sshMonitor->isStarted();
+                    
+                    // Calculate overall status
+                    $allSshOk = true;
+                    foreach ($ssh_result as $ip => $status) {
+                        if (is_array($status) && isset($status['status']) && !$status['status']) {
+                            $allSshOk = false;
+                            break;
+                        }
+                    }
+                    $ssh_result['overall_status'] = $allSshOk;
+                    
+                    $serviceStatus['ssh-connection-check'] = $ssh_result;
+                    $this->logger->info("SSH Connection check - Overall status: " . ($allSshOk ? 'OK' : 'ISSUES'));
+                }
+                
+                if ($registeredService::getServiceName() == "certificate-check") {
+                    $cert_result = $this->certMonitor->isStarted();
+                    $serviceStatus['certificate-check'] = $cert_result;
+                    $this->logger->info("Certificate check - Overall status: " . ($cert_result['overall_status'] ? 'OK' : 'ISSUES'));
                 }
             }
         }
@@ -334,4 +409,66 @@ class ServiceController extends Controller
           //  'nbworkers' => $nbWorkers
         ]);
     }
+
+    #[Route(path: '/admin/service/check', name: 'check_service', methods: 'GET')]
+    public function checkServiceAction(Request $request)
+    {
+        $requestedService = $request->query->get('service');
+        $this->logger->debug("[ServiceController:checkServiceAction]::Requested service check: ".$requestedService);
+
+        try {
+            if ($requestedService === 'ssh-connection-check') {
+                $result = $this->sshMonitor->isStarted();
+                
+                $allOk = true;
+                $details = [];
+                foreach ($result as $ip => $status) {
+                    if (is_array($status)) {
+                        if ($status['status']) {
+                            $details[] = "{$ip}: Connected via {$status['method']}";
+                        } else {
+                            $details[] = "{$ip}: Failed - {$status['error']}";
+                            $allOk = false;
+                        }
+                    }
+                }
+                
+                if ($allOk) {
+                    $this->addFlash('success', 'SSH connections OK. ' . implode(' | ', $details));
+                } else {
+                    $this->addFlash('warning', 'SSH connection issues detected. ' . implode(' | ', $details));
+                }
+            }
+            
+            if ($requestedService === 'certificate-check') {
+                $result = $this->certMonitor->isStarted();
+                
+                $issues = [];
+                $warnings = [];
+                
+                foreach ($result['certificates'] as $key => $cert) {
+                    if (!$cert['valid']) {
+                        $issues[] = "{$cert['name']}: {$cert['error']}";
+                    } elseif (isset($cert['warning']) && $cert['warning']) {
+                        $warnings[] = "{$cert['name']}: Expires in {$cert['days_remaining']} days";
+                    }
+                }
+                
+                if (empty($issues) && empty($warnings)) {
+                    $this->addFlash('success', 'All certificates are valid');
+                } elseif (empty($issues)) {
+                    $this->addFlash('warning', 'Certificate warnings: ' . implode(' | ', $warnings));
+                } else {
+                    $this->addFlash('danger', 'Certificate issues: ' . implode(' | ', $issues));
+                }
+            }
+            
+        } catch (Exception $e) {
+            $this->addFlash('danger', 'Check failed: ' . $e->getMessage());
+            $this->logger->error("Error checking service: ".$requestedService." Exception: ".$e->getMessage());
+        }
+
+        return $this->redirectToRoute('services');
+    }
+
 }

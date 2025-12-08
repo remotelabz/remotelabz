@@ -268,6 +268,19 @@ services:
             $sshPrivateKey: '%app.ssh.worker.privatekey%'
             $sshUser: '%app.ssh.worker.user%'
             $sshPasswd: '%app.ssh.worker.passwd%'
+            $sshPort: '%app.ssh.worker.port%'
+            $sslCaKey: '%env(SSL_CA_KEY)%'
+            $sslCaCert: '%env(SSL_CA_CERT)%'
+            $sslTlsKey: '%env(SSL_TLS_KEY)%'
+            $remotelabzProxySslKey: '%env(REMOTELABZ_PROXY_SSL_KEY)%'
+            $remotelabzProxySslCert: '%env(REMOTELABZ_PROXY_SSL_CERT)%'
+            $logger: '@logger'
+            $workerManager: '@App\Service\Worker\WorkerManager'
+            $proxyManager: '@App\Service\Proxy\ProxyManager'
+            $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
+            $labInstanceRepository: '@App\Repository\LabInstanceRepository'
+            $deviceInstanceRepository: '@App\Repository\DeviceInstanceRepository'
+            $entityManager: '@doctrine.orm.entity_manager'
 
     App\Controller\UserController:
         arguments:
@@ -304,4 +317,27 @@ services:
             $userRepository: '@App\Repository\UserRepository'
             $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
 
+    App\Service\Monitor\SshConnectionMonitor:
+        arguments:
+            $sshUser: '%app.ssh.worker.user%'
+            $sshPassword: '%app.ssh.worker.passwd%'
+            $publicKeyFile: '%app.ssh.worker.publickey%'
+            $privateKeyFile: '%app.ssh.worker.privatekey%'
+            $sshPort: '%app.ssh.worker.port%'
+            $labInstanceRepository: '@App\Repository\LabInstanceRepository'
+            $logger: '@logger'
+        tags:
+            - { name: monolog.logger, channel: ssh_monitor }
+
+    App\Service\Monitor\CertificateMonitor:
+        arguments:
+            $sslCaKey: '%app.ssl.ca.key%'
+            $sslCaCert: '%app.ssl.ca.cert%'
+            $sslTlsKey: '%app.ssl.tls.key%'
+            $remotelabzProxySslKey: '%env(REMOTELABZ_PROXY_SSL_KEY)%'
+            $remotelabzProxySslCert: '%env(REMOTELABZ_PROXY_SSL_CERT)%'
+            $warningDays: 30  # Alert when certificate expires in 30 days or less
+            $logger: '@logger'
+        tags:
+            - { name: monolog.logger, channel: certificate_monitor }
 
