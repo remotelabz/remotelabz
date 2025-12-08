@@ -3,14 +3,14 @@
 apt-get update
 apt-get -y upgrade
 
-apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn libapache2-mod-php
-apt install -y php php-bcmath php-curl php-gd php-intl php-mbstring php-mysql php-xml php-zip libapache2-mod-shib
+apt install -y fail2ban exim4 apache2 curl gnupg zip unzip ntp openvpn qemu-utils
 # Install php8.4 on Ubuntu 24.04
 add-apt-repository ppa:ondrej/php -y
 apt update
 apt install php8.4 -y
-apt install php8.4-common php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath php8.4-ssh2 -y
+apt install php8.4-common php8.4-gd php8.4-amqp php8.4-cli php8.4-opcache php8.4-mysql php8.4-xml php8.4-curl php8.4-zip php8.4-mbstring php8.4-gd php8.4-intl php8.4-bcmath php8.4-ssh2 -y
 apt install haproxy
+apt install -y  libapache2-mod-shib libapache2-mod-php8.4
 apt autoremove -y
 a2dismod php7.4 php8.1 php8.2 php8.3
 a2enmod php8.4

@@ -46,7 +46,7 @@ class SandboxListItem extends Component {
     }
 
     async onModifyClick(item) {
-        console.log("SandboxListItem onModifyClick item:", item);
+        //console.log("SandboxListItem onModifyClick item:", item);
         if (this.props.isAnyLoading) {
             toast.warning("Please wait for the current operation to complete.", {});
             return;
@@ -115,7 +115,7 @@ class SandboxListItem extends Component {
                         // Ajout du device avec gestion d'erreur spécifique
                         try {
                             await this.api.post('/api/labs/' + lab.id + '/devices', item);
-                            console.log("Item", item);
+                            //console.log("Item", item);
                         } catch (deviceError) {
                             console.error("Error adding device:", deviceError);
                             throw deviceError; // Re-lancer pour être capturé par le catch principal
@@ -141,10 +141,10 @@ class SandboxListItem extends Component {
             }
             // If we want to modify a lab       
             else if (this.props.itemType === "lab") {
-                this.setState({ isLoading: true, exist: true, lab: this.props.item});
-                //console.log("SandboxListItem onModifyClick lab:", this.props.item);
+                this.setState({ isLoading: true, exist: true, lab: this.props.item});              
                 labName = "Sandbox_Lab_" + this.props.user.uuid + "_" + this.props.item.id;
                 var fields = {name: labName, description: this.props.item.description, shortDescription: this.props.item.shortDescription}
+
                 if (this.props.item.hasTimer) {
                     let timerArray = this.props.item.timer.split(":");
                     fields = {...fields, hasTimer: this.props.item.hasTimer, timer: {hour: Math.round(timerArray[0]), minute: Math.round(timerArray[1])}
@@ -165,7 +165,7 @@ class SandboxListItem extends Component {
 
                 try {
                     const response = await Remotelabz.labs.createcopyLab(this.props.item.id, labName)
-                    //console.log("response:", response);
+                    console.log("response:", response);
                     
 
                     if(response.status === 200) {
@@ -233,7 +233,7 @@ class SandboxListItem extends Component {
         //console.log("Rendering state is", this.state);
         //console.log("Rendering props ", this.props);
 
-        if(this.state.isLoading || this.props.isAnyLoading) {
+        if(this.state.isLoading) {
             button = (
                 <Button className="ml-3" variant="dark" title="Starting your instance" data-toggle="tooltip" data-placement="top" disabled>
                     <Spinner animation="border" size="sm" />
