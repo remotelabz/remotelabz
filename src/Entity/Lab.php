@@ -28,15 +28,15 @@ class Lab implements InstanciableInterface
     private $name;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $shortDescription;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $description;
 
     #[ORM\Column(type: 'boolean', options: ['default' => 0])]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $isTemplate;
 
     #[ORM\Column(type: 'text', nullable: true)]
@@ -105,7 +105,7 @@ class Lab implements InstanciableInterface
      */
     #[ORM\OneToMany(targetEntity: 'App\Entity\TextObject', mappedBy: 'lab')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $textobjects;
 
     /**
@@ -114,7 +114,7 @@ class Lab implements InstanciableInterface
      */
     #[ORM\OneToMany(targetEntity: 'App\Entity\Picture', mappedBy: 'lab')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_instance', 'api_get_lab_template','sandbox'])]
     private $pictures;
 
     /**
@@ -126,7 +126,7 @@ class Lab implements InstanciableInterface
     private $bookings;
 
     #[ORM\Column(type: 'boolean')]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $hasTimer = false;
 
     /**
@@ -134,14 +134,12 @@ class Lab implements InstanciableInterface
      */
     #[Assert\Time]
     #[ORM\Column(type: 'string', nullable: true)]
-    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab'])]
+    #[Serializer\Groups(['api_get_lab', 'api_get_lab_template', 'export_lab','sandbox'])]
     private $timer;
   
     #[ORM\OneToMany(targetEntity: 'App\Entity\InvitationCode', mappedBy: 'lab', cascade: ['persist', 'remove'])]
     #[Serializer\Groups([])]
     private $invitationCodes;
-
-
 
     public function __construct()
     {
