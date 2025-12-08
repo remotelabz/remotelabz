@@ -976,6 +976,12 @@ class LabController extends Controller
                         $this->logger->debug("[LabController:updateAction]::Device \"DHCP Service\" not found, creating a new one.");
                     }
 
+                $src=$this->getParameter('directory.public.images').'/logo/nopic.jpg';
+                $dst=$this->getParameter('directory.public.upload.lab.banner').'/'.$lab->getId().'/nopic.jpg';
+                $filesystem = new Filesystem();
+                $filesystem->copy($src,$dst);
+                $lab->setBanner('nopic.jpg');
+
                 $entityManager->persist($lab);
                 $entityManager->flush();
                 }
