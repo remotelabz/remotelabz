@@ -73,7 +73,92 @@
                                 <a href="{{ path('start_service', {'service': 'router'}) }}" class="btn btn-danger">Restart</a>
                             </div>
                         </div>
+                    </li>
+                </ul>
+              </div>
+        </div>
+    </div>
+</div>
 
+<div class="content-title">
+    <div class="content-title-infos">
+        <h1>System Checks</h1>
+    </div>
+</div>
+<div class="content-body">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="fw600">SSH Connection Status
+                            {% if serviceStatus['ssh-connection-check']['overall_status'] is defined %}
+                                {% if serviceStatus['ssh-connection-check']['overall_status'] %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                                {% else %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: orange"></i>
+                                {% endif %}
+                            {% else %}
+                                <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
+                            {% endif %}<br/>
+                            <i class="fa fa-info-circle text-info"></i> {{ 'SSH connectivity to all workers'|trans }}
+                            {% if serviceStatus['ssh-connection-check'] is defined and serviceStatus['ssh-connection-check'] is iterable %}
+                                <br/><small class="text-muted">
+                                {% for ip, status in serviceStatus['ssh-connection-check'] %}
+                                    {% if ip != 'overall_status' %}
+                                        {{ ip }}: 
+                                        {% if status.status %}
+                                            <span class="text-success">✓ {{ status.method }}</span>
+                                        {% else %}
+                                            <span class="text-danger">✗ {{ status.error }}</span>
+                                        {% endif %}
+                                        {% if not loop.last %} | {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                </small>
+                            {% endif %}
+                            </span>
+                            <div class="float-right">
+                                <a href="{{ path('check_service', {'service': 'ssh-connection-check'}) }}" class="btn btn-primary">Check</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="fw600">Certificate Status
+                            {% if serviceStatus['certificate-check']['overall_status'] is defined %}
+                                {% if serviceStatus['certificate-check']['overall_status'] %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: green"></i>
+                                {% else %}
+                                    <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
+                                {% endif %}
+                            {% else %}
+                                <i aria-hidden="true" data-hidden="true" class="fa fa-circle" style="color: rgb(255, 0, 0)"></i>
+                            {% endif %}<br/>
+                            <i class="fa fa-info-circle text-info"></i> {{ 'SSL/TLS certificates validity'|trans }}
+                            {% if serviceStatus['certificate-check']['certificates'] is defined %}
+                                <br/><small class="text-muted">
+                                {% for key, cert in serviceStatus['certificate-check']['certificates'] %}
+                                    {{ cert.name }}: 
+                                    {% if cert.valid %}
+                                        {% if cert.warning is defined and cert.warning %}
+                                            <span class="text-warning">⚠ {{ cert.days_remaining }} days</span>
+                                        {% else %}
+                                            <span class="text-success">✓ {% if cert.days_remaining is defined %}{{ cert.days_remaining }} days{% endif %}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-danger">✗ {{ cert.error }}</span>
+                                    {% endif %}
+                                    {% if not loop.last %}<br/>{% endif %}
+                                {% endfor %}
+                                </small>
+                            {% endif %}
+                            </span>
+                            <div class="float-right">
+                                <a href="{{ path('check_service', {'service': 'certificate-check'}) }}" class="btn btn-primary">Check</a>
+                            </div>
+                        </div>
                     </li>
                 </ul>
               </div>
