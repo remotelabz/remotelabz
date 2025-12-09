@@ -254,6 +254,9 @@ useEffect(() => {
                     <div>
                         <h4 className="mb-0">Instances</h4>
                         <span>Started: { moment(labInstance.createdAt).format("DD/MM/YYYY hh:mm A") }</span>
+                        <div className="text-muted small">
+                            {props.lab.uuid}
+                        </div>
                     </div>
                     <div>
                         {props.lab.virtuality == 1 && props.lab.hasTimer == true && <span id="timer">{timerCountDown}</span>
