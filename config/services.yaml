@@ -152,13 +152,6 @@ services:
            - '%profile_picture_directory%'
            - '@security.token_storage'
 
-    App\Service\GitVersionService:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-            $githubRepository: '%github_repository%'
-            $cacheExpiry: '%git_version_cache_expiry%'
-            $cache: '@cache.app'  # Utilise le cache d'application
-
     App\Security\LoginFormAuthenticator:
         arguments:
             $refreshTokenManager: '@gesdinet.jwtrefreshtoken.refresh_token_manager'
@@ -341,3 +334,11 @@ services:
         tags:
             - { name: monolog.logger, channel: certificate_monitor }
 
+    App\Service\GitVersionService:
+        arguments:
+            $kernel: '@kernel'
+            $logger: '@logger'
+            $cache: '@cache.app'
+            $projectDir: '%kernel.project_dir%'
+            $githubRepository: '%github_repository%'
+            $cacheExpiry: '%git_version_cache_expiry%'

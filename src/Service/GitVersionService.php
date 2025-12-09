@@ -13,8 +13,8 @@ class GitVersionService
     private $cache;
     private $projectDir;
     private $cacheExpiry;
-
     private $githubRepository;
+    private $gitVersionFile;
 
     public function __construct(
         KernelInterface $kernel,
@@ -31,6 +31,7 @@ class GitVersionService
         $this->projectDir = $projectDir;
         $this->githubRepository = $githubRepository;
         $this->cacheExpiry = $cacheExpiry;
+        $this->gitVersionFile = $projectDir . '/var/git-version.json';
     }
 
     /**
@@ -39,21 +40,79 @@ class GitVersionService
     public function getFullVersion(): array
     {
         return $this->cache->get('git_version_full', function () {
-            $commit = $this->getCommitHashShort();
-            $result=[
-                'version_file' => $this->getVersionFromFile(),
-                'commit' => $this->getCommitHash(),
-                'branch' => $this->getBranchName(),
-                'commit_short' => $commit,
-                'commit_url' => $this->getCommitUrl($commit),
-                'github_url' => $this->githubRepository,
-            ];
-            return $result;
+            return $this->readGitVersionFile();
         });
     }
 
     /**
-     * Récupère le contenu du fichier version
+     * Lit le fichier JSON généré par systemd
+     */
+    private function readGitVersionFile(): array
+    {
+        try {
+            if (!file_exists($this->gitVersionFile)) {
+                $this->logger->warning('Git version file not found', [
+                    'file' => $this->gitVersionFile
+                ]);
+                return $this->getFallbackVersion();
+            }
+
+            $content = file_get_contents($this->gitVersionFile);
+            $data = json_decode($content, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->error('Failed to parse git version file', [
+                    'file' => $this->gitVersionFile,
+                    'error' => json_last_error_msg()
+                ]);
+                return $this->getFallbackVersion();
+            }
+
+            // Vérifier que toutes les clés nécessaires sont présentes
+            $requiredKeys = ['version_file', 'commit', 'commit_short', 'branch', 'commit_url', 'github_url'];
+            foreach ($requiredKeys as $key) {
+                if (!isset($data[$key])) {
+                    $this->logger->warning('Missing key in git version file', [
+                        'key' => $key,
+                        'file' => $this->gitVersionFile
+                    ]);
+                    return $this->getFallbackVersion();
+                }
+            }
+
+            $this->logger->debug('[GitVersionService:readGitVersionFile] Git version data loaded', $data);
+
+            return $data;
+
+        } catch (\Exception $e) {
+            $this->logger->error('Error reading git version file', [
+                'exception' => $e->getMessage(),
+                'file' => $this->gitVersionFile
+            ]);
+            return $this->getFallbackVersion();
+        }
+    }
+
+    /**
+     * Retourne une version par défaut en cas d'erreur
+     */
+    private function getFallbackVersion(): array
+    {
+        $version = $this->getVersionFromFile();
+        
+        return [
+            'version_file' => $version,
+            'commit' => 'unknown',
+            'commit_short' => 'unknown',
+            'branch' => 'unknown',
+            'commit_url' => $this->githubRepository,
+            'github_url' => $this->githubRepository,
+            'updated_at' => date('c')
+        ];
+    }
+
+    /**
+     * Récupère le contenu du fichier version (fallback)
      */
     private function getVersionFromFile(): string
     {
@@ -67,87 +126,6 @@ class GitVersionService
             $this->logger->error('Error reading version file', ['exception' => $e]);
             return 'error';
         }
-
-    }
-
-    /**
-     * Récupère le hash du commit actuel
-     */
-    private function getCommitHash(): string
-    {
-        return $this->executeGitCommand('git rev-parse HEAD');
-    }
-
-    /**
-     * Récupère le hash court du commit
-     */
-    private function getCommitHashShort(): string
-    {
-        return $this->executeGitCommand('git rev-parse --short HEAD');
-    }
-
-    /**
-     * Récupère le nom de la branche actuelle
-     */
-    private function getBranchName(): string
-    {
-        return $this->executeGitCommand('git rev-parse --abbrev-ref HEAD');
-    }
-
-    /**
-     * Exécute une commande Git
-     */
-    private function executeGitCommand(string $command): string
-    {
-        try {
-            // Séparer stdout et stderr
-            $output = shell_exec('cd ' . escapeshellarg($this->projectDir) . ' && ' . $command . ' 2>/dev/null');
-            
-            if ($output === null || empty(trim($output))) {
-                throw new \Exception('Command returned empty or failed');
-            }
-
-            $result = trim($output);
-            $this->logger->debug("[GitVersionService:executeGitCommand]::Output of git command ".$output);
-            // Vérifier si le résultat contient des messages d'erreur
-            if ($this->isErrorMessage($result)) {
-                throw new \Exception('Git command returned error message');
-            }
-
-            return $result;
-        } catch (\Exception $e) {
-            $this->logger->warning('Git command failed', [
-                'command' => $command,
-                'exception' => $e->getMessage()
-            ]);
-            return 'unknown';
-        }
-    }
-
-    /**
-     * Vérifie si le message contient une erreur Git
-     */
-    private function isErrorMessage(string $message): bool
-    {
-        $errorPatterns = [
-            'fatal:',
-            'error:',
-            'not a git repository',
-            'dubious ownership',
-            'detected dubious',
-            'safe.directory',
-            'permission denied',
-        ];
-
-        $lowerMessage = strtolower($message);
-        
-        foreach ($errorPatterns as $pattern) {
-            if (strpos($lowerMessage, strtolower($pattern)) !== false) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -156,22 +134,17 @@ class GitVersionService
     public function getFormattedVersion(): string
     {
         $data = $this->getFullVersion();
-         $result=sprintf(
+        
+        if ($data['commit_short'] === 'unknown') {
+            return $data['version_file'];
+        }
+
+        return sprintf(
             '%s (commit: %s, branch: %s)',
             $data['version_file'],
             $data['commit_short'],
             $data['branch']
         );
-
-        return $result;
-    }
-
-    /**
-     * Génère l'URL du commit sur GitHub
-     */
-    private function getCommitUrl(string $commitHash): string
-    {
-        return sprintf('%s/commit/%s', rtrim($this->githubRepository, '/'), $commitHash);
     }
 
     /**
@@ -181,5 +154,35 @@ class GitVersionService
     {
         $this->cache->delete('git_version_full');
         $this->logger->info('Git version cache invalidated');
+    }
+
+    /**
+     * Force la mise à jour du fichier de version
+     * À appeler manuellement après un déploiement
+     */
+    public function triggerUpdate(): bool
+    {
+        try {
+            // Déclencher manuellement le service systemd
+            exec('sudo systemctl start git-version-update.service 2>&1', $output, $returnCode);
+            
+            if ($returnCode === 0) {
+                $this->invalidateCache();
+                $this->logger->info('Git version update triggered successfully');
+                return true;
+            }
+            
+            $this->logger->error('Failed to trigger git version update', [
+                'return_code' => $returnCode,
+                'output' => implode("\n", $output)
+            ]);
+            return false;
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Exception while triggering git version update', [
+                'exception' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 }

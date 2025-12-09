@@ -1,0 +1,14 @@
+[Unit]
+Description=RemoteLabz Git Version Update Timer
+Requires=git-version-update.service
+
+[Timer]
+# Exécuter au démarrage
+OnBootSec=30s
+# Puis toutes les heures
+OnUnitActiveSec=1h
+# Persist le timer à travers les redémarrages
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=RemoteLabz Git Version Update Service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/remotelabz/bin/git-version-update.sh
+User=www-data
+Group=www-data
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
