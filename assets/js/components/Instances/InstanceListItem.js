@@ -384,7 +384,6 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                (allInstance?.length == labDeviceLength) && 
                                 isSandbox && 
                                 (instance.device.name !== "DHCP_service") && 
-
                                     <div onClick={() => setShowExport(!showExport)}>
                                         <Button variant="default">
                                             <SVG name={showExport ? "chevron-down" : "chevron-right"} />

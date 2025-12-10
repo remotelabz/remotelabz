@@ -165,7 +165,7 @@ services:
 
     App\EventSubscriber\RenderExceptionSubscriber:
         arguments:
-            $logger: '@logger'
+            $logger: '@monolog.logger'
 
     App\EventListener\InstanceSerializationListener:
         tags:
@@ -267,7 +267,7 @@ services:
             $sslTlsKey: '%env(SSL_TLS_KEY)%'
             $remotelabzProxySslKey: '%env(REMOTELABZ_PROXY_SSL_KEY)%'
             $remotelabzProxySslCert: '%env(REMOTELABZ_PROXY_SSL_CERT)%'
-            $logger: '@logger'
+            $logger: '@monolog.logger'
             $workerManager: '@App\Service\Worker\WorkerManager'
             $proxyManager: '@App\Service\Proxy\ProxyManager'
             $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
@@ -318,7 +318,7 @@ services:
             $privateKeyFile: '%app.ssh.worker.privatekey%'
             $sshPort: '%app.ssh.worker.port%'
             $configWorkerRepository: '@App\Repository\ConfigWorkerRepository'
-            $logger: '@logger'
+            $logger: '@monolog.logger'
         tags:
             - { name: monolog.logger, channel: ssh_monitor }
 
@@ -330,15 +330,18 @@ services:
             $remotelabzProxySslKey: '%env(REMOTELABZ_PROXY_SSL_KEY)%'
             $remotelabzProxySslCert: '%env(REMOTELABZ_PROXY_SSL_CERT)%'
             $warningDays: 30  # Alert when certificate expires in 30 days or less
-            $logger: '@logger'
+            $logger: '@monolog.logger'
         tags:
             - { name: monolog.logger, channel: certificate_monitor }
 
     App\Service\GitVersionService:
         arguments:
             $kernel: '@kernel'
-            $logger: '@logger'
+            $logger: '@monolog.logger'
             $cache: '@cache.app'
             $projectDir: '%kernel.project_dir%'
             $githubRepository: '%github_repository%'
             $cacheExpiry: '%git_version_cache_expiry%'
+        tags:
+            - { name: monolog.logger, channel: gitversion_monitor }
+

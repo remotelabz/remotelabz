@@ -1122,7 +1122,7 @@ class LabController extends Controller
                 $entityManager->persist($new_device);
 
                 $entityManager->flush();
-                $this->logger->debug("[LabController:createcopyLab]::flush done");                
+                $this->logger->debug("[LabController:createcopyLab]::Flush done");                
                 
 
                 $this->logger->debug("[LabController:createcopyLab]::New device ".$new_device->getName()." created");
@@ -1266,7 +1266,7 @@ class LabController extends Controller
                     $entityManager->remove($net_int);
                     $entityManager->flush();
                 }
-                $this->logger->debug("[LabController:delete_lab]Delete device name: ".$device->getName());
+                $this->logger->debug("[LabController:delete_lab]::Delete device name: ".$device->getName());
                 $entityManager->remove($device);
                 //$entityManager->flush();
             }
@@ -1334,10 +1334,10 @@ class LabController extends Controller
                             curl_exec($curl);
                                                         
                             if (curl_errno($curl)) { 
-                                $this->logger->debug("[LabController:exportAction]curl error of image download: ".curl_error($curl));
+                                $this->logger->debug("[LabController:exportAction]::Curl error of image download: ".curl_error($curl));
                             }
                             else if (curl_getinfo($curl, CURLINFO_HTTP_CODE) != 200) {
-                                $this->logger->debug("[LabController:exportAction]http code of  image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
+                                $this->logger->debug("[LabController:exportAction]::Http code of image download : ".curl_getinfo($curl, CURLINFO_HTTP_CODE));
                             }
                             else {
                                 break;
@@ -1354,7 +1354,7 @@ class LabController extends Controller
                     exec("ls /var/lib/lxc/", $containersOutput);
                     foreach ($containersOutput as $container) {
                         if ($container == $device->getOperatingSystem()->getImageFileName()) {
-                            $this->logger->debug("[LabController:exportAction]compressing container ".$device->getOperatingSystem()->getImageFileName());
+                            $this->logger->debug("[LabController:exportAction]::Compressing container ".$device->getOperatingSystem()->getImageFileName());
                             exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/".$device->getOperatingSystem()->getImageFileName().".tar.gz -C /var/lib/lxc/".$device->getOperatingSystem()->getImageFileName()." .");
                             break;
                         }
@@ -1364,9 +1364,9 @@ class LabController extends Controller
         }
         $fileSystem->dumpFile($this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.json', $data);
 
-        $this->logger->debug("[LabController:exportAction]compressing to tar.gz");
+        $this->logger->debug("[LabController:exportAction]::Compressing to tar.gz");
         exec("tar -cvzf ".$this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()."/lab_".$lab->getUuid().".tar.gz -C ". $this->getParameter('kernel.project_dir')."/public/uploads/lab/export/lab_".$lab->getUuid()." .");
-        $this->logger->debug("[LabController:exportAction]starting download");
+        $this->logger->debug("[LabController:exportAction]::Starting download");
         $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/lab/export/lab_'.$lab->getUuid().'/lab_'.$lab->getUuid().'.tar.gz';
         $response = new StreamedResponse(function() use ($filePath) {
             readfile($filePath);exit;
