@@ -260,6 +260,14 @@ class TemplateController extends Controller
                 'list' => $this->listFlavors()
             );
 
+            $data['options']['bios_type'] = Array(
+                'name' => 'Bios Type',
+                'type' => 'list',
+                'multiple'=> false,
+                'value' => $p['bios_type'] ?? '',
+                'list' => ["BIOS","UEFI"]
+            );
+
             $data['options']['cpu'] = Array(
                 'name' => 'Number of cpu',
                 'type' => 'input',
@@ -439,6 +447,7 @@ class TemplateController extends Controller
         "hypervisor" => $template->getHypervisor()->getId(),
         "brand" => $template->getBrand(),
         "model" => $template->getModel(),
+        "bios_type" => $template->getBiosType(),
         "description" => $template->getName(),
         "networkInterfaceTemplate" => $template->getNetworkInterfaceTemplate(),
         "cpu" => $template->getNbCpu(),

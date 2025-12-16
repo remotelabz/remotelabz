@@ -140,6 +140,12 @@
                         <span class="badge bg-primary">{{ device.nbCpu|default(1) }} vCPU</span>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>BIOS Type:</strong></div>
+                    <div class="col-sm-9">
+                        <i class="me-1"></i>{{ device.BiosType }}
+                    </div>
+                </div>
                 
                 {% if device.flavor %}
                 <div class="row mb-3">

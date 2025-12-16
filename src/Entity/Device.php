@@ -214,7 +214,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device','worker'])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
 
     private $cdrom_bus_type;
 
@@ -223,7 +223,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device','worker'])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $bios_filename;
 
     /**
@@ -231,7 +231,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device','worker'])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $bios_type;
 
     /**
@@ -239,7 +239,7 @@ class Device implements InstanciableInterface
      */
     #[Assert\Type(type: 'string')]
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Serializer\Groups(['api_get_device','worker'])]
+    #[Serializer\Groups(['api_get_device','worker','sandbox'])]
     private $other_options;
 
     public function __construct()
