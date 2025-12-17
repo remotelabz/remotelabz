@@ -1190,7 +1190,7 @@ class DeviceController extends Controller
                 "hypervisor" => $device->getHypervisor()->getId(),
                 "brand" => $device->getBrand(),
                 "model" => $device->getModel(),
-                "bios_type" => $template->getBiosType(),
+                "bios_type" => $device->getBiosType(),
                 "description" => $device->getName(),
                 "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
                 "cpu" => $device->getNbCpu(),
@@ -1201,8 +1201,8 @@ class DeviceController extends Controller
                 "config_script" => "embedded",
                 "ethernet" => 1,
                 "virtuality"=> $device->getVirtuality(),
-                "other_options" => $template->getOtherOptions(),
-                "cdrom_bus_type" => $template->getCdromBusType(),
+                "other_options" => $device->getOtherOptions(),
+                "cdrom_bus_type" => $device->getCdromBusType(),
                 "isos" => $isos
         ];
         
