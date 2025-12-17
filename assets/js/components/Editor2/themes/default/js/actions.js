@@ -1001,11 +1001,12 @@ $(document).on('click', '.action-nodeinterfaces', function (e) {
 
 // Deatach network lab node
 $(document).on('click', '.action-nodeedit', function (e) {
-    //logger(1, 'DEBUG: action = action-nodeedit');
+    logger(1, 'DEBUG: action = action-nodeedit');
     var disabled  = $(this).hasClass('disabled')
     if(disabled) return;
     var fromNodeList  = $(this).hasClass('control')
     var id = $(this).attr('data-path');
+    //logger(1, 'DEBUG: edit node id ' + id);
     $.when(getNodes(id)).done(function (values) {
         values['id'] = id;
         

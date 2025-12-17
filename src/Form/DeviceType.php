@@ -125,7 +125,6 @@ class DeviceType extends AbstractType
                 'help' => 'Firmaware type (BIOS or UEFI)',
             ])
             
-            
             ->add('bios_filename', EntityType::class, [
                 'class' => OperatingSystem::class,
                 'choice_label' => 'image',

@@ -260,6 +260,30 @@ class TemplateController extends Controller
                 'list' => $this->listFlavors()
             );
 
+            $data['options']['bios_type'] = Array(
+                'name' => 'Bios Type',
+                'type' => 'list',
+                'multiple'=> false,
+                'value' => $p['bios_type'] ?? '',
+                'list' => [
+                    'BIOS' => 'BIOS',
+                    'UEFI' => 'UEFI'
+                ]
+            );
+
+            $data['options']['cdrom_bus_type'] = Array(
+                'name' => 'CDROM Bus Type',
+                'type' => 'list',
+                'multiple'=> false,
+                'value' => $p['cdrom_bus_type'] ?? '',
+                'list' => [
+                    'IDE' => 'IDE',
+                    'SATA' => 'SATA',
+                    'SCSI' => 'SCSI',
+                    'VirtIO' => 'VirtIO'
+                ]
+            );          
+
             $data['options']['cpu'] = Array(
                 'name' => 'Number of cpu',
                 'type' => 'input',
@@ -299,6 +323,12 @@ class TemplateController extends Controller
                 'value' => $p['controlProtocol'] ?? '',
                 'list' => $this->listControlProtocolTypes()
             );
+
+            $data['options']['other_options'] = Array(
+                'name' => 'Qemu other options',
+                'type' => 'input',
+                'value' => $p['other_options'] ?? ''
+            );           
 
             $data['options']['template'] = Array(
                 'name' => 'Template',
@@ -428,7 +458,6 @@ class TemplateController extends Controller
             $isos = '';
         }
 
-
     $templateData = [
         "name" => $template->getName(),
         "type" => $template->getType(),
@@ -439,6 +468,7 @@ class TemplateController extends Controller
         "hypervisor" => $template->getHypervisor()->getId(),
         "brand" => $template->getBrand(),
         "model" => $template->getModel(),
+        "bios_type" => $template->getBiosType(),
         "description" => $template->getName(),
         "networkInterfaceTemplate" => $template->getNetworkInterfaceTemplate(),
         "cpu" => $template->getNbCpu(),
@@ -449,6 +479,8 @@ class TemplateController extends Controller
         "config_script" => "embedded",
         "ethernet" => 1,
         "virtuality" => $template->getVirtuality(),
+        "other_options" => $template->getOtherOptions(),
+        "cdrom_bus_type" => $template->getCdromBusType(),
         "isos" => $isos
     ];
 

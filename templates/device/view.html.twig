@@ -140,6 +140,23 @@
                         <span class="badge bg-primary">{{ device.nbCpu|default(1) }} vCPU</span>
                     </div>
                 </div>
+                {% if device.BiosType %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>BIOS Type:</strong></div>
+                        <div class="col-sm-9">
+                            <i class="me-1"></i>{{ device.BiosType }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if device.CdromBusType %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>CDROM Interface Type:</strong></div>
+                        <div class="col-sm-9">
+                            <i class="me-1"></i>{{ device.CdromBusType }}
+                        </div>
+                    </div>
+                {% endif %}
                 
                 {% if device.flavor %}
                 <div class="row mb-3">
@@ -201,6 +218,26 @@
                 </div>
             </div>
         </div>
+
+        {% if device.OtherOptions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas me-2"></i> Qemu options
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Options:</strong></div>
+                    <div class="col-sm-9">
+                        <i class="me-1"></i>{{ device.OtherOptions }}
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% endif %}
 
         

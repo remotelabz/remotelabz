@@ -3,7 +3,7 @@
  */
 
 $(function () {
-    console.log("coucou");
+    //console.log("coucou");
     // Configuration du sélecteur d'icône
     const iconSelect = document.querySelector('select[name*="[icon]"]');
     const iconDisplay = document.getElementById('iconDisplay');

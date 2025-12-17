@@ -477,7 +477,9 @@ class InstanceController extends Controller
 
     #[Post('/api/instances/create', name: 'api_create_instance')]
     #[Security("is_granted('ROLE_USER')", message: "Access denied.", methods: 'POST')]
-    public function createAction(Request $request, InstanceManager $instanceManager, UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository, GroupRepository $groupRepository, LabRepository $labRepository)
+    public function createAction(Request $request, InstanceManager $instanceManager, 
+        UserRepository $userRepository, InvitationCodeRepository $invitationCodeRepository,
+        GroupRepository $groupRepository, LabRepository $labRepository)
     {
         #$labUuid = $request->request->get('lab');
         $labUuid = $request->request->all()['lab'] ?? [];
@@ -485,7 +487,6 @@ class InstanceController extends Controller
         $instancierUuid = $request->request->all()['instancier'] ?? [];
         #$instancierType = $request->request->get('instancierType');
         $instancierType = $request->request->all()['instancierType'] ?? [];
-
 
         switch ($instancierType) {
             case 'user':

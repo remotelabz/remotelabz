@@ -379,6 +379,7 @@ class DeviceController extends Controller
         $this->denyAccessUnlessGranted(LabVoter::SEE_DEVICE, $lab);
 
         $device = $this->deviceRepository->find($id);
+        $this->logger->debug('[DeviceController:showActionTest]::Device id request '.$id);
         $nodeData = json_decode($request->getContent(), true);
         if (!$device) {
             throw new NotFoundHttpException("Device " . $id . " does not exist.");
@@ -457,13 +458,10 @@ class DeviceController extends Controller
         $data = [
             "name"=> $device->getName(),
             "type"=> $device->getType(),
-            //"console"=> $device->getConsole(),
             "delay"=> $device->getDelay(),
             "left"=> $device->getEditorData()->getY(),
             "top"=> $device->getEditorData()->getX(),
             "icon"=> $device->getIcon(),
-            //"image"=> $device->getImage(),
-            //"url"=> $device->getUrl(),
             "config"=>$device->getConfig(),
             "status"=> $status,
             "ethernet"=>$device->getEthernet(), 
@@ -479,7 +477,9 @@ class DeviceController extends Controller
             "operatingSystem" => $device->getOperatingSystem()->getId(),
             "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
-            "qemu_options"=>$device->getOtherOptions()
+            "qemu_options"=>$device->getOtherOptions(),
+            "cdrom_bus_type" => $device->getCdromBusType(),
+            "bios_type" => $device->getBiosType()
         ];
         if (!is_null($device->getOperatingSystem()->getArch()))
             $data["qemu_arch"]=$device->getOperatingSystem()->getArch()->getId();
@@ -544,7 +544,7 @@ class DeviceController extends Controller
            $device = $deviceForm->getData();
             foreach ($device->getControlProtocolTypes() as $proto) {
                 $proto->addDevice($device);
-                $this->logger->debug($proto->getName());
+                $this->logger->debug('[DeviceController:newAction]::'.$proto->getName());
             }
             $device->setAuthor($this->getUser());
             $device->setVirtuality($virtuality);
@@ -1182,14 +1182,15 @@ class DeviceController extends Controller
 
         $deviceData = [
                 "name" => $device_name,
-                //"type" => $device->getType(),
+                "type" => $device->getType(),
                 "icon" => $device->getIcon(),
                 "operatingSystem" => $device->getOperatingSystem()->getId(),
                 "flavor" => $device->getFlavor()->getId(),
                 "controlProtocol" => $controlProtocolTypes,
-                //"hypervisor" => $device->getHypervisor()->getId(),
+                "hypervisor" => $device->getHypervisor()->getId(),
                 "brand" => $device->getBrand(),
                 "model" => $device->getModel(),
+                "bios_type" => $device->getBiosType(),
                 "description" => $device->getName(),
                 "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
                 "cpu" => $device->getNbCpu(),
@@ -1200,7 +1201,8 @@ class DeviceController extends Controller
                 "config_script" => "embedded",
                 "ethernet" => 1,
                 "virtuality"=> $device->getVirtuality(),
-                "qemu_options"=>$device->getOtherOptions(),
+                "other_options" => $device->getOtherOptions(),
+                "cdrom_bus_type" => $device->getCdromBusType(),
                 "isos" => $isos
         ];
         
@@ -1262,6 +1264,19 @@ class DeviceController extends Controller
         if(isset($data['count'])) {
             $device->setCount($data['count']);
         }
+
+        if(isset($data['bios_type'])) {
+            $device->setBiosType($data['bios_type']);
+        }
+
+        if(isset($data['cdrom_bus_type'])) {
+            $device->setCdromBusType($data['cdrom_bus_type']);
+        }
+
+        if(isset($data['other_options'])) {
+            $device->setOtherOptions($data['other_options']);
+        }
+
         if(isset($data['name'])) {
             if($data['name'] != '') {
                 $oldDeviceName = $device->getName();
