@@ -467,6 +467,8 @@ export function getNodes(node_id) {
     } else {
         var url = '/api/labs/' + lab_filename + '/nodes';
     }
+    //logger(1, 'DEBUG: POST on url ' + url);
+
     var type = 'POST';
     $.ajax({
         cache: false,
@@ -481,7 +483,7 @@ export function getNodes(node_id) {
                 deferred.resolve(data['data']);
             } else {
                 // Application error
-                logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
+                //logger(1, 'DEBUG: application error (' + data['status'] + ') on ' + type + ' ' + url + ' (' + data['message'] + ').');
                 deferred.reject(data['message']);
             }
         },

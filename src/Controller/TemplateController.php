@@ -265,8 +265,24 @@ class TemplateController extends Controller
                 'type' => 'list',
                 'multiple'=> false,
                 'value' => $p['bios_type'] ?? '',
-                'list' => ["BIOS","UEFI"]
+                'list' => [
+                    'BIOS' => 'BIOS',
+                    'UEFI' => 'UEFI'
+                ]
             );
+
+            $data['options']['cdrom_bus_type'] = Array(
+                'name' => 'CDROM Bus Type',
+                'type' => 'list',
+                'multiple'=> false,
+                'value' => $p['cdrom_bus_type'] ?? '',
+                'list' => [
+                    'IDE' => 'IDE',
+                    'SATA' => 'SATA',
+                    'SCSI' => 'SCSI',
+                    'VirtIO' => 'VirtIO'
+                ]
+            );          
 
             $data['options']['cpu'] = Array(
                 'name' => 'Number of cpu',
@@ -307,6 +323,12 @@ class TemplateController extends Controller
                 'value' => $p['controlProtocol'] ?? '',
                 'list' => $this->listControlProtocolTypes()
             );
+
+            $data['options']['other_options'] = Array(
+                'name' => 'Qemu other options',
+                'type' => 'input',
+                'value' => $p['other_options'] ?? ''
+            );           
 
             $data['options']['template'] = Array(
                 'name' => 'Template',
@@ -436,7 +458,6 @@ class TemplateController extends Controller
             $isos = '';
         }
 
-
     $templateData = [
         "name" => $template->getName(),
         "type" => $template->getType(),
@@ -458,6 +479,8 @@ class TemplateController extends Controller
         "config_script" => "embedded",
         "ethernet" => 1,
         "virtuality" => $template->getVirtuality(),
+        "other_options" => $template->getOtherOptions(),
+        "cdrom_bus_type" => $template->getCdromBusType(),
         "isos" => $isos
     ];
 
