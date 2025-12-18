@@ -105,9 +105,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer text-muted d-flex justify-content-between align-items-center">
-                    <span>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></span>
-                    <span>{% if lab.id in started_instances %}&#128994;{% else %}&#128308;{% endif %}</span>
+                <div class="card-footer text-muted">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="mt-2">Author: {{lab.author.name}}</div>
+                            <div>Last updated <span class="timeago" datetime="{{ lab.lastUpdated|date('m/d/Y H:i:s') }}" data-toggle="tooltip" data-placement="bottom" title="{{ lab.lastUpdated|date('M d, Y h:ia') }}"></span></div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span>{% if lab.id in started_instances %}&#128994;{% else %}&#128308;{% endif %}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         {% endif %}

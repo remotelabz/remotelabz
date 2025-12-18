@@ -584,12 +584,12 @@ class DeviceController extends Controller
 
                 $deviceData = [
                     "name" => $device->getName(),
-                    //"type" => $device->getType(),
+                    "type" => $device->getType(),
                     "icon" => $device->getIcon(),
                     "operatingSystem" => $device->getOperatingSystem()->getId(),
                     "flavor" => $device->getFlavor()->getId(),
                     "controlProtocol" => $controlProtocolTypes,
-                    //"hypervisor" => $device->getHypervisor()->getId(),
+                    "hypervisor" => $device->getHypervisor()->getId(),
                     "brand" => $device->getBrand(),
                     "model" => $device->getModel(),
                     "description" => $device->getName(),
