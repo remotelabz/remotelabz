@@ -96,7 +96,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
   );
 });
 
-const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted, user }) => {
+const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted, user }) => {
   if (!selectedInstance) return null;
 
   const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
@@ -499,6 +499,19 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
                                 <SVG name="external-link" />
                               </a>
                             }
+
+                            {(deviceInstance.state === 'started' && is_serial(deviceInstance)) &&
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={"/instances/" + deviceInstance.uuid + "/view/serial"}
+                                className="btn btn-sm btn-primary"
+                                title="Open Serial console"
+                              >
+                                <SVG name="admin" /> {/* ou un autre icône approprié pour serial */}
+                              </a>
+                            }
+
                             {deviceInstance.state === 'started' && (
                               <button
                                 className="btn btn-sm btn-danger"
@@ -571,7 +584,7 @@ const DetailsModal = React.memo(({ selectedInstance, onClose, sharedStates, onSt
       </Modal.Footer>
     </Modal>
   </>);
-});
+};
 
 export default function OptimizedInstanceList({ 
   instances = [], 
