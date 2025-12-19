@@ -31,7 +31,7 @@ import { logger, getJsonMessage, newUIreturn, printPageAuthentication, getUserIn
          printListNodes, setNodeData, printFormCustomShape, printFormText, printListTextobjects, printFormEditCustomShape,
          printFormEditText, printFormSubjectLab, getTextObjects, createTextObject, 
          editTextObject, editTextObjects, deleteTextObject, textObjectDragStop, addMessage, addModal, addModalError, addModalWide,
-         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection } from'./functions.js';
+         dirname, basename, hex2rgb, updateFreeSelect, getTopology, editConnection,initExtendedTimer  } from'./functions.js';
 import {fromByteArray,TextEncoderLite} from './b64encoder';
 import { adjustZoom, resolveZoom, saveEditorLab } from './ebs/functions';
 import Showdown, { extension } from 'showdown';
@@ -1052,6 +1052,9 @@ $(document).on('click', '.action-labedit', function (e) {
     $.when(getLabInfo($('#lab-viewport').attr('data-path'))).done(function (values) {
         values['path'] = dirname($('#lab-viewport').attr('data-path'));
         printFormLab('edit', values);
+        setTimeout(function() {
+            initExtendedTimer();
+        }, 100);
     }).fail(function (message) {
         addModalError(message);
     });
@@ -1064,6 +1067,9 @@ $(document).on('click', '.action-labedit-inline', function (e) {
     $.when(getLabInfo($('.action-labedit-inline').attr('data-path'))).done(function (values) {
         values['path'] = dirname($('.action-labedit-inline').attr('data-path'));
         printFormLab('edit', values);
+        setTimeout(function() {
+            initExtendedTimer();
+        }, 100);
     }).fail(function (message) {
         addModalError(message);
     });
@@ -1900,10 +1906,6 @@ $(document).on('submit', '#form-lab-edit', function (e) {
     });
     return false;  // Stop to avoid POST
 });
-
-$(document).on('click', '#resetTimer', function(e) {
-    document.getElementById('timer').value = "";
-})
 
 // Submit lab TP subject form
 $(document).on('submit', '#form-subject-lab', function (e) {

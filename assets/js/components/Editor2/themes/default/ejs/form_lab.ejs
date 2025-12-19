@@ -20,7 +20,7 @@
                 <label class="col-md-2 control-label"><%=MESSAGES[26]%><sup class="sup-star">*</sup></label>
                 <div class="col-md-10">
                     <input class="form-control" name="lab[version]" value="<%=version%>" type="text"/>
-                    <span class="chars">Must be interger ([0-9]chars)</span>
+                    <span class="chars">Must be integer ([0-9]chars)</span>
                 </div>
             </div>
             <div class="form-group">
@@ -61,13 +61,41 @@
                 </div>
             </div>
             <% if(virtuality == 1){%>
+
             <div class="form-group">
-                <label class="col-md-2 control-label">Timer</label>
-                <div class="col-md-2">
-                    <input class="form-control" type="time" id="timer" name="lab[timer]" value="<%=timer%>" step="1" style="width: auto" />
+                <label class="col-md-2 control-label">Timer Duration</label>
+                <div class="col-md-10">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="timer_days">Days</label>
+                            <input class="form-control" type="number" id="timer_days" name="timer[days]" value="0" min="0" max="30" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="timer_hours">Hours</label>
+                            <input class="form-control" type="number" id="timer_hours" name="timer[hours]" value="0" min="0" max="23" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="timer_minutes">Minutes</label>
+                            <input class="form-control" type="number" id="timer_minutes" name="timer[minutes]" value="0" min="0" max="59" />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="timer_seconds">Seconds</label>
+                            <input class="form-control" type="number" id="timer_seconds" name="timer[seconds]" value="0" min="0" max="59" />
+                        </div>
+                        <div class="col-md-3" style="padding-top: 24px;">
+                            <button type="button" class="btn btn-flat" id="resetTimer">Reset Timer</button>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-md-12">
+                            <p class="text-muted" id="timer_display">Total: 0 seconds</p>
+                            <!-- Champ caché pour stocker la valeur totale en secondes -->
+                            <input type="hidden" name="lab[timer]" id="timer_total" value="0" />
+                        </div>
+                    </div>
                 </div>
-                <button type="button" class="btn btn-flat" id="resetTimer">Reset</button>
             </div>
+
             <%}%>
             <div style="height: 100px;"></div>
             <div class="row">

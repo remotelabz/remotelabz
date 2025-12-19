@@ -9,9 +9,11 @@
  * @copyright 2014-2016 Andrea Dainese
  * @license BSD-3-Clause https://github.com/dainok/unetlab/blob/master/LICENSE
  * @copyright 2018-2020 Julien Hubert <https://github.com/Atlanta>
- * @copyright 2021 Florent Nolot <https://github.com/florent-n>
+ * @copyright 2018-2025 Florent Nolot <https://github.com/florent-n>
+ * @copyright 2024-2025 Noemie P. <https://github.com/Noemie-P>
  * @author Florent Nolot
  * @author Julien Hubert
+ * @author Noemie P.
  */
 
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
@@ -1329,6 +1331,7 @@ export function printFormLab(action, values) {
     });
  
     validateLabInfo();
+    initExtendedTimer();
 }
 
 export function postBanner(banner, attachments) {
@@ -3589,5 +3592,165 @@ function printFormUploadNodeConfig(path) {
     logger(1, 'DEBUG: popping up the upload form.');
     addModal(MESSAGES[201], html, '', 'upload-modal');
     validateImport();
+}
+
+/**
+ * Calcule le total en secondes à partir des champs jours/heures/minutes/secondes
+ */
+export function updateTimerTotal() {
+    const days = parseInt(document.getElementById('timer_days')?.value) || 0;
+    const hours = parseInt(document.getElementById('timer_hours')?.value) || 0;
+    const minutes = parseInt(document.getElementById('timer_minutes')?.value) || 0;
+    const seconds = parseInt(document.getElementById('timer_seconds')?.value) || 0;
+    
+    const totalSeconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+    
+    // Mettre à jour le champ caché
+    const timerTotalField = document.getElementById('timer_total');
+    if (timerTotalField) {
+        timerTotalField.value = totalSeconds;
+    }
+    
+    // Afficher le total de manière lisible
+    let displayText = 'Total: ';
+    if (days > 0) displayText += days + ' day' + (days > 1 ? 's ' : ' ');
+    if (hours > 0) displayText += hours + ' hour' + (hours > 1 ? 's ' : ' ');
+    if (minutes > 0) displayText += minutes + ' minute' + (minutes > 1 ? 's ' : ' ');
+    if (seconds > 0) displayText += seconds + ' second' + (seconds > 1 ? 's' : '');
+    if (totalSeconds === 0) displayText += '0 seconds';
+    displayText += ' (' + totalSeconds + ' seconds total)';
+    
+    const displayElement = document.getElementById('timer_display');
+    if (displayElement) {
+        displayElement.textContent = displayText;
+    }
+    
+    return totalSeconds;
+}
+
+/**
+ * Convertit des secondes en composants (jours/heures/minutes/secondes)
+ * @param {number} totalSeconds - Le nombre total de secondes
+ * @returns {object} Objet contenant days, hours, minutes, seconds
+ */
+export function secondsToComponents(totalSeconds) {
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return { days, hours, minutes, seconds };
+}
+
+/**
+ * Initialise les événements du timer étendu
+ */
+export function initExtendedTimer() {
+    logger(1, 'DEBUG: Initializing extended timer');
+    
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    const timerTotal = document.getElementById('timer_total');
+    const resetButton = document.getElementById('resetTimer');
+    
+    // Vérifier que les éléments existent
+    if (!timerDays || !timerHours || !timerMinutes || !timerSeconds) {
+        logger(1, 'DEBUG: Timer elements not found, skipping initialization');
+        return;
+    }
+    
+    // Si une valeur timer existe déjà, la convertir
+    if (timerTotal && timerTotal.value && timerTotal.value !== '0') {
+        const existingTimer = timerTotal.value;
+        
+        // Si c'est au format HH:MM:SS
+        if (existingTimer.includes(':')) {
+            const parts = existingTimer.split(':');
+            if (parts.length === 3) {
+                timerHours.value = parseInt(parts[0]) || 0;
+                timerMinutes.value = parseInt(parts[1]) || 0;
+                timerSeconds.value = parseInt(parts[2]) || 0;
+                timerDays.value = 0;
+            }
+        } else {
+            // Si c'est en secondes
+            const components = secondsToComponents(parseInt(existingTimer));
+            timerDays.value = components.days;
+            timerHours.value = components.hours;
+            timerMinutes.value = components.minutes;
+            timerSeconds.value = components.seconds;
+        }
+    }
+    
+    // Mettre à jour le total à chaque changement
+    timerDays.addEventListener('input', updateTimerTotal);
+    timerHours.addEventListener('input', updateTimerTotal);
+    timerMinutes.addEventListener('input', updateTimerTotal);
+    timerSeconds.addEventListener('input', updateTimerTotal);
+    
+    // Bouton Reset
+    if (resetButton) {
+        resetButton.addEventListener('click', function() {
+            timerDays.value = 0;
+            timerHours.value = 0;
+            timerMinutes.value = 0;
+            timerSeconds.value = 0;
+            updateTimerTotal();
+            logger(1, 'DEBUG: Timer reset to 0');
+        });
+    }
+    
+    // Calculer le total initial
+    updateTimerTotal();
+    
+    logger(1, 'DEBUG: Extended timer initialized successfully');
+}
+
+/**
+ * Réinitialise le timer à zéro
+ */
+export function resetTimer() {
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    
+    if (timerDays) timerDays.value = 0;
+    if (timerHours) timerHours.value = 0;
+    if (timerMinutes) timerMinutes.value = 0;
+    if (timerSeconds) timerSeconds.value = 0;
+    
+    updateTimerTotal();
+}
+
+/**
+ * Obtient la valeur du timer en secondes
+ * @returns {number} La valeur totale en secondes
+ */
+export function getTimerValue() {
+    const timerTotal = document.getElementById('timer_total');
+    return timerTotal ? parseInt(timerTotal.value) || 0 : 0;
+}
+
+/**
+ * Définit la valeur du timer à partir de secondes
+ * @param {number} totalSeconds - Le nombre total de secondes
+ */
+export function setTimerValue(totalSeconds) {
+    const components = secondsToComponents(totalSeconds);
+    
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    
+    if (timerDays) timerDays.value = components.days;
+    if (timerHours) timerHours.value = components.hours;
+    if (timerMinutes) timerMinutes.value = components.minutes;
+    if (timerSeconds) timerSeconds.value = components.seconds;
+    
+    updateTimerTotal();
 }
 
