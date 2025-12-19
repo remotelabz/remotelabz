@@ -20,7 +20,7 @@ doctrine:
 
         types:
             array: App\Doctrine\ArrayType
-
+        persistent: false
 
         url: 'mysql://%env(MYSQL_USER)%:%env(MYSQL_PASSWORD)%@%env(MYSQL_SERVER)%/%env(MYSQL_DATABASE)%'
     orm:
