@@ -55,6 +55,14 @@ class InstanceStateMessageHandler
     public function __invoke(InstanceStateMessage $message)
     {
         $uuid=null;
+
+        // Ajout pour éviter le message SQLSTATE[HY000]: General error: 2006 MySQL server has gone away [] []
+        $connection = $this->entityManager->getConnection();
+
+        if (!$connection->isConnected()) {
+            $connection->connect();
+        }
+
     try {
       
         $this->logger->info("Received InstanceState message :", [

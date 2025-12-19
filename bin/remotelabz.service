@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 #Restart=on-failure
 RestartSec=5
-ExecStart=/usr/bin/env php /opt/remotelabz/bin/console messenger:consume front --memory-limit=128M
+ExecStart=/usr/bin/env php /opt/remotelabz/bin/console messenger:consume front --memory-limit=128M --time-limit=3600
 ExecStop=/usr/bin/env php /opt/remotelabz/bin/console messenger:stop-workers
 MemoryAccounting=true
 MemoryHigh=128M
