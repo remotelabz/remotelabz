@@ -84,7 +84,6 @@ nobind
 persist-key
 persist-tun
 verb 1
-ncp-disable
 keepalive 5 30
 port $port
 proto $protocol

@@ -121,7 +121,6 @@ cert RemoteLabz-VPNServer.crt
 key RemoteLabz-VPNServer.key
 dh dh2048.pem
 cipher AES-256-GCM
-ncp-disable
 tls-auth ta.key 0
 server 10.8.0.0 255.255.255.0
 keepalive 5 30
