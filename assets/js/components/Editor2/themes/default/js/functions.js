@@ -1587,20 +1587,21 @@ export function printFormNode(action, values, fromNodeList) {
                                     if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
                                     
                                     var tpl = '';
-                                    if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'];
-                                    if (key == 'qemu_options') tpl = " ( reset to template value )"
+                                    if (key == 'other_options' && value_set == '') value_set = template_values['options'][key]['value'];
+                                    if (key == 'other_options') tpl = " ( reset to template value )"
                                     
-                                    value_set = (key == 'qemu_options') ? value_set.replace(/"/g, '&quot;') : value_set;
-                                    template_values['options'][key]['value'] = (key == 'qemu_options') ? template_values['options'][key]['value'].replace(/"/g, '&quot;') : template_values['options'][key]['value'];
+                                    value_set = (key == 'other_options') ? value_set.replace(/"/g, '&quot;') : value_set;
+                                    logger(1,"DEBUG: key value_set "+key+" "+value_set);
+                                    var template_value_escaped = (key == 'other_options') ? template_values['options'][key]['value'].replace(/"/g, '&quot;') : template_values['options'][key]['value'];
 
                                     html_data += '<div class="form-group' + widthClass + '">' +
-                                        '<label class=" control-label"> ' + value['name'] + '<a id="link_' + key + '" onClick="javascript:document.getElementById(\'input_' + key + '\').value=\'' + template_values['options'][key]['value'] + '\';document.getElementById(\'link_' + key + '\').style.visibility=\'hidden\'" style="visibility: ' + ((value_set != template_values['options'][key]['value']) ? 'visible' : 'hidden') + ';" >' + tpl + '</a>' + ram_value + '</label>' +
-                                        '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_' + key + '" onClick="javascript:document.getElementById(\'link_' + key + '\').style.visibility=\'visible\'"/>' +
+                                        '<label class=" control-label"> ' + value['name'] + '<a id="link_' + key + '" class="reset-to-template" data-input-id="input_' + key + '" data-template-value="' + template_value_escaped + '" style="visibility: ' + ((value_set != template_value_escaped) ? 'visible' : 'hidden') + ';" >' + tpl + '</a>' + ram_value + '</label>' +
+                                        '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_' + key + '" data-reset-link="link_' + key + '"/>' +
                                         '</div>';
-                                    
-                                    if (key == 'qemu_options') {
+
+                                    if (key == 'other_options') {
                                         html_data += '<div class="form-group' + widthClass + '">' +
-                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value'] + '" type="text" disabled/>' +
+                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_value_escaped + '" type="text" disabled/>' +
                                             '</div>';
                                     }
                                 }
@@ -1623,6 +1624,22 @@ export function printFormNode(action, values, fromNodeList) {
                         $('#form-node-data').html(html_data);
                         $('.selectpicker').selectpicker();
                         
+                        $(document).off('click', '.reset-to-template').on('click', '.reset-to-template', function(e) {
+                            e.preventDefault();
+                            var inputId = $(this).data('input-id');
+                            var templateValue = $(this).data('template-value');
+                            // Désérialiser les entités HTML
+                            var decodedValue = $('<textarea/>').html(templateValue).text();
+                            $('#' + inputId).val(decodedValue);
+                            $(this).css('visibility', 'hidden');
+                        });
+
+                        // Gérer les clics sur les inputs pour afficher le lien de réinitialisation
+                        $(document).off('click', 'input[data-reset-link]').on('click', 'input[data-reset-link]', function() {
+                            var linkId = $(this).data('reset-link');
+                            $('#' + linkId).css('visibility', 'visible');
+                        });
+
                         if (!fromNodeList) {
                             setTimeout(function () {
                                 $('.selectpicker').selectpicker().data("selectpicker").$button.focus();

@@ -11,7 +11,7 @@
 
         <ul class="nav overflow-scroll" id="sidebar-scroll">
             {{ sidebar.link("User", 'users', null, 'user', 'users', _context) }}
-            {{ sidebar.link("Mail", 'admin_write_mail', null, 'mail', 'mail', _context) }}
+            {# {{ sidebar.link("Mail", 'admin_write_mail', null, 'mail', 'mail', _context) }} #}
             {# {{ sidebar.link("Groups", 'groups', null, 'group', 'groups', _context) }} #}
             <li class="nav-item">
                 <a class="nav-link dropdown-toggle 
@@ -42,7 +42,7 @@
                     {{ sidebar.link("Device Template", 'devices', null, 'document', 'devices', _context) }}
                </ul>
             </li>
-            {{ sidebar.link("PDU", 'pdus', null, 'power', 'pdus', _context) }}
+            {{ sidebar.link("PDU (exp.)", 'pdus', null, 'power', 'pdus', _context) }}
             {{ sidebar.link("Sandbox", 'sandbox', null, 'documents', 'sandbox', _context) }}
             {{ sidebar.link("Instance", 'instances', null, 'monitor', 'instances', _context) }}
             {{ sidebar.link("Codes", 'codes', null, 'doc-text', 'codes', _context) }}
