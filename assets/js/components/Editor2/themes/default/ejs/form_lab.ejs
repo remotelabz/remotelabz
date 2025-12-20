@@ -2,43 +2,42 @@
     <div class="row">
         <div class="col-md-4">
             <div class="form-group">
-                <label class="col-md-2 control-label"><%=MESSAGES[20]%>
-                    <sup class="sup-star">*</sup>
-                </label>
-                <div class="col-md-10">
+                <label class="col-md-3 control-label"><%=MESSAGES[20]%>*</label>
+                <div class="col-md-9">
                     <input class="form-control" name="lab[path]" value="<%=path%>" disabled="" type="text"/>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-md-2 control-label"><%=MESSAGES[19]%><sup class="sup-star">*</sup></label>
-                <div class="col-md-10">
+                <label class="col-md-3 control-label"><%=MESSAGES[19]%>*</label>
+                <div class="col-md-9">
                     <input class="form-control autofocus" name="lab[name]" value="<%=name%>" type="text"/>
-                    <span class="chars">Use only [A-Za-z0-9_- ]chars</span>
+                    <span class="chars">Use only [A-Za-z0-9_- ] chars</span>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-md-2 control-label"><%=MESSAGES[26]%><sup class="sup-star">*</sup></label>
-                <div class="col-md-10">
+                <label class="col-md-3 control-label"><%=MESSAGES[26]%>*</label>
+                <div class="col-md-9">
                     <input class="form-control" name="lab[version]" value="<%=version%>" type="text"/>
-                    <span class="chars">Must be integer ([0-9]chars)</span>
+                    <span class="chars">Must be integer ([0-9] chars)</span>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-md-2 control-label">Author</label>
-                <div class="col-md-10">
+                <label class="col-md-3 control-label">Author</label>
+                <div class="col-md-9">
                     <input class="form-control" name="lab[author]" value="<%=author%>" disabled="" type="text"/>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-md-4 control-label"><%=MESSAGES[158]%><sup class="sup-star">*</sup></label>
-                <div class="col-md-3">
+                <label class="col-md-3 control-label"><%=MESSAGES[158]%>*</label>
+                <div class="col-md-4">
                     <input class="form-control" name="lab[scripttimeout]" value="<%=scripttimeout%>" type="text"/>
-                    <label class="col-md-3 control-label control-label_custom">Seconds</label>
                 </div>
+                <label class="col-md-1 control-label control-label_custom">Seconds</label>
+                <div class="col-md-3"></div>
             </div>
             <div class="row">
                 <div class="col-md-12 parent-required">
-                    <p class="p-required"><sup class="sup-required">*</sup>- Required Fields</p>
+                    <p class="p-required">* - Required Fields</p>
                 </div>
             </div>
         </div>
@@ -51,17 +50,18 @@
             </div>
             <div class="form-group">
                 <label class="col-md-2 control-label">Banner</label>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div id="bannerDropzone" class="dropzone">
                         <div class="dz-default dz-message" id="bannerDropzoneText">
-                            <img src="<%=srcBanner%>" class="bannerDropzone data-dz-thumbnail" width="160px" height="105px" style="object-fit: cover;">
+                            <img src="<%=srcBanner%>" class="bannerDropzone data-dz-thumbnail" width="160px" style="object-fit: cover;"><br/>
                             <span>Drop files here</span>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-6">
+                </div>
             </div>
             <% if(virtuality == 1){%>
-
             <div class="form-group">
                 <label class="col-md-2 control-label">Timer Duration</label>
                 <div class="col-md-10">
@@ -82,7 +82,7 @@
                             <label for="timer_seconds">Seconds</label>
                             <input class="form-control" type="number" id="timer_seconds" name="timer[seconds]" value="0" min="0" max="59" />
                         </div>
-                        <div class="col-md-3" style="padding-top: 24px;">
+                        <div class="col-md-2" style="padding-top: 24px;">
                             <button type="button" class="btn btn-flat" id="resetTimer">Reset Timer</button>
                         </div>
                     </div>

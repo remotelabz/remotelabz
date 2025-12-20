@@ -1276,7 +1276,7 @@ export function printContextMenu(title, body, pageX, pageY, addToBody, role, hid
 
 // Add a new lab
 export function printFormLab(action, values) {
-    
+    //logger('1','DEBUG: printFormLab values',values);
     if (action == 'add') {
         var path = values['path'];
     } else {
@@ -1297,7 +1297,7 @@ export function printFormLab(action, values) {
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
-        timer: (values['timer'] != null) ? values['timer'] : '',
+        timer: (values['timer'] != null) ? values['timer'] : '0',
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
@@ -1306,8 +1306,26 @@ export function printFormLab(action, values) {
         MESSAGES: MESSAGES,
     })
     
-    logger(1, 'DEBUG: popping up the lab-add form.');
+    //logger(1, 'DEBUG: printFormLab popping up the lab-add form.');
+    //logger(1, 'DEBUG: printFormLab timer.' + values['timer']);
     addModalWide(title, html, '');
+
+    // ATTENDRE que la modal soit complètement affichée
+    $('.modal').one('shown.bs.modal', function() {
+        //logger(1, 'DEBUG: Modal shown, initializing timer with value: ' + values['timer']);
+        
+        // Définir d'abord la valeur dans le champ caché
+        const timerTotal = document.getElementById('timer_total');
+        if (timerTotal && values['timer']) {
+            timerTotal.value = values['timer'];
+            //logger(1, 'DEBUG: Set timer_total field to: ' + values['timer']);
+        }
+        
+        // PUIS initialiser le timer
+        initExtendedTimer();
+        
+        //logger(1, 'DEBUG: Timer initialized, final value: ' + (timerTotal ? timerTotal.value : 'not found'));
+    });
 
     Dropzone.autoDiscover= false;
     var bannerDropzone = new Dropzone("div#bannerDropzone",{
@@ -1331,7 +1349,6 @@ export function printFormLab(action, values) {
     });
  
     validateLabInfo();
-    initExtendedTimer();
 }
 
 export function postBanner(banner, attachments) {
@@ -1371,7 +1388,7 @@ export function printFormSubjectLab(action, values) {
         MESSAGES: MESSAGES,
     })
 
-    logger(1, 'DEBUG: popping up the lab-add form.');
+    logger(1, 'DEBUG: printFormSubjectLab popping up the lab-add form.');
     addModalWide(title, html, '');
     var subjectEditor = new EasyMDE({ element: $("#editor")[0] });
     validateLabInfo();
@@ -3589,7 +3606,7 @@ function printFormUploadNodeConfig(path) {
                          '</div>' +
                    '</div>' +
                  '</form>';
-    logger(1, 'DEBUG: popping up the upload form.');
+    logger(1, 'DEBUG: printFormUploadNodeConfig popping up the upload form.');
     addModal(MESSAGES[201], html, '', 'upload-modal');
     validateImport();
 }
@@ -3682,6 +3699,7 @@ export function initExtendedTimer() {
             timerMinutes.value = components.minutes;
             timerSeconds.value = components.seconds;
         }
+        updateTimerTotal();
     }
     
     // Mettre à jour le total à chaque changement
@@ -3703,9 +3721,10 @@ export function initExtendedTimer() {
     }
     
     // Calculer le total initial
-    updateTimerTotal();
-    
-    logger(1, 'DEBUG: Extended timer initialized successfully');
+    if (!timerTotal || !timerTotal.value || timerTotal.value === '0') {
+        updateTimerTotal();
+    }    
+    logger(1, 'DEBUG: Extended timer initialized successfully'+timerTotal.value);
 }
 
 /**
