@@ -54,7 +54,7 @@
           {% block breadcrumbs %}
             <div class="breadcrumb">
               {% if '/admin' in app.request.uri %}
-                {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('users') }) %}
+                {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('admin') }) %}
               {% else %}
                 {% set breadcrumbs = breadcrumbs | merge({}) %}
               {% endif %}

@@ -41,7 +41,7 @@
           </a>
           {% endif %}
         {% if is_granted('ROLE_ADMINISTRATOR') %}
-          <a class="nav-link ml-2" href="{{ path('users') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
+          <a class="nav-link ml-2" href="{{ path('admin') }}" data-toggle="tooltip" data-placement="bottom" title="Admin area">
             {{ svg('settings', 's16') }}
           </a>
           {% elseif is_granted('ROLE_TEACHER_EDITOR') and not is_granted('ROLE_ADMINISTRATOR') %}
