@@ -150,15 +150,15 @@ export function ObjectPosUpdate (event ,ui) {
                 groupMove.push(node)
           });
      }
-     logger(1,'DEBUG: moving objects...0');
+     //logger(1,'DEBUG: moving objects...0');
      window.dragstop = 0;
      var zoom = $('#zoomslide').slider("value")/100 ;
      if ( groupMove.length > 1 ) window.dragstop = 1
      if (  event.metaKey || ( event.e != undefined && event.e.metaKey )  || event.ctrlKey || (  event.e != undefined && event.e.ctrlKey)  ) return
-     logger(1,'DEBUG: moving objects...1');
+     //logger(1,'DEBUG: moving objects...1');
      window.moveCount += 1
      if ( window.moveCount != groupMove.length ) return
-     logger(1,'DEBUG: moving objects...2');
+     //logger(1,'DEBUG: moving objects...2');
      var tmp_nodes = [],
          tmp_shapes = [],
          tmp_networks = [];
@@ -168,13 +168,13 @@ export function ObjectPosUpdate (event ,ui) {
           id = node.id
           $('#'+id).addClass('dragstopped')
           if ( id.search('node') != -1 ) {
-               logger(1, 'DEBUG: setting' + id + ' position.');
+               //logger(1, 'DEBUG: setting' + id + ' position.');
                tmp_nodes.push( { id : id.replace('node','') , left: eLeft, top: eTop } )
           } else if  ( id.search('network') != -1 )  {
-              logger(1, 'DEBUG: setting ' + id + ' position.');
+              //logger(1, 'DEBUG: setting ' + id + ' position.');
               tmp_networks.push( { id : id.replace('network','') , left: eLeft, top: eTop } )
           } else if ( id.search('custom') != -1 )  {
-              logger(1, 'DEBUG: setting ' + id + ' position.');
+              //logger(1, 'DEBUG: setting ' + id + ' position.');
               var objectData = node.outerHTML;
               objectData = fromByteArray(new TextEncoderLite('utf-8').encode(objectData));
               tmp_shapes.push( { id : id.replace(/customShape/,'').replace(/customText/,'') , data: objectData } )
@@ -182,9 +182,9 @@ export function ObjectPosUpdate (event ,ui) {
      });
      // Bulk for nodes
      $.when(setNodesPosition(tmp_nodes)).done(function () {
-           logger(1, 'DEBUG: all selected node position saved.');
+           //logger(1, 'DEBUG: all selected node position saved.');
            $.when(editTextObjects(tmp_shapes)).done(function () {
-                logger(1, 'DEBUG: all selected shape position saved.');
+                //logger(1, 'DEBUG: all selected shape position saved.');
            }).fail(function (message) {
                 addModalError(message);
            });

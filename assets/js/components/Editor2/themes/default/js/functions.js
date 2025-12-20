@@ -773,7 +773,7 @@ export function setNodesPosition(nodes) {
         data: JSON.stringify(form_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: node position updated.');
+                //logger(1, 'DEBUG: node position updated.');
                 deferred.resolve();
             } else {
                 // Application error
@@ -2112,7 +2112,7 @@ export function printLabTopology() {
                 if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && labinfo['lock'] == 0 ) {
                     var dragDeferred = $.Deferred()
                     $.when ( labTextObjectsResolver ).done ( function () {
-                        logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
+                        //logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
                         lab_topology.draggable($('.node_frame, .network_frame, .customShape' ), {
                            containment: false,
                            grid: [3, 3],
@@ -2667,7 +2667,7 @@ export function getTextObjects() {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
+                //logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -3637,10 +3637,10 @@ export function updateTimerTotal() {
     if (totalSeconds === 0) displayText += '0 seconds';
     displayText += ' (' + totalSeconds + ' seconds total)';
     
-    const displayElement = document.getElementById('timer_display');
+    /*const displayElement = document.getElementById('timer_display');
     if (displayElement) {
         displayElement.textContent = displayText;
-    }
+    }*/
     
     return totalSeconds;
 }
@@ -3663,7 +3663,7 @@ export function secondsToComponents(totalSeconds) {
  * Initialise les événements du timer étendu
  */
 export function initExtendedTimer() {
-    logger(1, 'DEBUG: Initializing extended timer');
+    //logger(1, 'DEBUG: Initializing extended timer');
     
     const timerDays = document.getElementById('timer_days');
     const timerHours = document.getElementById('timer_hours');
@@ -3674,7 +3674,7 @@ export function initExtendedTimer() {
     
     // Vérifier que les éléments existent
     if (!timerDays || !timerHours || !timerMinutes || !timerSeconds) {
-        logger(1, 'DEBUG: Timer elements not found, skipping initialization');
+        //logger(1, 'DEBUG: Timer elements not found, skipping initialization');
         return;
     }
     
@@ -3716,7 +3716,7 @@ export function initExtendedTimer() {
             timerMinutes.value = 0;
             timerSeconds.value = 0;
             updateTimerTotal();
-            logger(1, 'DEBUG: Timer reset to 0');
+            //logger(1, 'DEBUG: Timer reset to 0');
         });
     }
     
@@ -3724,7 +3724,7 @@ export function initExtendedTimer() {
     if (!timerTotal || !timerTotal.value || timerTotal.value === '0') {
         updateTimerTotal();
     }    
-    logger(1, 'DEBUG: Extended timer initialized successfully'+timerTotal.value);
+    //logger(1, 'DEBUG: Extended timer initialized successfully'+timerTotal.value);
 }
 
 /**
