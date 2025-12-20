@@ -477,7 +477,7 @@ class DeviceController extends Controller
             "operatingSystem" => $device->getOperatingSystem()->getId(),
             "console" => $controlProtocolTypesName,
             "networkInterfaceTemplate"=>$device->getNetworkInterfaceTemplate(),
-            "qemu_options"=>$device->getOtherOptions(),
+            "other_options"=>$device->getOtherOptions(),
             "cdrom_bus_type" => $device->getCdromBusType(),
             "bios_type" => $device->getBiosType()
         ];
@@ -602,7 +602,7 @@ class DeviceController extends Controller
                     "config_script" => "embedded",
                     "ethernet" => 1,
                     "virtuality" => $virtuality,              
-                    "qemu_options"=>$device->getOtherOptions(),
+                    "other_options"=>$device->getOtherOptions(),
                     "isos" => $isos
                 ];
                 

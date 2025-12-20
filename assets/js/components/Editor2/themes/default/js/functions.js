@@ -9,9 +9,11 @@
  * @copyright 2014-2016 Andrea Dainese
  * @license BSD-3-Clause https://github.com/dainok/unetlab/blob/master/LICENSE
  * @copyright 2018-2020 Julien Hubert <https://github.com/Atlanta>
- * @copyright 2021 Florent Nolot <https://github.com/florent-n>
+ * @copyright 2018-2025 Florent Nolot <https://github.com/florent-n>
+ * @copyright 2024-2025 Noemie P. <https://github.com/Noemie-P>
  * @author Florent Nolot
  * @author Julien Hubert
+ * @author Noemie P.
  */
 
 import {DEBUG, TIMEOUT, LAB, NAME, ROLE, AUTHOR, UPDATEID, LOCK, EDITION, TEMPLATE, ISGROUPOWNER, HASGROUPACCESS, VIRTUALITY,
@@ -771,7 +773,7 @@ export function setNodesPosition(nodes) {
         data: JSON.stringify(form_data),
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: node position updated.');
+                //logger(1, 'DEBUG: node position updated.');
                 deferred.resolve();
             } else {
                 // Application error
@@ -1274,7 +1276,7 @@ export function printContextMenu(title, body, pageX, pageY, addToBody, role, hid
 
 // Add a new lab
 export function printFormLab(action, values) {
-    
+    //logger('1','DEBUG: printFormLab values',values);
     if (action == 'add') {
         var path = values['path'];
     } else {
@@ -1295,7 +1297,7 @@ export function printFormLab(action, values) {
         description: (values['description'] != null) ? values['description'] : '',
         body: (values['body'] != null) ? values['body'] : '',
         banner: (values['banner'] != null) ? values['banner'] : '',
-        timer: (values['timer'] != null) ? values['timer'] : '',
+        timer: (values['timer'] != null) ? values['timer'] : '0',
         virtuality: VIRTUALITY,
         srcBanner : '/labs/'+id+'/banner?'+ currentTime,
         title: title,
@@ -1304,8 +1306,26 @@ export function printFormLab(action, values) {
         MESSAGES: MESSAGES,
     })
     
-    logger(1, 'DEBUG: popping up the lab-add form.');
+    //logger(1, 'DEBUG: printFormLab popping up the lab-add form.');
+    //logger(1, 'DEBUG: printFormLab timer.' + values['timer']);
     addModalWide(title, html, '');
+
+    // ATTENDRE que la modal soit complètement affichée
+    $('.modal').one('shown.bs.modal', function() {
+        //logger(1, 'DEBUG: Modal shown, initializing timer with value: ' + values['timer']);
+        
+        // Définir d'abord la valeur dans le champ caché
+        const timerTotal = document.getElementById('timer_total');
+        if (timerTotal && values['timer']) {
+            timerTotal.value = values['timer'];
+            //logger(1, 'DEBUG: Set timer_total field to: ' + values['timer']);
+        }
+        
+        // PUIS initialiser le timer
+        initExtendedTimer();
+        
+        //logger(1, 'DEBUG: Timer initialized, final value: ' + (timerTotal ? timerTotal.value : 'not found'));
+    });
 
     Dropzone.autoDiscover= false;
     var bannerDropzone = new Dropzone("div#bannerDropzone",{
@@ -1368,7 +1388,7 @@ export function printFormSubjectLab(action, values) {
         MESSAGES: MESSAGES,
     })
 
-    logger(1, 'DEBUG: popping up the lab-add form.');
+    logger(1, 'DEBUG: printFormSubjectLab popping up the lab-add form.');
     addModalWide(title, html, '');
     var subjectEditor = new EasyMDE({ element: $("#editor")[0] });
     validateLabInfo();
@@ -1567,20 +1587,21 @@ export function printFormNode(action, values, fromNodeList) {
                                     if (bothConnTypes && (key == 'ethernet' || key == 'serial')) widthClass = ' col-sm-6 '
                                     
                                     var tpl = '';
-                                    if (key == 'qemu_options' && value_set == '') value_set = template_values['options'][key]['value'];
-                                    if (key == 'qemu_options') tpl = " ( reset to template value )"
+                                    if (key == 'other_options' && value_set == '') value_set = template_values['options'][key]['value'];
+                                    if (key == 'other_options') tpl = " ( reset to template value )"
                                     
-                                    value_set = (key == 'qemu_options') ? value_set.replace(/"/g, '&quot;') : value_set;
-                                    template_values['options'][key]['value'] = (key == 'qemu_options') ? template_values['options'][key]['value'].replace(/"/g, '&quot;') : template_values['options'][key]['value'];
+                                    value_set = (key == 'other_options') ? value_set.replace(/"/g, '&quot;') : value_set;
+                                    logger(1,"DEBUG: key value_set "+key+" "+value_set);
+                                    var template_value_escaped = (key == 'other_options') ? template_values['options'][key]['value'].replace(/"/g, '&quot;') : template_values['options'][key]['value'];
 
                                     html_data += '<div class="form-group' + widthClass + '">' +
-                                        '<label class=" control-label"> ' + value['name'] + '<a id="link_' + key + '" onClick="javascript:document.getElementById(\'input_' + key + '\').value=\'' + template_values['options'][key]['value'] + '\';document.getElementById(\'link_' + key + '\').style.visibility=\'hidden\'" style="visibility: ' + ((value_set != template_values['options'][key]['value']) ? 'visible' : 'hidden') + ';" >' + tpl + '</a>' + ram_value + '</label>' +
-                                        '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_' + key + '" onClick="javascript:document.getElementById(\'link_' + key + '\').style.visibility=\'visible\'"/>' +
+                                        '<label class=" control-label"> ' + value['name'] + '<a id="link_' + key + '" class="reset-to-template" data-input-id="input_' + key + '" data-template-value="' + template_value_escaped + '" style="visibility: ' + ((value_set != template_value_escaped) ? 'visible' : 'hidden') + ';" >' + tpl + '</a>' + ram_value + '</label>' +
+                                        '<input class="form-control' + ((key == 'name') ? ' autofocus' : '') + '" name="node[' + key + ']" value="' + value_set + '" type="text" id="input_' + key + '" data-reset-link="link_' + key + '"/>' +
                                         '</div>';
-                                    
-                                    if (key == 'qemu_options') {
+
+                                    if (key == 'other_options') {
                                         html_data += '<div class="form-group' + widthClass + '">' +
-                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_values['options'][key]['value'] + '" type="text" disabled/>' +
+                                            '<input class="form-control hidden" name="node[ro_' + key + ']" value="' + template_value_escaped + '" type="text" disabled/>' +
                                             '</div>';
                                     }
                                 }
@@ -1603,6 +1624,22 @@ export function printFormNode(action, values, fromNodeList) {
                         $('#form-node-data').html(html_data);
                         $('.selectpicker').selectpicker();
                         
+                        $(document).off('click', '.reset-to-template').on('click', '.reset-to-template', function(e) {
+                            e.preventDefault();
+                            var inputId = $(this).data('input-id');
+                            var templateValue = $(this).data('template-value');
+                            // Désérialiser les entités HTML
+                            var decodedValue = $('<textarea/>').html(templateValue).text();
+                            $('#' + inputId).val(decodedValue);
+                            $(this).css('visibility', 'hidden');
+                        });
+
+                        // Gérer les clics sur les inputs pour afficher le lien de réinitialisation
+                        $(document).off('click', 'input[data-reset-link]').on('click', 'input[data-reset-link]', function() {
+                            var linkId = $(this).data('reset-link');
+                            $('#' + linkId).css('visibility', 'visible');
+                        });
+
                         if (!fromNodeList) {
                             setTimeout(function () {
                                 $('.selectpicker').selectpicker().data("selectpicker").$button.focus();
@@ -2092,7 +2129,7 @@ export function printLabTopology() {
                 if ((((ROLE == 'ROLE_TEACHER' || ROLE == 'ROLE_TEACHER_EDITOR') && AUTHOR == 1) || (ROLE == 'ROLE_ADMINISTRATOR' || ROLE == 'ROLE_SUPER_ADMINISTRATOR')) && EDITION ==1 && labinfo['lock'] == 0 ) {
                     var dragDeferred = $.Deferred()
                     $.when ( labTextObjectsResolver ).done ( function () {
-                        logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
+                        //logger(1,'DEBUG: '+ textObjectsCount+ ' Shape(s) left');
                         lab_topology.draggable($('.node_frame, .network_frame, .customShape' ), {
                            containment: false,
                            grid: [3, 3],
@@ -2647,7 +2684,7 @@ export function getTextObjects() {
         dataType: 'json',
         success: function (data) {
             if (data['status'] == 'success') {
-                logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
+                //logger(1, 'DEBUG: got shape(s) from lab "' + lab_filename + '".');
                 deferred.resolve(data['data']);
             } else {
                 // Application error
@@ -3586,8 +3623,170 @@ function printFormUploadNodeConfig(path) {
                          '</div>' +
                    '</div>' +
                  '</form>';
-    logger(1, 'DEBUG: popping up the upload form.');
+    logger(1, 'DEBUG: printFormUploadNodeConfig popping up the upload form.');
     addModal(MESSAGES[201], html, '', 'upload-modal');
     validateImport();
+}
+
+/**
+ * Calcule le total en secondes à partir des champs jours/heures/minutes/secondes
+ */
+export function updateTimerTotal() {
+    const days = parseInt(document.getElementById('timer_days')?.value) || 0;
+    const hours = parseInt(document.getElementById('timer_hours')?.value) || 0;
+    const minutes = parseInt(document.getElementById('timer_minutes')?.value) || 0;
+    const seconds = parseInt(document.getElementById('timer_seconds')?.value) || 0;
+    
+    const totalSeconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+    
+    // Mettre à jour le champ caché
+    const timerTotalField = document.getElementById('timer_total');
+    if (timerTotalField) {
+        timerTotalField.value = totalSeconds;
+    }
+    
+    // Afficher le total de manière lisible
+    let displayText = 'Total: ';
+    if (days > 0) displayText += days + ' day' + (days > 1 ? 's ' : ' ');
+    if (hours > 0) displayText += hours + ' hour' + (hours > 1 ? 's ' : ' ');
+    if (minutes > 0) displayText += minutes + ' minute' + (minutes > 1 ? 's ' : ' ');
+    if (seconds > 0) displayText += seconds + ' second' + (seconds > 1 ? 's' : '');
+    if (totalSeconds === 0) displayText += '0 seconds';
+    displayText += ' (' + totalSeconds + ' seconds total)';
+    
+    /*const displayElement = document.getElementById('timer_display');
+    if (displayElement) {
+        displayElement.textContent = displayText;
+    }*/
+    
+    return totalSeconds;
+}
+
+/**
+ * Convertit des secondes en composants (jours/heures/minutes/secondes)
+ * @param {number} totalSeconds - Le nombre total de secondes
+ * @returns {object} Objet contenant days, hours, minutes, seconds
+ */
+export function secondsToComponents(totalSeconds) {
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return { days, hours, minutes, seconds };
+}
+
+/**
+ * Initialise les événements du timer étendu
+ */
+export function initExtendedTimer() {
+    //logger(1, 'DEBUG: Initializing extended timer');
+    
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    const timerTotal = document.getElementById('timer_total');
+    const resetButton = document.getElementById('resetTimer');
+    
+    // Vérifier que les éléments existent
+    if (!timerDays || !timerHours || !timerMinutes || !timerSeconds) {
+        //logger(1, 'DEBUG: Timer elements not found, skipping initialization');
+        return;
+    }
+    
+    // Si une valeur timer existe déjà, la convertir
+    if (timerTotal && timerTotal.value && timerTotal.value !== '0') {
+        const existingTimer = timerTotal.value;
+        
+        // Si c'est au format HH:MM:SS
+        if (existingTimer.includes(':')) {
+            const parts = existingTimer.split(':');
+            if (parts.length === 3) {
+                timerHours.value = parseInt(parts[0]) || 0;
+                timerMinutes.value = parseInt(parts[1]) || 0;
+                timerSeconds.value = parseInt(parts[2]) || 0;
+                timerDays.value = 0;
+            }
+        } else {
+            // Si c'est en secondes
+            const components = secondsToComponents(parseInt(existingTimer));
+            timerDays.value = components.days;
+            timerHours.value = components.hours;
+            timerMinutes.value = components.minutes;
+            timerSeconds.value = components.seconds;
+        }
+        updateTimerTotal();
+    }
+    
+    // Mettre à jour le total à chaque changement
+    timerDays.addEventListener('input', updateTimerTotal);
+    timerHours.addEventListener('input', updateTimerTotal);
+    timerMinutes.addEventListener('input', updateTimerTotal);
+    timerSeconds.addEventListener('input', updateTimerTotal);
+    
+    // Bouton Reset
+    if (resetButton) {
+        resetButton.addEventListener('click', function() {
+            timerDays.value = 0;
+            timerHours.value = 0;
+            timerMinutes.value = 0;
+            timerSeconds.value = 0;
+            updateTimerTotal();
+            //logger(1, 'DEBUG: Timer reset to 0');
+        });
+    }
+    
+    // Calculer le total initial
+    if (!timerTotal || !timerTotal.value || timerTotal.value === '0') {
+        updateTimerTotal();
+    }    
+    //logger(1, 'DEBUG: Extended timer initialized successfully'+timerTotal.value);
+}
+
+/**
+ * Réinitialise le timer à zéro
+ */
+export function resetTimer() {
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    
+    if (timerDays) timerDays.value = 0;
+    if (timerHours) timerHours.value = 0;
+    if (timerMinutes) timerMinutes.value = 0;
+    if (timerSeconds) timerSeconds.value = 0;
+    
+    updateTimerTotal();
+}
+
+/**
+ * Obtient la valeur du timer en secondes
+ * @returns {number} La valeur totale en secondes
+ */
+export function getTimerValue() {
+    const timerTotal = document.getElementById('timer_total');
+    return timerTotal ? parseInt(timerTotal.value) || 0 : 0;
+}
+
+/**
+ * Définit la valeur du timer à partir de secondes
+ * @param {number} totalSeconds - Le nombre total de secondes
+ */
+export function setTimerValue(totalSeconds) {
+    const components = secondsToComponents(totalSeconds);
+    
+    const timerDays = document.getElementById('timer_days');
+    const timerHours = document.getElementById('timer_hours');
+    const timerMinutes = document.getElementById('timer_minutes');
+    const timerSeconds = document.getElementById('timer_seconds');
+    
+    if (timerDays) timerDays.value = components.days;
+    if (timerHours) timerHours.value = components.hours;
+    if (timerMinutes) timerMinutes.value = components.minutes;
+    if (timerSeconds) timerSeconds.value = components.seconds;
+    
+    updateTimerTotal();
 }
 
