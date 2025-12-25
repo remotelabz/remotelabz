@@ -94,25 +94,6 @@ class CodeLoginAuthenticator extends AbstractLoginFormAuthenticator
             && $request->isMethod('POST');
     }
 
-/*    public function authenticate(Request $request): Passport
-    {
-        $code = $request->request->get('code', '');
-        $invitedUser = $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['code' => $code]);
-        return new Passport(
-            new UserBadge($invitedUser->getMail()." ".$code,  function($credentials) {
-                $mail = explode(" ", $credentials)[0];
-                $userCode = explode(" ", $credentials)[1];
-
-                return $this->entityManager->getRepository(InvitationCode::class)->findOneBy(['mail'=>$mail, "code"=>$userCode]);
-            }),
-            new PasswordCredentials($code),
-            [
-                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
-            ]
-        );
-    }
-*/
-
 public function authenticate(Request $request): Passport
 {
     $code = $request->request->get('code', '');

@@ -33,6 +33,7 @@ use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 
 class SecurityController extends AbstractController
@@ -68,7 +69,7 @@ class SecurityController extends AbstractController
     protected $entityManager;
      /** @var LoggerInterface $logger */
     private $logger;
-    
+    private Security $security;
 
     public function __construct(UrlGeneratorInterface $urlGenerator,
         UserRepository $userRepository,
@@ -79,7 +80,8 @@ class SecurityController extends AbstractController
         string $contact_mail,
         EntityManagerInterface $entityManager,
         GitVersionService $gitVersionService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Security $security
     )
     {
         $this->urlGenerator = $urlGenerator;
@@ -92,6 +94,7 @@ class SecurityController extends AbstractController
         $this->entityManager = $entityManager;
         $this->gitVersionService = $gitVersionService;
         $this->logger = $logger;
+        $this->security = $security;
 
     }
 
@@ -138,6 +141,7 @@ class SecurityController extends AbstractController
     #[Route(path: '/logout', name: 'logout')]
     public function logout()
     {
+        $this->logger->debug('[SecurityController:logout]::logout the user '.$this->security->getUser());
         $response = new Response();
         $response->headers->clearCookie('bearer', '/', null);
         $response->setContent(json_encode([
@@ -166,7 +170,7 @@ class SecurityController extends AbstractController
                 'email' => $formData['email']
             ]);
 
-            if (null ==! $user) {
+            if (null !== $user) {
                 $token = sha1($user->getEmail()) . sha1(uniqid("", true));
                 $passwordResetRequest = new PasswordResetRequest();
                 $passwordResetRequest

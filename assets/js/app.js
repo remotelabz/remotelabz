@@ -1,5 +1,5 @@
 /**
-* Remotelabz main JS file.
+* Remotelabz main JS file - FIXED VERSION
 *
 * Mainly used to customize plugins and loading them.
 *
@@ -336,24 +336,81 @@ $(function() {
     /**
      * Notification Polling System
      * Check for new notifications from backend every 3 seconds
+     * 
+     * FIXED: Only runs when user is authenticated and NOT on login page
      */
     
     $(function() {
+        // Check if we're on the login page or password reset pages
+        const isLoginPage = window.location.pathname === '/login' || 
+                           window.location.pathname.startsWith('/password') ||
+                           window.location.pathname === '/login/code' ||
+                           window.location.pathname.startsWith('/login/shibboleth');
+        
+        // Don't start polling on login pages
+        if (isLoginPage) {
+            //console.log('Notification polling disabled on authentication pages');
+            return;
+        }
+
         let isPolling = false;
         let shownNotificationIds = new Set();
         let pollingInterval = null;
+        let consecutiveErrors = 0;
+        const MAX_CONSECUTIVE_ERRORS = 3;
+        let pollingDelay = 1000; // Start with 1 second
+        let pollCount = 0;
+
+
+        const POLLING_STAGES = [
+            { after: 0, delay: 1000 },   // 0-5 polls: 1 seconde
+            { after: 5, delay: 3000 },   // 5-10 polls: 3 secondes
+            { after: 10, delay: 5000 },  // 10+ polls: 5 secondes
+            { after: 20, delay: 10000 },  // 10+ polls: 5 secondes
+        ];
+
+        function getCurrentDelay() {
+            for (let i = POLLING_STAGES.length - 1; i >= 0; i--) {
+                if (pollCount >= POLLING_STAGES[i].after) {
+                    return POLLING_STAGES[i].delay;
+                }
+            }
+            return POLLING_STAGES[0].delay;
+        }
+
+        function restartPollingInterval(newDelay) {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            pollingInterval = setInterval(checkNotifications, newDelay);
+        }
 
         function checkNotifications() {
             if (isPolling) return;
             isPolling = true;
 
+            const oldDelay = getCurrentDelay();
+            pollCount++;
+            const newDelay = getCurrentDelay();
+            
+            // Si le délai a changé, redémarrer l'intervalle
+            if (oldDelay !== newDelay) {
+                restartPollingInterval(newDelay);
+                console.log(`Polling interval changed to ${newDelay}ms`);
+            }
+
             $.ajax({
                 url: '/api/notifications/unread',
                 method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    // Include the bearer token from cookie if it exists
+                    'Authorization': 'Bearer ' + (Cookies.get('bearer') || '')
                 },
                 success: function(response) {
+                    // Reset error counter on success
+                    consecutiveErrors = 0;
+                    
                     if (response.notifications && Array.isArray(response.notifications)) {
                         response.notifications.forEach(notification => {
                             // Only show notifications we haven't shown yet
@@ -371,12 +428,12 @@ $(function() {
                                 // Mark as read after showing
                                 $.ajax({
                                     url: '/notifications/mark-read/' + notification.id,
-                                    method: 'GET', // Changed to GET to match existing route
+                                    method: 'GET',
                                     headers: {
                                         'X-Requested-With': 'XMLHttpRequest'
                                     },
                                     success: function() {
-                                        console.log('Notification ' + notification.id + ' marked as read');
+                                        //console.log('Notification ' + notification.id + ' marked as read');
                                     },
                                     error: function(xhr, status, error) {
                                         console.error('Failed to mark notification as read:', error);
@@ -387,8 +444,26 @@ $(function() {
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Silently fail if user is not authenticated or other errors
-                    if (xhr.status !== 401) {
+                    consecutiveErrors++;
+                    
+                    // If we get 401 (Unauthorized) or 403 (Forbidden), stop polling
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        console.warn('User not authenticated for notifications, stopping polling');
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                    } 
+                    // If we have too many consecutive errors, reduce polling frequency
+                    else if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                        console.warn('Too many consecutive errors, stopping notification polling');
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                    }
+                    // Otherwise silently fail for other errors
+                    else {
                         console.error('Failed to fetch notifications:', error);
                     }
                 },
@@ -398,11 +473,31 @@ $(function() {
             });
         }
 
-        // Initial check on page load
-        checkNotifications();
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+            } else {
+                //const currentDelay = getCurrentDelay();
+                const currentDelay = POLLING_STAGES[0].delay;
+                pollCount = 0;
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+                pollingInterval = setInterval(checkNotifications, currentDelay);
+                
+                // Check immédiatement au retour
+                checkNotifications();
+            }
+        });
 
-        // Poll every 3 seconds
-        pollingInterval = setInterval(checkNotifications, 3000);
+        // Initial check on page load (with delay to ensure page is fully loaded)
+        setTimeout(checkNotifications, 1000);
+
+        // Start polling with initial delay (1 second)
+        pollingInterval = setInterval(checkNotifications, getCurrentDelay());
 
         // Clean up on page unload
         $(window).on('beforeunload', function() {
@@ -410,8 +505,6 @@ $(function() {
                 clearInterval(pollingInterval);
             }
         });
-    });
-    
-    
+    });  
     
 })(jQuery);
