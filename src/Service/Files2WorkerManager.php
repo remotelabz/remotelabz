@@ -71,138 +71,52 @@ class Files2WorkerManager
     }
 
     /**
-     * Copie un fichier ISO sur tous les workers disponibles
+     * Copie un fichier sur tous les workers disponibles
+     * @param $type can be iso or image
+     * @param $localfileName
      */
-    public function copyFileToAllWorkers(string $localFilePath, string $remoteFilePath): array
+    public function copyFileToAllWorkers(string $type,string $localFilename): array
     {
-        $results = [];
         $workers = $this->configWorkerRepository->findAll();
-        $remoteFilePath = rtrim($this->sshWorkerDirectory, '/') . '/' . ltrim($remoteFilePath, '/');
         foreach ($workers as $worker) {
-            //if ($worker->getAvailable()) {
-                /*
-                try {
-                    $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Copying ' . $localFilePath . ' to worker: ' . $worker->getIPv4());
-                    
-                    $sshConnection = $this->sshService->connect(
-                        $worker->getIPv4(),
-                        $this->sshPort,
-                        $this->sshUser,
-                        $this->sshPasswd,
-                        $this->sshPublicKey,
-                        $this->sshPrivateKey
-                    );
-                    
-                    if ($sshConnection) {
-                        $this->sshService->copyFile($sshConnection, $localFilePath, $remoteFilePath, $worker->getIPv4());
-                        $this->sshService->disconnect($sshConnection);
-                        
-                        $results[$worker->getIPv4()] = [
-                            'success' => true,
-                            'message' => 'ISO copied successfully'
-                        ];
-                        
-                        $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Copying ' . $localFilePath . ' to worker: ' . $worker->getIPv4() . ' done.');
-                    } else {
-                        $results[$worker->getIPv4()] = [
-                            'success' => false,
-                            'message' => 'Failed to establish SSH connection'
-                        ];
-                    }
-                } catch (Exception $e) {
-                    $this->logger->error('Failed to copy file to worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
-                    $results[$worker->getIPv4()] = [
-                        'success' => false,
-                        'message' => $e->getMessage()
-                    ];
-                }*/
-                
                 $content = json_encode([
-                    'filename' => $localFilePath,
-                    'file_type' => 'image',
+                    'filename' => $localFilename,
+                    'file_type' => $type,
                     'worker_ip' => $worker->getIPv4(),
-                    'user_id' => $this->getCurrentUserId(),
-                    // Ou pour des chemins personnalisés :
-                    // 'remote_path' => '/path/on/front/file.img',
-                    // 'local_path' => '/path/on/worker/file.img'
+                    'user_id' => $this->getCurrentUserId()
                 ]);
-                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Send message to ' . $worker->getIPv4() ." ".$localFilePath);
+                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Send message to ' . $worker->getIPv4() ." ".$localFilename);
 
                 $this->bus->dispatch(
                     new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_COPYFROMFRONT), [
                         new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
                     ]
                 );
-
-           /* } else {
-                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Skipping unavailable worker: ' . $worker->getIPv4());
-                $results[$worker->getIPv4()] = [
-                    'success' => false,
-                    'message' => 'Worker not available'
-                ];
-            }*/
         }
-        
-        return $results;
     }
 
     /**
      * Supprime un fichier ISO de tous les workers disponibles
      */
-    public function deleteFileFromAllWorkers(string $remoteFilePath): array
+    public function deleteFileFromAllWorkers(string $type,string $remoteFilename): array
     {
-        $results = [];
         $workers = $this->configWorkerRepository->findAll();
-        $remoteFilePath = rtrim($this->sshWorkerDirectory, '/') . '/' . ltrim($remoteFilePath, '/');
-
         foreach ($workers as $worker) {
-            if ($worker->getAvailable()) {
-                try {
-                    $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' . $remoteFilePath . ' from worker: ' . $worker->getIPv4());
-                    
-                    $command = 'rm -f ' . escapeshellarg($remoteFilePath);
-                    $sshConnection = $this->sshService->connect(
-                        $worker->getIPv4(),
-                        $this->sshPort,
-                        $this->sshUser,
-                        $this->sshPasswd,
-                        $this->sshPublicKey,
-                        $this->sshPrivateKey
-                    );
-                    
-                    if ($sshConnection) {
-                        $this->sshService->executeCommand($sshConnection, $command);
-                        $this->sshService->disconnect($sshConnection);
-                        
-                        $results[$worker->getIPv4()] = [
-                            'success' => true,
-                            'message' => 'ISO deleted successfully'
-                        ];
-                        
-                        $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' . $remoteFilePath . ' from worker: ' . $worker->getIPv4() . ' done.');
-                    } else {
-                        $results[$worker->getIPv4()] = [
-                            'success' => false,
-                            'message' => 'Failed to establish SSH connection'
-                        ];
-                    }
-                } catch (Exception $e) {
-                    $this->logger->error('Failed to delete $remoteFilePath from worker: ' . $worker->getIPv4() . ' - ' . $e->getMessage());
-                    $results[$worker->getIPv4()] = [
-                        'success' => false,
-                        'message' => $e->getMessage()
-                    ];
-                }
-            } else {
-                $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Skipping unavailable worker: ' . $worker->getIPv4());
-                $results[$worker->getIPv4()] = [
-                    'success' => false,
-                    'message' => 'Worker not available'
-                ];
-            }
+            $content = json_encode([
+                'filename' => $localFilename,
+                'file_type' => $type,
+                'worker_ip' => $worker->getIPv4(),
+                'user_id' => $this->getCurrentUserId()
+            ]);
+            
+            $this->bus->dispatch(
+                new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_DELETEISO), [
+                    new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
+                ]
+            ); 
+
+            $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' .$type." ".$remoteFilename.' from worker: ' . $worker->getIPv4());
         }
-        
-        return $results;
     }
 
     /**

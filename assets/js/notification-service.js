@@ -3,7 +3,7 @@
  * Handles displaying notifications using react-toastify library
  */
 
-import { toast } from 'react-toastify';
+import { toast,Bounce  } from 'react-toastify';
 
 class NotificationService {
     constructor() {
@@ -13,9 +13,11 @@ class NotificationService {
             autoClose: 5000,
             hideProgressBar: false,
             closeOnClick: true,
-            pauseOnHover: false,
+            pauseOnHover: true,
             draggable: true,
-            icon: <i className="fas fa-check-circle"></i> // FontAwesome icon
+            progress: undefined,
+            transition: Bounce,
+            pauseOnFocusLoss:false
         };
     }
 

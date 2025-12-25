@@ -130,13 +130,16 @@ class InstanceStateMessageHandler
             // $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Message is null:");
 
             // Becarefull : in case of ACTION_COPY2WORKER_DEV, the instance has no uuid
+            
             if ($message->getType() === InstanceStateMessage::TYPE_LAB)
                 $instance = $this->labInstanceRepository->findOneBy(['uuid' => $uuid]);
             else if ($message->getType() === InstanceStateMessage::TYPE_DEVICE)
                 $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
 
-            $userId = $this->getUserIdFromInstance($instance);
-            //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ".$userId);
+            if (!is_null($instance)) {
+                $userId = $this->getUserIdFromInstance($instance);
+                //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ".$userId);
+            }
 
             // if an error happened, set device instance in its previous state
             if ($message->getState() === InstanceStateMessage::STATE_ERROR) {

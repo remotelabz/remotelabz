@@ -396,7 +396,7 @@ $(function() {
             // Si le délai a changé, redémarrer l'intervalle
             if (oldDelay !== newDelay) {
                 restartPollingInterval(newDelay);
-                console.log(`Polling interval changed to ${newDelay}ms`);
+                //console.log(`Polling interval changed to ${newDelay}ms`);
             }
 
             $.ajax({

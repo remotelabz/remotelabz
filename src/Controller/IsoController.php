@@ -78,8 +78,7 @@ class IsoController extends AbstractController
                     $iso->setFilenameUrl(null);
                     
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
-                    $remoteFilePath = '/images/'.$uploadedFilename;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers("iso/".$uploadedFilename, $remoteFilePath);
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
 
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
@@ -175,17 +174,15 @@ class IsoController extends AbstractController
                         if (file_exists($oldFile)) {
                             $this->logger->debug('[IsoController:edit]::Deleting old file: ' . $oldFile);
                             unlink($oldFile);
-                            $oldFilePath = '/images/' . $oldFilename;
-                            $this->Files2WorkerManager->deleteFileFromAllWorkers($oldFilePath);
+                            $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
                         }
                     }
 
                     // Copier le nouveau fichier vers les workers
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                    $remoteFilePath = '/images/' . $uploadedFileName;
-                    //$results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
                     $file="iso/".$uploadedFileName;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($file, $remoteFilePath);
+
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($file, $uploadedFileName);
                     
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
