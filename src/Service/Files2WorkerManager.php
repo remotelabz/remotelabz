@@ -3,6 +3,13 @@
 namespace App\Service;
 
 use App\Repository\ConfigWorkerRepository;
+use Remotelabz\Message\Message\InstanceActionMessage;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
+use Symfony\Component\Security\Core\Security;
+
+
+
 use Psr\Log\LoggerInterface;
 use Exception;
 
@@ -11,23 +18,27 @@ class Files2WorkerManager
     private LoggerInterface $logger;
     private SshService $sshService;
     private ConfigWorkerRepository $configWorkerRepository;
+    private Security $security;
     private string $sshUser;
     private string $sshPasswd;
     private string $sshPrivateKey;
     private string $sshPublicKey;
     private string $sshPort;
     private string $sshWorkerDirectory;
-
+    private $bus;
+    
     public function __construct(
         LoggerInterface $logger,
         SshService $sshService,
         ConfigWorkerRepository $configWorkerRepository,
+        MessageBusInterface $bus,
+        Security $security,
         string $sshUser,
         string $sshPasswd,
         string $sshPrivateKey,
         string $sshPublicKey,
         string $sshPort,
-        string $sshWorkerDirectory
+        string $sshWorkerDirectory                
     ) {
         $this->logger = $logger;
         $this->sshService = $sshService;
@@ -38,6 +49,8 @@ class Files2WorkerManager
         $this->sshPublicKey = $sshPublicKey;
         $this->sshPort = $sshPort;
         $this->sshWorkerDirectory = $sshWorkerDirectory;
+        $this->bus = $bus;
+        $this->security = $security;
     }
 
     
@@ -66,7 +79,8 @@ class Files2WorkerManager
         $workers = $this->configWorkerRepository->findAll();
         $remoteFilePath = rtrim($this->sshWorkerDirectory, '/') . '/' . ltrim($remoteFilePath, '/');
         foreach ($workers as $worker) {
-            if ($worker->getAvailable()) {
+            //if ($worker->getAvailable()) {
+                /*
                 try {
                     $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Copying ' . $localFilePath . ' to worker: ' . $worker->getIPv4());
                     
@@ -101,14 +115,32 @@ class Files2WorkerManager
                         'success' => false,
                         'message' => $e->getMessage()
                     ];
-                }
-            } else {
+                }*/
+                
+                $content = json_encode([
+                    'filename' => $localFilePath,
+                    'file_type' => 'image',
+                    'worker_ip' => $worker->getIPv4(),
+                    'user_id' => $this->getCurrentUserId(),
+                    // Ou pour des chemins personnalisés :
+                    // 'remote_path' => '/path/on/front/file.img',
+                    // 'local_path' => '/path/on/worker/file.img'
+                ]);
+                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Send message to ' . $worker->getIPv4() ." ".$localFilePath);
+
+                $this->bus->dispatch(
+                    new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_COPYFROMFRONT), [
+                        new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
+                    ]
+                );
+
+           /* } else {
                 $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Skipping unavailable worker: ' . $worker->getIPv4());
                 $results[$worker->getIPv4()] = [
                     'success' => false,
                     'message' => 'Worker not available'
                 ];
-            }
+            }*/
         }
         
         return $results;
@@ -236,5 +268,21 @@ class Files2WorkerManager
             $this->logger->error('Failed to delete from worker: ' . $workerIp . ' - ' . $e->getMessage());
             return false;
         }
+    }
+
+    private function getCurrentUserId(): ?string
+    {
+        $user = $this->security->getUser();
+        
+        if (!$user) {
+            return null; // Pas d'utilisateur connecté
+        }
+        
+        // Adapter selon votre entité User
+        if (method_exists($user, 'getId')) {
+            return (string) $user->getId();
+        }
+        
+        return null;
     }
 }

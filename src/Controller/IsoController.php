@@ -22,12 +22,19 @@ use App\Service\SshService;
 use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\Files2WorkerManager;
+use App\Controller\InstanceErrorHandlerTrait;
+
+
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 class IsoController extends AbstractController
 {
+ 
     private LoggerInterface $logger;
     private Files2WorkerManager $Files2WorkerManager;
+    
+
+    use InstanceErrorHandlerTrait;
     
     public function __construct(LoggerInterface $logger, Files2WorkerManager $Files2WorkerManager)
     {
@@ -72,7 +79,7 @@ class IsoController extends AbstractController
                     
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
                     $remoteFilePath = '/images/'.$uploadedFilename;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers("iso/".$uploadedFilename, $remoteFilePath);
 
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
@@ -81,7 +88,9 @@ class IsoController extends AbstractController
                     if (!empty($failures)) {
                         $this->addFlash('warning', 'ISO created but some workers failed to send the file.');
                     } else {
-                        unlink($localFilePath);
+                        if (file_exists($localFilePath))
+                            unlink($localFilePath);
+
                         $this->addFlash('success', 'ISO created and file copied to all workers successfully.');
                     }
                 } else {
@@ -105,7 +114,7 @@ class IsoController extends AbstractController
             $entityManager->persist($iso);
             $entityManager->flush();
 
-            $this->addFlash('success', 'ISO created successfully');
+            $this->addFlashMsgSuccess($request->getSession(), 'ISO created successfully');
 
             return $this->redirectToRoute('app_iso_index');
         } elseif ($form->isSubmitted()) {
@@ -174,14 +183,17 @@ class IsoController extends AbstractController
                     // Copier le nouveau fichier vers les workers
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
                     $remoteFilePath = '/images/' . $uploadedFileName;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    //$results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    $file="iso/".$uploadedFileName;
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($file, $remoteFilePath);
                     
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
                     });
                     
                     if (empty($failures)) {
-                        unlink($localFilePath);
+                        if (file_exists($localFilePath))
+                            unlink($localFilePath);
                     }
                     
                     // Mettre à jour l'entité
@@ -246,7 +258,9 @@ class IsoController extends AbstractController
             $entityManager->flush();
             
             $this->logger->info('[IsoController:edit]::ISO updated successfully');
-            $this->addFlash('success', 'ISO modifiée avec succès');
+
+            $this->addFlashMsgSuccess($request->getSession(), 'ISO modified with success');
+
             return $this->redirectToRoute('app_iso_index');
             
         } elseif ($form->isSubmitted()) {
@@ -290,7 +304,8 @@ class IsoController extends AbstractController
             $entityManager->remove($iso);
             $entityManager->flush();
             
-            $this->addFlash('success', 'ISO supprimée avec succès');
+            $this->addFlashMsgSuccess($request->getSession(), 'ISO deleted successfully');
+
         }
 
         return $this->redirectToRoute('app_iso_index');

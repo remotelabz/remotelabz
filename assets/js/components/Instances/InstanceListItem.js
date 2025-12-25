@@ -149,7 +149,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         };
 
         Remotelabz.instances.device.start(deviceInstance.uuid,startData).then(() => {
-            toast.success('Instance start requested.');
+            //toast.success('Instance start requested.');
             onStateUpdate();
             setBootWithIso(false);
             setSelectedIsoId(null);
@@ -172,7 +172,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
             setShowStopDeviceModel(false);
         }
         Remotelabz.instances.device.stop(deviceInstance.uuid).then(() => {
-            toast.success('Instance stop requested.');
+            //toast.success('Instance stop requested.');
             onStateUpdate();
         }).catch((error) => {
             setInstanceStopping(deviceInstance.uuid, false);
@@ -192,7 +192,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         setInstanceResetting(deviceInstance.uuid, true);
         
         Remotelabz.instances.device.reset(deviceInstance.uuid).then(() => {
-            toast.success('Instance reset requested.');
+            //toast.success('Instance reset requested.');
             onStateUpdate();
         }).catch((error) => {
             setInstanceResetting(deviceInstance.uuid, false);
@@ -234,7 +234,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         
         Remotelabz.instances.export(deviceInstance.uuid, exportData.name, "device", exportData)
             .then((response) => {
-                toast.success('Instance export requested.');
+                //toast.success('Instance export requested.');
                 onStateUpdate();
                 // Réinitialiser les valeurs
                 setBootWithIso(false);

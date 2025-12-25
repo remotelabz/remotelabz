@@ -63,7 +63,7 @@ class SshService
     {
         // ... (body of the scp function from SSHCopy.php)
         // Ensure to remove the `this->logger` references and use `$this->logger` instead.
-        $this->logger->debug("Send file " . $localFile . " -> " . $remoteFile);
+        $this->logger->debug("[SshService:copyFile]::Send file " . $localFile . " -> " . $remoteFile);
         $this->logger->info("Send " . $localFile . " file via scp to " . $workerDestIp . ":" . $remoteFile);
 
         try {
