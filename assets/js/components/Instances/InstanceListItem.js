@@ -136,6 +136,67 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
         }
     }, [instance.state]);
 
+    
+    function canControlInstances() {
+        // DEBUG: Afficher toute la structure de l'instance pour comprendre
+        /*console.log('=== DEBUG STRUCTURE COMPLETE ===');
+        console.log('instance complète:', instance);
+        console.log('instance.ownedBy:', instance.ownedBy);
+        console.log('instance.labInstance:', instance.labInstance);
+        console.log('user complet:', user);
+        console.log('user.groups:', user?.groups);
+        console.log('================================');
+        */
+
+        // Si l'instance n'appartient pas à un groupe, pas de restriction
+        if (instance.ownedBy !== 'group') {
+            //console.log('Instance pas owned by group -> return true');
+            return true;
+        }
+        
+        // Si pas de user dans les props, bloquer par défaut
+        if (!user || !user.groups) {
+            //console.log('Pas de user ou pas de user.groups -> return false');
+            return false;
+        }
+        
+        // Trouver le groupe propriétaire de cette instance
+        // Utiliser instance.owner directement (pas instance.labInstance.owner)
+        const ownerGroupId = instance.owner?.id;
+        const ownerGroupUuid = instance.owner?.uuid;
+        
+        //console.log('Recherche du groupe owner - ID:', ownerGroupId, 'UUID:', ownerGroupUuid);
+        
+        // Chercher si l'utilisateur est membre de ce groupe et son rôle
+        const userGroupMembership = user.groups.find(g => {
+            //console.log('Comparaison groupe:', g, 'avec ownerGroupId:', ownerGroupId, 'ownerGroupUuid:', ownerGroupUuid);
+            return g.id === ownerGroupId || g.uuid === ownerGroupUuid;
+        });
+        
+        //console.log('userGroupMembership trouvé:', userGroupMembership);
+        
+        if (!userGroupMembership) {
+            //console.log('Utilisateur pas membre du groupe -> return false');
+            return false; // L'utilisateur n'est pas membre du groupe
+        }
+        
+        // Autoriser seulement les admins et owners
+        const canControl = userGroupMembership.role === 'admin' || userGroupMembership.role === 'owner';
+        
+        /*console.log('canControlInstances RESULT:', {
+            deviceName: device.name,
+            instanceUuid: instance.uuid,
+            instanceOwnedBy: instance.ownedBy,
+            userId: user?.id,
+            userName: user?.name,
+            userGroupMembership: userGroupMembership,
+            userRole: userGroupMembership?.role,
+            canControl: canControl
+        });
+        */
+        return canControl;
+    }
+
     function startDevice(deviceInstance) {
         // Validation : empêcher le démarrage si Boot ISO coché sans ISO sélectionné
         if (bootWithIso && !selectedIsoId) {
@@ -268,7 +329,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     data-toggle="tooltip" 
                     data-placement="top" 
                     onClick={() => startDevice(instance)} 
-                    disabled={isComputingState(instance)}
+                    disabled={isComputingState(instance) || (instance.ownedBy === 'group' && !canControlInstances())}
                 >
                     {isStarting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                 </Button>
@@ -282,7 +343,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     variant="success" 
                     title="Start device" 
                     onClick={() => startDevice(instance)}
-                    disabled={isComputingState(instance)}
+                    disabled={isComputingState(instance) || (instance.ownedBy === 'group' && !canControlInstances())}
                 >
                     {isStarting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                 </Button>
@@ -296,7 +357,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     variant="success" 
                     title="Start device" 
                     onClick={() => startDevice(instance)}
-                    disabled={isComputingState(instance)}
+                    disabled={isComputingState(instance) || (instance.ownedBy === 'group' && !canControlInstances())}
                 >
                     {isStarting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="play" />}
                 </Button>
@@ -334,7 +395,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                     variant="danger" 
                     title="Stop device" 
                     onClick={() => stopDevice(instance)}
-                    disabled={isComputingState(instance)}
+                    disabled={isComputingState(instance) || (instance.ownedBy === 'group' && !canControlInstances())}
                 >
                     {isStopping(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                 </Button>
@@ -428,7 +489,12 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
                         }        
-                        {instance.ownedBy == "group" && showControls && (instance.state === 'stopped' || instance.state === 'error') && instance.device.hypervisor.name != 'natif' &&
+                        {instance.ownedBy == "group"
+                        && showControls
+                        && (instance.state === 'stopped' || instance.state === 'error')
+                        && instance.device.hypervisor.name != 'natif'
+                        && canControlInstances()
+                        &&
                             <Button 
                                 variant="warning" 
                                 title="Reset device" 
@@ -448,7 +514,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         && !isSandbox
                         && user.roles
                         && (user.roles.includes("ROLE_ADMINISTRATOR") || user.roles.includes("ROLE_SUPER_ADMINISTRATOR") || ((user.roles.includes("ROLE_TEACHER") || user.roles.includes("ROLE_TEACHER_EDITOR")))))
-                         &&
+                        &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -464,7 +530,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
 
                         {(instance.state == 'started' && is_vnc(instance))
                         && showControls
-                         &&
+                        &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -479,7 +545,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         }
                         {(instance.state == 'started' && is_login(instance))
                         && showControls
-                         &&
+                        &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -494,7 +560,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         }
                         {(instance.state == 'started' && is_serial(instance))
                         && showControls
-                         &&
+                        &&
                             <a
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -511,6 +577,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         { showControls && 
                             controls
                         }
+
                         {instance.ownedBy != 'group' 
                         && allInstancesPage 
                         && showControls
@@ -525,8 +592,13 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 {isStopping(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                             </Button>
                         }
-                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' 
-                            && instance.state != 'reset' && instance.state != 'started') &&
+                        {instance.ownedBy == "group" 
+                        && showControls
+                        && allInstancesPage
+                        && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' 
+                            && instance.state != 'reset' && instance.state != 'started')
+                        && canControlInstances()
+                        &&
                             <Button 
                                 variant="danger" 
                                 className="ml-3" 
