@@ -97,11 +97,7 @@ const VirtualizedInstanceRow = React.memo((props) => {
 });
 
 const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, onRefreshDetails, onLabDeleted, user }) => {
-  if (!selectedInstance) return null;
-
-  const labInfo = sharedStates.labCache[selectedInstance.uuid] || {};
-  const deviceInstances = sharedStates.deviceInstancesCache[selectedInstance.uuid] || [];
-  
+  // TOUS les hooks doivent être appelés AVANT tout return conditionnel
   const [expandedDevice, setExpandedDevice] = useState(null);
   const [deviceStates, setDeviceStates] = useState({});
   const [deviceLogs, setDeviceLogs] = useState({});
@@ -135,6 +131,8 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
 
   // Gestion des actions bulk
   const handleBulkAction = useCallback(async (action) => {
+    if (!selectedInstance) return;
+    
     const setLoading = action === 'start' ? setIsBulkStarting : 
                        action === 'stop' ? setIsBulkStopping : 
                        setIsBulkResetting;
@@ -194,6 +192,8 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
   }, [selectedInstance, onRefreshDetails]);
 
   const handleLeaveLab = useCallback(async () => {
+    if (!selectedInstance) return;
+    
     setShowLeaveLabModal(false);
     setIsDeleting(true);
     
@@ -225,8 +225,13 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
     }
   }, [selectedInstance, onClose, onLabDeleted]);
 
+  const labInfo = selectedInstance ? (sharedStates.labCache[selectedInstance.uuid] || {}) : {};
+  const deviceInstances = selectedInstance ? (sharedStates.deviceInstancesCache[selectedInstance.uuid] || []) : [];
+
   // Gestion des logs
   useEffect(() => {
+    if (!selectedInstance) return;
+    
     deviceInstances.forEach(device => {
       if (logsIntervalsRef.current[device.uuid]) {
         stopLogsPolling(logsIntervalsRef.current[device.uuid]);
@@ -252,7 +257,7 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
       });
       logsIntervalsRef.current = {};
     };
-  }, [deviceInstances]);
+  }, [deviceInstances, selectedInstance]);
 
   const refreshTimerRef = useRef(null);
 
@@ -278,6 +283,9 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
       [deviceUuid]: !prev[deviceUuid]
     }));
   };
+
+  // Maintenant qu'TOUS les hooks ont été appelés, on peut faire le return conditionnel
+  if (!selectedInstance) return null;
 
   return (<>
     <div className="modal fade show" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -522,7 +530,6 @@ const DetailsModal = ({ selectedInstance, onClose, sharedStates, onStateUpdate, 
                                 {deviceStates[deviceInstance.uuid] === 'stop' ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                               </button>
                             )}
-                            
                             {(deviceInstance.state === 'stopped' || deviceInstance.state === 'error') && deviceInstance.device?.hypervisor?.name !== 'natif' && (
                                 <button
                                 className="btn btn-sm btn-warning"
