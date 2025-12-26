@@ -1157,7 +1157,7 @@ class LabController extends Controller
         $lab->setVersion($data['version']);
         $lab->setShortDescription($data['description']);
         $lab->setScripttimeout($data['scripttimeout']);
-        if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "00:00:00") {
+        if ($lab->getVirtuality() == 1 && $data['timer'] !== "" && $data['timer'] != "0") {
             $lab->setHasTimer(true);
             $lab->setTimer($data['timer']);
         }

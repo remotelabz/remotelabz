@@ -310,11 +310,11 @@ class InstanceStateMessageHandler
                 switch ($message->getState()) {
                     case InstanceStateMessage::STATE_STOPPED:
                         $this->instanceManager->setStopped($instance);
-                        $this->notificationService->success($userId, 'Instance stopped successfully.', $uuid);
+                        $this->notificationService->success($userId, 'Instance '.$uuid.' stopped successfully.', $uuid);
                     break;
                     
                     case InstanceStateMessage::STATE_STARTED:
-                        $this->notificationService->success($userId, 'Instance started successfully.', $uuid);
+                        $this->notificationService->success($userId, 'Instance '.$uuid.' started successfully.', $uuid);
                     break;
 
                     case InstanceStateMessage::STATE_EXPORTED:
@@ -386,7 +386,7 @@ class InstanceStateMessageHandler
                                 }
                                 $this->entityManager->remove($lab);
                             }
-                            $this->notificationService->success($userId, 'Lab instance deleted successfully.', $uuid);
+                            $this->notificationService->success($userId, 'Lab instance '.$uuid.' deleted successfully.', $uuid);
                         }
                         break;
                         default :
