@@ -164,6 +164,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
         try {
             const response = await Remotelabz.instances.lab.create(props.lab.uuid, viewAs.uuid, viewAs.type, false);
             setLabInstance(response.data);
+            setLoadingInstanceState(false);
             if (!isSandbox) {
                 $.ajax({
                     type: "POST",
@@ -176,6 +177,7 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
                 });
             }
         } catch (error) {
+            setLoadingInstanceState(false); 
             if (error.response?.data?.message.includes("No worker available")) {
                 console.error("No worker available - Please contact an administrator");
                 
