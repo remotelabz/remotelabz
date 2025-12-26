@@ -75,7 +75,7 @@ class Files2WorkerManager
      * @param $type can be iso or image
      * @param $localfileName
      */
-    public function copyFileToAllWorkers(string $type,string $localFilename): array
+    public function copyFileToAllWorkers(string $type,string $localFilename)
     {
         $workers = $this->configWorkerRepository->findAll();
         foreach ($workers as $worker) {
@@ -85,7 +85,7 @@ class Files2WorkerManager
                     'worker_ip' => $worker->getIPv4(),
                     'user_id' => $this->getCurrentUserId()
                 ]);
-                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Send message to ' . $worker->getIPv4() ." ".$localFilename);
+                $this->logger->debug('[Files2WorkerManager:copyFileToAllWorkers]::Send message to ' . $worker->getIPv4() ." to copy ".$type." ".$localFilename);
 
                 $this->bus->dispatch(
                     new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_COPYFROMFRONT), [
@@ -98,8 +98,7 @@ class Files2WorkerManager
     /**
      * Supprime un fichier ISO de tous les workers disponibles
      */
-    public function deleteFileFromAllWorkers(string $type,string $remoteFilename): array
-    {
+    public function deleteFileFromAllWorkers(string $type,string $localFilename){
         $workers = $this->configWorkerRepository->findAll();
         foreach ($workers as $worker) {
             $content = json_encode([
@@ -108,14 +107,15 @@ class Files2WorkerManager
                 'worker_ip' => $worker->getIPv4(),
                 'user_id' => $this->getCurrentUserId()
             ]);
-            
+            $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Send message to ' . $worker->getIPv4() ." to delete ".$type." ".$localFilename);
+
             $this->bus->dispatch(
                 new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_DELETEISO), [
                     new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
                 ]
             ); 
 
-            $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' .$type." ".$remoteFilename.' from worker: ' . $worker->getIPv4());
+            $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' .$type." ".$localFilename.' from worker: ' . $worker->getIPv4());
         }
     }
 

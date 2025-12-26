@@ -140,14 +140,17 @@ class InstanceStateMessageHandler
                 $userId = $this->getUserIdFromInstance($instance);
                 //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ".$userId);
             }
+            $options=$message->getOptions();
+            if (!is_null($options)) {
+                $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
+                if (key_exists('user_id',$options))
+                    $userId=$options['user_id'];
+            }
 
             // if an error happened, set device instance in its previous state
             if ($message->getState() === InstanceStateMessage::STATE_ERROR) {
                 $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Error state received from instance uuid ". $message->getUuid());
-                $options=$message->getOptions();
-                $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received', $options);
-                if (key_exists('user_id',$options))
-                    $userId=$options['user_id'];
+                
 
                 // Add user notification (works without session!)
                 $errorMessage = 'An error occurred with instance ' . $uuid;
@@ -302,11 +305,8 @@ class InstanceStateMessageHandler
                     $instance->setState($message->getState());
                     $this->entityManager->persist($instance);
                     $this->entityManager->flush();
-
                 }
-                /*  else 
-                    $this->logger->debug("[InstanceStateMessageHandler:__invoke]::InstanceStateMessageHandler Instance is null");
-                */
+
                 switch ($message->getState()) {
                     case InstanceStateMessage::STATE_STOPPED:
                         $this->instanceManager->setStopped($instance);
@@ -333,14 +333,21 @@ class InstanceStateMessageHandler
                         $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);
                         $this->notificationService->info($userId, 'OS image deleted from worker.', $uuid);
                     break;
+                    
+                    case InstanceStateMessage::STATE_ISO_DELETED:
+                        $options_exported=$message->getOptions();
+                        $this->logger->info("ISO image ".$options_exported["iso_filename"]." is deleted from worker ".$options_exported["workerIP"]);
+                        $this->notificationService->info($userId, 'Old ISO image deleted from worker.', $uuid);
+                    break;
 
                     case InstanceStateMessage::STATE_FILE_COPIED:
                         $options = $message->getOptions();
                         $this->logger->info(
                             "File copied from front to worker",
                             [
-                                'front_ip' => $options['front_ip'] ?? 'unknown',
-                                'local_path' => $options['local_path'] ?? 'unknown'
+                                'worker_ip' => $options['worker_ip'] ?? 'unknown',
+                                'local_path' => $options['local_path'] ?? 'unknown',
+                                'user_id' => $options['user_id'] ?? 'unknown',
                             ]
                         );
                         $this->notificationService->success($userId, 'File copied successfully.', $uuid);
@@ -378,10 +385,12 @@ class InstanceStateMessageHandler
                                     }
                                 }
                                 $this->entityManager->remove($lab);
-                                $this->notificationService->success($userId, 'Lab instance deleted successfully.', $uuid);
                             }
+                            $this->notificationService->success($userId, 'Lab instance deleted successfully.', $uuid);
                         }
                         break;
+                        default :
+                            $this->notificationService->success($userId, 'Instance '.$uuid." ".$message->getState().' successfully.',$uuid);
                 }
             }
         

@@ -155,12 +155,13 @@ class IsoController extends AbstractController
 
             $fileSourceType = $form->get('fileSourceType')->getData();
             
+            /*
             $this->logger->debug('[IsoController:edit]::File source type: ' . $fileSourceType);
             $this->logger->debug('[IsoController:edit]::Old filename: ' . $oldFilename);
             $this->logger->debug('[IsoController:edit]::Old URL: ' . $oldFilenameUrl);
             $this->logger->debug('[IsoController:edit]::New filename from form: ' . $iso->getFilename());
             $this->logger->debug('[IsoController:edit]::New URL from form: ' . $iso->getFilenameUrl());
-
+            */
             if ($fileSourceType === 'upload') {
                 $uploadedFileName = $form->get('uploaded_filename')->getData();
                 $this->logger->debug('[IsoController:edit]::Uploaded filename from form: ' . $uploadedFileName);
@@ -180,18 +181,8 @@ class IsoController extends AbstractController
 
                     // Copier le nouveau fichier vers les workers
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                    $file="iso/".$uploadedFileName;
 
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($file, $uploadedFileName);
-                    
-                    $failures = array_filter($results, function($result) {
-                        return !$result['success'];
-                    });
-                    
-                    if (empty($failures)) {
-                        if (file_exists($localFilePath))
-                            unlink($localFilePath);
-                    }
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('iso', $uploadedFileName);
                     
                     // Mettre à jour l'entité
                     $iso->setFilename($uploadedFileName);
@@ -234,14 +225,18 @@ class IsoController extends AbstractController
             } elseif ($fileSourceType === 'filename') {
                 // Mode filename only
                 $this->logger->debug('[IsoController:edit]::Switching to filename only mode');
-                $this->logger->debug('[IsoController:edit]::Filename from form: ' . $iso->getFilename());
+                $new_filename=$iso->getFilename();
+                $this->logger->debug('[IsoController:edit]::Filename from form: ' . $new_filename);
                 
                 // Si on avait un fichier uploadé avant, le supprimer
                 if ($oldFilename && file_exists($this->getParameter('iso_directory') . '/' . $oldFilename)) {
-                    $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
-                    $this->logger->debug('[IsoController:edit]::Deleting old uploaded file when switching to filename only: ' . $oldFile);
-                    unlink($oldFile);
-                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
+                    $oldFileWithPath = $this->getParameter('iso_directory') . '/' . $oldFilename;
+                    $new_fileWithPath = $this->getParameter('iso_directory') . '/' . $new_filename;
+                    $this->logger->debug('[IsoController:edit]::Deleting old uploaded file when switching to filename only: ' . $oldFileWithPath);
+                    rename($oldFileWithPath,$new_fileWithPath);
+                    
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('iso', $new_filename);
                 }
                 
                 // Nettoyer l'URL
@@ -301,7 +296,7 @@ class IsoController extends AbstractController
             $entityManager->remove($iso);
             $entityManager->flush();
             
-            $this->addFlashMsgSuccess($request->getSession(), 'ISO deleted successfully');
+            $this->addFlashMsgSuccess($request->getSession(), 'Old ISO deleted successfully');
 
         }
 
