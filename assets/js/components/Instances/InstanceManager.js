@@ -43,27 +43,44 @@ function InstanceManager(props = {lab: {}, user: {}, labInstance: {}, isJitsiCal
     function countdown() {
         if (labInstance) {
             const timerEnd = new Date(labInstance.timerEnd).getTime();
+
             timerRef.current = setInterval(function () {
                 const now = new Date().getTime();
                 const timeInterval = timerEnd - now;
 
-                let hours = Math.floor((timeInterval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                let minutes = Math.floor((timeInterval % (1000 * 60 * 60)) / (1000 * 60));
-                let seconds = Math.floor((timeInterval % (1000 * 60)) / 1000);
-
-                hours = hours.toString().padStart(2, '0');
-                minutes = minutes.toString().padStart(2, '0');
-                seconds = seconds.toString().padStart(2, '0');
-
-                const intervalResult = `Timer: ${hours}:${minutes}:${seconds}`;
-                setTimerCountDown(intervalResult);
-
-                if (timeInterval < 0) {
+                if (timeInterval <= 0) {
                     clearInterval(timerRef.current);
                     setTimerCountDown('Timer: STOPPED');
                     stopDevices();
+                    return;
                 }
+
+                const days = Math.floor(timeInterval / (1000 * 60 * 60 * 24));
+                const hours = Math.floor(
+                    (timeInterval % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                );
+                const minutes = Math.floor(
+                    (timeInterval % (1000 * 60 * 60)) / (1000 * 60)
+                );
+                const seconds = Math.floor(
+                    (timeInterval % (1000 * 60)) / 1000
+                );
+
+                const h = hours.toString().padStart(2, '0');
+                const m = minutes.toString().padStart(2, '0');
+                const s = seconds.toString().padStart(2, '0');
+
+                let intervalResult = 'Timer: ';
+
+                if (days > 0) {
+                    intervalResult += `${days}j `;
+                }
+
+                intervalResult += `${h}:${m}:${s}`;
+
+                setTimerCountDown(intervalResult);
             }, 1000);
+
         }
     }
 

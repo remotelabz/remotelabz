@@ -226,9 +226,10 @@ class InstanceManager
             }
 
             if ($lab->getHasTimer() == true) {
-                $timer = explode(":",$lab->getTimer());
+                $timer = $lab->getTimer();
                 $date = new \DateTime();
-                $date->modify('+ '.$timer[0].' hours + ' . $timer[1]. ' minutes + ' .$timer[2]. ' seconds');
+                //$this->logger->debug("[InstanceManager:create]::Timer of the lab ".$timer);
+                $date->add(new \DateInterval('PT' . $timer . 'S'));
                 $labInstance->setTimerEnd($date);
             }
 

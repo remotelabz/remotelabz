@@ -14,7 +14,7 @@ parameters:
     directory.public.upload.lab: '%directory.public.upload%/lab'
     directory.public.upload.lab.banner: '%directory.public.upload.lab%/banner'
     iso_directory: '%directory.public.upload%/iso'
-    image_directory: '%kernel.project_dir%/public/uploads/images'
+    image_directory: '%directory.public.upload%/images'
     image_default_profile: 'Circle-icons-profile.png'
     no_internet_access: 'No-Internet.png'
     shibboleth_idp_url: '/Shibboleth.sso'

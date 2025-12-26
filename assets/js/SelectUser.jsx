@@ -69,7 +69,6 @@ export default class CustomControl extends Component {
     }
 }
 
-ReactDOM.render(
-    <CustomControl></CustomControl>,
-    document.getElementById('usersSelect')
-);
+const container = document.getElementById('usersSelect');
+const root = createRoot(container);
+root.render(<CustomControl></CustomControl>);

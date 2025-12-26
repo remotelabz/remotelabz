@@ -1,0 +1,30 @@
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {{ parent() }}
+{% endblock %}
+
+
+{% block header %}
+    {% set category = 'admin' %}
+    {{ parent() }}
+{% endblock %}
+
+
+{% block wrapper %}
+<div class="container">
+    <div>
+        <p class="lead">Welcome {{ app.user.firstname }} in your admin zone</p>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}

@@ -1,4 +1,6 @@
 // on ready
+import $ from 'jquery';
+
 (function () {
     for (let lab of document.querySelectorAll('.lab')) {
         let labDescription = lab.querySelector('.lab-description');
@@ -15,4 +17,4 @@
             })
         }
     }
-})()
+})();

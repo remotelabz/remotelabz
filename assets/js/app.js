@@ -1,5 +1,5 @@
 /**
-* Remotelabz main JS file.
+* Remotelabz main JS file - FIXED VERSION
 *
 * Mainly used to customize plugins and loading them.
 *
@@ -16,10 +16,12 @@ import 'datatables.net-buttons-bs4/css/buttons.bootstrap4.css';
 import 'datatables.net-select-bs4/css/select.bootstrap4.css';
 import 'flag-icons/sass/flag-icons.scss';
 //import 'noty/src/noty.scss';
-import 'noty/src/themes/mint.scss';
+//import 'noty/src/themes/mint.scss';
 import 'simplemde/dist/simplemde.min.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 import 'cropperjs/dist/cropper.min.css';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 import $ from 'jquery';
 global.$ = global.jQuery = $;
@@ -36,6 +38,14 @@ import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
 import './components/registration';
 import 'react-toastify';
 import './components/gauges';
+
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { ToastContainer } from 'react-toastify';
+
+import notificationService from './notification-service';
 
 
 const Cookies = require('js-cookie');
@@ -56,6 +66,38 @@ if (theme !== undefined) {
         expires: 3650
     });
 }
+
+/**
+ * Initialize ToastContainer
+ * This needs to be mounted once in the DOM
+ */
+$(function() {
+    // Create a div for the toast container if it doesn't exist
+    if (!document.getElementById('toast-container-root')) {
+        const toastRoot = document.createElement('div');
+        toastRoot.id = 'toast-container-root';
+        document.body.appendChild(toastRoot);
+    }
+    
+    // Mount the ToastContainer
+    const root = createRoot(document.getElementById('toast-container-root'));
+    root.render(
+        React.createElement(ToastContainer, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            newestOnTop: true,
+            closeOnClick: true,
+            rtl: false,
+            pauseOnFocusLoss: true,
+            draggable: true,
+            pauseOnHover: true,
+            theme: theme === 'dark' ? 'dark' : 'light'
+        })
+    );
+    window.toastRoot = root;
+});
+
 
 /**
 * Functions using jQuery goes here
@@ -92,6 +134,26 @@ if (theme !== undefined) {
             }
 
             document.getElementById("themeSwitcher").dispatchEvent(new Event('change'));
+
+            // Update toast theme when theme changes
+            const newTheme = document.getElementById("themeSwitcher").checked ? 'dark' : 'light';
+            if (window.toastRoot) {
+                window.toastRoot.render(
+                    React.createElement(ToastContainer, {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        newestOnTop: true,
+                        closeOnClick: true,
+                        rtl: false,
+                        pauseOnFocusLoss: true,
+                        draggable: true,
+                        pauseOnHover: true,
+                        theme: newTheme
+                    })
+                );
+            }
+
         });
     };
 
@@ -248,5 +310,201 @@ if (theme !== undefined) {
             }
         });
     }
+
+    /**
+     * Display flash messages as notifications on page load
+     */
+    $(function() {
+        // Display traditional flash messages
+        $('.flash-notice').each(function() {
+            const $flashElement = $(this);
+            const message = $flashElement.text().trim();
+            const type = $flashElement.hasClass('alert-danger') ? 'error' :
+                        $flashElement.hasClass('alert-warning') ? 'warning' :
+                        $flashElement.hasClass('alert-success') ? 'success' : 'info';
+            
+            // Show notification
+            if (message) {
+                notificationService[type](message);
+            }
+            
+            // Hide the flash message element (we're showing it as a notification instead)
+            $flashElement.hide();
+        });
+    });
+
+    /**
+     * Notification Polling System
+     * Check for new notifications from backend every 3 seconds
+     * 
+     * FIXED: Only runs when user is authenticated and NOT on login page
+     */
+    
+    $(function() {
+        // Check if we're on the login page or password reset pages
+        const isLoginPage = window.location.pathname === '/login' || 
+                           window.location.pathname.startsWith('/password') ||
+                           window.location.pathname === '/login/code' ||
+                           window.location.pathname.startsWith('/login/shibboleth');
+        
+        // Don't start polling on login pages
+        if (isLoginPage) {
+            //console.log('Notification polling disabled on authentication pages');
+            return;
+        }
+
+        let isPolling = false;
+        let shownNotificationIds = new Set();
+        let pollingInterval = null;
+        let consecutiveErrors = 0;
+        const MAX_CONSECUTIVE_ERRORS = 3;
+        let pollingDelay = 1000; // Start with 1 second
+        let pollCount = 0;
+
+
+        const POLLING_STAGES = [
+            { after: 0, delay: 1000 },   // 0-5 polls: 1 seconde
+            { after: 5, delay: 3000 },   // 5-10 polls: 3 secondes
+            { after: 10, delay: 5000 },  // 10+ polls: 5 secondes
+            { after: 20, delay: 10000 },  // 10+ polls: 5 secondes
+        ];
+
+        function getCurrentDelay() {
+            for (let i = POLLING_STAGES.length - 1; i >= 0; i--) {
+                if (pollCount >= POLLING_STAGES[i].after) {
+                    return POLLING_STAGES[i].delay;
+                }
+            }
+            return POLLING_STAGES[0].delay;
+        }
+
+        function restartPollingInterval(newDelay) {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            pollingInterval = setInterval(checkNotifications, newDelay);
+        }
+
+        function checkNotifications() {
+            if (isPolling) return;
+            isPolling = true;
+
+            const oldDelay = getCurrentDelay();
+            pollCount++;
+            const newDelay = getCurrentDelay();
+            
+            // Si le délai a changé, redémarrer l'intervalle
+            if (oldDelay !== newDelay) {
+                restartPollingInterval(newDelay);
+                //console.log(`Polling interval changed to ${newDelay}ms`);
+            }
+
+            $.ajax({
+                url: '/api/notifications/unread',
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    // Include the bearer token from cookie if it exists
+                    'Authorization': 'Bearer ' + (Cookies.get('bearer') || '')
+                },
+                success: function(response) {
+                    // Reset error counter on success
+                    consecutiveErrors = 0;
+                    
+                    if (response.notifications && Array.isArray(response.notifications)) {
+                        response.notifications.forEach(notification => {
+                            // Only show notifications we haven't shown yet
+                            if (!shownNotificationIds.has(notification.id)) {
+                                const type = notification.type || 'info';
+                                const message = notification.message || 'Notification';
+                                
+                                // Display notification with appropriate timeout
+                                const timeout = type === 'error' ? 0 : 5000;
+                                notificationService[type](message, timeout);
+                                
+                                // Track that we've shown this notification
+                                shownNotificationIds.add(notification.id);
+                                
+                                // Mark as read after showing
+                                $.ajax({
+                                    url: '/notifications/mark-read/' + notification.id,
+                                    method: 'GET',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    success: function() {
+                                        //console.log('Notification ' + notification.id + ' marked as read');
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Failed to mark notification as read:', error);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    consecutiveErrors++;
+                    
+                    // If we get 401 (Unauthorized) or 403 (Forbidden), stop polling
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        console.warn('User not authenticated for notifications, stopping polling');
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                    } 
+                    // If we have too many consecutive errors, reduce polling frequency
+                    else if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                        console.warn('Too many consecutive errors, stopping notification polling');
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                    }
+                    // Otherwise silently fail for other errors
+                    else {
+                        console.error('Failed to fetch notifications:', error);
+                    }
+                },
+                complete: function() {
+                    isPolling = false;
+                }
+            });
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+            } else {
+                //const currentDelay = getCurrentDelay();
+                const currentDelay = POLLING_STAGES[0].delay;
+                pollCount = 0;
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+                pollingInterval = setInterval(checkNotifications, currentDelay);
+                
+                // Check immédiatement au retour
+                checkNotifications();
+            }
+        });
+
+        // Initial check on page load (with delay to ensure page is fully loaded)
+        setTimeout(checkNotifications, 1000);
+
+        // Start polling with initial delay (1 second)
+        pollingInterval = setInterval(checkNotifications, getCurrentDelay());
+
+        // Clean up on page unload
+        $(window).on('beforeunload', function() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        });
+    });  
     
 })(jQuery);

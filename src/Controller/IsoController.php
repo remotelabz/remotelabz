@@ -22,12 +22,19 @@ use App\Service\SshService;
 use App\Repository\ConfigWorkerRepository;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\Files2WorkerManager;
+use App\Controller\InstanceErrorHandlerTrait;
+
+
 
 #[IsGranted("ROLE_TEACHER_EDITOR", message: "Access denied.")]
 class IsoController extends AbstractController
 {
+ 
     private LoggerInterface $logger;
     private Files2WorkerManager $Files2WorkerManager;
+    
+
+    use InstanceErrorHandlerTrait;
     
     public function __construct(LoggerInterface $logger, Files2WorkerManager $Files2WorkerManager)
     {
@@ -71,8 +78,7 @@ class IsoController extends AbstractController
                     $iso->setFilenameUrl(null);
                     
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
-                    $remoteFilePath = '/images/'.$uploadedFilename;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
 
                     $failures = array_filter($results, function($result) {
                         return !$result['success'];
@@ -81,7 +87,9 @@ class IsoController extends AbstractController
                     if (!empty($failures)) {
                         $this->addFlash('warning', 'ISO created but some workers failed to send the file.');
                     } else {
-                        unlink($localFilePath);
+                        if (file_exists($localFilePath))
+                            unlink($localFilePath);
+
                         $this->addFlash('success', 'ISO created and file copied to all workers successfully.');
                     }
                 } else {
@@ -105,7 +113,7 @@ class IsoController extends AbstractController
             $entityManager->persist($iso);
             $entityManager->flush();
 
-            $this->addFlash('success', 'ISO created successfully');
+            $this->addFlashMsgSuccess($request->getSession(), 'ISO created successfully');
 
             return $this->redirectToRoute('app_iso_index');
         } elseif ($form->isSubmitted()) {
@@ -147,12 +155,13 @@ class IsoController extends AbstractController
 
             $fileSourceType = $form->get('fileSourceType')->getData();
             
+            /*
             $this->logger->debug('[IsoController:edit]::File source type: ' . $fileSourceType);
             $this->logger->debug('[IsoController:edit]::Old filename: ' . $oldFilename);
             $this->logger->debug('[IsoController:edit]::Old URL: ' . $oldFilenameUrl);
             $this->logger->debug('[IsoController:edit]::New filename from form: ' . $iso->getFilename());
             $this->logger->debug('[IsoController:edit]::New URL from form: ' . $iso->getFilenameUrl());
-
+            */
             if ($fileSourceType === 'upload') {
                 $uploadedFileName = $form->get('uploaded_filename')->getData();
                 $this->logger->debug('[IsoController:edit]::Uploaded filename from form: ' . $uploadedFileName);
@@ -166,23 +175,14 @@ class IsoController extends AbstractController
                         if (file_exists($oldFile)) {
                             $this->logger->debug('[IsoController:edit]::Deleting old file: ' . $oldFile);
                             unlink($oldFile);
-                            $oldFilePath = '/images/' . $oldFilename;
-                            $this->Files2WorkerManager->deleteFileFromAllWorkers($oldFilePath);
+                            $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
                         }
                     }
 
                     // Copier le nouveau fichier vers les workers
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFileName;
-                    $remoteFilePath = '/images/' . $uploadedFileName;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
-                    
-                    $failures = array_filter($results, function($result) {
-                        return !$result['success'];
-                    });
-                    
-                    if (empty($failures)) {
-                        unlink($localFilePath);
-                    }
+
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('iso', $uploadedFileName);
                     
                     // Mettre à jour l'entité
                     $iso->setFilename($uploadedFileName);
@@ -225,14 +225,18 @@ class IsoController extends AbstractController
             } elseif ($fileSourceType === 'filename') {
                 // Mode filename only
                 $this->logger->debug('[IsoController:edit]::Switching to filename only mode');
-                $this->logger->debug('[IsoController:edit]::Filename from form: ' . $iso->getFilename());
+                $new_filename=$iso->getFilename();
+                $this->logger->debug('[IsoController:edit]::Filename from form: ' . $new_filename);
                 
                 // Si on avait un fichier uploadé avant, le supprimer
                 if ($oldFilename && file_exists($this->getParameter('iso_directory') . '/' . $oldFilename)) {
-                    $oldFile = $this->getParameter('iso_directory') . '/' . $oldFilename;
-                    $this->logger->debug('[IsoController:edit]::Deleting old uploaded file when switching to filename only: ' . $oldFile);
-                    unlink($oldFile);
-                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/' . $oldFilename);
+                    $oldFileWithPath = $this->getParameter('iso_directory') . '/' . $oldFilename;
+                    $new_fileWithPath = $this->getParameter('iso_directory') . '/' . $new_filename;
+                    $this->logger->debug('[IsoController:edit]::Deleting old uploaded file when switching to filename only: ' . $oldFileWithPath);
+                    rename($oldFileWithPath,$new_fileWithPath);
+                    
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers('iso',$oldFilename);
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('iso', $new_filename);
                 }
                 
                 // Nettoyer l'URL
@@ -246,7 +250,9 @@ class IsoController extends AbstractController
             $entityManager->flush();
             
             $this->logger->info('[IsoController:edit]::ISO updated successfully');
-            $this->addFlash('success', 'ISO modifiée avec succès');
+
+            $this->addFlashMsgSuccess($request->getSession(), 'ISO modified with success');
+
             return $this->redirectToRoute('app_iso_index');
             
         } elseif ($form->isSubmitted()) {
@@ -290,7 +296,8 @@ class IsoController extends AbstractController
             $entityManager->remove($iso);
             $entityManager->flush();
             
-            $this->addFlash('success', 'ISO supprimée avec succès');
+            $this->addFlashMsgSuccess($request->getSession(), 'Old ISO deleted successfully');
+
         }
 
         return $this->redirectToRoute('app_iso_index');

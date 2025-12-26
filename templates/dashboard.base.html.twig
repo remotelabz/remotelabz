@@ -54,7 +54,7 @@
           {% block breadcrumbs %}
             <div class="breadcrumb">
               {% if '/admin' in app.request.uri %}
-                {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('users') }) %}
+                {% set breadcrumbs = breadcrumbs | merge({ 'Admin Area': path('admin') }) %}
               {% else %}
                 {% set breadcrumbs = breadcrumbs | merge({}) %}
               {% endif %}
@@ -79,6 +79,13 @@
       {% else %}
       <div class="container-fluid container-limited">
       {% endif %}
+      {# Display Persistent Notifications from Database #}
+        {% set unread_notifications = get_unread_notifications() %}
+        {% if unread_notifications is not empty %}
+          <div class="persistent-notifications" data-notifications="{{ unread_notifications|json_encode|e('html_attr') }}">
+            {# Notifications will be displayed via JavaScript using Noty #}
+          </div>
+        {% endif %}
         <div class="flashbag-container">
           {%- for label, messages in app.flashes -%}
             {%- for message in messages -%}
@@ -98,8 +105,8 @@
         {% else %}
           {{- block('wrapper') -}}
         {% endif %}
+        
         <footer>
-          
           <div class="d-flex align-items-center justify-content-center">
             <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/Logo-France2030-type-blanc.png') }}" class="partnership-logo w64 h64" /></a>
             <div class="flex-fill"><a href="https://docs.remotelabz.com" target="_blank">Help</a></div>
@@ -121,7 +128,10 @@ function resizebar() {
   var scrollSidebar = document.querySelector("#sidebar-scroll");
   var sideBarContext = document.querySelector("#sidebarContext");
   var sideBar = document.querySelector("#sidebar");
-  scrollSidebar.style.maxHeight = sideBar.offsetHeight - toggleSidebar.offsetHeight - sideBarContext.offsetHeight +"px";
+
+  if (scrollSidebar && sideBar && toggleSidebar && sideBarContext) {
+    scrollSidebar.style.maxHeight = sideBar.offsetHeight - toggleSidebar.offsetHeight - sideBarContext.offsetHeight +"px";
+  }
 }
 resizebar();
 window.addEventListener("resize", ()=> resizebar());

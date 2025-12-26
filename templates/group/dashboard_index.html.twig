@@ -29,63 +29,12 @@
             {% embed "@layouts/topbar_tabbed.html.twig" %}
                 {% import "components.html.twig" as components %}
                 {% block quick_actions %}
-                    {# <form action="{{ path('dashboard_groups') }}" method="GET">
-                        <input type="search" class="form-control input-sm" name="search"
-                        placeholder="Search by name"
-                        spellcheck="false" value="{{ search|default('') }}" type="search" />
-                    </form> #}
                 {% endblock %}
                 {% block items %}
                     {{ components.topbar_tab('Your groups', 'dashboard_groups') }}
-                    {# {{ components.topbar_tab('Explore public groups', 'dashboard_explore_groups') }} #}
                 {% endblock %}
             {% endembed %}
         </div>
         {{- react_component('GroupExplorer', {'props': {"endpoint": path('api_groups'), "user": app.user.email}}) -}}
-        {# <ul>
-            {% for group in groups %}
-                <li>
-                    <div class="item-left d-flex flex-column">
-                        <div class="d-flex">
-                            <div class="avatar identicon bg-{{ group.id % 8 + 1 }} s40 rounded mr-2">
-                                {% if group.pictureFilename is defined and group.pictureFilename %}
-                                    image
-                                {% else %}
-                                    {{- group.name|firstLetter|upper -}}
-                                {% endif %}
-                            </div>
-                            <div class="d-flex flex-column">
-                                <div class="item-title">
-                                    <a href="{{ path('dashboard_show_group', {slug: group.path}) }}">{{ _self.groupParent(group) }} {{ group.name }}</a>
-                                </div>
-                                <div>{{ group.description }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item-right item-margin text-muted">
-                        <span class="mr-3">{{ svg('group') }} {{ group.users|length }}</span>
-                        <span class="mr-3">
-                            {% if group.visibility is defined %}
-                                {% if group.visibility == '0' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Private - The group and its activities can only be viewed by yourself.">
-                                        {{ svg('lock') }}
-                                    </div>
-                                {% elseif group.visibility == '1' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Internal - The group and any internal activities can be viewed by members.">
-                                        {{ svg('shield') }}
-                                    </div>
-                                {% elseif group.visibility == '2' %}
-                                    <div data-toggle="tooltip" data-placement="bottom" title="Public - The group and any internal projects can be viewed by any logged in user.">
-                                        {{ svg('earth') }}
-                                    </div>
-                                {% endif %}
-                            {% endif %}
-                        </span>
-                        {# <a href="{{ path('edit_group', {slug: group.path}) }}" class="btn btn-default">Edit</a>
-                        <a href="{{ path('delete_group', {slug: group.path}) }}" class="btn btn-danger">Delete</a>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul> #}
     </div>
 {% endblock %}

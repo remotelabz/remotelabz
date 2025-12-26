@@ -56,9 +56,7 @@ class ConfigWorkerController extends Controller
         OperatingSystemRepository $operatingSystemRepository,
         WorkerManager $workerManager,
         EntityManagerInterface $entityManager,
-        Files2WorkerManager $Files2WorkerManager,
-
-        
+        Files2WorkerManager $Files2WorkerManager,        
     ) {
         $this->logger = $logger;
         if ($logger == null) {
