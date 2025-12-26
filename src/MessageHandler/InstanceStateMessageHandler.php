@@ -331,13 +331,13 @@ class InstanceStateMessageHandler
                     case InstanceStateMessage::STATE_OS_DELETED:
                         $options_exported=$message->getOptions();
                         $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);
-                        $this->notificationService->info($userId, 'OS image deleted from worker.', $uuid);
+                        $this->notificationService->success($userId, 'OS image deleted from worker.', $uuid);
                     break;
                     
                     case InstanceStateMessage::STATE_ISO_DELETED:
                         $options_exported=$message->getOptions();
                         $this->logger->info("ISO image ".$options_exported["iso_filename"]." is deleted from worker ".$options_exported["workerIP"]);
-                        $this->notificationService->info($userId, 'Old ISO image deleted from worker.', $uuid);
+                        $this->notificationService->success($userId, 'Old ISO image deleted from worker.', $uuid);
                     break;
 
                     case InstanceStateMessage::STATE_FILE_COPIED:

@@ -188,15 +188,36 @@
                     </small>
                 </div>
                 
+                {% if flavor.memory is defined and flavor.memory|length > 0 %}
                 <div class="mb-3">
-                    <strong class="small">Recommended Flavors:</strong>
+                    <strong class="small">Available Memory Flavors:</strong>
                     <ul class="small mb-0">
-                        <li>XX-Small: 1 vCPU, 256MB RAM</li>
-                        <li>X-Small: 1 vCPU, 512MB RAM</li>
-                        <li>Medium: 2 vCPU, 1GB RAM</li>
-                        <li>Large: 4 vCPU, 2GB RAM</li>
+                        {% for memory_flavor in flavor.memory %}
+                        <li><strong>{{ memory_flavor.name }}</strong>: {{ memory_flavor.memory_gb }} GB RAM ({{ memory_flavor.memory }} MB)</li>
+                        {% endfor %}
                     </ul>
                 </div>
+                {% endif %}
+                
+                {% if flavor.disk is defined and flavor.disk|length > 0 %}
+                <div class="mb-3">
+                    <strong class="small">Available Disk Configurations:</strong>
+                    <ul class="small mb-0">
+                        {% for disk_config in flavor.disk %}
+                        <li>
+                            <strong>{{ disk_config.os_name }}</strong>: {{ disk_config.disk_gb }} GB
+                            <br><span class="text-muted" style="font-size: 0.85em;">Flavor disk used: {{ disk_config.name }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if (flavor.memory is not defined or flavor.memory|length == 0) and (flavor.disk is not defined or flavor.disk|length == 0) %}
+                <div class="alert alert-warning">
+                    <small>No flavors configured in the system.</small>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}

@@ -27,6 +27,7 @@ use App\Repository\OperatingSystemRepository;
 use App\Repository\HypervisorRepository;
 use App\Repository\NetworkInterfaceRepository;
 use App\Repository\IsoRepository;
+use App\Repository\FlavorDiskRepository;
 use App\Security\ACL\LabVoter;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\HttpFoundation\Request;
@@ -67,7 +68,7 @@ class DeviceController extends Controller
     private NetworkInterfaceRepository $networkInterfaceRepository;
     private EntityManagerInterface $entityManager;
     private IsoRepository $isoRepository;
-
+    private FlavorDiskRepository $flavorDiskRepository;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -86,7 +87,8 @@ class DeviceController extends Controller
         NetworkInterfaceRepository $networkInterfaceRepository,
         ManagerRegistry $managerRegistry,
         EntityManagerInterface $entityManager,
-        IsoRepository $isoRepository)
+        IsoRepository $isoRepository,
+        FlavorDiskRepository $flavorDiskRepository)
     {
         $this->deviceRepository = $deviceRepository;
         $this->deviceInstanceRepository = $deviceInstanceRepository;
@@ -102,6 +104,7 @@ class DeviceController extends Controller
         $this->managerRegistry = $managerRegistry;
         $this->entityManager = $entityManager;
         $this->isoRepository = $isoRepository;
+        $this->flavorDiskRepository = $flavorDiskRepository;
     }
 
     
@@ -631,11 +634,72 @@ class DeviceController extends Controller
             return $this->json($deviceForm, 200, [], ['api_get_device']);
         }
 
+
+
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
             'data' => $device,
-            'virtuality' => $virtuality
+            'virtuality' => $virtuality,
+            'flavor' => $this->getAllFlavors()
         ]);
+    }
+
+    private function getAllFlavors() {
+        // Récupérer tous les flavors (RAM/CPU)
+        $flavors = $this->flavorRepository->findAll();
+
+        // Récupérer tous les Operating Systems qui ont un FlavorDisk associé
+        $operatingSystems = $this->operatingSystemRepository->findAll();
+
+        // Préparer les données pour le template
+        $flavor_global = [
+            'memory' => [],
+            'disk' => []
+        ];
+
+        // Formater les données des flavors (RAM)
+        foreach ($flavors as $flavor) {
+            $flavor_global['memory'][] = [
+                'id' => $flavor->getId(),
+                'name' => $flavor->getName(),
+                'memory' => $flavor->getMemory(), // en MB
+                'memory_gb' => round($flavor->getMemory() / 1024, 2) // conversion en GB
+            ];
+        }
+
+        // Trier les flavors par mémoire croissante
+        usort($flavor_global['memory'], function($a, $b) {
+            return $a['memory'] <=> $b['memory'];
+        });
+
+        // Tableau pour éviter les doublons de FlavorDisk
+        $addedFlavorDisks = [];
+
+        // Formater les données des Operating Systems qui ont un FlavorDisk
+        foreach ($operatingSystems as $os) {
+            $flavorDisk = $os->getFlavorDisk();
+            
+            // Vérifier que l'OS a bien un FlavorDisk et qu'on ne l'a pas déjà ajouté
+            if ($flavorDisk !== null && !isset($addedFlavorDisks[$flavorDisk->getId()])) {
+                $flavor_global['disk'][] = [
+                    'id' => $flavorDisk->getId(),
+                    'name' => $flavorDisk->getName(),
+                    'disk_gb' => $flavorDisk->getDisk(), // en GB
+                    'os_name' => $os->getName(), // Nom de l'OS qui utilise ce FlavorDisk
+                    'os_id' => $os->getId()
+                ];
+                
+                // Marquer ce FlavorDisk comme déjà ajouté
+                $addedFlavorDisks[$flavorDisk->getId()] = true;
+            }
+        }
+
+        // Trier les flavor disks par taille croissante
+        usort($flavor_global['disk'], function($a, $b) {
+            return $a['disk'] <=> $b['disk'];
+        });
+
+        return $flavor_global;
     }
 
     #[Post('/api/labs/{labId<\d+>}/node', name: 'api_new_devices')]
@@ -982,7 +1046,8 @@ class DeviceController extends Controller
         return $this->render('device/new.html.twig', [
             'form' => $deviceForm->createView(),
             'data' => $device,
-            'virtuality' => $virtuality
+            'virtuality' => $virtuality,
+            'flavor' => $this->getAllFlavors()
         ]);
     }
 
