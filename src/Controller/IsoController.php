@@ -288,8 +288,8 @@ class IsoController extends AbstractController
                 $file = $this->getParameter('iso_directory') . '/' . $iso->getFilename();
                 if (file_exists($file)) {
                     unlink($file);
-                    $this->Files2WorkerManager->deleteFileFromAllWorkers('/images/'.$iso->getFilename());
-                    $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all active workers');
+                    $this->Files2WorkerManager->deleteFileFromAllWorkers("iso",$iso->getFilename());
+                    $this->logger->debug('[IsoController:delete]::Deleted file '.$file.' from all workers');
                 }
             }
             
