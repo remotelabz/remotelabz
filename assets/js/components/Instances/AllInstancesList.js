@@ -54,7 +54,7 @@ function AllInstancesList(props = {labInstances: [], user:{}}) {
         const request = Remotelabz.instances.lab.getAll(currentFilter, currentSubFilter, currentPage, currentSearchUuid);
     
         request.then(response => {
-            console.log('[AllInstancesList] Données reçues:', response.data);
+            //console.log('[AllInstancesList] Données reçues:', response.data);
             const formattedInstances = Array.isArray(response.data) ? response.data : [];
             setInstances(formattedInstances);
             setLoadingInstanceState(false);

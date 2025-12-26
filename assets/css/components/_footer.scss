@@ -15,8 +15,6 @@ footer {
 
     img {
         width: 96px;
-        -webkit-filter: grayscale(100%);
-        filter: grayscale(100%);
         transition: all 0.15s linear;
         opacity: .5;
 
@@ -25,10 +23,23 @@ footer {
             opacity: 1;
         }
     }
+
+    .partnership-logo-dark {
+      display: none;
+    }
+
 }
 
 [theme="dark"] {
     footer {
         border-top: 1px solid #35353b;
+
+        .partnership-logo-light {
+            display: none;
+        }
+
+        .partnership-logo-dark {
+            display: block;
+        }
     }
 }

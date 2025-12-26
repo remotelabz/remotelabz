@@ -35,6 +35,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
     const currentDeviceIsos = deviceIsos;
 
     const displayState = instance.device?.hypervisor?.name === 'natif' ? 'started' : instance.state;
+    
 
     /*console.log("Device ID:", instance.device.id);
     console.log("Device Name:", instance.device.name);
@@ -524,7 +525,8 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 {isStopping(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="stop" />}
                             </Button>
                         }
-                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' && instance.state != 'reset' && instance.state != 'started') &&
+                        {instance.ownedBy == "group" && showControls && allInstancesPage && (instance.state != 'stopped' && instance.state != 'error' && instance.state != 'exported' 
+                            && instance.state != 'reset' && instance.state != 'started') &&
                             <Button 
                                 variant="danger" 
                                 className="ml-3" 

@@ -102,7 +102,11 @@
 <footer>
           
           <div class="d-flex align-items-center justify-content-center">
-            <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/Logo-France2030-type-blanc.png') }}" class="partnership-logo w64 h64" /></a>
+            {% if app.request.cookies.get('theme') == "dark" %}
+              <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/Logo-France2030-type-blanc.png') }}" class="partnership-logo w64 h64" /></a>
+            {% else %}
+              <a href="https://anr.fr" target="_blank"><img src="{{ asset('build/images/Logo-France2030-type-rouge-bleu.png') }}" class="partnership-logo w64 h64" /></a>
+            {% endif %}
             <div class="flex-fill">Aide d'état au titre du projet France 2030 Fo6Med - ANR-23-CMAS-0008</div>
             <div class="flex-fill"><a href="https://docs.remotelabz.com" target="_blank">Help</a></div>
             <div class="flex-fill"><a href="https://www.remotelabz.com" target="_blank">Web site</a></div>
