@@ -194,6 +194,11 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
             canControl: canControl
         });
         */
+       /*console.log('canControlInstances RESULT:', {
+            deviceName: device.name,
+            instanceUuid: instance.uuid,
+            canControl: canControl
+        });*/
         return canControl;
     }
 
@@ -431,7 +436,9 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                         {((instance.state == 'stopped' || instance.state == 'exported' || instance.state == 'error') && 
                             //(allInstance?.length == labDeviceLength) && 
                             //isSandbox && 
-                            instance.device.name !== "DHCP_service") && (
+                            instance.device.name !== "DHCP_service")
+                            && canControlInstances()
+                            && (
                                 <IsoSelector
                                     deviceIsos={currentDeviceIsos}
                                     bootWithIso={bootWithIso}
@@ -502,7 +509,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                                 data-placement="top" 
                                 className="ml-3" 
                                 onClick={() => setShowResetDeviceModel(true)}
-                                disabled={isComputingState(instance)}
+                                //disabled={isComputingState(instance)}
                             >
                                 {isResetting(instance) ? <Spinner animation="border" size="sm" /> : <SVG name="redo" />}
                             </Button>
@@ -574,7 +581,7 @@ function InstanceListItem({ instance, labDeviceLength, allInstance, deviceIsos, 
                             </a>
                         }
 
-                        { showControls && 
+                        { showControls && canControlInstances() &&
                             controls
                         }
 

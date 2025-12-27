@@ -16,7 +16,6 @@ class NotificationService {
             pauseOnHover: true,
             draggable: true,
             progress: undefined,
-            transition: Bounce,
             pauseOnFocusLoss:false
         };
     }

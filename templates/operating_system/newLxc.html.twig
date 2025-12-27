@@ -10,7 +10,7 @@
     <div class="row align-items-center">
         <div class="col">
             <div class="d-flex align-items-center">
-                <h1 class="display-6 mb-0 me-3">Create LXC Container</h1>
+                <h1 class="display-6 mb-0 me-3">Create LXC Container</h1>&nbsp;
                 <span class="badge bg-success fs-6">
                     <i class="fab fa-docker me-1"></i>Container
                 </span>
@@ -27,6 +27,11 @@
                 <h5 class="card-title mb-0">
                     <i class="fab fa-linux me-2"></i> Linux Container Images
                 </h5>
+            </div>
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Note:</strong> These images are fetched from the official 
+                <a href="https://images.linuxcontainers.org" target="_blank">Linux Containers Image Server</a>
             </div>
             <div class="card-body">
                 <div id="lxc-wizard">
@@ -59,12 +64,6 @@
                                     </div>
                                 </div>
                             {% endfor %}
-                        </div>
-                        
-                        <div class="alert alert-info mt-4">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Note:</strong> These images are fetched from the official 
-                            <a href="https://images.linuxcontainers.org" target="_blank">Linux Containers Image Server</a>
                         </div>
                     </div>
 
@@ -138,15 +137,15 @@
     
     <div class="col-lg-4">
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Danger
+        <div class="card mb-4 ">
+            <div class="card-header alert alert-danger">
+                <h5 class="card-title mb-0 alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2 "></i>&nbsp;Important
                 </h5>
             </div>
             <div class="card-body">
-                <p class="small">
-                    <strong>Important</strong> You have to install pamtester in your LXC container to activate the user login. Otherwise
+                <p>
+                    You have to install <strong>pamtester</strong> in your LXC container to activate the user login. Otherwise
                     a user cannot log in.
                 </p>
             </div>

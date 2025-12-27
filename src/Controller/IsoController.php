@@ -78,20 +78,14 @@ class IsoController extends AbstractController
                     $iso->setFilenameUrl(null);
                     
                     $localFilePath = $this->getParameter('iso_directory') . '/' . $uploadedFilename;
-                    $results = $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
+                    $this->Files2WorkerManager->CopyFileToAllWorkers("iso",$uploadedFilename);
 
-                    $failures = array_filter($results, function($result) {
-                        return !$result['success'];
-                    });
                     
-                    if (!empty($failures)) {
-                        $this->addFlash('warning', 'ISO created but some workers failed to send the file.');
-                    } else {
-                        if (file_exists($localFilePath))
-                            unlink($localFilePath);
+                    if (file_exists($localFilePath))
+                        unlink($localFilePath);
 
-                        $this->addFlash('success', 'ISO created and file copied to all workers successfully.');
-                    }
+                    $this->addFlash('success', 'ISO created and send order to all workers');
+                    
                 } else {
                     $this->addFlash('danger', 'No file was uploaded. Please upload a file first.');
                     return $this->render('iso/new.html.twig', [
@@ -296,7 +290,7 @@ class IsoController extends AbstractController
             $entityManager->remove($iso);
             $entityManager->flush();
             
-            $this->addFlashMsgSuccess($request->getSession(), 'Old ISO deleted successfully');
+            $this->addFlashMsgSuccess($request->getSession(), 'Old ISO deleted successfully and send order to worker');
 
         }
 
@@ -334,7 +328,7 @@ class IsoController extends AbstractController
                 $newFile = $uploadDir . '/' . $newFilename;
                 $fileSize = file_exists($newFile) ? filesize($newFile) : null;
 
-                $this->logger->debug('[IsoController:upload]::Move '.$file.' file to '.$newFile.' done.');
+                $this->logger->debug('[IsoController:upload]::Move '.$file.' file to '.$newFile.' done. It\'s size is '.$fileSize);
 
             } catch (FileException $e) {
                 return $this->json(['error' => 'Upload failed'], 500);

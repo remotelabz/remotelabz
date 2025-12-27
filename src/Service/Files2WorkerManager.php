@@ -96,24 +96,44 @@ class Files2WorkerManager
     }
 
     /**
-     * Supprime un fichier ISO de tous les workers disponibles
+     * Supprime un fichier ISO ou Image de tous les workers disponibles
      */
-    public function deleteFileFromAllWorkers(string $type,string $localFilename){
+    public function deleteFileFromAllWorkers(string $type,string $localFilename,string $hypervisor=null){
         $workers = $this->configWorkerRepository->findAll();
         foreach ($workers as $worker) {
-            $content = json_encode([
-                'filename' => $localFilename,
+            $content=[
+                'os_imagename' => $localFilename,
                 'file_type' => $type,
-                'worker_ip' => $worker->getIPv4(),
-                'user_id' => $this->getCurrentUserId()
-            ]);
+                'Worker_Dest_IP' => $worker->getIPv4(),
+                'user_id' => $this->getCurrentUserId(),
+            ];
+            
+            if ($type="image") {
+                if (is_null($hypervisor))
+                    $content['hypervisor']="qemu";
+                else
+                    $content['hypervisor']=$hypervisor;
+            }
+            $json_content = json_encode($content);
+
             $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Send message to ' . $worker->getIPv4() ." to delete ".$type." ".$localFilename);
 
+            
+            $action="";
+            switch ($type) {
+                case "iso" :
+                    $action=InstanceActionMessage::ACTION_DELETEISO;
+                    break;
+                case "image" :
+                    $action=InstanceActionMessage::ACTION_DELETEOS;
+                    break;
+            }
+            
             $this->bus->dispatch(
-                new InstanceActionMessage($content, "", InstanceActionMessage::ACTION_DELETEISO), [
-                    new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
-                ]
-            ); 
+                    new InstanceActionMessage($json_content, "", $action), [
+                        new AmqpStamp($worker->getIPv4(), AMQP_NOPARAM, []),
+                    ]
+            );           
 
             $this->logger->debug('[Files2WorkerManager:deleteFileFromAllWorkers]::Deleting ' .$type." ".$localFilename.' from worker: ' . $worker->getIPv4());
         }

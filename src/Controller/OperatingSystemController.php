@@ -314,9 +314,7 @@ class OperatingSystemController extends Controller
                 }
              
                 if ($uploadedFilename && trim($uploadedFilename) !== '') {
-                    $localFilePath = $this->getParameter('image_directory') . '/' . $uploadedFilename;
-                    $remoteFilePath = '/images/'.$uploadedFilename;
-                    $this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('image',$uploadedFilename);
                 }
             } else {
                 // Hyperviseur non reconnu - nettoyer les champs image
@@ -464,7 +462,9 @@ class OperatingSystemController extends Controller
                         'submitted' => $filenameOnly,
                         'user' => $this->getUser()->getName()
                     ]);
-                    
+                    $maxUploadSize = min(
+                          ini_get('upload_max_filesize'), ini_get('post_max_size')
+                    );
                     return $this->render('operating_system/new.html.twig', [
                         'operatingSystem' => $operatingSystem,
                         'operatingSystemForm' => $operatingSystemForm->createView(),
@@ -505,7 +505,7 @@ class OperatingSystemController extends Controller
                     if (strcmp($old_filename,$filenameOnly)) {
                         $this->logger->debug('[OperatingSystemController:editAction]::Filename is modifed to '.$filenameOnly);
                         $oldfilenamepath=$this->getParameter('image_directory') . '/' . $operatingSystemEdited->getImageFilename();
-                        $this->Files2WorkerManager->deleteFileFromAllWorkers($oldfilenamepath);
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers('image',$old_filename);
                     }
                     $operatingSystemEdited->setImageFilename($filenameOnly);
                     $operatingSystemEdited->setImageUrl(null);
@@ -527,18 +527,12 @@ class OperatingSystemController extends Controller
                     $localFilePath = $this->getParameter('image_directory') . '/' . $uploadedFilename;
                     $remoteFilePath = '/images/'.$uploadedFilename;
                     
-                    if ($this->Files2WorkerManager->AvailableWorkerExist()) {
-                        $this->Files2WorkerManager->deleteFileFromAllWorkers($old_filename);
-                        $results=$this->Files2WorkerManager->CopyFileToAllWorkers($localFilePath, $remoteFilePath);
-                        $failures = array_filter($results, function($result) { 
-                        });
-                        if (!empty($failures)) {
-                            $this->addFlash('warning', 'Image created but some workers failed to send the file.');
-                        } else {
-                            unlink($this->getParameter('image_directory') . '/' . $old_filename);
-                            $this->addFlash('success', 'Image created and file copied to all workers successfully.');
-                        }
-                    }                   
+                    //$this->Files2WorkerManager->deleteFileFromAllWorkers('image',$uploadedFilename);
+                    $this->Files2WorkerManager->CopyFileToAllWorkers('image',$uploadedFilename);
+                    
+                    unlink($this->getParameter('image_directory') . '/' . $old_filename);
+                    $this->addFlash('success', 'Image created and file copied to all workers successfully.');
+                        
                 }
             } else {
                 // Hyperviseur non reconnu - nettoyer les champs image
@@ -609,7 +603,7 @@ class OperatingSystemController extends Controller
         $id=$operatingSystem->getId();
         if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
             $operatingSystem = $this->operatingSystemRepository->find($id);
-            $operatingSystemName=$operatingSystem->getImageFilename();
+            $operatingSystemFilename=$operatingSystem->getImageFilename();
             $operatingSystemHypervisor=strtolower($operatingSystem->getHypervisor()->getName());
 
             if (null === $operatingSystem) {
@@ -633,24 +627,22 @@ class OperatingSystemController extends Controller
                     $entityManager->flush();
                     $this->addFlash('success', $operatingSystem->getName() . ' has been deleted.');
                     $this->logger->info("Delete OS - Operating system " . $operatingSystem->getName() . " has been deleted by user ".$this->getUser()->getName());
-                    if (null !== $operatingSystemName) {
-                        $workers = $this->configWorkerRepository->findAll();
-            
-                        foreach ($workers as $otherWorker) {
-                            $otherWorkerIP=$otherWorker->getIPv4();
-                            $tmp=array();
-                            $tmp['Worker_Dest_IP'] = $otherWorkerIP;
-                            $tmp['hypervisor'] = $operatingSystemHypervisor;
-                            $tmp['os_imagename'] = $operatingSystemName;
-                            $deviceJsonToCopy = json_encode($tmp, 0, 4096);
-                            // the case of qemu image with link.
-                            $this->logger->debug("OS to delete on worker ".$otherWorkerIP,$tmp);
-                            $this->bus->dispatch(
-                                new InstanceActionMessage($deviceJsonToCopy, "", InstanceActionMessage::ACTION_DELETEOS), [
-                                    new AmqpStamp($otherWorkerIP, AMQP_NOPARAM, [])
-                                    ]
-                                );            
+                    $this->logger->debug("[OperatingSystemController:delete]::The filename is ".$operatingSystemFilename);
+                    
+                    if ($operatingSystemHypervisor === "qemu") {
+                        $this->logger->debug("[OperatingSystemController:delete]::Hypervisor of this OS is ".$operatingSystemHypervisor);
+                        if ($operatingSystemFilename !== null) {// Operating System can be an url, so no filename
+                            $file = $this->getParameter('image_directory') . '/' . $operatingSystemFilename;
+                            if (file_exists($file)) {
+                                unlink($file);
+                                $this->Files2WorkerManager->deleteFileFromAllWorkers('image',$operatingSystemFilename);
+                            }
                         }
+                    } elseif ($operatingSystemHypervisor === "lxc") {
+                        $this->logger->debug("[OperatingSystemController:delete]::Hypervisor of this OS is ".$operatingSystemHypervisor);
+                        //send message 
+                        $this->Files2WorkerManager->deleteFileFromAllWorkers('image',$operatingSystemFilename,$operatingSystemHypervisor);
+
                     }
                     
                     return $this->redirectToRoute('operating_systems');
@@ -741,7 +733,7 @@ class OperatingSystemController extends Controller
                 $newOs_id=$newOs->getId();
                 $this->logger->info("New LXC OS - Operating system " . $newOs->getName() . " has been created by user ".$this->getUser()->getName());
             } else {
-                $this->logger->info("[OperatingSystemController:newLxcAction]::This LXC OS ".$osName." already exist");
+                $this->logger->info("This LXC OS ".$osName." already exist");
                 
                 // Retourner une réponse JSON avec un statut d'erreur
                 return $this->json([
@@ -832,8 +824,8 @@ class OperatingSystemController extends Controller
                 
                 $fileSize = file_exists($destinationFile) ? filesize($destinationFile) : null;
                 
-                $this->logger->debug('[OperatingSystemController:upload]::Move file to '.$uploadDir.' done');
-                $this->logger->info('File successfully uploaded to '.$uploadDir);
+                $this->logger->debug('[OperatingSystemController:upload]::Move file to '.$destinationFile.' done');
+                $this->logger->info('File successfully uploaded to '.$destinationFile);
                 
                 return $this->json([
                     'success' => true, 

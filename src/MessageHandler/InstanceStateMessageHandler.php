@@ -61,35 +61,78 @@ class InstanceStateMessageHandler
 
 
     /**
-     * Get user ID from instance (if available)
+     * Get user IDs from instance (returns array for group instances, single element array for user instances)
+     * 
+     * For user instances: returns [userId]
+     * For group instances: returns [ownerId, admin1Id, admin2Id, ...]
      */
-    private function getUserIdFromInstance($instance): ?string
+    private function getUserIdFromInstance($instance): array
     {
-        $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Try to determine the user of instance '.$instance->getUuid());
+        $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Try to determine the user(s) of instance '.$instance->getUuid());
 
         if (!$instance) {
-            return null;
+            return [];
         }
 
         try {
-            // Adjust this based on your entity structure
-            if (method_exists($instance, 'getUser')) {
-                $user = $instance->getUser();
-                return $user ? (string) $user->getId() : null;
-            }
+            $userIds = [];
             
-            if (method_exists($instance, 'getLabInstance')) {
-                $labInstance = $instance->getLabInstance();
-                if ($labInstance && method_exists($labInstance, 'getUser')) {
-                    $user = $labInstance->getUser();
-                    return $user ? (string) $user->getId() : null;
+            // Check if instance is owned by a group
+            if (method_exists($instance, 'getGroup')) {
+                $group = $instance->getGroup();
+                if (!is_null($group)) {
+                    $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Instance '.$instance->getUuid().' is owned by group '.$group->getId());
+                    
+                    // Get the group owner
+                    $owner = $group->getOwner();
+                    if ($owner) {
+                        $userIds[] = (string) $owner->getId();
+                        $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Added owner user ID: '.$owner->getId());
+                    }
+                    
+                    // Get all group admins
+                    $admins = $group->getAdmins();
+                    foreach ($admins as $adminGroupUser) {
+                        $admin = $adminGroupUser->getUser();
+                        $adminId = (string) $admin->getId();
+                        // Avoid duplicates (in case owner is also admin)
+                        if (!in_array($adminId, $userIds)) {
+                            $userIds[] = $adminId;
+                            $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Added admin user ID: '.$adminId);
+                        }
+                    }
+                    
+                    if (!empty($userIds)) {
+                        $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::Found '.count($userIds).' users for group instance: '.implode(', ', $userIds));
+                        return $userIds;
+                    }
                 }
             }
+            
+            // Check if instance has a direct user (non-group instance)
+            if (method_exists($instance, 'getUser')) {
+                $user = $instance->getUser();
+                if (!is_null($user)) {
+                    $userId = (string) $user->getId();
+                    $this->logger->debug('[InstanceStateMessageHandler:getUserIdFromInstance]::User of instance '.$instance->getUuid().' found. User Id : '.$userId);
+                    return [$userId];
+                }
+            }
+            
+            // Check if it's a DeviceInstance that belongs to a LabInstance
+            /*if (method_exists($instance, 'getDeviceInstance')) {
+                $deviceInstance = $instance->getDeviceInstance();
+                if ($deviceInstance) {
+                    // Recursively call this method for the lab instance
+                    return $this->getUserIdFromInstance($deviceInstance);
+                }
+            }*/
+            
         } catch (\Exception $e) {
-            $this->logger->warning('Could not determine user ID from instance: ' . $e->getMessage());
+            $this->logger->warning('Could not determine user ID(s) from instance: ' . $e->getMessage());
         }
 
-        return null;
+        return [];
     }
 
 
@@ -137,14 +180,14 @@ class InstanceStateMessageHandler
                 $instance = $this->deviceInstanceRepository->findOneBy(['uuid' => $uuid]);
 
             if (!is_null($instance)) {
-                $userId = $this->getUserIdFromInstance($instance);
-                //$this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ".$userId);
+                $userIds = $this->getUserIdFromInstance($instance);
+                $this->logger->debug("[InstanceStateMessageHandler:__invoke]::User id of the instance is ",$userIds);
             }
             $options=$message->getOptions();
             if (!is_null($options)) {
                 $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Options received :', $options);
                 if (key_exists('user_id',$options))
-                    $userId=$options['user_id'];
+                    $userIds=array($options['user_id']);
             }
 
             // if an error happened, set device instance in its previous state
@@ -157,14 +200,14 @@ class InstanceStateMessageHandler
                 if (isset($options['error_message'])) {
                     $errorMessage .= ': ' . $options['error_message'];
                 }
-                $this->notificationService->error($userId, $errorMessage, $uuid, $options ?? []);
+                $this->notificationService->error($userIds, $errorMessage, $uuid, $options ?? []);
 
                 if (!is_null($options) && !empty($options)) {
                     $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Show options of error message received : ', $options);
                     if ( $options["state"] === InstanceActionMessage::ACTION_RENAMEOS ) {
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel renameOS');
                         $this->notificationService->warning(
-                            $userId,
+                            $userIds,
                             'Failed to rename operating system. Changes have been reverted.',
                             $uuid
                         );
@@ -173,7 +216,7 @@ class InstanceStateMessageHandler
                     if ( $options["state"] === InstanceActionMessage::ACTION_EXPORT_DEV ) {
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Cancel exported');
                          $this->notificationService->error(
-                            $userId,
+                            $userIds,
                             'Export failed. The operation has been cancelled.',
                             $uuid
                         );
@@ -212,7 +255,7 @@ class InstanceStateMessageHandler
                         } catch (\Exception $e) {
                             $this->logger->error('[InstanceStateMessageHandler:__invoke]::Error while removing devices and OS during export cancel: '.$e->getMessage());
                             $this->notificationService->error(
-                                $userId,
+                                $userIds,
                                 'Error cleaning up after failed export: ' . $e->getMessage(),
                                 $uuid
                             );
@@ -222,7 +265,7 @@ class InstanceStateMessageHandler
                         $errorMessage='Error when try to copy '.$message->getUuid().' image to worker '.$options["worker_dest_ip"];    
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::'.$errorMessage);
                         $this->notificationService->error(
-                            $userId,
+                            $userIds,
                             $errorMessage,
                             $uuid
                         );
@@ -231,7 +274,7 @@ class InstanceStateMessageHandler
                         $errorMessage='Error when worker '.$options["worker_ip"].' try to copy '.$message->getUuid();
                         $this->logger->debug('[InstanceStateMessageHandler:__invoke]::'.$errorMessage);
                         $this->notificationService->error(
-                            $userId,
+                            $userIds,
                             $errorMessage,
                             $uuid
                         );
@@ -243,25 +286,25 @@ class InstanceStateMessageHandler
                         case InstanceStateMessage::STATE_STARTING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after '.$instance->getState());
                             $instance->setState(InstanceStateMessage::STATE_ERROR);
-                            $this->notificationService->warning($userId, 'Instance failed to start and has been stopped.', $uuid);
+                            $this->notificationService->warning($userIds, 'Instance failed to start and has been stopped.', $uuid);
                             break;
 
                         case InstanceStateMessage::STATE_STOPPING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                             $instance->setState(InstanceStateMessage::STATE_STARTED);
-                            $this->notificationService->warning($userId, 'Instance failed to stop.', $uuid);
+                            $this->notificationService->warning($userIds, 'Instance failed to stop.', $uuid);
                             break;
                         
                         case InstanceStateMessage::STATE_RESETTING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                             $instance->setState(InstanceStateMessage::STATE_STOPPED);
-                            $this->notificationService->warning($userId, 'Instance failed to reset.', $uuid);
+                            $this->notificationService->warning($userIds, 'Instance failed to reset.', $uuid);
                             break;
 
                         case InstanceStateMessage::STATE_CREATING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                             $instance->setState(InstanceStateMessage::STATE_DELETED);
-                            $this->notificationService->error($userId, 'Instance creation failed.', $uuid);
+                            $this->notificationService->error($userIds, 'Instance creation failed.', $uuid);
                             break;
 
                         case InstanceStateMessage::STATE_CREATED:
@@ -272,18 +315,18 @@ class InstanceStateMessageHandler
                         case InstanceStateMessage::STATE_DELETING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                             $instance->setState(InstanceStateMessage::STATE_CREATED);
-                            $this->notificationService->warning($userId, 'Instance deletion failed.', $uuid);
+                            $this->notificationService->warning($userIds, 'Instance deletion failed.', $uuid);
                             break;
 
                         case InstanceStateMessage::STATE_EXPORTING:
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Instance in error after  '.$instance->getState());
                             if ($message->getOptions()['error_code'] === 1) {//Device never started
                                 $instance->setState(InstanceStateMessage::STATE_ERROR);
-                                $this->notificationService->error($userId, 'Export failed: Device never started.', $uuid);
+                                $this->notificationService->error($userIds, 'Export failed: Device never started.', $uuid);
                             }
                             else {
                                 $instance->setState(InstanceStateMessage::STATE_DELETED);
-                                $this->notificationService->error($userId, 'Export failed.', $uuid);
+                                $this->notificationService->error($userIds, 'Export failed.', $uuid);
                             }
                             $this->logger->debug('[InstanceStateMessageHandler:__invoke]::Error received during exporting, message options :',$message->getOptions());
                             break;
@@ -310,16 +353,16 @@ class InstanceStateMessageHandler
                 switch ($message->getState()) {
                     case InstanceStateMessage::STATE_STOPPED:
                         $this->instanceManager->setStopped($instance);
-                        $this->notificationService->success($userId, 'Instance '.$uuid.' stopped successfully.', $uuid);
+                        $this->notificationService->success($userIds, 'Instance '.$uuid.' stopped successfully.', $uuid);
                     break;
                     
                     case InstanceStateMessage::STATE_STARTED:
-                        $this->notificationService->success($userId, 'Instance '.$uuid.' started successfully.', $uuid);
+                        $this->notificationService->success($userIds, 'Instance '.$uuid.' started successfully.', $uuid);
                     break;
 
                     case InstanceStateMessage::STATE_EXPORTED:
                         $this->logger->debug("[InstanceStateMessageHandler:__invoke]::Instance state exported received");
-                        $this->notificationService->success($userId, 'Instance exported successfully.', $uuid);
+                        $this->notificationService->success($userIds, 'Instance exported successfully.', $uuid);
 
                         $this->instanceManager->delete($instance->getLabInstance());
                         $options_exported=$message->getOptions();
@@ -331,13 +374,13 @@ class InstanceStateMessageHandler
                     case InstanceStateMessage::STATE_OS_DELETED:
                         $options_exported=$message->getOptions();
                         $this->logger->info($options_exported["hypervisor"]." image ".$options_exported["os_imagename"]." is deleted from worker ".$options_exported["workerIP"]);
-                        $this->notificationService->success($userId, 'OS image deleted from worker.', $uuid);
+                        $this->notificationService->success($userIds, 'OS image deleted from worker.', $uuid);
                     break;
                     
                     case InstanceStateMessage::STATE_ISO_DELETED:
                         $options_exported=$message->getOptions();
                         $this->logger->info("ISO image ".$options_exported["iso_filename"]." is deleted from worker ".$options_exported["workerIP"]);
-                        $this->notificationService->success($userId, 'Old ISO image deleted from worker.', $uuid);
+                        $this->notificationService->success($userIds, 'Old ISO image deleted from worker.', $uuid);
                     break;
 
                     case InstanceStateMessage::STATE_FILE_COPIED:
@@ -350,7 +393,7 @@ class InstanceStateMessageHandler
                                 'user_id' => $options['user_id'] ?? 'unknown',
                             ]
                         );
-                        $this->notificationService->success($userId, 'File copied successfully.', $uuid);
+                        $this->notificationService->success($userIds, 'File copied successfully.', $uuid);
                     break;
 
                     case InstanceStateMessage::STATE_DELETED:                
@@ -386,11 +429,11 @@ class InstanceStateMessageHandler
                                 }
                                 $this->entityManager->remove($lab);
                             }
-                            $this->notificationService->success($userId, 'Lab instance '.$uuid.' deleted successfully.', $uuid);
+                            $this->notificationService->success($userIds, 'Lab instance '.$uuid.' deleted successfully.', $uuid);
                         }
                         break;
                         default :
-                            $this->notificationService->success($userId, 'Instance '.$uuid." ".$message->getState().' successfully.',$uuid);
+                            $this->notificationService->success($userIds, 'Instance '.$uuid." ".$message->getState().' successfully.',$uuid);
                 }
             }
         
@@ -401,9 +444,9 @@ class InstanceStateMessageHandler
             
             // Try to notify user even if there was an error
             try {
-                $userId = $this->getUserIdFromInstance($instance);
+                $userIds = $this->getUserIdFromInstance($instance);
                 $this->notificationService->error(
-                    $userId,
+                    $userIds,
                     'An unexpected error occurred: ' . $e->getMessage(),
                     $uuid ?? null
                 );
