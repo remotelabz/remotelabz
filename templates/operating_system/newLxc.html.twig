@@ -360,7 +360,7 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    console.log('LXC device created:', result);
+                    //console.log('LXC device created:', result);
                     window.location.href = `/admin/operating-systems/${result.os_id}`;
                 } else {
                     if (result.error && result.message) {
