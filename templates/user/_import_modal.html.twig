@@ -1,0 +1,75 @@
+{# 
+   NOUVEAU TEMPLATE TWIG POUR LA MODAL D'IMPORTATION
+   Créer ce fichier: templates/user/_import_modal.html.twig
+   
+   Ce template remplace l'embed dans index_html.twig (lignes 20-37)
+   Pour l'utiliser, remplacer dans index_html.twig:
+   
+   {% include 'user/_import_modal.html.twig' %}
+#}
+
+{% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
+    {% block body %}
+        <div class="alert alert-info">
+            <h5><i class="fa fa-info-circle"></i> CSV Format</h5>
+            <p>The CSV file, encoded in UTF-8, must contain user information in the following format:</p>
+            <kbd>lastname,firstname,email,password,group</kbd>
+            
+            <div class="mt-3">
+                <strong>Columns:</strong>
+                <ul class="mb-0">
+                    <li><strong>lastname, firstname, email:</strong> Required</li>
+                    <li><strong>password:</strong> Optional - Must be a strong password (min 12 chars, uppercase, lowercase, digit, special char)</li>
+                    <li><strong>group:</strong> Optional - Group name</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <h5><i class="fa fa-exclamation-triangle"></i> Password Rules</h5>
+            <ul class="mb-0">
+                <li>If a password is provided in CSV but is <strong>not strong enough</strong>, a new strong password will be generated</li>
+                <li>If the password column is <strong>empty</strong>, a strong password will be automatically generated</li>
+                <li>Generated passwords will be displayed after import</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-secondary">
+            <h5><i class="fa fa-envelope"></i> Email Notification</h5>
+            <p class="mb-0">
+                Use the checkbox below to control email sending:
+            </p>
+            <ul class="mb-0">
+                <li><strong>Checked:</strong> All imported users will receive their password by email</li>
+                <li><strong>Unchecked:</strong> No emails will be sent (passwords will only be displayed on the results page)</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong><i class="fa fa-ban"></i> Warning:</strong> Lines with an already used email will be silently ignored.
+        </div>
+
+        <hr>
+
+        {{ form_start(addUserFromFileForm, {'attr': {'id': 'addUserFromFileForm'}}) }}
+            <div class="form-group">
+                {{ form_row(addUserFromFileForm.file) }}
+            </div>
+            
+            <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                    {{ form_widget(addUserFromFileForm.sendPasswordByEmail, {'attr': {'class': 'custom-control-input'}}) }}
+                    {{ form_label(addUserFromFileForm.sendPasswordByEmail, null, {'label_attr': {'class': 'custom-control-label'}}) }}
+                    <small class="form-text text-muted">
+                        {{ form_help(addUserFromFileForm.sendPasswordByEmail) }}
+                    </small>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                {{ form_widget(addUserFromFileForm.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+            </div>
+        {{ form_end(addUserFromFileForm) }}
+    {% endblock %}
+{% endembed %}

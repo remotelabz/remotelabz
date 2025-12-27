@@ -17,24 +17,7 @@
 
 
 {% block wrapper %}
-    {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
-        {% block body %}
-            <p>The CSV file, encoded in UTF8, must contains user information in the following format:
-                <br>
-                <br>
-                <kbd>lastname,firstname,email,group</kbd>
-                <br><br>
-                The password of each user will be send by email<br>
-                <br>
-                <span class="text-danger">Warning:</span> Lines with an already used e-mail will be silently ignored.
-            </p>
-            {{ form(addUserFromFileForm, {'id': 'addUserFromFileForm'}) }}
-            {# <div class="custom-file">
-                <input type="file" class="custom-file-input" id="customFile">
-                <label class="custom-file-label" for="customFile">Choose file</label>
-              </div> #}
-        {% endblock %}
-    {% endembed %}
+    {% include 'user/_import_modal.html.twig' %}
    
 
     <div class="top-panel">

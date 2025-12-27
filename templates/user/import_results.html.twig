@@ -1,0 +1,346 @@
+{# 
+   NOUVEAU TEMPLATE POUR AFFICHER LES RÉSULTATS D'IMPORTATION
+   Créer ce fichier: templates/user/import_results.html.twig
+#}
+
+{% extends 'dashboard.base.html.twig' %}
+
+{% block breadcrumbs %}
+    {% set breadcrumbs = breadcrumbs|merge({ 
+        'Users': path('users'),
+        'Import Results': path('users_import_results')
+    }) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block header %}
+    {% set category = 'admin' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block sidebar %}
+    {% set category = 'users' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block wrapper %}
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">
+                            <i class="fa fa-check-circle"></i> User Import Results
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i> 
+                            <strong>Important:</strong> Please save the passwords below. They will not be displayed again.
+                            You can copy them to a secure location or print this page.
+                        </div>
+
+                        {% set successCount = 0 %}
+                        {% set failureCount = 0 %}
+                        
+                        {% for result in importResults %}
+                            {% if result.success %}
+                                {% set successCount = successCount + 1 %}
+                            {% else %}
+                                {% set failureCount = failureCount + 1 %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h5 class="text-success">
+                                            <i class="fa fa-check-circle"></i> Successfully Imported
+                                        </h5>
+                                        <h2 class="mb-0">{{ successCount }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if failureCount > 0 %}
+                            <div class="col-md-6">
+                                <div class="card border-danger">
+                                    <div class="card-body">
+                                        <h5 class="text-danger">
+                                            <i class="fa fa-times-circle"></i> Failed
+                                        </h5>
+                                        <h2 class="mb-0">{{ failureCount }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {# Successful imports table #}
+                        {% if successCount > 0 %}
+                        <h4 class="mt-4 mb-3">
+                            <i class="fa fa-users"></i> Successfully Imported Users
+                        </h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered" id="importedUsersTable">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Last Name</th>
+                                        <th>First Name</th>
+                                        <th>Email</th>
+                                        <th>Password</th>
+                                        <th>Password Source</th>
+                                        <th>Email Sent</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set index = 0 %}
+                                    {% for result in importResults %}
+                                        {% if result.success %}
+                                            {% set index = index + 1 %}
+                                            <tr>
+                                                <td>{{ index }}</td>
+                                                <td>{{ result.user.lastName }}</td>
+                                                <td>{{ result.user.firstName }}</td>
+                                                <td>{{ result.user.email }}</td>
+                                                <td>
+                                                    <div class="input-group">
+                                                        <input type="password" 
+                                                               class="form-control password-field" 
+                                                               value="{{ result.password }}" 
+                                                               id="password-{{ index }}"
+                                                               readonly>
+                                                        <div class="input-group-append">
+                                                            <button class="btn btn-outline-secondary toggle-password" 
+                                                                    type="button"
+                                                                    data-target="password-{{ index }}">
+                                                                <i class="fa fa-eye"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-primary copy-password" 
+                                                                    type="button"
+                                                                    data-target="password-{{ index }}">
+                                                                <i class="fa fa-copy"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if result.passwordGenerated %}
+                                                        <span class="badge badge-info">
+                                                            <i class="fa fa-robot"></i> Generated
+                                                        </span>
+                                                        {% if result.passwordError %}
+                                                            <br>
+                                                            <small class="text-warning">
+                                                                <i class="fa fa-exclamation-triangle"></i> {{ result.passwordError }}
+                                                            </small>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="badge badge-success">
+                                                            <i class="fa fa-file-csv"></i> From CSV
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if result.emailSent %}
+                                                        <span class="badge badge-success">
+                                                            <i class="fa fa-check"></i> Yes
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">
+                                                            <i class="fa fa-times"></i> No
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ path('edit_user', {'id': result.user.id}) }}" 
+                                                       class="btn btn-sm btn-primary"
+                                                       title="Edit user">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {# Failed imports table #}
+                        {% if failureCount > 0 %}
+                        <h4 class="mt-5 mb-3 text-danger">
+                            <i class="fa fa-exclamation-triangle"></i> Failed Imports
+                        </h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="thead-danger">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Last Name</th>
+                                        <th>First Name</th>
+                                        <th>Email</th>
+                                        <th>Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set failIndex = 0 %}
+                                    {% for result in importResults %}
+                                        {% if not result.success %}
+                                            {% set failIndex = failIndex + 1 %}
+                                            <tr>
+                                                <td>{{ failIndex }}</td>
+                                                <td>{{ result.lastName }}</td>
+                                                <td>{{ result.firstName }}</td>
+                                                <td>{{ result.email }}</td>
+                                                <td>
+                                                    <span class="badge badge-danger">
+                                                        {{ result.error }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {# Action buttons #}
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ path('users') }}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Back to Users
+                            </a>
+                            <div>
+                                <button onclick="window.print()" class="btn btn-info">
+                                    <i class="fa fa-print"></i> Print
+                                </button>
+                                <button id="exportCSV" class="btn btn-success">
+                                    <i class="fa fa-file-csv"></i> Export to CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    
+    <script>
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // Copy password to clipboard
+        document.querySelectorAll('.copy-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                
+                // Create a temporary input to copy the value
+                const tempInput = document.createElement('input');
+                tempInput.value = input.value;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                // Visual feedback
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fa fa-check"></i>';
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    this.innerHTML = originalHTML;
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-primary');
+                }, 2000);
+            });
+        });
+
+        // Export to CSV
+        document.getElementById('exportCSV').addEventListener('click', function() {
+            const table = document.getElementById('importedUsersTable');
+            let csv = [];
+            
+            // Headers
+            const headers = [];
+            table.querySelectorAll('thead th').forEach(th => {
+                headers.push('"' + th.textContent.trim() + '"');
+            });
+            csv.push(headers.join(','));
+            
+            // Rows
+            table.querySelectorAll('tbody tr').forEach(tr => {
+                const row = [];
+                tr.querySelectorAll('td').forEach((td, index) => {
+                    if (index === 4) { // Password column
+                        const input = td.querySelector('input');
+                        row.push('"' + (input ? input.value : '') + '"');
+                    } else if (index === 7) { // Skip actions column
+                        return;
+                    } else {
+                        row.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+                    }
+                });
+                csv.push(row.join(','));
+            });
+            
+            // Download
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'imported_users_' + new Date().toISOString().slice(0,10) + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+
+    <style>
+        @media print {
+            .btn, .breadcrumb, .sidebar, .top-panel, .search-panel {
+                display: none !important;
+            }
+            
+            .password-field {
+                border: none !important;
+                background: transparent !important;
+            }
+            
+            table {
+                font-size: 10px;
+            }
+        }
+        
+        .password-field {
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+{% endblock %}
