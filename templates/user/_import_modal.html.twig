@@ -1,11 +1,6 @@
 {# 
-   NOUVEAU TEMPLATE TWIG POUR LA MODAL D'IMPORTATION
-   Créer ce fichier: templates/user/_import_modal.html.twig
-   
-   Ce template remplace l'embed dans index_html.twig (lignes 20-37)
-   Pour l'utiliser, remplacer dans index_html.twig:
-   
-   {% include 'user/_import_modal.html.twig' %}
+   VERSION ALTERNATIVE avec styling Bootstrap personnalisé
+   Si la version simplifiée ne fonctionne pas ou si tu préfères un style particulier
 #}
 
 {% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
@@ -53,22 +48,28 @@
 
         {{ form_start(addUserFromFileForm, {'attr': {'id': 'addUserFromFileForm'}}) }}
             <div class="form-group">
-                {{ form_row(addUserFromFileForm.file) }}
+                {{ form_label(addUserFromFileForm.file) }}
+                {{ form_widget(addUserFromFileForm.file, {'attr': {'class': 'form-control-file'}}) }}
+                {% if addUserFromFileForm.file.vars.help is defined %}
+                    <small class="form-text text-muted">{{ addUserFromFileForm.file.vars.help }}</small>
+                {% endif %}
+                {{ form_errors(addUserFromFileForm.file) }}
             </div>
             
             <div class="form-group">
-                <div class="custom-control custom-checkbox">
-                    {{ form_widget(addUserFromFileForm.sendPasswordByEmail, {'attr': {'class': 'custom-control-input'}}) }}
-                    {{ form_label(addUserFromFileForm.sendPasswordByEmail, null, {'label_attr': {'class': 'custom-control-label'}}) }}
-                    <small class="form-text text-muted">
-                        {{ form_help(addUserFromFileForm.sendPasswordByEmail) }}
-                    </small>
+                <div class="form-check">
+                    {{ form_widget(addUserFromFileForm.sendPasswordByEmail, {'attr': {'class': 'form-check-input', 'id': 'sendPasswordByEmail'}}) }}
+                    
                 </div>
+                {% if addUserFromFileForm.sendPasswordByEmail.vars.help is defined %}
+                    <small class="form-text text-muted">{{ addUserFromFileForm.sendPasswordByEmail.vars.help }}</small>
+                {% endif %}
+                {{ form_errors(addUserFromFileForm.sendPasswordByEmail) }}
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                {{ form_widget(addUserFromFileForm.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+                {{ form_widget(addUserFromFileForm.submit, {'attr': {'class': 'btn btn-primary', 'value': 'Import users'}}) }}
             </div>
         {{ form_end(addUserFromFileForm) }}
     {% endblock %}
