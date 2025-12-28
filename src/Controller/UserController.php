@@ -33,6 +33,7 @@ use FOS\RestBundle\Controller\Annotations\View;
 use FOS\RestBundle\Controller\Annotations\Route as RestRoute;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -159,51 +160,64 @@ class UserController extends Controller
             }
         }
 
-        $addUserFromFileForm = $this->createFormBuilder([])
-            ->add('file', FileType::class, [
-                "help" => "Accepted formats: csv",
-                "attr" => [
-                    "accepted" => ".csv",
-                ]
-            ])
-            ->add('submit', SubmitType::class)
-            ->getForm();
+    $addUserFromFileForm = $this->createFormBuilder([])
+        ->add('file', FileType::class, [
+            "help" => "Accepted formats: csv",
+            "attr" => [
+                "accepted" => ".csv",
+            ]
+        ])
+        ->add('sendPasswordByEmail', CheckboxType::class, [
+            'label' => 'Send password by email',
+            'required' => false,
+            'data' => false,
+            'help' => 'If checked, passwords will be sent to all imported users by email. If not checked, no emails will be sent.'
+        ])
+        ->add('submit', SubmitType::class, [
+            'label' => 'Import users'
+        ])
+        ->getForm();
 
-        $addUserFromFileForm->handleRequest($request);
+    $addUserFromFileForm->handleRequest($request);
 
-        if ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
-            $file = $addUserFromFileForm->getData()['file'];
+    $importResults = null; // Variable pour stocker les résultats
 
-            $fileExtension = strtolower($file->getClientOriginalExtension());
+    if ($addUserFromFileForm->isSubmitted() && $addUserFromFileForm->isValid()) {
+        $file = $addUserFromFileForm->getData()['file'];
+        $sendPasswordByEmail = $addUserFromFileForm->getData()['sendPasswordByEmail'];
 
-            if (in_array($fileExtension, ['csv'])) {
-                $fileSocket = fopen($file, 'r');
+        $fileExtension = strtolower($file->getClientOriginalExtension());
 
-                $addedUsers = [];
+        if (in_array($fileExtension, ['csv'])) {
+            $fileSocket = fopen($file, 'r');
 
-                switch ($fileExtension) {
-                    case 'csv':
-                        $addedUsers = $this->createUserFromCSV($fileSocket,$file);
-                        break;
-                }
+            $result = [];
 
-                if ($addedUsers && count($addedUsers) > 0) {
-                    $this->addFlash('success', 'Utilisateur(s) créé(s).');
-                } else {
-                    $this->addFlash(
-                        'warning',
-                        'Aucun utilisateur créé. Veuillez vérifier que les
-                        utilisateurs spécifiés dans le fichier n\'existent pas déjà ou que le format du fichier est correct.'
-                    );
-                }
-
-                fclose($fileSocket);
-            } else {
-                $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
+            switch ($fileExtension) {
+                case 'csv':
+                    $result = $this->createUserFromCSV($fileSocket, $file, $sendPasswordByEmail);
+                    break;
             }
-            return $this->redirectToRoute('users');
 
+            fclose($fileSocket);
+            
+            $addedUsers = $result['users'] ?? [];
+            $importResults = $result['results'] ?? [];
+
+            if ($addedUsers && count($addedUsers) > 0) {
+                // Stocker les résultats en session pour les afficher
+                $request->getSession()->set('import_results', $importResults);
+                return $this->redirectToRoute('users_import_results');
+            } else {
+                $this->addFlash(
+                    'warning',
+                    'Aucun utilisateur créé. Veuillez vérifier que les utilisateurs spécifiés dans le fichier n\'existent pas déjà ou que le format du fichier est correct.'
+                );
+            }
+        } else {
+            $this->addFlash('danger', "Ce type de fichier n'est pas accepté.");
         }
+    }   
 
         if ('json' === $request->getRequestFormat()) {
             return $this->json($users->slice($page * $limit - $limit, $limit), 200, [], [$request->get('_route')]);
@@ -232,6 +246,24 @@ class UserController extends Controller
         ]);
     }
 
+    #[Route(path: '/admin/users/import-results', name: 'users_import_results', methods: ['GET'])]
+    #[IsGranted("ROLE_TEACHER", message: "Access denied.")]
+    public function importResultsAction(Request $request)
+    {
+        $importResults = $request->getSession()->get('import_results', []);
+        
+        if (empty($importResults)) {
+            $this->addFlash('warning', 'No import results to display.');
+            return $this->redirectToRoute('users');
+        }
+        
+        // Nettoyer la session
+        $request->getSession()->remove('import_results');
+        
+        return $this->render('user/import_results.html.twig', [
+            'importResults' => $importResults
+        ]);
+    }
     
     public function fetchUsersAction(Request $request)
     {
@@ -243,23 +275,7 @@ class UserController extends Controller
         }
 
     }
-
-    /*    /*public function fetchUserTypeByGroupOwner(Request $request, string $userType, int $id)
-    {
-        $owner = $this->userRepository->find($id);
-        $users = $this->userRepository->findUserTypesByGroups($userType, $owner);
-
-        if (!$users) {
-            throw new NotFoundHttpException();
-        }
-
-        if ('json' === $request->getRequestFormat()) {
-            return $this->json($users, 200, [], ["api_users"]);
-        }
-
-    }*/
-
-    
+   
 	#[Get('/api/users/{id<\d+>}', name: 'api_get_user')]
 	#[IsGranted("ROLE_USER", message: "Access denied.")]
     public function showAction(Request $request, int $id)
@@ -482,86 +498,147 @@ class UserController extends Controller
         return $this->redirectToRoute('users');
     }
 
-    /**
-     * The CSV must be in the following format :
-     * Name, firstname,email,password
-     * @return array The number of elements added
-     */
-    public function createUserFromCSV($filehandler,$file)
+    public function createUserFromCSV($filehandler, $file, $sendPasswordByEmail = false)
     {
         $row = 0;
         $line = array();
         $addedUsers = array();
+        $importResults = array(); // Nouveau: stocke les résultats détaillés
         $validator = Validation::createValidator();
         $entityManager = $this->entityManager;
 
-        $error=false;
+        $error = false;
 
         if (($data = fgetcsv($filehandler, 1000, ",")) !== FALSE) {
-            if ( in_array("firstname",array_map('strtolower',$data)) && in_array("lastname",array_map('strtolower',$data)) 
-            && in_array("email",array_map('strtolower',$data)) ) {
-                //$this->logger->debug("Find first line in CSV file");
-
+            // Vérifier que les colonnes obligatoires sont présentes
+            $requiredColumns = ['firstname', 'lastname', 'email'];
+            $dataLower = array_map('strtolower', $data);
+            
+            $hasAllRequired = true;
+            foreach ($requiredColumns as $col) {
+                if (!in_array($col, $dataLower)) {
+                    $hasAllRequired = false;
+                    break;
+                }
+            }
+            
+            if ($hasAllRequired) {
                 $csv = array_map('str_getcsv', file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES));
                 array_walk($csv, function(&$a) use ($csv) {
                     $a = array_combine($csv[0], $a);
                 });
-                $this->logger->debug("firstname in CSV file :",$csv);
-            }
-            else {
-                $this->addFlash('danger',"File format is incorrect");
-                $error=true;
+                $this->logger->debug("CSV file parsed successfully", $csv);
+            } else {
+                $this->addFlash('danger', "File format is incorrect. Required columns: firstname, lastname, email");
+                $error = true;
             }
         }
-    
+
         if (!$error) {
-            $row=0;
+            $row = 0;
             foreach ($csv as $line_num => $line) {
                 if ($line_num > 0) {
-                    if (count($line) > 3) {
-                        $lastName = $line['lastname'];
-                        $firstName = $line['firstname'];
-                        $group = $line['group'];
-                        $email = $line['email'];
-                        $user=$this->userRepository->findOneByEmail($email);
-                        if ($user==null) {
-                            $password = $this->generateStrongPassword(); // trim newline because this is the last field
+                    if (count($line) >= 3) { // Au minimum firstname, lastname, email
+                        $lastName = trim($line['lastname']);
+                        $firstName = trim($line['firstname']);
+                        $email = trim($line['email']);
+                        $group = isset($line['group']) ? trim($line['group']) : '';
+                        
+                        // Nouveau: gestion du mot de passe depuis le CSV
+                        $csvPassword = isset($line['password']) ? trim($line['password']) : '';
+                        $passwordGenerated = false;
+                        $passwordToUse = '';
+                        $passwordError = '';
+                        
+                        $user = $this->userRepository->findOneByEmail($email);
+                        
+                        if ($user == null) {
+                            // Déterminer le mot de passe à utiliser
+                            if (!empty($csvPassword)) {
+                                // Un mot de passe est fourni dans le CSV
+                                if ($this->isStrongPassword($csvPassword)) {
+                                    $passwordToUse = $csvPassword;
+                                    $this->logger->info("Using password from CSV for user: " . $email);
+                                } else {
+                                    $passwordError = "Password from CSV does not meet strong password requirements";
+                                    $this->logger->warning($passwordError . " for user: " . $email);
+                                    // Générer un mot de passe fort
+                                    $passwordToUse = $this->generateStrongPassword();
+                                    $passwordGenerated = true;
+                                    $this->logger->info("Generated strong password for user: " . $email);
+                                }
+                            } else {
+                                // Aucun mot de passe fourni, en générer un
+                                $passwordToUse = $this->generateStrongPassword();
+                                $passwordGenerated = true;
+                                $this->logger->info("Generated password for user (no password in CSV): " . $email);
+                            }
+                            
                             $user = new User();
                             $user
                                 ->setLastName($lastName)
                                 ->setFirstName($firstName)
                                 ->setEmail($email)
-                                ->setPassword($this->passwordHasher->hashPassword($user, $password));
+                                ->setPassword($this->passwordHasher->hashPassword($user, $passwordToUse));
 
-                            $this->logger->info("User importation by ".$this->getUser()->getName().": ".$firstName." ".$lastName." ".$email);
+                            $this->logger->info("User importation by " . $this->getUser()->getName() . ": " . $firstName . " " . $lastName . " " . $email);
 
                             $validEmail = count($validator->validate($email, [new ConstraintsEmail()])) === 0;
 
                             if ($validEmail && $this->userRepository->findByEmail($email) == null) {
-                                var_dump($user->getName());
                                 $entityManager->persist($user);
-                                $this->sendNewAccountEmail($user, $password);
+                                
+                                // Nouveau: décision d'envoi d'email basée sur les paramètres
+                                $shouldSendEmail = false;
+                                $emailSent = false;
+                                
+                                if ($sendPasswordByEmail) {
+                                    // Si la checkbox est cochée, toujours envoyer
+                                    $shouldSendEmail = true;
+                                    
+                                    try {
+                                        $this->sendNewAccountEmail($user, $passwordToUse);
+                                        $emailSent = true;
+                                        $this->logger->info("Password email sent to: " . $email);
+                                    } catch (\Exception $e) {
+                                        $emailSent = false;
+                                        $this->logger->error("Failed to send email to: " . $email . " - " . $e->getMessage());
+                                    }
+                                }
+                                // Si la checkbox n'est pas cochée, on n'envoie rien du tout
+                                
                                 $addedUsers[$row] = $user;
+                                
+                                // Nouveau: stocker les détails pour l'affichage
+                                $importResults[] = [
+                                    'user' => $user,
+                                    'password' => $passwordToUse,
+                                    'passwordGenerated' => $passwordGenerated,
+                                    'passwordError' => $passwordError,
+                                    'emailSent' => $emailSent,
+                                    'success' => true
+                                ];
 
+                                // Gestion des groupes (inchangée)
                                 if ($group != "") {
-                                    if ( !$group_wanted=$this->groupRepository->findOneByName($group) ) {
-                                        $this->logger->info("Creation of ".$group." group by ".$this->getUser()->getName());
+                                    if (!$group_wanted = $this->groupRepository->findOneByName($group)) {
+                                        $this->logger->info("Creation of " . $group . " group by " . $this->getUser()->getName());
                                         $group_wanted = new Group();
                                         $group_wanted->setName($group);
                                         $group_wanted->setVisibility(Group::VISIBILITY_PRIVATE);
-                                        $slug_wanted=str_replace(" ","-",$group);
-        
-                                        $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
-                                        $i=1;
-                                        while($slug_list) {
-                                            if ($slug_wanted==$slug_list->getSlug()) {
-                                                $this->logger->debug("The slug ".$slug_wanted." exists");
-                                                $slug_wanted=$slug_wanted.$i;
+                                        $slug_wanted = str_replace(" ", "-", $group);
+
+                                        $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
+                                        $i = 1;
+                                        while ($slug_list) {
+                                            if ($slug_wanted == $slug_list->getSlug()) {
+                                                $this->logger->debug("The slug " . $slug_wanted . " exists");
+                                                $slug_wanted = $slug_wanted . $i;
                                                 $i++;
                                             }
-                                            $slug_list=$this->groupRepository->findOneBySlug($slug_wanted);
+                                            $slug_list = $this->groupRepository->findOneBySlug($slug_wanted);
                                         }
-                                        $this->logger->debug("Creation of ".$group." with slug ".$slug_wanted);
+                                        $this->logger->debug("Creation of " . $group . " with slug " . $slug_wanted);
                                         $group_wanted->setSlug($slug_wanted);
                                         $entityManager->persist($group_wanted);
                                         $group_wanted->addUser($this->getUser(), Group::ROLE_OWNER);
@@ -569,8 +646,25 @@ class UserController extends Controller
                                     if (!$user->isMemberOf($group_wanted))
                                         $group_wanted->addUser($user);
                                 }
+                            } else {
+                                // Email invalide ou déjà existant
+                                $importResults[] = [
+                                    'firstName' => $firstName,
+                                    'lastName' => $lastName,
+                                    'email' => $email,
+                                    'success' => false,
+                                    'error' => $validEmail ? 'Email already exists' : 'Invalid email format'
+                                ];
                             }
-
+                        } else {
+                            // Utilisateur déjà existant
+                            $importResults[] = [
+                                'firstName' => $firstName,
+                                'lastName' => $lastName,
+                                'email' => $email,
+                                'success' => false,
+                                'error' => 'User already exists'
+                            ];
                         }
                         
                         $row++;
@@ -578,10 +672,15 @@ class UserController extends Controller
                     $entityManager->flush();
                 }
             }
-    
-        $entityManager->flush();
-        return $addedUsers;
+
+            $entityManager->flush();
         }
+        
+        // Nouveau: retourner à la fois les utilisateurs ajoutés et les résultats détaillés
+        return [
+            'users' => $addedUsers,
+            'results' => $importResults
+        ];
     }
 
     /**
@@ -902,6 +1001,31 @@ class UserController extends Controller
         return $response;
     }
 
+    /**
+     * Validates if a password meets strong password requirements
+     * - At least 12 characters
+     * - At least one lowercase letter
+     * - At least one uppercase letter
+     * - At least one digit
+     * - At least one special character (!@#$%&*?)
+     *
+     * @param string $password
+     * @return bool
+     */
+    private function isStrongPassword($password)
+    {
+        if (strlen($password) < 12) {
+            return false;
+        }
+        
+        $hasLowercase = preg_match('/[a-z]/', $password);
+        $hasUppercase = preg_match('/[A-Z]/', $password);
+        $hasDigit = preg_match('/[0-9]/', $password);
+        $hasSpecial = preg_match('/[!@#$%&*?]/', $password);
+        
+        return $hasLowercase && $hasUppercase && $hasDigit && $hasSpecial;
+    }
+
     // Generates a strong password of N length containing at least one lower case letter,
     // one uppercase letter, one digit, and one special character. The remaining characters
     // in the password are chosen at random from those four sets.
@@ -923,7 +1047,7 @@ class UserController extends Controller
         if(strpos($available_sets, 'd') !== false)
             $sets[] = '23456789';
         if(strpos($available_sets, 's') !== false)
-            $sets[] = '!@#$%&*?';
+            $sets[] = '!@#$%&*';
 
         $all = '';
         $password = '';

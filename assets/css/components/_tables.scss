@@ -16,6 +16,18 @@
     .item {
       padding: 0 !important;
     }
+
+    
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+        background-color: map-get($theme-colors, "gray-light");
+        color: black;
+}
+    
+.table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: white;
+        color: black;
 }
 
 [theme="dark"] {
@@ -29,5 +41,20 @@
         thead th {
             border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
         }
+    
+        tbody > tr:nth-of-type(odd) {
+            background-color: map-get($colors, "dark-lighter");
+            color: black
+        }
+
+        tbody > tr:nth-of-type(even) {
+              background-color: map-get($colors, "dark-lightest");
+              color: #f0f0f0
+        }
+        
+        
+        
     }
+
+    
 }

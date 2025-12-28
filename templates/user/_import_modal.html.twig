@@ -1,0 +1,76 @@
+{# 
+   VERSION ALTERNATIVE avec styling Bootstrap personnalisé
+   Si la version simplifiée ne fonctionne pas ou si tu préfères un style particulier
+#}
+
+{% embed 'modal.html.twig' with {'title': 'Import from file'|trans, 'class': 'import-user-modal'} %}
+    {% block body %}
+        <div class="alert alert-info">
+            <h5><i class="fa fa-info-circle"></i> CSV Format</h5>
+            <p>The CSV file, encoded in UTF-8, must contain user information in the following format:</p>
+            <kbd>lastname,firstname,email,password,group</kbd>
+            
+            <div class="mt-3">
+                <strong>Columns:</strong>
+                <ul class="mb-0">
+                    <li><strong>lastname, firstname, email:</strong> Required</li>
+                    <li><strong>password:</strong> Optional - Must be a strong password (min 12 chars, uppercase, lowercase, digit, special char (!@#$%&*) )</li>
+                    <li><strong>group:</strong> Optional - Group name</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <h5><i class="fa fa-exclamation-triangle"></i> Password Rules</h5>
+            <ul class="mb-0">
+                <li>If a password is provided in CSV but is <strong>not strong enough</strong>, a new strong password will be generated</li>
+                <li>If the password column is <strong>empty</strong>, a strong password will be automatically generated</li>
+                <li>Generated passwords will be displayed after import</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-secondary">
+            <h5><i class="fa fa-envelope"></i> Email Notification</h5>
+            <p class="mb-0">
+                Use the checkbox below to control email sending:
+            </p>
+            <ul class="mb-0">
+                <li><strong>Checked:</strong> All imported users will receive their password by email</li>
+                <li><strong>Unchecked:</strong> No emails will be sent (passwords will only be displayed on the results page)</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-danger">
+            <strong><i class="fa fa-ban"></i> Warning:</strong> Lines with an already used email will be silently ignored.
+        </div>
+
+        <hr>
+
+        {{ form_start(addUserFromFileForm, {'attr': {'id': 'addUserFromFileForm'}}) }}
+            <div class="form-group">
+                {{ form_label(addUserFromFileForm.file) }}
+                {{ form_widget(addUserFromFileForm.file, {'attr': {'class': 'form-control-file'}}) }}
+                {% if addUserFromFileForm.file.vars.help is defined %}
+                    <small class="form-text text-muted">{{ addUserFromFileForm.file.vars.help }}</small>
+                {% endif %}
+                {{ form_errors(addUserFromFileForm.file) }}
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form_widget(addUserFromFileForm.sendPasswordByEmail, {'attr': {'class': 'form-check-input', 'id': 'sendPasswordByEmail'}}) }}
+                    
+                </div>
+                {% if addUserFromFileForm.sendPasswordByEmail.vars.help is defined %}
+                    <small class="form-text text-muted">{{ addUserFromFileForm.sendPasswordByEmail.vars.help }}</small>
+                {% endif %}
+                {{ form_errors(addUserFromFileForm.sendPasswordByEmail) }}
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                {{ form_widget(addUserFromFileForm.submit, {'attr': {'class': 'btn btn-primary', 'value': 'Import users'}}) }}
+            </div>
+        {{ form_end(addUserFromFileForm) }}
+    {% endblock %}
+{% endembed %}
