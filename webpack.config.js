@@ -1,3 +1,4 @@
+const webpack = require('webpack');  // Ajouter en haut
 const Encore = require('@symfony/webpack-encore');
 const path = require('path');
 
@@ -95,7 +96,11 @@ Encore
     })
 
     .enableReactPreset()
-
+    .addPlugin(new webpack.ProvidePlugin({
+        $: 'jquery',
+        jQuery: 'jquery',
+        'window.jQuery': 'jquery'
+    }))
     .copyFiles({
         from: './assets/images',
         // optional target path, relative to the output dir
