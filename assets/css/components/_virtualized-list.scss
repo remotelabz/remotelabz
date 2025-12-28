@@ -162,7 +162,7 @@
           color: $white;
 
           &:hover:not(:disabled) {
-            background-color: darken(theme-color(info), 10%);
+            background-color: darken(map-get($theme-colors, info), 10%);
           }
         }
 
@@ -309,7 +309,7 @@
 
     .virtualized-list-header {
       background-color: theme-color("dark");
-      border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%);
+      border-bottom-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
 
       h2 {
         color: theme-color("light");
@@ -322,7 +322,7 @@
 
     .virtualized-instance-row {
       background-color: theme-color("dark");
-      border-bottom-color: lighten(theme-color("dark-lighter"), 7.5%);
+      border-bottom-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
       color: theme-color("light");
 
       &:nth-child(even) {
@@ -330,7 +330,7 @@
       }
 
       &:hover {
-        background-color: lighten(theme-color("dark-lighter"), 5%);
+        background-color: lighten(map-get($theme-colors, "dark-lighter"), 5%);
       }
 
       .instance-info {
@@ -346,10 +346,10 @@
       .instance-actions {
         button {
           &.btn-details {
-            background-color: darken(theme-color(info), 10%);
+            background-color: darken(map-get($theme-colors, info), 10%);
 
             &:hover:not(:disabled) {
-              background-color: darken(theme-color(info), 15%);
+              background-color: darken(map-get($theme-colors, info), 15%);
             }
           }
         }
@@ -388,20 +388,20 @@
 
           pre {
             background-color: theme-color("dark-lighter");
-            border-color: lighten(theme-color("dark-lighter"), 7.5%);
+            border-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
           }
 
           code {
             color: #52ceab;
 
             &:hover {
-              background-color: lighten(theme-color("dark-lighter"), 5%);
+              background-color: lighten(map-get($theme-colors, "dark-lighter"), 5%);
             }
           }
         }
 
         .modal-actions {
-          border-top-color: lighten(theme-color("dark-lighter"), 7.5%);
+          border-top-color: lighten(map-get($theme-colors, "dark-lighter"), 7.5%);
 
           button.btn-close {
             background-color: darken(#6c757d, 10%);

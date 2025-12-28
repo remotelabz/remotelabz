@@ -45,7 +45,7 @@ h1 {
 
 .navbar {
   min-height: $navbar-height;
-  background-color: theme-color(primary);
+  background-color: map-get($theme-colors, primary);
   color: $white;
   min-height: 40px;
   list-style: none;
@@ -78,10 +78,10 @@ h1 {
 // }
 
 a {
-  color: theme-color(primary);
+  color: map-get($theme-colors, primary);
 
   &:hover, &:active {
-    color: theme-color(primary);
+    color: map-get($theme-colors, primary);
   }
 }
 
@@ -392,7 +392,7 @@ img.rounded-circle {
   .selectize-input
   {
     div.item {
-      background-color: theme-color(info);
+      background-color: map-get($theme-colors, info);
       padding: $input-btn-padding-y $input-btn-padding-x;
       border-radius: $btn-border-radius-sm;
       color: $white;
@@ -441,7 +441,7 @@ img.rounded-circle {
         &.active
         {
           color: $white;
-          background-color: theme-color(info);
+          background-color: map-get($theme-colors, info);
           cursor: pointer;
         }
       }
@@ -1080,8 +1080,8 @@ $grid-number: 12;
   background-color: var(--dark);
 
   html, body {
-    background-color: theme-color("dark");
-    color: theme-color("light");
+    background-color: map-get($theme-colors, dark);
+    color: map-get($theme-colors, light);
   }
 
   .text-muted {
@@ -1111,7 +1111,7 @@ $grid-number: 12;
   }
 
   .content-title {
-    color: theme-color("light");
+    color: map-get($theme-colors, light);
     border-color: color.adjust(map.get($theme-colors, "dark"), $lightness: 10%);
   }
 
@@ -1126,23 +1126,23 @@ $grid-number: 12;
   }
 
   .select2-container--bootstrap-5 {
-    background-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark-lighter);
     border-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
     display: block;
     width: 100% !important;
     margin-right: 1rem !important;
     border-radius: 4px;
     .selection {
-        background-color: theme-color("dark-lighter");
-        border-color: theme-color("dark-lightest");
+        background-color: map-get($theme-colors, dark-lighter);
+        border-color: map-get($theme-colors, dark-lightest);
         .select2-selection--single {
           background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
             .select2-selection__rendered {
-                color: theme-color("light");
+                color: map-get($theme-colors, light);
             }
         }
         .select2-selection {
-          background-color: theme-color("dark-lighter");
+          background-color: map-get($theme-colors, dark-lighter);
           border-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
           .select2-selection__choice__display {
             color: color.adjust(map.get($theme-colors, "light"), $lightness: -5%);
@@ -1151,7 +1151,7 @@ $grid-number: 12;
             background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
             .select2-search__field {
               background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
-              color: theme-color("light");
+              color: map-get($theme-colors, light);
             }
           }
         }
@@ -1163,18 +1163,18 @@ $grid-number: 12;
         background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
         .select2-search__field {
           background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
-          color: theme-color("light");
+          color: map-get($theme-colors, light);
         }
         .select2-search__field:focus {
           box-shadow: none;
-          border-color: theme-color("light");
+          border-color: map-get($theme-colors, light);
         }
       }
       .select2-results {
         background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
         .select2-results__options {
           background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
-          color: theme-color("light");
+          color: map-get($theme-colors, light);
           .select2-results__option.select2-results__option--selected {
             background-color: #d4d4d4;
             color: #212529;
@@ -1183,12 +1183,12 @@ $grid-number: 12;
           .select2-results__option.select2-results__option--selected.select2-results__option--highlighted {
             background-color:  color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 20%);
             border-radius: 2px;
-            color: theme-color("light");
+            color: map-get($theme-colors, light);
           }
           .select2-results__option.select2-results__option--selectable.select2-results__option--highlighted {
             background-color:  color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 20%);
             border-radius: 2px; 
-            color: theme-color("light");
+            color: map-get($theme-colors, light);
           }
         }
       }
@@ -1199,7 +1199,7 @@ $grid-number: 12;
     box-shadow: 0 0 0 .20rem rgba(0,123,255,0.75);
     .selection {
       .select2-selection {
-        color: theme-color("light");
+        color: map-get($theme-colors, light);
         background-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
       }
     }
@@ -1289,7 +1289,7 @@ $grid-number: 12;
     .nav-links li {
       a {
         &:hover {
-          color: theme-color("light");
+          color: map-get($theme-colors, light);
         }
 
         .badge.badge-pill {
@@ -1298,7 +1298,7 @@ $grid-number: 12;
       }
 
       &.active {
-        color: theme-color("light");
+        color: map-get($theme-colors, light);
       }
     }
   }
@@ -1306,7 +1306,7 @@ $grid-number: 12;
   .item-panel {
     .item {
       .item-name {
-        color: theme-color("light");
+        color: map-get($theme-colors, light);
       }
     }
   }
@@ -1316,11 +1316,11 @@ $grid-number: 12;
       fill: currentColor;
 
       .lab-item-name {
-        color: theme-color("light");
+        color: map-get($theme-colors, light);
       }
 
       .lab-item-author {
-        color: theme-color("light");
+        color: map-get($theme-colors, light);
       }
     }
   }
@@ -1333,7 +1333,7 @@ $grid-number: 12;
   .content-list {
     > ul {
       li {
-        border-bottom-color: theme-color("dark-lighter");
+        border-bottom-color: map-get($theme-colors, dark-lighter);
   
         > .item-left {
           flex-grow: 1;
@@ -1360,8 +1360,8 @@ $grid-number: 12;
   }
 
   .list-group-item {
-    background-color: theme-color("dark");
-    border-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark);
+    border-color: map-get($theme-colors, dark-lighter);
   }
 
   .content-list {
@@ -1384,7 +1384,7 @@ $grid-number: 12;
     }
   
     li:last-child::before {
-      background: theme-color("dark");
+      background: map-get($theme-colors, dark);
     }
   
     > li:first-child {
@@ -1394,31 +1394,31 @@ $grid-number: 12;
   
   .group-row-contents {
     &:hover {
-      background-color: theme-color("dark-lighter");
+      background-color: map-get($theme-colors, dark-lighter);
     }
   }
   
 
   .identicon {
-    color: theme-color("light");
+    color: map-get($theme-colors, light);
   }
 
   .CodeMirror {
-    background-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark-lighter);
     border-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
-    color: theme-color("light");
+    color: map-get($theme-colors, light);
   }
 
   .CodeMirror-cursor {
-    border-left-color: theme-color("light");
+    border-left-color: map-get($theme-colors, light);
   }
 
   .editor-toolbar, .editor-toolbar.fullscreen {
-    background-color: theme-color("dark");
+    background-color: map-get($theme-colors, dark);
     border-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
 
     a, button {
-      color: theme-color("light") !important;
+      color: map-get($theme-colors, light) !important;
       fill: currentColor;
 
       &:hover, &.active {
@@ -1433,7 +1433,7 @@ $grid-number: 12;
   }
 
   .editor-preview, .editor-preview-side {
-    background-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark-lighter);
 
     pre {
       background: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 5%);
@@ -1465,7 +1465,7 @@ $grid-number: 12;
 
   .dropzone {
     border-color: color.adjust(map.get($theme-colors, "dark-lighter"), $lightness: 7.5%);
-    background-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark-lighter);
     color: color.adjust(map.get($theme-colors, "light"), $lightness: -5%);
   }
   
@@ -1478,7 +1478,7 @@ $grid-number: 12;
   }
 
   .jumbotron {
-    background-color: theme-color("dark-lighter");
+    background-color: map-get($theme-colors, dark-lighter);
   }
 
   .tippy-tooltip.remotelabz-theme {
